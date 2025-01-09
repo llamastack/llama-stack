@@ -192,6 +192,14 @@ async def localize_image_content(uri: str) -> tuple[bytes, str] | None:
                 format = "png"
 
         return content, format
+    elif uri.startswith("data"):
+        # data:image/{format};base64,{data}
+        match = re.match(r"data:image/(\w+);base64,(.+)", uri)
+        if not match:
+            raise ValueError(f"Invalid data URL format, {uri[:40]}...")
+        fmt, image_data = match.groups()
+        content = base64.b64decode(image_data)
+        return content, fmt
     else:
         return None
 
