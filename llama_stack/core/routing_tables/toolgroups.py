@@ -53,9 +53,14 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
 
         all_tools = []
         for toolgroup in toolgroups:
-            if toolgroup.identifier not in self.toolgroups_to_tools:
-                await self._index_tools(toolgroup)
-            all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])
+            try:
+                if toolgroup.identifier not in self.toolgroups_to_tools:
+                    await self._index_tools(toolgroup)
+                all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])
+            except Exception as e:
+                logger.warning(f"Error listing tools for toolgroup {toolgroup.identifier}: {e}")
+                logger.debug(e, exc_info=True)
+                continue
 
         return ListToolsResponse(data=all_tools)
 
