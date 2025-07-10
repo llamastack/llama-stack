@@ -53,20 +53,20 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
 
         all_tools = []
         for toolgroup in toolgroups:
-            try:
-                if toolgroup.identifier not in self.toolgroups_to_tools:
+            if toolgroup.identifier not in self.toolgroups_to_tools:
+                try:
                     await self._index_tools(toolgroup)
-                all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])
-            except AuthenticationRequiredError:
-                # Send authentication errors back to the client so it knows
-                # that it needs to supply credentials for remote MCP servers.
-                raise
-            except Exception as e:
-                # Other errors that the client cannot fix are logged and
-                # those specific toolgroups are skipped.
-                logger.warning(f"Error listing tools for toolgroup {toolgroup.identifier}: {e}")
-                logger.debug(e, exc_info=True)
-                continue
+                except AuthenticationRequiredError:
+                    # Send authentication errors back to the client so it knows
+                    # that it needs to supply credentials for remote MCP servers.
+                    raise
+                except Exception as e:
+                    # Other errors that the client cannot fix are logged and
+                    # those specific toolgroups are skipped.
+                    logger.warning(f"Error listing tools for toolgroup {toolgroup.identifier}: {e}")
+                    logger.debug(e, exc_info=True)
+                    continue
+            all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])
 
         return ListToolsResponse(data=all_tools)
 
