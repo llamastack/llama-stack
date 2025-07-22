@@ -23,6 +23,9 @@ RUN_CONFIG_PATH=/app/run.yaml
 
 BUILD_CONTEXT_DIR=$(pwd)
 
+# Placeholder for template files
+TEMPLATE_FILES=()
+
 set -euo pipefail
 
 # Define color codes
@@ -324,14 +327,19 @@ fi
 RUN pip uninstall -y uv
 EOF
 
-# If a run config is provided, we use the --config flag
+# Copy the entrypoint script to build context and then into the container
+cp llama_stack/core/entrypoint.sh "$BUILD_CONTEXT_DIR/entrypoint.sh"
+add_to_container << EOF
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+EOF
 if [[ -n "$run_config" ]]; then
   add_to_container << EOF
-ENTRYPOINT ["python", "-m", "llama_stack.core.server.server", "$RUN_CONFIG_PATH"]
+ENTRYPOINT ["/app/entrypoint.sh", "$RUN_CONFIG_PATH"]
 EOF
 elif [[ "$distro_or_config" != *.yaml ]]; then
   add_to_container << EOF
-ENTRYPOINT ["python", "-m", "llama_stack.core.server.server", "$distro_or_config"]
+ENTRYPOINT ["/app/entrypoint.sh", "$distro_or_config"]
 EOF
 fi
 
@@ -404,7 +412,8 @@ $CONTAINER_BINARY build \
   "$BUILD_CONTEXT_DIR"
 
 # clean up tmp/configs
-rm -rf "$BUILD_CONTEXT_DIR/run.yaml" "$TEMP_DIR"
+rm -rf "$BUILD_CONTEXT_DIR/run.yaml" "$BUILD_CONTEXT_DIR/entrypoint.sh" "$TEMP_DIR" "${TEMPLATE_FILES[@]}"
+
 set +x
 
 echo "Success!"

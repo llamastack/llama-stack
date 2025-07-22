@@ -175,6 +175,46 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             provider_shield_id="${env.CODE_SCANNER_MODEL:=}",
         ),
     ]
+    postgres_config = PostgresSqlStoreConfig.sample_run_config()
+    default_overrides = {
+        "inference": remote_inference_providers + [embedding_provider],
+        "vector_io": [
+            Provider(
+                provider_id="faiss",
+                provider_type="inline::faiss",
+                config=FaissVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="sqlite-vec",
+                provider_type="inline::sqlite-vec",
+                config=SQLiteVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="${env.MILVUS_URL:+milvus}",
+                provider_type="inline::milvus",
+                config=MilvusVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="${env.CHROMADB_URL:+chromadb}",
+                provider_type="remote::chromadb",
+                config=ChromaVectorIOConfig.sample_run_config(
+                    f"~/.llama/distributions/{name}/",
+                    url="${env.CHROMADB_URL:=}",
+                ),
+            ),
+            Provider(
+                provider_id="${env.PGVECTOR_DB:+pgvector}",
+                provider_type="remote::pgvector",
+                config=PGVectorVectorIOConfig.sample_run_config(
+                    f"~/.llama/distributions/{name}",
+                    db="${env.PGVECTOR_DB:=}",
+                    user="${env.PGVECTOR_USER:=}",
+                    password="${env.PGVECTOR_PASSWORD:=}",
+                ),
+            ),
+        ],
+        "files": [files_provider],
+    }
 
     return DistributionTemplate(
         name=name,
@@ -186,48 +226,27 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         additional_pip_packages=PostgresSqlStoreConfig.pip_packages(),
         run_configs={
             "run.yaml": RunConfigSettings(
-                provider_overrides={
-                    "inference": remote_inference_providers + [embedding_provider],
-                    "vector_io": [
-                        Provider(
-                            provider_id="faiss",
-                            provider_type="inline::faiss",
-                            config=FaissVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-                        ),
-                        Provider(
-                            provider_id="sqlite-vec",
-                            provider_type="inline::sqlite-vec",
-                            config=SQLiteVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-                        ),
-                        Provider(
-                            provider_id="${env.MILVUS_URL:+milvus}",
-                            provider_type="inline::milvus",
-                            config=MilvusVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-                        ),
-                        Provider(
-                            provider_id="${env.CHROMADB_URL:+chromadb}",
-                            provider_type="remote::chromadb",
-                            config=ChromaVectorIOConfig.sample_run_config(
-                                f"~/.llama/distributions/{name}/",
-                                url="${env.CHROMADB_URL:=}",
-                            ),
-                        ),
-                        Provider(
-                            provider_id="${env.PGVECTOR_DB:+pgvector}",
-                            provider_type="remote::pgvector",
-                            config=PGVectorVectorIOConfig.sample_run_config(
-                                f"~/.llama/distributions/{name}",
-                                db="${env.PGVECTOR_DB:=}",
-                                user="${env.PGVECTOR_USER:=}",
-                                password="${env.PGVECTOR_PASSWORD:=}",
-                            ),
-                        ),
-                    ],
-                    "files": [files_provider],
-                },
+                provider_overrides=default_overrides,
                 default_models=[],
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
+            ),
+            "run-with-postgres-store.yaml": RunConfigSettings(
+                provider_overrides={
+                    **default_overrides,
+                    "agents": [
+                        Provider(
+                            provider_id="meta-reference",
+                            provider_type="inline::meta-reference",
+                            config=dict(
+                                persistence_store=postgres_config,
+                                responses_store=postgres_config,
+                            ),
+                        )
+                    ],
+                },
+                inference_store=postgres_config,
+                metadata_store=postgres_config,
             ),
         },
         run_config_env_vars={
