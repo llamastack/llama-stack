@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-inference-meta-reference"
+version = "0.1.0"
+description = "Meta's reference implementation of inference with support for various model formats and optimization techniques"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "accelerate",
+    "fairscale",
+    "torch",
+    "torchvision",
+    "transformers",
+    "zmq",
+    "lm-format-enforcer",
+    "sentence-transformers",
+    "torchao==0.8.0",
+    "fbgemm-gpu-genai==1.1.2",
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]

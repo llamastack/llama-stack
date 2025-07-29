@@ -141,7 +141,10 @@ class ProviderSpec(BaseModel):
     )
 
     is_external: bool = Field(default=False, description="Notes whether this provider is an external provider.")
-
+    package_extras: list[str] = Field(
+        default_factory=list,
+        description="Optional package extras to install when using pyproject.toml files (e.g., ['cpu', 'gpu'])",
+    )
     # used internally by the resolver; this is a hack for now
     deps__: list[str] = Field(default_factory=list)
 

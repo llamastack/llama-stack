@@ -13,7 +13,6 @@ def available_providers() -> list[ProviderSpec]:
         InlineProviderSpec(
             api=Api.batches,
             provider_type="inline::reference",
-            pip_packages=[],
             module="llama_stack.providers.inline.batches.reference",
             config_class="llama_stack.providers.inline.batches.reference.config.ReferenceBatchesImplConfig",
             api_dependencies=[
