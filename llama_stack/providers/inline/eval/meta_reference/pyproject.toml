@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-eval-meta-reference"
+version = "0.1.0"
+description = "Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "tree_sitter",
+    "pythainlp",
+    "langdetect",
+    "emoji",
+    "nltk",
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]
