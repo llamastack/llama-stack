@@ -11,11 +11,11 @@ from llama_stack.cli.stack.list_stacks import StackListBuilds
 from llama_stack.cli.stack.utils import print_subcommand_description
 from llama_stack.cli.subcommand import Subcommand
 
-from .build import StackBuild
 from .list_apis import StackListApis
 from .list_providers import StackListProviders
 from .remove import StackRemove
 from .run import StackRun
+from .show import StackShow
 
 
 class StackParser(Subcommand):
@@ -39,7 +39,7 @@ class StackParser(Subcommand):
         subparsers = self.parser.add_subparsers(title="stack_subcommands")
 
         # Add sub-commands
-        StackBuild.create(subparsers)
+        StackShow.create(subparsers)
         StackListApis.create(subparsers)
         StackListProviders.create(subparsers)
         StackRun.create(subparsers)

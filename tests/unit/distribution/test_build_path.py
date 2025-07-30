@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack.cli.stack._build import (
+from llama_stack.cli.stack._sync import (
     _run_stack_build_command_from_build_config,
 )
 from llama_stack.core.datatypes import BuildConfig, DistributionSpec
