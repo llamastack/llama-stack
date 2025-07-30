@@ -9,6 +9,8 @@
 #   2. All classes should have a custom error message with the goal of informing the Llama Stack user specifically
 #   3. All classes should propogate the inherited __init__ function otherwise via 'super().__init__(message)'
 
+from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreType
+
 
 class ResourceNotFoundError(ValueError):
     """generic exception for a missing Llama Stack resource"""
@@ -25,6 +27,16 @@ class UnsupportedModelError(ValueError):
 
     def __init__(self, model_name: str, supported_models_list: list[str]):
         message = f"'{model_name}' model is not supported. Supported models are: {', '.join(supported_models_list)}"
+        super().__init__(message)
+
+
+class UnsupportedSqlStoreError(ValueError):
+    """raised when SQL store is not present in the list of supported SQL stores"""
+
+    def __init__(self, sqlstore_type: str):
+        message = (
+            f"'{sqlstore_type}' SQL store is not supported. Supported SQL stores are: {', '.join(list(SqlStoreType))}"
+        )
         super().__init__(message)
 
 
