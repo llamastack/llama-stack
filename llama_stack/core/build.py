@@ -6,6 +6,8 @@
 
 import importlib.resources
 import sys
+import tomllib
+from pathlib import Path
 
 from pydantic import BaseModel
 from termcolor import cprint
@@ -72,8 +74,13 @@ def get_provider_dependencies(
                         external_provider_deps.append(provider_spec.module)
                     else:
                         external_provider_deps.extend(provider_spec.module)
-            if hasattr(provider_spec, "pip_packages"):
-                deps.extend(provider_spec.pip_packages)
+
+            pyproject = Path(provider_spec.module.replace(".", "/")) / "pyproject.toml"
+            with open(pyproject, "rb") as f:
+                data = tomllib.load(f)
+
+            dependencies = data.get("project", {}).get("dependencies", [])
+            deps.extend(dependencies)
             if hasattr(provider_spec, "container_image") and provider_spec.container_image:
                 raise ValueError("A stack's dependencies cannot have a container image")
 
