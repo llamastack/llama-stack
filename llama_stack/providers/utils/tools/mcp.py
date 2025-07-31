@@ -120,6 +120,10 @@ async def list_mcp_tools(endpoint: str, headers: dict[str, str]) -> ListToolDefs
                         name=param_name,
                         parameter_type=param_schema.get("type", "string"),
                         description=param_schema.get("description", ""),
+                        required="default" not in param_schema,
+                        items=param_schema.get("items", None),
+                        title=param_schema.get("title", None),
+                        default=param_schema.get("default", None),
                     )
                 )
             tools.append(
