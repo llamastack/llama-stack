@@ -5,10 +5,7 @@
 # the root directory of this source tree.
 
 import argparse
-import importlib.resources
-import json
 import os
-import shutil
 import sys
 import textwrap
 from pathlib import Path
@@ -17,9 +14,9 @@ import yaml
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
-from termcolor import colored, cprint
+from termcolor import cprint
 
-from llama_stack.cli.stack.utils import ImageType, available_templates_specs, generate_run_config
+from llama_stack.cli.stack.utils import ImageType, available_templates_specs
 from llama_stack.core.build import get_provider_dependencies
 from llama_stack.core.datatypes import (
     BuildConfig,
@@ -27,10 +24,7 @@ from llama_stack.core.datatypes import (
     DistributionSpec,
 )
 from llama_stack.core.distribution import get_provider_registry
-from llama_stack.core.external import load_external_apis
 from llama_stack.core.stack import replace_env_vars
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-from llama_stack.core.utils.exec import run_command
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
 
