@@ -144,7 +144,7 @@ jobs:
 
       - name: Build Llama Stack
         run: |
-          uv run --no-sync llama stack build --template ci-tests --image-type venv
+          uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
 
       - name: Check Storage and Memory Available Before Tests
         if: ${{ always() }}

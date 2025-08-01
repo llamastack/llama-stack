@@ -57,7 +57,7 @@ runs:
         echo "Building Llama Stack"
 
         LLAMA_STACK_DIR=. \
-          uv run --no-sync llama stack build --template ci-tests --image-type venv
+          uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
 
     - name: Configure git for commits
       shell: bash

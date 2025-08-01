@@ -19,10 +19,7 @@ from llama_stack.core.datatypes import (
     DistributionSpec,
 )
 from llama_stack.core.distribution import get_provider_registry
-from llama_stack.core.external import load_external_apis
 from llama_stack.core.stack import replace_env_vars
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-from llama_stack.core.utils.exec import run_command
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
 
@@ -137,6 +134,15 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
 
     normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(build_config)
     normal_deps += SERVER_DEPENDENCIES
+
+    # Add external API dependencies
+    if build_config.external_apis_dir:
+        from llama_stack.core.external import load_external_apis
+
+        external_apis = load_external_apis(build_config)
+        if external_apis:
+            for _, api_spec in external_apis.items():
+                normal_deps.extend(api_spec.pip_packages)
 
     # Format and output based on requested format
     output = format_output_deps_only(
