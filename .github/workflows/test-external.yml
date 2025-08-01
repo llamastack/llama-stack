@@ -44,11 +44,11 @@ jobs:
 
       - name: Print distro dependencies
         run: |
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack build --config tests/external/build.yaml --print-deps-only
+          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack show --config tests/external/build.yaml
 
       - name: Build distro from config file
         run: |
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack build --config tests/external/build.yaml
+          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack show --config tests/external/build.yaml | sh
 
       - name: Start Llama Stack server in background
         if: ${{ matrix.image-type }} == 'venv'

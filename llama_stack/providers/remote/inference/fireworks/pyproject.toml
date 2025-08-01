@@ -11,7 +11,7 @@ requires-python = ">=3.12"
 license = { "text" = "MIT" }
 dependencies = [
     "fireworks-ai",
-
+    "grpcio>=1.67.1,<1.71.0",                # Pin grpcio version for compatibility
 ]
 
 
