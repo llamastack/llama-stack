@@ -6,13 +6,13 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.schema_utils import json_schema_type
 
 
 class GroqProviderDataValidator(BaseModel):
-    groq_api_key: str | None = Field(
+    groq_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Groq models",
     )
@@ -20,7 +20,7 @@ class GroqProviderDataValidator(BaseModel):
 
 @json_schema_type
 class GroqConfig(BaseModel):
-    api_key: str | None = Field(
+    api_key: SecretStr | None = Field(
         # The Groq client library loads the GROQ_API_KEY environment variable by default
         default=None,
         description="The Groq API key",

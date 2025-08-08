@@ -6,7 +6,7 @@
 
 import os
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 
 class BedrockBaseConfig(BaseModel):
@@ -14,12 +14,12 @@ class BedrockBaseConfig(BaseModel):
         default_factory=lambda: os.getenv("AWS_ACCESS_KEY_ID"),
         description="The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID",
     )
-    aws_secret_access_key: str | None = Field(
-        default_factory=lambda: os.getenv("AWS_SECRET_ACCESS_KEY"),
+    aws_secret_access_key: SecretStr | None = Field(
+        default_factory=lambda: SecretStr(val) if (val := os.getenv("AWS_SECRET_ACCESS_KEY")) else None,
         description="The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY",
     )
-    aws_session_token: str | None = Field(
-        default_factory=lambda: os.getenv("AWS_SESSION_TOKEN"),
+    aws_session_token: SecretStr | None = Field(
+        default_factory=lambda: SecretStr(val) if (val := os.getenv("AWS_SESSION_TOKEN")) else None,
         description="The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN",
     )
     region_name: str | None = Field(

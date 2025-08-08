@@ -28,7 +28,7 @@ class MongoDBKVStoreImpl(KVStore):
                 "host": self.config.host,
                 "port": self.config.port,
                 "username": self.config.user,
-                "password": self.config.password,
+                "password": self.config.password.get_secret_value(),
             }
             conn_creds = {k: v for k, v in conn_creds.items() if v is not None}
             self.conn = AsyncMongoClient(**conn_creds)

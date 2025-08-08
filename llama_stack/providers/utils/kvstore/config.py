@@ -8,7 +8,7 @@ import re
 from enum import Enum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
 from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
 
@@ -74,7 +74,7 @@ class PostgresKVStoreConfig(CommonConfig):
     port: int = 5432
     db: str = "llamastack"
     user: str
-    password: str | None = None
+    password: SecretStr | None = None
     ssl_mode: str | None = None
     ca_cert_path: str | None = None
     table_name: str = "llamastack_kvstore"
@@ -118,7 +118,7 @@ class MongoDBKVStoreConfig(CommonConfig):
     port: int = 27017
     db: str = "llamastack"
     user: str = None
-    password: str | None = None
+    password: SecretStr | None = None
     collection_name: str = "llamastack_kvstore"
 
     @classmethod

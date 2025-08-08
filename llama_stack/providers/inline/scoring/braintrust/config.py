@@ -5,11 +5,11 @@
 # the root directory of this source tree.
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 
 class BraintrustScoringConfig(BaseModel):
-    openai_api_key: str | None = Field(
+    openai_api_key: SecretStr | None = Field(
         default=None,
         description="The OpenAI API Key",
     )
