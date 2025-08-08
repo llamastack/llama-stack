@@ -6,13 +6,13 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.schema_utils import json_schema_type
 
 
 class OpenAIProviderDataValidator(BaseModel):
-    openai_api_key: str | None = Field(
+    openai_api_key: SecretStr | None = Field(
         default=None,
         description="API key for OpenAI models",
     )
@@ -20,7 +20,7 @@ class OpenAIProviderDataValidator(BaseModel):
 
 @json_schema_type
 class OpenAIConfig(BaseModel):
-    api_key: str | None = Field(
+    api_key: SecretStr | None = Field(
         default=None,
         description="API key for OpenAI models",
     )

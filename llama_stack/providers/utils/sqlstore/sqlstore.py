@@ -9,7 +9,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
 
@@ -63,11 +63,11 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
     port: int = 5432
     db: str = "llamastack"
     user: str
-    password: str | None = None
+    password: SecretStr | None = None
 
     @property
     def engine_str(self) -> str:
-        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
+        return f"postgresql+asyncpg://{self.user}:{self.password.get_secret_value() if self.password else ''}@{self.host}:{self.port}/{self.db}"
 
     @classmethod
     def pip_packages(cls) -> list[str]:

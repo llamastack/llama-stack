@@ -6,13 +6,13 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.schema_utils import json_schema_type
 
 
 class AnthropicProviderDataValidator(BaseModel):
-    anthropic_api_key: str | None = Field(
+    anthropic_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Anthropic models",
     )
@@ -20,7 +20,7 @@ class AnthropicProviderDataValidator(BaseModel):
 
 @json_schema_type
 class AnthropicConfig(BaseModel):
-    api_key: str | None = Field(
+    api_key: SecretStr | None = Field(
         default=None,
         description="API key for Anthropic models",
     )

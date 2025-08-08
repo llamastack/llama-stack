@@ -366,7 +366,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
                 port=self.config.port,
                 database=self.config.db,
                 user=self.config.user,
-                password=self.config.password,
+                password=self.config.password.get_secret_value(),
             )
             self.conn.autocommit = True
             with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:

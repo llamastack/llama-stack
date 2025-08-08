@@ -30,7 +30,7 @@ class PostgresKVStoreImpl(KVStore):
                 port=self.config.port,
                 database=self.config.db,
                 user=self.config.user,
-                password=self.config.password,
+                password=self.config.password.get_secret_value(),
                 sslmode=self.config.ssl_mode,
                 sslrootcert=self.config.ca_cert_path,
             )

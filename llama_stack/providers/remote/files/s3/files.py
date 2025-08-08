@@ -46,7 +46,7 @@ def _create_s3_client(config: S3FilesImplConfig) -> boto3.client:
             s3_config.update(
                 {
                     "aws_access_key_id": config.aws_access_key_id,
-                    "aws_secret_access_key": config.aws_secret_access_key,
+                    "aws_secret_access_key": config.aws_secret_access_key.get_secret_value(),
                 }
             )
 

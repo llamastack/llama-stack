@@ -8,6 +8,7 @@ from typing import Any
 
 import google.auth.transport.requests
 from google.auth import default
+from pydantic import SecretStr
 
 from llama_stack.apis.inference import ChatCompletionRequest
 from llama_stack.providers.utils.inference.litellm_openai_mixin import (
@@ -43,7 +44,7 @@ class VertexAIInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         except Exception:
             # If we can't get credentials, return empty string to let LiteLLM handle it
             # This allows the LiteLLM mixin to work with ADC directly
-            return ""
+            return SecretStr("")
 
     def get_base_url(self) -> str:
         """

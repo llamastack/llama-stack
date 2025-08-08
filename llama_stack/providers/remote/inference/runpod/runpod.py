@@ -103,7 +103,10 @@ class RunpodInferenceAdapter(
             tool_config=tool_config,
         )
 
-        client = OpenAI(base_url=self.config.url, api_key=self.config.api_token)
+        client = OpenAI(
+            base_url=self.config.url,
+            api_key=self.config.api_token.get_secret_value() if self.config.api_token else None,
+        )
         if stream:
             return self._stream_chat_completion(request, client)
         else:

@@ -6,13 +6,13 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.schema_utils import json_schema_type
 
 
 class LlamaProviderDataValidator(BaseModel):
-    llama_api_key: str | None = Field(
+    llama_api_key: SecretStr | None = Field(
         default=None,
         description="API key for api.llama models",
     )
@@ -20,7 +20,7 @@ class LlamaProviderDataValidator(BaseModel):
 
 @json_schema_type
 class LlamaCompatConfig(BaseModel):
-    api_key: str | None = Field(
+    api_key: SecretStr | None = Field(
         default=None,
         description="The Llama API key",
     )

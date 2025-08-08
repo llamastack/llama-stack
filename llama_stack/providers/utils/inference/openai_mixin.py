@@ -11,6 +11,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from openai import NOT_GIVEN, AsyncOpenAI
+from pydantic import SecretStr
 
 from llama_stack.apis.inference import (
     Model,
@@ -70,14 +71,14 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
     allowed_models: list[str] = []
 
     @abstractmethod
-    def get_api_key(self) -> str:
+    def get_api_key(self) -> SecretStr:
         """
         Get the API key.
 
         This method must be implemented by child classes to provide the API key
         for authenticating with the OpenAI API or compatible endpoints.
 
-        :return: The API key as a string
+        :return: The API key as a SecretStr
         """
         pass
 
