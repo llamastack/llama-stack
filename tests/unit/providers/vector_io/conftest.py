@@ -4,7 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
 import random
+import tempfile
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
@@ -18,7 +20,7 @@ from llama_stack.providers.inline.vector_io.chroma.config import ChromaVectorIOC
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import FaissIndex, FaissVectorIOAdapter
 from llama_stack.providers.inline.vector_io.milvus.config import MilvusVectorIOConfig, SqliteKVStoreConfig
-from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig
+from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec import SQLiteVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
 from llama_stack.providers.remote.vector_io.chroma.chroma import ChromaIndex, ChromaVectorIOAdapter, maybe_await
@@ -32,7 +34,7 @@ COLLECTION_PREFIX = "test_collection"
 MILVUS_ALIAS = "test_milvus"
 
 
-@pytest.fixture(params=["milvus", "sqlite_vec", "faiss", "chroma", "pgvector"])
+@pytest.fixture(params=["milvus", "sqlite_vec", "faiss", "chroma", "qdrant", "pgvector"])
 def vector_provider(request):
     return request.param
 
@@ -286,19 +288,22 @@ async def chroma_vec_adapter(chroma_vec_db_path, mock_inference_api, embedding_d
 
 
 @pytest.fixture
-def qdrant_vec_db_path(tmp_path_factory):
+def qdrant_vec_db_path(tmp_path):
+    """Use tmp_path with additional isolation to ensure unique path per test."""
     import uuid
 
-    db_path = str(tmp_path_factory.getbasetemp() / f"test_qdrant_{uuid.uuid4()}.db")
-    return db_path
+    # Create a completely isolated temporary directory
+    temp_dir = tempfile.mkdtemp(prefix=f"qdrant_test_{uuid.uuid4()}_")
+    return temp_dir
 
 
 @pytest.fixture
 async def qdrant_vec_adapter(qdrant_vec_db_path, mock_inference_api, embedding_dimension):
+    import shutil
     import uuid
 
-    config = QdrantVectorIOConfig(
-        db_path=qdrant_vec_db_path,
+    config = InlineQdrantVectorIOConfig(
+        path=qdrant_vec_db_path,
         kvstore=SqliteKVStoreConfig(),
     )
     adapter = QdrantVectorIOAdapter(
@@ -306,19 +311,29 @@ async def qdrant_vec_adapter(qdrant_vec_db_path, mock_inference_api, embedding_d
         inference_api=mock_inference_api,
         files_api=None,
     )
-    collection_id = f"qdrant_test_collection_{uuid.uuid4()}"
+
+    original_initialize = adapter.initialize
+
+    async def safe_initialize():
+        if not hasattr(adapter, "_initialized") or not adapter._initialized:
+            await original_initialize()
+            adapter._initialized = True
+
+    adapter.initialize = safe_initialize
     await adapter.initialize()
-    await adapter.register_vector_db(
-        VectorDB(
-            identifier=collection_id,
-            provider_id="test_provider",
-            embedding_model="test_model",
-            embedding_dimension=embedding_dimension,
-        )
-    )
+
+    collection_id = f"qdrant_test_collection_{uuid.uuid4()}"
     adapter.test_collection_id = collection_id
+    adapter._test_db_path = qdrant_vec_db_path
     yield adapter
+
     await adapter.shutdown()
+
+    try:
+        if os.path.exists(qdrant_vec_db_path):
+            shutil.rmtree(qdrant_vec_db_path, ignore_errors=True)
+    except Exception:
+        pass
 
 
 @pytest.fixture

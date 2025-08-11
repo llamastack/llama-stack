@@ -128,13 +128,43 @@ class QdrantIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(
-        self,
-        query_string: str,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
-        raise NotImplementedError("Keyword search is not supported in Qdrant")
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+        try:
+            results = (
+                await self.client.query_points(
+                    collection_name=self.collection_name,
+                    query_filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="chunk_content.content", match=models.MatchText(text=query_string)
+                            )
+                        ]
+                    ),
+                    limit=k,
+                    with_payload=True,
+                    with_vectors=False,
+                    score_threshold=score_threshold,
+                )
+            ).points
+        except Exception as e:
+            log.error(f"Error querying keyword search in Qdrant collection {self.collection_name}: {e}")
+            raise
+
+        chunks, scores = [], []
+        for point in results:
+            assert isinstance(point, models.ScoredPoint)
+            assert point.payload is not None
+
+            try:
+                chunk = Chunk(**point.payload["chunk_content"])
+            except Exception:
+                log.exception("Failed to parse chunk")
+                continue
+
+            chunks.append(chunk)
+            scores.append(point.score)
+
+        return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_hybrid(
         self,
