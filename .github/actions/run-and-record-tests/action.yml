@@ -68,7 +68,8 @@ runs:
           echo "New recordings detected, committing and pushing"
           git add tests/integration/recordings/
 
-          git commit -m "Recordings update from CI (suite: ${{ inputs.suite }})"
+          git commit -m "Recordings update from CI (setup: ${{ inputs.setup }}, suite: ${{ inputs.suite }})"
+
           git fetch origin ${{ github.ref_name }}
           git rebase origin/${{ github.ref_name }}
           echo "Rebased successfully"
@@ -82,7 +83,8 @@ runs:
       if: ${{ always() }}
       shell: bash
       run: |
-        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log || true
+        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log 2>&1 || true
+        sudo docker logs vllm > vllm-${{ inputs.inference-mode }}.log 2>&1 || true
 
     - name: Upload logs
       if: ${{ always() }}
