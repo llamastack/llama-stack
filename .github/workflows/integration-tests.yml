@@ -27,7 +27,6 @@ on:
   schedule:
     # If changing the cron schedule, update the provider in the test-matrix job
     - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC
-    - cron: '1 0 * * 0'  # (test vllm) Weekly on Sunday at 1 AM UTC
   workflow_dispatch:
     inputs:
       test-all-client-versions:

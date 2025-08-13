@@ -2,7 +2,8 @@
   "default": [
     {"suite": "base", "setup": "ollama"},
     {"suite": "vision", "setup": "ollama-vision"},
-    {"suite": "responses", "setup": "gpt"}
+    {"suite": "responses", "setup": "gpt"},
+    {"suite": "base-vllm-subset", "setup": "vllm"}
   ],
   "schedules": {
     "1 0 * * 0": [

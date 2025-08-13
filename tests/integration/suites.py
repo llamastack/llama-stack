@@ -169,6 +169,11 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=base_roots,
         default_setup="ollama",
     ),
+    "base-vllm-subset": Suite(
+        name="base-vllm-subset",
+        roots=["tests/integration/inference"],
+        default_setup="vllm",
+    ),
     "responses": Suite(
         name="responses",
         roots=["tests/integration/responses"],
