@@ -58,9 +58,9 @@ runs:
           git add tests/integration/recordings/
 
           if [ "${{ inputs.run-vision-tests }}" == "true" ]; then
-            git commit -m "Recordings update from CI (vision)"
+            git commit -m "Recordings update from CI (vision) (${{ inputs.provider }})"
           else
-            git commit -m "Recordings update from CI"
+            git commit -m "Recordings update from CI (${{ inputs.provider }})"
           fi
 
           git fetch origin ${{ github.ref_name }}
@@ -76,7 +76,8 @@ runs:
       if: ${{ always() }}
       shell: bash
       run: |
-        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log || true
+        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log 2>&1 || true
+        sudo docker logs vllm > vllm-${{ inputs.inference-mode }}.log 2>&1 || true
 
     - name: Upload logs
       if: ${{ always() }}
