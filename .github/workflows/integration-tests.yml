@@ -21,7 +21,6 @@ on:
   schedule:
     # If changing the cron schedule, update the provider in the test-matrix job
     - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC
-    - cron: '1 0 * * 0'  # (test vllm) Weekly on Sunday at 1 AM UTC
   workflow_dispatch:
     inputs:
       test-all-client-versions:
@@ -57,11 +56,9 @@ jobs:
         # Default (including test-setup=ollama): ollama+base, ollama-vision+vision, gpt+responses
         config: >-
           ${{
-            github.event.schedule == '1 0 * * 0'
-              && fromJSON('[{"setup": "vllm", "suite": "base"}]')
-            || github.event.inputs.test-setup == 'ollama-vision'
+            github.event.inputs.test-setup == 'ollama-vision'
               && fromJSON('[{"setup": "ollama-vision", "suite": "vision"}]')
-            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}, {"setup": "gpt", "suite": "responses"}]')
+            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}, {"setup": "gpt", "suite": "responses"}, {"setup": "vllm", "suite": "base-vllm-subset"}]')
           }}
 
     steps:
