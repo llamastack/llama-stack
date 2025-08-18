@@ -39,7 +39,7 @@ def loop():
 
 @pytest.fixture
 def embedding_dimension():
-    return 384
+    return 768
 
 
 @pytest.fixture
