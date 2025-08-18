@@ -224,8 +224,8 @@ llama-stack-client vector_dbs list
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ identifier               ┃ provider_id ┃ provider_resource_id     ┃ vector_db_type ┃ params                            ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ my_demo_vector_db        │ faiss       │ my_demo_vector_db        │                │ embedding_dimension: 384          │
-│                          │             │                          │                │ embedding_model: all-MiniLM-L6-v2 │
+│ my_demo_vector_db        │ faiss       │ my_demo_vector_db        │                │ embedding_dimension: 768          │
+│                          │             │                          │                │ embedding_model: nomic-embed-text-v1.5 │
 │                          │             │                          │                │ type: vector_db                   │
 │                          │             │                          │                │                                   │
 └──────────────────────────┴─────────────┴──────────────────────────┴────────────────┴───────────────────────────────────┘
@@ -244,8 +244,8 @@ Required arguments:
 Optional arguments:
 - `--provider-id`: Provider ID for the vector db
 - `--provider-vector-db-id`: Provider's vector db ID
-- `--embedding-model`: Embedding model to use. Default: `all-MiniLM-L6-v2`
-- `--embedding-dimension`: Dimension of embeddings. Default: 384
+- `--embedding-model`: Embedding model to use. Default: `nomic-embed-text-v1.5`
+- `--embedding-dimension`: Dimension of embeddings. Default: 768
 
 ### `llama-stack-client vector_dbs unregister`
 Delete a vector db

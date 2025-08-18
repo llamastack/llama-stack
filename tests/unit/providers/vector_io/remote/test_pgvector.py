@@ -23,7 +23,7 @@ def loop():
 @pytest.fixture
 def embedding_dimension():
     """Default embedding dimension for tests."""
-    return 384
+    return 768
 
 
 @pytest.fixture

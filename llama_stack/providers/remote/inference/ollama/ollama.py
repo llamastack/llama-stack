@@ -131,8 +131,17 @@ class OllamaInferenceAdapter(
         provider_id = self.__provider_id__
         response = await self.client.list()
 
-        # always add the two embedding models which can be pulled on demand
         models = [
+            Model(
+                identifier="nomic-embed-text",
+                provider_resource_id="nomic-embed-text:latest",
+                provider_id=provider_id,
+                metadata={
+                    "embedding_dimension": 768,
+                    "context_length": 8192,
+                },
+                model_type=ModelType.embedding,
+            ),
             Model(
                 identifier="all-minilm:l6-v2",
                 provider_resource_id="all-minilm:l6-v2",
@@ -151,16 +160,6 @@ class OllamaInferenceAdapter(
                 metadata={
                     "embedding_dimension": 384,
                     "context_length": 512,
-                },
-                model_type=ModelType.embedding,
-            ),
-            Model(
-                identifier="nomic-embed-text",
-                provider_resource_id="nomic-embed-text:latest",
-                provider_id=provider_id,
-                metadata={
-                    "embedding_dimension": 768,
-                    "context_length": 8192,
                 },
                 model_type=ModelType.embedding,
             ),

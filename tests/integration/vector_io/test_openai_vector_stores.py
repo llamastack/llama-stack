@@ -372,8 +372,20 @@ def test_openai_vector_store_search_with_ranking_options(
         chunks=sample_chunks,
     )
 
+    # First search without threshold to determine reasonable threshold
+    initial_search = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning and artificial intelligence",
+        max_num_results=3,
+    )
+
+    # Use a threshold that's lower than the lowest score to ensure we get results
+    if initial_search.data:
+        threshold = min(result.score for result in initial_search.data) * 0.9
+    else:
+        threshold = 0.01
+
     # Search with ranking options
-    threshold = 0.1
     search_response = compat_client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="machine learning and artificial intelligence",

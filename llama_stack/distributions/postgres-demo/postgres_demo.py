@@ -85,11 +85,11 @@ def get_distribution_template() -> DistributionTemplate:
         config=SentenceTransformersInferenceConfig.sample_run_config(),
     )
     embedding_model = ModelInput(
-        model_id="all-MiniLM-L6-v2",
+        model_id="nomic-embed-text-v1.5",
         provider_id=embedding_provider.provider_id,
         model_type=ModelType.embedding,
         metadata={
-            "embedding_dimension": 384,
+            "embedding_dimension": 768,
         },
     )
     postgres_config = PostgresSqlStoreConfig.sample_run_config()

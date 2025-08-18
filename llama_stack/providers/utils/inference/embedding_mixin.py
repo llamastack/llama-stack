@@ -108,7 +108,7 @@ class SentenceTransformerEmbeddingMixin:
         def _load_model():
             from sentence_transformers import SentenceTransformer
 
-            return SentenceTransformer(model)
+            return SentenceTransformer(model, trust_remote_code=True)
 
         loaded_model = await asyncio.to_thread(_load_model)
         EMBEDDING_MODELS[model] = loaded_model

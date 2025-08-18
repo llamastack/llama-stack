@@ -455,8 +455,8 @@ def test_rag_agent(llama_stack_client, agent_config, rag_tool_name):
     vector_db_id = f"test-vector-db-{uuid4()}"
     llama_stack_client.vector_dbs.register(
         vector_db_id=vector_db_id,
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
+        embedding_model="nomic-embed-text-v1.5",
+        embedding_dimension=768,
     )
     llama_stack_client.tool_runtime.rag_tool.insert(
         documents=documents,
