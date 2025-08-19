@@ -102,6 +102,11 @@ class DiskDistributionRegistry(DistributionRegistry):
                 f"Object {existing_obj.type}:{existing_obj.identifier}'s {existing_obj.provider_id} provider is being replaced with {obj.provider_id}"
             )
 
+        # Skip persistence for from_config objects - they should only exist in memory
+        if hasattr(obj, "source") and obj.source == "from_config":
+            logger.debug(f"Skipping persistence for from_config object {obj.type}:{obj.identifier}")
+            return True
+
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),
             obj.model_dump_json(),

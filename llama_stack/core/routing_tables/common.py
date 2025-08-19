@@ -191,7 +191,14 @@ class CommonRoutingTableImpl(RoutingTable):
         if not is_action_allowed(self.policy, "delete", obj, user):
             raise AccessDeniedError("delete", obj, user)
         await self.dist_registry.delete(obj.type, obj.identifier)
-        await unregister_object_from_provider(obj, self.impls_by_provider_id[obj.provider_id])
+
+        # Only try to unregister from provider if the provider still exists
+        if obj.provider_id in self.impls_by_provider_id:
+            await unregister_object_from_provider(obj, self.impls_by_provider_id[obj.provider_id])
+        else:
+            logger.debug(
+                f"Provider {obj.provider_id} no longer exists, skipping provider unregistration for {obj.identifier}"
+            )
 
     async def register_object(self, obj: RoutableObjectWithProvider) -> RoutableObjectWithProvider:
         # if provider_id is not specified, pick an arbitrary one from existing entries
@@ -253,6 +260,13 @@ async def lookup_model(routing_table: CommonRoutingTableImpl, model_id: str) -> 
     model = await routing_table.get_object_by_identifier("model", model_id)
     if model is not None:
         return model
+
+    # Check from_config models if this is a ModelsRoutingTable
+    if hasattr(routing_table, "_generate_from_config_models"):
+        from_config_models = routing_table._generate_from_config_models()
+        for from_config_model in from_config_models:
+            if from_config_model.identifier == model_id:
+                return from_config_model
 
     logger.warning(
         f"WARNING: model identifier '{model_id}' not found in routing table. Falling back to "
