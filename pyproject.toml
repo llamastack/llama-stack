@@ -25,8 +25,8 @@ classifiers = [
 ]
 dependencies = [
     "aiohttp",
-    "fastapi>=0.115.0,<1.0",                  # server
-    "fire",                                   # for MCP in LLS client
+    "fastapi>=0.115.0,<1.0", # server
+    "fire", # for MCP in LLS client
     "httpx",
     "huggingface-hub>=0.34.0,<1.0",
     "jinja2>=3.1.6",
@@ -43,12 +43,13 @@ dependencies = [
     "tiktoken",
     "pillow",
     "h11>=0.16.0",
-    "python-multipart>=0.0.20",               # For fastapi Form
-    "uvicorn>=0.34.0",                        # server
-    "opentelemetry-sdk>=1.30.0",              # server
+    "python-multipart>=0.0.20", # For fastapi Form
+    "uvicorn>=0.34.0", # server
+    "opentelemetry-sdk>=1.30.0", # server
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
-    "aiosqlite>=0.21.0",                      # server - for metadata store
-    "asyncpg",                                # for metadata store
+    "aiosqlite>=0.21.0", # server - for metadata store
+    "asyncpg", # for metadata store
+    "weaviate-client>=4.16.5",
 ]
 
 [project.optional-dependencies]
