@@ -10,7 +10,7 @@ import weaviate
 import weaviate.classes as wvc
 from numpy.typing import NDArray
 from weaviate.classes.init import Auth
-from weaviate.classes.query import Filter
+from weaviate.classes.query import Filter, HybridFusion
 
 from llama_stack.apis.common.content_types import InterleavedContent
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
@@ -26,6 +26,7 @@ from llama_stack.providers.utils.memory.openai_vector_store_mixin import (
     OpenAIVectorStoreMixin,
 )
 from llama_stack.providers.utils.memory.vector_store import (
+    RERANKER_TYPE_RRF,
     ChunkForDeletion,
     EmbeddingIndex,
     VectorDBWithIndex,
@@ -88,6 +89,9 @@ class WeaviateIndex(EmbeddingIndex):
         collection.data.delete_many(where=Filter.by_property("chunk_id").contains_any(chunk_ids))
 
     async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+        log.info(
+            f"WEAVIATE VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
+        )
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
         collection = self.client.collections.get(sanitized_collection_name)
 
@@ -115,6 +119,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunks.append(chunk)
             scores.append(score)
 
+        log.info(f"WEAVIATE VECTOR SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def delete(self, chunk_ids: list[str] | None = None) -> None:
@@ -136,7 +141,46 @@ class WeaviateIndex(EmbeddingIndex):
         k: int,
         score_threshold: float,
     ) -> QueryChunksResponse:
-        raise NotImplementedError("Keyword search is not supported in Weaviate")
+        """
+        Performs BM25-based keyword search using Weaviate's built-in full-text search.
+        Args:
+            query_string: The text query for keyword search
+            k: Limit of number of results to return
+            score_threshold: Minimum similarity score threshold
+        Returns:
+            QueryChunksResponse with combined results
+        """
+        log.info(f"WEAVIATE KEYWORD SEARCH CALLED: query='{query_string}', k={k}, threshold={score_threshold}")
+        sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
+        collection = self.client.collections.get(sanitized_collection_name)
+
+        # Perform BM25 keyword search on chunk_content field
+        results = collection.query.bm25(
+            query=query_string,
+            limit=k,
+            return_metadata=wvc.query.MetadataQuery(score=True),
+        )
+
+        chunks = []
+        scores = []
+        for doc in results.objects:
+            chunk_json = doc.properties["chunk_content"]
+            try:
+                chunk_dict = json.loads(chunk_json)
+                chunk = Chunk(**chunk_dict)
+            except Exception:
+                log.exception(f"Failed to parse document: {chunk_json}")
+                continue
+
+            score = doc.metadata.score if doc.metadata.score is not None else 0.0
+            if score < score_threshold:
+                continue
+
+            chunks.append(chunk)
+            scores.append(score)
+
+        log.info(f"WEAVIATE KEYWORD SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}.")
+        return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_hybrid(
         self,
@@ -147,7 +191,62 @@ class WeaviateIndex(EmbeddingIndex):
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
-        raise NotImplementedError("Hybrid search is not supported in Weaviate")
+        """
+        Hybrid search combining vector similarity and keyword search using Weaviate's native hybrid search.
+        Args:
+            embedding: The query embedding vector
+            query_string: The text query for keyword search
+            k: Limit of number of results to return
+            score_threshold: Minimum similarity score threshold
+            reranker_type: Type of reranker to use ("rrf" or "normalized")
+            reranker_params: Parameters for the reranker
+        Returns:
+            QueryChunksResponse with combined results
+        """
+        log.info(
+            f"WEAVIATE HYBRID SEARCH CALLED: query='{query_string}', embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}, reranker={reranker_type}"
+        )
+        sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
+        collection = self.client.collections.get(sanitized_collection_name)
+
+        # Ranked (RRF) reranker fusion type
+        if reranker_type == RERANKER_TYPE_RRF:
+            rerank = HybridFusion.RANKED
+        # Relative score (Normalized) reranker fusion type
+        else:
+            rerank = HybridFusion.RELATIVE_SCORE
+
+        # Perform hybrid search using Weaviate's native hybrid search
+        results = collection.query.hybrid(
+            query=query_string,
+            alpha=0.5,  # Range <0, 1>, where 0.5 will equally favor vector and keyword search
+            vector=embedding.tolist(),
+            limit=k,
+            fusion_type=rerank,
+            return_metadata=wvc.query.MetadataQuery(score=True),
+        )
+
+        chunks = []
+        scores = []
+        for doc in results.objects:
+            chunk_json = doc.properties["chunk_content"]
+            try:
+                chunk_dict = json.loads(chunk_json)
+                chunk = Chunk(**chunk_dict)
+            except Exception:
+                log.exception(f"Failed to parse document: {chunk_json}")
+                continue
+
+            score = doc.metadata.score if doc.metadata.score is not None else 0.0
+            if score < score_threshold:
+                continue
+
+            log.info(f"Document {chunk.metadata.get('document_id')} has score {score}")
+            chunks.append(chunk)
+            scores.append(score)
+
+        log.info(f"WEAVIATE HYBRID SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
+        return QueryChunksResponse(chunks=chunks, scores=scores)
 
 
 class WeaviateVectorIOAdapter(
