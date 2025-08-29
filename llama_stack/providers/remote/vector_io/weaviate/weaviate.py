@@ -112,7 +112,10 @@ class WeaviateIndex(EmbeddingIndex):
                 log.exception(f"Failed to parse document: {chunk_json}")
                 continue
 
-            score = 1.0 / doc.metadata.distance if doc.metadata.distance != 0 else float("inf")
+            if doc.metadata.distance is None:
+                continue
+            # Convert cosine distance ∈ [0,2] → cosine similarity ∈ [-1,1]
+            score = 1.0 - float(doc.metadata.distance)
             if score < score_threshold:
                 continue
 
