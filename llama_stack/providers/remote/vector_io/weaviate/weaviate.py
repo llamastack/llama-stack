@@ -89,6 +89,15 @@ class WeaviateIndex(EmbeddingIndex):
         collection.data.delete_many(where=Filter.by_property("chunk_id").contains_any(chunk_ids))
 
     async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+        """
+        Performs vector search using Weaviate's built-in vector search.
+        Args:
+            embedding: The query embedding vector
+            k: Limit of number of results to return
+            score_threshold: Minimum similarity score threshold
+        Returns:
+            QueryChunksResponse with chunks and scores
+        """
         log.info(
             f"WEAVIATE VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
         )
@@ -151,7 +160,7 @@ class WeaviateIndex(EmbeddingIndex):
             k: Limit of number of results to return
             score_threshold: Minimum similarity score threshold
         Returns:
-            QueryChunksResponse with combined results
+            QueryChunksResponse with chunks and scores
         """
         log.info(f"WEAVIATE KEYWORD SEARCH CALLED: query='{query_string}', k={k}, threshold={score_threshold}")
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
