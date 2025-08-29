@@ -448,45 +448,28 @@ async def pgvector_vec_adapter(mock_inference_api, embedding_dimension):
 
                         yield adapter
                         await adapter.shutdown()
-def weaviate_vec_db_path():
-    return "localhost:8080"
+
+
+@pytest.fixture(scope="session")
+def weaviate_vec_db_path(tmp_path_factory):
+    db_path = str(tmp_path_factory.getbasetemp() / "test_weaviate.db")
+    return db_path
 
 
 @pytest.fixture
 async def weaviate_vec_index(weaviate_vec_db_path, embedding_dimension):
-    import uuid
-
+    import pytest_socket
     import weaviate
 
-    # Connect to local Weaviate instance
-    client = weaviate.connect_to_local(
-        host="localhost",
+    pytest_socket.enable_socket()
+    client = weaviate.connect_to_embedded(
+        hostname="localhost",
         port=8080,
+        grpc_port=50051,
+        persistence_data_path=weaviate_vec_db_path,
     )
-
-    collection_name = f"{COLLECTION_PREFIX}_{uuid.uuid4()}"
-    index = WeaviateIndex(client=client, collection_name=collection_name)
-
-    # Create the collection for this test
-    import weaviate.classes as wvc
-    from weaviate.collections.classes.config import _CollectionConfig
-
-    from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
-
-    sanitized_name = sanitize_collection_name(collection_name, weaviate_format=True)
-    collection_config = _CollectionConfig(
-        name=sanitized_name,
-        vectorizer_config=wvc.config.Configure.Vectorizer.none(),
-        properties=[
-            wvc.config.Property(
-                name="chunk_content",
-                data_type=wvc.config.DataType.TEXT,
-            ),
-        ],
-    )
-    if not client.collections.exists(sanitized_name):
-        client.collections.create_from_config(collection_config)
-
+    index = WeaviateIndex(client=client, collection_name="Testcollection")
+    await index.initialize()
     yield index
     await index.delete()
     client.close()
@@ -494,8 +477,20 @@ async def weaviate_vec_index(weaviate_vec_db_path, embedding_dimension):
 
 @pytest.fixture
 async def weaviate_vec_adapter(weaviate_vec_db_path, mock_inference_api, embedding_dimension):
+    import pytest_socket
+    import weaviate
+
+    pytest_socket.enable_socket()
+
+    client = weaviate.connect_to_embedded(
+        hostname="localhost",
+        port=8080,
+        grpc_port=50051,
+        persistence_data_path=weaviate_vec_db_path,
+    )
+
     config = WeaviateVectorIOConfig(
-        weaviate_cluster_url=weaviate_vec_db_path,
+        weaviate_cluster_url="localhost:8080",
         weaviate_api_key=None,
         kvstore=SqliteKVStoreConfig(),
     )
@@ -517,6 +512,7 @@ async def weaviate_vec_adapter(weaviate_vec_db_path, mock_inference_api, embeddi
     adapter.test_collection_id = collection_id
     yield adapter
     await adapter.shutdown()
+    client.close()
 
 
 @pytest.fixture
