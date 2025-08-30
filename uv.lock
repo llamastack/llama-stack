@@ -1981,7 +1981,7 @@ test = [
     { name = "milvus-lite", specifier = ">=2.5.0" },
     { name = "openai", specifier = ">=1.100.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
-    { name = "pymilvus", specifier = ">=2.5.12" },
+    { name = "pymilvus", specifier = ">=2.6.1" },
     { name = "pypdf" },
     { name = "requests" },
     { name = "sqlalchemy" },
@@ -2006,7 +2006,7 @@ unit = [
     { name = "ollama" },
     { name = "openai" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
-    { name = "pymilvus", specifier = ">=2.5.12" },
+    { name = "pymilvus", specifier = ">=2.6.1" },
     { name = "pypdf" },
     { name = "qdrant-client" },
     { name = "sqlalchemy" },
@@ -3508,7 +3508,7 @@ wheels = [
 
 [[package]]
 name = "pymilvus"
-version = "2.6.0"
+version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grpcio" },
@@ -3519,9 +3519,9 @@ dependencies = [
     { name = "setuptools" },
     { name = "ujson" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/86/21/5c25a975299415a5a8f26d4759ddf7852aefdf3595f002b5203c4aaf5c8e/pymilvus-2.6.0.tar.gz", hash = "sha256:2b2ca487e098abc34231755e33af2f5294e9f6a64d92d03551532defbac0a3fb", size = 1292994, upload-time = "2025-08-06T09:09:01.705Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/a9/b25af985972082d1bb0b26739fece8cea3f56370733b4b1de690c42a77cc/pymilvus-2.6.1.tar.gz", hash = "sha256:ef1d7f5039719398d131ca80c19e55bc2bccc7ab6609f2cca9a04217dcb0a7fb", size = 1322169, upload-time = "2025-08-29T10:03:50.523Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/a2/dfc2a2225aeb90a7dff9443f2d26fe9d04f6f7bcefe537945b5d5220fddd/pymilvus-2.6.0-py3-none-any.whl", hash = "sha256:d743fdd928c9007184d24a52b4f5dfdd18d405a37b4dba66b5ea4bf196fac526", size = 248299, upload-time = "2025-08-06T09:08:58.272Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/1a/8b677e0f4ef683bbfb00d495960573fff0844ed509b3cf0abede79a48e90/pymilvus-2.6.1-py3-none-any.whl", hash = "sha256:e3d76d45ce04d3555a6849645a18a1e2992706e248d5b6dc58a00504d0b60165", size = 254252, upload-time = "2025-08-29T10:03:48.539Z" },
 ]
 
 [[package]]

@@ -93,7 +93,7 @@ unit = [
     "sqlalchemy[asyncio]>=2.0.41",
     "blobfile",
     "faiss-cpu",
-    "pymilvus>=2.5.12",
+    "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "litellm",
     "together",
@@ -121,7 +121,7 @@ test = [
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
     "requests",
-    "pymilvus>=2.5.12",
+    "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "weaviate-client>=4.16.4",
 ]
