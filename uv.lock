@@ -1930,7 +1930,7 @@ requires-dist = [
 provides-extras = ["ui"]
 
 [package.metadata.requires-dev]
-benchmark = [{ name = "locust", specifier = ">=2.37.14" }]
+benchmark = [{ name = "locust", specifier = ">=2.39.1" }]
 codegen = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "pydantic" },
@@ -2043,7 +2043,7 @@ wheels = [
 
 [[package]]
 name = "locust"
-version = "2.39.0"
+version = "2.39.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "configargparse" },
@@ -2055,6 +2055,7 @@ dependencies = [
     { name = "locust-cloud" },
     { name = "msgpack" },
     { name = "psutil" },
+    { name = "python-engineio" },
     { name = "python-socketio", extra = ["client"] },
     { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "pyzmq" },
@@ -2062,9 +2063,9 @@ dependencies = [
     { name = "setuptools" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/6f/d6ca4483f4795747fbbd610d28e798ca4f5d4358e03f309343eb5bab128f/locust-2.39.0.tar.gz", hash = "sha256:71e82a68324f9d63d4b800035288488c08eab12811fa4c24ff07f031643b7b39", size = 1409879, upload-time = "2025-08-20T13:39:55.233Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/c8/10aa5445c404eed389b56877e6714c1787190cc09dd70059ce3765979ec5/locust-2.39.1.tar.gz", hash = "sha256:6bdd19e27edf9a1c84391d6cf6e9a737dfb832be7dfbf39053191ae31b9cc498", size = 1409902, upload-time = "2025-08-29T17:41:01.544Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7c/94/7dc9a2b4ccb18a5b0c4be4bfadfa79b6c0fd860267a7114641402627e7db/locust-2.39.0-py3-none-any.whl", hash = "sha256:3817c4d7cca387b4b871da779c9e145c2a95fbb0b5602be5833976902b967a8f", size = 1428138, upload-time = "2025-08-20T13:39:52.549Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/b3/b2f4b2ca88b1e72eba7be2b2982533b887f8b709d222db78eb9602aa5121/locust-2.39.1-py3-none-any.whl", hash = "sha256:fd5148f2f1a4ed34aee968abc4393674e69d1b5e1b54db50a397f6eb09ce0b04", size = 1428155, upload-time = "2025-08-29T17:41:00.245Z" },
 ]
 
 [[package]]
