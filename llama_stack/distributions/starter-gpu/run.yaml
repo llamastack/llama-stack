@@ -156,10 +156,13 @@ providers:
       sqlite_db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter-gpu}/trace_store.db
       otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
   post_training:
-  - provider_id: torchtune-gpu
-    provider_type: inline::torchtune-gpu
+  - provider_id: huggingface-gpu
+    provider_type: inline::huggingface-gpu
     config:
-      checkpoint_format: meta
+      checkpoint_format: huggingface
+      distributed_backend: null
+      device: cpu
+      dpo_output_dir: ~/.llama/distributions/starter-gpu/dpo_output
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference

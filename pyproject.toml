@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.2.18"
+version = "0.2.20"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
@@ -31,9 +31,9 @@ dependencies = [
     "huggingface-hub>=0.34.0,<1.0",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-client>=0.2.18",
+    "llama-stack-client>=0.2.20",
     "llama-api-client>=0.1.2",
-    "openai>=1.99.6,<1.100.0",
+    "openai>=1.99.6",
     "prompt-toolkit",
     "python-dotenv",
     "python-jose[cryptography]",
@@ -56,7 +56,7 @@ dependencies = [
 ui = [
     "streamlit",
     "pandas",
-    "llama-stack-client>=0.2.18",
+    "llama-stack-client>=0.2.20",
     "streamlit-option-menu",
 ]
 
@@ -84,6 +84,7 @@ unit = [
     "openai",
     "aiosqlite",
     "aiohttp",
+    "psycopg2-binary>=2.9.0",
     "pypdf",
     "mcp",
     "chardet",
@@ -105,12 +106,13 @@ unit = [
 # separately. If you are using "uv" to execute your tests, you can use the "--group" flag to specify extra
 # dependencies.
 test = [
-    "openai",
+    "openai>=1.100.0",  # for expires_after support
     "aiosqlite",
     "aiohttp",
     "torch>=2.6.0",
     "torchvision>=0.21.0",
     "chardet",
+    "psycopg2-binary>=2.9.0",
     "pypdf",
     "mcp",
     "datasets",

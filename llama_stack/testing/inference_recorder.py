@@ -9,7 +9,6 @@ from __future__ import annotations  # for forward references
 import hashlib
 import json
 import os
-import sqlite3
 from collections.abc import Generator
 from contextlib import contextmanager
 from enum import StrEnum
@@ -125,27 +124,12 @@ class ResponseStorage:
     def __init__(self, test_dir: Path):
         self.test_dir = test_dir
         self.responses_dir = self.test_dir / "responses"
-        self.db_path = self.test_dir / "index.sqlite"
 
         self._ensure_directories()
-        self._init_database()
 
     def _ensure_directories(self):
         self.test_dir.mkdir(parents=True, exist_ok=True)
         self.responses_dir.mkdir(exist_ok=True)
-
-    def _init_database(self):
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS recordings (
-                    request_hash TEXT PRIMARY KEY,
-                    response_file TEXT,
-                    endpoint TEXT,
-                    model TEXT,
-                    timestamp TEXT,
-                    is_streaming BOOLEAN
-                )
-            """)
 
     def store_recording(self, request_hash: str, request: dict[str, Any], response: dict[str, Any]):
         """Store a request/response pair."""
@@ -169,34 +153,9 @@ class ResponseStorage:
             f.write("\n")
             f.flush()
 
-        # Update SQLite index
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO recordings
-                (request_hash, response_file, endpoint, model, timestamp, is_streaming)
-                VALUES (?, ?, ?, ?, datetime('now'), ?)
-            """,
-                (
-                    request_hash,
-                    response_file,
-                    request.get("endpoint", ""),
-                    request.get("model", ""),
-                    response.get("is_streaming", False),
-                ),
-            )
-
     def find_recording(self, request_hash: str) -> dict[str, Any] | None:
         """Find a recorded response by request hash."""
-        with sqlite3.connect(self.db_path) as conn:
-            result = conn.execute(
-                "SELECT response_file FROM recordings WHERE request_hash = ?", (request_hash,)
-            ).fetchone()
-
-        if not result:
-            return None
-
-        response_file = result[0]
+        response_file = f"{request_hash[:12]}.json"
         response_path = self.responses_dir / response_file
 
         if not response_path.exists():

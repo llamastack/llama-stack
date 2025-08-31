@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import sqlite3
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -133,7 +132,6 @@ class TestInferenceRecording:
         # Test directory creation
         assert storage.test_dir.exists()
         assert storage.responses_dir.exists()
-        assert storage.db_path.exists()
 
         # Test storing and retrieving a recording
         request_hash = "test_hash_123"
@@ -146,15 +144,6 @@ class TestInferenceRecording:
         response_data = {"body": {"content": "test response"}, "is_streaming": False}
 
         storage.store_recording(request_hash, request_data, response_data)
-
-        # Verify SQLite record
-        with sqlite3.connect(storage.db_path) as conn:
-            result = conn.execute("SELECT * FROM recordings WHERE request_hash = ?", (request_hash,)).fetchone()
-
-        assert result is not None
-        assert result[0] == request_hash  # request_hash
-        assert result[2] == "/v1/chat/completions"  # endpoint
-        assert result[3] == "llama3.2:3b"  # model
 
         # Verify file storage and retrieval
         retrieved = storage.find_recording(request_hash)
@@ -185,10 +174,7 @@ class TestInferenceRecording:
 
         # Verify recording was stored
         storage = ResponseStorage(temp_storage_dir)
-        with sqlite3.connect(storage.db_path) as conn:
-            recordings = conn.execute("SELECT COUNT(*) FROM recordings").fetchone()[0]
-
-        assert recordings == 1
+        assert storage.responses_dir.exists()
 
     async def test_replay_mode(self, temp_storage_dir, real_openai_chat_response):
         """Test that replay mode returns stored responses without making real calls."""

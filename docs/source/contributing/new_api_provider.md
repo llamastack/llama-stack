@@ -14,6 +14,13 @@ Here are some example PRs to help you get started:
    - [Nvidia Inference Implementation](https://github.com/meta-llama/llama-stack/pull/355)
    - [Model context protocol Tool Runtime](https://github.com/meta-llama/llama-stack/pull/665)
 
+## Guidelines for creating Internal or External Providers
+
+|**Type** |Internal (In-tree) |External (out-of-tree)
+|---------|-------------------|---------------------|
+|**Description** |A provider that is directly in the Llama Stack code|A provider that is outside of the Llama stack core codebase but is still accessible and usable by Llama Stack.
+|**Benefits** |Ability to interact with the provider with minimal additional configurations or installations| Contributors do not have to add directly to the code to create providers accessible on Llama Stack. Keep provider-specific code separate from the core Llama Stack code.
+
 ## Inference Provider Patterns
 
 When implementing Inference providers for OpenAI-compatible APIs, Llama Stack provides several mixin classes to simplify development and ensure consistent behavior across providers.

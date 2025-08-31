@@ -40,8 +40,9 @@ def available_providers() -> list[ProviderSpec]:
         InlineProviderSpec(
             api=Api.inference,
             provider_type="inline::sentence-transformers",
+            # CrossEncoder depends on torchao.quantization
             pip_packages=[
-                "torch torchvision --index-url https://download.pytorch.org/whl/cpu",
+                "torch torchvision torchao>=0.12.0 --extra-index-url https://download.pytorch.org/whl/cpu",
                 "sentence-transformers --no-deps",
             ],
             module="llama_stack.providers.inline.inference.sentence_transformers",
@@ -115,7 +116,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter=AdapterSpec(
                 adapter_type="fireworks",
                 pip_packages=[
-                    "fireworks-ai",
+                    "fireworks-ai<=0.18.0",
                 ],
                 module="llama_stack.providers.remote.inference.fireworks",
                 config_class="llama_stack.providers.remote.inference.fireworks.FireworksImplConfig",

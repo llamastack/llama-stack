@@ -80,7 +80,7 @@ def get_provider_dependencies(
     normal_deps = []
     special_deps = []
     for package in deps:
-        if "--no-deps" in package or "--index-url" in package:
+        if any(f in package for f in ["--no-deps", "--index-url", "--extra-index-url"]):
             special_deps.append(package)
         else:
             normal_deps.append(package)
