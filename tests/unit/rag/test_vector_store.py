@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, MagicMock
 import numpy as np
 import pytest
 
+from llama_stack.apis.inference.inference import OpenAIEmbeddingData
 from llama_stack.apis.tools import RAGDocument
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.providers.utils.memory.vector_store import (
@@ -218,7 +219,10 @@ class TestVectorDBWithIndex:
             Chunk(content="Test 2", embedding=None, metadata={}),
         ]
 
-        mock_inference_api.openai_embeddings.return_value.data = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+        mock_inference_api.openai_embeddings.return_value.data = [
+            OpenAIEmbeddingData(embedding=[0.1, 0.2, 0.3], index=0),
+            OpenAIEmbeddingData(embedding=[0.4, 0.5, 0.6], index=1),
+        ]
 
         await vector_db_with_index.insert_chunks(chunks)
 
@@ -310,7 +314,10 @@ class TestVectorDBWithIndex:
             Chunk(content="Test 3", embedding=None, metadata={}),
         ]
 
-        mock_inference_api.openai_embeddings.return_value.data = [[0.1, 0.1, 0.1], [0.3, 0.3, 0.3]]
+        mock_inference_api.openai_embeddings.return_value.data = [
+            OpenAIEmbeddingData(embedding=[0.1, 0.1, 0.1], index=0),
+            OpenAIEmbeddingData(embedding=[0.3, 0.3, 0.3], index=1),
+        ]
 
         await vector_db_with_index.insert_chunks(chunks)
 

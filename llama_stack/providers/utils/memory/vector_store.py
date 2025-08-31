@@ -298,8 +298,8 @@ class VectorDBWithIndex:
                 self.vector_db.embedding_model,
                 [c.content for c in chunks_to_embed],
             )
-            for c, embedding in zip(chunks_to_embed, resp.data, strict=False):
-                c.embedding = embedding
+            for c, data in zip(chunks_to_embed, resp.data, strict=False):
+                c.embedding = data.embedding
 
         embeddings = np.array([c.embedding for c in chunks], dtype=np.float32)
         await self.index.add_chunks(chunks, embeddings)
@@ -335,7 +335,7 @@ class VectorDBWithIndex:
             return await self.index.query_keyword(query_string, k, score_threshold)
 
         embeddings_response = await self.inference_api.openai_embeddings(self.vector_db.embedding_model, [query_string])
-        query_vector = np.array(embeddings_response.data[0], dtype=np.float32)
+        query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(
                 query_vector, query_string, k, score_threshold, reranker_type, reranker_params
