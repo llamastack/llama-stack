@@ -295,4 +295,19 @@ Available Models:
                 description="IBM WatsonX inference provider for accessing AI models on IBM's WatsonX platform.",
             ),
         ),
+        remote_provider_spec(
+            api=Api.inference,
+            adapter=AdapterSpec(
+                adapter_type="azure",
+                pip_packages=["litellm"],
+                module="llama_stack.providers.remote.inference.azure",
+                config_class="llama_stack.providers.remote.inference.azure.AzureConfig",
+                provider_data_validator="llama_stack.providers.remote.inference.azure.config.AzureProviderDataValidator",
+                description="""
+Azure OpenAI inference provider for accessing GPT models and other Azure services.
+Provider documentation
+https://learn.microsoft.com/en-us/azure/ai-foundry/openai/overview
+""",
+            ),
+        ),
     ]
