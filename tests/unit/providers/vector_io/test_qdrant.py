@@ -54,7 +54,9 @@ def mock_vector_db(vector_db_id) -> MagicMock:
     mock_vector_db.identifier = vector_db_id
     mock_vector_db.embedding_dimension = 384
     mock_vector_db.model_dump_json.return_value = (
-        '{"identifier": "' + vector_db_id + '", "embedding_model": "embedding_model", "embedding_dimension": 384}'
+        '{"identifier": "'
+        + vector_db_id
+        + '", "provider_id": "qdrant", "embedding_model": "embedding_model", "embedding_dimension": 384}'
     )
     return mock_vector_db
 
