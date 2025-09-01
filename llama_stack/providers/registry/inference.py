@@ -292,7 +292,7 @@ Available Models:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="watsonx",
-                pip_packages=["ibm_watson_machine_learning"],
+                pip_packages=["ibm_watsonx_ai"],
                 module="llama_stack.providers.remote.inference.watsonx",
                 config_class="llama_stack.providers.remote.inference.watsonx.WatsonXConfig",
                 provider_data_validator="llama_stack.providers.remote.inference.watsonx.WatsonXProviderDataValidator",
