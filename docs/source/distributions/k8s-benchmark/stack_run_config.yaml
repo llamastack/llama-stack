@@ -3,6 +3,7 @@ image_name: kubernetes-benchmark-demo
 apis:
 - agents
 - inference
+- safety
 - telemetry
 - tool_runtime
 - vector_io
@@ -30,6 +31,11 @@ providers:
         db: ${env.POSTGRES_DB:=llamastack}
         user: ${env.POSTGRES_USER:=llamastack}
         password: ${env.POSTGRES_PASSWORD:=llamastack}
+  safety:
+  - provider_id: llama-guard
+    provider_type: inline::llama-guard
+    config:
+      excluded_categories: []
   agents:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -95,6 +101,8 @@ models:
 - model_id: ${env.INFERENCE_MODEL}
   provider_id: vllm-inference
   model_type: llm
+shields:
+- shield_id: ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}
 vector_dbs: []
 datasets: []
 scoring_fns: []

@@ -73,6 +73,7 @@ from llama_stack.providers.inline.telemetry.meta_reference.telemetry import (
     TelemetryAdapter,
 )
 from llama_stack.providers.utils.telemetry.tracing import (
+    BACKGROUND_LOGGER,
     CURRENT_TRACE_CONTEXT,
     end_trace,
     setup_logger,
@@ -204,6 +205,10 @@ async def sse_generator(event_gen_coroutine):
 
 
 async def log_request_pre_validation(request: Request):
+    # Skip expensive body parsing if debug logging is disabled
+    if not logger.isEnabledFor(logging.DEBUG):
+        return
+        
     if request.method in ("POST", "PUT", "PATCH"):
         try:
             body_bytes = await request.body()
@@ -303,6 +308,10 @@ class TracingMiddleware:
         if path.startswith(self.fastapi_paths):
             # Pass through to FastAPI's built-in handlers
             logger.debug(f"Bypassing custom routing for FastAPI built-in path: {path}")
+            return await self.app(scope, receive, send)
+
+        # Quick exit if telemetry is disabled - skip expensive route matching and tracing
+        if BACKGROUND_LOGGER is None:
             return await self.app(scope, receive, send)
 
         if not hasattr(self, "route_impls"):

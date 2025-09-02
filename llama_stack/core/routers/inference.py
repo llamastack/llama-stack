@@ -525,9 +525,8 @@ class InferenceRouter(Inference):
 
         response = await self._nonstream_openai_chat_completion(provider, params)
 
-        # Store the response with the ID that will be returned to the client
         if self.store:
-            await self.store.store_chat_completion(response, messages)
+            asyncio.create_task(self.store.store_chat_completion(response, messages))
 
         if self.telemetry:
             metrics = self._construct_metrics(
@@ -855,4 +854,4 @@ class InferenceRouter(Inference):
                     object="chat.completion",
                 )
                 logger.debug(f"InferenceRouter.completion_response: {final_response}")
-                await self.store.store_chat_completion(final_response, messages)
+                asyncio.create_task(self.store.store_chat_completion(final_response, messages))
