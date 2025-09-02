@@ -177,6 +177,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
             metadata_keys_to_exclude_from_context = [
                 "token_count",
                 "metadata_token_count",
+                "vector_db_id",
             ]
             metadata_for_context = {}
             for k in chunk_metadata_keys_to_include_from_context:
