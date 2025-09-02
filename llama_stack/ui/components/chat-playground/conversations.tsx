@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import type { Message } from "@/components/chat-playground/chat-message";
 import { useAuthClient } from "@/hooks/use-auth-client";
+import { cleanMessageContent } from "@/lib/message-content-utils";
 import type {
   Session,
   SessionCreateParams,
@@ -219,10 +220,7 @@ export function Conversations({
             messages.push({
               id: `${turn.turn_id}-assistant-${messages.length}`,
               role: "assistant",
-              content:
-                typeof turn.output_message.content === "string"
-                  ? turn.output_message.content
-                  : JSON.stringify(turn.output_message.content),
+              content: cleanMessageContent(turn.output_message.content),
               createdAt: new Date(
                 turn.completed_at || turn.started_at || Date.now()
               ),
@@ -271,7 +269,7 @@ export function Conversations({
   );
 
   const deleteSession = async (sessionId: string) => {
-    if (sessions.length <= 1 || !selectedAgentId) {
+    if (!selectedAgentId) {
       return;
     }
 
@@ -324,7 +322,6 @@ export function Conversations({
     }
   }, [currentSession]);
 
-  // Don't render if no agent is selected
   if (!selectedAgentId) {
     return null;
   }
@@ -357,7 +354,7 @@ export function Conversations({
           + New
         </Button>
 
-        {currentSession && sessions.length > 1 && (
+        {currentSession && (
           <Button
             onClick={() => deleteSession(currentSession.id)}
             variant="outline"

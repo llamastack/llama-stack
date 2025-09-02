@@ -86,10 +86,15 @@ class LocalfsFilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
+        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
+        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
     ) -> OpenAIFileObject:
         """Upload a file that can be used across various endpoints."""
         if not self.sql_store:
             raise RuntimeError("Files provider not initialized")
+
+        if expires_after_anchor is not None or expires_after_seconds is not None:
+            raise NotImplementedError("File expiration is not supported by this provider")
 
         file_id = self._generate_file_id()
         file_path = self._get_file_path(file_id)

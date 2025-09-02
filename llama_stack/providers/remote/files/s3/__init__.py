@@ -6,15 +6,14 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import Api
+from llama_stack.core.datatypes import AccessRule, Api
 
 from .config import S3FilesImplConfig
 
 
-async def get_adapter_impl(config: S3FilesImplConfig, deps: dict[Api, Any]):
+async def get_adapter_impl(config: S3FilesImplConfig, deps: dict[Api, Any], policy: list[AccessRule] | None = None):
     from .files import S3FilesImpl
 
-    # TODO: authorization policies and user separation
-    impl = S3FilesImpl(config)
+    impl = S3FilesImpl(config, policy or [])
     await impl.initialize()
     return impl

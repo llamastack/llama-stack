@@ -22,17 +22,17 @@ else
 fi
 
 if [ -z "${GITHUB_CLIENT_ID:-}" ]; then
-  echo "ERROR: GITHUB_CLIENT_ID not set. You need it for Github login to work. Refer to https://llama-stack.readthedocs.io/en/latest/deploying/index.html#kubernetes-deployment-guide"
+  echo "ERROR: GITHUB_CLIENT_ID not set. You need it for Github login to work. See the Kubernetes Deployment Guide in the Llama Stack documentation."
   exit 1
 fi
 
 if [ -z "${GITHUB_CLIENT_SECRET:-}" ]; then
-  echo "ERROR: GITHUB_CLIENT_SECRET not set. You need it for Github login to work. Refer to https://llama-stack.readthedocs.io/en/latest/deploying/index.html#kubernetes-deployment-guide"
+  echo "ERROR: GITHUB_CLIENT_SECRET not set. You need it for Github login to work. See the Kubernetes Deployment Guide in the Llama Stack documentation."
   exit 1
 fi
 
 if [ -z "${LLAMA_STACK_UI_URL:-}" ]; then
-  echo "ERROR: LLAMA_STACK_UI_URL not set. Should be set to the external URL of the UI (excluding port). You need it for Github login to work. Refer to https://llama-stack.readthedocs.io/en/latest/deploying/index.html#kubernetes-deployment-guide"
+  echo "ERROR: LLAMA_STACK_UI_URL not set. Should be set to the external URL of the UI (excluding port). You need it for Github login to work. See the Kubernetes Deployment Guide in the Llama Stack documentation."
   exit 1
 fi
 

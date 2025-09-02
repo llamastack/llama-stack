@@ -66,7 +66,7 @@ llama stack run starter --port 5050
 
 Ensure the Llama Stack server version is the same as the Kotlin SDK Library for maximum compatibility.
 
-Other inference providers: [Table](https://llama-stack.readthedocs.io/en/latest/index.html#supported-llama-stack-implementations)
+Other inference providers: [Table](../../index.md#supported-llama-stack-implementations)
 
 How to set remote localhost in Demo App: [Settings](https://github.com/meta-llama/llama-stack-client-kotlin/tree/latest-release/examples/android_app#settings)
 

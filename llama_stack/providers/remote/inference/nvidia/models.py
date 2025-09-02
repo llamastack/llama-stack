@@ -55,6 +55,10 @@ MODEL_ENTRIES = [
         "meta/llama-3.3-70b-instruct",
         CoreModelId.llama3_3_70b_instruct.value,
     ),
+    ProviderModelEntry(
+        provider_model_id="nvidia/vila",
+        model_type=ModelType.llm,
+    ),
     # NeMo Retriever Text Embedding models -
     #
     # https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/support-matrix.html

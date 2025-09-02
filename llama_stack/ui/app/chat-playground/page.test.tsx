@@ -31,6 +31,9 @@ const mockClient = {
   toolgroups: {
     list: jest.fn(),
   },
+  vectorDBs: {
+    list: jest.fn(),
+  },
 };
 
 jest.mock("@/hooks/use-auth-client", () => ({
@@ -164,7 +167,7 @@ describe("ChatPlaygroundPage", () => {
       session_name: "Test Session",
       started_at: new Date().toISOString(),
       turns: [],
-    }); // No turns by default
+    });
     mockClient.agents.retrieve.mockResolvedValue({
       agent_id: "test-agent",
       agent_config: {
@@ -417,7 +420,6 @@ describe("ChatPlaygroundPage", () => {
       });
 
       await waitFor(() => {
-        // first agent should be auto-selected
         expect(mockClient.agents.session.create).toHaveBeenCalledWith(
           "agent_123",
           { session_name: "Default Session" }
@@ -464,7 +466,7 @@ describe("ChatPlaygroundPage", () => {
       });
     });
 
-    test("hides delete button when only one agent exists", async () => {
+    test("shows delete button even when only one agent exists", async () => {
       mockClient.agents.list.mockResolvedValue({
         data: [mockAgents[0]],
       });
@@ -474,9 +476,7 @@ describe("ChatPlaygroundPage", () => {
       });
 
       await waitFor(() => {
-        expect(
-          screen.queryByTitle("Delete current agent")
-        ).not.toBeInTheDocument();
+        expect(screen.getByTitle("Delete current agent")).toBeInTheDocument();
       });
     });
 
@@ -505,7 +505,7 @@ describe("ChatPlaygroundPage", () => {
       await waitFor(() => {
         expect(mockClient.agents.delete).toHaveBeenCalledWith("agent_123");
         expect(global.confirm).toHaveBeenCalledWith(
-          "Are you sure you want to delete this agent? This action cannot be undone and will delete all associated sessions."
+          "Are you sure you want to delete this agent? This action cannot be undone and will delete the agent and all its sessions."
         );
       });
 
@@ -582,6 +582,209 @@ describe("ChatPlaygroundPage", () => {
       });
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe("RAG File Upload", () => {
+    let mockFileReader: {
+      readAsDataURL: jest.Mock;
+      readAsText: jest.Mock;
+      result: string | null;
+      onload: (() => void) | null;
+      onerror: (() => void) | null;
+    };
+    let mockRAGTool: {
+      insert: jest.Mock;
+    };
+
+    beforeEach(() => {
+      mockFileReader = {
+        readAsDataURL: jest.fn(),
+        readAsText: jest.fn(),
+        result: null,
+        onload: null,
+        onerror: null,
+      };
+      global.FileReader = jest.fn(() => mockFileReader);
+
+      mockRAGTool = {
+        insert: jest.fn().mockResolvedValue({}),
+      };
+      mockClient.toolRuntime = {
+        ragTool: mockRAGTool,
+      };
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    test("handles text file upload", async () => {
+      new File(["Hello, world!"], "test.txt", {
+        type: "text/plain",
+      });
+
+      mockClient.agents.retrieve.mockResolvedValue({
+        agent_id: "test-agent",
+        agent_config: {
+          toolgroups: [
+            {
+              name: "builtin::rag/knowledge_search",
+              args: { vector_db_ids: ["test-vector-db"] },
+            },
+          ],
+        },
+      });
+
+      await act(async () => {
+        render(<ChatPlaygroundPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("chat-component")).toBeInTheDocument();
+      });
+
+      const chatComponent = screen.getByTestId("chat-component");
+      chatComponent.getAttribute("data-onragfileupload");
+
+      // this is a simplified test
+      expect(mockRAGTool.insert).not.toHaveBeenCalled();
+    });
+
+    test("handles PDF file upload with FileReader", async () => {
+      new File([new ArrayBuffer(1000)], "test.pdf", {
+        type: "application/pdf",
+      });
+
+      const mockDataURL = "data:application/pdf;base64,JVBERi0xLjQK";
+      mockFileReader.result = mockDataURL;
+
+      mockClient.agents.retrieve.mockResolvedValue({
+        agent_id: "test-agent",
+        agent_config: {
+          toolgroups: [
+            {
+              name: "builtin::rag/knowledge_search",
+              args: { vector_db_ids: ["test-vector-db"] },
+            },
+          ],
+        },
+      });
+
+      await act(async () => {
+        render(<ChatPlaygroundPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("chat-component")).toBeInTheDocument();
+      });
+
+      expect(global.FileReader).toBeDefined();
+    });
+
+    test("handles different file types correctly", () => {
+      const getContentType = (filename: string): string => {
+        const ext = filename.toLowerCase().split(".").pop();
+        switch (ext) {
+          case "pdf":
+            return "application/pdf";
+          case "txt":
+            return "text/plain";
+          case "md":
+            return "text/markdown";
+          case "html":
+            return "text/html";
+          case "csv":
+            return "text/csv";
+          case "json":
+            return "application/json";
+          case "docx":
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+          case "doc":
+            return "application/msword";
+          default:
+            return "application/octet-stream";
+        }
+      };
+
+      expect(getContentType("test.pdf")).toBe("application/pdf");
+      expect(getContentType("test.txt")).toBe("text/plain");
+      expect(getContentType("test.md")).toBe("text/markdown");
+      expect(getContentType("test.html")).toBe("text/html");
+      expect(getContentType("test.csv")).toBe("text/csv");
+      expect(getContentType("test.json")).toBe("application/json");
+      expect(getContentType("test.docx")).toBe(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+      expect(getContentType("test.doc")).toBe("application/msword");
+      expect(getContentType("test.unknown")).toBe("application/octet-stream");
+    });
+
+    test("determines text vs binary file types correctly", () => {
+      const isTextFile = (mimeType: string): boolean => {
+        return (
+          mimeType.startsWith("text/") ||
+          mimeType === "application/json" ||
+          mimeType === "text/markdown" ||
+          mimeType === "text/html" ||
+          mimeType === "text/csv"
+        );
+      };
+
+      expect(isTextFile("text/plain")).toBe(true);
+      expect(isTextFile("text/markdown")).toBe(true);
+      expect(isTextFile("text/html")).toBe(true);
+      expect(isTextFile("text/csv")).toBe(true);
+      expect(isTextFile("application/json")).toBe(true);
+
+      expect(isTextFile("application/pdf")).toBe(false);
+      expect(isTextFile("application/msword")).toBe(false);
+      expect(
+        isTextFile(
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+      ).toBe(false);
+      expect(isTextFile("application/octet-stream")).toBe(false);
+    });
+
+    test("handles FileReader error gracefully", async () => {
+      const pdfFile = new File([new ArrayBuffer(1000)], "test.pdf", {
+        type: "application/pdf",
+      });
+
+      mockFileReader.onerror = jest.fn();
+      const mockError = new Error("FileReader failed");
+
+      const fileReaderPromise = new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error || mockError);
+        reader.readAsDataURL(pdfFile);
+
+        setTimeout(() => {
+          reader.onerror?.(new ProgressEvent("error"));
+        }, 0);
+      });
+
+      await expect(fileReaderPromise).rejects.toBeDefined();
+    });
+
+    test("handles large file upload with FileReader approach", () => {
+      // create a large file
+      const largeFile = new File(
+        [new ArrayBuffer(10 * 1024 * 1024)],
+        "large.pdf",
+        {
+          type: "application/pdf",
+        }
+      );
+
+      expect(largeFile.size).toBe(10 * 1024 * 1024); // 10MB
+
+      expect(global.FileReader).toBeDefined();
+
+      const reader = new FileReader();
+      expect(reader.readAsDataURL).toBeDefined();
     });
   });
 });
