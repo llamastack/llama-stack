@@ -10,21 +10,17 @@ from cerebras.cloud.sdk import AsyncCerebras
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     CompletionRequest,
     CompletionResponse,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
     OpenAIEmbeddingsResponse,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -186,16 +182,6 @@ class CerebrasInferenceAdapter(
             "stream": request.stream,
             **get_sampling_options(request.sampling_params),
         }
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        raise NotImplementedError()
 
     async def openai_embeddings(
         self,

@@ -17,7 +17,7 @@ from typing import (
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
-from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent, InterleavedContentItem
+from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.models import Model
 from llama_stack.apis.telemetry import MetricResponseMixin
@@ -1134,26 +1134,6 @@ class InferenceProvider(Protocol):
         """
         raise NotImplementedError("Batch chat completion is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
-
-    @webmethod(route="/inference/embeddings", method="POST")
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        """Generate embeddings for content pieces using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
-        :param contents: List of contents to generate embeddings for. Each content can be a string or an InterleavedContentItem (and hence can be multimodal). The behavior depends on the model and provider. Some models may only support text.
-        :param output_dimension: (Optional) Output dimensionality for the embeddings. Only supported by Matryoshka models.
-        :param text_truncation: (Optional) Config for how to truncate text for embedding when text is longer than the model's max sequence length.
-        :param task_type: (Optional) How is the embedding being used? This is only supported by asymmetric embedding models.
-        :returns: An array of embeddings, one for each content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}.
-        """
-        ...
 
     @webmethod(route="/inference/rerank", method="POST", experimental=True)
     async def rerank(

@@ -11,14 +11,11 @@ from huggingface_hub import AsyncInferenceClient, HfApi
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     CompletionRequest,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
@@ -26,7 +23,6 @@ from llama_stack.apis.inference import (
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -281,16 +277,6 @@ class _HfAdapter(
             stop_sequences=["<|eom_id|>", "<|eot_id|>"],
             **self._build_options(request.sampling_params, request.response_format),
         )
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        raise NotImplementedError()
 
     async def openai_embeddings(
         self,

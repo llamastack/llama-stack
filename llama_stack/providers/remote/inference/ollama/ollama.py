@@ -17,7 +17,6 @@ from openai import AsyncOpenAI
 from llama_stack.apis.common.content_types import (
     ImageContentItem,
     InterleavedContent,
-    InterleavedContentItem,
     TextContentItem,
 )
 from llama_stack.apis.common.errors import UnsupportedModelError
@@ -28,8 +27,6 @@ from llama_stack.apis.inference import (
     CompletionRequest,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     GrammarResponseFormat,
     InferenceProvider,
     JsonSchemaResponseFormat,
@@ -44,7 +41,6 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -76,9 +72,7 @@ from llama_stack.providers.utils.inference.openai_compat import (
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
     completion_request_to_prompt,
-    content_has_media,
     convert_image_content_to_url,
-    interleaved_content_as_str,
     localize_image_content,
     request_has_media,
 )
@@ -393,27 +387,6 @@ class OllamaInferenceAdapter(
         stream = _generate_and_convert_to_openai_compat()
         async for chunk in process_chat_completion_stream_response(stream, request):
             yield chunk
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self._get_model(model_id)
-
-        assert all(not content_has_media(content) for content in contents), (
-            "Ollama does not support media for embeddings"
-        )
-        response = await self.client.embed(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-        )
-        embeddings = response["embeddings"]
-
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def register_model(self, model: Model) -> Model:
         try:

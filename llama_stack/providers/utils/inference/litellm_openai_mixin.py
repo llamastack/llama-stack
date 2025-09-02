@@ -11,14 +11,11 @@ import litellm
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     InferenceProvider,
     JsonSchemaResponseFormat,
     LogProbConfig,
@@ -32,7 +29,6 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -49,9 +45,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
     convert_tooldef_to_openai_tool,
     get_sampling_options,
     prepare_openai_completion_params,
-)
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -268,24 +261,6 @@ class LiteLLMOpenAIMixin(
                 f'{{"{key_field}": "<API_KEY>"}}, or in the provider config.'
             )
         return api_key
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-
-        response = litellm.embedding(
-            model=self.get_litellm_model_name(model.provider_resource_id),
-            input=[interleaved_content_as_str(content) for content in contents],
-        )
-
-        embeddings = [data["embedding"] for data in response["data"]]
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,

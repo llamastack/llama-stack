@@ -136,16 +136,6 @@ class RunpodInferenceAdapter(
             **get_sampling_options(request.sampling_params),
         }
 
-    async def embeddings(
-        self,
-        model: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        raise NotImplementedError()
-
     async def openai_embeddings(
         self,
         model: str,
