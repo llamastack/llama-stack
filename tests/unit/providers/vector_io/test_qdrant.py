@@ -11,7 +11,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from llama_stack.apis.inference import EmbeddingsResponse, Inference
+from llama_stack.apis.inference import Inference
+from llama_stack.apis.inference.inference import OpenAIEmbeddingData, OpenAIEmbeddingsResponse, OpenAIEmbeddingUsage
 from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     VectorDB,
@@ -68,7 +69,13 @@ def mock_vector_db_store(mock_vector_db) -> MagicMock:
 @pytest.fixture
 def mock_api_service(sample_embeddings):
     mock_api_service = MagicMock(spec=Inference)
-    mock_api_service.embeddings = AsyncMock(return_value=EmbeddingsResponse(embeddings=sample_embeddings))
+    mock_api_service.openai_embeddings = AsyncMock(
+        return_value=OpenAIEmbeddingsResponse(
+            model="mock-embedding-model",
+            data=[OpenAIEmbeddingData(embedding=sample, index=i) for i, sample in enumerate(sample_embeddings)],
+            usage=OpenAIEmbeddingUsage(prompt_tokens=10, total_tokens=10),
+        )
+    )
     return mock_api_service
 
 

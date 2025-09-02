@@ -32,7 +32,6 @@ dependencies = [
     "jinja2>=3.1.6",
     "jsonschema",
     "llama-stack-client>=0.2.20",
-    "llama-api-client>=0.1.2",
     "openai>=1.99.6",
     "prompt-toolkit",
     "python-dotenv",
@@ -146,7 +145,7 @@ docs = [
 ]
 codegen = ["rich", "pydantic", "jinja2>=3.1.6"]
 benchmark = [
-    "locust>=2.37.14",
+    "locust>=2.39.1",
 ]
 
 [project.urls]
