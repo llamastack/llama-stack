@@ -212,7 +212,7 @@ def main():
     )
     os.environ["OPENAI_API_KEY"] = "dummy"
     os.environ["OPENAI_BASE_URL"] = "http://0.0.0.0:8321/v1/openai/v1"
-    llm = ChatOpenAI(model="ollama/llama3:70b-instruct")
+    llm = ChatOpenAI(model="ollama/llama3:70b-instruct", base_url="http://localhost:8321/v1/openai/v1")
 
     # Test the wrapper
     test_response = llm.invoke("Can you help me with the document processing?")
