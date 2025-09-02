@@ -12,14 +12,11 @@ from together import AsyncTogether
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     CompletionRequest,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
@@ -32,7 +29,6 @@ from llama_stack.apis.inference import (
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -53,8 +49,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
     completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
     request_has_media,
 )
 
@@ -234,26 +228,6 @@ class TogetherInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProvi
         }
         logger.debug(f"params to together: {params}")
         return params
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-        assert all(not content_has_media(content) for content in contents), (
-            "Together does not support media for embeddings"
-        )
-        client = self._get_client()
-        r = await client.embeddings.create(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-        )
-        embeddings = [item.embedding for item in r.data]
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,

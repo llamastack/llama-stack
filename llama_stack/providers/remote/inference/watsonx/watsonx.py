@@ -11,13 +11,11 @@ from ibm_watson_machine_learning.foundation_models import Model
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 from openai import AsyncOpenAI
 
-from llama_stack.apis.common.content_types import InterleavedContent, InterleavedContentItem
+from llama_stack.apis.common.content_types import InterleavedContent
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     CompletionRequest,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     GreedySamplingStrategy,
     Inference,
     LogProbConfig,
@@ -30,7 +28,6 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -248,16 +245,6 @@ class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
             **input_dict,
         }
         return params
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        raise NotImplementedError("embedding is not supported for watsonx")
 
     async def openai_embeddings(
         self,

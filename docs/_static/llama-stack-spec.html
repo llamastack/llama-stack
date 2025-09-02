@@ -901,49 +901,6 @@
                 ]
             }
         },
-        "/v1/inference/embeddings": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "An array of embeddings, one for each content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/EmbeddingsResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Inference"
-                ],
-                "description": "Generate embeddings for content pieces using the specified model.",
-                "parameters": [],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/EmbeddingsRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                }
-            }
-        },
         "/v1/eval/benchmarks/{benchmark_id}/evaluations": {
             "post": {
                 "responses": {
@@ -9697,80 +9654,6 @@
                 ],
                 "title": "OpenAIDeleteResponseObject",
                 "description": "Response object confirming deletion of an OpenAI response."
-            },
-            "EmbeddingsRequest": {
-                "type": "object",
-                "properties": {
-                    "model_id": {
-                        "type": "string",
-                        "description": "The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint."
-                    },
-                    "contents": {
-                        "oneOf": [
-                            {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/components/schemas/InterleavedContentItem"
-                                }
-                            }
-                        ],
-                        "description": "List of contents to generate embeddings for. Each content can be a string or an InterleavedContentItem (and hence can be multimodal). The behavior depends on the model and provider. Some models may only support text."
-                    },
-                    "text_truncation": {
-                        "type": "string",
-                        "enum": [
-                            "none",
-                            "start",
-                            "end"
-                        ],
-                        "description": "(Optional) Config for how to truncate text for embedding when text is longer than the model's max sequence length."
-                    },
-                    "output_dimension": {
-                        "type": "integer",
-                        "description": "(Optional) Output dimensionality for the embeddings. Only supported by Matryoshka models."
-                    },
-                    "task_type": {
-                        "type": "string",
-                        "enum": [
-                            "query",
-                            "document"
-                        ],
-                        "description": "(Optional) How is the embedding being used? This is only supported by asymmetric embedding models."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "model_id",
-                    "contents"
-                ],
-                "title": "EmbeddingsRequest"
-            },
-            "EmbeddingsResponse": {
-                "type": "object",
-                "properties": {
-                    "embeddings": {
-                        "type": "array",
-                        "items": {
-                            "type": "array",
-                            "items": {
-                                "type": "number"
-                            }
-                        },
-                        "description": "List of embedding vectors, one per input content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "embeddings"
-                ],
-                "title": "EmbeddingsResponse",
-                "description": "Response containing generated embeddings."
             },
             "AgentCandidate": {
                 "type": "object",

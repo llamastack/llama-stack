@@ -11,8 +11,6 @@ from openai import NOT_GIVEN, APIConnectionError
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
-    TextContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
@@ -21,8 +19,6 @@ from llama_stack.apis.inference import (
     CompletionRequest,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
@@ -31,7 +27,6 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingUsage,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
 )
@@ -154,60 +149,6 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference, ModelRegistryHelper):
         else:
             # we pass n=1 to get only one completion
             return convert_openai_completion_choice(response.choices[0])
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        if any(content_has_media(content) for content in contents):
-            raise NotImplementedError("Media is not supported")
-
-        #
-        # Llama Stack: contents = list[str] | list[InterleavedContentItem]
-        #  ->
-        # OpenAI: input = str | list[str]
-        #
-        # we can ignore str and always pass list[str] to OpenAI
-        #
-        flat_contents = [content.text if isinstance(content, TextContentItem) else content for content in contents]
-        input = [content.text if isinstance(content, TextContentItem) else content for content in flat_contents]
-        provider_model_id = await self._get_provider_model_id(model_id)
-
-        extra_body = {}
-
-        if text_truncation is not None:
-            text_truncation_options = {
-                TextTruncation.none: "NONE",
-                TextTruncation.end: "END",
-                TextTruncation.start: "START",
-            }
-            extra_body["truncate"] = text_truncation_options[text_truncation]
-
-        if output_dimension is not None:
-            extra_body["dimensions"] = output_dimension
-
-        if task_type is not None:
-            task_type_options = {
-                EmbeddingTaskType.document: "passage",
-                EmbeddingTaskType.query: "query",
-            }
-            extra_body["input_type"] = task_type_options[task_type]
-
-        response = await self.client.embeddings.create(
-            model=provider_model_id,
-            input=input,
-            extra_body=extra_body,
-        )
-        #
-        # OpenAI: CreateEmbeddingResponse(data=[Embedding(embedding=list[float], ...)], ...)
-        #  ->
-        # Llama Stack: EmbeddingsResponse(embeddings=list[list[float]])
-        #
-        return EmbeddingsResponse(embeddings=[embedding.embedding for embedding in response.data])
 
     async def openai_embeddings(
         self,

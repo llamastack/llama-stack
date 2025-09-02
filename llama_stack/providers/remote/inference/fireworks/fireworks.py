@@ -12,15 +12,12 @@ from openai import AsyncOpenAI
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     CompletionRequest,
     CompletionResponse,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
@@ -33,7 +30,6 @@ from llama_stack.apis.inference import (
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -57,8 +53,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
     completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
     request_has_media,
 )
 
@@ -260,31 +254,6 @@ class FireworksInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProv
         logger.debug(f"params to fireworks: {params}")
 
         return params
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-
-        kwargs = {}
-        if model.metadata.get("embedding_dimension"):
-            kwargs["dimensions"] = model.metadata.get("embedding_dimension")
-        assert all(not content_has_media(content) for content in contents), (
-            "Fireworks does not support media for embeddings"
-        )
-        response = self._get_client().embeddings.create(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-            **kwargs,
-        )
-
-        embeddings = [data.embedding for data in response.data]
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,
