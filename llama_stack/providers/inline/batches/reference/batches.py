@@ -178,9 +178,9 @@ class ReferenceBatchesImpl(Batches):
 
         # TODO: set expiration time for garbage collection
 
-        if endpoint not in ["/v1/chat/completions"]:
+        if endpoint not in ["/v1/chat/completions", "/v1/completions"]:
             raise ValueError(
-                f"Invalid endpoint: {endpoint}. Supported values: /v1/chat/completions. Code: invalid_value. Param: endpoint",
+                f"Invalid endpoint: {endpoint}. Supported values: /v1/chat/completions, /v1/completions. Code: invalid_value. Param: endpoint",
             )
 
         if completion_window != "24h":
@@ -424,13 +424,21 @@ class ReferenceBatchesImpl(Batches):
                             )
                             valid = False
 
-                        for param, expected_type, type_string in [
-                            ("model", str, "a string"),
-                            # messages is specific to /v1/chat/completions
-                            # we could skip validating messages here and let inference fail. however,
-                            # that would be a very expensive way to find out messages is wrong.
-                            ("messages", list, "an array"),  # TODO: allow messages to be a string?
-                        ]:
+                        if batch.endpoint == "/v1/chat/completions":
+                            required_params = [
+                                ("model", str, "a string"),
+                                # messages is specific to /v1/chat/completions
+                                # we could skip validating messages here and let inference fail. however,
+                                # that would be a very expensive way to find out messages is wrong.
+                                ("messages", list, "an array"),  # TODO: allow messages to be a string?
+                            ]
+                        else:  # /v1/completions
+                            required_params = [
+                                ("model", str, "a string"),
+                                ("prompt", str, "a string"),  # TODO: allow prompt to be a list of strings??
+                            ]
+
+                        for param, expected_type, type_string in required_params:
                             if param not in body:
                                 errors.append(
                                     BatchError(
@@ -591,20 +599,37 @@ class ReferenceBatchesImpl(Batches):
 
         try:
             # TODO(SECURITY): review body for security issues
-            request.body["messages"] = [convert_to_openai_message_param(msg) for msg in request.body["messages"]]
-            chat_response = await self.inference_api.openai_chat_completion(**request.body)
+            if request.url == "/v1/chat/completions":
+                request.body["messages"] = [convert_to_openai_message_param(msg) for msg in request.body["messages"]]
+                chat_response = await self.inference_api.openai_chat_completion(**request.body)
 
-            # this is for mypy, we don't allow streaming so we'll get the right type
-            assert hasattr(chat_response, "model_dump_json"), "Chat response must have model_dump_json method"
-            return {
-                "id": request_id,
-                "custom_id": request.custom_id,
-                "response": {
-                    "status_code": 200,
-                    "request_id": request_id,  # TODO: should this be different?
-                    "body": chat_response.model_dump_json(),
-                },
-            }
+                # this is for mypy, we don't allow streaming so we'll get the right type
+                assert hasattr(chat_response, "model_dump_json"), "Chat response must have model_dump_json method"
+                return {
+                    "id": request_id,
+                    "custom_id": request.custom_id,
+                    "response": {
+                        "status_code": 200,
+                        "request_id": request_id,  # TODO: should this be different?
+                        "body": chat_response.model_dump_json(),
+                    },
+                }
+            else:  # /v1/completions
+                completion_response = await self.inference_api.openai_completion(**request.body)
+
+                # this is for mypy, we don't allow streaming so we'll get the right type
+                assert hasattr(completion_response, "model_dump_json"), (
+                    "Completion response must have model_dump_json method"
+                )
+                return {
+                    "id": request_id,
+                    "custom_id": request.custom_id,
+                    "response": {
+                        "status_code": 200,
+                        "request_id": request_id,
+                        "body": completion_response.model_dump_json(),
+                    },
+                }
         except Exception as e:
             logger.info(f"Error processing request {request.custom_id} in batch {batch_id}: {e}")
             return {
