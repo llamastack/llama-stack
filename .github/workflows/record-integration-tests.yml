@@ -18,10 +18,10 @@ on:
         description: 'Test against a specific provider'
         type: string
         default: 'ollama'
-      run-vision-tests:
-        description: 'Whether to run vision tests'
-        type: boolean
-        default: false
+      test-suite:
+        description: 'Test suite to use: base, responses, vision, etc.'
+        type: string
+        default: ''
       test-pattern:
         description: 'Regex pattern to pass to pytest -k'
         type: string
@@ -40,7 +40,7 @@ jobs:
           echo "::group::Workflow Inputs"
           echo "test-subdirs: ${{ inputs.test-subdirs }}"
           echo "test-provider: ${{ inputs.test-provider }}"
-          echo "run-vision-tests: ${{ inputs.run-vision-tests }}"
+          echo "test-suite: ${{ inputs.test-suite }}"
           echo "test-pattern: ${{ inputs.test-pattern }}"
           echo "branch: ${{ github.ref_name }}"
           echo "::endgroup::"
@@ -56,7 +56,7 @@ jobs:
           python-version: "3.12"  # Use single Python version for recording
           client-version: "latest"
           provider: ${{ inputs.test-provider || 'ollama' }}
-          run-vision-tests: ${{ inputs.run-vision-tests }}
+          test-suite: ${{ inputs.test-suite }}
           inference-mode: 'record'
 
       - name: Run and record tests
@@ -67,4 +67,4 @@ jobs:
           stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
           provider: ${{ inputs.test-provider || 'ollama' }}
           inference-mode: 'record'
-          run-vision-tests: ${{ inputs.run-vision-tests }}
+          test-suite: ${{ inputs.test-suite }}

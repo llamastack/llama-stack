@@ -42,6 +42,27 @@ Model parameters can be influenced by the following options:
 Each of these are comma-separated lists and can be used to generate multiple parameter combinations. Note that tests will be skipped
 if no model is specified.
 
+### Suites (fast selection + sane defaults)
+
+- `--suite`: comma-separated list of named suites that both narrow which tests are collected and prefill common model options (unless you pass them explicitly). This keeps runs fast and convenient.
+- Available suites:
+  - `responses`: collects tests under `tests/integration/responses`; defaults `--text-model=ollama/llama3.2:3b-instruct-fp16`, `--embedding-model=sentence-transformers/all-MiniLM-L6-v2`.
+  - `vision`: collects only `tests/integration/inference/test_vision_inference.py`; defaults `--vision-model=ollama/llama3.2-vision:11b`, `--embedding-model=sentence-transformers/all-MiniLM-L6-v2`.
+- Explicit flags always win. For example, `--suite=responses --text-model=<X>` overrides the suite’s text model.
+
+Examples:
+
+```bash
+# Fast responses run with defaults
+pytest -s -v tests/integration --stack-config=server:starter --suite=responses
+
+# Fast single-file vision run with defaults
+pytest -s -v tests/integration --stack-config=server:starter --suite=vision
+
+# Combine suites and override a default
+pytest -s -v tests/integration --stack-config=server:starter --suite=responses,vision --embedding-model=text-embedding-3-small
+```
+
 ## Examples
 
 ### Testing against a Server

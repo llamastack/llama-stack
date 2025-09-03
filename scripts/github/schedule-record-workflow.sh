@@ -15,7 +15,7 @@ set -euo pipefail
 BRANCH=""
 TEST_SUBDIRS=""
 TEST_PROVIDER="ollama"
-RUN_VISION_TESTS=false
+TEST_SUITE="base"
 TEST_PATTERN=""
 
 # Help function
@@ -27,9 +27,9 @@ Trigger the integration test recording workflow remotely. This way you do not ne
 
 OPTIONS:
     -b, --branch BRANCH         Branch to run the workflow on (defaults to current branch)
-    -s, --test-subdirs DIRS     Comma-separated list of test subdirectories to run (REQUIRED)
     -p, --test-provider PROVIDER Test provider to use: vllm or ollama (default: ollama)
-    -v, --run-vision-tests      Include vision tests in the recording
+    -t, --test-suite SUITE      Test suite to use: base, responses, vision, etc. (default: base)
+    -s, --test-subdirs DIRS     Comma-separated list of test subdirectories to run (overrides suite)
     -k, --test-pattern PATTERN  Regex pattern to pass to pytest -k
     -h, --help                  Show this help message
 
@@ -38,7 +38,7 @@ EXAMPLES:
     $0 --test-subdirs "agents"
 
     # Record tests for specific branch with vision tests
-    $0 -b my-feature-branch --test-subdirs "inference" --run-vision-tests
+    $0 -b my-feature-branch --test-suite vision
 
     # Record multiple test subdirectories with specific provider
     $0 --test-subdirs "agents,inference" --test-provider vllm
@@ -71,9 +71,9 @@ while [[ $# -gt 0 ]]; do
             TEST_PROVIDER="$2"
             shift 2
             ;;
-        -v|--run-vision-tests)
-            RUN_VISION_TESTS=true
-            shift
+        -t|--test-suite)
+            TEST_SUITE="$2"
+            shift 2
             ;;
         -k|--test-pattern)
             TEST_PATTERN="$2"
@@ -92,11 +92,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate required parameters
-if [[ -z "$TEST_SUBDIRS" ]]; then
-    echo "Error: --test-subdirs is required"
-    echo "Please specify which test subdirectories to run, e.g.:"
+if [[ -z "$TEST_SUBDIRS" && -z "$TEST_SUITE" ]]; then
+    echo "Error: --test-subdirs or --test-suite is required"
+    echo "Please specify which test subdirectories to run or test suite to use, e.g.:"
     echo "  $0 --test-subdirs \"agents,inference\""
-    echo "  $0 --test-subdirs \"inference\" --run-vision-tests"
+    echo "  $0 --test-suite vision"
     echo ""
     exit 1
 fi
@@ -239,17 +239,19 @@ echo "Triggering integration test recording workflow..."
 echo "Branch: $BRANCH"
 echo "Test provider: $TEST_PROVIDER"
 echo "Test subdirs: $TEST_SUBDIRS"
-echo "Run vision tests: $RUN_VISION_TESTS"
+echo "Test suite: $TEST_SUITE"
 echo "Test pattern: ${TEST_PATTERN:-"(none)"}"
 echo ""
 
 # Prepare inputs for gh workflow run
-INPUTS="-f test-subdirs='$TEST_SUBDIRS'"
+if [[ -n "$TEST_SUBDIRS" ]]; then
+    INPUTS="-f test-subdirs='$TEST_SUBDIRS'"
+fi
 if [[ -n "$TEST_PROVIDER" ]]; then
     INPUTS="$INPUTS -f test-provider='$TEST_PROVIDER'"
 fi
-if [[ "$RUN_VISION_TESTS" == "true" ]]; then
-    INPUTS="$INPUTS -f run-vision-tests=true"
+if [[ -n "$TEST_SUITE" ]]; then
+    INPUTS="$INPUTS -f test-suite='$TEST_SUITE'"
 fi
 if [[ -n "$TEST_PATTERN" ]]; then
     INPUTS="$INPUTS -f test-pattern='$TEST_PATTERN'"
