@@ -202,6 +202,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
                 "document_ids": [c.metadata["document_id"] for c in chunks[: len(picked)]],
                 "chunks": [c.content for c in chunks[: len(picked)]],
                 "scores": scores[: len(picked)],
+                "vector_db_ids": [c.metadata["vector_db_id"] for c in chunks[: len(picked)]],
             },
         )
 
