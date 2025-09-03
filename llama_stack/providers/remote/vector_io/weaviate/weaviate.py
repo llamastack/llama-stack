@@ -104,11 +104,15 @@ class WeaviateIndex(EmbeddingIndex):
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
         collection = self.client.collections.get(sanitized_collection_name)
 
-        results = collection.query.near_vector(
-            near_vector=embedding.tolist(),
-            limit=k,
-            return_metadata=wvc.query.MetadataQuery(distance=True),
-        )
+        try:
+            results = collection.query.near_vector(
+                near_vector=embedding.tolist(),
+                limit=k,
+                return_metadata=wvc.query.MetadataQuery(distance=True),
+            )
+        except Exception as e:
+            log.error(f"Weaviate client vector search failed: {e}")
+            raise
 
         chunks = []
         scores = []
@@ -123,8 +127,8 @@ class WeaviateIndex(EmbeddingIndex):
 
             if doc.metadata.distance is None:
                 continue
-            # Convert cosine distance ∈ [0,2] → cosine similarity ∈ [-1,1]
-            score = 1.0 - float(doc.metadata.distance)
+            # Convert cosine distance ∈ [0,2] -> normalized cosine similarity ∈ [0,1]
+            score = 1.0 - (float(doc.metadata.distance) / 2.0)
             if score < score_threshold:
                 continue
 
@@ -167,11 +171,15 @@ class WeaviateIndex(EmbeddingIndex):
         collection = self.client.collections.get(sanitized_collection_name)
 
         # Perform BM25 keyword search on chunk_content field
-        results = collection.query.bm25(
-            query=query_string,
-            limit=k,
-            return_metadata=wvc.query.MetadataQuery(score=True),
-        )
+        try:
+            results = collection.query.bm25(
+                query=query_string,
+                limit=k,
+                return_metadata=wvc.query.MetadataQuery(score=True),
+            )
+        except Exception as e:
+            log.error(f"Weaviate client keyword search failed: {e}")
+            raise
 
         chunks = []
         scores = []
@@ -229,14 +237,18 @@ class WeaviateIndex(EmbeddingIndex):
             rerank = HybridFusion.RELATIVE_SCORE
 
         # Perform hybrid search using Weaviate's native hybrid search
-        results = collection.query.hybrid(
-            query=query_string,
-            alpha=0.5,  # Range <0, 1>, where 0.5 will equally favor vector and keyword search
-            vector=embedding.tolist(),
-            limit=k,
-            fusion_type=rerank,
-            return_metadata=wvc.query.MetadataQuery(score=True),
-        )
+        try:
+            results = collection.query.hybrid(
+                query=query_string,
+                alpha=0.5,  # Range <0, 1>, where 0.5 will equally favor vector and keyword search
+                vector=embedding.tolist(),
+                limit=k,
+                fusion_type=rerank,
+                return_metadata=wvc.query.MetadataQuery(score=True),
+            )
+        except Exception as e:
+            log.error(f"Weaviate client hybrid search failed: {e}")
+            raise
 
         chunks = []
         scores = []
@@ -283,7 +295,7 @@ class WeaviateVectorIOAdapter(
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
-    def _get_client(self) -> weaviate.Client:
+    def _get_client(self) -> weaviate.WeaviateClient:
         if "localhost" in self.config.weaviate_cluster_url:
             log.info("using Weaviate locally in container")
             host, port = self.config.weaviate_cluster_url.split(":")
