@@ -284,7 +284,15 @@ async def instantiate_providers(
         if provider.provider_id is None:
             continue
 
-        deps = {a: impls[a] for a in provider.spec.api_dependencies}
+        try:
+            deps = {a: impls[a] for a in provider.spec.api_dependencies}
+        except KeyError as e:
+            missing_api = e.args[0]
+            raise RuntimeError(
+                f"Failed to resolve '{provider.spec.api.value}' provider '{provider.provider_id}' of type '{provider.spec.provider_type}': "
+                f"required dependency '{missing_api.value}' is not available. "
+                f"Please add a '{missing_api.value}' provider to your configuration or check if the provider is properly configured."
+            ) from e
         for a in provider.spec.optional_api_dependencies:
             if a in impls:
                 deps[a] = impls[a]
