@@ -40,17 +40,14 @@ The system patches OpenAI and Ollama client methods to intercept calls before th
 
 ### Storage Architecture
 
-Recordings use a two-tier storage system optimized for both speed and debuggability:
+Recordings are stored as JSON files in the recording directory. They are looked up by their request hash.
 
 ```
 recordings/
-├── index.sqlite          # Fast lookup by request hash
 └── responses/
     ├── abc123def456.json  # Individual response files
     └── def789ghi012.json
 ```
-
-**SQLite index** enables O(log n) hash lookups and metadata queries without loading response bodies.
 
 **JSON files** store complete request/response pairs in human-readable format for debugging.
 
@@ -166,8 +163,8 @@ This preserves type safety - when replayed, you get the same Pydantic objects wi
 Control recording behavior globally:
 
 ```bash
-export LLAMA_STACK_TEST_INFERENCE_MODE=replay
-export LLAMA_STACK_TEST_RECORDING_DIR=/path/to/recordings
+export LLAMA_STACK_TEST_INFERENCE_MODE=replay   # this is the default
+export LLAMA_STACK_TEST_RECORDING_DIR=/path/to/recordings   # default is tests/integration/recordings
 pytest tests/integration/
 ```
 

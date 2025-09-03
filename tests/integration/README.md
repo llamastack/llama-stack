@@ -98,29 +98,25 @@ pytest -s -v tests/integration/vector_io/ \
 
 The testing system supports three modes controlled by environment variables:
 
-### LIVE Mode (Default)
-Tests make real API calls:
+### REPLAY Mode (Default)
+Uses cached responses instead of making API calls:
 ```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=live pytest tests/integration/
+pytest tests/integration/
 ```
-
 ### RECORD Mode
 Captures API interactions for later replay:
 ```bash
 LLAMA_STACK_TEST_INFERENCE_MODE=record \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
 pytest tests/integration/inference/test_new_feature.py
 ```
 
-### REPLAY Mode
-Uses cached responses instead of making API calls:
+### LIVE Mode
+Tests make real API calls (but not recorded):
 ```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=replay \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
-pytest tests/integration/
+LLAMA_STACK_TEST_INFERENCE_MODE=live pytest tests/integration/
 ```
 
-Note that right now you must specify the recording directory. This is because different tests use different recording directories and we don't (yet) have a fool-proof way to map a test to a recording directory. We are working on this.
+By default, the recording directory is `tests/integration/recordings`. You can override this by setting the `LLAMA_STACK_TEST_RECORDING_DIR` environment variable.
 
 ## Managing Recordings
 
@@ -146,7 +142,6 @@ See the [main testing guide](../README.md#remote-re-recording-recommended) for f
 ```bash
 # Re-record specific tests
 LLAMA_STACK_TEST_INFERENCE_MODE=record \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
 pytest -s -v --stack-config=server:starter tests/integration/inference/test_modified.py
 ```
 
