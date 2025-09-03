@@ -457,7 +457,7 @@ def weaviate_vec_db_path(tmp_path_factory):
 
 
 @pytest.fixture
-async def weaviate_vec_index(weaviate_vec_db_path, embedding_dimension):
+async def weaviate_vec_index(weaviate_vec_db_path):
     import pytest_socket
     import weaviate
 
