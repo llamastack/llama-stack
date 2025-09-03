@@ -30,11 +30,11 @@ from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,
-    RERANKER_TYPE_WEIGHTED,
     ChunkForDeletion,
     EmbeddingIndex,
     VectorDBWithIndex,
 )
+from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
 logger = get_logger(name=__name__, category="vector_io")
 
@@ -64,59 +64,6 @@ def _create_sqlite_connection(db_path):
     sqlite_vec.load(connection)
     connection.enable_load_extension(False)
     return connection
-
-
-def _normalize_scores(scores: dict[str, float]) -> dict[str, float]:
-    """Normalize scores to [0,1] range using min-max normalization."""
-    if not scores:
-        return {}
-    min_score = min(scores.values())
-    max_score = max(scores.values())
-    score_range = max_score - min_score
-    if score_range > 0:
-        return {doc_id: (score - min_score) / score_range for doc_id, score in scores.items()}
-    return dict.fromkeys(scores, 1.0)
-
-
-def _weighted_rerank(
-    vector_scores: dict[str, float],
-    keyword_scores: dict[str, float],
-    alpha: float = 0.5,
-) -> dict[str, float]:
-    """ReRanker that uses weighted average of scores."""
-    all_ids = set(vector_scores.keys()) | set(keyword_scores.keys())
-    normalized_vector_scores = _normalize_scores(vector_scores)
-    normalized_keyword_scores = _normalize_scores(keyword_scores)
-
-    return {
-        doc_id: (alpha * normalized_keyword_scores.get(doc_id, 0.0))
-        + ((1 - alpha) * normalized_vector_scores.get(doc_id, 0.0))
-        for doc_id in all_ids
-    }
-
-
-def _rrf_rerank(
-    vector_scores: dict[str, float],
-    keyword_scores: dict[str, float],
-    impact_factor: float = 60.0,
-) -> dict[str, float]:
-    """ReRanker that uses Reciprocal Rank Fusion."""
-    # Convert scores to ranks
-    vector_ranks = {
-        doc_id: i + 1 for i, (doc_id, _) in enumerate(sorted(vector_scores.items(), key=lambda x: x[1], reverse=True))
-    }
-    keyword_ranks = {
-        doc_id: i + 1 for i, (doc_id, _) in enumerate(sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True))
-    }
-
-    all_ids = set(vector_scores.keys()) | set(keyword_scores.keys())
-    rrf_scores = {}
-    for doc_id in all_ids:
-        vector_rank = vector_ranks.get(doc_id, float("inf"))
-        keyword_rank = keyword_ranks.get(doc_id, float("inf"))
-        # RRF formula: score = 1/(k + r) where k is impact_factor and r is the rank
-        rrf_scores[doc_id] = (1.0 / (impact_factor + vector_rank)) + (1.0 / (impact_factor + keyword_rank))
-    return rrf_scores
 
 
 def _make_sql_identifier(name: str) -> str:
@@ -398,14 +345,10 @@ class SQLiteVecIndex(EmbeddingIndex):
             for chunk, score in zip(keyword_response.chunks, keyword_response.scores, strict=False)
         }
 
-        # Combine scores using the specified reranker
-        if reranker_type == RERANKER_TYPE_WEIGHTED:
-            alpha = reranker_params.get("alpha", 0.5)
-            combined_scores = _weighted_rerank(vector_scores, keyword_scores, alpha)
-        else:
-            # Default to RRF for None, RRF, or any unknown types
-            impact_factor = reranker_params.get("impact_factor", 60.0)
-            combined_scores = _rrf_rerank(vector_scores, keyword_scores, impact_factor)
+        # Combine scores using the reranking utility
+        combined_scores = WeightedInMemoryAggregator.combine_search_results(
+            vector_scores, keyword_scores, reranker_type, reranker_params
+        )
 
         # Sort by combined score and get top k results
         sorted_items = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)

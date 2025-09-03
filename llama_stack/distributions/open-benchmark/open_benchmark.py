@@ -43,7 +43,7 @@ def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderMo
             "openai",
             [
                 ProviderModelEntry(
-                    provider_model_id="openai/gpt-4o",
+                    provider_model_id="gpt-4o",
                     model_type=ModelType.llm,
                 )
             ],
@@ -53,7 +53,7 @@ def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderMo
             "anthropic",
             [
                 ProviderModelEntry(
-                    provider_model_id="anthropic/claude-3-5-sonnet-latest",
+                    provider_model_id="claude-3-5-sonnet-latest",
                     model_type=ModelType.llm,
                 )
             ],
@@ -207,13 +207,6 @@ def get_distribution_template() -> DistributionTemplate:
             ),
         ),
         DatasetInput(
-            dataset_id="bfcl",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/bfcl_v3?split=train",
-            ),
-        ),
-        DatasetInput(
             dataset_id="ifeval",
             purpose=DatasetPurpose.eval_messages_answer,
             source=URIDataSource(
@@ -249,11 +242,6 @@ def get_distribution_template() -> DistributionTemplate:
             benchmark_id="meta-reference-math-500",
             dataset_id="math_500",
             scoring_functions=["basic::regex_parser_math_response"],
-        ),
-        BenchmarkInput(
-            benchmark_id="meta-reference-bfcl",
-            dataset_id="bfcl",
-            scoring_functions=["basic::bfcl"],
         ),
         BenchmarkInput(
             benchmark_id="meta-reference-ifeval",

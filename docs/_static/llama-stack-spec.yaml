@@ -427,6 +427,58 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateOpenaiResponseRequest'
         required: true
+  /v1/prompts:
+    get:
+      responses:
+        '200':
+          description: >-
+            A ListPromptsResponse containing all prompts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPromptsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Prompts
+      description: List all prompts.
+      parameters: []
+    post:
+      responses:
+        '200':
+          description: The created Prompt resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Prompts
+      description: Create a new prompt.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePromptRequest'
+        required: true
   /v1/agents/{agent_id}:
     get:
       responses:
@@ -613,6 +665,103 @@ paths:
         - name: response_id
           in: path
           description: The ID of the OpenAI response to delete.
+          required: true
+          schema:
+            type: string
+  /v1/prompts/{prompt_id}:
+    get:
+      responses:
+        '200':
+          description: A Prompt resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Prompts
+      description: >-
+        Get a prompt by its identifier and optional version.
+      parameters:
+        - name: prompt_id
+          in: path
+          description: The identifier of the prompt to get.
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: query
+          description: >-
+            The version of the prompt to get (defaults to latest).
+          required: false
+          schema:
+            type: string
+    post:
+      responses:
+        '200':
+          description: >-
+            The updated Prompt resource with incremented version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Prompts
+      description: >-
+        Update an existing prompt (increments version).
+      parameters:
+        - name: prompt_id
+          in: path
+          description: The identifier of the prompt to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePromptRequest'
+        required: true
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Prompts
+      description: Delete a prompt.
+      parameters:
+        - name: prompt_id
+          in: path
+          description: The identifier of the prompt to delete.
           required: true
           schema:
             type: string
@@ -2933,6 +3082,10 @@ paths:
         - file: The File object (not file name) to be uploaded.
 
         - purpose: The intended purpose of the uploaded file.
+
+        - expires_after: Optional form values describing expiration for the file.
+        Expected expires_after[anchor] = "created_at", expires_after[seconds] = <int>.
+        Seconds must be between 3600 and 2592000 (1 hour to 30 days).
       parameters: []
       requestBody:
         content:
@@ -2945,9 +3098,19 @@ paths:
                   format: binary
                 purpose:
                   $ref: '#/components/schemas/OpenAIFilePurpose'
+                expires_after_anchor:
+                  oneOf:
+                    - type: string
+                    - type: 'null'
+                expires_after_seconds:
+                  oneOf:
+                    - type: integer
+                    - type: 'null'
               required:
                 - file
                 - purpose
+                - expires_after_anchor
+                - expires_after_seconds
         required: true
   /v1/openai/v1/models:
     get:
@@ -3531,6 +3694,43 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ScoreBatchRequest'
+        required: true
+  /v1/prompts/{prompt_id}/default-version:
+    post:
+      responses:
+        '200':
+          description: >-
+            The prompt with the specified version now set as default.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Prompts
+      description: >-
+        Set which version of a prompt should be the default in get_prompt (latest).
+      parameters:
+        - name: prompt_id
+          in: path
+          description: The identifier of the prompt.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetDefaultVersionRequest'
         required: true
   /v1/post-training/supervised-fine-tune:
     post:
@@ -7134,6 +7334,53 @@ components:
         - type
       title: >-
         OpenAIResponseObjectStreamResponseWebSearchCallSearching
+    CreatePromptRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: >-
+            The prompt text content with variable placeholders.
+        variables:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            Dictionary of variable names to their default values.
+      additionalProperties: false
+      required:
+        - prompt
+      title: CreatePromptRequest
+    Prompt:
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: >-
+            The system prompt text with variable placeholders. Variables are only
+            supported when using the Responses API.
+        version:
+          type: string
+          description: >-
+            Version string (integer start at 1 cast as string, incremented on save)
+        prompt_id:
+          type: string
+          description: >-
+            Unique identifier formatted as 'pmpt_<48-digit-hash>'
+        variables:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            Dictionary of prompt variable names and values
+      additionalProperties: false
+      required:
+        - version
+        - prompt_id
+      title: Prompt
+      description: >-
+        A prompt resource representing a stored OpenAI Compatible prompt template
+        in Llama Stack.
     OpenAIDeleteResponseObject:
       type: object
       properties:
@@ -7607,6 +7854,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: benchmark
           default: benchmark
           description: The resource type, always benchmark
@@ -8093,6 +8341,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: dataset
           default: dataset
           description: >-
@@ -8205,6 +8454,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: model
           default: model
           description: >-
@@ -8396,6 +8646,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: scoring_function
           default: scoring_function
           description: >-
@@ -8472,6 +8723,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: shield
           default: shield
           description: The resource type, always shield
@@ -8651,6 +8903,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: tool
           default: tool
           description: Type of resource, always 'tool'
@@ -8709,6 +8962,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: tool_group
           default: tool_group
           description: Type of resource, always 'tool_group'
@@ -8937,6 +9191,7 @@ components:
             - benchmark
             - tool
             - tool_group
+            - prompt
           const: vector_db
           default: vector_db
           description: >-
@@ -9563,6 +9818,18 @@ components:
       title: OpenAIResponseObjectWithInput
       description: >-
         OpenAI response object extended with input context information.
+    ListPromptsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prompt'
+      additionalProperties: false
+      required:
+        - data
+      title: ListPromptsResponse
+      description: Response model to list prompts.
     ListProvidersResponse:
       type: object
       properties:
@@ -12708,6 +12975,16 @@ components:
       title: ScoreBatchResponse
       description: >-
         Response from batch scoring operations on datasets.
+    SetDefaultVersionRequest:
+      type: object
+      properties:
+        version:
+          type: string
+          description: The version to set as default.
+      additionalProperties: false
+      required:
+        - version
+      title: SetDefaultVersionRequest
     AlgorithmConfig:
       oneOf:
         - $ref: '#/components/schemas/LoraFinetuningConfig'
@@ -12904,6 +13181,22 @@ components:
       description: >-
         Response from the synthetic data generation. Batch of (prompt, response, score)
         tuples that pass the threshold.
+    UpdatePromptRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: The updated prompt text content.
+        variables:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            Updated dictionary of variable names to their default values.
+      additionalProperties: false
+      required:
+        - prompt
+      title: UpdatePromptRequest
     VersionInfo:
       type: object
       properties:
@@ -13015,6 +13308,9 @@ tags:
   - name: Inspect
   - name: Models
   - name: PostTraining (Coming Soon)
+  - name: Prompts
+    x-displayName: >-
+      Protocol for prompt management operations.
   - name: Providers
     x-displayName: >-
       Providers API for inspecting, listing, and modifying providers and their configurations.
@@ -13042,6 +13338,7 @@ x-tagGroups:
       - Inspect
       - Models
       - PostTraining (Coming Soon)
+      - Prompts
       - Providers
       - Safety
       - Scoring

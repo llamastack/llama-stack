@@ -20,34 +20,2280 @@
       "options": {
         "temperature": 0.0
       },
-      "stream": false
+      "stream": true
     },
     "endpoint": "/api/chat",
     "model": "llama3.2-vision:11b"
   },
   "response": {
-    "body": {
-      "__type__": "ollama._types.ChatResponse",
-      "__data__": {
-        "model": "llama3.2-vision:11b",
-        "created_at": "2025-08-01T00:06:12.068973125Z",
-        "done": true,
-        "done_reason": "stop",
-        "total_duration": 44793549354,
-        "load_duration": 51960915,
-        "prompt_eval_count": 18,
-        "prompt_eval_duration": 579363429,
-        "eval_count": 110,
-        "eval_duration": 44156162976,
-        "message": {
-          "role": "assistant",
-          "content": "The image features a close-up of a golden retriever puppy, with its mouth open and tongue out, as if it is smiling or panting. The puppy's fur is a light golden color, and its ears are floppy and hanging down on either side of its head. The background of the image is blurred, but it appears to be a natural setting, possibly a field or a park, with a greenish-yellow color. The overall atmosphere of the image is one of happiness and playfulness, as the puppy seems to be enjoying itself.",
-          "thinking": null,
-          "images": null,
-          "tool_calls": null
+    "body": [
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.358461Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": "The",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.416981Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " image",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.477481Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " features",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.53807Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " a",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.59701Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " close",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.655848Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": "-up",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.715363Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " of",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.773865Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " a",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.832338Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " golden",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.890824Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " retrie",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:22.949237Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": "ver",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.008374Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " puppy",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.066921Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ",",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.125544Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " with",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.184923Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " its",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.244278Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " mouth",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.303383Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " open",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.36246Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " and",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.421703Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " tongue",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.481027Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " out",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.540282Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ",",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.59938Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " as",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.658742Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " if",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.718569Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " it",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.777758Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " is",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.836924Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " pant",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.896332Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": "ing",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:23.955491Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " or",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.014861Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " b",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.074933Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": "arking",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.133301Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ".",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.192664Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " The",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.251448Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " puppy",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.310083Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": "'s",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.369218Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " fur",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.42843Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " is",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.487403Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " a",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.547118Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " light",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.606557Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " golden",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.665594Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " color",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.725305Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ",",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.784482Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " and",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.843771Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " its",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.903031Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " eyes",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:24.962328Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " are",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.022265Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " dark",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.081666Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " brown",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.140962Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ".",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.200015Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " The",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.259212Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " background",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.318509Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " of",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.377923Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " the",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.436963Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " image",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.4958Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " is",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.554502Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " blurred",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.613841Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ",",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.673643Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " but",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.733099Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " it",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.792667Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " appears",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.853133Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " to",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.912402Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " be",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:25.971501Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " a",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.031043Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " natural",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.090781Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " setting",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.150238Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ",",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.209744Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " possibly",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.269231Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " a",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.328953Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " park",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.38859Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " or",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.44816Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " a",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.507848Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " field",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.567611Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ".",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.627394Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " The",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.688384Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " overall",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.750165Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " atmosphere",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.809389Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " of",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.868745Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " the",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.928602Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " image",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:26.988568Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " is",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.04809Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " one",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.107359Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " of",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.16686Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " play",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.226135Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": "fulness",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.285472Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " and",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.344933Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " energy",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.404492Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ",",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.463561Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " as",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.523445Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " the",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.582168Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " puppy",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.641388Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " seems",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.70213Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " to",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.761774Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " be",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.821071Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " in",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.880307Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " the",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.939228Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " midst",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:27.998568Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " of",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:28.057651Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " an",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:28.117008Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " activity",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:28.176556Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " or",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:28.235557Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " play",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:28.295066Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": " session",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:28.354418Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "message": {
+            "role": "assistant",
+            "content": ".",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
+        }
+      },
+      {
+        "__type__": "ollama._types.ChatResponse",
+        "__data__": {
+          "model": "llama3.2-vision:11b",
+          "created_at": "2025-09-03T17:54:28.413798Z",
+          "done": true,
+          "done_reason": "stop",
+          "total_duration": 6299752375,
+          "load_duration": 103264083,
+          "prompt_eval_count": 18,
+          "prompt_eval_duration": 135920375,
+          "eval_count": 103,
+          "eval_duration": 6055836667,
+          "message": {
+            "role": "assistant",
+            "content": "",
+            "thinking": null,
+            "images": null,
+            "tool_calls": null
+          }
         }
       }
-    },
-    "is_streaming": false
+    ],
+    "is_streaming": true
   }
 }

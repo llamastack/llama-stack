@@ -19,6 +19,7 @@ class ResourceType(StrEnum):
     benchmark = "benchmark"
     tool = "tool"
     tool_group = "tool_group"
+    prompt = "prompt"
 
 
 class Resource(BaseModel):
