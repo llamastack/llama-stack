@@ -167,6 +167,24 @@ models:
   provider_id: nvidia
   provider_model_id: snowflake/arctic-embed-l
   model_type: embedding
+- metadata:
+    endpoint: https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking
+  model_id: nv-rerank-qa-mistral-4b:1
+  provider_id: nvidia
+  provider_model_id: nv-rerank-qa-mistral-4b:1
+  model_type: rerank
+- metadata:
+    endpoint: https://ai.api.nvidia.com/v1/retrieval/nvidia/nv-rerankqa-mistral-4b-v3/reranking
+  model_id: nvidia/nv-rerankqa-mistral-4b-v3
+  provider_id: nvidia
+  provider_model_id: nvidia/nv-rerankqa-mistral-4b-v3
+  model_type: rerank
+- metadata:
+    endpoint: https://ai.api.nvidia.com/v1/retrieval/nvidia/llama-3_2-nv-rerankqa-1b-v2/reranking
+  model_id: nvidia/llama-3.2-nv-rerankqa-1b-v2
+  provider_id: nvidia
+  provider_model_id: nvidia/llama-3.2-nv-rerankqa-1b-v2
+  model_type: rerank
 shields: []
 vector_dbs: []
 datasets: []
