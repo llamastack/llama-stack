@@ -44,8 +44,13 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
     Order,
+    RerankResponse,
     StopReason,
     ToolPromptFormat,
+)
+from llama_stack.apis.inference.inference import (
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
 )
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.apis.telemetry import MetricEvent, MetricInResponse, Telemetry
@@ -181,6 +186,23 @@ class InferenceRouter(Inference):
         if model.model_type != expected_model_type:
             raise ModelTypeError(model_id, model.model_type, expected_model_type)
         return model
+
+    async def rerank(
+        self,
+        model: str,
+        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
+        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
+        max_num_results: int | None = None,
+    ) -> RerankResponse:
+        logger.debug(f"InferenceRouter.rerank: {model}")
+        model_obj = await self._get_model(model, ModelType.rerank)
+        provider = await self.routing_table.get_provider_impl(model_obj.identifier)
+        return await provider.rerank(
+            model=model_obj.identifier,
+            query=query,
+            items=items,
+            max_num_results=max_num_results,
+        )
 
     async def openai_completion(
         self,
