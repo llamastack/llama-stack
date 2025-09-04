@@ -8578,6 +8578,7 @@ components:
       enum:
         - llm
         - embedding
+        - rerank
       title: ModelType
       description: >-
         Enumeration of supported model types in Llama Stack.
@@ -12732,7 +12733,8 @@ components:
         model:
           type: string
           description: >-
-            The identifier of the reranking model to use.
+            The identifier of the reranking model to use. The model must be a reranking
+            model registered with Llama Stack and available via the /models endpoint.
         query:
           oneOf:
             - type: string
