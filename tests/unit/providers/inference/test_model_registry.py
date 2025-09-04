@@ -15,9 +15,9 @@ class TestProviderDataValidator(BaseModel):
     test_api_key: str | None = Field(default=None)
 
 MODEL_ENTRIES_WITHOUT_ALIASES = [
-        ProviderModelEntry(model_type=ModelType.llm, provider_model_id="test-llm-model", aliases=[]),
-        ProviderModelEntry(model_type=ModelType.embedding, provider_model_id="test-text-embedding-model", aliases=[], metadata={"embedding_dimension": 1536, "context_length": 8192}),
-    ]
+    ProviderModelEntry(model_type=ModelType.llm, provider_model_id="test-llm-model", aliases=[]),
+    ProviderModelEntry(model_type=ModelType.embedding, provider_model_id="test-text-embedding-model", aliases=[], metadata={"embedding_dimension": 1536, "context_length": 8192}),
+]
 
 class TestLiteLLMAdapterWithModelEntries(LiteLLMOpenAIMixin):
     def __init__(self, config: TestConfig):
@@ -38,7 +38,6 @@ def adapter_with_model_entries():
 
     return adapter
 
-
 async def test_model_types_are_correct(adapter_with_model_entries):
     """Test that model types are correct"""
     model_entries = adapter_with_model_entries.model_entries
@@ -54,4 +53,20 @@ async def test_model_types_are_correct(adapter_with_model_entries):
 
     embedding_models = [m for m in models if m.model_type == ModelType.embedding]
     assert len(embedding_models) == len(embedding_model_entries)
+
+def test_embedding_metadata_is_required():
+    with pytest.raises(ValueError):
+        entry1 = ProviderModelEntry(
+            model_type=ModelType.embedding,
+            provider_model_id="test-text-embedding-model",
+            aliases=[],
+            metadata={}
+        )
     
+    entry2 = ProviderModelEntry(
+        model_type=ModelType.embedding,
+        provider_model_id="test-text-embedding-model",
+        aliases=[],
+        metadata={"embedding_dimension": 1536}
+    )
+    assert entry2.metadata["embedding_dimension"] == 1536
