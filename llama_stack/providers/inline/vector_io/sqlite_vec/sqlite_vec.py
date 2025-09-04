@@ -109,7 +109,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 # Create the virtual table for embeddings.
                 cur.execute(f"""
                     CREATE VIRTUAL TABLE IF NOT EXISTS [{self.vector_table}]
-                    USING vec0(embedding FLOAT[{self.dimension}], id TEXT);
+                    USING vec0(embedding FLOAT[{self.dimension}] distance_metric=cosine, id TEXT);
                 """)
                 connection.commit()
                 # FTS5 table (for keyword search) - creating both the tables by default. Will use the relevant one
@@ -224,6 +224,9 @@ class SQLiteVecIndex(EmbeddingIndex):
         """
         Performs vector-based search using a virtual table for vector similarity.
         """
+        logger.info(
+            f"SQLITE-VEC VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
+        )
 
         def _execute_query():
             connection = _create_sqlite_connection(self.db_path)
@@ -248,7 +251,10 @@ class SQLiteVecIndex(EmbeddingIndex):
         chunks, scores = [], []
         for row in rows:
             _id, chunk_json, distance = row
-            score = 1.0 / distance if distance != 0 else float("inf")
+            distance = float(distance)
+            # Cosine distance range [0,2] -> normalized to [0,1]
+            score = 1.0 - (distance / 2.0)
+            logger.info(f"Computed score {score} from distance {distance} for chunk id {_id}")
             if score < score_threshold:
                 continue
             try:
@@ -258,6 +264,8 @@ class SQLiteVecIndex(EmbeddingIndex):
                 continue
             chunks.append(chunk)
             scores.append(score)
+
+        logger.info(f"SQLITE-VEC VECTOR SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_keyword(

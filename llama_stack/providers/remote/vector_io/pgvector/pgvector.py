@@ -39,7 +39,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryA
 
 from .config import PGVectorVectorIOConfig
 
-log = get_logger(name=__name__, category="vector_io::pgvector")
+logger = get_logger(name=__name__, category="vector_io::pgvector")
 
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_dbs:pgvector:{VERSION}::"
@@ -132,7 +132,7 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
         except Exception as e:
-            log.exception(f"Error creating PGVectorIndex for vector_db: {self.vector_db.identifier}")
+            logger.exception(f"Error creating PGVectorIndex for vector_db: {self.vector_db.identifier}")
             raise RuntimeError(f"Error creating PGVectorIndex for vector_db: {self.vector_db.identifier}") from e
 
     async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
@@ -179,6 +179,9 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
+        logger.info(
+            f"PGVECTOR VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
+        )
         pgvector_search_function = self.get_pgvector_search_function()
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
@@ -196,12 +199,15 @@ class PGVectorIndex(EmbeddingIndex):
             chunks = []
             scores = []
             for doc, dist in results:
-                score = 1.0 / float(dist) if dist != 0 else float("inf")
+                # Cosine distance range [0,2] -> normalized to [0,1]
+                score = 1.0 - (float(dist) / 2.0)
+                logger.info(f"Computed score {score} from distance {dist}")
                 if score < score_threshold:
                     continue
                 chunks.append(Chunk(**doc))
                 scores.append(score)
 
+            logger.info(f"PGVECTOR VECTOR SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
             return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_keyword(
@@ -356,7 +362,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:
-        log.info(f"Initializing PGVector memory adapter with config: {self.config}")
+        logger.info(f"Initializing PGVector memory adapter with config: {self.config}")
         self.kvstore = await kvstore_impl(self.config.kvstore)
         await self.initialize_openai_vector_stores()
 
@@ -372,7 +378,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
             with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 version = check_extension_version(cur)
                 if version:
-                    log.info(f"Vector extension version: {version}")
+                    logger.info(f"Vector extension version: {version}")
                 else:
                     raise RuntimeError("Vector extension is not installed.")
 
@@ -385,13 +391,13 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
                 """
                 )
         except Exception as e:
-            log.exception("Could not connect to PGVector database server")
+            logger.exception("Could not connect to PGVector database server")
             raise RuntimeError("Could not connect to PGVector database server") from e
 
     async def shutdown(self) -> None:
         if self.conn is not None:
             self.conn.close()
-            log.info("Connection to PGVector database server closed")
+            logger.info("Connection to PGVector database server closed")
 
     async def register_vector_db(self, vector_db: VectorDB) -> None:
         # Persist vector DB metadata in the KV store
