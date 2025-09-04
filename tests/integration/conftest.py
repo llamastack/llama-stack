@@ -30,6 +30,8 @@ def pytest_runtest_makereport(item, call):
 def pytest_sessionstart(session):
     # stop macOS from complaining about duplicate OpenMP libraries
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+    if "LLAMA_STACK_TEST_INFERENCE_MODE" not in os.environ:
+        os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = "replay"
 
 
 def pytest_runtest_teardown(item):

@@ -105,12 +105,12 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
 
         method = getattr(impls[api], register_method)
         for obj in objects:
-            logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
-
-            # Do not register models on disabled providers
-            if hasattr(obj, "provider_id") and (not obj.provider_id or obj.provider_id == "__disabled__"):
-                logger.debug(f"Skipping {rsrc.capitalize()} registration for disabled provider.")
-                continue
+            if hasattr(obj, "provider_id"):
+                # Do not register models on disabled providers
+                if not obj.provider_id or obj.provider_id == "__disabled__":
+                    logger.debug(f"Skipping {rsrc.capitalize()} registration for disabled provider.")
+                    continue
+                logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
             # we want to maintain the type information in arguments to method.
             # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
@@ -225,7 +225,10 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
 
         try:
             result = re.sub(pattern, get_env_var, config)
-            return _convert_string_to_proper_type(result)
+            # Only apply type conversion if substitution actually happened
+            if result != config:
+                return _convert_string_to_proper_type(result)
+            return result
         except EnvVarError as e:
             raise EnvVarError(e.var_name, e.path) from None
 

@@ -140,13 +140,6 @@ THIS_DIR=$(dirname "$0")
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
 
-# Set recording directory
-if [[ "$RUN_VISION_TESTS" == "true" ]]; then
-    export LLAMA_STACK_TEST_RECORDING_DIR="tests/integration/recordings/vision"
-else
-    export LLAMA_STACK_TEST_RECORDING_DIR="tests/integration/recordings"
-fi
-
 # check if "llama" and "pytest" are available. this script does not use `uv run` given
 # it can be used in a pre-release environment where we have not been able to tell
 # uv about pre-release dependencies properly (yet).
@@ -297,6 +290,13 @@ echo ""
 echo "=== System Resources After Tests ==="
 free -h 2>/dev/null || echo "free command not available"
 df -h
+
+# stop server
+if [[ "$STACK_CONFIG" == *"server:"* ]]; then
+    echo "Stopping Llama Stack Server..."
+    kill $(lsof -i :8321 | awk 'NR>1 {print $2}')
+    echo "Llama Stack Server stopped"
+fi
 
 echo ""
 echo "=== Integration Tests Complete ==="

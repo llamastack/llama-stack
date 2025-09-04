@@ -13,7 +13,7 @@ from llama_stack.providers.datatypes import AdapterSpec, Api, InlineProviderSpec
 # The CPU version is used for distributions that don't have GPU support -- they result in smaller container images.
 torchtune_def = dict(
     api=Api.post_training,
-    pip_packages=["torchtune==0.5.0", "torchao==0.8.0", "numpy"],
+    pip_packages=["numpy"],
     module="llama_stack.providers.inline.post_training.torchtune",
     config_class="llama_stack.providers.inline.post_training.torchtune.TorchtunePostTrainingConfig",
     api_dependencies=[
@@ -23,56 +23,39 @@ torchtune_def = dict(
     description="TorchTune-based post-training provider for fine-tuning and optimizing models using Meta's TorchTune framework.",
 )
 
-huggingface_def = dict(
-    api=Api.post_training,
-    pip_packages=["trl", "transformers", "peft", "datasets"],
-    module="llama_stack.providers.inline.post_training.huggingface",
-    config_class="llama_stack.providers.inline.post_training.huggingface.HuggingFacePostTrainingConfig",
-    api_dependencies=[
-        Api.datasetio,
-        Api.datasets,
-    ],
-    description="HuggingFace-based post-training provider for fine-tuning models using the HuggingFace ecosystem.",
-)
-
 
 def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
-            **{
+            **{  # type: ignore
                 **torchtune_def,
                 "provider_type": "inline::torchtune-cpu",
                 "pip_packages": (
                     cast(list[str], torchtune_def["pip_packages"])
-                    + ["torch torchtune==0.5.0 torchao==0.8.0 --index-url https://download.pytorch.org/whl/cpu"]
+                    + ["torch torchtune>=0.5.0 torchao>=0.12.0 --extra-index-url https://download.pytorch.org/whl/cpu"]
                 ),
             },
         ),
         InlineProviderSpec(
-            **{
-                **huggingface_def,
-                "provider_type": "inline::huggingface-cpu",
-                "pip_packages": (
-                    cast(list[str], huggingface_def["pip_packages"])
-                    + ["torch --index-url https://download.pytorch.org/whl/cpu"]
-                ),
-            },
-        ),
-        InlineProviderSpec(
-            **{
+            **{  # type: ignore
                 **torchtune_def,
                 "provider_type": "inline::torchtune-gpu",
                 "pip_packages": (
-                    cast(list[str], torchtune_def["pip_packages"]) + ["torch torchtune==0.5.0 torchao==0.8.0"]
+                    cast(list[str], torchtune_def["pip_packages"]) + ["torch torchtune>=0.5.0 torchao>=0.12.0"]
                 ),
             },
         ),
         InlineProviderSpec(
-            **{
-                **huggingface_def,
-                "provider_type": "inline::huggingface-gpu",
-                "pip_packages": (cast(list[str], huggingface_def["pip_packages"]) + ["torch"]),
-            },
+            api=Api.post_training,
+            provider_type="inline::huggingface-gpu",
+            pip_packages=["trl", "transformers", "peft", "datasets", "torch"],
+            module="llama_stack.providers.inline.post_training.huggingface",
+            config_class="llama_stack.providers.inline.post_training.huggingface.HuggingFacePostTrainingConfig",
+            api_dependencies=[
+                Api.datasetio,
+                Api.datasets,
+            ],
+            description="HuggingFace-based post-training provider for fine-tuning models using the HuggingFace ecosystem.",
         ),
         remote_provider_spec(
             api=Api.post_training,

@@ -17,6 +17,6 @@ def get_distribution_template() -> DistributionTemplate:
     template.description = "Quick start template for running Llama Stack with several popular providers. This distribution is intended for GPU-enabled environments."
 
     template.providers["post_training"] = [
-        BuildProvider(provider_type="inline::torchtune-gpu"),
+        BuildProvider(provider_type="inline::huggingface-gpu"),
     ]
     return template

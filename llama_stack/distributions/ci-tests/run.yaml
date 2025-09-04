@@ -156,13 +156,10 @@ providers:
       sqlite_db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/trace_store.db
       otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
   post_training:
-  - provider_id: huggingface-cpu
-    provider_type: inline::huggingface-cpu
+  - provider_id: torchtune-cpu
+    provider_type: inline::torchtune-cpu
     config:
-      checkpoint_format: huggingface
-      distributed_backend: null
-      device: cpu
-      dpo_output_dir: ~/.llama/distributions/ci-tests/dpo_output
+      checkpoint_format: meta
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference

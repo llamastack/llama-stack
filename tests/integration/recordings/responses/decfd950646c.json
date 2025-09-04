@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:11434/v1/v1/chat/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -44,32 +44,22 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-620",
+          "id": "chatcmpl-202",
           "choices": [
             {
               "delta": {
-                "content": "",
+                "content": "{\"name\":\"get_weather\",\"parameters{\"key\"]=\"Tokyo\"}}",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
-                "tool_calls": [
-                  {
-                    "index": 0,
-                    "id": "call_490d5ur7",
-                    "function": {
-                      "arguments": "{\"city\":\"Tokyo\"}",
-                      "name": "get_weather"
-                    },
-                    "type": "function"
-                  }
-                ]
+                "tool_calls": null
               },
               "finish_reason": null,
               "index": 0,
               "logprobs": null
             }
           ],
-          "created": 1755228972,
+          "created": 1756921363,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -80,7 +70,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-620",
+          "id": "chatcmpl-202",
           "choices": [
             {
               "delta": {
@@ -90,12 +80,12 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "tool_calls",
+              "finish_reason": "stop",
               "index": 0,
               "logprobs": null
             }
           ],
-          "created": 1755228972,
+          "created": 1756921363,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

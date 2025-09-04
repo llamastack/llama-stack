@@ -17,6 +17,7 @@ Weaviate supports:
 - Metadata filtering
 - Multi-modal retrieval
 
+
 ## Usage
 
 To use Weaviate in your Llama Stack project, follow these steps:

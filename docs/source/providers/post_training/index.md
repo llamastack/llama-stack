@@ -9,7 +9,6 @@ This section contains documentation for all available providers for the **post_t
 ```{toctree}
 :maxdepth: 1
 
-inline_huggingface-cpu
 inline_huggingface-gpu
 inline_torchtune-cpu
 inline_torchtune-gpu
