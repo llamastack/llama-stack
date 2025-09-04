@@ -86,7 +86,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/templates/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
+        files: ^llama_stack/distributions/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
       - id: provider-codegen
         name: Provider Codegen
         additional_dependencies:
