@@ -132,9 +132,9 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
             },
         )
     elif isinstance(exc, ConflictError):
-        return HTTPException(status_code=409, detail=str(exc))
+        return HTTPException(status_code=httpx.codes.CONFLICT, detail=str(exc))
     elif isinstance(exc, ResourceNotFoundError):
-        return HTTPException(status_code=404, detail=str(exc))
+        return HTTPException(status_code=httpx.codes.NOT_FOUND, detail=str(exc))
     elif isinstance(exc, ValueError):
         return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=f"Invalid value: {str(exc)}")
     elif isinstance(exc, BadRequestError):
