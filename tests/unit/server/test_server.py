@@ -113,6 +113,15 @@ class TestTranslateException:
         assert result.status_code == 504
         assert result.detail == "Operation timed out: "
 
+    def test_translate_connection_error(self):
+        """Test that ConnectionError is translated to 502 HTTP status."""
+        exc = ConnectionError("Failed to connect to MCP server at http://localhost:9999/sse: Connection refused")
+        result = translate_exception(exc)
+
+        assert isinstance(result, HTTPException)
+        assert result.status_code == 502
+        assert result.detail == "Failed to connect to MCP server at http://localhost:9999/sse: Connection refused"
+
     def test_translate_not_implemented_error(self):
         """Test that NotImplementedError is translated to 501 HTTP status."""
         exc = NotImplementedError("Not implemented")

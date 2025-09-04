@@ -527,7 +527,7 @@ class InferenceRouter(Inference):
 
         # Store the response with the ID that will be returned to the client
         if self.store:
-            await self.store.store_chat_completion(response, messages)
+            asyncio.create_task(self.store.store_chat_completion(response, messages))
 
         if self.telemetry:
             metrics = self._construct_metrics(
@@ -755,7 +755,7 @@ class InferenceRouter(Inference):
                             choices_data[idx] = {
                                 "content_parts": [],
                                 "tool_calls_builder": {},
-                                "finish_reason": None,
+                                "finish_reason": "stop",
                                 "logprobs_content_parts": [],
                             }
                         current_choice_data = choices_data[idx]
@@ -855,4 +855,4 @@ class InferenceRouter(Inference):
                     object="chat.completion",
                 )
                 logger.debug(f"InferenceRouter.completion_response: {final_response}")
-                await self.store.store_chat_completion(final_response, messages)
+                asyncio.create_task(self.store.store_chat_completion(final_response, messages))

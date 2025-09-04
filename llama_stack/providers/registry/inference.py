@@ -116,7 +116,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter=AdapterSpec(
                 adapter_type="fireworks",
                 pip_packages=[
-                    "fireworks-ai<=0.18.0",
+                    "fireworks-ai<=0.17.16",
                 ],
                 module="llama_stack.providers.remote.inference.fireworks",
                 config_class="llama_stack.providers.remote.inference.fireworks.FireworksImplConfig",
