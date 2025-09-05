@@ -47,21 +47,12 @@ class VectorDBsRoutingTable(CommonRoutingTableImpl, VectorDBs):
         self,
         vector_db_id: str,
         embedding_model: str,
+        provider_id: str,
         embedding_dimension: int | None = 384,
-        provider_id: str | None = None,
         provider_vector_db_id: str | None = None,
         vector_db_name: str | None = None,
     ) -> VectorDB:
         provider_vector_db_id = provider_vector_db_id or vector_db_id
-        if provider_id is None:
-            if len(self.impls_by_provider_id) > 0:
-                provider_id = list(self.impls_by_provider_id.keys())[0]
-                if len(self.impls_by_provider_id) > 1:
-                    logger.warning(
-                        f"No provider specified and multiple providers available. Arbitrarily selected the first provider {provider_id}."
-                    )
-            else:
-                raise ValueError("No provider available. Please configure a vector_io provider.")
         model = await lookup_model(self, embedding_model)
         if model is None:
             raise ModelNotFoundError(embedding_model)
