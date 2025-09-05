@@ -281,7 +281,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
                     for ranking in rankings:
                         rerank_data.append(RerankData(index=ranking["index"], relevance_score=ranking["logit"]))
 
-                    # Apply max_num_results limit if specified
+                    # Apply max_num_results limit
                     if max_num_results is not None:
                         rerank_data = rerank_data[:max_num_results]
 
