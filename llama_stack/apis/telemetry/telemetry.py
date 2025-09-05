@@ -91,6 +91,21 @@ class EventType(Enum):
 
 
 @json_schema_type
+class MetricType(Enum):
+    """The type of metric being recorded.
+    :cvar COUNTER: A counter metric that only increases (e.g., requests_total)
+    :cvar UP_DOWN_COUNTER: A counter that can increase or decrease (e.g., active_connections)
+    :cvar HISTOGRAM: A histogram metric for measuring distributions (e.g., request_duration_seconds)
+    :cvar GAUGE: A gauge metric for point-in-time values (e.g., cpu_usage_percent)
+    """
+
+    COUNTER = "counter"
+    UP_DOWN_COUNTER = "up_down_counter"
+    HISTOGRAM = "histogram"
+    GAUGE = "gauge"
+
+
+@json_schema_type
 class LogSeverity(Enum):
     """The severity level of a log message.
     :cvar VERBOSE: Detailed diagnostic information for troubleshooting
@@ -143,12 +158,14 @@ class MetricEvent(EventCommon):
     :param metric: The name of the metric being measured
     :param value: The numeric value of the metric measurement
     :param unit: The unit of measurement for the metric value
+    :param metric_type: The type of metric (optional, inferred if not provided for backwards compatibility)
     """
 
     type: Literal[EventType.METRIC] = EventType.METRIC
     metric: str  # this would be an enum
     value: int | float
     unit: str
+    metric_type: MetricType | None = None
 
 
 @json_schema_type
