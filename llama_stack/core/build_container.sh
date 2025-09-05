@@ -23,6 +23,9 @@ RUN_CONFIG_PATH=/app/run.yaml
 
 BUILD_CONTEXT_DIR=$(pwd)
 
+# Placeholder for template files
+TEMPLATE_FILES=()
+
 set -euo pipefail
 
 # Define color codes
@@ -263,6 +266,19 @@ EOF
   add_to_container << EOF
 COPY run.yaml $RUN_CONFIG_PATH
 EOF
+# This is a template, we don't need to copy the run config but we still want to include potential
+# other run files like -with-postgres-store.yaml or -with-safety.yaml
+else
+  template_files=$(find "$BUILD_CONTEXT_DIR"/llama_stack/distributions/"$distro_or_config" -name "*.yaml" -not -name "run.yaml" -not -name "build.yaml")
+  echo "Copying template files: $template_files"
+  for file in $template_files; do
+    template_file_name=$(basename "$file")
+    TEMPLATE_FILES+=("$template_file_name")
+    cp "$file" "$BUILD_CONTEXT_DIR/$template_file_name"
+    add_to_container << EOF
+COPY $template_file_name /app/$template_file_name
+EOF
+  done
 fi
 
 stack_mount="/app/llama-stack-source"
@@ -324,14 +340,19 @@ fi
 RUN pip uninstall -y uv
 EOF
 
-# If a run config is provided, we use the --config flag
+# Copy the entrypoint script to build context and then into the container
+cp llama_stack/core/entrypoint.sh "$BUILD_CONTEXT_DIR/entrypoint.sh"
+add_to_container << EOF
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+EOF
 if [[ -n "$run_config" ]]; then
   add_to_container << EOF
-ENTRYPOINT ["python", "-m", "llama_stack.core.server.server", "$RUN_CONFIG_PATH"]
+ENTRYPOINT ["/app/entrypoint.sh", "$RUN_CONFIG_PATH"]
 EOF
 elif [[ "$distro_or_config" != *.yaml ]]; then
   add_to_container << EOF
-ENTRYPOINT ["python", "-m", "llama_stack.core.server.server", "$distro_or_config"]
+ENTRYPOINT ["/app/entrypoint.sh", "$distro_or_config"]
 EOF
 fi
 
@@ -404,7 +425,8 @@ $CONTAINER_BINARY build \
   "$BUILD_CONTEXT_DIR"
 
 # clean up tmp/configs
-rm -rf "$BUILD_CONTEXT_DIR/run.yaml" "$TEMP_DIR"
+rm -rf "$BUILD_CONTEXT_DIR/run.yaml" "$BUILD_CONTEXT_DIR/entrypoint.sh" "$TEMP_DIR" "${TEMPLATE_FILES[@]}"
+
 set +x
 
 echo "Success!"
