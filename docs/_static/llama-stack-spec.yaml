@@ -2699,6 +2699,142 @@ paths:
           required: true
           schema:
             type: string
+  /v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/chunks/{chunk_id}:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreChunkObject representing the chunk.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreChunkObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      description: >-
+        Retrieve a specific chunk from a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the chunk.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file containing the chunk.
+          required: true
+          schema:
+            type: string
+        - name: chunk_id
+          in: path
+          description: The ID of the chunk to retrieve.
+          required: true
+          schema:
+            type: string
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreChunkObject representing the updated chunk.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreChunkObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      description: >-
+        Update a specific chunk in a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the chunk.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file containing the chunk.
+          required: true
+          schema:
+            type: string
+        - name: chunk_id
+          in: path
+          description: The ID of the chunk to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiUpdateVectorStoreChunkRequest'
+        required: true
+    delete:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreChunkDeleteResponse indicating the deletion status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreChunkDeleteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      description: >-
+        Delete a specific chunk from a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the chunk.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file containing the chunk.
+          required: true
+          schema:
+            type: string
+        - name: chunk_id
+          in: path
+          description: The ID of the chunk to delete.
+          required: true
+          schema:
+            type: string
   /v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}:
     get:
       responses:
@@ -2986,6 +3122,66 @@ paths:
         - Models
       description: List models using the OpenAI API.
       parameters: []
+  /v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/chunks:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreListChunksResponse with the list of chunks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreListChunksResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      description: List chunks in a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: The ID of the vector store.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file.
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Max number of chunks to return.
+          required: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: Sort order.
+          required: false
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: Pagination cursor.
+          required: false
+          schema:
+            type: string
+        - name: before
+          in: query
+          description: Pagination cursor.
+          required: false
+          schema:
+            type: string
   /v1/openai/v1/files/{file_id}/content:
     get:
       responses:
@@ -10856,6 +11052,30 @@ components:
         - deleted
       title: VectorStoreDeleteResponse
       description: Response from deleting a vector store.
+    VectorStoreChunkDeleteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the deleted chunk
+        object:
+          type: string
+          default: vector_store.file.chunk.deleted
+          description: >-
+            Object type identifier for the deletion response
+        deleted:
+          type: boolean
+          default: true
+          description: >-
+            Whether the deletion operation was successful
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - deleted
+      title: VectorStoreChunkDeleteResponse
+      description: >-
+        Response from deleting a vector store chunk.
     VectorStoreFileDeleteResponse:
       type: object
       properties:
@@ -11144,6 +11364,91 @@ components:
       required:
         - data
       title: OpenAIListModelsResponse
+    VectorStoreChunkObject:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the chunk
+        object:
+          type: string
+          default: vector_store.file.chunk
+          description: >-
+            Object type identifier, always "vector_store.file.chunk"
+        created_at:
+          type: integer
+          description: Timestamp when the chunk was created
+        vector_store_id:
+          type: string
+          description: >-
+            ID of the vector store containing this chunk
+        file_id:
+          type: string
+          description: ID of the file containing this chunk
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            The content of the chunk, using the same format as Chunk class
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Metadata associated with the chunk
+        embedding:
+          type: array
+          items:
+            type: number
+          description: The embedding vector for the chunk
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created_at
+        - vector_store_id
+        - file_id
+        - content
+        - metadata
+      title: VectorStoreChunkObject
+      description: OpenAI Vector Store Chunk object.
+    VectorStoreListChunksResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          default: list
+          description: Object type identifier, always "list"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VectorStoreChunkObject'
+          description: List of vector store chunk objects
+        first_id:
+          type: string
+          description: >-
+            (Optional) ID of the first chunk in the list for pagination
+        last_id:
+          type: string
+          description: >-
+            (Optional) ID of the last chunk in the list for pagination
+        has_more:
+          type: boolean
+          default: false
+          description: >-
+            Whether there are more chunks available beyond this page
+      additionalProperties: false
+      required:
+        - object
+        - data
+        - has_more
+      title: VectorStoreListChunksResponse
+      description: >-
+        Response from listing chunks in a vector store file.
     VectorStoreListResponse:
       type: object
       properties:
@@ -11390,6 +11695,25 @@ components:
             Set of 16 key-value pairs that can be attached to an object.
       additionalProperties: false
       title: OpenaiUpdateVectorStoreRequest
+    OpenaiUpdateVectorStoreChunkRequest:
+      type: object
+      properties:
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: Updated content for the chunk.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Updated metadata for the chunk.
+      additionalProperties: false
+      title: OpenaiUpdateVectorStoreChunkRequest
     OpenaiUpdateVectorStoreFileRequest:
       type: object
       properties:
