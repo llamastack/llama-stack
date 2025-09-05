@@ -21,6 +21,7 @@ class Prompt(BaseModel):
     :param version: Version string (integer start at 1 cast as string, incremented on save)
     :param prompt_id: Unique identifier formatted as 'pmpt_<48-digit-hash>'
     :param variables: Dictionary of prompt variable names and values
+    :param is_default: Boolean indicating whether this version is the default version for this prompt
     """
 
     prompt: str | None = Field(default=None, description="The system prompt with variable placeholders")
@@ -28,6 +29,9 @@ class Prompt(BaseModel):
     prompt_id: str = Field(description="Unique identifier in format 'pmpt_<48-digit-hash>'")
     variables: dict[str, str] | None = Field(
         default_factory=dict, description="Variables for dynamic injection using {{variable}} syntax"
+    )
+    is_default: bool = Field(
+        default=False, description="Boolean indicating whether this version is the default version"
     )
 
     @field_validator("prompt_id")
@@ -155,6 +159,18 @@ class Prompts(Protocol):
         """Delete a prompt.
 
         :param prompt_id: The identifier of the prompt to delete.
+        """
+        ...
+
+    @webmethod(route="/prompts/{prompt_id:path}/versions", method="GET")
+    async def list_prompt_versions(
+        self,
+        prompt_id: str,
+    ) -> ListPromptsResponse:
+        """List all versions of a specific prompt.
+
+        :param prompt_id: The identifier of the prompt to list versions for.
+        :returns: A ListPromptsResponse containing all versions of the prompt.
         """
         ...
 

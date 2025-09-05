@@ -100,3 +100,20 @@ class TestPrompts:
         response = await store.list_prompts()
         listed_prompt = response.data[0]
         assert listed_prompt.version == "1" and listed_prompt.prompt == "V1"
+
+    async def test_get_all_prompt_versions(self, store):
+        prompt = await store.create_prompt("V1")
+        await store.update_prompt(prompt.prompt_id, "V2")
+        await store.update_prompt(prompt.prompt_id, "V3")
+
+        versions = (await store.list_prompt_versions(prompt.prompt_id)).data
+        assert len(versions) == 3
+        assert [v.version for v in versions] == ["1", "2", "3"]
+        assert [v.is_default for v in versions] == [False, False, True]
+
+        await store.set_default_version(prompt.prompt_id, "2")
+        versions = (await store.list_prompt_versions(prompt.prompt_id)).data
+        assert [v.is_default for v in versions] == [False, True, False]
+
+        with pytest.raises(ValueError):
+            await store.list_prompt_versions("nonexistent")

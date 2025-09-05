@@ -169,6 +169,32 @@ class PromptServiceImpl(Prompts):
         for key in keys:
             await self.kvstore.delete(key)
 
+    async def list_prompt_versions(self, prompt_id: str) -> ListPromptsResponse:
+        """List all versions of a specific prompt."""
+        prefix = f"prompts:v1:{prompt_id}:"
+        keys = await self.kvstore.keys_in_range(prefix, prefix + "\xff")
+
+        default_version = None
+        prompts = []
+
+        for key in keys:
+            data = await self.kvstore.get(key)
+            if key.endswith(":default"):
+                default_version = data
+            else:
+                if data:
+                    prompt_obj = self._deserialize_prompt(data)
+                    prompts.append(prompt_obj)
+
+        if not prompts:
+            raise ValueError(f"Prompt {prompt_id} not found")
+
+        for prompt in prompts:
+            prompt.is_default = prompt.version == default_version
+
+        prompts.sort(key=lambda x: int(x.version))
+        return ListPromptsResponse(data=prompts)
+
     async def set_default_version(self, prompt_id: str, version: str) -> Prompt:
         """Set which version of a prompt should be the default (latest)."""
         version_key = self._get_version_key(prompt_id, version)

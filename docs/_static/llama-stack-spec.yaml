@@ -2132,6 +2132,37 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/Order'
+  /v1/prompts/{prompt_id}/versions:
+    get:
+      responses:
+        '200':
+          description: >-
+            A ListPromptsResponse containing all versions of the prompt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPromptsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Prompts
+      description: List all versions of a specific prompt.
+      parameters:
+        - name: prompt_id
+          in: path
+          description: >-
+            The identifier of the prompt to list versions for.
+          required: true
+          schema:
+            type: string
   /v1/providers:
     get:
       responses:
@@ -7373,10 +7404,17 @@ components:
             type: string
           description: >-
             Dictionary of prompt variable names and values
+        is_default:
+          type: boolean
+          default: false
+          description: >-
+            Boolean indicating whether this version is the default version for this
+            prompt
       additionalProperties: false
       required:
         - version
         - prompt_id
+        - is_default
       title: Prompt
       description: >-
         A prompt resource representing a stored OpenAI Compatible prompt template
