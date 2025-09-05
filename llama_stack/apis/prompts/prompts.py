@@ -107,7 +107,19 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id:path}", method="GET")
+    @webmethod(route="/prompts/{prompt_id}/versions", method="GET")
+    async def list_prompt_versions(
+        self,
+        prompt_id: str,
+    ) -> ListPromptsResponse:
+        """List all versions of a specific prompt.
+
+        :param prompt_id: The identifier of the prompt to list versions for.
+        :returns: A ListPromptsResponse containing all versions of the prompt.
+        """
+        ...
+
+    @webmethod(route="/prompts/{prompt_id}", method="GET")
     async def get_prompt(
         self,
         prompt_id: str,
@@ -135,7 +147,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id:path}", method="PUT")
+    @webmethod(route="/prompts/{prompt_id}", method="PUT")
     async def update_prompt(
         self,
         prompt_id: str,
@@ -151,7 +163,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id:path}", method="DELETE")
+    @webmethod(route="/prompts/{prompt_id}", method="DELETE")
     async def delete_prompt(
         self,
         prompt_id: str,
@@ -162,19 +174,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id:path}/versions", method="GET")
-    async def list_prompt_versions(
-        self,
-        prompt_id: str,
-    ) -> ListPromptsResponse:
-        """List all versions of a specific prompt.
-
-        :param prompt_id: The identifier of the prompt to list versions for.
-        :returns: A ListPromptsResponse containing all versions of the prompt.
-        """
-        ...
-
-    @webmethod(route="/prompts/{prompt_id:path}/default-version", method="PUT")
+    @webmethod(route="/prompts/{prompt_id}/default-version", method="PUT")
     async def set_default_version(
         self,
         prompt_id: str,
