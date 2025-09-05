@@ -77,7 +77,7 @@ You must be careful when re-recording. CI workflows assume a specific setup for 
 ./scripts/github/schedule-record-workflow.sh --test-subdirs "agents,inference"
 
 # Record with vision tests enabled
-./scripts/github/schedule-record-workflow.sh --test-subdirs "inference" --run-vision-tests
+./scripts/github/schedule-record-workflow.sh --test-suite vision
 
 # Record with specific provider
 ./scripts/github/schedule-record-workflow.sh --test-subdirs "agents" --test-provider vllm

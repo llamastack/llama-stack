@@ -2,13 +2,6 @@ name: 'Run and Record Tests'
 description: 'Run integration tests and handle recording/artifact upload'
 
 inputs:
-  test-subdirs:
-    description: 'Comma-separated list of test subdirectories to run'
-    required: true
-  test-pattern:
-    description: 'Regex pattern to pass to pytest -k'
-    required: false
-    default: ''
   stack-config:
     description: 'Stack configuration to use'
     required: true
@@ -18,10 +11,18 @@ inputs:
   inference-mode:
     description: 'Inference mode (record or replay)'
     required: true
-  run-vision-tests:
-    description: 'Whether to run vision tests'
+  test-suite:
+    description: 'Test suite to use: base, responses, vision, etc.'
     required: false
-    default: 'false'
+    default: ''
+  test-subdirs:
+    description: 'Comma-separated list of test subdirectories to run; overrides test-suite'
+    required: false
+    default: ''
+  test-pattern:
+    description: 'Regex pattern to pass to pytest -k'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -42,7 +43,7 @@ runs:
           --test-subdirs '${{ inputs.test-subdirs }}' \
           --test-pattern '${{ inputs.test-pattern }}' \
           --inference-mode '${{ inputs.inference-mode }}' \
-          ${{ inputs.run-vision-tests == 'true' && '--run-vision-tests' || '' }} \
+          --test-suite '${{ inputs.test-suite }}' \
           | tee pytest-${{ inputs.inference-mode }}.log
 
 
@@ -57,12 +58,7 @@ runs:
           echo "New recordings detected, committing and pushing"
           git add tests/integration/recordings/
 
-          if [ "${{ inputs.run-vision-tests }}" == "true" ]; then
-            git commit -m "Recordings update from CI (vision)"
-          else
-            git commit -m "Recordings update from CI"
-          fi
-
+          git commit -m "Recordings update from CI (test-suite: ${{ inputs.test-suite }})"
           git fetch origin ${{ github.ref_name }}
           git rebase origin/${{ github.ref_name }}
           echo "Rebased successfully"
