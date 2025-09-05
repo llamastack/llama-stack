@@ -43,6 +43,7 @@ from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.resolver import ProviderRegistry, resolve_impls
 from llama_stack.core.routing_tables.common import CommonRoutingTableImpl
 from llama_stack.core.store.registry import create_dist_registry
+from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
@@ -310,7 +311,7 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     impls[Api.providers] = providers_impl
 
     prompts_impl = PromptServiceImpl(
-        PromptServiceConfig(kvstore=SqliteKVStoreConfig(db_path=os.path.expanduser("~/.llama-stack/prompts.db"))),
+        PromptServiceConfig(run_config=run_config),
         deps=impls,
     )
     impls[Api.prompts] = prompts_impl

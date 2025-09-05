@@ -10,17 +10,19 @@ from typing import Any
 from pydantic import BaseModel
 
 from llama_stack.apis.prompts import ListPromptsResponse, Prompt, Prompts
+from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
-from llama_stack.providers.utils.kvstore.config import KVStoreConfig
+from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 
 class PromptServiceConfig(BaseModel):
     """Configuration for the built-in prompt service.
 
-    :param kvstore: Configuration for the key-value store backend
+    :param run_config: Stack run configuration containing distribution info
     """
 
-    kvstore: KVStoreConfig
+    run_config: StackRunConfig
 
 
 async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]):
@@ -39,7 +41,10 @@ class PromptServiceImpl(Prompts):
         self.kvstore: KVStore
 
     async def initialize(self) -> None:
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        kvstore_config = SqliteKVStoreConfig(
+            db_path=(DISTRIBS_BASE_DIR / self.config.run_config.image_name / "prompts.db").as_posix()
+        )
+        self.kvstore = await kvstore_impl(kvstore_config)
 
     def _get_prompt_key(self, prompt_id: str, version: str | None = None) -> str:
         if version:
