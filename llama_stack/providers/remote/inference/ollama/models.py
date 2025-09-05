@@ -87,16 +87,7 @@ MODEL_ENTRIES = [
         CoreModelId.llama3_3_70b_instruct.value,
     ),
     ProviderModelEntry(
-        provider_model_id="all-minilm:l6-v2",
-        aliases=["all-minilm"],
-        model_type=ModelType.embedding,
-        metadata={
-            "embedding_dimension": 384,
-            "context_length": 512,
-        },
-    ),
-    ProviderModelEntry(
-        provider_model_id="nomic-embed-text",
+        provider_model_id="nomic-embed-text:latest",
         model_type=ModelType.embedding,
         metadata={
             "embedding_dimension": 768,

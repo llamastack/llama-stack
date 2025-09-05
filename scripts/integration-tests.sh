@@ -202,7 +202,7 @@ if [[ "$RUN_VISION_TESTS" == "true" ]]; then
         --stack-config="$STACK_CONFIG" \
         -k "$PYTEST_PATTERN" \
         --vision-model=ollama/llama3.2-vision:11b \
-        --embedding-model=sentence-transformers/all-MiniLM-L6-v2 \
+        --embedding-model=nomic-ai/nomic-embed-text-v1.5 \
         --color=yes $EXTRA_PARAMS \
         --capture=tee-sys
     exit_code=$?
@@ -270,7 +270,7 @@ pytest -s -v $TEST_FILES \
     --stack-config="$STACK_CONFIG" \
     -k "$PYTEST_PATTERN" \
     --text-model="$TEXT_MODEL" \
-    --embedding-model=sentence-transformers/all-MiniLM-L6-v2 \
+    --embedding-model=nomic-ai/nomic-embed-text-v1.5 \
     --color=yes $EXTRA_PARAMS \
     --capture=tee-sys
 exit_code=$?

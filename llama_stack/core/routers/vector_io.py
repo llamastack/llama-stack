@@ -52,7 +52,7 @@ class VectorIORouter(VectorIO):
         pass
 
     async def _get_first_embedding_model(self) -> tuple[str, int] | None:
-        """Get the first available embedding model identifier."""
+        """Get the first available embedding model identifier, preferring nomic-embed models."""
         try:
             # Get all models from the routing table
             all_models = await self.routing_table.get_all_with_type("model")
@@ -65,10 +65,14 @@ class VectorIORouter(VectorIO):
             ]
 
             if embedding_models:
-                dimension = embedding_models[0].metadata.get("embedding_dimension", None)
+                # Prefer default nomic-embed models
+                preferred_models = [m for m in embedding_models if "nomic-embed" in m.identifier]
+                selected_model = preferred_models[0] if preferred_models else embedding_models[0]
+
+                dimension = selected_model.metadata.get("embedding_dimension", None)
                 if dimension is None:
-                    raise ValueError(f"Embedding model {embedding_models[0].identifier} has no embedding dimension")
-                return embedding_models[0].identifier, dimension
+                    raise ValueError(f"Embedding model {selected_model.identifier} has no embedding dimension")
+                return selected_model.identifier, dimension
             else:
                 logger.warning("No embedding models found in the routing table")
                 return None
@@ -80,7 +84,7 @@ class VectorIORouter(VectorIO):
         self,
         vector_db_id: str,
         embedding_model: str,
-        embedding_dimension: int | None = 384,
+        embedding_dimension: int | None = 768,
         provider_id: str | None = None,
         vector_db_name: str | None = None,
         provider_vector_db_id: str | None = None,

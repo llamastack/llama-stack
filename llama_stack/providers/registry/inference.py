@@ -44,6 +44,9 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=[
                 "torch torchvision torchao>=0.12.0 --extra-index-url https://download.pytorch.org/whl/cpu",
                 "sentence-transformers --no-deps",
+                "einops",
+                "tokenizers",
+                "safetensors",
             ],
             module="llama_stack.providers.inline.inference.sentence_transformers",
             config_class="llama_stack.providers.inline.inference.sentence_transformers.config.SentenceTransformersInferenceConfig",
