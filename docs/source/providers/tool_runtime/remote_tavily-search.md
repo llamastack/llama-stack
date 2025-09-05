@@ -8,7 +8,7 @@ Tavily Search tool for AI-optimized web search with structured results.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_key` | `str \| None` | No |  | The Tavily Search API Key |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | The Tavily Search API Key |
 | `max_results` | `<class 'int'>` | No | 3 | The maximum number of results to return |
 
 ## Sample Configuration

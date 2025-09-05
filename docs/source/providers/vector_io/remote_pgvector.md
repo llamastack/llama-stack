@@ -112,7 +112,7 @@ See [PGVector's documentation](https://github.com/pgvector/pgvector) for more de
 | `port` | `int \| None` | No | 5432 |  |
 | `db` | `str \| None` | No | postgres |  |
 | `user` | `str \| None` | No | postgres |  |
-| `password` | `str \| None` | No | mysecretpassword |  |
+| `password` | `pydantic.types.SecretStr \| None` | No | mysecretpassword |  |
 | `kvstore` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig, annotation=NoneType, required=False, default='sqlite', discriminator='type'` | No |  | Config for KV store backend (SQLite only for now) |
 
 ## Sample Configuration

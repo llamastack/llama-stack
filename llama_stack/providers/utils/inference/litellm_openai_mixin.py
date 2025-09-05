@@ -8,6 +8,7 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 import litellm
+from pydantic import SecretStr
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
@@ -69,7 +70,7 @@ class LiteLLMOpenAIMixin(
         self,
         model_entries,
         litellm_provider_name: str,
-        api_key_from_config: str | None,
+        api_key_from_config: SecretStr | None,
         provider_data_api_key_field: str,
         openai_compat_api_base: str | None = None,
         download_images: bool = False,
@@ -247,14 +248,14 @@ class LiteLLMOpenAIMixin(
 
         return {
             "model": request.model,
-            "api_key": self.get_api_key(),
+            "api_key": self.get_api_key().get_secret_value(),
             "api_base": self.api_base,
             **input_dict,
             "stream": request.stream,
             **get_sampling_options(request.sampling_params),
         }
 
-    def get_api_key(self) -> str:
+    def get_api_key(self) -> SecretStr:
         provider_data = self.get_request_provider_data()
         key_field = self.provider_data_api_key_field
         if provider_data and getattr(provider_data, key_field, None):
@@ -305,7 +306,7 @@ class LiteLLMOpenAIMixin(
         response = litellm.embedding(
             model=self.get_litellm_model_name(model_obj.provider_resource_id),
             input=input_list,
-            api_key=self.get_api_key(),
+            api_key=self.get_api_key().get_secret_value(),
             api_base=self.api_base,
             dimensions=dimensions,
         )
@@ -368,7 +369,7 @@ class LiteLLMOpenAIMixin(
             user=user,
             guided_choice=guided_choice,
             prompt_logprobs=prompt_logprobs,
-            api_key=self.get_api_key(),
+            api_key=self.get_api_key().get_secret_value(),
             api_base=self.api_base,
         )
         return await litellm.atext_completion(**params)
@@ -424,7 +425,7 @@ class LiteLLMOpenAIMixin(
             top_logprobs=top_logprobs,
             top_p=top_p,
             user=user,
-            api_key=self.get_api_key(),
+            api_key=self.get_api_key().get_secret_value(),
             api_base=self.api_base,
         )
         return await litellm.acompletion(**params)

@@ -9,8 +9,8 @@ AWS Bedrock inference provider for accessing various AI models through AWS's man
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `aws_access_key_id` | `str \| None` | No |  | The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID |
-| `aws_secret_access_key` | `str \| None` | No |  | The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY |
-| `aws_session_token` | `str \| None` | No |  | The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN |
+| `aws_secret_access_key` | `pydantic.types.SecretStr \| None` | No |  | The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY |
+| `aws_session_token` | `pydantic.types.SecretStr \| None` | No |  | The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN |
 | `region_name` | `str \| None` | No |  | The default AWS Region to use, for example, us-west-1 or us-west-2.Default use environment variable: AWS_DEFAULT_REGION |
 | `profile_name` | `str \| None` | No |  | The profile name that contains credentials to use.Default use environment variable: AWS_PROFILE |
 | `total_max_attempts` | `int \| None` | No |  | An integer representing the maximum number of attempts that will be made for a single request, including the initial attempt. Default use environment variable: AWS_MAX_ATTEMPTS |

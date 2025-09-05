@@ -8,7 +8,7 @@ Llama OpenAI-compatible provider for using Llama models with OpenAI API format.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_key` | `str \| None` | No |  | The Llama API key |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | The Llama API key |
 | `openai_compat_api_base` | `<class 'str'>` | No | https://api.llama.com/compat/v1/ | The URL for the Llama API server |
 
 ## Sample Configuration

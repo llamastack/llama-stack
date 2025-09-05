@@ -8,7 +8,7 @@ Braintrust scoring provider for evaluation and scoring using the Braintrust plat
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `openai_api_key` | `str \| None` | No |  | The OpenAI API Key |
+| `openai_api_key` | `pydantic.types.SecretStr \| None` | No |  | The OpenAI API Key |
 
 ## Sample Configuration
 

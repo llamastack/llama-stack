@@ -8,7 +8,7 @@ Brave Search tool for web search capabilities with privacy-focused results.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_key` | `str \| None` | No |  | The Brave Search API Key |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | The Brave Search API Key |
 | `max_results` | `<class 'int'>` | No | 3 | The maximum number of results to return |
 
 ## Sample Configuration

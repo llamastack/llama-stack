@@ -34,7 +34,7 @@ def test_groq_provider_openai_client_caching():
             {"x-llamastack-provider-data": json.dumps({inference_adapter.provider_data_api_key_field: api_key})}
         ):
             openai_client = inference_adapter._get_openai_client()
-            assert openai_client.api_key == api_key
+            assert openai_client.api_key.get_secret_value() == api_key
 
 
 def test_openai_provider_openai_client_caching():
@@ -53,7 +53,7 @@ def test_openai_provider_openai_client_caching():
             {"x-llamastack-provider-data": json.dumps({inference_adapter.provider_data_api_key_field: api_key})}
         ):
             openai_client = inference_adapter.client
-            assert openai_client.api_key == api_key
+            assert openai_client.api_key.get_secret_value() == api_key
 
 
 def test_together_provider_openai_client_caching():
@@ -87,4 +87,4 @@ def test_llama_compat_provider_openai_client_caching():
 
     for api_key in ["test1", "test2"]:
         with request_provider_data_context({"x-llamastack-provider-data": json.dumps({"llama_api_key": api_key})}):
-            assert inference_adapter.client.api_key == api_key
+            assert inference_adapter.client.api_key.get_secret_value() == api_key

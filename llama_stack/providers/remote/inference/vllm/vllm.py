@@ -361,7 +361,7 @@ class VLLMInferenceAdapter(Inference, ModelsProtocolPrivate):
     def _create_client(self):
         return AsyncOpenAI(
             base_url=self.config.url,
-            api_key=self.config.api_token,
+            api_key=self.config.api_token.get_secret_value() if self.config.api_token else None,
             http_client=httpx.AsyncClient(verify=self.config.tls_verify),
         )
 

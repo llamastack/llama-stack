@@ -80,16 +80,15 @@ class FireworksInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProv
         pass
 
     def _get_api_key(self) -> str:
-        config_api_key = self.config.api_key.get_secret_value() if self.config.api_key else None
-        if config_api_key:
-            return config_api_key
-        else:
-            provider_data = self.get_request_provider_data()
-            if provider_data is None or not provider_data.fireworks_api_key:
-                raise ValueError(
-                    'Pass Fireworks API Key in the header X-LlamaStack-Provider-Data as { "fireworks_api_key": <your api key>}'
-                )
-            return provider_data.fireworks_api_key
+        if self.config.api_key:
+            return self.config.api_key.get_secret_value()
+
+        provider_data = self.get_request_provider_data()
+        if provider_data is None or not provider_data.fireworks_api_key:
+            raise ValueError(
+                'Pass Fireworks API Key in the header X-LlamaStack-Provider-Data as { "fireworks_api_key": <your api key>}'
+            )
+        return provider_data.fireworks_api_key
 
     def _get_base_url(self) -> str:
         return "https://api.fireworks.ai/inference/v1"

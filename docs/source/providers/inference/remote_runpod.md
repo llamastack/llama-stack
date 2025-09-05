@@ -9,7 +9,7 @@ RunPod inference provider for running models on RunPod's cloud GPU platform.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `url` | `str \| None` | No |  | The URL for the Runpod model serving endpoint |
-| `api_token` | `str \| None` | No |  | The API token |
+| `api_token` | `pydantic.types.SecretStr \| None` | No |  | The API token |
 
 ## Sample Configuration
 

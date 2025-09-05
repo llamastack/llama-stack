@@ -10,7 +10,7 @@ Remote vLLM inference provider for connecting to vLLM servers.
 |-------|------|----------|---------|-------------|
 | `url` | `str \| None` | No |  | The URL for the vLLM model serving endpoint |
 | `max_tokens` | `<class 'int'>` | No | 4096 | Maximum number of tokens to generate. |
-| `api_token` | `str \| None` | No | fake | The API token |
+| `api_token` | `pydantic.types.SecretStr \| None` | No | ********** | The API token |
 | `tls_verify` | `bool \| str` | No | True | Whether to verify TLS certificates. Can be a boolean or a path to a CA certificate file. |
 | `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically |
 

@@ -8,7 +8,7 @@ Bing Search tool for web search capabilities using Microsoft's search engine.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_key` | `str \| None` | No |  |  |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  |  |
 | `top_k` | `<class 'int'>` | No | 3 |  |
 
 ## Sample Configuration

@@ -6,6 +6,8 @@
 
 from typing import Any
 
+from pydantic import SecretStr
+
 from llama_stack.apis.inference import ChatCompletionRequest
 from llama_stack.providers.utils.inference.litellm_openai_mixin import (
     LiteLLMOpenAIMixin,
@@ -26,10 +28,10 @@ class VertexAIInferenceAdapter(LiteLLMOpenAIMixin):
         )
         self.config = config
 
-    def get_api_key(self) -> str:
+    def get_api_key(self) -> SecretStr:
         # Vertex AI doesn't use API keys, it uses Application Default Credentials
         # Return empty string to let litellm handle authentication via ADC
-        return ""
+        return SecretStr("")
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict[str, Any]:
         # Get base parameters from parent

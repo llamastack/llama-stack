@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 
 class BedrockBaseConfig(BaseModel):
@@ -12,11 +12,11 @@ class BedrockBaseConfig(BaseModel):
         default=None,
         description="The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID",
     )
-    aws_secret_access_key: str | None = Field(
+    aws_secret_access_key: SecretStr | None = Field(
         default=None,
         description="The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY",
     )
-    aws_session_token: str | None = Field(
+    aws_session_token: SecretStr | None = Field(
         default=None,
         description="The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN",
     )

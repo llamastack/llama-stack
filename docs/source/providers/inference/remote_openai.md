@@ -8,7 +8,7 @@ OpenAI inference provider for accessing GPT models and other OpenAI services.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_key` | `str \| None` | No |  | API key for OpenAI models |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | API key for OpenAI models |
 | `base_url` | `<class 'str'>` | No | https://api.openai.com/v1 | Base URL for OpenAI API |
 
 ## Sample Configuration

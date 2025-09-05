@@ -114,7 +114,7 @@ class DatabricksInferenceAdapter(
             tool_config=tool_config,
         )
 
-        client = OpenAI(base_url=self.config.url, api_key=self.config.api_token)
+        client = OpenAI(base_url=self.config.url, api_key=self.config.api_token.get_secret_value())
         if stream:
             return self._stream_chat_completion(request, client)
         else:

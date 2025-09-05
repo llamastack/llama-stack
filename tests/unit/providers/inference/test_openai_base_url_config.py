@@ -7,6 +7,8 @@
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from pydantic import SecretStr
+
 from llama_stack.core.stack import replace_env_vars
 from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
 from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
@@ -59,14 +61,14 @@ class TestOpenAIBaseURLConfig:
         adapter = OpenAIInferenceAdapter(config)
 
         # Mock the get_api_key method since it's delegated to LiteLLMOpenAIMixin
-        adapter.get_api_key = MagicMock(return_value="test-key")
+        adapter.get_api_key = MagicMock(return_value=SecretStr("test-key"))
 
         # Access the client property to trigger AsyncOpenAI initialization
         _ = adapter.client
 
         # Verify AsyncOpenAI was called with the correct base_url
         mock_openai_class.assert_called_once_with(
-            api_key="test-key",
+            api_key=SecretStr("test-key"),
             base_url=custom_url,
         )
 
@@ -78,7 +80,7 @@ class TestOpenAIBaseURLConfig:
         adapter = OpenAIInferenceAdapter(config)
 
         # Mock the get_api_key method
-        adapter.get_api_key = MagicMock(return_value="test-key")
+        adapter.get_api_key = MagicMock(return_value=SecretStr("test-key"))
 
         # Mock the AsyncOpenAI client and its models.retrieve method
         mock_client = MagicMock()
@@ -90,7 +92,7 @@ class TestOpenAIBaseURLConfig:
 
         # Verify the client was created with the custom URL
         mock_openai_class.assert_called_with(
-            api_key="test-key",
+            api_key=SecretStr("test-key"),
             base_url=custom_url,
         )
 
@@ -108,7 +110,7 @@ class TestOpenAIBaseURLConfig:
         adapter = OpenAIInferenceAdapter(config)
 
         # Mock the get_api_key method
-        adapter.get_api_key = MagicMock(return_value="test-key")
+        adapter.get_api_key = MagicMock(return_value=SecretStr("test-key"))
 
         # Mock the AsyncOpenAI client
         mock_client = MagicMock()
@@ -120,6 +122,6 @@ class TestOpenAIBaseURLConfig:
 
         # Verify the client was created with the environment variable URL
         mock_openai_class.assert_called_with(
-            api_key="test-key",
+            api_key=SecretStr("test-key"),
             base_url="https://proxy.openai.com/v1",
         )

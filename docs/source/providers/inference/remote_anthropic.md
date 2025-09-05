@@ -8,7 +8,7 @@ Anthropic inference provider for accessing Claude models and Anthropic's AI serv
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_key` | `str \| None` | No |  | API key for Anthropic models |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | API key for Anthropic models |
 
 ## Sample Configuration
 

@@ -8,7 +8,7 @@ Google Gemini inference provider for accessing Gemini models and Google's AI ser
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_key` | `str \| None` | No |  | API key for Gemini models |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | API key for Gemini models |
 
 ## Sample Configuration
 
