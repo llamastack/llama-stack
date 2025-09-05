@@ -9,24 +9,25 @@ import tempfile
 
 import pytest
 
+from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 
 class TestPrompts:
     @pytest.fixture
     async def store(self):
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_file:
-            db_path = tmp_file.name
-
-        try:
-            config = PromptServiceConfig(kvstore=SqliteKVStoreConfig(db_path=db_path))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            mock_run_config = StackRunConfig(image_name="test-distribution", apis=[], providers={})
+            config = PromptServiceConfig(run_config=mock_run_config)
             store = PromptServiceImpl(config, deps={})
-            await store.initialize()
+
+            from llama_stack.providers.utils.kvstore import kvstore_impl
+            from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
+
+            test_db_path = os.path.join(temp_dir, "test_prompts.db")
+            store.kvstore = await kvstore_impl(SqliteKVStoreConfig(db_path=test_db_path))
+
             yield store
-        finally:
-            if os.path.exists(db_path):
-                os.unlink(db_path)
 
     async def test_create_and_get_prompt(self, store):
         prompt = await store.create_prompt("Hello world!", {"name": "John"})

@@ -43,11 +43,9 @@ from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.resolver import ProviderRegistry, resolve_impls
 from llama_stack.core.routing_tables.common import CommonRoutingTableImpl
 from llama_stack.core.store.registry import create_dist_registry
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 logger = get_logger(name=__name__, category="core")
 
