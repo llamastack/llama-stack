@@ -1,0 +1,60 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 0"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-d930dfa4bb2949b5a61230cf1d04269d",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I'm happy to help you test the OpenAI 0 model. However, I need to clarify that I'm a large language model, I don't have direct access to OpenAI's servers or APIs. But I can guide you through a process to test the 0 model.\n\nThe OpenAI 0 model is a text-to-image model that can generate images based on text prompts. Here's a step-by-step guide to test the 0 model:\n\n**Step 1: Install the model**\n\nYou can install the OpenAI 0 model using the following command:\n```bash\ncurl -o /tmp/0.py https://tfjs.org/releases/tfjs-2.1.0/tfjs-models-openai-0.ckpt\n```\nThis will download the OpenAI 0 model to your local machine.\n\n**Step 2: Write a text prompt**\n\nCreate a text prompt that you want the 0 model to generate an image for. For example:\n```\n\"Generate an image of a futuristic cityscape at night with a full moon\"\n```\n**Step 3: Run the model**\n\nUse the following command to run the model and generate an image:\n```bash\npython /tmp/0.py --prompt \"Generate an image of a futuristic cityscape at night with a full moon\"\n```\nThis will run the model and generate an image based on the text prompt. You can view the generated image by opening a web browser and navigating to `http://localhost:8501`.\n\n**Alternative method**\n\nAlternatively, you can use the OpenAI Model Hub to test the 0 model. Here's how:\n\n1. Go to the OpenAI Model Hub: https://huggingface.co/models\n2. Search for \"OpenAI 0\" in the search bar.\n3. Click on the \"OpenAI 0\" model to view its details.\n4. Click on the \"Test\" button to run the model and generate an image.\n5. Follow the same steps as above to view the generated image.\n\nPlease note that the OpenAI 0 model is a pre-trained model, and its performance may vary depending on the input text prompt. You can experiment with different text prompts to see how the model generates images.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757083957,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 457,
+          "prompt_tokens": 41,
+          "total_tokens": 498,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

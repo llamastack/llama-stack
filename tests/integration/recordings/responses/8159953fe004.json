@@ -1,0 +1,60 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test OpenAI telemetry creation"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-0b0d7d5c84944f0da4e0bd6f5e7e48cd",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "To test OpenAI telemetry creation, I'll follow these steps:\n\n1. Create a new OpenAI account if you don't have one already.\n2. Log in to the OpenAI account.\n3. Go to the \"Create a Model\" page and select \"Custom Model\" as the model type.\n4. Choose a model type (e.g., language model, text generator, etc.).\n5. Set the model parameters (e'th parameters, etc.).\n6. Create the model.\n7. Create a new project in the OpenAI project dashboard.\n8. Go to the \"Telemetry\" tab and click on \"Create Telemetry\".\n9. Fill in the telemetry details (e.g., event name, description, etc.).\n10. Click \"Create Telemetry\".\n\nLet's test the telemetry creation process:\n\n**Step 1: Create a new OpenAI account**\n\nI'm an AI, and I don't have a personal account. I'll create a new one just for testing purposes.\n\n**Step 2: Log in to the OpenAI account**\n\nI'm already logged in to my OpenAI account.\n\n**Step 3: Go to the \"Create a Model\" page and select \"Custom Model\" as the model type**\n\nI'll create a custom model for testing purposes.\n\n**Step 4: Choose a model type (e.g., language model, text generator, etc.)**\n\nI'll choose the \"Language Model\" type.\n\n**Step 5: Set the model parameters**\n\nI'll set the model parameters to test the telemetry creation process.\n\n**Step 6: Create the model**\n\nI'll create the model.\n\n**Step 7: Create a new project in the OpenAI project dashboard**\n\nI'll create a new project.\n\n**Step 8: Go to the \"Telemetry\" tab and click on \"Create Telemetry\"**\n\nI'll create a new telemetry event.\n\n**Step 9: Fill in the telemetry details**\n\nI'll fill in the telemetry details.\n\nHere's the telemetry event I created:\n\n* **Event Name:** Custom Model Telemetry\n* **Description:** Custom model created for testing purposes\n* **Event Type:** Model Creation\n* **Model Name:** Custom Model\n* **Model Type:** Language Model\n* **Model Version:** 1.0.0\n* **Event Time:** 2023-02-20 14:30:00\n* **Model Parameters:**\n\n* **Language:** English\n* **Device:** Desktop\n* **Platform:** Windows\n* **User Agent:** Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.37\n\nNow, I'll test the telemetry creation process by trying to create a new telemetry event:\n\n**Step 1: Go to the \"Telemetry\" tab and click on \"Create Telemetry\"**\n\nI'll click on the \"Create Telemetry\" button.\n\n**Step 2: Fill in the telemetry details**\n\nI'll fill in the telemetry details.\n\nHere's the telemetry event I created:\n\n* **Event Name:** Custom Model Telemetry\n* **Description:** Custom model created for testing purposes\n* **Event Type:** Model Creation\n* **Model Name:** Custom Model\n* **Model Type:** Language Model\n* **Model Version:** 1.0.0\n* **Event Time:** 2023-02-20 14:30:00\n* **Model Parameters:**\n\n* **Language:** English\n* **Device:** Desktop\n* **Platform:** Windows\n* **User Agent:** Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.37\n\nThe telemetry event was created successfully.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757084287,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 802,
+          "prompt_tokens": 40,
+          "total_tokens": 842,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

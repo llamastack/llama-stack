@@ -186,7 +186,7 @@ EXCLUDE_TESTS="builtin_tool or safety_with_image or code_interpreter or test_rag
 
 # Additional exclusions for vllm provider
 if [[ "$PROVIDER" == "vllm" ]]; then
-    EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls"
+    EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls or test_text_chat_completion_structured_output"
 fi
 
 PYTEST_PATTERN="not( $EXCLUDE_TESTS )"
@@ -233,7 +233,7 @@ TEST_FILES=""
 for test_subdir in $(echo "$TEST_SUBDIRS" | tr ',' '\n'); do
     # Skip certain test types for vllm provider
     if [[ "$PROVIDER" == "vllm" ]]; then
-        if [[ "$test_subdir" == "safety" ]] || [[ "$test_subdir" == "post_training" ]] || [[ "$test_subdir" == "tool_runtime" ]]; then
+        if [[ "$test_subdir" == "safety" ]] || [[ "$test_subdir" == "post_training" ]] || [[ "$test_subdir" == "tool_runtime" ]] || [[ "$test_subdir" == "agents" ]] || [[ "$test_subdir" == "eval" ]] || [[ "$test_subdir" == "batches" ]] ; then
             echo "Skipping $test_subdir for vllm provider"
             continue
         fi

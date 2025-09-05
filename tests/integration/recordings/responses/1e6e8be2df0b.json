@@ -1,0 +1,62 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai with temperature 0"
+        }
+      ],
+      "max_tokens": 100,
+      "stream": false,
+      "temperature": 0.7
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-5082eb9e8dd542fc875e39dd6d916c16",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "To test the OpenAI model with a temperature of 0, you'll need to use the OpenAI API and the PyTorch library. Here's an example code snippet that demonstrates how to do this:\n\n```python\nimport torch\nfrom openai.api import create_api\nfrom openai.api import get_session\n\n# Set the API credentials\napi_key = \"YOUR_API_KEY\"\napi_secret = \"YOUR_API_SECRET\"\n\n# Create a new API session\nsession = get_session(api_key,",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757084217,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 100,
+          "prompt_tokens": 43,
+          "total_tokens": 143,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}
