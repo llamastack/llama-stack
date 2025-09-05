@@ -34,6 +34,10 @@ Options:
     --test-pattern STRING    Regex pattern to pass to pytest -k
     --help                   Show this help message
 
+Suites are defined in tests/integration/suites.py. They are used to narrow the collection of tests and provide default model options.
+
+You can also specify subdirectories (of tests/integration) to select tests from, which will override the suite.
+
 Examples:
     # Basic inference tests with ollama
     $0 --stack-config server:ci-tests --provider ollama

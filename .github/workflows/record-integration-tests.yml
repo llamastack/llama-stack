@@ -10,16 +10,16 @@ run-name: Run the integration test suite from tests/integration
 on:
   workflow_dispatch:
     inputs:
-      test-subdirs:
-        description: 'Comma-separated list of test subdirectories to run'
-        type: string
-        default: ''
       test-provider:
         description: 'Test against a specific provider'
         type: string
         default: 'ollama'
       test-suite:
         description: 'Test suite to use: base, responses, vision, etc.'
+        type: string
+        default: ''
+      test-subdirs:
+        description: 'Comma-separated list of test subdirectories to run; overrides test-suite'
         type: string
         default: ''
       test-pattern:
@@ -38,11 +38,11 @@ jobs:
       - name: Echo workflow inputs
         run: |
           echo "::group::Workflow Inputs"
-          echo "test-subdirs: ${{ inputs.test-subdirs }}"
+          echo "branch: ${{ github.ref_name }}"
           echo "test-provider: ${{ inputs.test-provider }}"
           echo "test-suite: ${{ inputs.test-suite }}"
+          echo "test-subdirs: ${{ inputs.test-subdirs }}"
           echo "test-pattern: ${{ inputs.test-pattern }}"
-          echo "branch: ${{ github.ref_name }}"
           echo "::endgroup::"
 
       - name: Checkout repository
@@ -62,9 +62,9 @@ jobs:
       - name: Run and record tests
         uses: ./.github/actions/run-and-record-tests
         with:
-          test-pattern: ${{ inputs.test-pattern }}
-          test-subdirs: ${{ inputs.test-subdirs }}
           stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
           provider: ${{ inputs.test-provider || 'ollama' }}
           inference-mode: 'record'
           test-suite: ${{ inputs.test-suite }}
+          test-subdirs: ${{ inputs.test-subdirs }}
+          test-pattern: ${{ inputs.test-pattern }}

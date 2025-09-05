@@ -1,6 +1,6 @@
 name: Integration Tests (Replay)
 
-run-name: Run the integration test suite from tests/integration in replay mode
+run-name: Run the integration test suites from tests/integration in replay mode
 
 on:
   push:
@@ -32,14 +32,6 @@ on:
         description: 'Test against a specific provider'
         type: string
         default: 'ollama'
-      test-subdirs:
-        description: 'Comma-separated list of test subdirectories to run'
-        type: string
-        default: ''
-      test-pattern:
-        description: 'Regex pattern to pass to pytest -k'
-        type: string
-        default: ''
 
 concurrency:
   # Skip concurrency for pushes to main - each commit should be tested independently
@@ -79,8 +71,6 @@ jobs:
       - name: Run tests
         uses: ./.github/actions/run-and-record-tests
         with:
-          test-subdirs: ${{ inputs.test-subdirs }}
-          test-pattern: ${{ inputs.test-pattern }}
           stack-config: ${{ matrix.client-type == 'library' && 'ci-tests' || 'server:ci-tests' }}
           provider: ${{ matrix.provider }}
           inference-mode: 'replay'

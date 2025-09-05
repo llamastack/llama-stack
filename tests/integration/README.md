@@ -44,9 +44,9 @@ if no model is specified.
 
 ### Suites (fast selection + sane defaults)
 
-- `--suite`: comma-separated list of named suites that both narrow which tests are collected and prefill common model options (unless you pass them explicitly). This keeps runs fast and convenient.
+- `--suite`: comma-separated list of named suites that both narrow which tests are collected and prefill common model options (unless you pass them explicitly).
 - Available suites:
-  - `responses`: collects tests under `tests/integration/responses`; defaults `--text-model=ollama/llama3.2:3b-instruct-fp16`, `--embedding-model=sentence-transformers/all-MiniLM-L6-v2`.
+  - `responses`: collects tests under `tests/integration/responses`; this is a separate suite because it needs a strong tool-calling model.
   - `vision`: collects only `tests/integration/inference/test_vision_inference.py`; defaults `--vision-model=ollama/llama3.2-vision:11b`, `--embedding-model=sentence-transformers/all-MiniLM-L6-v2`.
 - Explicit flags always win. For example, `--suite=responses --text-model=<X>` overrides the suite’s text model.
 

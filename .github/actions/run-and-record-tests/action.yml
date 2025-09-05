@@ -2,13 +2,6 @@ name: 'Run and Record Tests'
 description: 'Run integration tests and handle recording/artifact upload'
 
 inputs:
-  test-subdirs:
-    description: 'Comma-separated list of test subdirectories to run'
-    required: true
-  test-pattern:
-    description: 'Regex pattern to pass to pytest -k'
-    required: false
-    default: ''
   stack-config:
     description: 'Stack configuration to use'
     required: true
@@ -20,6 +13,14 @@ inputs:
     required: true
   test-suite:
     description: 'Test suite to use: base, responses, vision, etc.'
+    required: false
+    default: ''
+  test-subdirs:
+    description: 'Comma-separated list of test subdirectories to run; overrides test-suite'
+    required: false
+    default: ''
+  test-pattern:
+    description: 'Regex pattern to pass to pytest -k'
     required: false
     default: ''
 
