@@ -80,6 +80,7 @@ from llama_stack.providers.utils.telemetry.tracing import (
 )
 
 from .auth import AuthenticationMiddleware
+from .metrics import RequestMetricsMiddleware
 from .quota import QuotaMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -554,6 +555,10 @@ def main(args: argparse.Namespace | None = None):
 
     app.__llama_stack_impls__ = impls
     app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
+
+    # Add request metrics middleware
+    telemetry_impl = impls.get(Api.telemetry) if Api.telemetry in impls else None
+    app.add_middleware(RequestMetricsMiddleware, telemetry=telemetry_impl)
 
     import uvicorn
 

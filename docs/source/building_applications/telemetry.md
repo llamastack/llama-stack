@@ -37,6 +37,9 @@ The following metrics are automatically generated for each inference request:
 | `llama_stack_prompt_tokens_total` | Counter | `tokens` | Number of tokens in the input prompt | `model_id`, `provider_id` |
 | `llama_stack_completion_tokens_total` | Counter | `tokens` | Number of tokens in the generated response | `model_id`, `provider_id` |
 | `llama_stack_tokens_total` | Counter | `tokens` | Total tokens used (prompt + completion) | `model_id`, `provider_id` |
+| `llama_stack_requests_total` | Counter | `requests` | Total number of requests | `api`, `status` |
+| `llama_stack_request_duration_seconds` | Gauge | `seconds` | Request duration | `api`, `status` |
+| `llama_stack_concurrent_requests` | Gauge | `requests` | Number of concurrent requests | `api` |
 
 #### Metric Generation Flow
 
