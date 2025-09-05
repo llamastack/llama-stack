@@ -43,7 +43,7 @@ class PromptServiceImpl(Prompts):
 
     def _get_prompt_key(self, prompt_id: str, version: str | None = None) -> str:
         if version:
-            return f"prompts:v1:{prompt_id}:{version}"
+            return self._get_version_key(prompt_id, version)
         return f"prompts:v1:{prompt_id}:default"
 
     def _get_version_key(self, prompt_id: str, version: str) -> str:
