@@ -5,6 +5,8 @@
 # the root directory of this source tree.
 
 
+import time
+
 import pytest
 
 from ..test_cases.test_case import TestCase
@@ -323,8 +325,15 @@ def test_inference_store(compat_client, client_with_models, text_model_id, strea
         response_id = response.id
         content = response.choices[0].message.content
 
-    responses = client.chat.completions.list(limit=1000)
-    assert response_id in [r.id for r in responses.data]
+    tries = 0
+    while tries < 10:
+        responses = client.chat.completions.list(limit=1000)
+        if response_id in [r.id for r in responses.data]:
+            break
+        else:
+            tries += 1
+            time.sleep(0.1)
+    assert tries < 10, f"Response {response_id} not found after 1 second"
 
     retrieved_response = client.chat.completions.retrieve(response_id)
     assert retrieved_response.id == response_id
@@ -387,6 +396,18 @@ def test_inference_store_tool_calls(compat_client, client_with_models, text_mode
     else:
         response_id = response.id
         content = response.choices[0].message.content
+
+    # wait for the response to be stored
+    tries = 0
+    while tries < 10:
+        responses = client.chat.completions.list(limit=1000)
+        if response_id in [r.id for r in responses.data]:
+            break
+        else:
+            tries += 1
+            time.sleep(0.1)
+
+    assert tries < 10, f"Response {response_id} not found after 1 second"
 
     responses = client.chat.completions.list(limit=1000)
     assert response_id in [r.id for r in responses.data]

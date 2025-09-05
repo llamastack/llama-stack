@@ -141,6 +141,8 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
         return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
     elif isinstance(exc, PermissionError | AccessDeniedError):
         return HTTPException(status_code=httpx.codes.FORBIDDEN, detail=f"Permission denied: {str(exc)}")
+    elif isinstance(exc, ConnectionError | httpx.ConnectError):
+        return HTTPException(status_code=httpx.codes.BAD_GATEWAY, detail=str(exc))
     elif isinstance(exc, asyncio.TimeoutError | TimeoutError):
         return HTTPException(status_code=httpx.codes.GATEWAY_TIMEOUT, detail=f"Operation timed out: {str(exc)}")
     elif isinstance(exc, NotImplementedError):
