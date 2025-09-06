@@ -354,6 +354,47 @@ You can easily validate a request by running:
 curl -s -L -H "Authorization: Bearer $(cat llama-stack-auth-token)" http://127.0.0.1:8321/v1/providers
 ```
 
+#### Kubernetes Authentication Provider
+
+The server can be configured to use Kubernetes SelfSubjectReview API to validate tokens directly against the Kubernetes API server:
+
+```yaml
+server:
+  auth:
+    provider_config:
+      type: "kubernetes"
+      api_server_url: "https://kubernetes.default.svc"
+      claims_mapping:
+        username: "roles"
+        groups: "roles"
+        uid: "uid_attr"
+      verify_tls: true
+      tls_cafile: "/path/to/ca.crt"
+```
+
+Configuration options:
+- `api_server_url`: The Kubernetes API server URL (e.g., https://kubernetes.default.svc:6443)
+- `verify_tls`: Whether to verify TLS certificates (default: true)
+- `tls_cafile`: Path to CA certificate file for TLS verification
+- `claims_mapping`: Mapping of Kubernetes user claims to access attributes
+
+The provider validates tokens by sending a SelfSubjectReview request to the Kubernetes API server at `/apis/authentication.k8s.io/v1/selfsubjectreviews`. The provider extracts user information from the response:
+- Username from the `userInfo.username` field
+- Groups from the `userInfo.groups` field
+- UID from the `userInfo.uid` field
+
+To obtain a token for testing:
+```bash
+kubectl create namespace llama-stack
+kubectl create serviceaccount llama-stack-auth -n llama-stack
+kubectl create token llama-stack-auth -n llama-stack > llama-stack-auth-token
+```
+
+You can validate a request by running:
+```bash
+curl -s -L -H "Authorization: Bearer $(cat llama-stack-auth-token)" http://127.0.0.1:8321/v1/providers
+```
+
 #### GitHub Token Provider
 Validates GitHub personal access tokens or OAuth tokens directly:
 ```yaml
