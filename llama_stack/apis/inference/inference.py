@@ -1026,7 +1026,6 @@ class InferenceProvider(Protocol):
 
     model_store: ModelStore | None = None
 
-    @webmethod(route="/inference/completion", method="POST")
     async def completion(
         self,
         model_id: str,
@@ -1049,7 +1048,6 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/inference/batch-completion", method="POST", experimental=True)
     async def batch_completion(
         self,
         model_id: str,
@@ -1070,7 +1068,6 @@ class InferenceProvider(Protocol):
         raise NotImplementedError("Batch completion is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
 
-    @webmethod(route="/inference/chat-completion", method="POST")
     async def chat_completion(
         self,
         model_id: str,
@@ -1110,7 +1107,6 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/inference/batch-chat-completion", method="POST", experimental=True)
     async def batch_chat_completion(
         self,
         model_id: str,
@@ -1135,7 +1131,6 @@ class InferenceProvider(Protocol):
         raise NotImplementedError("Batch chat completion is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
 
-    @webmethod(route="/inference/embeddings", method="POST")
     async def embeddings(
         self,
         model_id: str,
