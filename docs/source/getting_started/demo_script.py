@@ -18,12 +18,13 @@ embedding_model_id = (
 ).identifier
 embedding_dimension = em.metadata["embedding_dimension"]
 
-_ = client.vector_dbs.register(
+vector_db = client.vector_dbs.register(
     vector_db_id=vector_db_id,
     embedding_model=embedding_model_id,
     embedding_dimension=embedding_dimension,
     provider_id="faiss",
 )
+vector_db_id = vector_db.identifier
 source = "https://www.paulgraham.com/greatwork.html"
 print("rag_tool> Ingesting document:", source)
 document = RAGDocument(
@@ -35,7 +36,7 @@ document = RAGDocument(
 client.tool_runtime.rag_tool.insert(
     documents=[document],
     vector_db_id=vector_db_id,
-    chunk_size_in_tokens=50,
+    chunk_size_in_tokens=100,
 )
 agent = Agent(
     client,
