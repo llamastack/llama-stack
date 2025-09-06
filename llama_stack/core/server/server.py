@@ -515,6 +515,7 @@ def main(args: argparse.Namespace | None = None):
 
     apis_to_serve.add("inspect")
     apis_to_serve.add("providers")
+    apis_to_serve.add("prompts")
     for api_str in apis_to_serve:
         api = Api(api_str)
 
