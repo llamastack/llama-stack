@@ -6294,6 +6294,17 @@ components:
       title: OpenAIResponseError
       description: >-
         Error details for failed OpenAI response requests.
+    OpenAIResponseIncompleteDetails:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Reason for the response being incomplete
+      additionalProperties: false
+      required:
+        - reason
+      title: OpenAIResponseIncompleteDetails
+      description: Incomplete details for OpenAI responses.
     OpenAIResponseObject:
       type: object
       properties:
@@ -6308,6 +6319,36 @@ components:
         id:
           type: string
           description: Unique identifier for this response
+        incomplete_details:
+          $ref: '#/components/schemas/OpenAIResponseIncompleteDetails'
+          description: >-
+            (Optional) Incomplete details if the response is incomplete
+        instructions:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: >-
+            (Optional) A system (or developer) message inserted into the model's context.
+        max_output_tokens:
+          type: integer
+          description: >-
+            (Optional) An upper bound for the number of tokens that can be generated
+            for a response, including visible output tokens and reasoning tokens.
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) The maximum number of total calls to built-in tools that can
+            be processed in a response.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            (Optional) Set of 16 key-value pairs that can be attached to an object.
+            This can be useful for storing additional information about the object
+            in a structured format, and querying for objects via API or the dashboard.
         model:
           type: string
           description: Model identifier used for generation
@@ -6332,6 +6373,28 @@ components:
           type: string
           description: >-
             (Optional) ID of the previous response in a conversation
+        prompt:
+          $ref: '#/components/schemas/OpenAIResponsePrompt'
+          description: >-
+            (Optional) Reference to a prompt template and its variables.
+        prompt_cache_key:
+          type: string
+          description: >-
+            (Optional)Used to cache responses for similar requests to optimize your
+            cache hit rates. Replaces the user field.
+        reasoning:
+          $ref: '#/components/schemas/OpenAIResponseReasoning'
+          description: >-
+            (Optional) Configuration options for reasoning models.
+        safety_identifier:
+          type: string
+          description: >-
+            (Optional) A stable identifier used to help detect users of your application
+            that may be violating OpenAI's usage policies.
+        service_tier:
+          type: string
+          description: >-
+            (Optional) Specifies the processing type used for serving the request.
         status:
           type: string
           description: >-
@@ -6344,18 +6407,26 @@ components:
           $ref: '#/components/schemas/OpenAIResponseText'
           description: >-
             Text formatting configuration for the response
+        tool_choice:
+          $ref: '#/components/schemas/OpenAIResponsesToolChoice'
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponsesTool'
+        top_logprobs:
+          type: integer
         top_p:
           type: number
           description: >-
             (Optional) Nucleus sampling parameter used for generation
-        truncation:
-          type: string
-          description: >-
-            (Optional) Truncation strategy applied to the response
         user:
           type: string
           description: >-
             (Optional) User identifier associated with the request
+        truncation:
+          type: string
+          description: >-
+            (Optional) Truncation strategy applied to the response
       additionalProperties: false
       required:
         - created_at
@@ -6365,10 +6436,11 @@ components:
         - output
         - parallel_tool_calls
         - status
-        - text
       title: OpenAIResponseObject
       description: >-
         Complete OpenAI response object containing generation results and metadata.
+
+        Based on OpenAI Responses API schema: https://github.com/openai/openai-python/blob/34014aedbb8946c03e97e5c8d72e03ad2259cd7c/src/openai/types/responses/response.py#L38
     OpenAIResponseOutput:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseMessage'
@@ -6486,6 +6558,194 @@ components:
       title: OpenAIResponseOutputMessageMCPListTools
       description: >-
         MCP list tools output message containing available tools from an MCP server.
+    OpenAIResponsePrompt:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            The unique identifier of the prompt template to use.
+        variables:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Map of values to substitute in for variables in your prompt.
+            The substitution values can either be strings, or other Response input
+            types like images or files.
+        version:
+          type: string
+          description: >-
+            (Optional) Version of the prompt template.
+      additionalProperties: false
+      required:
+        - id
+      title: OpenAIResponsePrompt
+      description: >-
+        Reference to a prompt template and its variables.
+    OpenAIResponseReasoning:
+      type: object
+      properties:
+        effort:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - minimal
+          description: >-
+            (Optional) The effort level to use for reasoning.
+        generate_summary:
+          type: string
+          description: >-
+            Deprecated. Use the generate_summary_text field instead. (Optional) Whether
+            to generate a summary of the reasoning process.
+        summary:
+          type: string
+      additionalProperties: false
+      title: OpenAIResponseReasoning
+      description: >-
+        Configuration options for reasoning models.
+    OpenAIResponsesTool:
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        parameters:
+          type: object
+          title: object
+          description: >-
+            The base class of the class hierarchy.
+
+            When called, it accepts no arguments and returns a new featureless
+
+            instance that has no instance attributes and cannot be given any.
+        type:
+          type: string
+          const: function
+      additionalProperties: false
+      title: OpenAIResponsesTool
+    OpenAIResponsesToolChoice:
+      oneOf:
+        - $ref: '#/components/schemas/ToolChoiceOptions'
+        - $ref: '#/components/schemas/ToolChoiceTypes'
+        - oneOf:
+            - $ref: '#/components/schemas/ToolChoiceAllowed'
+            - $ref: '#/components/schemas/ToolChoiceFunction'
+            - $ref: '#/components/schemas/ToolChoiceMcp'
+            - $ref: '#/components/schemas/ToolChoiceCustom'
+          discriminator:
+            propertyName: type
+            mapping:
+              allowed_tools: '#/components/schemas/ToolChoiceAllowed'
+              function: '#/components/schemas/ToolChoiceFunction'
+              mcp: '#/components/schemas/ToolChoiceMcp'
+              custom: '#/components/schemas/ToolChoiceCustom'
+    ToolChoiceAllowed:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+            - auto
+            - required
+        tools:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              title: object
+              description: >-
+                The base class of the class hierarchy.
+
+                When called, it accepts no arguments and returns a new featureless
+
+                instance that has no instance attributes and cannot be given any.
+        type:
+          type: string
+          const: allowed_tools
+          default: allowed_tools
+      additionalProperties: false
+      required:
+        - mode
+        - tools
+        - type
+      title: ToolChoiceAllowed
+    ToolChoiceCustom:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          const: custom
+          default: custom
+      additionalProperties: false
+      required:
+        - name
+        - type
+      title: ToolChoiceCustom
+    ToolChoiceFunction:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          const: function
+          default: function
+      additionalProperties: false
+      required:
+        - name
+        - type
+      title: ToolChoiceFunction
+    ToolChoiceMcp:
+      type: object
+      properties:
+        server_label:
+          type: string
+        type:
+          type: string
+          const: mcp
+          default: mcp
+        name:
+          type: string
+      additionalProperties: false
+      required:
+        - server_label
+        - type
+      title: ToolChoiceMcp
+    ToolChoiceOptions:
+      type: string
+      enum:
+        - none
+        - auto
+        - required
+    ToolChoiceTypes:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - file_search
+            - web_search_preview
+            - computer_use_preview
+            - web_search_preview_2025_03_11
+            - image_generation
+            - code_interpreter
+      additionalProperties: false
+      required:
+        - type
+      title: ToolChoiceTypes
     OpenAIResponseContentPart:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
@@ -9509,6 +9769,36 @@ components:
         id:
           type: string
           description: Unique identifier for this response
+        incomplete_details:
+          $ref: '#/components/schemas/OpenAIResponseIncompleteDetails'
+          description: >-
+            (Optional) Incomplete details if the response is incomplete
+        instructions:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: >-
+            (Optional) A system (or developer) message inserted into the model's context.
+        max_output_tokens:
+          type: integer
+          description: >-
+            (Optional) An upper bound for the number of tokens that can be generated
+            for a response, including visible output tokens and reasoning tokens.
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) The maximum number of total calls to built-in tools that can
+            be processed in a response.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            (Optional) Set of 16 key-value pairs that can be attached to an object.
+            This can be useful for storing additional information about the object
+            in a structured format, and querying for objects via API or the dashboard.
         model:
           type: string
           description: Model identifier used for generation
@@ -9533,6 +9823,28 @@ components:
           type: string
           description: >-
             (Optional) ID of the previous response in a conversation
+        prompt:
+          $ref: '#/components/schemas/OpenAIResponsePrompt'
+          description: >-
+            (Optional) Reference to a prompt template and its variables.
+        prompt_cache_key:
+          type: string
+          description: >-
+            (Optional)Used to cache responses for similar requests to optimize your
+            cache hit rates. Replaces the user field.
+        reasoning:
+          $ref: '#/components/schemas/OpenAIResponseReasoning'
+          description: >-
+            (Optional) Configuration options for reasoning models.
+        safety_identifier:
+          type: string
+          description: >-
+            (Optional) A stable identifier used to help detect users of your application
+            that may be violating OpenAI's usage policies.
+        service_tier:
+          type: string
+          description: >-
+            (Optional) Specifies the processing type used for serving the request.
         status:
           type: string
           description: >-
@@ -9545,18 +9857,26 @@ components:
           $ref: '#/components/schemas/OpenAIResponseText'
           description: >-
             Text formatting configuration for the response
+        tool_choice:
+          $ref: '#/components/schemas/OpenAIResponsesToolChoice'
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponsesTool'
+        top_logprobs:
+          type: integer
         top_p:
           type: number
           description: >-
             (Optional) Nucleus sampling parameter used for generation
-        truncation:
-          type: string
-          description: >-
-            (Optional) Truncation strategy applied to the response
         user:
           type: string
           description: >-
             (Optional) User identifier associated with the request
+        truncation:
+          type: string
+          description: >-
+            (Optional) Truncation strategy applied to the response
         input:
           type: array
           items:
@@ -9572,7 +9892,6 @@ components:
         - output
         - parallel_tool_calls
         - status
-        - text
         - input
       title: OpenAIResponseObjectWithInput
       description: >-
