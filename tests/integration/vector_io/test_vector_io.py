@@ -138,8 +138,8 @@ def test_insert_chunks(client_with_empty_registry, embedding_model_id, embedding
 def test_insert_chunks_with_precomputed_embeddings(client_with_empty_registry, embedding_model_id, embedding_dimension):
     vector_io_provider_params_dict = {
         "inline::milvus": {"score_threshold": -1.0},
-        "remote::qdrant": {"score_threshold": -1.0},
         "inline::qdrant": {"score_threshold": -1.0},
+        "remote::qdrant": {"score_threshold": -1.0},
     }
     vector_db_name = "test_precomputed_embeddings_db"
     register_response = client_with_empty_registry.vector_dbs.register(

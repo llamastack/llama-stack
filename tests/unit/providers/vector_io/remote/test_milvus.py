@@ -23,13 +23,13 @@ pymilvus_mock.AnnSearchRequest = MagicMock
 with patch.dict("sys.modules", {"pymilvus": pymilvus_mock}):
     from llama_stack.providers.remote.vector_io.milvus.milvus import MilvusIndex
 
-# This test is a unit test for the MilvusVectorIOAdapter class. This should only contain
+# This test is a unit test for the MilvusIndex class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
 # tests/integration/vector_io/
 #
 # How to run this test:
 #
-# pytest tests/unit/providers/vector_io/test_milvus.py \
+# pytest tests/unit/providers/vector_io/remote/test_milvus.py \
 # -v -s --tb=short --disable-warnings --asyncio-mode=auto
 
 MILVUS_PROVIDER = "milvus"
@@ -324,3 +324,6 @@ async def test_query_hybrid_search_default_rrf(
     call_args = mock_milvus_client.hybrid_search.call_args
     ranker = call_args[1]["ranker"]
     assert ranker is not None
+
+
+# TODO: Write tests for the MilvusVectorIOAdapter class.
