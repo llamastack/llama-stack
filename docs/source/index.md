@@ -14,10 +14,10 @@ Llama Stack {{ llama_stack_version }} is now available! See the {{ llama_stack_v
 
 ## What is Llama Stack?
 
-Llama Stack defines and standardizes the core building blocks needed to bring generative AI applications to market. It provides a unified set of APIs with implementations from leading service providers, enabling seamless transitions between development and production environments. More specifically, it provides
+Llama Stack defines and standardizes the core building blocks needed to bring generative AI applications to market. It provides a unified set of OpenAI-compatible APIs with implementations from leading service providers, enabling seamless transitions between development and production environments. More specifically, it provides
 
-- **Unified API layer** for Inference, RAG, Agents, Tools, Safety, Evals, and Telemetry.
-- **Plugin architecture** to support the rich ecosystem of implementations of the different APIs in different environments like local development, on-premises, cloud, and mobile.
+- **OpenAI-compatible API layer** for Inference, RAG, Agents, Tools, Safety, Evals, and Telemetry
+- **Plugin architecture** to support the rich ecosystem of implementations of the different APIs in different environments like local development, on-premises, cloud, and mobile
 - **Prepackaged verified distributions** which offer a one-stop solution for developers to get started quickly and reliably in any environment
 - **Multiple developer interfaces** like CLI and SDKs for Python, Node, iOS, and Android
 - **Standalone applications** as examples for how to build production-grade AI applications with Llama Stack
@@ -82,6 +82,23 @@ A number of "adapters" are available for some popular Inference and Vector Store
 |  Postgres (PGVector) | Hosted and Single Node |
 |  Weaviate | Hosted |
 |  Qdrant  | Hosted and Single Node |
+
+**Files API (OpenAI-compatible)**
+|  **Provider** |  **Environments** |
+| :----: | :----: |
+|  Local Filesystem | Single Node |
+|  S3 | Hosted |
+
+**Vector Store Files API (OpenAI-compatible)**
+|  **Provider** |  **Environments** |
+| :----: | :----: |
+|  FAISS | Single Node |
+|  SQLite-vec | Single Node |
+|  Milvus | Single Node |
+|  ChromaDB | Hosted and Single Node |
+|  Qdrant | Hosted and Single Node |
+|  Weaviate | Hosted |
+|  Postgres (PGVector) | Hosted and Single Node |
 
 **Safety API**
 |  **Provider** |  **Environments** |
