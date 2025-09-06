@@ -81,3 +81,58 @@ class TestRagQuery:
         # Test that invalid mode raises an error
         with pytest.raises(ValueError):
             RAGQueryConfig(mode="wrong_mode")
+
+    @pytest.mark.asyncio
+    async def test_query_adds_vector_db_id_to_chunk_metadata(self):
+        rag_tool = MemoryToolRuntimeImpl(
+            config=MagicMock(),
+            vector_io_api=MagicMock(),
+            inference_api=MagicMock(),
+        )
+
+        vector_db_ids = ["db1", "db2"]
+
+        # Fake chunks from each DB
+        chunk_metadata1 = ChunkMetadata(
+            document_id="doc1",
+            chunk_id="chunk1",
+            source="test_source1",
+            metadata_token_count=5,
+        )
+        chunk1 = Chunk(
+            content="chunk from db1",
+            metadata={"vector_db_id": "db1", "document_id": "doc1"},
+            stored_chunk_id="c1",
+            chunk_metadata=chunk_metadata1,
+        )
+
+        chunk_metadata2 = ChunkMetadata(
+            document_id="doc2",
+            chunk_id="chunk2",
+            source="test_source2",
+            metadata_token_count=5,
+        )
+        chunk2 = Chunk(
+            content="chunk from db2",
+            metadata={"vector_db_id": "db2", "document_id": "doc2"},
+            stored_chunk_id="c2",
+            chunk_metadata=chunk_metadata2,
+        )
+
+        rag_tool.vector_io_api.query_chunks = AsyncMock(
+            side_effect=[
+                QueryChunksResponse(chunks=[chunk1], scores=[0.9]),
+                QueryChunksResponse(chunks=[chunk2], scores=[0.8]),
+            ]
+        )
+
+        result = await rag_tool.query(content="test", vector_db_ids=vector_db_ids)
+        returned_chunks = result.metadata["chunks"]
+        returned_scores = result.metadata["scores"]
+        returned_doc_ids = result.metadata["document_ids"]
+        returned_vector_db_ids = result.metadata["vector_db_ids"]
+
+        assert returned_chunks == ["chunk from db1", "chunk from db2"]
+        assert returned_scores == (0.9, 0.8)
+        assert returned_doc_ids == ["doc1", "doc2"]
+        assert returned_vector_db_ids == ["db1", "db2"]
