@@ -512,6 +512,36 @@ async def test_models_source_tracking_provider(cached_disk_dist_registry):
     await table.shutdown()
 
 
+async def test_models_source_tracking_config(cached_disk_dist_registry):
+    """Test that models registered via direct object registration get config source."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register model directly with config source (simulating config-based registration)
+    from llama_stack.core.datatypes import ModelWithOwner
+
+    config_model = ModelWithOwner(
+        identifier="config-model",
+        provider_resource_id="config-model",
+        provider_id="test_provider",
+        metadata={},
+        model_type=ModelType.llm,
+        source=RegistryEntrySource.from_config,
+    )
+
+    # Use the internal register_object method to simulate config registration
+    await table.register_object(config_model)
+
+    models = await table.list_models()
+    assert len(models.data) == 1
+    model = models.data[0]
+    assert model.source == RegistryEntrySource.from_config
+    assert model.identifier == "config-model"
+
+    # Cleanup
+    await table.shutdown()
+
+
 async def test_models_source_interaction_preserves_default(cached_disk_dist_registry):
     """Test that provider refresh preserves user-registered models with default source."""
     table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
@@ -569,13 +599,93 @@ async def test_models_source_interaction_preserves_default(cached_disk_dist_regi
     await table.shutdown()
 
 
+async def test_models_source_interaction_preserves_config(cached_disk_dist_registry):
+    """Test that provider refresh preserves config-registered models."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # First register a config model with same provider_resource_id as provider will later provide
+    from llama_stack.core.datatypes import ModelWithOwner
+
+    config_model = ModelWithOwner(
+        identifier="config-model",
+        provider_resource_id="provider-model-1",
+        provider_id="test_provider",
+        metadata={},
+        model_type=ModelType.llm,
+        source=RegistryEntrySource.from_config,
+    )
+
+    await table.register_object(config_model)
+
+    # Verify config model is registered with config source
+    models = await table.list_models()
+    assert len(models.data) == 1
+    config_model_obj = models.data[0]
+    assert config_model_obj.source == RegistryEntrySource.from_config
+    assert config_model_obj.identifier == "config-model"
+    assert config_model_obj.provider_resource_id == "provider-model-1"
+
+    # Now simulate provider refresh
+    provider_models = [
+        Model(
+            identifier="provider-model-1",
+            provider_resource_id="provider-model-1",
+            provider_id="test_provider",
+            metadata={},
+            model_type=ModelType.llm,
+        ),
+        Model(
+            identifier="different-model",
+            provider_resource_id="different-model",
+            provider_id="test_provider",
+            metadata={},
+            model_type=ModelType.llm,
+        ),
+    ]
+    await table.update_registered_models("test_provider", provider_models)
+
+    # Verify config model is preserved, but provider added new model
+    models = await table.list_models()
+    assert len(models.data) == 2
+
+    # Find the config model and provider model
+    config_model_obj = next((m for m in models.data if m.identifier == "config-model"), None)
+    provider_model = next((m for m in models.data if m.identifier == "test_provider/different-model"), None)
+
+    assert config_model_obj is not None
+    assert config_model_obj.source == RegistryEntrySource.from_config
+    assert config_model_obj.provider_resource_id == "provider-model-1"
+
+    assert provider_model is not None
+    assert provider_model.source == RegistryEntrySource.listed_from_provider
+    assert provider_model.provider_resource_id == "different-model"
+
+    # Cleanup
+    await table.shutdown()
+
+
 async def test_models_source_interaction_cleanup_provider_models(cached_disk_dist_registry):
-    """Test that provider refresh removes old provider models but keeps default ones."""
+    """Test that provider refresh removes old provider models but keeps default and config ones."""
     table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
 
     # Register a user model
     await table.register_model(model_id="user-model", provider_id="test_provider")
+
+    # Register a config model
+    from llama_stack.core.datatypes import ModelWithOwner
+
+    config_model = ModelWithOwner(
+        identifier="config-model",
+        provider_resource_id="config-model",
+        provider_id="test_provider",
+        metadata={},
+        model_type=ModelType.llm,
+        source=RegistryEntrySource.from_config,
+    )
+
+    await table.register_object(config_model)
 
     # Add some provider models
     provider_models_v1 = [
@@ -589,9 +699,9 @@ async def test_models_source_interaction_cleanup_provider_models(cached_disk_dis
     ]
     await table.update_registered_models("test_provider", provider_models_v1)
 
-    # Verify we have both user and provider models
+    # Verify we have user, config, and provider models
     models = await table.list_models()
-    assert len(models.data) == 2
+    assert len(models.data) == 3
 
     # Now update with new provider models (should remove old provider models)
     provider_models_v2 = [
@@ -605,20 +715,160 @@ async def test_models_source_interaction_cleanup_provider_models(cached_disk_dis
     ]
     await table.update_registered_models("test_provider", provider_models_v2)
 
-    # Should have user model + new provider model, old provider model gone
+    # Should have user model + config model + new provider model, old provider model gone
+    models = await table.list_models()
+    assert len(models.data) == 3
+
+    identifiers = {m.identifier for m in models.data}
+    assert "test_provider/user-model" in identifiers  # User model preserved
+    assert "config-model" in identifiers  # Config model preserved
+    assert "test_provider/provider-model-new" in identifiers  # New provider model
+    assert "test_provider/provider-model-old" not in identifiers  # Old provider model removed
+
+    # Verify sources are correct
+    user_model = next((m for m in models.data if m.identifier == "test_provider/user-model"), None)
+    config_model_obj = next((m for m in models.data if m.identifier == "config-model"), None)
+    provider_model = next((m for m in models.data if m.identifier == "test_provider/provider-model-new"), None)
+
+    assert user_model.source == RegistryEntrySource.via_register_api
+    assert config_model_obj.source == RegistryEntrySource.from_config
+    assert provider_model.source == RegistryEntrySource.listed_from_provider
+
+    # Cleanup
+    await table.shutdown()
+
+
+async def test_models_cleanup_ephemeral_models(cached_disk_dist_registry):
+    """Test that cleanup_ephemeral_models only removes provider models."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register models with different sources
+    await table.register_model(model_id="user-model", provider_id="test_provider")
+
+    from llama_stack.core.datatypes import ModelWithOwner
+
+    config_model = ModelWithOwner(
+        identifier="config-model",
+        provider_resource_id="config-model",
+        provider_id="test_provider",
+        metadata={},
+        model_type=ModelType.llm,
+        source=RegistryEntrySource.from_config,
+    )
+
+    await table.register_object(config_model)
+
+    # Add provider models
+    provider_models = [
+        Model(
+            identifier="provider-model",
+            provider_resource_id="provider-model",
+            provider_id="test_provider",
+            metadata={},
+            model_type=ModelType.llm,
+        ),
+    ]
+    await table.update_registered_models("test_provider", provider_models)
+
+    # Verify we have all three types
+    models = await table.list_models()
+    assert len(models.data) == 3
+
+    # Call cleanup_ephemeral_models
+    await table.cleanup_ephemeral_models()
+
+    # Should only have user and config models, provider model removed
     models = await table.list_models()
     assert len(models.data) == 2
 
     identifiers = {m.identifier for m in models.data}
     assert "test_provider/user-model" in identifiers  # User model preserved
-    assert "test_provider/provider-model-new" in identifiers  # New provider model (uses provider's identifier)
-    assert "test_provider/provider-model-old" not in identifiers  # Old provider model removed
+    assert "config-model" in identifiers  # Config model preserved
+    assert "test_provider/provider-model" not in identifiers  # Provider model removed
 
-    # Verify sources are correct
-    user_model = next((m for m in models.data if m.identifier == "test_provider/user-model"), None)
-    provider_model = next((m for m in models.data if m.identifier == "test_provider/provider-model-new"), None)
+    # Cleanup
+    await table.shutdown()
 
-    assert user_model.source == RegistryEntrySource.via_register_api
+
+async def test_models_cleanup_config_models(cached_disk_dist_registry):
+    """Test that cleanup_config_models only removes config models."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register models with different sources
+    await table.register_model(model_id="user-model", provider_id="test_provider")
+
+    from llama_stack.core.datatypes import ModelWithOwner
+
+    config_model = ModelWithOwner(
+        identifier="config-model",
+        provider_resource_id="config-model",
+        provider_id="test_provider",
+        metadata={},
+        model_type=ModelType.llm,
+        source=RegistryEntrySource.from_config,
+    )
+
+    await table.register_object(config_model)
+
+    # Add provider models
+    provider_models = [
+        Model(
+            identifier="provider-model",
+            provider_resource_id="provider-model",
+            provider_id="test_provider",
+            metadata={},
+            model_type=ModelType.llm,
+        ),
+    ]
+    await table.update_registered_models("test_provider", provider_models)
+
+    # Verify we have all three types
+    models = await table.list_models()
+    assert len(models.data) == 3
+
+    # Call cleanup_config_models
+    await table.cleanup_config_models()
+
+    # Should only have user and provider models, config model removed
+    models = await table.list_models()
+    assert len(models.data) == 2
+
+    identifiers = {m.identifier for m in models.data}
+    assert "test_provider/user-model" in identifiers  # User model preserved
+    assert "test_provider/provider-model" in identifiers  # Provider model preserved
+    assert "config-model" not in identifiers  # Config model removed
+
+    # Cleanup
+    await table.shutdown()
+
+
+async def test_models_register_model_with_source_parameter(cached_disk_dist_registry):
+    """Test that register_model accepts and uses the source parameter."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Test registering with explicit config source
+    await table.register_model(
+        model_id="config-model", provider_id="test_provider", source=RegistryEntrySource.from_config
+    )
+
+    models = await table.list_models()
+    assert len(models.data) == 1
+    model = models.data[0]
+    assert model.source == RegistryEntrySource.from_config
+    assert model.identifier == "test_provider/config-model"
+
+    # Test registering with explicit provider source
+    await table.register_model(
+        model_id="provider-model", provider_id="test_provider", source=RegistryEntrySource.listed_from_provider
+    )
+
+    models = await table.list_models()
+    assert len(models.data) == 2
+    provider_model = next((m for m in models.data if m.identifier == "test_provider/provider-model"), None)
+    assert provider_model is not None
     assert provider_model.source == RegistryEntrySource.listed_from_provider
 
     # Cleanup

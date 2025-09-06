@@ -34,7 +34,7 @@ from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
-from llama_stack.core.datatypes import Provider, StackRunConfig
+from llama_stack.core.datatypes import Provider, RegistryEntrySource, StackRunConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
@@ -112,10 +112,25 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
                     continue
                 logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            # For models, use the register_model method with config source
+            if rsrc == "models":
+                logger.debug(
+                    f"Registering model from config: {obj.model_id} -> {obj.provider_model_id} via {obj.provider_id}"
+                )
+                await impls[api].register_model(
+                    model_id=obj.model_id,
+                    provider_model_id=obj.provider_model_id,
+                    provider_id=obj.provider_id,
+                    metadata=obj.metadata,
+                    model_type=obj.model_type,
+                    source=RegistryEntrySource.from_config,
+                )
+                logger.debug(f"Model registration completed for: {obj.model_id}")
+            else:
+                # we want to maintain the type information in arguments to method.
+                # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
+                # we use model_dump() to find all the attrs and then getattr to get the still typed value.
+                await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
         response = await method()
@@ -306,6 +321,14 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     impls[Api.providers] = providers_impl
 
 
+async def cleanup_provider_models_on_startup(impls: dict[Api, Any]) -> None:
+    """Clean up provider models from previous sessions on startup."""
+    routing_tables = [v for v in impls.values() if isinstance(v, CommonRoutingTableImpl)]
+    for routing_table in routing_tables:
+        if hasattr(routing_table, "cleanup_ephemeral_models"):
+            await routing_table.cleanup_ephemeral_models()
+
+
 # Produces a stack of providers for the given run config. Not all APIs may be
 # asked for in the run config.
 async def construct_stack(
@@ -331,6 +354,8 @@ async def construct_stack(
 
     await register_resources(run_config, impls)
 
+    # Clean up ephemeral models from previous sessions before first refresh
+    await cleanup_provider_models_on_startup(impls)
     await refresh_registry_once(impls)
 
     global REGISTRY_REFRESH_TASK

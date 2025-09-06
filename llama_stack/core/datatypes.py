@@ -39,6 +39,7 @@ RoutingKey = str | list[str]
 class RegistryEntrySource(StrEnum):
     via_register_api = "via_register_api"
     listed_from_provider = "listed_from_provider"
+    from_config = "from_config"
 
 
 class User(BaseModel):

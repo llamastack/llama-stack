@@ -74,6 +74,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         provider_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
+        source: RegistryEntrySource | None = None,
     ) -> Model:
         if provider_id is None:
             # If provider_id not specified, use the only provider if it supports this model
@@ -100,13 +101,15 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         else:
             identifier = f"{provider_id}/{provider_model_id}"
 
+        source = source or RegistryEntrySource.via_register_api
+
         model = ModelWithOwner(
             identifier=identifier,
             provider_resource_id=provider_model_id,
             provider_id=provider_id,
             metadata=metadata,
             model_type=model_type,
-            source=RegistryEntrySource.via_register_api,
+            source=source,
         )
         registered_model = await self.register_object(model)
         return registered_model
@@ -130,7 +133,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         for model in existing_models:
             if model.provider_id != provider_id:
                 continue
-            if model.source == RegistryEntrySource.via_register_api:
+            if model.source in [RegistryEntrySource.via_register_api, RegistryEntrySource.from_config]:
                 model_ids[model.provider_resource_id] = model.identifier
                 continue
 
@@ -156,3 +159,67 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                     source=RegistryEntrySource.listed_from_provider,
                 )
             )
+
+    async def cleanup_ephemeral_models(self) -> None:
+        """Clean up models that should not persist across sessions."""
+        try:
+            existing_models = await self.get_all_with_type("model")
+        except (AttributeError, RuntimeError, TypeError) as e:
+            logger.debug(f"Could not retrieve models for cleanup: {e}")
+            return
+
+        for model in existing_models:
+            if model.source == RegistryEntrySource.listed_from_provider:
+                logger.debug(f"Cleaning up ephemeral provider model: {model.identifier}")
+                try:
+                    await self.unregister_object(model)
+                except (AttributeError, RuntimeError, TypeError) as e:
+                    logger.debug(f"Could not unregister model {model.identifier}: {e}")
+                continue
+
+    async def cleanup_config_models(self) -> None:
+        """Clean up models that came from configuration (run.yaml)."""
+        try:
+            existing_models = await self.get_all_with_type("model")
+        except (AttributeError, RuntimeError, TypeError) as e:
+            logger.debug(f"Could not retrieve models for cleanup: {e}")
+            return
+
+        for model in existing_models:
+            if model.source == RegistryEntrySource.from_config:
+                logger.debug(f"Cleaning up config model: {model.identifier}")
+                try:
+                    await self.unregister_object(model)
+                except (AttributeError, RuntimeError, TypeError) as e:
+                    logger.debug(f"Could not unregister model {model.identifier}: {e}")
+                continue
+
+    async def initialize(self) -> None:
+        """Initialize the models routing table with cleanup."""
+        # Clean up provider models from previous sessions
+        await self.cleanup_ephemeral_models()
+
+        # Also clean up config models from previous sessions
+        # This ensures we start with a clean slate for config models
+        await self.cleanup_config_models()
+
+        await super().initialize()
+
+    async def shutdown(self) -> None:
+        """Shutdown with cleanup of ephemeral models."""
+        # Clean up provider models before shutdown
+        try:
+            existing_models = await self.get_all_with_type("model")
+        except (AttributeError, RuntimeError, TypeError) as e:
+            logger.debug(f"Could not retrieve models for shutdown cleanup: {e}")
+            await super().shutdown()
+            return
+
+        for model in existing_models:
+            if model.source == RegistryEntrySource.listed_from_provider:
+                try:
+                    await self.unregister_object(model)
+                except (AttributeError, RuntimeError, TypeError) as e:
+                    logger.debug(f"Could not unregister model {model.identifier} during shutdown: {e}")
+
+        await super().shutdown()
