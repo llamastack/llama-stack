@@ -7,6 +7,7 @@
 from collections.abc import Mapping
 from typing import Any, Literal
 
+from llama_stack.apis.common.errors import UnsupportedSqlStoreError
 from llama_stack.core.access_control.access_control import default_policy, is_action_allowed
 from llama_stack.core.access_control.conditions import ProtectedResource
 from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
@@ -59,7 +60,7 @@ class AuthorizedSqlStore:
 
         :param sql_store: Base SqlStore implementation to wrap
         """
-        self.sql_store = sql_store
+        self.sql_store: SqlStore = sql_store
         self._detect_database_type()
         self._validate_sql_optimized_policy()
 
@@ -69,8 +70,8 @@ class AuthorizedSqlStore:
             raise ValueError("SqlStore must have a config attribute to be used with AuthorizedSqlStore")
 
         self.database_type = self.sql_store.config.type
-        if self.database_type not in [SqlStoreType.postgres, SqlStoreType.sqlite]:
-            raise ValueError(f"Unsupported database type: {self.database_type}")
+        if self.database_type not in list(SqlStoreType):
+            raise UnsupportedSqlStoreError(self.database_type)
 
     def _validate_sql_optimized_policy(self) -> None:
         """Validate that SQL_OPTIMIZED_POLICY matches the actual default_policy().
@@ -201,10 +202,10 @@ class AuthorizedSqlStore:
         """
         if self.database_type == SqlStoreType.postgres:
             return f"{column}->'{path}'"
-        elif self.database_type == SqlStoreType.sqlite:
-            return f"JSON_EXTRACT({column}, '$.{path}')"
+        # this case is when self.database_type == SqlStoreType.sqlite
+        # validity detection already occurs in _detect_database_type
         else:
-            raise ValueError(f"Unsupported database type: {self.database_type}")
+            return f"JSON_EXTRACT({column}, '$.{path}')"
 
     def _json_extract_text(self, column: str, path: str) -> str:
         """Extract JSON value as text.
@@ -218,10 +219,10 @@ class AuthorizedSqlStore:
         """
         if self.database_type == SqlStoreType.postgres:
             return f"{column}->>'{path}'"
-        elif self.database_type == SqlStoreType.sqlite:
-            return f"JSON_EXTRACT({column}, '$.{path}')"
+        # this case is when self.database_type == SqlStoreType.sqlite
+        # validity detection already occurs in _detect_database_type
         else:
-            raise ValueError(f"Unsupported database type: {self.database_type}")
+            return f"JSON_EXTRACT({column}, '$.{path}')"
 
     def _get_public_access_conditions(self) -> list[str]:
         """Get the SQL conditions for public access."""
@@ -232,8 +233,6 @@ class AuthorizedSqlStore:
             conditions.append("access_attributes::text = 'null'")
         elif self.database_type == SqlStoreType.sqlite:
             conditions.append("access_attributes = 'null'")
-        else:
-            raise ValueError(f"Unsupported database type: {self.database_type}")
         return conditions
 
     def _build_default_policy_where_clause(self, current_user: User | None) -> str:
