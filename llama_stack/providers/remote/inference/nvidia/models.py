@@ -104,6 +104,28 @@ MODEL_ENTRIES = [
             "context_length": 512,
         },
     ),
+    # NVIDIA Reranking models
+    ProviderModelEntry(
+        provider_model_id="nv-rerank-qa-mistral-4b:1",
+        model_type=ModelType.rerank,
+        metadata={
+            "endpoint": "https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking",
+        },
+    ),
+    ProviderModelEntry(
+        provider_model_id="nvidia/nv-rerankqa-mistral-4b-v3",
+        model_type=ModelType.rerank,
+        metadata={
+            "endpoint": "https://ai.api.nvidia.com/v1/retrieval/nvidia/nv-rerankqa-mistral-4b-v3/reranking",
+        },
+    ),
+    ProviderModelEntry(
+        provider_model_id="nvidia/llama-3.2-nv-rerankqa-1b-v2",
+        model_type=ModelType.rerank,
+        metadata={
+            "endpoint": "https://ai.api.nvidia.com/v1/retrieval/nvidia/llama-3_2-nv-rerankqa-1b-v2/reranking",
+        },
+    ),
     # TODO(mf): how do we handle Nemotron models?
     # "Llama3.1-Nemotron-51B-Instruct" -> "meta/llama-3.1-nemotron-51b-instruct",
 ] + SAFETY_MODELS_ENTRIES

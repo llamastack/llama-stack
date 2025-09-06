@@ -47,6 +47,7 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
     Order,
+    RerankResponse,
     ResponseFormat,
     SamplingParams,
     StopReason,
@@ -55,6 +56,10 @@ from llama_stack.apis.inference import (
     ToolConfig,
     ToolDefinition,
     ToolPromptFormat,
+)
+from llama_stack.apis.inference.inference import (
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
 )
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.apis.telemetry import MetricEvent, MetricInResponse, Telemetry
@@ -364,6 +369,24 @@ class InferenceRouter(Inference):
             text_truncation=text_truncation,
             output_dimension=output_dimension,
             task_type=task_type,
+        )
+
+    async def rerank(
+        self,
+        model: str,
+        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
+        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
+        max_num_results: int | None = None,
+    ) -> RerankResponse:
+        """Route rerank requests to the appropriate provider based on the model."""
+        logger.debug(f"InferenceRouter.rerank: {model}")
+        model_obj = await self._get_model(model, ModelType.rerank)
+        provider = await self.routing_table.get_provider_impl(model_obj.identifier)
+        return await provider.rerank(
+            model=model_obj.identifier,
+            query=query,
+            items=items,
+            max_num_results=max_num_results,
         )
 
     async def openai_completion(

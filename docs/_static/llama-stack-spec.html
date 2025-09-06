@@ -11126,7 +11126,8 @@
                 "type": "string",
                 "enum": [
                     "llm",
-                    "embedding"
+                    "embedding",
+                    "rerank"
                 ],
                 "title": "ModelType",
                 "description": "Enumeration of supported model types in Llama Stack."
@@ -16661,7 +16662,7 @@
                 "properties": {
                     "model": {
                         "type": "string",
-                        "description": "The identifier of the reranking model to use."
+                        "description": "The identifier of the reranking model to use. The model must be a reranking model registered with Llama Stack and available via the /models endpoint."
                     },
                     "query": {
                         "oneOf": [
