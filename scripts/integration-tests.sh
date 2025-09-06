@@ -16,7 +16,7 @@ STACK_CONFIG=""
 PROVIDER=""
 TEST_SUBDIRS=""
 TEST_PATTERN=""
-RUN_VISION_TESTS="false"
+TEST_SUITE="base"
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
 
@@ -28,11 +28,15 @@ Usage: $0 [OPTIONS]
 Options:
     --stack-config STRING    Stack configuration to use (required)
     --provider STRING        Provider to use (ollama, vllm, etc.) (required)
-    --test-subdirs STRING    Comma-separated list of test subdirectories to run (default: 'inference')
-    --run-vision-tests       Run vision tests instead of regular tests
+    --test-suite STRING      Comma-separated list of test suites to run (default: 'base')
     --inference-mode STRING  Inference mode: record or replay (default: replay)
+    --test-subdirs STRING    Comma-separated list of test subdirectories to run (overrides suite)
     --test-pattern STRING    Regex pattern to pass to pytest -k
     --help                   Show this help message
+
+Suites are defined in tests/integration/suites.py. They are used to narrow the collection of tests and provide default model options.
+
+You can also specify subdirectories (of tests/integration) to select tests from, which will override the suite.
 
 Examples:
     # Basic inference tests with ollama
@@ -42,7 +46,7 @@ Examples:
     $0 --stack-config server:ci-tests --provider vllm --test-subdirs 'inference,agents'
 
     # Vision tests with ollama
-    $0 --stack-config server:ci-tests --provider ollama --run-vision-tests
+    $0 --stack-config server:ci-tests --provider ollama --test-suite vision
 
     # Record mode for updating test recordings
     $0 --stack-config server:ci-tests --provider ollama --inference-mode record
@@ -64,9 +68,9 @@ while [[ $# -gt 0 ]]; do
             TEST_SUBDIRS="$2"
             shift 2
             ;;
-        --run-vision-tests)
-            RUN_VISION_TESTS="true"
-            shift
+        --test-suite)
+            TEST_SUITE="$2"
+            shift 2
             ;;
         --inference-mode)
             INFERENCE_MODE="$2"
@@ -92,22 +96,25 @@ done
 # Validate required parameters
 if [[ -z "$STACK_CONFIG" ]]; then
     echo "Error: --stack-config is required"
-    usage
     exit 1
 fi
 
 if [[ -z "$PROVIDER" ]]; then
     echo "Error: --provider is required"
-    usage
+    exit 1
+fi
+
+if [[ -z "$TEST_SUITE" && -z "$TEST_SUBDIRS" ]]; then
+    echo "Error: --test-suite or --test-subdirs is required"
     exit 1
 fi
 
 echo "=== Llama Stack Integration Test Runner ==="
 echo "Stack Config: $STACK_CONFIG"
 echo "Provider: $PROVIDER"
-echo "Test Subdirs: $TEST_SUBDIRS"
-echo "Vision Tests: $RUN_VISION_TESTS"
 echo "Inference Mode: $INFERENCE_MODE"
+echo "Test Suite: $TEST_SUITE"
+echo "Test Subdirs: $TEST_SUBDIRS"
 echo "Test Pattern: $TEST_PATTERN"
 echo ""
 
@@ -194,84 +201,46 @@ if [[ -n "$TEST_PATTERN" ]]; then
     PYTEST_PATTERN="${PYTEST_PATTERN} and $TEST_PATTERN"
 fi
 
-# Run vision tests if specified
-if [[ "$RUN_VISION_TESTS" == "true" ]]; then
-    echo "Running vision tests..."
-    set +e
-    pytest -s -v tests/integration/inference/test_vision_inference.py \
-        --stack-config="$STACK_CONFIG" \
-        -k "$PYTEST_PATTERN" \
-        --vision-model=ollama/llama3.2-vision:11b \
-        --embedding-model=sentence-transformers/all-MiniLM-L6-v2 \
-        --color=yes $EXTRA_PARAMS \
-        --capture=tee-sys
-    exit_code=$?
-    set -e
-
-    if [ $exit_code -eq 0 ]; then
-        echo "✅ Vision tests completed successfully"
-    elif [ $exit_code -eq 5 ]; then
-        echo "⚠️ No vision tests collected (pattern matched no tests)"
-    else
-        echo "❌ Vision tests failed"
-        exit 1
-    fi
-    exit 0
-fi
-
-# Run regular tests
-if [[ -z "$TEST_SUBDIRS" ]]; then
-   TEST_SUBDIRS=$(find tests/integration -maxdepth 1 -mindepth 1 -type d |
-            sed 's|tests/integration/||' |
-            grep -Ev "^(__pycache__|fixtures|test_cases|recordings|non_ci|post_training)$" |
-            sort)
-fi
 echo "Test subdirs to run: $TEST_SUBDIRS"
 
-# Collect all test files for the specified test types
-TEST_FILES=""
-for test_subdir in $(echo "$TEST_SUBDIRS" | tr ',' '\n'); do
-    # Skip certain test types for vllm provider
-    if [[ "$PROVIDER" == "vllm" ]]; then
-        if [[ "$test_subdir" == "safety" ]] || [[ "$test_subdir" == "post_training" ]] || [[ "$test_subdir" == "tool_runtime" ]]; then
-            echo "Skipping $test_subdir for vllm provider"
-            continue
+if [[ -n "$TEST_SUBDIRS" ]]; then
+    # Collect all test files for the specified test types
+    TEST_FILES=""
+    for test_subdir in $(echo "$TEST_SUBDIRS" | tr ',' '\n'); do
+        if [[ -d "tests/integration/$test_subdir" ]]; then
+            # Find all Python test files in this directory
+            test_files=$(find tests/integration/$test_subdir -name "test_*.py" -o -name "*_test.py")
+            if [[ -n "$test_files" ]]; then
+                TEST_FILES="$TEST_FILES $test_files"
+                echo "Added test files from $test_subdir: $(echo $test_files | wc -w) files"
+            fi
+        else
+            echo "Warning: Directory tests/integration/$test_subdir does not exist"
         fi
+    done
+
+    if [[ -z "$TEST_FILES" ]]; then
+        echo "No test files found for the specified test types"
+        exit 1
     fi
 
-    if [[ "$STACK_CONFIG" != *"server:"* ]] && [[ "$test_subdir" == "batches" ]]; then
-        echo "Skipping $test_subdir for library client until types are supported"
-        continue
-    fi
+    echo ""
+    echo "=== Running all collected tests in a single pytest command ==="
+    echo "Total test files: $(echo $TEST_FILES | wc -w)"
 
-    if [[ -d "tests/integration/$test_subdir" ]]; then
-        # Find all Python test files in this directory
-        test_files=$(find tests/integration/$test_subdir -name "test_*.py" -o -name "*_test.py")
-        if [[ -n "$test_files" ]]; then
-            TEST_FILES="$TEST_FILES $test_files"
-            echo "Added test files from $test_subdir: $(echo $test_files | wc -w) files"
-        fi
-    else
-        echo "Warning: Directory tests/integration/$test_subdir does not exist"
-    fi
-done
-
-if [[ -z "$TEST_FILES" ]]; then
-    echo "No test files found for the specified test types"
-    exit 1
+    PYTEST_TARGET="$TEST_FILES"
+    EXTRA_PARAMS="$EXTRA_PARAMS --text-model=$TEXT_MODEL --embedding-model=sentence-transformers/all-MiniLM-L6-v2"
+else
+    PYTEST_TARGET="tests/integration/"
+    EXTRA_PARAMS="$EXTRA_PARAMS --suite=$TEST_SUITE"
 fi
 
-echo ""
-echo "=== Running all collected tests in a single pytest command ==="
-echo "Total test files: $(echo $TEST_FILES | wc -w)"
-
 set +e
-pytest -s -v $TEST_FILES \
+pytest -s -v $PYTEST_TARGET \
     --stack-config="$STACK_CONFIG" \
     -k "$PYTEST_PATTERN" \
-    --text-model="$TEXT_MODEL" \
-    --embedding-model=sentence-transformers/all-MiniLM-L6-v2 \
-    --color=yes $EXTRA_PARAMS \
+    $EXTRA_PARAMS \
+    --color=yes \
     --capture=tee-sys
 exit_code=$?
 set -e
@@ -294,7 +263,13 @@ df -h
 # stop server
 if [[ "$STACK_CONFIG" == *"server:"* ]]; then
     echo "Stopping Llama Stack Server..."
-    kill $(lsof -i :8321 | awk 'NR>1 {print $2}')
+    pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
+    if [[ -n "$pids" ]]; then
+        echo "Killing Llama Stack Server processes: $pids"
+        kill -9 $pids
+    else
+        echo "No Llama Stack Server processes found ?!"
+    fi
     echo "Llama Stack Server stopped"
 fi
 

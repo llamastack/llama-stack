@@ -12,10 +12,10 @@ inputs:
     description: 'Provider to setup (ollama or vllm)'
     required: true
     default: 'ollama'
-  run-vision-tests:
-    description: 'Whether to setup provider for vision tests'
+  test-suite:
+    description: 'Test suite to use: base, responses, vision, etc.'
     required: false
-    default: 'false'
+    default: ''
   inference-mode:
     description: 'Inference mode (record or replay)'
     required: true
@@ -33,7 +33,7 @@ runs:
       if: ${{ inputs.provider == 'ollama' && inputs.inference-mode == 'record' }}
       uses: ./.github/actions/setup-ollama
       with:
-        run-vision-tests: ${{ inputs.run-vision-tests }}
+        test-suite: ${{ inputs.test-suite }}
 
     - name: Setup vllm
       if: ${{ inputs.provider == 'vllm' && inputs.inference-mode == 'record' }}

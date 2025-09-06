@@ -15,8 +15,8 @@ AWS Bedrock inference provider for accessing various AI models through AWS's man
 | `profile_name` | `str \| None` | No |  | The profile name that contains credentials to use.Default use environment variable: AWS_PROFILE |
 | `total_max_attempts` | `int \| None` | No |  | An integer representing the maximum number of attempts that will be made for a single request, including the initial attempt. Default use environment variable: AWS_MAX_ATTEMPTS |
 | `retry_mode` | `str \| None` | No |  | A string representing the type of retries Boto3 will perform.Default use environment variable: AWS_RETRY_MODE |
-| `connect_timeout` | `float \| None` | No | 60 | The time in seconds till a timeout exception is thrown when attempting to make a connection. The default is 60 seconds. |
-| `read_timeout` | `float \| None` | No | 60 | The time in seconds till a timeout exception is thrown when attempting to read from a connection.The default is 60 seconds. |
+| `connect_timeout` | `float \| None` | No | 60.0 | The time in seconds till a timeout exception is thrown when attempting to make a connection. The default is 60 seconds. |
+| `read_timeout` | `float \| None` | No | 60.0 | The time in seconds till a timeout exception is thrown when attempting to read from a connection.The default is 60 seconds. |
 | `session_ttl` | `int \| None` | No | 3600 | The time in seconds till a session expires. The default is 3600 seconds (1 hour). |
 
 ## Sample Configuration
