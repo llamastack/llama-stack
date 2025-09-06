@@ -63,6 +63,9 @@ def skip_if_doesnt_support_n(client_with_models, model_id):
     if provider.provider_type in (
         "remote::sambanova",
         "remote::ollama",
+        # https://console.groq.com/docs/openai#currently-unsupported-openai-features
+        # -> Error code: 400 - {'error': {'message': "'n' : number must be at most 1", 'type': 'invalid_request_error'}}
+        "remote::groq",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support n param.")
 
