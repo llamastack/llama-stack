@@ -92,6 +92,8 @@ class ToolParamDefinition(BaseModel):
     param_type: str
     description: str | None = None
     required: bool | None = True
+    items: Any | None = None
+    title: str | None = None
     default: Any | None = None
 
 
