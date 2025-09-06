@@ -256,6 +256,7 @@ def get_external_providers_from_module(
                     spec = module.get_provider_spec()
                 else:
                     # pass in a partially filled out provider spec to satisfy the registry -- knowing we will be overwriting it later upon build and run
+                    # in the case we are building we CANNOT import this module of course because it has not been installed.
                     spec = ProviderSpec(
                         api=Api(provider_api),
                         provider_type=provider.provider_type,
@@ -264,9 +265,16 @@ def get_external_providers_from_module(
                         config_class="",
                     )
                 provider_type = provider.provider_type
-                # in the case we are building we CANNOT import this module of course because it has not been installed.
-                # return a partially filled out spec that the build script will populate.
-                registry[Api(provider_api)][provider_type] = spec
+                if isinstance(spec, list):
+                    # optionally allow people to pass inline and remote provider specs as a returned list.
+                    # with the old method, users could pass in directories of specs using overlapping code
+                    # we want to ensure we preserve that flexibility in this method.
+                    for adapter in spec:
+                        if adapter.adapter_type != provider.provider_type:
+                            continue
+                        registry[Api(provider_api)][provider.provider_type] = adapter
+                else:
+                    registry[Api(provider_api)][provider_type] = spec
             except ModuleNotFoundError as exc:
                 raise ValueError(
                     "get_provider_spec not found. If specifying an external provider via `module` in the Provider spec, the Provider must have the `provider.get_provider_spec` module available"
