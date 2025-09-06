@@ -32,7 +32,7 @@ def available_providers() -> list[ProviderSpec]:
             ],
             module="llama_stack.providers.inline.tool_runtime.rag",
             config_class="llama_stack.providers.inline.tool_runtime.rag.config.RagToolRuntimeConfig",
-            api_dependencies=[Api.vector_io, Api.inference],
+            api_dependencies=[Api.vector_io, Api.inference, Api.files],
             description="RAG (Retrieval-Augmented Generation) tool runtime for document ingestion, chunking, and semantic search.",
         ),
         remote_provider_spec(
