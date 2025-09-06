@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import time
+import uuid
 from io import BytesIO
 
 import pytest
@@ -900,3 +901,76 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
         search_mode=search_mode,
     )
     assert search_response is not None
+
+
+def test_openai_vector_store_file_contents_with_extended_fields(compat_client_with_empty_stores, client_with_models):
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+    vector_store = compat_client.vector_stores.create(
+        name="extended_fields_test_store", metadata={"purpose": "extended_fields_testing"}
+    )
+
+    test_content = b"This is a test document."
+    file_name = f"extended_fields_test_{uuid.uuid4().hex}.txt"
+    attributes = {"test_type": "extended_fields", "version": "1.0"}
+
+    with BytesIO(test_content) as file_buffer:
+        file_buffer.name = file_name
+        file = compat_client.files.create(file=file_buffer, purpose="assistants")
+
+    file_attach_response = compat_client.vector_stores.files.create(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        attributes=attributes,
+    )
+
+    assert file_attach_response.status == "completed", f"File attach failed: {file_attach_response.last_error}"
+    assert file_attach_response.attributes == attributes
+
+    file_contents = compat_client.vector_stores.files.content(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+    )
+
+    assert file_contents
+    assert file_contents.filename == file_name
+    assert file_contents.attributes == attributes
+    assert len(file_contents.content) > 0
+
+    for content_item in file_contents.content:
+        if isinstance(compat_client, LlamaStackClient):
+            content_item = content_item.to_dict()
+        assert content_item["type"] == "text"
+        assert "text" in content_item
+        assert isinstance(content_item["text"], str)
+        assert len(content_item["text"]) > 0
+
+        if "embedding" in content_item:
+            assert isinstance(content_item["embedding"], list)
+            assert all(isinstance(x, (int | float)) for x in content_item["embedding"])
+
+        if "created_timestamp" in content_item:
+            assert isinstance(content_item["created_timestamp"], int)
+            assert content_item["created_timestamp"] > 0
+
+        if "chunk_metadata" in content_item:
+            assert isinstance(content_item["chunk_metadata"], dict)
+            if "chunk_id" in content_item["chunk_metadata"]:
+                assert isinstance(content_item["chunk_metadata"]["chunk_id"], str)
+            if "chunk_window" in content_item["chunk_metadata"]:
+                assert isinstance(content_item["chunk_metadata"]["chunk_window"], str)
+
+    search_response = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id, query="test document", max_num_results=5
+    )
+
+    assert search_response is not None
+    assert len(search_response.data) > 0
+
+    for result_object in search_response.data:
+        result = result_object.to_dict()
+        assert "content" in result
+        assert len(result["content"]) > 0
+        assert result["content"][0]["type"] == "text"
+        assert "text" in result["content"][0]

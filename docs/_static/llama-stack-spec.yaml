@@ -11190,6 +11190,34 @@ components:
         text:
           type: string
           description: The actual text content
+        embedding:
+          type: array
+          items:
+            type: number
+          description: >-
+            (Optional) Embedding vector for the content, if available
+        created_timestamp:
+          type: integer
+          description: >-
+            (Optional) Timestamp when the content was created
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Metadata associated with the content, such as source, author,
+            etc.
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+          description: >-
+            (Optional) Metadata associated with the chunk, such as document ID, source,
+            etc.
       additionalProperties: false
       required:
         - type

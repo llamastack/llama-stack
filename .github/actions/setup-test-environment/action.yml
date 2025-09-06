@@ -39,6 +39,17 @@ runs:
       if: ${{ inputs.provider == 'vllm' && inputs.inference-mode == 'record' }}
       uses: ./.github/actions/setup-vllm
 
+    - name: Set provider URLs for replay mode
+      if: ${{ inputs.inference-mode == 'replay' }}
+      shell: bash
+      run: |
+        # setting so providers get registered in replay mode
+        if [ "${{ inputs.provider }}" == "ollama" ]; then
+          echo "OLLAMA_URL=http://localhost:11434" >> $GITHUB_ENV
+        elif [ "${{ inputs.provider }}" == "vllm" ]; then
+          echo "VLLM_URL=http://localhost:8000/v1" >> $GITHUB_ENV
+        fi
+
     - name: Build Llama Stack
       shell: bash
       run: |
