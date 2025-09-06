@@ -42,68 +42,6 @@ paths:
             schema:
               $ref: '#/components/schemas/AppendRowsRequest'
         required: true
-  /v1/inference/batch-chat-completion:
-    post:
-      responses:
-        '200':
-          description: >-
-            A BatchChatCompletionResponse with the full completions.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BatchChatCompletionResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Inference
-      description: >-
-        Generate chat completions for a batch of messages using the specified model.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BatchChatCompletionRequest'
-        required: true
-  /v1/inference/batch-completion:
-    post:
-      responses:
-        '200':
-          description: >-
-            A BatchCompletionResponse with the full completions.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BatchCompletionResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Inference
-      description: >-
-        Generate completions for a batch of content using the specified model.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BatchCompletionRequest'
-        required: true
   /v1/post-training/job/cancel:
     post:
       responses:
@@ -154,7 +92,7 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
       tags:
-        - BatchInference (Coming Soon)
+        - Inference
       description: >-
         Generate a chat completion for the given messages using the specified model.
       parameters: []
@@ -189,7 +127,7 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
       tags:
-        - BatchInference (Coming Soon)
+        - Inference
       description: >-
         Generate a completion for the given content using the specified model.
       parameters: []
@@ -3682,6 +3620,16 @@ components:
       required:
         - rows
       title: AppendRowsRequest
+    CancelTrainingJobRequest:
+      type: object
+      properties:
+        job_uuid:
+          type: string
+          description: The UUID of the job to cancel.
+      additionalProperties: false
+      required:
+        - job_uuid
+      title: CancelTrainingJobRequest
     CompletionMessage:
       type: object
       properties:
@@ -4199,224 +4147,6 @@ components:
       title: UserMessage
       description: >-
         A message from the user in a chat conversation.
-    BatchChatCompletionRequest:
-      type: object
-      properties:
-        model_id:
-          type: string
-          description: >-
-            The identifier of the model to use. The model must be registered with
-            Llama Stack and available via the /models endpoint.
-        messages_batch:
-          type: array
-          items:
-            type: array
-            items:
-              $ref: '#/components/schemas/Message'
-          description: >-
-            The messages to generate completions for.
-        sampling_params:
-          $ref: '#/components/schemas/SamplingParams'
-          description: >-
-            (Optional) Parameters to control the sampling strategy.
-        tools:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolDefinition'
-          description: >-
-            (Optional) List of tool definitions available to the model.
-        tool_config:
-          $ref: '#/components/schemas/ToolConfig'
-          description: (Optional) Configuration for tool use.
-        response_format:
-          $ref: '#/components/schemas/ResponseFormat'
-          description: >-
-            (Optional) Grammar specification for guided (structured) decoding.
-        logprobs:
-          type: object
-          properties:
-            top_k:
-              type: integer
-              default: 0
-              description: >-
-                How many tokens (for each position) to return log probabilities for.
-          additionalProperties: false
-          description: >-
-            (Optional) If specified, log probabilities for each token position will
-            be returned.
-      additionalProperties: false
-      required:
-        - model_id
-        - messages_batch
-      title: BatchChatCompletionRequest
-    BatchChatCompletionResponse:
-      type: object
-      properties:
-        batch:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChatCompletionResponse'
-          description: >-
-            List of chat completion responses, one for each conversation in the batch
-      additionalProperties: false
-      required:
-        - batch
-      title: BatchChatCompletionResponse
-      description: >-
-        Response from a batch chat completion request.
-    ChatCompletionResponse:
-      type: object
-      properties:
-        metrics:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetricInResponse'
-          description: >-
-            (Optional) List of metrics associated with the API response
-        completion_message:
-          $ref: '#/components/schemas/CompletionMessage'
-          description: The complete response message
-        logprobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/TokenLogProbs'
-          description: >-
-            Optional log probabilities for generated tokens
-      additionalProperties: false
-      required:
-        - completion_message
-      title: ChatCompletionResponse
-      description: Response from a chat completion request.
-    MetricInResponse:
-      type: object
-      properties:
-        metric:
-          type: string
-          description: The name of the metric
-        value:
-          oneOf:
-            - type: integer
-            - type: number
-          description: The numeric value of the metric
-        unit:
-          type: string
-          description: >-
-            (Optional) The unit of measurement for the metric value
-      additionalProperties: false
-      required:
-        - metric
-        - value
-      title: MetricInResponse
-      description: >-
-        A metric value included in API responses.
-    TokenLogProbs:
-      type: object
-      properties:
-        logprobs_by_token:
-          type: object
-          additionalProperties:
-            type: number
-          description: >-
-            Dictionary mapping tokens to their log probabilities
-      additionalProperties: false
-      required:
-        - logprobs_by_token
-      title: TokenLogProbs
-      description: Log probabilities for generated tokens.
-    BatchCompletionRequest:
-      type: object
-      properties:
-        model_id:
-          type: string
-          description: >-
-            The identifier of the model to use. The model must be registered with
-            Llama Stack and available via the /models endpoint.
-        content_batch:
-          type: array
-          items:
-            $ref: '#/components/schemas/InterleavedContent'
-          description: The content to generate completions for.
-        sampling_params:
-          $ref: '#/components/schemas/SamplingParams'
-          description: >-
-            (Optional) Parameters to control the sampling strategy.
-        response_format:
-          $ref: '#/components/schemas/ResponseFormat'
-          description: >-
-            (Optional) Grammar specification for guided (structured) decoding.
-        logprobs:
-          type: object
-          properties:
-            top_k:
-              type: integer
-              default: 0
-              description: >-
-                How many tokens (for each position) to return log probabilities for.
-          additionalProperties: false
-          description: >-
-            (Optional) If specified, log probabilities for each token position will
-            be returned.
-      additionalProperties: false
-      required:
-        - model_id
-        - content_batch
-      title: BatchCompletionRequest
-    BatchCompletionResponse:
-      type: object
-      properties:
-        batch:
-          type: array
-          items:
-            $ref: '#/components/schemas/CompletionResponse'
-          description: >-
-            List of completion responses, one for each input in the batch
-      additionalProperties: false
-      required:
-        - batch
-      title: BatchCompletionResponse
-      description: >-
-        Response from a batch completion request.
-    CompletionResponse:
-      type: object
-      properties:
-        metrics:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetricInResponse'
-          description: >-
-            (Optional) List of metrics associated with the API response
-        content:
-          type: string
-          description: The generated completion text
-        stop_reason:
-          type: string
-          enum:
-            - end_of_turn
-            - end_of_message
-            - out_of_tokens
-          description: Reason why generation stopped
-        logprobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/TokenLogProbs'
-          description: >-
-            Optional log probabilities for generated tokens
-      additionalProperties: false
-      required:
-        - content
-        - stop_reason
-      title: CompletionResponse
-      description: Response from a completion request.
-    CancelTrainingJobRequest:
-      type: object
-      properties:
-        job_uuid:
-          type: string
-          description: The UUID of the job to cancel.
-      additionalProperties: false
-      required:
-        - job_uuid
-      title: CancelTrainingJobRequest
     ChatCompletionRequest:
       type: object
       properties:
@@ -4495,6 +4225,65 @@ components:
         - model_id
         - messages
       title: ChatCompletionRequest
+    ChatCompletionResponse:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricInResponse'
+          description: >-
+            (Optional) List of metrics associated with the API response
+        completion_message:
+          $ref: '#/components/schemas/CompletionMessage'
+          description: The complete response message
+        logprobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenLogProbs'
+          description: >-
+            Optional log probabilities for generated tokens
+      additionalProperties: false
+      required:
+        - completion_message
+      title: ChatCompletionResponse
+      description: Response from a chat completion request.
+    MetricInResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+          description: The name of the metric
+        value:
+          oneOf:
+            - type: integer
+            - type: number
+          description: The numeric value of the metric
+        unit:
+          type: string
+          description: >-
+            (Optional) The unit of measurement for the metric value
+      additionalProperties: false
+      required:
+        - metric
+        - value
+      title: MetricInResponse
+      description: >-
+        A metric value included in API responses.
+    TokenLogProbs:
+      type: object
+      properties:
+        logprobs_by_token:
+          type: object
+          additionalProperties:
+            type: number
+          description: >-
+            Dictionary mapping tokens to their log probabilities
+      additionalProperties: false
+      required:
+        - logprobs_by_token
+      title: TokenLogProbs
+      description: Log probabilities for generated tokens.
     ChatCompletionResponseEvent:
       type: object
       properties:
@@ -4672,6 +4461,37 @@ components:
         - model_id
         - content
       title: CompletionRequest
+    CompletionResponse:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricInResponse'
+          description: >-
+            (Optional) List of metrics associated with the API response
+        content:
+          type: string
+          description: The generated completion text
+        stop_reason:
+          type: string
+          enum:
+            - end_of_turn
+            - end_of_message
+            - out_of_tokens
+          description: Reason why generation stopped
+        logprobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenLogProbs'
+          description: >-
+            Optional log probabilities for generated tokens
+      additionalProperties: false
+      required:
+        - content
+        - stop_reason
+      title: CompletionResponse
+      description: Response from a completion request.
     CompletionResponseStreamChunk:
       type: object
       properties:
@@ -12995,18 +12815,6 @@ tags:
       the RAG Tool and Vector IO APIs for more details.
     x-displayName: >-
       Agents API for creating and interacting with agentic systems.
-  - name: BatchInference (Coming Soon)
-    description: >-
-      This is an asynchronous API. If the request is successful, the response will
-      be a job which can be polled for completion.
-
-
-      NOTE: This API is not yet implemented and is subject to change in concert with
-      other asynchronous APIs
-
-      including (post-training, evals, etc).
-    x-displayName: >-
-      Batch inference API for generating completions and chat completions.
   - name: Benchmarks
   - name: DatasetIO
   - name: Datasets
@@ -13046,7 +12854,6 @@ x-tagGroups:
   - name: Operations
     tags:
       - Agents
-      - BatchInference (Coming Soon)
       - Benchmarks
       - DatasetIO
       - Datasets

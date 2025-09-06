@@ -86,92 +86,6 @@
                 }
             }
         },
-        "/v1/inference/batch-chat-completion": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "A BatchChatCompletionResponse with the full completions.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/BatchChatCompletionResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Inference"
-                ],
-                "description": "Generate chat completions for a batch of messages using the specified model.",
-                "parameters": [],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/BatchChatCompletionRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                }
-            }
-        },
-        "/v1/inference/batch-completion": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "A BatchCompletionResponse with the full completions.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/BatchCompletionResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Inference"
-                ],
-                "description": "Generate completions for a batch of content using the specified model.",
-                "parameters": [],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/BatchCompletionRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                }
-            }
-        },
         "/v1/post-training/job/cancel": {
             "post": {
                 "responses": {
@@ -240,7 +154,7 @@
                     }
                 },
                 "tags": [
-                    "BatchInference (Coming Soon)"
+                    "Inference"
                 ],
                 "description": "Generate a chat completion for the given messages using the specified model.",
                 "parameters": [],
@@ -288,7 +202,7 @@
                     }
                 },
                 "tags": [
-                    "BatchInference (Coming Soon)"
+                    "Inference"
                 ],
                 "description": "Generate a completion for the given content using the specified model.",
                 "parameters": [],
@@ -5198,6 +5112,20 @@
                 ],
                 "title": "AppendRowsRequest"
             },
+            "CancelTrainingJobRequest": {
+                "type": "object",
+                "properties": {
+                    "job_uuid": {
+                        "type": "string",
+                        "description": "The UUID of the job to cancel."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "job_uuid"
+                ],
+                "title": "CancelTrainingJobRequest"
+            },
             "CompletionMessage": {
                 "type": "object",
                 "properties": {
@@ -5903,26 +5831,23 @@
                 "title": "UserMessage",
                 "description": "A message from the user in a chat conversation."
             },
-            "BatchChatCompletionRequest": {
+            "ChatCompletionRequest": {
                 "type": "object",
                 "properties": {
                     "model_id": {
                         "type": "string",
                         "description": "The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint."
                     },
-                    "messages_batch": {
+                    "messages": {
                         "type": "array",
                         "items": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/components/schemas/Message"
-                            }
+                            "$ref": "#/components/schemas/Message"
                         },
-                        "description": "The messages to generate completions for."
+                        "description": "List of messages in the conversation."
                     },
                     "sampling_params": {
                         "$ref": "#/components/schemas/SamplingParams",
-                        "description": "(Optional) Parameters to control the sampling strategy."
+                        "description": "Parameters to control the sampling strategy."
                     },
                     "tools": {
                         "type": "array",
@@ -5931,13 +5856,31 @@
                         },
                         "description": "(Optional) List of tool definitions available to the model."
                     },
-                    "tool_config": {
-                        "$ref": "#/components/schemas/ToolConfig",
-                        "description": "(Optional) Configuration for tool use."
+                    "tool_choice": {
+                        "type": "string",
+                        "enum": [
+                            "auto",
+                            "required",
+                            "none"
+                        ],
+                        "description": "(Optional) Whether tool use is required or automatic. Defaults to ToolChoice.auto. .. deprecated:: Use tool_config instead."
+                    },
+                    "tool_prompt_format": {
+                        "type": "string",
+                        "enum": [
+                            "json",
+                            "function_tag",
+                            "python_list"
+                        ],
+                        "description": "(Optional) Instructs the model how to format tool calls. By default, Llama Stack will attempt to use a format that is best adapted to the model. - `ToolPromptFormat.json`: The tool calls are formatted as a JSON object. - `ToolPromptFormat.function_tag`: The tool calls are enclosed in a <function=function_name> tag. - `ToolPromptFormat.python_list`: The tool calls are output as Python syntax -- a list of function calls. .. deprecated:: Use tool_config instead."
                     },
                     "response_format": {
                         "$ref": "#/components/schemas/ResponseFormat",
-                        "description": "(Optional) Grammar specification for guided (structured) decoding."
+                        "description": "(Optional) Grammar specification for guided (structured) decoding. There are two options: - `ResponseFormat.json_schema`: The grammar is a JSON schema. Most providers support this format. - `ResponseFormat.grammar`: The grammar is a BNF grammar. This format is more flexible, but not all providers support it."
+                    },
+                    "stream": {
+                        "type": "boolean",
+                        "description": "(Optional) If True, generate an SSE event stream of the response. Defaults to False."
                     },
                     "logprobs": {
                         "type": "object",
@@ -5950,32 +5893,18 @@
                         },
                         "additionalProperties": false,
                         "description": "(Optional) If specified, log probabilities for each token position will be returned."
+                    },
+                    "tool_config": {
+                        "$ref": "#/components/schemas/ToolConfig",
+                        "description": "(Optional) Configuration for tool use."
                     }
                 },
                 "additionalProperties": false,
                 "required": [
                     "model_id",
-                    "messages_batch"
+                    "messages"
                 ],
-                "title": "BatchChatCompletionRequest"
-            },
-            "BatchChatCompletionResponse": {
-                "type": "object",
-                "properties": {
-                    "batch": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ChatCompletionResponse"
-                        },
-                        "description": "List of chat completion responses, one for each conversation in the batch"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "batch"
-                ],
-                "title": "BatchChatCompletionResponse",
-                "description": "Response from a batch chat completion request."
+                "title": "ChatCompletionRequest"
             },
             "ChatCompletionResponse": {
                 "type": "object",
@@ -6054,194 +5983,6 @@
                 ],
                 "title": "TokenLogProbs",
                 "description": "Log probabilities for generated tokens."
-            },
-            "BatchCompletionRequest": {
-                "type": "object",
-                "properties": {
-                    "model_id": {
-                        "type": "string",
-                        "description": "The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint."
-                    },
-                    "content_batch": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/InterleavedContent"
-                        },
-                        "description": "The content to generate completions for."
-                    },
-                    "sampling_params": {
-                        "$ref": "#/components/schemas/SamplingParams",
-                        "description": "(Optional) Parameters to control the sampling strategy."
-                    },
-                    "response_format": {
-                        "$ref": "#/components/schemas/ResponseFormat",
-                        "description": "(Optional) Grammar specification for guided (structured) decoding."
-                    },
-                    "logprobs": {
-                        "type": "object",
-                        "properties": {
-                            "top_k": {
-                                "type": "integer",
-                                "default": 0,
-                                "description": "How many tokens (for each position) to return log probabilities for."
-                            }
-                        },
-                        "additionalProperties": false,
-                        "description": "(Optional) If specified, log probabilities for each token position will be returned."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "model_id",
-                    "content_batch"
-                ],
-                "title": "BatchCompletionRequest"
-            },
-            "BatchCompletionResponse": {
-                "type": "object",
-                "properties": {
-                    "batch": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/CompletionResponse"
-                        },
-                        "description": "List of completion responses, one for each input in the batch"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "batch"
-                ],
-                "title": "BatchCompletionResponse",
-                "description": "Response from a batch completion request."
-            },
-            "CompletionResponse": {
-                "type": "object",
-                "properties": {
-                    "metrics": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/MetricInResponse"
-                        },
-                        "description": "(Optional) List of metrics associated with the API response"
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "The generated completion text"
-                    },
-                    "stop_reason": {
-                        "type": "string",
-                        "enum": [
-                            "end_of_turn",
-                            "end_of_message",
-                            "out_of_tokens"
-                        ],
-                        "description": "Reason why generation stopped"
-                    },
-                    "logprobs": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/TokenLogProbs"
-                        },
-                        "description": "Optional log probabilities for generated tokens"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "content",
-                    "stop_reason"
-                ],
-                "title": "CompletionResponse",
-                "description": "Response from a completion request."
-            },
-            "CancelTrainingJobRequest": {
-                "type": "object",
-                "properties": {
-                    "job_uuid": {
-                        "type": "string",
-                        "description": "The UUID of the job to cancel."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "job_uuid"
-                ],
-                "title": "CancelTrainingJobRequest"
-            },
-            "ChatCompletionRequest": {
-                "type": "object",
-                "properties": {
-                    "model_id": {
-                        "type": "string",
-                        "description": "The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint."
-                    },
-                    "messages": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Message"
-                        },
-                        "description": "List of messages in the conversation."
-                    },
-                    "sampling_params": {
-                        "$ref": "#/components/schemas/SamplingParams",
-                        "description": "Parameters to control the sampling strategy."
-                    },
-                    "tools": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ToolDefinition"
-                        },
-                        "description": "(Optional) List of tool definitions available to the model."
-                    },
-                    "tool_choice": {
-                        "type": "string",
-                        "enum": [
-                            "auto",
-                            "required",
-                            "none"
-                        ],
-                        "description": "(Optional) Whether tool use is required or automatic. Defaults to ToolChoice.auto. .. deprecated:: Use tool_config instead."
-                    },
-                    "tool_prompt_format": {
-                        "type": "string",
-                        "enum": [
-                            "json",
-                            "function_tag",
-                            "python_list"
-                        ],
-                        "description": "(Optional) Instructs the model how to format tool calls. By default, Llama Stack will attempt to use a format that is best adapted to the model. - `ToolPromptFormat.json`: The tool calls are formatted as a JSON object. - `ToolPromptFormat.function_tag`: The tool calls are enclosed in a <function=function_name> tag. - `ToolPromptFormat.python_list`: The tool calls are output as Python syntax -- a list of function calls. .. deprecated:: Use tool_config instead."
-                    },
-                    "response_format": {
-                        "$ref": "#/components/schemas/ResponseFormat",
-                        "description": "(Optional) Grammar specification for guided (structured) decoding. There are two options: - `ResponseFormat.json_schema`: The grammar is a JSON schema. Most providers support this format. - `ResponseFormat.grammar`: The grammar is a BNF grammar. This format is more flexible, but not all providers support it."
-                    },
-                    "stream": {
-                        "type": "boolean",
-                        "description": "(Optional) If True, generate an SSE event stream of the response. Defaults to False."
-                    },
-                    "logprobs": {
-                        "type": "object",
-                        "properties": {
-                            "top_k": {
-                                "type": "integer",
-                                "default": 0,
-                                "description": "How many tokens (for each position) to return log probabilities for."
-                            }
-                        },
-                        "additionalProperties": false,
-                        "description": "(Optional) If specified, log probabilities for each token position will be returned."
-                    },
-                    "tool_config": {
-                        "$ref": "#/components/schemas/ToolConfig",
-                        "description": "(Optional) Configuration for tool use."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "model_id",
-                    "messages"
-                ],
-                "title": "ChatCompletionRequest"
             },
             "ChatCompletionResponseEvent": {
                 "type": "object",
@@ -6454,6 +6195,45 @@
                     "content"
                 ],
                 "title": "CompletionRequest"
+            },
+            "CompletionResponse": {
+                "type": "object",
+                "properties": {
+                    "metrics": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MetricInResponse"
+                        },
+                        "description": "(Optional) List of metrics associated with the API response"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "The generated completion text"
+                    },
+                    "stop_reason": {
+                        "type": "string",
+                        "enum": [
+                            "end_of_turn",
+                            "end_of_message",
+                            "out_of_tokens"
+                        ],
+                        "description": "Reason why generation stopped"
+                    },
+                    "logprobs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TokenLogProbs"
+                        },
+                        "description": "Optional log probabilities for generated tokens"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "content",
+                    "stop_reason"
+                ],
+                "title": "CompletionResponse",
+                "description": "Response from a completion request."
             },
             "CompletionResponseStreamChunk": {
                 "type": "object",
@@ -17503,11 +17283,6 @@
             "x-displayName": "Agents API for creating and interacting with agentic systems."
         },
         {
-            "name": "BatchInference (Coming Soon)",
-            "description": "This is an asynchronous API. If the request is successful, the response will be a job which can be polled for completion.\n\nNOTE: This API is not yet implemented and is subject to change in concert with other asynchronous APIs\nincluding (post-training, evals, etc).",
-            "x-displayName": "Batch inference API for generating completions and chat completions."
-        },
-        {
             "name": "Benchmarks"
         },
         {
@@ -17577,7 +17352,6 @@
             "name": "Operations",
             "tags": [
                 "Agents",
-                "BatchInference (Coming Soon)",
                 "Benchmarks",
                 "DatasetIO",
                 "Datasets",
