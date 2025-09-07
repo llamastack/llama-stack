@@ -1,17 +1,17 @@
 name: Setup Ollama
 description: Start Ollama
 inputs:
-  run-vision-tests:
-    description: 'Run vision tests: "true" or "false"'
+  test-suite:
+    description: 'Test suite to use: base, responses, vision, etc.'
     required: false
-    default: 'false'
+    default: ''
 runs:
   using: "composite"
   steps:
     - name: Start Ollama
       shell: bash
       run: |
-        if [ "${{ inputs.run-vision-tests }}" == "true" ]; then
+        if [ "${{ inputs.test-suite }}" == "vision" ]; then
           image="ollama-with-vision-model"
         else
           image="ollama-with-models"

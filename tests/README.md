@@ -38,24 +38,13 @@ For running integration tests, you must provide a few things:
   - a distribution name (e.g., `starter`) or a path to a `run.yaml` file
   - a comma-separated list of api=provider pairs, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`. This is most useful for testing a single API surface.
 
-- Whether you are using replay or live mode for inference. This is specified with the LLAMA_STACK_TEST_INFERENCE_MODE environment variable. The default mode currently is "live" -- that is certainly surprising, but we will fix this soon.
-
 - Any API keys you need to use should be set in the environment, or can be passed in with the --env option.
 
 You can run the integration tests in replay mode with:
 ```bash
 # Run all tests with existing recordings
-LLAMA_STACK_TEST_INFERENCE_MODE=replay \
-  LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
   uv run --group test \
   pytest -sv tests/integration/ --stack-config=starter
-```
-
-If you don't specify LLAMA_STACK_TEST_INFERENCE_MODE, by default it will be in "live" mode -- that is, it will make real API calls.
-
-```bash
-# Test against live APIs
-FIREWORKS_API_KEY=your_key pytest -sv tests/integration/inference --stack-config=starter
 ```
 
 ### Re-recording tests
@@ -66,7 +55,6 @@ If you want to re-record tests locally, you can do so with:
 
 ```bash
 LLAMA_STACK_TEST_INFERENCE_MODE=record \
-  LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
   uv run --group test \
   pytest -sv tests/integration/ --stack-config=starter -k "<appropriate test name>"
 ```
@@ -89,7 +77,7 @@ You must be careful when re-recording. CI workflows assume a specific setup for 
 ./scripts/github/schedule-record-workflow.sh --test-subdirs "agents,inference"
 
 # Record with vision tests enabled
-./scripts/github/schedule-record-workflow.sh --test-subdirs "inference" --run-vision-tests
+./scripts/github/schedule-record-workflow.sh --test-suite vision
 
 # Record with specific provider
 ./scripts/github/schedule-record-workflow.sh --test-subdirs "agents" --test-provider vllm

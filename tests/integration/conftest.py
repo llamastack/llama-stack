@@ -6,14 +6,16 @@
 import inspect
 import itertools
 import os
-import platform
 import textwrap
 import time
+from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
 
 from llama_stack.log import get_logger
+
+from .suites import SUITE_DEFINITIONS
 
 logger = get_logger(__name__, category="tests")
 
@@ -30,6 +32,8 @@ def pytest_runtest_makereport(item, call):
 def pytest_sessionstart(session):
     # stop macOS from complaining about duplicate OpenMP libraries
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+    if "LLAMA_STACK_TEST_INFERENCE_MODE" not in os.environ:
+        os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = "replay"
 
 
 def pytest_runtest_teardown(item):
@@ -59,9 +63,22 @@ def pytest_configure(config):
         key, value = env_var.split("=", 1)
         os.environ[key] = value
 
-    if platform.system() == "Darwin":  # Darwin is the system name for macOS
-        os.environ["DISABLE_CODE_SANDBOX"] = "1"
-        logger.info("Setting DISABLE_CODE_SANDBOX=1 for macOS")
+    suites_raw = config.getoption("--suite")
+    suites: list[str] = []
+    if suites_raw:
+        suites = [p.strip() for p in str(suites_raw).split(",") if p.strip()]
+        unknown = [p for p in suites if p not in SUITE_DEFINITIONS]
+        if unknown:
+            raise pytest.UsageError(
+                f"Unknown suite(s): {', '.join(unknown)}. Available: {', '.join(sorted(SUITE_DEFINITIONS.keys()))}"
+            )
+    for suite in suites:
+        suite_def = SUITE_DEFINITIONS.get(suite, {})
+        defaults: dict = suite_def.get("defaults", {})
+        for dest, value in defaults.items():
+            current = getattr(config.option, dest, None)
+            if not current:
+                setattr(config.option, dest, value)
 
 
 def pytest_addoption(parser):
@@ -104,14 +121,19 @@ def pytest_addoption(parser):
         help="Output dimensionality of the embedding model to use for testing. Default: 384",
     )
     parser.addoption(
-        "--record-responses",
-        action="store_true",
-        help="Record new API responses instead of using cached ones.",
-    )
-    parser.addoption(
         "--report",
         help="Path where the test report should be written, e.g. --report=/path/to/report.md",
     )
+
+    available_suites = ", ".join(sorted(SUITE_DEFINITIONS.keys()))
+    suite_help = (
+        "Comma-separated integration test suites to narrow collection and prefill defaults. "
+        "Available: "
+        f"{available_suites}. "
+        "Explicit CLI flags (e.g., --text-model) override suite defaults. "
+        "Examples: --suite=responses or --suite=responses,vision."
+    )
+    parser.addoption("--suite", help=suite_help)
 
 
 MODEL_SHORT_IDS = {
@@ -195,3 +217,40 @@ def pytest_generate_tests(metafunc):
 
 
 pytest_plugins = ["tests.integration.fixtures.common"]
+
+
+def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
+    """Skip collecting paths outside the selected suite roots for speed."""
+    suites_raw = config.getoption("--suite")
+    if not suites_raw:
+        return False
+
+    names = [p.strip() for p in str(suites_raw).split(",") if p.strip()]
+    roots: list[str] = []
+    for name in names:
+        suite_def = SUITE_DEFINITIONS.get(name)
+        if suite_def:
+            roots.extend(suite_def.get("roots", []))
+    if not roots:
+        return False
+
+    p = Path(str(path)).resolve()
+
+    # Only constrain within tests/integration to avoid ignoring unrelated tests
+    integration_root = (Path(str(config.rootpath)) / "tests" / "integration").resolve()
+    if not p.is_relative_to(integration_root):
+        return False
+
+    for r in roots:
+        rp = (Path(str(config.rootpath)) / r).resolve()
+        if rp.is_file():
+            # Allow the exact file and any ancestor directories so pytest can walk into it.
+            if p == rp:
+                return False
+            if p.is_dir() and rp.is_relative_to(p):
+                return False
+        else:
+            # Allow anything inside an allowed directory
+            if p.is_relative_to(rp):
+                return False
+    return True

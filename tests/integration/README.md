@@ -42,6 +42,27 @@ Model parameters can be influenced by the following options:
 Each of these are comma-separated lists and can be used to generate multiple parameter combinations. Note that tests will be skipped
 if no model is specified.
 
+### Suites (fast selection + sane defaults)
+
+- `--suite`: comma-separated list of named suites that both narrow which tests are collected and prefill common model options (unless you pass them explicitly).
+- Available suites:
+  - `responses`: collects tests under `tests/integration/responses`; this is a separate suite because it needs a strong tool-calling model.
+  - `vision`: collects only `tests/integration/inference/test_vision_inference.py`; defaults `--vision-model=ollama/llama3.2-vision:11b`, `--embedding-model=sentence-transformers/all-MiniLM-L6-v2`.
+- Explicit flags always win. For example, `--suite=responses --text-model=<X>` overrides the suite’s text model.
+
+Examples:
+
+```bash
+# Fast responses run with defaults
+pytest -s -v tests/integration --stack-config=server:starter --suite=responses
+
+# Fast single-file vision run with defaults
+pytest -s -v tests/integration --stack-config=server:starter --suite=vision
+
+# Combine suites and override a default
+pytest -s -v tests/integration --stack-config=server:starter --suite=responses,vision --embedding-model=text-embedding-3-small
+```
+
 ## Examples
 
 ### Testing against a Server
@@ -98,29 +119,25 @@ sentence-transformers/all-MiniLM-L6-v2
 
 The testing system supports three modes controlled by environment variables:
 
-### LIVE Mode (Default)
-Tests make real API calls:
+### REPLAY Mode (Default)
+Uses cached responses instead of making API calls:
 ```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=live pytest tests/integration/
+pytest tests/integration/
 ```
-
 ### RECORD Mode
 Captures API interactions for later replay:
 ```bash
 LLAMA_STACK_TEST_INFERENCE_MODE=record \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
 pytest tests/integration/inference/test_new_feature.py
 ```
 
-### REPLAY Mode
-Uses cached responses instead of making API calls:
+### LIVE Mode
+Tests make real API calls (but not recorded):
 ```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=replay \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
-pytest tests/integration/
+LLAMA_STACK_TEST_INFERENCE_MODE=live pytest tests/integration/
 ```
 
-Note that right now you must specify the recording directory. This is because different tests use different recording directories and we don't (yet) have a fool-proof way to map a test to a recording directory. We are working on this.
+By default, the recording directory is `tests/integration/recordings`. You can override this by setting the `LLAMA_STACK_TEST_RECORDING_DIR` environment variable.
 
 ## Managing Recordings
 
@@ -146,7 +163,6 @@ See the [main testing guide](../README.md#remote-re-recording-recommended) for f
 ```bash
 # Re-record specific tests
 LLAMA_STACK_TEST_INFERENCE_MODE=record \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
 pytest -s -v --stack-config=server:starter tests/integration/inference/test_modified.py
 ```
 

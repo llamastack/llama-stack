@@ -116,7 +116,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter=AdapterSpec(
                 adapter_type="fireworks",
                 pip_packages=[
-                    "fireworks-ai",
+                    "fireworks-ai<=0.17.16",
                 ],
                 module="llama_stack.providers.remote.inference.fireworks",
                 config_class="llama_stack.providers.remote.inference.fireworks.FireworksImplConfig",
@@ -207,7 +207,7 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="gemini",
-                pip_packages=["litellm"],
+                pip_packages=["litellm", "openai"],
                 module="llama_stack.providers.remote.inference.gemini",
                 config_class="llama_stack.providers.remote.inference.gemini.GeminiConfig",
                 provider_data_validator="llama_stack.providers.remote.inference.gemini.config.GeminiProviderDataValidator",
@@ -248,7 +248,7 @@ Available Models:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="groq",
-                pip_packages=["litellm"],
+                pip_packages=["litellm", "openai"],
                 module="llama_stack.providers.remote.inference.groq",
                 config_class="llama_stack.providers.remote.inference.groq.GroqConfig",
                 provider_data_validator="llama_stack.providers.remote.inference.groq.config.GroqProviderDataValidator",
@@ -270,7 +270,7 @@ Available Models:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="sambanova",
-                pip_packages=["litellm"],
+                pip_packages=["litellm", "openai"],
                 module="llama_stack.providers.remote.inference.sambanova",
                 config_class="llama_stack.providers.remote.inference.sambanova.SambaNovaImplConfig",
                 provider_data_validator="llama_stack.providers.remote.inference.sambanova.config.SambaNovaProviderDataValidator",
@@ -292,7 +292,7 @@ Available Models:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="watsonx",
-                pip_packages=["ibm_watson_machine_learning"],
+                pip_packages=["ibm_watsonx_ai"],
                 module="llama_stack.providers.remote.inference.watsonx",
                 config_class="llama_stack.providers.remote.inference.watsonx.WatsonXConfig",
                 provider_data_validator="llama_stack.providers.remote.inference.watsonx.WatsonXProviderDataValidator",
