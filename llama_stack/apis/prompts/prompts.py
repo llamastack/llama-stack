@@ -153,12 +153,14 @@ class Prompts(Protocol):
         prompt_id: str,
         prompt: str,
         variables: dict[str, str] | None = None,
+        version: str | None = None,
     ) -> Prompt:
         """Update an existing prompt (increments version).
 
         :param prompt_id: The identifier of the prompt to update.
         :param prompt: The updated prompt text content.
         :param variables: Updated dictionary of variable names to their default values.
+        :param version: The current version of the prompt being updated (as a string).
         :returns: The updated Prompt resource with incremented version.
         """
         ...
@@ -174,7 +176,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}/default-version", method="PUT")
+    @webmethod(route="/prompts/{prompt_id}/set-default-version", method="PUT")
     async def set_default_version(
         self,
         prompt_id: str,

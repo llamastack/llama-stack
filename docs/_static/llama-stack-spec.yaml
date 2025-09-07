@@ -3726,7 +3726,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ScoreBatchRequest'
         required: true
-  /v1/prompts/{prompt_id}/default-version:
+  /v1/prompts/{prompt_id}/set-default-version:
     post:
       responses:
         '200':
@@ -13231,6 +13231,10 @@ components:
             type: string
           description: >-
             Updated dictionary of variable names to their default values.
+        version:
+          type: string
+          description: >-
+            The current version of the prompt being updated (as a string).
       additionalProperties: false
       required:
         - prompt

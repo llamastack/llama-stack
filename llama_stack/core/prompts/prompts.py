@@ -46,10 +46,20 @@ class PromptServiceImpl(Prompts):
         )
         self.kvstore = await kvstore_impl(kvstore_config)
 
-    def _get_prompt_key(self, prompt_id: str, version: str | None = None) -> str:
+    def _get_default_key(self, prompt_id: str) -> str:
+        """Get the KVStore key that stores the default version number."""
+        return f"prompts:v1:{prompt_id}:default"
+
+    async def _get_prompt_key(self, prompt_id: str, version: str | None = None) -> str:
+        """Get the KVStore key for prompt data, returning default version if applicable."""
         if version:
             return self._get_version_key(prompt_id, version)
-        return f"prompts:v1:{prompt_id}:default"
+
+        default_key = self._get_default_key(prompt_id)
+        resolved_version = await self.kvstore.get(default_key)
+        if resolved_version is None:
+            raise ValueError(f"Prompt {prompt_id}:default not found")
+        return self._get_version_key(prompt_id, resolved_version)
 
     def _get_version_key(self, prompt_id: str, version: str) -> str:
         """Get the KVStore key for a specific prompt version."""
@@ -102,22 +112,10 @@ class PromptServiceImpl(Prompts):
 
     async def get_prompt(self, prompt_id: str, version: str | None = None) -> Prompt:
         """Get a prompt by its identifier and optional version."""
-        if version:
-            key = self._get_version_key(prompt_id, version)
-            data = await self.kvstore.get(key)
-            if data is None:
-                raise ValueError(f"Prompt {prompt_id} version {version} not found")
-        else:
-            default_key = self._get_prompt_key(prompt_id)
-            default_version = await self.kvstore.get(default_key)
-            if default_version is None:
-                raise ValueError(f"Prompt with ID '{prompt_id}' not found")
-
-            key = self._get_version_key(prompt_id, default_version)
-            data = await self.kvstore.get(key)
-            if data is None:
-                raise ValueError(f"Prompt with ID '{prompt_id}' not found")
-
+        key = await self._get_prompt_key(prompt_id, version)
+        data = await self.kvstore.get(key)
+        if data is None:
+            raise ValueError(f"Prompt {prompt_id}:{version if version else 'default'} not found")
         return self._deserialize_prompt(data)
 
     async def create_prompt(
@@ -135,7 +133,7 @@ class PromptServiceImpl(Prompts):
         data = self._serialize_prompt(prompt_obj)
         await self.kvstore.set(version_key, data)
 
-        default_key = self._get_prompt_key(prompt_obj.prompt_id)
+        default_key = self._get_default_key(prompt_obj.prompt_id)
         await self.kvstore.set(default_key, "1")
 
         return prompt_obj
@@ -145,13 +143,20 @@ class PromptServiceImpl(Prompts):
         prompt_id: str,
         prompt: str,
         variables: dict[str, str] | None = None,
+        version: str | None = None,
     ) -> Prompt:
         """Update an existing prompt (increments version)."""
         if variables is None:
             variables = {}
 
         current_prompt = await self.get_prompt(prompt_id)
-        new_version = str(int(current_prompt.version) + 1)
+        if version and current_prompt.version != version:
+            raise ValueError(
+                f"'{version}' is not the latest prompt version for prompt_id='{prompt_id}'. Use the latest version '{current_prompt.version}' in request."
+            )
+
+        current_version = current_prompt.version if version is None else version
+        new_version = str(int(current_version) + 1)
 
         updated_prompt = Prompt(prompt_id=prompt_id, prompt=prompt, version=new_version, variables=variables)
 
@@ -159,7 +164,7 @@ class PromptServiceImpl(Prompts):
         data = self._serialize_prompt(updated_prompt)
         await self.kvstore.set(version_key, data)
 
-        default_key = self._get_prompt_key(prompt_id)
+        default_key = self._get_default_key(prompt_id)
         await self.kvstore.set(default_key, new_version)
 
         return updated_prompt
@@ -207,7 +212,7 @@ class PromptServiceImpl(Prompts):
         if data is None:
             raise ValueError(f"Prompt {prompt_id} version {version} not found")
 
-        default_key = self._get_prompt_key(prompt_id)
+        default_key = self._get_default_key(prompt_id)
         await self.kvstore.set(default_key, version)
 
         return self._deserialize_prompt(data)

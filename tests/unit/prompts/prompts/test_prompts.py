@@ -46,6 +46,22 @@ class TestPrompts:
         assert updated.version == "2"
         assert updated.prompt == "Updated"
 
+    async def test_update_prompt_with_version(self, store):
+        version_for_update = "1"
+
+        prompt = await store.create_prompt("Original")
+        assert prompt.version == "1"
+        prompt = await store.update_prompt(prompt.prompt_id, "Updated", {"v": "2"}, version_for_update)
+        assert prompt.version == "2"
+
+        with pytest.raises(ValueError):
+            # now this is a stale version
+            await store.update_prompt(prompt.prompt_id, "Another Update", {"v": "2"}, version_for_update)
+
+        with pytest.raises(ValueError):
+            # this version does not exist
+            await store.update_prompt(prompt.prompt_id, "Another Update", {"v": "2"}, "99")
+
     async def test_delete_prompt(self, store):
         prompt = await store.create_prompt("to be deleted")
         await store.delete_prompt(prompt.prompt_id)
