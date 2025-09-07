@@ -76,7 +76,7 @@ class PromptServiceImpl(Prompts):
                 "prompt_id": prompt.prompt_id,
                 "prompt": prompt.prompt,
                 "version": prompt.version,
-                "variables": prompt.variables or {},
+                "variables": prompt.variables or [],
             }
         )
 
@@ -84,7 +84,7 @@ class PromptServiceImpl(Prompts):
         """Deserialize a prompt from JSON string."""
         obj = json.loads(data)
         return Prompt(
-            prompt_id=obj["prompt_id"], prompt=obj["prompt"], version=obj["version"], variables=obj.get("variables", {})
+            prompt_id=obj["prompt_id"], prompt=obj["prompt"], version=obj["version"], variables=obj.get("variables", [])
         )
 
     async def list_prompts(self) -> ListPromptsResponse:
@@ -121,11 +121,11 @@ class PromptServiceImpl(Prompts):
     async def create_prompt(
         self,
         prompt: str,
-        variables: dict[str, str] | None = None,
+        variables: list[str] | None = None,
     ) -> Prompt:
         """Create a new prompt."""
         if variables is None:
-            variables = {}
+            variables = []
 
         prompt_obj = Prompt(prompt_id=Prompt.generate_prompt_id(), prompt=prompt, version="1", variables=variables)
 
@@ -142,12 +142,12 @@ class PromptServiceImpl(Prompts):
         self,
         prompt_id: str,
         prompt: str,
-        variables: dict[str, str] | None = None,
+        variables: list[str] | None = None,
         version: str | None = None,
     ) -> Prompt:
         """Update an existing prompt (increments version)."""
         if variables is None:
-            variables = {}
+            variables = []
 
         current_prompt = await self.get_prompt(prompt_id)
         if version and current_prompt.version != version:

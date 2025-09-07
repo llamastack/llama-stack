@@ -7373,11 +7373,11 @@ components:
           description: >-
             The prompt text content with variable placeholders.
         variables:
-          type: object
-          additionalProperties:
+          type: array
+          items:
             type: string
           description: >-
-            Dictionary of variable names to their default values.
+            List of variable names that can be used in the prompt template.
       additionalProperties: false
       required:
         - prompt
@@ -7399,8 +7399,8 @@ components:
           description: >-
             Unique identifier formatted as 'pmpt_<48-digit-hash>'
         variables:
-          type: object
-          additionalProperties:
+          type: array
+          items:
             type: string
           description: >-
             Dictionary of prompt variable names and values
@@ -7414,6 +7414,7 @@ components:
       required:
         - version
         - prompt_id
+        - variables
         - is_default
       title: Prompt
       description: >-
@@ -13226,11 +13227,11 @@ components:
           type: string
           description: The updated prompt text content.
         variables:
-          type: object
-          additionalProperties:
+          type: array
+          items:
             type: string
           description: >-
-            Updated dictionary of variable names to their default values.
+            Updated list of variable names that can be used in the prompt template.
         version:
           type: string
           description: >-

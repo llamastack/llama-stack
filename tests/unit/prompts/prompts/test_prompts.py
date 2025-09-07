@@ -30,11 +30,11 @@ class TestPrompts:
             yield store
 
     async def test_create_and_get_prompt(self, store):
-        prompt = await store.create_prompt("Hello world!", {"name": "John"})
+        prompt = await store.create_prompt("Hello world!", ["name"])
         assert prompt.prompt == "Hello world!"
         assert prompt.version == "1"
         assert prompt.prompt_id.startswith("pmpt_")
-        assert prompt.variables == {"name": "John"}
+        assert prompt.variables == ["name"]
 
         retrieved = await store.get_prompt(prompt.prompt_id)
         assert retrieved.prompt_id == prompt.prompt_id
@@ -42,7 +42,7 @@ class TestPrompts:
 
     async def test_update_prompt(self, store):
         prompt = await store.create_prompt("Original")
-        updated = await store.update_prompt(prompt.prompt_id, "Updated", {"v": "2"})
+        updated = await store.update_prompt(prompt.prompt_id, "Updated", ["v"])
         assert updated.version == "2"
         assert updated.prompt == "Updated"
 
@@ -51,16 +51,16 @@ class TestPrompts:
 
         prompt = await store.create_prompt("Original")
         assert prompt.version == "1"
-        prompt = await store.update_prompt(prompt.prompt_id, "Updated", {"v": "2"}, version_for_update)
+        prompt = await store.update_prompt(prompt.prompt_id, "Updated", ["v"], version_for_update)
         assert prompt.version == "2"
 
         with pytest.raises(ValueError):
             # now this is a stale version
-            await store.update_prompt(prompt.prompt_id, "Another Update", {"v": "2"}, version_for_update)
+            await store.update_prompt(prompt.prompt_id, "Another Update", ["v"], version_for_update)
 
         with pytest.raises(ValueError):
             # this version does not exist
-            await store.update_prompt(prompt.prompt_id, "Another Update", {"v": "2"}, "99")
+            await store.update_prompt(prompt.prompt_id, "Another Update", ["v"], "99")
 
     async def test_delete_prompt(self, store):
         prompt = await store.create_prompt("to be deleted")
@@ -134,3 +134,13 @@ class TestPrompts:
 
         with pytest.raises(ValueError):
             await store.list_prompt_versions("nonexistent")
+
+    async def test_prompt_variable_validation(self, store):
+        prompt = await store.create_prompt("Hello {{ name }}, you live in {{ city }}!", ["name", "city"])
+        assert prompt.variables == ["name", "city"]
+
+        prompt_no_vars = await store.create_prompt("Hello world!", [])
+        assert prompt_no_vars.variables == []
+
+        with pytest.raises(ValueError, match="undeclared variables"):
+            await store.create_prompt("Hello {{ name }}, invalid {{ unknown }}!", ["name"])

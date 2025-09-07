@@ -9985,11 +9985,11 @@
                         "description": "The prompt text content with variable placeholders."
                     },
                     "variables": {
-                        "type": "object",
-                        "additionalProperties": {
+                        "type": "array",
+                        "items": {
                             "type": "string"
                         },
-                        "description": "Dictionary of variable names to their default values."
+                        "description": "List of variable names that can be used in the prompt template."
                     }
                 },
                 "additionalProperties": false,
@@ -10014,8 +10014,8 @@
                         "description": "Unique identifier formatted as 'pmpt_<48-digit-hash>'"
                     },
                     "variables": {
-                        "type": "object",
-                        "additionalProperties": {
+                        "type": "array",
+                        "items": {
                             "type": "string"
                         },
                         "description": "Dictionary of prompt variable names and values"
@@ -10030,6 +10030,7 @@
                 "required": [
                     "version",
                     "prompt_id",
+                    "variables",
                     "is_default"
                 ],
                 "title": "Prompt",
@@ -17824,11 +17825,11 @@
                         "description": "The updated prompt text content."
                     },
                     "variables": {
-                        "type": "object",
-                        "additionalProperties": {
+                        "type": "array",
+                        "items": {
                             "type": "string"
                         },
-                        "description": "Updated dictionary of variable names to their default values."
+                        "description": "Updated list of variable names that can be used in the prompt template."
                     },
                     "version": {
                         "type": "string",
