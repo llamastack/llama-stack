@@ -38,6 +38,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         "remote::tgi",
         "remote::vertexai",
         "remote::gemini",  # https://generativelanguage.googleapis.com/v1beta/openai/completions -> 404
+        "remote::anthropic",  # at least claude-3-{5,7}-{haiku,sonnet}-* / claude-{sonnet,opus}-4-* are not supported
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI completions.")
 
@@ -70,6 +71,8 @@ def skip_if_doesnt_support_n(client_with_models, model_id):
         # Error code: 400 - [{'error': {'code': 400, 'message': 'Only one candidate can be specified in the
         # current model', 'status': 'INVALID_ARGUMENT'}}]
         "remote::gemini",
+        # https://docs.anthropic.com/en/api/openai-sdk#simple-fields
+        "remote::anthropic",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support n param.")
 
