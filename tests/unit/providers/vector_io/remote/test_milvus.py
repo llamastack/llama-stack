@@ -48,7 +48,7 @@ async def mock_milvus_client() -> MagicMock:
     # Mock async insert operation
     client.insert = AsyncMock(return_value={"insert_count": 10})
 
-    # Mock async search operation - return mock results (data should be dict, not JSON string)
+    # Mock async search operation
     client.search = AsyncMock(
         return_value=[
             [
@@ -87,13 +87,10 @@ async def mock_milvus_client() -> MagicMock:
         ]
     )
 
-    # Mock async hybrid_search operation
     client.hybrid_search = AsyncMock(return_value=[])
 
-    # Mock async delete operation
     client.delete = AsyncMock(return_value=None)
 
-    # Mock async close operation
     client.close = AsyncMock(return_value=None)
 
     return client

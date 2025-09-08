@@ -190,7 +190,7 @@ async def milvus_vec_index(milvus_vec_db_path, embedding_dimension):
     index = MilvusIndex(client, name, consistency_level="Strong")
     index.db_path = milvus_vec_db_path
     yield index
-    # Proper cleanup: close the async client
+
     await client.close()
 
 
