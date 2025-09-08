@@ -324,6 +324,3 @@ async def test_query_hybrid_search_default_rrf(
     call_args = mock_milvus_client.hybrid_search.call_args
     ranker = call_args[1]["ranker"]
     assert ranker is not None
-
-
-# TODO: Write tests for the MilvusVectorIOAdapter class.
