@@ -16,6 +16,7 @@ from transformers import (
 )
 from trl import DPOConfig, DPOTrainer
 
+from llama_stack.apis.common.errors import MissingTrainingConfigError
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.post_training import (
@@ -204,8 +205,8 @@ class HFDPOAlignmentSingleDevice:
     ) -> tuple[Dataset, Dataset, AutoTokenizer]:
         """Load and prepare the dataset for DPO training."""
         # Validate data config
-        if not config.data_config:
-            raise ValueError("DataConfig is required for DPO training")
+        if config.data_config is None:
+            raise MissingTrainingConfigError("DataConfig")
 
         # Load dataset
         logger.info(f"Loading dataset: {config.data_config.dataset_id}")
@@ -266,8 +267,8 @@ class HFDPOAlignmentSingleDevice:
             logger.info(f"Using custom learning rate: {lr}")
 
         # Validate data config
-        if not config.data_config:
-            raise ValueError("DataConfig is required for training")
+        if config.data_config is None:
+            raise MissingTrainingConfigError("DataConfig")
         data_config = config.data_config
 
         # Calculate steps and get save strategy
@@ -356,8 +357,8 @@ class HFDPOAlignmentSingleDevice:
         train_dataset, eval_dataset, tokenizer = await self.load_dataset(model, config_obj, provider_config_obj)
 
         # Calculate steps per epoch
-        if not config_obj.data_config:
-            raise ValueError("DataConfig is required for training")
+        if config_obj.data_config is None:
+            raise MissingTrainingConfigError("DataConfig")
         steps_per_epoch = len(train_dataset) // config_obj.data_config.batch_size
 
         # Setup training arguments
@@ -441,8 +442,8 @@ class HFDPOAlignmentSingleDevice:
         }
 
         # Validate data config
-        if not config.data_config:
-            raise ValueError("DataConfig is required for training")
+        if config.data_config is None:
+            raise MissingTrainingConfigError("DataConfig")
 
         # Train in a separate process
         logger.info("Starting DPO training in separate process")
