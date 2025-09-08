@@ -154,6 +154,7 @@ class PromptServiceImpl(Prompts):
         prompt: str,
         version: int,
         variables: list[str] | None = None,
+        set_as_default: bool = True,
     ) -> Prompt:
         """Update an existing prompt (increments version)."""
         if version < 1:
@@ -178,8 +179,8 @@ class PromptServiceImpl(Prompts):
         data = self._serialize_prompt(updated_prompt)
         await self.kvstore.set(version_key, data)
 
-        default_key = self._get_default_key(prompt_id)
-        await self.kvstore.set(default_key, str(new_version))
+        if set_as_default:
+            await self.set_default_version(prompt_id, new_version)
 
         return updated_prompt
 

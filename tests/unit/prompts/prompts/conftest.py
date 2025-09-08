@@ -18,7 +18,13 @@ async def temp_prompt_store(tmp_path_factory):
     temp_dir = tmp_path_factory.getbasetemp()
     db_path = str(temp_dir / f"{unique_id}.db")
 
-    config = PromptServiceConfig(kvstore=SqliteKVStoreConfig(db_path=db_path))
+    from llama_stack.core.datatypes import StackRunConfig
+    from llama_stack.providers.utils.kvstore import kvstore_impl
+
+    mock_run_config = StackRunConfig(image_name="test-distribution", apis=[], providers={})
+    config = PromptServiceConfig(run_config=mock_run_config)
     store = PromptServiceImpl(config, deps={})
-    await store.initialize()
+
+    store.kvstore = await kvstore_impl(SqliteKVStoreConfig(db_path=db_path))
+
     yield store

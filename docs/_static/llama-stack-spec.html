@@ -17834,12 +17834,17 @@
                             "type": "string"
                         },
                         "description": "Updated list of variable names that can be used in the prompt template."
+                    },
+                    "set_as_default": {
+                        "type": "boolean",
+                        "description": "Set the new version as the default (default=True)."
                     }
                 },
                 "additionalProperties": false,
                 "required": [
                     "prompt",
-                    "version"
+                    "version",
+                    "set_as_default"
                 ],
                 "title": "UpdatePromptRequest"
             },

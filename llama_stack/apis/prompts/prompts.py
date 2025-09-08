@@ -150,6 +150,7 @@ class Prompts(Protocol):
         prompt: str,
         version: int,
         variables: list[str] | None = None,
+        set_as_default: bool = True,
     ) -> Prompt:
         """Update an existing prompt (increments version).
 
@@ -157,6 +158,7 @@ class Prompts(Protocol):
         :param prompt: The updated prompt text content.
         :param version: The current version of the prompt being updated.
         :param variables: Updated list of variable names that can be used in the prompt template.
+        :param set_as_default: Set the new version as the default (default=True).
         :returns: The updated Prompt resource with incremented version.
         """
         ...
