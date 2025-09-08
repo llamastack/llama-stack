@@ -1,7 +1,7 @@
 name: Setup Ollama
 description: Start Ollama
 inputs:
-  test-suite:
+  suite:
     description: 'Test suite to use: base, responses, vision, etc.'
     required: false
     default: ''
@@ -11,7 +11,7 @@ runs:
     - name: Start Ollama
       shell: bash
       run: |
-        if [ "${{ inputs.test-suite }}" == "vision" ]; then
+        if [ "${{ inputs.suite }}" == "vision" ]; then
           image="ollama-with-vision-model"
         else
           image="ollama-with-models"

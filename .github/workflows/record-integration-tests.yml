@@ -10,19 +10,19 @@ run-name: Run the integration test suite from tests/integration
 on:
   workflow_dispatch:
     inputs:
-      test-provider:
-        description: 'Test against a specific provider'
+      test-setup:
+        description: 'Test against a specific setup'
         type: string
         default: 'ollama'
-      test-suite:
+      suite:
         description: 'Test suite to use: base, responses, vision, etc.'
         type: string
         default: ''
-      test-subdirs:
-        description: 'Comma-separated list of test subdirectories to run; overrides test-suite'
+      subdirs:
+        description: 'Comma-separated list of test subdirectories to run; overrides suite'
         type: string
         default: ''
-      test-pattern:
+      pattern:
         description: 'Regex pattern to pass to pytest -k'
         type: string
         default: ''
@@ -39,10 +39,10 @@ jobs:
         run: |
           echo "::group::Workflow Inputs"
           echo "branch: ${{ github.ref_name }}"
-          echo "test-provider: ${{ inputs.test-provider }}"
-          echo "test-suite: ${{ inputs.test-suite }}"
-          echo "test-subdirs: ${{ inputs.test-subdirs }}"
-          echo "test-pattern: ${{ inputs.test-pattern }}"
+          echo "test-setup: ${{ inputs.test-setup }}"
+          echo "suite: ${{ inputs.suite }}"
+          echo "subdirs: ${{ inputs.subdirs }}"
+          echo "pattern: ${{ inputs.pattern }}"
           echo "::endgroup::"
 
       - name: Checkout repository
@@ -55,16 +55,16 @@ jobs:
         with:
           python-version: "3.12"  # Use single Python version for recording
           client-version: "latest"
-          provider: ${{ inputs.test-provider || 'ollama' }}
-          test-suite: ${{ inputs.test-suite }}
+          setup: ${{ inputs.test-setup || 'ollama' }}
+          suite: ${{ inputs.suite }}
           inference-mode: 'record'
 
       - name: Run and record tests
         uses: ./.github/actions/run-and-record-tests
         with:
           stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
-          provider: ${{ inputs.test-provider || 'ollama' }}
+          setup: ${{ inputs.test-setup || 'ollama' }}
           inference-mode: 'record'
-          test-suite: ${{ inputs.test-suite }}
-          test-subdirs: ${{ inputs.test-subdirs }}
-          test-pattern: ${{ inputs.test-pattern }}
+          suite: ${{ inputs.suite }}
+          subdirs: ${{ inputs.subdirs }}
+          pattern: ${{ inputs.pattern }}
