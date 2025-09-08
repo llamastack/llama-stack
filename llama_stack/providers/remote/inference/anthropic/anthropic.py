@@ -5,12 +5,13 @@
 # the root directory of this source tree.
 
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import AnthropicConfig
 from .models import MODEL_ENTRIES
 
 
-class AnthropicInferenceAdapter(LiteLLMOpenAIMixin):
+class AnthropicInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
     def __init__(self, config: AnthropicConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
@@ -26,3 +27,8 @@ class AnthropicInferenceAdapter(LiteLLMOpenAIMixin):
 
     async def shutdown(self) -> None:
         await super().shutdown()
+
+    get_api_key = LiteLLMOpenAIMixin.get_api_key
+
+    def get_base_url(self):
+        return "https://api.anthropic.com/v1"
