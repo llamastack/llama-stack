@@ -774,3 +774,136 @@ def test_has_required_scope_function():
 
     # Test no user (auth disabled)
     assert _has_required_scope("test.read", None)
+
+
+@pytest.fixture
+def mock_kubernetes_api_server():
+    return "https://api.cluster.example.com:6443"
+
+
+@pytest.fixture
+def kubernetes_auth_app(mock_kubernetes_api_server):
+    app = FastAPI()
+    auth_config = AuthenticationConfig(
+        provider_config={
+            "type": "kubernetes",
+            "api_server_url": mock_kubernetes_api_server,
+            "verify_tls": False,
+            "claims_mapping": {
+                "username": "roles",
+                "groups": "roles",
+                "uid": "uid_attr",
+            },
+        },
+    )
+    app.add_middleware(AuthenticationMiddleware, auth_config=auth_config, impls={})
+
+    @app.get("/test")
+    def test_endpoint():
+        return {"message": "Authentication successful"}
+
+    return app
+
+
+@pytest.fixture
+def kubernetes_auth_client(kubernetes_auth_app):
+    return TestClient(kubernetes_auth_app)
+
+
+def test_missing_auth_header_kubernetes_auth(kubernetes_auth_client):
+    response = kubernetes_auth_client.get("/test")
+    assert response.status_code == 401
+    assert "Authentication required" in response.json()["error"]["message"]
+
+
+def test_invalid_auth_header_format_kubernetes_auth(kubernetes_auth_client):
+    response = kubernetes_auth_client.get("/test", headers={"Authorization": "InvalidFormat token123"})
+    assert response.status_code == 401
+    assert "Invalid Authorization header format" in response.json()["error"]["message"]
+
+
+async def mock_kubernetes_selfsubjectreview_success(*args, **kwargs):
+    return MockResponse(
+        201,
+        {
+            "apiVersion": "authentication.k8s.io/v1",
+            "kind": "SelfSubjectReview",
+            "metadata": {"creationTimestamp": "2025-07-15T13:53:56Z"},
+            "status": {
+                "userInfo": {
+                    "username": "alice",
+                    "uid": "alice-uid-123",
+                    "groups": ["system:authenticated", "developers", "admins"],
+                    "extra": {"scopes.authorization.openshift.io": ["user:full"]},
+                }
+            },
+        },
+    )
+
+
+async def mock_kubernetes_selfsubjectreview_failure(*args, **kwargs):
+    return MockResponse(401, {"message": "Unauthorized"})
+
+
+async def mock_kubernetes_selfsubjectreview_http_error(*args, **kwargs):
+    return MockResponse(500, {"message": "Internal Server Error"})
+
+
+@patch("httpx.AsyncClient.post", new=mock_kubernetes_selfsubjectreview_success)
+def test_valid_kubernetes_auth_authentication(kubernetes_auth_client, valid_token):
+    response = kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {valid_token}"})
+    assert response.status_code == 200
+    assert response.json() == {"message": "Authentication successful"}
+
+
+@patch("httpx.AsyncClient.post", new=mock_kubernetes_selfsubjectreview_failure)
+def test_invalid_kubernetes_auth_authentication(kubernetes_auth_client, invalid_token):
+    response = kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {invalid_token}"})
+    assert response.status_code == 401
+    assert "Invalid token" in response.json()["error"]["message"]
+
+
+@patch("httpx.AsyncClient.post", new=mock_kubernetes_selfsubjectreview_http_error)
+def test_kubernetes_auth_http_error(kubernetes_auth_client, valid_token):
+    response = kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {valid_token}"})
+    assert response.status_code == 401
+    assert "Token validation failed" in response.json()["error"]["message"]
+
+
+def test_kubernetes_auth_request_payload(kubernetes_auth_client, valid_token, mock_kubernetes_api_server):
+    with patch("httpx.AsyncClient.post") as mock_post:
+        mock_response = MockResponse(
+            200,
+            {
+                "apiVersion": "authentication.k8s.io/v1",
+                "kind": "SelfSubjectReview",
+                "metadata": {"creationTimestamp": "2025-07-15T13:53:56Z"},
+                "status": {
+                    "userInfo": {
+                        "username": "test-user",
+                        "uid": "test-uid",
+                        "groups": ["test-group"],
+                    }
+                },
+            },
+        )
+        mock_post.return_value = mock_response
+
+        kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {valid_token}"})
+
+        # Verify the request was made with correct parameters
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+
+        # Check URL (passed as positional argument)
+        assert call_args[0][0] == f"{mock_kubernetes_api_server}/apis/authentication.k8s.io/v1/selfsubjectreviews"
+
+        # Check headers (passed as keyword argument)
+        headers = call_args[1]["headers"]
+        assert headers["Authorization"] == f"Bearer {valid_token}"
+        assert headers["Content-Type"] == "application/json"
+
+        # Check request body (passed as keyword argument)
+        request_body = call_args[1]["json"]
+        assert request_body["apiVersion"] == "authentication.k8s.io/v1"
+        assert request_body["kind"] == "SelfSubjectReview"

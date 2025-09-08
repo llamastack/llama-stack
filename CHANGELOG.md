@@ -1,5 +1,103 @@
 # Changelog
 
+# v0.2.20
+Published on: 2025-08-29T22:25:32Z
+
+Here are some key changes that are coming as part of this release.
+
+### Build and Environment
+
+- Environment improvements: fixed env var replacement to preserve types.
+- Docker stability: fixed container startup failures for Fireworks AI provider.
+- Removed absolute paths in build for better portability.
+
+### Features
+
+- UI Enhancements: Implemented file upload and VectorDB creation/configuration directly in UI.
+- Vector Store Improvements: Added keyword, vector, and hybrid search inside vector store.
+- Added S3 authorization support for file providers.
+- SQL Store: Added inequality support to where clause.
+
+### Documentation
+
+- Fixed post-training docs.
+- Added Contributor Guidelines for creating Internal vs. External providers.
+
+### Fixes
+
+- Removed unsupported bfcl scoring function.
+- Multiple reliability and configuration fixes for providers and environment handling.
+
+### Engineering / Chores
+
+- Cleaner internal development setup with consistent paths.
+- Incremental improvements to provider integration and vector store behavior.
+
+
+### New Contributors
+- @omertuc made their first contribution in #3270
+- @r3v5 made their first contribution in vector store hybrid search
+
+---
+
+# v0.2.19
+Published on: 2025-08-26T22:06:55Z
+
+## Highlights
+* feat: Add CORS configuration support for server by @skamenan7 in https://github.com/llamastack/llama-stack/pull/3201
+* feat(api): introduce /rerank by @ehhuang in https://github.com/llamastack/llama-stack/pull/2940
+* feat: Add S3 Files Provider by @mattf in https://github.com/llamastack/llama-stack/pull/3202
+
+
+---
+
+# v0.2.18
+Published on: 2025-08-20T01:09:27Z
+
+## Highlights
+* Add moderations create API
+* Hybrid search in Milvus
+* Numerous Responses API improvements
+* Documentation updates
+
+
+---
+
+# v0.2.17
+Published on: 2025-08-05T01:51:14Z
+
+## Highlights
+
+* feat(tests): introduce inference record/replay to increase test reliability by @ashwinb in https://github.com/meta-llama/llama-stack/pull/2941
+* fix(library_client): improve initialization error handling and prevent AttributeError by @mattf in https://github.com/meta-llama/llama-stack/pull/2944
+* fix: use OLLAMA_URL to activate Ollama provider in starter by @ashwinb in https://github.com/meta-llama/llama-stack/pull/2963
+* feat(UI): adding MVP playground UI by @franciscojavierarceo in https://github.com/meta-llama/llama-stack/pull/2828
+* Standardization of errors (@nathan-weinberg)
+* feat: Enable DPO training with HuggingFace inline provider by @Nehanth in https://github.com/meta-llama/llama-stack/pull/2825
+* chore: rename templates to distributions by @ashwinb in https://github.com/meta-llama/llama-stack/pull/3035
+
+
+---
+
+# v0.2.16
+Published on: 2025-07-28T23:35:23Z
+
+## Highlights
+
+* Automatic model registration for self-hosted providers (ollama and vllm currently). No need for `INFERENCE_MODEL` environment variables which need to be updated, etc.
+* Much simplified starter distribution. Most `ENABLE_` env variables are now gone. When you set `VLLM_URL`, the `vllm` provider is auto-enabled. Similar for `MILVUS_URL`, `PGVECTOR_DB`, etc. Check the [run.yaml](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/templates/starter/run.yaml) for more details.
+* All tests migrated to pytest now (thanks @Elbehery)
+* DPO implementation in the post-training provider (thanks @Nehanth)
+* (Huge!) Support for external APIs and providers thereof (thanks @leseb, @cdoern and others). This is a really big deal -- you can now add more APIs completely out of tree and experiment with them before (optionally) wanting to contribute back.
+* `inline::vllm` provider is gone thank you very much
+* several improvements to OpenAI inference implementations and LiteLLM backend (thanks @mattf)
+* Chroma now supports Vector Store API (thanks @franciscojavierarceo).
+* Authorization improvements: Vector Store/File APIs now supports access control (thanks @franciscojavierarceo); Telemetry read APIs are gated according to logged-in user's roles.
+
+
+
+---
+
 # v0.2.15
 Published on: 2025-07-16T03:30:01Z
 
