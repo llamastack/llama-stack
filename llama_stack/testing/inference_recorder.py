@@ -292,7 +292,7 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
                 f"No recorded response found for request hash: {request_hash}\n"
                 f"Request: {method} {url} {body}\n"
                 f"Model: {body.get('model', 'unknown')}\n"
-                f"To record this response, run with LLAMA_STACK_INFERENCE_MODE=record"
+                f"To record this response, run with LLAMA_STACK_TEST_INFERENCE_MODE=record"
             )
 
     elif _current_mode == InferenceMode.RECORD:
