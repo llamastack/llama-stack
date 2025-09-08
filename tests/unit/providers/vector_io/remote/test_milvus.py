@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
@@ -14,7 +14,7 @@ from llama_stack.apis.vector_io import QueryChunksResponse
 # Mock the entire pymilvus module
 pymilvus_mock = MagicMock()
 pymilvus_mock.DataType = MagicMock()
-pymilvus_mock.MilvusClient = MagicMock
+pymilvus_mock.AsyncMilvusClient = MagicMock
 pymilvus_mock.RRFRanker = MagicMock
 pymilvus_mock.WeightedRanker = MagicMock
 pymilvus_mock.AnnSearchRequest = MagicMock
@@ -40,48 +40,61 @@ async def mock_milvus_client() -> MagicMock:
     """Create a mock Milvus client with common method behaviors."""
     client = MagicMock()
 
-    # Mock collection operations
-    client.has_collection.return_value = False  # Initially no collection
-    client.create_collection.return_value = None
-    client.drop_collection.return_value = None
+    # Mock async collection operations
+    client.has_collection = AsyncMock(return_value=False)  # Initially no collection
+    client.create_collection = AsyncMock(return_value=None)
+    client.drop_collection = AsyncMock(return_value=None)
 
-    # Mock insert operation
-    client.insert.return_value = {"insert_count": 10}
+    # Mock async insert operation
+    client.insert = AsyncMock(return_value={"insert_count": 10})
 
-    # Mock search operation - return mock results (data should be dict, not JSON string)
-    client.search.return_value = [
-        [
+    # Mock async search operation - return mock results (data should be dict, not JSON string)
+    client.search = AsyncMock(
+        return_value=[
+            [
+                {
+                    "id": 0,
+                    "distance": 0.1,
+                    "entity": {"chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}}},
+                },
+                {
+                    "id": 1,
+                    "distance": 0.2,
+                    "entity": {"chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}}},
+                },
+            ]
+        ]
+    )
+
+    # Mock async query operation for keyword search (data should be dict, not JSON string)
+    client.query = AsyncMock(
+        return_value=[
             {
-                "id": 0,
-                "distance": 0.1,
-                "entity": {"chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}}},
+                "chunk_id": "chunk1",
+                "chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}},
+                "score": 0.9,
             },
             {
-                "id": 1,
-                "distance": 0.2,
-                "entity": {"chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}}},
+                "chunk_id": "chunk2",
+                "chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}},
+                "score": 0.8,
+            },
+            {
+                "chunk_id": "chunk3",
+                "chunk_content": {"content": "mock chunk 3", "metadata": {"document_id": "doc3"}},
+                "score": 0.7,
             },
         ]
-    ]
+    )
 
-    # Mock query operation for keyword search (data should be dict, not JSON string)
-    client.query.return_value = [
-        {
-            "chunk_id": "chunk1",
-            "chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}},
-            "score": 0.9,
-        },
-        {
-            "chunk_id": "chunk2",
-            "chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}},
-            "score": 0.8,
-        },
-        {
-            "chunk_id": "chunk3",
-            "chunk_content": {"content": "mock chunk 3", "metadata": {"document_id": "doc3"}},
-            "score": 0.7,
-        },
-    ]
+    # Mock async hybrid_search operation
+    client.hybrid_search = AsyncMock(return_value=[])
+
+    # Mock async delete operation
+    client.delete = AsyncMock(return_value=None)
+
+    # Mock async close operation
+    client.close = AsyncMock(return_value=None)
 
     return client
 

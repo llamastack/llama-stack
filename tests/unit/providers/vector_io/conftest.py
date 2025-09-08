@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 import pytest
 from chromadb import PersistentClient
-from pymilvus import MilvusClient, connections
+from pymilvus import AsyncMilvusClient, connections
 
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
@@ -139,7 +139,7 @@ async def sqlite_vec_vec_index(embedding_dimension, tmp_path_factory):
     await index.initialize()
     index.db_path = db_path
     yield index
-    index.delete()
+    await index.delete()
 
 
 @pytest.fixture
@@ -176,12 +176,14 @@ def milvus_vec_db_path(tmp_path_factory):
 
 @pytest.fixture
 async def milvus_vec_index(milvus_vec_db_path, embedding_dimension):
-    client = MilvusClient(milvus_vec_db_path)
+    client = AsyncMilvusClient(milvus_vec_db_path)
     name = f"{COLLECTION_PREFIX}_{np.random.randint(1e6)}"
     connections.connect(alias=MILVUS_ALIAS, uri=milvus_vec_db_path)
     index = MilvusIndex(client, name, consistency_level="Strong")
     index.db_path = milvus_vec_db_path
     yield index
+    # Proper cleanup: close the async client
+    await client.close()
 
 
 @pytest.fixture
