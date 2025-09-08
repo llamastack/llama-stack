@@ -48,12 +48,12 @@ async def test_initialize_index(vector_index):
 
 
 async def test_add_chunks_query_vector(vector_index, sample_chunks, sample_embeddings):
-    vector_index.delete()
-    vector_index.initialize()
+    await vector_index.delete()
+    await vector_index.initialize()
     await vector_index.add_chunks(sample_chunks, sample_embeddings)
     resp = await vector_index.query_vector(sample_embeddings[0], k=1, score_threshold=-1)
     assert resp.chunks[0].content == sample_chunks[0].content
-    vector_index.delete()
+    await vector_index.delete()
 
 
 async def test_chunk_id_conflict(vector_index, sample_chunks, embedding_dimension):
