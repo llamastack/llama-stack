@@ -10,12 +10,13 @@ from llama_stack.apis.inference import ChatCompletionRequest
 from llama_stack.providers.utils.inference.litellm_openai_mixin import (
     LiteLLMOpenAIMixin,
 )
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import VertexAIConfig
 from .models import MODEL_ENTRIES
 
 
-class VertexAIInferenceAdapter(LiteLLMOpenAIMixin):
+class VertexAIInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
     def __init__(self, config: VertexAIConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
@@ -30,6 +31,10 @@ class VertexAIInferenceAdapter(LiteLLMOpenAIMixin):
         # Vertex AI doesn't use API keys, it uses Application Default Credentials
         # Return empty string to let litellm handle authentication via ADC
         return ""
+
+    def get_base_url(self):
+        # source - https://cloud.google.com/vertex-ai/generative-ai/docs/start/openai
+        return f"https://{self.config.location}-aiplatform.googleapis.com/v1/projects/{self.config.project}/locations/{self.config.location}/endpoints/openapi"
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict[str, Any]:
         # Get base parameters from parent
