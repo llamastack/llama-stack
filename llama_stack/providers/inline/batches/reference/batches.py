@@ -178,9 +178,9 @@ class ReferenceBatchesImpl(Batches):
 
         # TODO: set expiration time for garbage collection
 
-        if endpoint not in ["/v1/chat/completions", "/v1/completions"]:
+        if endpoint not in ["/v1/chat/completions", "/v1/completions", "/v1/embeddings"]:
             raise ValueError(
-                f"Invalid endpoint: {endpoint}. Supported values: /v1/chat/completions, /v1/completions. Code: invalid_value. Param: endpoint",
+                f"Invalid endpoint: {endpoint}. Supported values: /v1/chat/completions, /v1/completions, /v1/embeddings. Code: invalid_value. Param: endpoint",
             )
 
         if completion_window != "24h":
@@ -432,10 +432,15 @@ class ReferenceBatchesImpl(Batches):
                                 # that would be a very expensive way to find out messages is wrong.
                                 ("messages", list, "an array"),  # TODO: allow messages to be a string?
                             ]
-                        else:  # /v1/completions
+                        elif batch.endpoint == "/v1/completions":
                             required_params = [
                                 ("model", str, "a string"),
                                 ("prompt", str, "a string"),  # TODO: allow prompt to be a list of strings??
+                            ]
+                        else:  # /v1/embeddings
+                            required_params = [
+                                ("model", str, "a string"),
+                                ("input", str, "a string or array of strings"),
                             ]
 
                         for param, expected_type, type_string in required_params:
@@ -449,6 +454,18 @@ class ReferenceBatchesImpl(Batches):
                                     )
                                 )
                                 valid = False
+                            elif param == "input" and batch.endpoint == "/v1/embeddings":
+                                # Special handling for embeddings input parameter - can be string or list
+                                if not isinstance(body[param], str | list):
+                                    errors.append(
+                                        BatchError(
+                                            code="invalid_request",
+                                            line=line_num,
+                                            message=f"{param.capitalize()} must be {type_string}",
+                                            param=f"body.{param}",
+                                        )
+                                    )
+                                    valid = False
                             elif not isinstance(body[param], expected_type):
                                 errors.append(
                                     BatchError(
@@ -614,7 +631,7 @@ class ReferenceBatchesImpl(Batches):
                         "body": chat_response.model_dump_json(),
                     },
                 }
-            else:  # /v1/completions
+            elif request.url == "/v1/completions":
                 completion_response = await self.inference_api.openai_completion(**request.body)
 
                 # this is for mypy, we don't allow streaming so we'll get the right type
@@ -628,6 +645,20 @@ class ReferenceBatchesImpl(Batches):
                         "status_code": 200,
                         "request_id": request_id,
                         "body": completion_response.model_dump_json(),
+                    },
+                }
+            else:  # /v1/embeddings
+                embeddings_response = await self.inference_api.openai_embeddings(**request.body)
+                assert hasattr(embeddings_response, "model_dump_json"), (
+                    "Embeddings response must have model_dump_json method"
+                )
+                return {
+                    "id": request_id,
+                    "custom_id": request.custom_id,
+                    "response": {
+                        "status_code": 200,
+                        "request_id": request_id,  # TODO: should this be different?
+                        "body": embeddings_response.model_dump_json(),
                     },
                 }
         except Exception as e:
