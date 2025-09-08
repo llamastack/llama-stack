@@ -121,10 +121,6 @@ class AutoRoutedProviderSpec(ProviderSpec):
         default=None,
     )
 
-    @property
-    def pip_packages(self) -> list[str]:
-        raise AssertionError("Should not be called on AutoRoutedProviderSpec")
-
 
 # Example: /models, /shields
 class RoutingTableProviderSpec(ProviderSpec):

@@ -6,11 +6,10 @@
 
 
 from llama_stack.providers.datatypes import (
-    AdapterSpec,
     Api,
     InlineProviderSpec,
     ProviderSpec,
-    remote_provider_spec,
+    RemoteProviderSpec,
 )
 
 
@@ -48,35 +47,32 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.inline.safety.code_scanner.CodeScannerConfig",
             description="Code Scanner safety provider for detecting security vulnerabilities and unsafe code patterns.",
         ),
-        remote_provider_spec(
+        RemoteProviderSpec(
             api=Api.safety,
-            adapter=AdapterSpec(
-                adapter_type="bedrock",
-                pip_packages=["boto3"],
-                module="llama_stack.providers.remote.safety.bedrock",
-                config_class="llama_stack.providers.remote.safety.bedrock.BedrockSafetyConfig",
-                description="AWS Bedrock safety provider for content moderation using AWS's safety services.",
-            ),
+            adapter_type="bedrock",
+            provider_type="remote::bedrock",
+            pip_packages=["boto3"],
+            module="llama_stack.providers.remote.safety.bedrock",
+            config_class="llama_stack.providers.remote.safety.bedrock.BedrockSafetyConfig",
+            description="AWS Bedrock safety provider for content moderation using AWS's safety services.",
         ),
-        remote_provider_spec(
+        RemoteProviderSpec(
             api=Api.safety,
-            adapter=AdapterSpec(
-                adapter_type="nvidia",
-                pip_packages=["requests"],
-                module="llama_stack.providers.remote.safety.nvidia",
-                config_class="llama_stack.providers.remote.safety.nvidia.NVIDIASafetyConfig",
-                description="NVIDIA's safety provider for content moderation and safety filtering.",
-            ),
+            adapter_type="nvidia",
+            provider_type="remote::nvidia",
+            pip_packages=["requests"],
+            module="llama_stack.providers.remote.safety.nvidia",
+            config_class="llama_stack.providers.remote.safety.nvidia.NVIDIASafetyConfig",
+            description="NVIDIA's safety provider for content moderation and safety filtering.",
         ),
-        remote_provider_spec(
+        RemoteProviderSpec(
             api=Api.safety,
-            adapter=AdapterSpec(
-                adapter_type="sambanova",
-                pip_packages=["litellm", "requests"],
-                module="llama_stack.providers.remote.safety.sambanova",
-                config_class="llama_stack.providers.remote.safety.sambanova.SambaNovaSafetyConfig",
-                provider_data_validator="llama_stack.providers.remote.safety.sambanova.config.SambaNovaProviderDataValidator",
-                description="SambaNova's safety provider for content moderation and safety filtering.",
-            ),
+            adapter_type="sambanova",
+            provider_type="remote::sambanova",
+            pip_packages=["litellm", "requests"],
+            module="llama_stack.providers.remote.safety.sambanova",
+            config_class="llama_stack.providers.remote.safety.sambanova.SambaNovaSafetyConfig",
+            provider_data_validator="llama_stack.providers.remote.safety.sambanova.config.SambaNovaProviderDataValidator",
+            description="SambaNova's safety provider for content moderation and safety filtering.",
         ),
     ]
