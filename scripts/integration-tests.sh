@@ -232,7 +232,7 @@ if [[ -n "$TEST_SUBDIRS" ]]; then
     EXTRA_PARAMS="$EXTRA_PARAMS --text-model=$TEXT_MODEL --embedding-model=sentence-transformers/all-MiniLM-L6-v2"
 else
     PYTEST_TARGET="tests/integration/"
-    EXTRA_PARAMS="$EXTRA_PARAMS --suite=$TEST_SUITE"
+    EXTRA_PARAMS="$EXTRA_PARAMS --text-model=$TEXT_MODEL --suite=$TEST_SUITE"
 fi
 
 set +e
