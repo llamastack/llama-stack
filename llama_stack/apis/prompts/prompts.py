@@ -19,14 +19,14 @@ class Prompt(BaseModel):
     """A prompt resource representing a stored OpenAI Compatible prompt template in Llama Stack.
 
     :param prompt: The system prompt text with variable placeholders. Variables are only supported when using the Responses API.
-    :param version: Version string (integer start at 1 cast as string, incremented on save)
+    :param version: Version (integer starting at 1, incremented on save)
     :param prompt_id: Unique identifier formatted as 'pmpt_<48-digit-hash>'
     :param variables: List of prompt variable names that can be used in the prompt template
     :param is_default: Boolean indicating whether this version is the default version for this prompt
     """
 
     prompt: str | None = Field(default=None, description="The system prompt with variable placeholders")
-    version: str = Field(description="Version string (integer start at 1 cast as string)")
+    version: int = Field(description="Version (integer starting at 1, incremented on save)", ge=1)
     prompt_id: str = Field(description="Unique identifier in format 'pmpt_<48-digit-hash>'")
     variables: list[str] = Field(
         default_factory=list, description="List of variable names that can be used in the prompt template"
@@ -56,15 +56,9 @@ class Prompt(BaseModel):
 
     @field_validator("version")
     @classmethod
-    def validate_version(cls, prompt_version: str) -> str:
-        try:
-            int_version = int(prompt_version)
-            if int_version < 1:
-                raise ValueError("version must be >= 1")
-        except ValueError as e:
-            if "invalid literal" in str(e):
-                raise ValueError("version must be a string representation of an integer") from e
-            raise
+    def validate_version(cls, prompt_version: int) -> int:
+        if prompt_version < 1:
+            raise ValueError("version must be >= 1")
         return prompt_version
 
     @model_validator(mode="after")
@@ -88,13 +82,6 @@ class Prompt(BaseModel):
         random_bytes = secrets.token_bytes(24)
         hex_string = random_bytes.hex()
         return f"pmpt_{hex_string}"
-
-
-class UpdatePromptRequest(BaseModel):
-    """Request model for updating a prompt."""
-
-    prompt: str = Field(description="The prompt text content")
-    variables: list[str] = Field(default_factory=list, description="List of variable names for dynamic injection")
 
 
 class ListPromptsResponse(BaseModel):
@@ -132,7 +119,7 @@ class Prompts(Protocol):
     async def get_prompt(
         self,
         prompt_id: str,
-        version: str | None = None,
+        version: int | None = None,
     ) -> Prompt:
         """Get a prompt by its identifier and optional version.
 
@@ -161,14 +148,14 @@ class Prompts(Protocol):
         self,
         prompt_id: str,
         prompt: str,
-        version: str,
+        version: int,
         variables: list[str] | None = None,
     ) -> Prompt:
         """Update an existing prompt (increments version).
 
         :param prompt_id: The identifier of the prompt to update.
         :param prompt: The updated prompt text content.
-        :param version: The current version of the prompt being updated (as a string).
+        :param version: The current version of the prompt being updated.
         :param variables: Updated list of variable names that can be used in the prompt template.
         :returns: The updated Prompt resource with incremented version.
         """
@@ -189,7 +176,7 @@ class Prompts(Protocol):
     async def set_default_version(
         self,
         prompt_id: str,
-        version: str,
+        version: int,
     ) -> Prompt:
         """Set which version of a prompt should be the default in get_prompt (latest).
 

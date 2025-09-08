@@ -1021,7 +1021,7 @@
                         "description": "The version of the prompt to get (defaults to latest).",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ]
@@ -10006,8 +10006,8 @@
                         "description": "The system prompt text with variable placeholders. Variables are only supported when using the Responses API."
                     },
                     "version": {
-                        "type": "string",
-                        "description": "Version string (integer start at 1 cast as string, incremented on save)"
+                        "type": "integer",
+                        "description": "Version (integer starting at 1, incremented on save)"
                     },
                     "prompt_id": {
                         "type": "string",
@@ -17523,7 +17523,7 @@
                 "type": "object",
                 "properties": {
                     "version": {
-                        "type": "string",
+                        "type": "integer",
                         "description": "The version to set as default."
                     }
                 },
@@ -17825,8 +17825,8 @@
                         "description": "The updated prompt text content."
                     },
                     "version": {
-                        "type": "string",
-                        "description": "The current version of the prompt being updated (as a string)."
+                        "type": "integer",
+                        "description": "The current version of the prompt being updated."
                     },
                     "variables": {
                         "type": "array",
