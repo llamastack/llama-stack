@@ -142,20 +142,22 @@ class PromptServiceImpl(Prompts):
         self,
         prompt_id: str,
         prompt: str,
+        version: str,
         variables: list[str] | None = None,
-        version: str | None = None,
     ) -> Prompt:
         """Update an existing prompt (increments version)."""
         if variables is None:
             variables = []
 
-        current_prompt = await self.get_prompt(prompt_id)
-        if version and current_prompt.version != version:
+        prompt_versions = await self.list_prompt_versions(prompt_id)
+        latest_prompt = max(prompt_versions.data, key=lambda x: int(x.version))
+
+        if version and latest_prompt.version != version:
             raise ValueError(
-                f"'{version}' is not the latest prompt version for prompt_id='{prompt_id}'. Use the latest version '{current_prompt.version}' in request."
+                f"'{version}' is not the latest prompt version for prompt_id='{prompt_id}'. Use the latest version '{latest_prompt.version}' in request."
             )
 
-        current_version = current_prompt.version if version is None else version
+        current_version = latest_prompt.version if version is None else version
         new_version = str(int(current_version) + 1)
 
         updated_prompt = Prompt(prompt_id=prompt_id, prompt=prompt, version=new_version, variables=variables)

@@ -21,7 +21,7 @@ class Prompt(BaseModel):
     :param prompt: The system prompt text with variable placeholders. Variables are only supported when using the Responses API.
     :param version: Version string (integer start at 1 cast as string, incremented on save)
     :param prompt_id: Unique identifier formatted as 'pmpt_<48-digit-hash>'
-    :param variables: Dictionary of prompt variable names and values
+    :param variables: List of prompt variable names that can be used in the prompt template
     :param is_default: Boolean indicating whether this version is the default version for this prompt
     """
 
@@ -88,13 +88,6 @@ class Prompt(BaseModel):
         random_bytes = secrets.token_bytes(24)
         hex_string = random_bytes.hex()
         return f"pmpt_{hex_string}"
-
-
-class CreatePromptRequest(BaseModel):
-    """Request model to create a prompt."""
-
-    prompt: str = Field(description="The prompt text content")
-    variables: list[str] = Field(default_factory=list, description="List of variable names for dynamic injection")
 
 
 class UpdatePromptRequest(BaseModel):
@@ -168,15 +161,15 @@ class Prompts(Protocol):
         self,
         prompt_id: str,
         prompt: str,
+        version: str,
         variables: list[str] | None = None,
-        version: str | None = None,
     ) -> Prompt:
         """Update an existing prompt (increments version).
 
         :param prompt_id: The identifier of the prompt to update.
         :param prompt: The updated prompt text content.
-        :param variables: Updated list of variable names that can be used in the prompt template.
         :param version: The current version of the prompt being updated (as a string).
+        :param variables: Updated list of variable names that can be used in the prompt template.
         :returns: The updated Prompt resource with incremented version.
         """
         ...

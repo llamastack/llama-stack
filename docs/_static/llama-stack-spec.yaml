@@ -7403,7 +7403,7 @@ components:
           items:
             type: string
           description: >-
-            Dictionary of prompt variable names and values
+            List of prompt variable names that can be used in the prompt template
         is_default:
           type: boolean
           default: false
@@ -13226,19 +13226,20 @@ components:
         prompt:
           type: string
           description: The updated prompt text content.
+        version:
+          type: string
+          description: >-
+            The current version of the prompt being updated (as a string).
         variables:
           type: array
           items:
             type: string
           description: >-
             Updated list of variable names that can be used in the prompt template.
-        version:
-          type: string
-          description: >-
-            The current version of the prompt being updated (as a string).
       additionalProperties: false
       required:
         - prompt
+        - version
       title: UpdatePromptRequest
     VersionInfo:
       type: object
