@@ -1777,7 +1777,6 @@ dependencies = [
     { name = "termcolor" },
     { name = "tiktoken" },
     { name = "uvicorn" },
-    { name = "weaviate-client" },
 ]
 
 [package.optional-dependencies]
@@ -1905,7 +1904,6 @@ requires-dist = [
     { name = "termcolor" },
     { name = "tiktoken" },
     { name = "uvicorn", specifier = ">=0.34.0" },
-    { name = "weaviate-client", specifier = ">=4.16.5" },
 ]
 provides-extras = ["ui"]
 
