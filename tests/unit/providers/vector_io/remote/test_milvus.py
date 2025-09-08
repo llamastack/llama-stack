@@ -40,15 +40,12 @@ async def mock_milvus_client() -> MagicMock:
     """Create a mock Milvus client with common method behaviors."""
     client = MagicMock()
 
-    # Mock async collection operations
     client.has_collection = AsyncMock(return_value=False)  # Initially no collection
     client.create_collection = AsyncMock(return_value=None)
     client.drop_collection = AsyncMock(return_value=None)
 
-    # Mock async insert operation
     client.insert = AsyncMock(return_value={"insert_count": 10})
 
-    # Mock async search operation
     client.search = AsyncMock(
         return_value=[
             [
