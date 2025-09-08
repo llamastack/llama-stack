@@ -96,9 +96,9 @@ class WeaviateIndex(EmbeddingIndex):
             k: Limit of number of results to return
             score_threshold: Minimum similarity score threshold
         Returns:
-            QueryChunksResponse with chunks and scores
+            QueryChunksResponse with chunks and scores.
         """
-        log.info(
+        log.debug(
             f"WEAVIATE VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
         )
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
@@ -135,7 +135,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunks.append(chunk)
             scores.append(score)
 
-        log.info(f"WEAVIATE VECTOR SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
+        log.debug(f"WEAVIATE VECTOR SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def delete(self, chunk_ids: list[str] | None = None) -> None:
@@ -166,7 +166,7 @@ class WeaviateIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with chunks and scores
         """
-        log.info(f"WEAVIATE KEYWORD SEARCH CALLED: query='{query_string}', k={k}, threshold={score_threshold}")
+        log.debug(f"WEAVIATE KEYWORD SEARCH CALLED: query='{query_string}', k={k}, threshold={score_threshold}")
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
         collection = self.client.collections.get(sanitized_collection_name)
 
@@ -199,7 +199,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunks.append(chunk)
             scores.append(score)
 
-        log.info(f"WEAVIATE KEYWORD SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}.")
+        log.debug(f"WEAVIATE KEYWORD SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}.")
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_hybrid(
@@ -223,7 +223,7 @@ class WeaviateIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
-        log.info(
+        log.debug(
             f"WEAVIATE HYBRID SEARCH CALLED: query='{query_string}', embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}, reranker={reranker_type}"
         )
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
@@ -265,11 +265,10 @@ class WeaviateIndex(EmbeddingIndex):
             if score < score_threshold:
                 continue
 
-            log.info(f"Document {chunk.metadata.get('document_id')} has score {score}")
             chunks.append(chunk)
             scores.append(score)
 
-        log.info(f"WEAVIATE HYBRID SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
+        log.debug(f"WEAVIATE HYBRID SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
 
@@ -297,7 +296,7 @@ class WeaviateVectorIOAdapter(
 
     def _get_client(self) -> weaviate.WeaviateClient:
         if "localhost" in self.config.weaviate_cluster_url:
-            log.info("using Weaviate locally in container")
+            log.info("Using Weaviate locally in container")
             host, port = self.config.weaviate_cluster_url.split(":")
             key = "local_test"
             client = weaviate.connect_to_local(
