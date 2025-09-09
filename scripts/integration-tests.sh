@@ -143,7 +143,7 @@ fi
 echo "=== Applying Setup Environment Variables ==="
 
 # the server needs this
-export LLAMA_STACK_INFERENCE_MODE=$INFERENCE_MODE
+export LLAMA_STACK_TEST_INFERENCE_MODE="$INFERENCE_MODE"
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
 echo "Setting up environment variables:"

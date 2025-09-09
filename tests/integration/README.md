@@ -162,7 +162,7 @@ cat recordings/responses/abc123.json | jq '.'
 #### Remote Re-recording (Recommended)
 Use the automated workflow script for easier re-recording:
 ```bash
-./scripts/github/schedule-record-workflow.sh --test-subdirs "inference,agents"
+./scripts/github/schedule-record-workflow.sh --subdirs "inference,agents"
 ```
 See the [main testing guide](../README.md#remote-re-recording-recommended) for full details.
 

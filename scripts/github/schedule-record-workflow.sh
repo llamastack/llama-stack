@@ -27,24 +27,24 @@ Trigger the integration test recording workflow remotely. This way you do not ne
 
 OPTIONS:
     -b, --branch BRANCH         Branch to run the workflow on (defaults to current branch)
-    -p, --test-setup SETUP       Test setup to use: vllm, ollama, gpt, etc. (default: ollama)
-    -t, --test-suite SUITE      Test suite to use: base, responses, vision, etc. (default: base)
-    -s, --test-subdirs DIRS     Comma-separated list of test subdirectories to run (overrides suite)
-    -k, --test-pattern PATTERN  Regex pattern to pass to pytest -k
+    -t, --suite SUITE           Test suite to use: base, responses, vision, etc. (default: base)
+    -p, --setup SETUP           Test setup to use: vllm, ollama, gpt, etc. (default: ollama)
+    -s, --subdirs DIRS          Comma-separated list of test subdirectories to run (overrides suite)
+    -k, --pattern PATTERN       Regex pattern to pass to pytest -k
     -h, --help                  Show this help message
 
 EXAMPLES:
     # Record tests for current branch with agents subdirectory
-    $0 --test-subdirs "agents"
+    $0 --subdirs "agents"
 
     # Record tests for specific branch with vision tests
-    $0 -b my-feature-branch --test-suite vision
+    $0 -b my-feature-branch --suite vision
 
     # Record multiple test subdirectories with specific setup
-    $0 --test-subdirs "agents,inference" --test-setup vllm
+    $0 --subdirs "agents,inference" --setup vllm
 
     # Record tests matching a specific pattern
-    $0 --test-subdirs "inference" --test-pattern "test_streaming"
+    $0 --subdirs "inference" --pattern "test_streaming"
 
 EOF
 }
@@ -63,19 +63,19 @@ while [[ $# -gt 0 ]]; do
             BRANCH="$2"
             shift 2
             ;;
-        -s|--test-subdirs)
+        -s|--subdirs)
             TEST_SUBDIRS="$2"
             shift 2
             ;;
-        -p|--test-setup)
+        -p|--setup)
             TEST_SETUP="$2"
             shift 2
             ;;
-        -t|--test-suite)
+        -t|--suite)
             TEST_SUITE="$2"
             shift 2
             ;;
-        -k|--test-pattern)
+        -k|--pattern)
             TEST_PATTERN="$2"
             shift 2
             ;;
@@ -93,10 +93,10 @@ done
 
 # Validate required parameters
 if [[ -z "$TEST_SUBDIRS" && -z "$TEST_SUITE" ]]; then
-    echo "Error: --test-subdirs or --test-suite is required"
+    echo "Error: --subdirs or --suite is required"
     echo "Please specify which test subdirectories to run or test suite to use, e.g.:"
-    echo "  $0 --test-subdirs \"agents,inference\""
-    echo "  $0 --test-suite vision"
+    echo "  $0 --subdirs \"agents,inference\""
+    echo "  $0 --suite vision"
     echo ""
     exit 1
 fi
