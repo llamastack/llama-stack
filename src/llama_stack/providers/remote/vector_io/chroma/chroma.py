@@ -48,11 +48,10 @@ class ChromaIndex(EmbeddingIndex):
     def __init__(self, client: ChromaClientType, collection, kvstore: KVStore | None = None):
         self.client = client
         self.collection = collection
-        self.collection_name = collection.name
         self.kvstore = kvstore
 
     async def initialize(self):
-        self.collection = await maybe_await(self.client.get_or_create_collection(self.collection_name))
+        pass
 
     async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
@@ -93,13 +92,7 @@ class ChromaIndex(EmbeddingIndex):
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def delete(self):
-        try:
-            await maybe_await(self.client.delete_collection(self.collection.name))
-        except Exception as e:
-            if "does not exists" in str(e):
-                log.warning(f"Collection {self.collection.name} already deleted")
-            else:
-                raise
+        await maybe_await(self.client.delete_collection(self.collection.name))
 
     async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
         raise NotImplementedError("Keyword search is not supported in Chroma")
