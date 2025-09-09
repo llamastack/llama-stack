@@ -51,6 +51,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="Local Ollama provider with text + safety models",
         env={
             "OLLAMA_URL": "http://0.0.0.0:11434",
+            "SAFETY_MODEL": "ollama/llama-guard3:1b",
         },
         defaults={
             "text_model": "ollama/llama3.2:3b-instruct-fp16",
