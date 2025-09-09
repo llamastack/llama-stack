@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 
+import aiohttp
 from openai import NOT_GIVEN
 
 from llama_stack.apis.inference import (
@@ -131,8 +132,6 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
             "Authorization": f"Bearer {self.get_api_key()}",
             "Content-Type": "application/json",
         }
-
-        import aiohttp
 
         try:
             async with aiohttp.ClientSession() as session:
