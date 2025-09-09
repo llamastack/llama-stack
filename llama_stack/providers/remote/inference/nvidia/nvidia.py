@@ -7,6 +7,7 @@
 import warnings
 from collections.abc import AsyncIterator
 
+import aiohttp
 from openai import NOT_GIVEN, APIConnectionError
 
 from llama_stack.apis.common.content_types import (
@@ -260,8 +261,6 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference, ModelRegistryHelper):
             "Authorization": f"Bearer {self.get_api_key()}",
             "Content-Type": "application/json",
         }
-
-        import aiohttp
 
         try:
             async with aiohttp.ClientSession() as session:
