@@ -909,10 +909,11 @@ def _convert_openai_request_response_format(
 
 
 def _convert_openai_tool_calls(
-    tool_calls: list[OpenAIChatCompletionMessageFunctionToolCall],
+    tool_calls: list[OpenAIChatCompletionMessageFunctionToolCall] | list[ToolCall],
 ) -> list[ToolCall]:
     """
     Convert an OpenAI ChatCompletionMessageToolCall list into a list of ToolCall.
+    If already ToolCall objects, return them as-is.
 
     OpenAI ChatCompletionMessageToolCall:
         id: str
@@ -933,6 +934,11 @@ def _convert_openai_tool_calls(
     if not tool_calls:
         return []  # CompletionMessage tool_calls is not optional
 
+    # Check if we already have ToolCall objects (Llama Stack internal type)
+    if tool_calls and isinstance(tool_calls[0], ToolCall):
+        return tool_calls  # Already in the correct format
+
+    # Convert from OpenAI format to ToolCall format
     return [
         ToolCall(
             call_id=call.id,
@@ -1004,13 +1010,19 @@ def _convert_openai_sampling_params(
 
 
 def openai_messages_to_messages(
-    messages: list[OpenAIMessageParam],
+    messages: list[OpenAIMessageParam] | list[Message],
 ) -> list[Message]:
     """
     Convert a list of OpenAIChatCompletionMessage into a list of Message.
+    If already Message objects, return them as-is.
     """
     converted_messages = []
     for message in messages:
+        # Check if this individual message is already a Llama Stack Message
+        if isinstance(message, Message):
+            # Already a Llama Stack Message, use as-is
+            converted_messages.append(message)
+            continue
         if message.role == "system":
             converted_message = SystemMessage(content=openai_content_to_content(message.content))
         elif message.role == "user":
@@ -1022,9 +1034,11 @@ def openai_messages_to_messages(
                 stop_reason=StopReason.end_of_turn,
             )
         elif message.role == "tool":
+            # Handle both OpenAI format (tool_call_id) and Llama Stack format (call_id)
+            tool_call_id = getattr(message, "tool_call_id", None) or getattr(message, "call_id", None)
             converted_message = ToolResponseMessage(
                 role="tool",
-                call_id=message.tool_call_id,
+                call_id=tool_call_id,
                 content=openai_content_to_content(message.content),
             )
         else:
