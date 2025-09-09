@@ -69,7 +69,6 @@ def create_adapter(config=None, model_metadata=None):
     return adapter
 
 
-@pytest.mark.asyncio
 async def test_rerank_basic_functionality():
     adapter = create_adapter()
     mock_response = MockResponse(json_data={"rankings": [{"index": 0, "logit": 0.5}]})
@@ -89,7 +88,6 @@ async def test_rerank_basic_functionality():
     assert payload["passages"] == [{"text": "item1"}, {"text": "item2"}]
 
 
-@pytest.mark.asyncio
 async def test_missing_rankings_key():
     adapter = create_adapter()
     mock_session = MockSession(MockResponse(json_data={}))
@@ -100,7 +98,6 @@ async def test_missing_rankings_key():
     assert len(result.data) == 0
 
 
-@pytest.mark.asyncio
 async def test_hosted_with_endpoint():
     adapter = create_adapter(
         config=NVIDIAConfig(api_key="key"), model_metadata={"endpoint": "https://model.endpoint/rerank"}
@@ -114,7 +111,6 @@ async def test_hosted_with_endpoint():
     assert url == "https://model.endpoint/rerank"
 
 
-@pytest.mark.asyncio
 async def test_hosted_without_endpoint():
     adapter = create_adapter(
         config=NVIDIAConfig(api_key="key"),  # This creates hosted config (integrate.api.nvidia.com).
@@ -129,7 +125,6 @@ async def test_hosted_without_endpoint():
     assert "https://integrate.api.nvidia.com" in url
 
 
-@pytest.mark.asyncio
 async def test_self_hosted_ignores_endpoint():
     adapter = create_adapter(
         config=NVIDIAConfig(url="http://localhost:8000", api_key=None),
@@ -145,7 +140,6 @@ async def test_self_hosted_ignores_endpoint():
     assert "model.endpoint/rerank" not in url
 
 
-@pytest.mark.asyncio
 async def test_max_num_results():
     adapter = create_adapter()
     rankings = [{"index": 0, "logit": 0.8}, {"index": 1, "logit": 0.6}]
@@ -159,7 +153,6 @@ async def test_max_num_results():
     assert result.data[0].relevance_score == 0.8
 
 
-@pytest.mark.asyncio
 async def test_http_error():
     adapter = create_adapter()
     mock_session = MockSession(MockResponse(status=500, text_data="Server Error"))
@@ -169,7 +162,6 @@ async def test_http_error():
             await adapter.rerank(model="test-model", query="q", items=["a"])
 
 
-@pytest.mark.asyncio
 async def test_client_error():
     adapter = create_adapter()
     mock_session = AsyncMock()
