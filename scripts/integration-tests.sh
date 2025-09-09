@@ -133,12 +133,20 @@ echo ""
 # Set environment variables
 export LLAMA_STACK_CLIENT_TIMEOUT=300
 
-# Setup-specific configuration is now handled by pytest via --setup
+THIS_DIR=$(dirname "$0")
+
 if [[ -n "$TEST_SETUP" ]]; then
     EXTRA_PARAMS="--setup=$TEST_SETUP"
 fi
 
-THIS_DIR=$(dirname "$0")
+# Apply setup-specific environment variables (needed for server startup and tests)
+echo "=== Applying Setup Environment Variables ==="
+SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. uv run python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
+echo "Setting up environment variables:"
+echo "$SETUP_ENV"
+eval "$SETUP_ENV"
+echo ""
+
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
 
@@ -157,6 +165,18 @@ fi
 
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* ]]; then
+    stop_server() {
+        echo "Stopping Llama Stack Server..."
+        pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
+        if [[ -n "$pids" ]]; then
+            echo "Killing Llama Stack Server processes: $pids"
+            kill -9 $pids
+        else
+            echo "No Llama Stack Server processes found ?!"
+        fi
+        echo "Llama Stack Server stopped"
+    }
+
     # check if server is already running
     if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
         echo "Llama Stack Server is already running, skipping start"
@@ -180,6 +200,8 @@ if [[ "$STACK_CONFIG" == *"server:"* ]]; then
         done
         echo ""
     fi
+
+    trap stop_server EXIT ERR INT TERM
 fi
 
 # Run tests
@@ -239,8 +261,8 @@ pytest -s -v $PYTEST_TARGET \
     --color=yes \
     --capture=tee-sys
 exit_code=$?
-set -e
 set +x
+set -e
 
 if [ $exit_code -eq 0 ]; then
     echo "✅ All tests completed successfully"
@@ -256,19 +278,6 @@ echo ""
 echo "=== System Resources After Tests ==="
 free -h 2>/dev/null || echo "free command not available"
 df -h
-
-# stop server
-if [[ "$STACK_CONFIG" == *"server:"* ]]; then
-    echo "Stopping Llama Stack Server..."
-    pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
-    if [[ -n "$pids" ]]; then
-        echo "Killing Llama Stack Server processes: $pids"
-        kill -9 $pids
-    else
-        echo "No Llama Stack Server processes found ?!"
-    fi
-    echo "Llama Stack Server stopped"
-fi
 
 echo ""
 echo "=== Integration Tests Complete ==="

@@ -38,20 +38,20 @@ runs:
     - name: Run Integration Tests
       shell: bash
       run: |
-        SCRIPT_ARGS="--stack-config '${{ inputs.stack-config }}' --inference-mode '${{ inputs.inference-mode }}'"
+        SCRIPT_ARGS="--stack-config ${{ inputs.stack-config }} --inference-mode ${{ inputs.inference-mode }}"
 
         # Add optional arguments only if they are provided
         if [ -n '${{ inputs.setup }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --setup '${{ inputs.setup }}'"
+          SCRIPT_ARGS="$SCRIPT_ARGS --setup ${{ inputs.setup }}"
         fi
         if [ -n '${{ inputs.suite }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --suite '${{ inputs.suite }}'"
+          SCRIPT_ARGS="$SCRIPT_ARGS --suite ${{ inputs.suite }}"
         fi
         if [ -n '${{ inputs.subdirs }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --subdirs '${{ inputs.subdirs }}'"
+          SCRIPT_ARGS="$SCRIPT_ARGS --subdirs ${{ inputs.subdirs }}"
         fi
         if [ -n '${{ inputs.pattern }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --pattern '${{ inputs.pattern }}'"
+          SCRIPT_ARGS="$SCRIPT_ARGS --pattern ${{ inputs.pattern }}"
         fi
 
         uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS | tee pytest-${{ inputs.inference-mode }}.log
