@@ -141,7 +141,7 @@ fi
 
 # Apply setup-specific environment variables (needed for server startup and tests)
 echo "=== Applying Setup Environment Variables ==="
-SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. uv run python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
+SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
 echo "Setting up environment variables:"
 echo "$SETUP_ENV"
 eval "$SETUP_ENV"
