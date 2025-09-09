@@ -40,7 +40,7 @@ async def mock_milvus_client() -> MagicMock:
     """Create a mock Milvus client with common method behaviors."""
     client = MagicMock()
 
-    client.has_collection = AsyncMock(return_value=False)  # Initially no collection
+    client.list_collections = AsyncMock(return_value=[])  # Initially no collections
     client.create_collection = AsyncMock(return_value=None)
     client.drop_collection = AsyncMock(return_value=None)
 
@@ -103,7 +103,7 @@ async def milvus_index(mock_milvus_client):
 
 async def test_add_chunks(milvus_index, sample_chunks, sample_embeddings, mock_milvus_client):
     # Setup: collection doesn't exist initially, then exists after creation
-    mock_milvus_client.has_collection.side_effect = [False, True]
+    mock_milvus_client.list_collections.side_effect = [[], ["test_collection"]]
 
     await milvus_index.add_chunks(sample_chunks, sample_embeddings)
 
@@ -120,7 +120,7 @@ async def test_query_chunks_vector(
     milvus_index, sample_chunks, sample_embeddings, embedding_dimension, mock_milvus_client
 ):
     # Setup: Add chunks first
-    mock_milvus_client.has_collection.return_value = True
+    mock_milvus_client.list_collections.return_value = ["test_collection"]
     await milvus_index.add_chunks(sample_chunks, sample_embeddings)
 
     # Test vector search
@@ -133,7 +133,7 @@ async def test_query_chunks_vector(
 
 
 async def test_query_chunks_keyword_search(milvus_index, sample_chunks, sample_embeddings, mock_milvus_client):
-    mock_milvus_client.has_collection.return_value = True
+    mock_milvus_client.list_collections.return_value = ["test_collection"]
     await milvus_index.add_chunks(sample_chunks, sample_embeddings)
 
     # Test keyword search
@@ -146,7 +146,7 @@ async def test_query_chunks_keyword_search(milvus_index, sample_chunks, sample_e
 
 async def test_bm25_fallback_to_simple_search(milvus_index, sample_chunks, sample_embeddings, mock_milvus_client):
     """Test that when BM25 search fails, the system falls back to simple text search."""
-    mock_milvus_client.has_collection.return_value = True
+    mock_milvus_client.list_collections.return_value = ["test_collection"]
     await milvus_index.add_chunks(sample_chunks, sample_embeddings)
 
     # Force BM25 search to fail
@@ -188,7 +188,7 @@ async def test_bm25_fallback_to_simple_search(milvus_index, sample_chunks, sampl
 
 async def test_delete_collection(milvus_index, mock_milvus_client):
     # Test collection deletion
-    mock_milvus_client.has_collection.return_value = True
+    mock_milvus_client.list_collections.return_value = ["test_collection"]
 
     await milvus_index.delete()
 
@@ -199,7 +199,7 @@ async def test_query_hybrid_search_rrf(
     milvus_index, sample_chunks, sample_embeddings, embedding_dimension, mock_milvus_client
 ):
     """Test hybrid search with RRF reranker."""
-    mock_milvus_client.has_collection.return_value = True
+    mock_milvus_client.list_collections.return_value = ["test_collection"]
     await milvus_index.add_chunks(sample_chunks, sample_embeddings)
 
     # Mock hybrid search results
@@ -251,7 +251,7 @@ async def test_query_hybrid_search_weighted(
     milvus_index, sample_chunks, sample_embeddings, embedding_dimension, mock_milvus_client
 ):
     """Test hybrid search with weighted reranker."""
-    mock_milvus_client.has_collection.return_value = True
+    mock_milvus_client.list_collections.return_value = ["test_collection"]
     await milvus_index.add_chunks(sample_chunks, sample_embeddings)
 
     # Mock hybrid search results
@@ -297,7 +297,7 @@ async def test_query_hybrid_search_default_rrf(
     milvus_index, sample_chunks, sample_embeddings, embedding_dimension, mock_milvus_client
 ):
     """Test hybrid search with default RRF reranker (no reranker_type specified)."""
-    mock_milvus_client.has_collection.return_value = True
+    mock_milvus_client.list_collections.return_value = ["test_collection"]
     await milvus_index.add_chunks(sample_chunks, sample_embeddings)
 
     # Mock hybrid search results
