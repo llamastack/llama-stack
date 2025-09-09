@@ -63,7 +63,8 @@ class MilvusIndex(EmbeddingIndex):
 
     async def delete(self):
         try:
-            if await self.client.has_collection(self.collection_name):
+            collections = await self.client.list_collections()
+            if self.collection_name in collections:
                 await self.client.drop_collection(collection_name=self.collection_name)
         except Exception as e:
             logger.warning(f"Failed to check or delete collection {self.collection_name}: {e}")
@@ -74,7 +75,8 @@ class MilvusIndex(EmbeddingIndex):
         )
 
         try:
-            collection_exists = await self.client.has_collection(self.collection_name)
+            collections = await self.client.list_collections()
+            collection_exists = self.collection_name in collections
         except Exception as e:
             logger.error(f"Failed to check collection existence: {self.collection_name} ({e})")
             # If it's an event loop issue, try to recreate the client
@@ -83,7 +85,8 @@ class MilvusIndex(EmbeddingIndex):
 
                 if hasattr(self, "_parent_adapter"):
                     await self._parent_adapter._recreate_client()
-                    collection_exists = await self.client.has_collection(self.collection_name)
+                    collections = await self.client.list_collections()
+                    collection_exists = self.collection_name in collections
                 else:
                     # Assume collection doesn't exist if we can't check
                     collection_exists = False
