@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+import asyncio
+from typing import Any
+
 from llama_stack.apis.inference import (
     ListOpenAIChatCompletionResponse,
     OpenAIChatCompletion,
@@ -10,23 +13,42 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     Order,
 )
-from llama_stack.core.datatypes import AccessRule
-from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
+from llama_stack.core.datatypes import AccessRule, InferenceStoreConfig
+from llama_stack.log import get_logger
 
 from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import SqliteSqlStoreConfig, SqlStoreConfig, sqlstore_impl
+from ..sqlstore.sqlstore import SqlStoreConfig, SqlStoreType, sqlstore_impl
+
+logger = get_logger(name=__name__, category="inference_store")
 
 
 class InferenceStore:
-    def __init__(self, sql_store_config: SqlStoreConfig, policy: list[AccessRule]):
-        if not sql_store_config:
-            sql_store_config = SqliteSqlStoreConfig(
-                db_path=(RUNTIME_BASE_DIR / "sqlstore.db").as_posix(),
+    def __init__(
+        self,
+        config: InferenceStoreConfig | SqlStoreConfig,
+        policy: list[AccessRule],
+    ):
+        # Handle backward compatibility
+        if not isinstance(config, InferenceStoreConfig):
+            # Legacy: SqlStoreConfig passed directly as config
+            config = InferenceStoreConfig(
+                sql_store_config=config,
             )
-        self.sql_store_config = sql_store_config
+
+        self.config = config
+        self.sql_store_config = config.sql_store_config
         self.sql_store = None
         self.policy = policy
+
+        # Disable write queue for SQLite to avoid concurrency issues
+        self.enable_write_queue = self.sql_store_config.type != SqlStoreType.sqlite
+
+        # Async write queue and worker control
+        self._queue: asyncio.Queue[tuple[OpenAIChatCompletion, list[OpenAIMessageParam]]] | None = None
+        self._worker_tasks: list[asyncio.Task[Any]] = []
+        self._max_write_queue_size: int = config.max_write_queue_size
+        self._num_writers: int = max(1, config.num_writers)
 
     async def initialize(self):
         """Create the necessary tables if they don't exist."""
@@ -42,10 +64,68 @@ class InferenceStore:
             },
         )
 
+        if self.enable_write_queue:
+            self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
+            for _ in range(self._num_writers):
+                self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
+        else:
+            logger.info("Write queue disabled for SQLite to avoid concurrency issues")
+
+    async def shutdown(self) -> None:
+        if not self._worker_tasks:
+            return
+        if self._queue is not None:
+            await self._queue.join()
+        for t in self._worker_tasks:
+            if not t.done():
+                t.cancel()
+        for t in self._worker_tasks:
+            try:
+                await t
+            except asyncio.CancelledError:
+                pass
+        self._worker_tasks.clear()
+
+    async def flush(self) -> None:
+        """Wait for all queued writes to complete. Useful for testing."""
+        if self.enable_write_queue and self._queue is not None:
+            await self._queue.join()
+
     async def store_chat_completion(
         self, chat_completion: OpenAIChatCompletion, input_messages: list[OpenAIMessageParam]
     ) -> None:
-        if not self.sql_store:
+        if self.enable_write_queue:
+            if self._queue is None:
+                raise ValueError("Inference store is not initialized")
+            try:
+                self._queue.put_nowait((chat_completion, input_messages))
+            except asyncio.QueueFull:
+                logger.warning(
+                    f"Write queue full; adding chat completion id={getattr(chat_completion, 'id', '<unknown>')}"
+                )
+                await self._queue.put((chat_completion, input_messages))
+        else:
+            await self._write_chat_completion(chat_completion, input_messages)
+
+    async def _worker_loop(self) -> None:
+        assert self._queue is not None
+        while True:
+            try:
+                item = await self._queue.get()
+            except asyncio.CancelledError:
+                break
+            chat_completion, input_messages = item
+            try:
+                await self._write_chat_completion(chat_completion, input_messages)
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"Error writing chat completion: {e}")
+            finally:
+                self._queue.task_done()
+
+    async def _write_chat_completion(
+        self, chat_completion: OpenAIChatCompletion, input_messages: list[OpenAIMessageParam]
+    ) -> None:
+        if self.sql_store is None:
             raise ValueError("Inference store is not initialized")
 
         data = chat_completion.model_dump()

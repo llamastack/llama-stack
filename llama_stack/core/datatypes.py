@@ -431,6 +431,12 @@ class ServerConfig(BaseModel):
     )
 
 
+class InferenceStoreConfig(BaseModel):
+    sql_store_config: SqlStoreConfig
+    max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
+    num_writers: int = Field(default=4, description="Number of concurrent background writers")
+
+
 class StackRunConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
@@ -464,11 +470,12 @@ Configuration for the persistence store used by the distribution registry. If no
 a default SQLite store will be used.""",
     )
 
-    inference_store: SqlStoreConfig | None = Field(
+    inference_store: InferenceStoreConfig | SqlStoreConfig | None = Field(
         default=None,
         description="""
-Configuration for the persistence store used by the inference API. If not specified,
-a default SQLite store will be used.""",
+Configuration for the persistence store used by the inference API. Can be either a
+InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
+If not specified, a default SQLite store will be used.""",
     )
 
     # registry of "resources" in the distribution

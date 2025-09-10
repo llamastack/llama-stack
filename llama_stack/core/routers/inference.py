@@ -90,6 +90,11 @@ class InferenceRouter(Inference):
 
     async def shutdown(self) -> None:
         logger.debug("InferenceRouter.shutdown")
+        if self.store:
+            try:
+                await self.store.shutdown()
+            except Exception as e:
+                logger.warning(f"Error during InferenceStore shutdown: {e}")
 
     async def register_model(
         self,
