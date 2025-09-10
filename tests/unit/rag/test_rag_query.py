@@ -88,6 +88,7 @@ class TestRagQuery:
             config=MagicMock(),
             vector_io_api=MagicMock(),
             inference_api=MagicMock(),
+            files_api=MagicMock(),
         )
 
         vector_db_ids = ["db1", "db2"]
