@@ -32,7 +32,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "jsonschema",
     "llama-stack-client>=0.2.21",
-    "openai>=1.99.6",
+    "openai>=1.100.0",                                # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
     "python-jose[cryptography]",
@@ -80,7 +80,6 @@ dev = [
 unit = [
     "sqlite-vec",
     "ollama",
-    "openai",
     "aiosqlite",
     "aiohttp",
     "psycopg2-binary>=2.9.0",
@@ -105,7 +104,6 @@ unit = [
 # separately. If you are using "uv" to execute your tests, you can use the "--group" flag to specify extra
 # dependencies.
 test = [
-    "openai>=1.100.0",  # for expires_after support
     "aiosqlite",
     "aiohttp",
     "torch>=2.6.0",

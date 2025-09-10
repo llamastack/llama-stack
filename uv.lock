@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
@@ -1839,7 +1839,6 @@ test = [
     { name = "datasets" },
     { name = "mcp" },
     { name = "milvus-lite" },
-    { name = "openai" },
     { name = "psycopg2-binary" },
     { name = "pymilvus" },
     { name = "pypdf" },
@@ -1865,7 +1864,6 @@ unit = [
     { name = "milvus-lite" },
     { name = "moto", extra = ["s3"] },
     { name = "ollama" },
-    { name = "openai" },
     { name = "psycopg2-binary" },
     { name = "pymilvus" },
     { name = "pypdf" },
@@ -1889,7 +1887,7 @@ requires-dist = [
     { name = "jsonschema" },
     { name = "llama-stack-client", specifier = ">=0.2.21" },
     { name = "llama-stack-client", marker = "extra == 'ui'", specifier = ">=0.2.21" },
-    { name = "openai", specifier = ">=1.99.6" },
+    { name = "openai", specifier = ">=1.100.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
     { name = "pandas", marker = "extra == 'ui'" },
@@ -1959,7 +1957,6 @@ test = [
     { name = "datasets", specifier = ">=4.0.0" },
     { name = "mcp" },
     { name = "milvus-lite", specifier = ">=2.5.0" },
-    { name = "openai", specifier = ">=1.100.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pymilvus", specifier = ">=2.6.1" },
     { name = "pypdf" },
@@ -1984,7 +1981,6 @@ unit = [
     { name = "milvus-lite", specifier = ">=2.5.0" },
     { name = "moto", extras = ["s3"], specifier = ">=5.1.10" },
     { name = "ollama" },
-    { name = "openai" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pymilvus", specifier = ">=2.6.1" },
     { name = "pypdf" },
