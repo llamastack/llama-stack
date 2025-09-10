@@ -423,7 +423,7 @@ class InferenceRouter(Inference):
             # response_stream = await provider.openai_completion(**params)
 
         response = await provider.openai_completion(**params)
-        if self.telemetry and getattr(response, "usage", None):
+        if self.telemetry:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
@@ -529,7 +529,7 @@ class InferenceRouter(Inference):
         if self.store:
             asyncio.create_task(self.store.store_chat_completion(response, messages))
 
-        if self.telemetry and getattr(response, "usage", None):
+        if self.telemetry:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
