@@ -82,7 +82,6 @@ class TestRagQuery:
         with pytest.raises(ValueError):
             RAGQueryConfig(mode="wrong_mode")
 
-    @pytest.mark.asyncio
     async def test_query_adds_vector_db_id_to_chunk_metadata(self):
         rag_tool = MemoryToolRuntimeImpl(
             config=MagicMock(),
