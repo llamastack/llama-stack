@@ -76,6 +76,9 @@ def skip_if_doesnt_support_n(client_with_models, model_id):
         "remote::gemini",
         # https://docs.anthropic.com/en/api/openai-sdk#simple-fields
         "remote::anthropic",
+        "remote::vertexai",
+        #  Error code: 400 - [{'error': {'code': 400, 'message': 'Unable to submit request because candidateCount must be 1 but
+        #  the entered value was 2. Update the candidateCount value and try again.', 'status': 'INVALID_ARGUMENT'}
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support n param.")
 
