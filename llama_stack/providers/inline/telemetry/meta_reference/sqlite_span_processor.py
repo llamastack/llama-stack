@@ -8,11 +8,13 @@ import json
 import os
 import sqlite3
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.trace import Span
 from opentelemetry.trace.span import format_span_id, format_trace_id
+
+from llama_stack.providers.utils.telemetry.tracing import LOCAL_ROOT_SPAN_MARKER
 
 
 class SQLiteSpanProcessor(SpanProcessor):
@@ -124,9 +126,9 @@ class SQLiteSpanProcessor(SpanProcessor):
                 (
                     trace_id,
                     service_name,
-                    (span_id if span.attributes.get("__root_span__") == "true" else None),
-                    datetime.fromtimestamp(span.start_time / 1e9, timezone.utc).isoformat(),
-                    datetime.fromtimestamp(span.end_time / 1e9, timezone.utc).isoformat(),
+                    (span_id if span.attributes.get(LOCAL_ROOT_SPAN_MARKER) else None),
+                    datetime.fromtimestamp(span.start_time / 1e9, UTC).isoformat(),
+                    datetime.fromtimestamp(span.end_time / 1e9, UTC).isoformat(),
                 ),
             )
 
@@ -144,8 +146,8 @@ class SQLiteSpanProcessor(SpanProcessor):
                     trace_id,
                     parent_span_id,
                     span.name,
-                    datetime.fromtimestamp(span.start_time / 1e9, timezone.utc).isoformat(),
-                    datetime.fromtimestamp(span.end_time / 1e9, timezone.utc).isoformat(),
+                    datetime.fromtimestamp(span.start_time / 1e9, UTC).isoformat(),
+                    datetime.fromtimestamp(span.end_time / 1e9, UTC).isoformat(),
                     json.dumps(dict(span.attributes)),
                     span.status.status_code.name,
                     span.kind.name,
@@ -162,7 +164,7 @@ class SQLiteSpanProcessor(SpanProcessor):
                     (
                         span_id,
                         event.name,
-                        datetime.fromtimestamp(event.timestamp / 1e9, timezone.utc).isoformat(),
+                        datetime.fromtimestamp(event.timestamp / 1e9, UTC).isoformat(),
                         json.dumps(dict(event.attributes)),
                     ),
                 )

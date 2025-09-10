@@ -16,13 +16,10 @@ MCP_TOOLGROUP_ID = "mcp::localmcp"
 
 def default_tools():
     """Default tools for backward compatibility."""
-    from mcp import types
     from mcp.server.fastmcp import Context
 
-    async def greet_everyone(
-        url: str, ctx: Context
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-        return [types.TextContent(type="text", text="Hello, world!")]
+    async def greet_everyone(url: str, ctx: Context) -> str:
+        return "Hello, world!"
 
     async def get_boiling_point(liquid_name: str, celsius: bool = True) -> int:
         """
@@ -45,7 +42,6 @@ def default_tools():
 
 def dependency_tools():
     """Tools with natural dependencies for multi-turn testing."""
-    from mcp import types
     from mcp.server.fastmcp import Context
 
     async def get_user_id(username: str, ctx: Context) -> str:
@@ -106,7 +102,7 @@ def dependency_tools():
         else:
             access = "no"
 
-        return [types.TextContent(type="text", text=access)]
+        return access
 
     async def get_experiment_id(experiment_name: str, ctx: Context) -> str:
         """
@@ -245,7 +241,6 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     try:
         yield {"server_url": server_url}
     finally:
-        print("Telling SSE server to exit")
         server_instance.should_exit = True
         time.sleep(0.5)
 
@@ -269,4 +264,3 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
 
         AppStatus.should_exit = False
         AppStatus.should_exit_event = None
-        print("SSE server exited")

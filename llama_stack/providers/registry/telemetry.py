@@ -24,5 +24,6 @@ def available_providers() -> list[ProviderSpec]:
             optional_api_dependencies=[Api.datasetio],
             module="llama_stack.providers.inline.telemetry.meta_reference",
             config_class="llama_stack.providers.inline.telemetry.meta_reference.config.TelemetryConfig",
+            description="Meta's reference implementation of telemetry and observability using OpenTelemetry.",
         ),
     ]

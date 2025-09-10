@@ -29,14 +29,15 @@ class VLLMInferenceAdapterConfig(BaseModel):
         default=True,
         description="Whether to verify TLS certificates. Can be a boolean or a path to a CA certificate file.",
     )
+    refresh_models: bool = Field(
+        default=False,
+        description="Whether to refresh models periodically",
+    )
 
     @field_validator("tls_verify")
     @classmethod
     def validate_tls_verify(cls, v):
         if isinstance(v, str):
-            # Check if it's a boolean string
-            if v.lower() in ("true", "false"):
-                return v.lower() == "true"
             # Otherwise, treat it as a cert path
             cert_path = Path(v).expanduser().resolve()
             if not cert_path.exists():
@@ -49,12 +50,12 @@ class VLLMInferenceAdapterConfig(BaseModel):
     @classmethod
     def sample_run_config(
         cls,
-        url: str = "${env.VLLM_URL}",
+        url: str = "${env.VLLM_URL:=}",
         **kwargs,
     ):
         return {
             "url": url,
-            "max_tokens": "${env.VLLM_MAX_TOKENS:4096}",
-            "api_token": "${env.VLLM_API_TOKEN:fake}",
-            "tls_verify": "${env.VLLM_TLS_VERIFY:true}",
+            "max_tokens": "${env.VLLM_MAX_TOKENS:=4096}",
+            "api_token": "${env.VLLM_API_TOKEN:=fake}",
+            "tls_verify": "${env.VLLM_TLS_VERIFY:=true}",
         }

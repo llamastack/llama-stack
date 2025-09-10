@@ -6,16 +6,19 @@
 
 import asyncio
 import contextvars
-import logging
+import logging  # allow-direct-logging
 import queue
 import random
+import sys
 import threading
+import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import wraps
 from typing import Any
 
 from llama_stack.apis.telemetry import (
+    Event,
     LogSeverity,
     Span,
     SpanEndPayload,
@@ -30,11 +33,24 @@ from llama_stack.providers.utils.telemetry.trace_protocol import serialize_value
 
 logger = get_logger(__name__, category="core")
 
+# Fallback logger that does NOT propagate to TelemetryHandler to avoid recursion
+_fallback_logger = logging.getLogger("llama_stack.telemetry.background")
+if not _fallback_logger.handlers:
+    _fallback_logger.propagate = False
+    _fallback_logger.setLevel(logging.ERROR)
+    _fallback_handler = logging.StreamHandler(sys.stderr)
+    _fallback_handler.setLevel(logging.ERROR)
+    _fallback_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+    _fallback_logger.addHandler(_fallback_handler)
+
 
 INVALID_SPAN_ID = 0x0000000000000000
 INVALID_TRACE_ID = 0x00000000000000000000000000000000
 
 ROOT_SPAN_MARKERS = ["__root__", "__root_span__"]
+# The logical root span may not be visible to this process if a parent context
+# is passed in. The local root span is the first local span in a trace.
+LOCAL_ROOT_SPAN_MARKER = "__local_root_span__"
 
 
 def trace_id_to_str(trace_id: int) -> str:
@@ -76,26 +92,43 @@ def generate_trace_id() -> str:
 CURRENT_TRACE_CONTEXT = contextvars.ContextVar("trace_context", default=None)
 BACKGROUND_LOGGER = None
 
+LOG_QUEUE_FULL_LOG_INTERVAL_SECONDS = 60.0
+
 
 class BackgroundLogger:
-    def __init__(self, api: Telemetry, capacity: int = 1000):
+    def __init__(self, api: Telemetry, capacity: int = 100000):
         self.api = api
-        self.log_queue = queue.Queue(maxsize=capacity)
-        self.worker_thread = threading.Thread(target=self._process_logs, daemon=True)
+        self.log_queue: queue.Queue[Any] = queue.Queue(maxsize=capacity)
+        self.worker_thread = threading.Thread(target=self._worker, daemon=True)
         self.worker_thread.start()
+        self._last_queue_full_log_time: float = 0.0
+        self._dropped_since_last_notice: int = 0
 
     def log_event(self, event):
         try:
             self.log_queue.put_nowait(event)
         except queue.Full:
-            logger.error("Log queue is full, dropping event")
+            # Aggregate drops and emit at most once per interval via fallback logger
+            self._dropped_since_last_notice += 1
+            current_time = time.time()
+            if current_time - self._last_queue_full_log_time >= LOG_QUEUE_FULL_LOG_INTERVAL_SECONDS:
+                _fallback_logger.error(
+                    "Log queue is full; dropped %d events since last notice",
+                    self._dropped_since_last_notice,
+                )
+                self._last_queue_full_log_time = current_time
+                self._dropped_since_last_notice = 0
 
-    def _process_logs(self):
+    def _worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._process_logs())
+
+    async def _process_logs(self):
         while True:
             try:
                 event = self.log_queue.get()
-                # figure out how to use a thread's native loop
-                asyncio.run(self.api.log_event(event))
+                await self.api.log_event(event)
             except Exception:
                 import traceback
 
@@ -106,6 +139,19 @@ class BackgroundLogger:
 
     def __del__(self):
         self.log_queue.join()
+
+
+def enqueue_event(event: Event) -> None:
+    """Enqueue a telemetry event to the background logger if available.
+
+    This provides a non-blocking path for routers and other hot paths to
+    submit telemetry without awaiting the Telemetry API, reducing contention
+    with the main event loop.
+    """
+    global BACKGROUND_LOGGER
+    if BACKGROUND_LOGGER is None:
+        raise RuntimeError("Telemetry API not initialized")
+    BACKGROUND_LOGGER.log_event(event)
 
 
 class TraceContext:
@@ -121,7 +167,7 @@ class TraceContext:
             span_id=generate_span_id(),
             trace_id=self.trace_id,
             name=name,
-            start_time=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
             parent_span_id=current_span.span_id if current_span else None,
             attributes=attributes,
         )
@@ -180,7 +226,13 @@ async def start_trace(name: str, attributes: dict[str, Any] = None) -> TraceCont
 
     trace_id = generate_trace_id()
     context = TraceContext(BACKGROUND_LOGGER, trace_id)
-    attributes = {marker: True for marker in ROOT_SPAN_MARKERS} | (attributes or {})
+    # Mark this span as the root for the trace for now. The processing of
+    # traceparent context if supplied comes later and will result in the
+    # ROOT_SPAN_MARKERS being removed. Also mark this is the 'local' root,
+    # i.e. the root of the spans originating in this process as this is
+    # needed to ensure that we insert this 'local' root span's id into
+    # the trace record in sqlite store.
+    attributes = dict.fromkeys(ROOT_SPAN_MARKERS, True) | {LOCAL_ROOT_SPAN_MARKER: True} | (attributes or {})
     context.push_span(name, attributes)
 
     CURRENT_TRACE_CONTEXT.set(context)
@@ -222,11 +274,7 @@ class TelemetryHandler(logging.Handler):
         if record.module in ("asyncio", "selector_events"):
             return
 
-        global CURRENT_TRACE_CONTEXT, BACKGROUND_LOGGER
-
-        if BACKGROUND_LOGGER is None:
-            raise RuntimeError("Telemetry API not initialized")
-
+        global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if context is None:
             return
@@ -235,11 +283,11 @@ class TelemetryHandler(logging.Handler):
         if span is None:
             return
 
-        BACKGROUND_LOGGER.log_event(
+        enqueue_event(
             UnstructuredLogEvent(
                 trace_id=span.trace_id,
                 span_id=span.span_id,
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=self.format(record),
                 severity=severity(record.levelname),
             )

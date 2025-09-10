@@ -2,6 +2,10 @@
 
 Given Llama Stack's service-oriented philosophy, a few concepts and workflows arise which may not feel completely natural in the LLM landscape, especially if you are coming with a background in other frameworks.
 
+```{include} architecture.md
+:start-after: ## Llama Stack architecture
+```
+
 ```{include} apis.md
 :start-after: ## APIs
 ```
@@ -10,14 +14,10 @@ Given Llama Stack's service-oriented philosophy, a few concepts and workflows ar
 :start-after: ## API Providers
 ```
 
-```{include} resources.md
-:start-after: ## Resources
-```
-
 ```{include} distributions.md
 :start-after: ## Distributions
 ```
 
-```{include} evaluation_concepts.md
-:start-after: ## Evaluation Concepts
+```{include} resources.md
+:start-after: ## Resources
 ```

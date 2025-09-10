@@ -8,7 +8,6 @@ from enum import Enum
 
 
 class ImageType(Enum):
-    CONDA = "conda"
     CONTAINER = "container"
     VENV = "venv"
 

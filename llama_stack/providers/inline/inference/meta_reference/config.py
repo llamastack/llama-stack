@@ -39,7 +39,7 @@ class MetaReferenceInferenceConfig(BaseModel):
     def validate_model(cls, model: str) -> str:
         permitted_models = supported_inference_models()
         descriptors = [m.descriptor() for m in permitted_models]
-        repos = [m.huggingface_repo for m in permitted_models]
+        repos = [m.huggingface_repo for m in permitted_models if m.huggingface_repo is not None]
         if model not in (descriptors + repos):
             model_list = "\n\t".join(repos)
             raise ValueError(f"Unknown model: `{model}`. Choose from [\n\t{model_list}\n]")
@@ -49,11 +49,11 @@ class MetaReferenceInferenceConfig(BaseModel):
     def sample_run_config(
         cls,
         model: str = "Llama3.2-3B-Instruct",
-        checkpoint_dir: str = "${env.CHECKPOINT_DIR:null}",
-        quantization_type: str = "${env.QUANTIZATION_TYPE:bf16}",
-        model_parallel_size: str = "${env.MODEL_PARALLEL_SIZE:0}",
-        max_batch_size: str = "${env.MAX_BATCH_SIZE:1}",
-        max_seq_len: str = "${env.MAX_SEQ_LEN:4096}",
+        checkpoint_dir: str = "${env.CHECKPOINT_DIR:=null}",
+        quantization_type: str = "${env.QUANTIZATION_TYPE:=bf16}",
+        model_parallel_size: str = "${env.MODEL_PARALLEL_SIZE:=0}",
+        max_batch_size: str = "${env.MAX_BATCH_SIZE:=1}",
+        max_seq_len: str = "${env.MAX_SEQ_LEN:=4096}",
         **kwargs,
     ) -> dict[str, Any]:
         return {

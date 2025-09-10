@@ -5,14 +5,11 @@
 # the root directory of this source tree.
 
 
-import pytest
-
 from llama_stack.apis.models import ModelType
-from llama_stack.distribution.datatypes import ModelWithOwner, User
-from llama_stack.distribution.store.registry import CachedDiskDistributionRegistry
+from llama_stack.core.datatypes import ModelWithOwner, User
+from llama_stack.core.store.registry import CachedDiskDistributionRegistry
 
 
-@pytest.mark.asyncio
 async def test_registry_cache_with_acl(cached_disk_dist_registry):
     model = ModelWithOwner(
         identifier="model-acl",
@@ -48,7 +45,6 @@ async def test_registry_cache_with_acl(cached_disk_dist_registry):
     assert new_model.owner.attributes["teams"] == ["ai-team"]
 
 
-@pytest.mark.asyncio
 async def test_registry_empty_acl(cached_disk_dist_registry):
     model = ModelWithOwner(
         identifier="model-empty-acl",
@@ -85,7 +81,6 @@ async def test_registry_empty_acl(cached_disk_dist_registry):
     assert len(all_models) == 2
 
 
-@pytest.mark.asyncio
 async def test_registry_serialization(cached_disk_dist_registry):
     attributes = {
         "roles": ["admin", "researcher"],

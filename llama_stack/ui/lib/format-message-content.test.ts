@@ -18,7 +18,7 @@ describe("extractTextFromContentPart", () => {
   it("should extract text from an array of text content objects", () => {
     const content = [{ type: "text", text: "Which planet do humans live on?" }];
     expect(extractTextFromContentPart(content)).toBe(
-      "Which planet do humans live on?",
+      "Which planet do humans live on?"
     );
   });
 
@@ -37,7 +37,7 @@ describe("extractTextFromContentPart", () => {
       { type: "text", text: "It's an image." },
     ];
     expect(extractTextFromContentPart(content)).toBe(
-      "Look at this: [Image] It's an image.",
+      "Look at this: [Image] It's an image."
     );
   });
 
@@ -53,7 +53,7 @@ describe("extractTextFromContentPart", () => {
   });
 
   it("should handle arrays with plain strings", () => {
-    const content = ["This is", " a test."] as any;
+    const content = ["This is", " a test."] as unknown;
     expect(extractTextFromContentPart(content)).toBe("This is  a test.");
   });
 
@@ -65,7 +65,7 @@ describe("extractTextFromContentPart", () => {
       null,
       undefined,
       { type: "text", noTextProperty: true },
-    ] as any;
+    ] as unknown;
     expect(extractTextFromContentPart(content)).toBe("Valid");
   });
 
@@ -75,15 +75,17 @@ describe("extractTextFromContentPart", () => {
       "Just a string.",
       { type: "image_url", image_url: { url: "http://example.com/image.png" } },
       { type: "text", text: "Last part." },
-    ] as any;
+    ] as unknown;
     expect(extractTextFromContentPart(content)).toBe(
-      "First part. Just a string. [Image] Last part.",
+      "First part. Just a string. [Image] Last part."
     );
   });
 });
 
 describe("extractDisplayableText (composite function)", () => {
-  const mockFormatToolCallToString = (toolCall: any) => {
+  const mockFormatToolCallToString = (toolCall: {
+    function?: { name?: string; arguments?: unknown };
+  }) => {
     if (!toolCall || !toolCall.function || !toolCall.function.name) return "";
     const args = toolCall.function.arguments
       ? JSON.stringify(toolCall.function.arguments)
@@ -125,7 +127,7 @@ describe("extractDisplayableText (composite function)", () => {
       tool_calls: [toolCall],
     };
     expect(extractDisplayableText(messageWithEffectivelyEmptyContent)).toBe(
-      mockFormatToolCallToString(toolCall),
+      mockFormatToolCallToString(toolCall)
     );
 
     const messageWithEmptyContent: ChatMessage = {
@@ -134,7 +136,7 @@ describe("extractDisplayableText (composite function)", () => {
       tool_calls: [toolCall],
     };
     expect(extractDisplayableText(messageWithEmptyContent)).toBe(
-      mockFormatToolCallToString(toolCall),
+      mockFormatToolCallToString(toolCall)
     );
   });
 
@@ -149,7 +151,7 @@ describe("extractDisplayableText (composite function)", () => {
     };
     const expectedToolCallStr = mockFormatToolCallToString(toolCall);
     expect(extractDisplayableText(message)).toBe(
-      `The result is: ${expectedToolCallStr}`,
+      `The result is: ${expectedToolCallStr}`
     );
   });
 
@@ -167,7 +169,7 @@ describe("extractDisplayableText (composite function)", () => {
     };
     const expectedToolCallStr = mockFormatToolCallToString(toolCall);
     expect(extractDisplayableText(message)).toBe(
-      `Okay, checking weather for London. ${expectedToolCallStr}`,
+      `Okay, checking weather for London. ${expectedToolCallStr}`
     );
   });
 
@@ -178,7 +180,7 @@ describe("extractDisplayableText (composite function)", () => {
       tool_calls: [],
     };
     expect(extractDisplayableText(messageEmptyToolCalls)).toBe(
-      "No tools here.",
+      "No tools here."
     );
 
     const messageUndefinedToolCalls: ChatMessage = {
@@ -187,7 +189,7 @@ describe("extractDisplayableText (composite function)", () => {
       tool_calls: undefined,
     };
     expect(extractDisplayableText(messageUndefinedToolCalls)).toBe(
-      "Still no tools.",
+      "Still no tools."
     );
   });
 });

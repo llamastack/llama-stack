@@ -4,17 +4,16 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
+import logging  # allow-direct-logging
 import os
-import sys
-from logging.config import dictConfig
+import re
+from logging.config import dictConfig  # allow-direct-logging
 
 from rich.console import Console
 from rich.errors import MarkupError
 from rich.logging import RichHandler
-from termcolor import cprint
 
-from .distribution.datatypes import LoggingConfig
+from llama_stack.core.datatypes import LoggingConfig
 
 # Default log level
 DEFAULT_LOG_LEVEL = logging.INFO
@@ -30,10 +29,12 @@ CATEGORIES = [
     "eval",
     "tools",
     "client",
+    "telemetry",
+    "openai_responses",
 ]
 
 # Initialize category levels with default level
-_category_levels: dict[str, int] = {category: DEFAULT_LOG_LEVEL for category in CATEGORIES}
+_category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
 
 
 def config_to_category_levels(category: str, level: str):
@@ -63,7 +64,6 @@ def config_to_category_levels(category: str, level: str):
         category_levels["root"] = level_value
     elif category in CATEGORIES:
         category_levels[category] = level_value
-        logging.info(f"Setting '{category}' category to level '{level}'.")
     else:
         logging.warning(f"Unknown logging category: {category}. No changes made.")
     return category_levels
@@ -97,7 +97,8 @@ def parse_environment_config(env_config: str) -> dict[str, int]:
         Dict[str, int]: A dictionary mapping categories to their log levels.
     """
     category_levels = {}
-    for pair in env_config.split(";"):
+    delimiter = ","
+    for pair in env_config.split(delimiter):
         if not pair.strip():
             continue
 
@@ -111,6 +112,11 @@ def parse_environment_config(env_config: str) -> dict[str, int]:
             logging.warning(f"Invalid logging configuration: '{pair}'. Expected format: 'category=level'.")
 
     return category_levels
+
+
+def strip_rich_markup(text):
+    """Remove Rich markup tags like [dim], [bold magenta], etc."""
+    return re.sub(r"\[/?[a-zA-Z0-9 _#=,]+\]", "", text)
 
 
 class CustomRichHandler(RichHandler):
@@ -129,6 +135,19 @@ class CustomRichHandler(RichHandler):
                 super().emit(record)
             finally:
                 self.markup = original_markup
+
+
+class CustomFileHandler(logging.FileHandler):
+    def __init__(self, filename, mode="a", encoding=None, delay=False):
+        super().__init__(filename, mode, encoding, delay)
+        # Default formatter to match console output
+        self.default_formatter = logging.Formatter("%(asctime)s %(name)s:%(lineno)d %(category)s: %(message)s")
+        self.setFormatter(self.default_formatter)
+
+    def emit(self, record):
+        if hasattr(record, "msg"):
+            record.msg = strip_rich_markup(str(record.msg))
+        super().emit(record)
 
 
 def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None:
@@ -167,8 +186,7 @@ def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None
     # Add a file handler if log_file is set
     if log_file:
         handlers["file"] = {
-            "class": "logging.FileHandler",
-            "formatter": "rich",
+            "()": CustomFileHandler,
             "filename": log_file,
             "mode": "a",
             "encoding": "utf-8",
@@ -235,7 +253,6 @@ def get_logger(
 
 env_config = os.environ.get("LLAMA_STACK_LOGGING", "")
 if env_config:
-    cprint(f"Environment variable LLAMA_STACK_LOGGING found: {env_config}", color="yellow", file=sys.stderr)
     _category_levels.update(parse_environment_config(env_config))
 
 log_file = os.environ.get("LLAMA_STACK_LOG_FILE")

@@ -6,8 +6,6 @@
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-import datasets as hf_datasets
-
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Dataset
@@ -73,6 +71,8 @@ class HuggingfaceDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
         start_index: int | None = None,
         limit: int | None = None,
     ) -> PaginatedResponse:
+        import datasets as hf_datasets
+
         dataset_def = self.dataset_infos[dataset_id]
         path, params = parse_hf_params(dataset_def)
         loaded_dataset = hf_datasets.load_dataset(path, **params)
@@ -81,6 +81,8 @@ class HuggingfaceDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
         return paginate_records(records, start_index, limit)
 
     async def append_rows(self, dataset_id: str, rows: list[dict[str, Any]]) -> None:
+        import datasets as hf_datasets
+
         dataset_def = self.dataset_infos[dataset_id]
         path, params = parse_hf_params(dataset_def)
         loaded_dataset = hf_datasets.load_dataset(path, **params)

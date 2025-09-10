@@ -8,7 +8,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
-import pytest_asyncio
 
 from llama_stack.apis.agents import (
     Agent,
@@ -50,7 +49,7 @@ def config(tmp_path):
     )
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def agents_impl(config, mock_apis):
     impl = MetaReferenceAgentsImpl(
         config,
@@ -117,7 +116,6 @@ def sample_agent_config():
     )
 
 
-@pytest.mark.asyncio
 async def test_create_agent(agents_impl, sample_agent_config):
     response = await agents_impl.create_agent(sample_agent_config)
 
@@ -132,7 +130,6 @@ async def test_create_agent(agents_impl, sample_agent_config):
     assert isinstance(agent_info.created_at, datetime)
 
 
-@pytest.mark.asyncio
 async def test_get_agent(agents_impl, sample_agent_config):
     create_response = await agents_impl.create_agent(sample_agent_config)
     agent_id = create_response.agent_id
@@ -146,7 +143,6 @@ async def test_get_agent(agents_impl, sample_agent_config):
     assert isinstance(agent.created_at, datetime)
 
 
-@pytest.mark.asyncio
 async def test_list_agents(agents_impl, sample_agent_config):
     agent1_response = await agents_impl.create_agent(sample_agent_config)
     agent2_response = await agents_impl.create_agent(sample_agent_config)
@@ -160,7 +156,6 @@ async def test_list_agents(agents_impl, sample_agent_config):
     assert agent2_response.agent_id in agent_ids
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("enable_session_persistence", [True, False])
 async def test_create_agent_session_persistence(agents_impl, sample_agent_config, enable_session_persistence):
     # Create an agent with specified persistence setting
@@ -188,7 +183,6 @@ async def test_create_agent_session_persistence(agents_impl, sample_agent_config
         await agents_impl.get_agents_session(agent_id, session_response.session_id)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("enable_session_persistence", [True, False])
 async def test_list_agent_sessions_persistence(agents_impl, sample_agent_config, enable_session_persistence):
     # Create an agent with specified persistence setting
@@ -221,7 +215,6 @@ async def test_list_agent_sessions_persistence(agents_impl, sample_agent_config,
     assert session2.session_id in {s["session_id"] for s in sessions.data}
 
 
-@pytest.mark.asyncio
 async def test_delete_agent(agents_impl, sample_agent_config):
     # Create an agent
     response = await agents_impl.create_agent(sample_agent_config)

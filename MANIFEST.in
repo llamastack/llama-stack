@@ -1,9 +1,9 @@
 include pyproject.toml
 include llama_stack/models/llama/llama3/tokenizer.model
 include llama_stack/models/llama/llama4/tokenizer.model
-include llama_stack/distribution/*.sh
+include llama_stack/core/*.sh
 include llama_stack/cli/scripts/*.sh
-include llama_stack/templates/*/*.yaml
+include llama_stack/distributions/*/*.yaml
 include llama_stack/providers/tests/test_cases/inference/*.json
 include llama_stack/models/llama/*/*.md
 include llama_stack/tests/integration/*.jpg

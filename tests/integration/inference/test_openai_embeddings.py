@@ -10,7 +10,7 @@ import struct
 import pytest
 from openai import OpenAI
 
-from llama_stack.distribution.library_client import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
 
 def decode_base64_to_floats(base64_string: str) -> list[float]:
@@ -34,11 +34,15 @@ def skip_if_model_doesnt_support_variable_dimensions(model_id):
         pytest.skip("{model_id} does not support variable output embedding dimensions")
 
 
-def skip_if_model_doesnt_support_openai_embeddings(client_with_models, model_id):
-    if isinstance(client_with_models, LlamaStackAsLibraryClient):
-        pytest.skip("OpenAI embeddings are not supported when testing with library client yet.")
+@pytest.fixture(params=["openai_client", "llama_stack_client"])
+def compat_client(request, client_with_models):
+    if request.param == "openai_client" and isinstance(client_with_models, LlamaStackAsLibraryClient):
+        pytest.skip("OpenAI client tests not supported with library client")
+    return request.getfixturevalue(request.param)
 
-    provider = provider_from_model(client_with_models, model_id)
+
+def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
+    provider = provider_from_model(client, model_id)
     if provider.provider_type in (
         "inline::meta-reference",
         "remote::bedrock",
@@ -47,7 +51,6 @@ def skip_if_model_doesnt_support_openai_embeddings(client_with_models, model_id)
         "remote::runpod",
         "remote::sambanova",
         "remote::tgi",
-        "remote::ollama",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI embeddings.")
 
@@ -58,13 +61,13 @@ def openai_client(client_with_models):
     return OpenAI(base_url=base_url, api_key="fake")
 
 
-def test_openai_embeddings_single_string(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_single_string(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with a single string input."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_text = "Hello, world!"
 
-    response = openai_client.embeddings.create(
+    response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text,
         encoding_format="float",
@@ -80,13 +83,13 @@ def test_openai_embeddings_single_string(openai_client, client_with_models, embe
     assert all(isinstance(x, float) for x in response.data[0].embedding)
 
 
-def test_openai_embeddings_multiple_strings(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_multiple_strings(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with multiple string inputs."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_texts = ["Hello, world!", "How are you today?", "This is a test."]
 
-    response = openai_client.embeddings.create(
+    response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_texts,
     )
@@ -103,13 +106,13 @@ def test_openai_embeddings_multiple_strings(openai_client, client_with_models, e
         assert all(isinstance(x, float) for x in embedding_data.embedding)
 
 
-def test_openai_embeddings_with_encoding_format_float(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_with_encoding_format_float(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with float encoding format."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_text = "Test encoding format"
 
-    response = openai_client.embeddings.create(
+    response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text,
         encoding_format="float",
@@ -121,7 +124,7 @@ def test_openai_embeddings_with_encoding_format_float(openai_client, client_with
     assert all(isinstance(x, float) for x in response.data[0].embedding)
 
 
-def test_openai_embeddings_with_dimensions(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_with_dimensions(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with custom dimensions parameter."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
     skip_if_model_doesnt_support_variable_dimensions(embedding_model_id)
@@ -129,7 +132,7 @@ def test_openai_embeddings_with_dimensions(openai_client, client_with_models, em
     input_text = "Test dimensions parameter"
     dimensions = 16
 
-    response = openai_client.embeddings.create(
+    response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text,
         dimensions=dimensions,
@@ -142,14 +145,14 @@ def test_openai_embeddings_with_dimensions(openai_client, client_with_models, em
     assert len(response.data[0].embedding) > 0
 
 
-def test_openai_embeddings_with_user_parameter(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_with_user_parameter(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with user parameter."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_text = "Test user parameter"
     user_id = "test-user-123"
 
-    response = openai_client.embeddings.create(
+    response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text,
         user=user_id,
@@ -161,41 +164,41 @@ def test_openai_embeddings_with_user_parameter(openai_client, client_with_models
     assert len(response.data[0].embedding) > 0
 
 
-def test_openai_embeddings_empty_list_error(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_empty_list_error(compat_client, client_with_models, embedding_model_id):
     """Test that empty list input raises an appropriate error."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     with pytest.raises(Exception):  # noqa: B017
-        openai_client.embeddings.create(
+        compat_client.embeddings.create(
             model=embedding_model_id,
             input=[],
         )
 
 
-def test_openai_embeddings_invalid_model_error(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_invalid_model_error(compat_client, client_with_models, embedding_model_id):
     """Test that invalid model ID raises an appropriate error."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     with pytest.raises(Exception):  # noqa: B017
-        openai_client.embeddings.create(
+        compat_client.embeddings.create(
             model="invalid-model-id",
             input="Test text",
         )
 
 
-def test_openai_embeddings_different_inputs_different_outputs(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_different_inputs_different_outputs(compat_client, client_with_models, embedding_model_id):
     """Test that different inputs produce different embeddings."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_text1 = "This is the first text"
     input_text2 = "This is completely different content"
 
-    response1 = openai_client.embeddings.create(
+    response1 = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text1,
     )
 
-    response2 = openai_client.embeddings.create(
+    response2 = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text2,
     )
@@ -208,7 +211,7 @@ def test_openai_embeddings_different_inputs_different_outputs(openai_client, cli
     assert embedding1 != embedding2
 
 
-def test_openai_embeddings_with_encoding_format_base64(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_with_encoding_format_base64(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with base64 encoding format."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
     skip_if_model_doesnt_support_variable_dimensions(embedding_model_id)
@@ -216,7 +219,7 @@ def test_openai_embeddings_with_encoding_format_base64(openai_client, client_wit
     input_text = "Test base64 encoding format"
     dimensions = 12
 
-    response = openai_client.embeddings.create(
+    response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text,
         encoding_format="base64",
@@ -241,13 +244,13 @@ def test_openai_embeddings_with_encoding_format_base64(openai_client, client_wit
     assert all(isinstance(x, float) for x in embedding_floats)
 
 
-def test_openai_embeddings_base64_batch_processing(openai_client, client_with_models, embedding_model_id):
+def test_openai_embeddings_base64_batch_processing(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with base64 encoding for batch processing."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_texts = ["First text for base64", "Second text for base64", "Third text for base64"]
 
-    response = openai_client.embeddings.create(
+    response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_texts,
         encoding_format="base64",

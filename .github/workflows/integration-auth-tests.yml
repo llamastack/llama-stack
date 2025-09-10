@@ -1,5 +1,7 @@
 name: Integration Auth Tests
 
+run-name: Run the integration test suite with Kubernetes authentication
+
 on:
   push:
     branches: [ main ]
@@ -8,6 +10,7 @@ on:
     paths:
       - 'distributions/**'
       - 'llama_stack/**'
+      - '!llama_stack/ui/**'
       - 'tests/integration/**'
       - 'uv.lock'
       - 'pyproject.toml'
@@ -15,7 +18,7 @@ on:
       - '.github/workflows/integration-auth-tests.yml' # This workflow
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,18 +31,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
-      - name: Build Llama Stack
-        run: |
-          llama stack build --template ollama --image-type venv
-
       - name: Install minikube
         if: ${{ matrix.auth-provider == 'kubernetes' }}
-        uses: medyagh/setup-minikube@cea33675329b799adccc9526aa5daccc26cd5052 # v0.0.19
+        uses: medyagh/setup-minikube@e3c7f79eb1e997eabccc536a6cf318a2b0fe19d9 # v0.0.20
 
       - name: Start minikube
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
@@ -52,30 +51,7 @@ jobs:
         run: |
           kubectl create namespace llama-stack
           kubectl create serviceaccount llama-stack-auth -n llama-stack
-          kubectl create rolebinding llama-stack-auth-rolebinding --clusterrole=admin --serviceaccount=llama-stack:llama-stack-auth -n llama-stack
           kubectl create token llama-stack-auth -n llama-stack > llama-stack-auth-token
-          cat <<EOF | kubectl apply -f -
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRole
-          metadata:
-            name: allow-anonymous-openid
-          rules:
-          - nonResourceURLs: ["/openid/v1/jwks"]
-            verbs: ["get"]
-          ---
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRoleBinding
-          metadata:
-            name: allow-anonymous-openid
-          roleRef:
-            apiGroup: rbac.authorization.k8s.io
-            kind: ClusterRole
-            name: allow-anonymous-openid
-          subjects:
-          - kind: User
-            name: system:anonymous
-            apiGroup: rbac.authorization.k8s.io
-          EOF
 
       - name: Set Kubernetes Config
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
@@ -84,6 +60,7 @@ jobs:
           echo "KUBERNETES_CA_CERT_PATH=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.certificate-authority}')" >> $GITHUB_ENV
           echo "KUBERNETES_ISSUER=$(kubectl get --raw /.well-known/openid-configuration| jq -r .issuer)" >> $GITHUB_ENV
           echo "KUBERNETES_AUDIENCE=$(kubectl create token llama-stack-auth -n llama-stack --duration=1h | cut -d. -f2 | base64 -d | jq -r '.aud[0]')" >> $GITHUB_ENV
+          echo "TOKEN=$(cat llama-stack-auth-token)" >> $GITHUB_ENV
 
       - name: Set Kube Auth Config and run server
         env:
@@ -99,9 +76,12 @@ jobs:
           server:
             port: 8321
           EOF
-          yq eval '.server.auth = {"provider_type": "${{ matrix.auth-provider }}"}' -i $run_dir/run.yaml
-          yq eval '.server.auth.config = {"tls_cafile": "${{ env.KUBERNETES_CA_CERT_PATH }}", "issuer": "${{ env.KUBERNETES_ISSUER }}", "audience": "${{ env.KUBERNETES_AUDIENCE }}"}' -i $run_dir/run.yaml
-          yq eval '.server.auth.config.jwks = {"uri": "${{ env.KUBERNETES_API_SERVER_URL }}"}' -i $run_dir/run.yaml
+          yq eval '.server.auth.provider_config.type = "${{ matrix.auth-provider }}"' -i $run_dir/run.yaml
+          yq eval '.server.auth.provider_config.tls_cafile = "${{ env.KUBERNETES_CA_CERT_PATH }}"' -i $run_dir/run.yaml
+          yq eval '.server.auth.provider_config.issuer = "${{ env.KUBERNETES_ISSUER }}"' -i $run_dir/run.yaml
+          yq eval '.server.auth.provider_config.audience = "${{ env.KUBERNETES_AUDIENCE }}"' -i $run_dir/run.yaml
+          yq eval '.server.auth.provider_config.jwks.uri = "${{ env.KUBERNETES_API_SERVER_URL }}"' -i $run_dir/run.yaml
+          yq eval '.server.auth.provider_config.jwks.token = "${{ env.TOKEN }}"' -i $run_dir/run.yaml
           cat $run_dir/run.yaml
 
           nohup uv run llama stack run $run_dir/run.yaml --image-type venv > server.log 2>&1 &

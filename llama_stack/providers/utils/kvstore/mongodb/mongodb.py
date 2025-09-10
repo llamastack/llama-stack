@@ -4,16 +4,16 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 from datetime import datetime
 
 from pymongo import AsyncMongoClient
 
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import KVStore
 
 from ..config import MongoDBKVStoreConfig
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="providers::utils")
 
 
 class MongoDBKVStoreImpl(KVStore):

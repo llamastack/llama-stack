@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 from collections.abc import Collection, Iterator, Sequence, Set
-from logging import getLogger
 from pathlib import Path
 from typing import (
     Literal,
@@ -14,10 +13,8 @@ from typing import (
 
 import tiktoken
 
+from llama_stack.log import get_logger
 from llama_stack.models.llama.tokenizer_utils import load_bpe_file
-
-logger = getLogger(__name__)
-
 
 # The tiktoken tokenizer can handle <=400k chars without
 # pyo3_runtime.PanicException.
@@ -100,6 +97,8 @@ BASIC_SPECIAL_TOKENS = [
     "<|fim_middle|>",
     "<|fim_suffix|>",
 ]
+
+logger = get_logger(name=__name__, category="models::llama")
 
 
 class Tokenizer:

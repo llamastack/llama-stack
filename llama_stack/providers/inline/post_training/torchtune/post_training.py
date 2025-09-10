@@ -23,12 +23,8 @@ from llama_stack.apis.post_training import (
 from llama_stack.providers.inline.post_training.torchtune.config import (
     TorchtunePostTrainingConfig,
 )
-from llama_stack.providers.inline.post_training.torchtune.recipes.lora_finetuning_single_device import (
-    LoraFinetuningSingleDevice,
-)
 from llama_stack.providers.utils.scheduler import JobArtifact, Scheduler
 from llama_stack.providers.utils.scheduler import JobStatus as SchedulerJobStatus
-from llama_stack.schema_utils import webmethod
 
 
 class TrainingArtifactType(Enum):
@@ -84,6 +80,10 @@ class TorchtunePostTrainingImpl:
         if isinstance(algorithm_config, LoraFinetuningConfig):
 
             async def handler(on_log_message_cb, on_status_change_cb, on_artifact_collected_cb):
+                from llama_stack.providers.inline.post_training.torchtune.recipes.lora_finetuning_single_device import (
+                    LoraFinetuningSingleDevice,
+                )
+
                 on_log_message_cb("Starting Lora finetuning")
 
                 recipe = LoraFinetuningSingleDevice(
@@ -123,7 +123,8 @@ class TorchtunePostTrainingImpl:
         training_config: TrainingConfig,
         hyperparam_search_config: dict[str, Any],
         logger_config: dict[str, Any],
-    ) -> PostTrainingJob: ...
+    ) -> PostTrainingJob:
+        raise NotImplementedError()
 
     async def get_training_jobs(self) -> ListPostTrainingJobsResponse:
         return ListPostTrainingJobsResponse(
@@ -143,7 +144,6 @@ class TorchtunePostTrainingImpl:
         data = cls._get_artifacts_metadata_by_type(job, TrainingArtifactType.RESOURCES_STATS.value)
         return data[0] if data else None
 
-    @webmethod(route="/post-training/job/status")
     async def get_training_job_status(self, job_uuid: str) -> PostTrainingJobStatusResponse | None:
         job = self._scheduler.get_job(job_uuid)
 
@@ -170,11 +170,9 @@ class TorchtunePostTrainingImpl:
             resources_allocated=self._get_resources_allocated(job),
         )
 
-    @webmethod(route="/post-training/job/cancel")
     async def cancel_training_job(self, job_uuid: str) -> None:
         self._scheduler.cancel(job_uuid)
 
-    @webmethod(route="/post-training/job/artifacts")
     async def get_training_job_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse | None:
         job = self._scheduler.get_job(job_uuid)
         return PostTrainingJobArtifactsResponse(job_uuid=job_uuid, checkpoints=self._get_checkpoints(job))

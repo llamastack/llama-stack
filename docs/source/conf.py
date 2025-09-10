@@ -52,7 +52,18 @@ extensions = [
     "sphinxcontrib.redoc",
     "sphinxcontrib.mermaid",
     "sphinxcontrib.video",
+    "sphinx_reredirects"
 ]
+
+redirects = {
+    "providers/post_training/index": "../../advanced_apis/post_training/index.html",
+    "providers/eval/index": "../../advanced_apis/eval/index.html",
+    "providers/scoring/index": "../../advanced_apis/scoring/index.html",
+    "playground/index": "../../building_applications/playground/index.html",
+    "openai/index": "../../providers/index.html#openai-api-compatibility",
+    "introduction/index": "../concepts/index.html#llama-stack-architecture"
+}
+
 myst_enable_extensions = ["colon_fence"]
 
 html_theme = "sphinx_rtd_theme"
@@ -121,6 +132,7 @@ def setup(app):
     app.add_css_file("css/my_theme.css")
     app.add_js_file("js/detect_theme.js")
     app.add_js_file("js/horizontal_nav.js")
+    app.add_js_file("js/keyboard_shortcuts.js")
 
     def dockerhub_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
         url = f"https://hub.docker.com/r/llamastack/{text}"

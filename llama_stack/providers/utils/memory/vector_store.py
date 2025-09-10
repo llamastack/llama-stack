@@ -5,8 +5,8 @@
 # the root directory of this source tree.
 import base64
 import io
-import logging
 import re
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
@@ -15,6 +15,7 @@ from urllib.parse import unquote
 import httpx
 import numpy as np
 from numpy.typing import NDArray
+from pydantic import BaseModel
 
 from llama_stack.apis.common.content_types import (
     URL,
@@ -23,14 +24,32 @@ from llama_stack.apis.common.content_types import (
 )
 from llama_stack.apis.tools import RAGDocument
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
+from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
+from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import Api
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
+from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="providers::utils")
+
+
+class ChunkForDeletion(BaseModel):
+    """Information needed to delete a chunk from a vector store.
+
+    :param chunk_id: The ID of the chunk to delete
+    :param document_id: The ID of the document this chunk belongs to
+    """
+
+    chunk_id: str
+    document_id: str
+
+
+# Constants for reranker types
+RERANKER_TYPE_RRF = "rrf"
+RERANKER_TYPE_WEIGHTED = "weighted"
 
 
 def parse_pdf(data: bytes) -> str:
@@ -72,19 +91,34 @@ def content_from_data(data_url: str) -> str:
         data = unquote(data)
         encoding = parts["encoding"] or "utf-8"
         data = data.encode(encoding)
+    return content_from_data_and_mime_type(data, parts["mimetype"], parts.get("encoding", None))
 
-    encoding = parts["encoding"]
-    if not encoding:
-        import chardet
 
-        detected = chardet.detect(data)
-        encoding = detected["encoding"]
+def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:
+    if isinstance(data, bytes):
+        if not encoding:
+            import chardet
 
-    mime_type = parts["mimetype"]
-    mime_category = mime_type.split("/")[0]
+            detected = chardet.detect(data)
+            encoding = detected["encoding"]
+
+    mime_category = mime_type.split("/")[0] if mime_type else None
     if mime_category == "text":
         # For text-based files (including CSV, MD)
-        return data.decode(encoding)
+        encodings_to_try = [encoding]
+        if encoding != "utf-8":
+            encodings_to_try.append("utf-8")
+        first_exception = None
+        for encoding in encodings_to_try:
+            try:
+                return data.decode(encoding)
+            except UnicodeDecodeError as e:
+                if first_exception is None:
+                    first_exception = e
+                log.warning(f"Decoding failed with {encoding}: {e}")
+        # raise the origional exception, if we got here there was at least 1 exception
+        log.error(f"Could not decode data as any of {encodings_to_try}")
+        raise first_exception
 
     elif mime_type == "application/pdf":
         return parse_pdf(data)
@@ -142,6 +176,7 @@ async def content_from_doc(doc: RAGDocument) -> str:
 def make_overlapped_chunks(
     document_id: str, text: str, window_len: int, overlap_len: int, metadata: dict[str, Any]
 ) -> list[Chunk]:
+    default_tokenizer = "DEFAULT_TIKTOKEN_TOKENIZER"
     tokenizer = Tokenizer.get_instance()
     tokens = tokenizer.encode(text, bos=False, eos=False)
     try:
@@ -155,16 +190,33 @@ def make_overlapped_chunks(
     for i in range(0, len(tokens), window_len - overlap_len):
         toks = tokens[i : i + window_len]
         chunk = tokenizer.decode(toks)
+        chunk_window = f"{i}-{i + len(toks)}"
+        chunk_id = generate_chunk_id(chunk, text, chunk_window)
         chunk_metadata = metadata.copy()
+        chunk_metadata["chunk_id"] = chunk_id
         chunk_metadata["document_id"] = document_id
         chunk_metadata["token_count"] = len(toks)
         chunk_metadata["metadata_token_count"] = len(metadata_tokens)
+
+        backend_chunk_metadata = ChunkMetadata(
+            chunk_id=chunk_id,
+            document_id=document_id,
+            source=metadata.get("source", None),
+            created_timestamp=metadata.get("created_timestamp", int(time.time())),
+            updated_timestamp=int(time.time()),
+            chunk_window=chunk_window,
+            chunk_tokenizer=default_tokenizer,
+            chunk_embedding_model=None,  # This will be set in `VectorDBWithIndex.insert_chunks`
+            content_token_count=len(toks),
+            metadata_token_count=len(metadata_tokens),
+        )
 
         # chunk is a string
         chunks.append(
             Chunk(
                 content=chunk,
                 metadata=chunk_metadata,
+                chunk_metadata=backend_chunk_metadata,
             )
         )
 
@@ -193,11 +245,27 @@ class EmbeddingIndex(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    async def delete_chunks(self, chunks_for_deletion: list[ChunkForDeletion]):
+        raise NotImplementedError()
+
+    @abstractmethod
     async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
         raise NotImplementedError()
 
     @abstractmethod
     async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def query_hybrid(
+        self,
+        embedding: NDArray,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        reranker_type: str,
+        reranker_params: dict[str, Any] | None = None,
+    ) -> QueryChunksResponse:
         raise NotImplementedError()
 
     @abstractmethod
@@ -219,16 +287,19 @@ class VectorDBWithIndex:
         for i, c in enumerate(chunks):
             if c.embedding is None:
                 chunks_to_embed.append(c)
+                if c.chunk_metadata:
+                    c.chunk_metadata.chunk_embedding_model = self.vector_db.embedding_model
+                    c.chunk_metadata.chunk_embedding_dimension = self.vector_db.embedding_dimension
             else:
                 _validate_embedding(c.embedding, i, self.vector_db.embedding_dimension)
 
         if chunks_to_embed:
-            resp = await self.inference_api.embeddings(
+            resp = await self.inference_api.openai_embeddings(
                 self.vector_db.embedding_model,
                 [c.content for c in chunks_to_embed],
             )
-            for c, embedding in zip(chunks_to_embed, resp.embeddings, strict=False):
-                c.embedding = embedding
+            for c, data in zip(chunks_to_embed, resp.data, strict=False):
+                c.embedding = data.embedding
 
         embeddings = np.array([c.embedding for c in chunks], dtype=np.float32)
         await self.index.add_chunks(chunks, embeddings)
@@ -243,10 +314,31 @@ class VectorDBWithIndex:
         k = params.get("max_chunks", 3)
         mode = params.get("mode")
         score_threshold = params.get("score_threshold", 0.0)
+
+        ranker = params.get("ranker")
+        if ranker is None:
+            reranker_type = RERANKER_TYPE_RRF
+            reranker_params = {"impact_factor": 60.0}
+        else:
+            strategy = ranker.get("strategy", "rrf")
+            if strategy == "weighted":
+                weights = ranker.get("params", {}).get("weights", [0.5, 0.5])
+                reranker_type = RERANKER_TYPE_WEIGHTED
+                reranker_params = {"alpha": weights[0] if len(weights) > 0 else 0.5}
+            else:
+                reranker_type = RERANKER_TYPE_RRF
+                k_value = ranker.get("params", {}).get("k", 60.0)
+                reranker_params = {"impact_factor": k_value}
+
         query_string = interleaved_content_as_str(query)
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
+
+        embeddings_response = await self.inference_api.openai_embeddings(self.vector_db.embedding_model, [query_string])
+        query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
+        if mode == "hybrid":
+            return await self.index.query_hybrid(
+                query_vector, query_string, k, score_threshold, reranker_type, reranker_params
+            )
         else:
-            embeddings_response = await self.inference_api.embeddings(self.vector_db.embedding_model, [query_string])
-            query_vector = np.array(embeddings_response.embeddings[0], dtype=np.float32)
             return await self.index.query_vector(query_vector, k, score_threshold)

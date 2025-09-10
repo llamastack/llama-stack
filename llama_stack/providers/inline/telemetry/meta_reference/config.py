@@ -4,15 +4,15 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-from llama_stack.distribution.utils.config_dirs import RUNTIME_BASE_DIR
+from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
 
 
-class TelemetrySink(str, Enum):
+class TelemetrySink(StrEnum):
     OTEL_TRACE = "otel_trace"
     OTEL_METRIC = "otel_metric"
     SQLITE = "sqlite"
@@ -20,13 +20,9 @@ class TelemetrySink(str, Enum):
 
 
 class TelemetryConfig(BaseModel):
-    otel_trace_endpoint: str = Field(
-        default="http://localhost:4318/v1/traces",
-        description="The OpenTelemetry collector endpoint URL for traces",
-    )
-    otel_metric_endpoint: str = Field(
-        default="http://localhost:4318/v1/metrics",
-        description="The OpenTelemetry collector endpoint URL for metrics",
+    otel_exporter_otlp_endpoint: str | None = Field(
+        default=None,
+        description="The OpenTelemetry collector endpoint URL (base URL for traces, metrics, and logs). If not set, the SDK will use OTEL_EXPORTER_OTLP_ENDPOINT environment variable.",
     )
     service_name: str = Field(
         # service name is always the same, use zero-width space to avoid clutter
@@ -35,10 +31,10 @@ class TelemetryConfig(BaseModel):
     )
     sinks: list[TelemetrySink] = Field(
         default=[TelemetrySink.CONSOLE, TelemetrySink.SQLITE],
-        description="List of telemetry sinks to enable (possible values: otel, sqlite, console)",
+        description="List of telemetry sinks to enable (possible values: otel_trace, otel_metric, sqlite, console)",
     )
     sqlite_db_path: str = Field(
-        default=(RUNTIME_BASE_DIR / "trace_store.db").as_posix(),
+        default_factory=lambda: (RUNTIME_BASE_DIR / "trace_store.db").as_posix(),
         description="The path to the SQLite database to use for storing traces",
     )
 
@@ -52,7 +48,8 @@ class TelemetryConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, db_name: str = "trace_store.db") -> dict[str, Any]:
         return {
-            "service_name": "${env.OTEL_SERVICE_NAME:\u200b}",
-            "sinks": "${env.TELEMETRY_SINKS:console,sqlite}",
-            "sqlite_db_path": "${env.SQLITE_STORE_DIR:" + __distro_dir__ + "}/" + db_name,
+            "service_name": "${env.OTEL_SERVICE_NAME:=\u200b}",
+            "sinks": "${env.TELEMETRY_SINKS:=console,sqlite}",
+            "sqlite_db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
+            "otel_exporter_otlp_endpoint": "${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}",
         }

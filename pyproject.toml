@@ -2,13 +2,16 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.uv]
+required-version = ">=0.7.0"
+
 [project]
 name = "llama_stack"
-version = "0.2.10"
+version = "0.2.21"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { "text" = "MIT" }
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -22,92 +25,107 @@ classifiers = [
 ]
 dependencies = [
     "aiohttp",
-    "fastapi>=0.115.0,<1.0",
-    "fire",
+    "fastapi>=0.115.0,<1.0",                  # server
+    "fire",                                   # for MCP in LLS client
     "httpx",
-    "huggingface-hub",
+    "huggingface-hub>=0.34.0,<1.0",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-client>=0.2.10",
-    "openai>=1.66",
+    "llama-stack-client>=0.2.21",
+    "openai>=1.99.6",
     "prompt-toolkit",
     "python-dotenv",
-    "python-jose",
+    "python-jose[cryptography]",
     "pydantic>=2",
-    "requests",
     "rich",
-    "setuptools",
     "starlette",
     "termcolor",
     "tiktoken",
     "pillow",
     "h11>=0.16.0",
-    "python-multipart>=0.0.20",
+    "python-multipart>=0.0.20",               # For fastapi Form
+    "uvicorn>=0.34.0",                        # server
+    "opentelemetry-sdk>=1.30.0",              # server
+    "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
+    "aiosqlite>=0.21.0",                      # server - for metadata store
+    "asyncpg",                                # for metadata store
 ]
 
 [project.optional-dependencies]
 ui = [
     "streamlit",
     "pandas",
-    "llama-stack-client>=0.2.10",
+    "llama-stack-client>=0.2.21",
     "streamlit-option-menu",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest",
+    "pytest>=8.4",
     "pytest-timeout",
-    "pytest-asyncio",
+    "pytest-asyncio>=1.0",
     "pytest-cov",
     "pytest-html",
     "pytest-json-report",
-    "nbval",              # For notebook testing
+    "pytest-socket", # For blocking network access in unit tests
+    "nbval", # For notebook testing
     "black",
     "ruff",
     "types-requests",
     "types-setuptools",
     "pre-commit",
-    "uvicorn",
-    "ruamel.yaml",        # needed for openapi generator
+    "ruamel.yaml", # needed for openapi generator
 ]
 # These are the dependencies required for running unit tests.
 unit = [
     "sqlite-vec",
+    "ollama",
     "openai",
     "aiosqlite",
     "aiohttp",
+    "psycopg2-binary>=2.9.0",
     "pypdf",
     "mcp",
     "chardet",
     "qdrant-client",
-    "opentelemetry-exporter-otlp-proto-http",
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
     "blobfile",
-    "faiss-cpu"
+    "faiss-cpu",
+    "pymilvus>=2.6.1",
+    "milvus-lite>=2.5.0",
+    "litellm",
+    "together",
+    "coverage",
+    "chromadb>=1.0.15",
+    "moto[s3]>=5.1.10",
 ]
 # These are the core dependencies required for running integration tests. They are shared across all
 # providers. If a provider requires additional dependencies, please add them to your environment
 # separately. If you are using "uv" to execute your tests, you can use the "--group" flag to specify extra
 # dependencies.
 test = [
-    "openai",
+    "openai>=1.100.0",  # for expires_after support
     "aiosqlite",
     "aiohttp",
     "torch>=2.6.0",
     "torchvision>=0.21.0",
-    "opentelemetry-sdk",
-    "opentelemetry-exporter-otlp-proto-http",
     "chardet",
+    "psycopg2-binary>=2.9.0",
     "pypdf",
     "mcp",
-    "datasets",
+    "datasets>=4.0.0",
     "autoevals",
     "transformers",
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
+    "requests",
+    "pymilvus>=2.6.1",
+    "milvus-lite>=2.5.0",
+    "weaviate-client>=4.16.4",
 ]
 docs = [
+    "setuptools",
     "sphinx-autobuild",
     "myst-parser",
     "sphinx",
@@ -119,11 +137,16 @@ docs = [
     "sphinxcontrib.redoc",
     "sphinxcontrib.video",
     "sphinxcontrib.mermaid",
+    "sphinx-reredirects",
     "tomli",
     "linkify",
     "sphinxcontrib.openapi",
+    "requests",
 ]
 codegen = ["rich", "pydantic", "jinja2>=3.1.6"]
+benchmark = [
+    "locust>=2.39.1",
+]
 
 [project.urls]
 Homepage = "https://github.com/meta-llama/llama-stack"
@@ -204,6 +227,9 @@ unfixable = [
     "RUF001",
     "PLE2515",
 ]
+"llama_stack/apis/**/__init__.py" = [
+    "F403",
+] # Using import * is acceptable (or at least tolerated) in an __init__.py of a package API
 
 [tool.mypy]
 mypy_path = ["llama_stack"]
@@ -218,46 +244,35 @@ follow_imports = "silent"
 # to exclude the entire directory.
 exclude = [
     # As we fix more and more of these, we should remove them from the list
-    "^llama_stack/apis/common/training_types\\.py$",
     "^llama_stack/cli/download\\.py$",
-    "^llama_stack/cli/stack/_build\\.py$",
-    "^llama_stack/distribution/build\\.py$",
-    "^llama_stack/distribution/client\\.py$",
-    "^llama_stack/distribution/request_headers\\.py$",
-    "^llama_stack/distribution/routers/",
-    "^llama_stack/distribution/routing_tables/",
-    "^llama_stack/distribution/server/endpoints\\.py$",
-    "^llama_stack/distribution/server/server\\.py$",
-    "^llama_stack/distribution/stack\\.py$",
-    "^llama_stack/distribution/store/registry\\.py$",
-    "^llama_stack/distribution/utils/exec\\.py$",
-    "^llama_stack/distribution/utils/prompt_for_config\\.py$",
-    "^llama_stack/models/llama/llama3/chat_format\\.py$",
+    "^llama_stack.core/build\\.py$",
+    "^llama_stack.core/client\\.py$",
+    "^llama_stack.core/request_headers\\.py$",
+    "^llama_stack.core/routers/",
+    "^llama_stack.core/routing_tables/",
+    "^llama_stack.core/server/endpoints\\.py$",
+    "^llama_stack.core/server/server\\.py$",
+    "^llama_stack.core/stack\\.py$",
+    "^llama_stack.core/store/registry\\.py$",
+    "^llama_stack.core/utils/exec\\.py$",
+    "^llama_stack.core/utils/prompt_for_config\\.py$",
     "^llama_stack/models/llama/llama3/interface\\.py$",
     "^llama_stack/models/llama/llama3/tokenizer\\.py$",
     "^llama_stack/models/llama/llama3/tool_utils\\.py$",
-    "^llama_stack/models/llama/llama3_3/prompts\\.py$",
     "^llama_stack/providers/inline/agents/meta_reference/",
     "^llama_stack/providers/inline/agents/meta_reference/agent_instance\\.py$",
     "^llama_stack/providers/inline/agents/meta_reference/agents\\.py$",
-    "^llama_stack/providers/inline/agents/meta_reference/safety\\.py$",
     "^llama_stack/providers/inline/datasetio/localfs/",
     "^llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
-    "^llama_stack/providers/inline/inference/meta_reference/config\\.py$",
     "^llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
     "^llama_stack/models/llama/llama3/generation\\.py$",
     "^llama_stack/models/llama/llama3/multimodal/model\\.py$",
     "^llama_stack/models/llama/llama4/",
-    "^llama_stack/providers/inline/inference/meta_reference/parallel_utils\\.py$",
     "^llama_stack/providers/inline/inference/meta_reference/quantization/fp8_impls\\.py$",
-    "^llama_stack/providers/inline/inference/meta_reference/quantization/loader\\.py$",
     "^llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
-    "^llama_stack/providers/inline/inference/vllm/",
     "^llama_stack/providers/inline/post_training/common/validator\\.py$",
-    "^llama_stack/providers/inline/post_training/torchtune/post_training\\.py$",
     "^llama_stack/providers/inline/safety/code_scanner/",
     "^llama_stack/providers/inline/safety/llama_guard/",
-    "^llama_stack/providers/inline/safety/prompt_guard/",
     "^llama_stack/providers/inline/scoring/basic/",
     "^llama_stack/providers/inline/scoring/braintrust/",
     "^llama_stack/providers/inline/scoring/llm_as_judge/",
@@ -321,10 +336,10 @@ exclude = [
     "^llama_stack/strong_typing/inspection\\.py$",
     "^llama_stack/strong_typing/schema\\.py$",
     "^llama_stack/strong_typing/serializer\\.py$",
-    "^llama_stack/templates/groq/groq\\.py$",
-    "^llama_stack/templates/llama_api/llama_api\\.py$",
-    "^llama_stack/templates/sambanova/sambanova\\.py$",
-    "^llama_stack/templates/template\\.py$",
+    "^llama_stack/distributions/groq/groq\\.py$",
+    "^llama_stack/distributions/llama_api/llama_api\\.py$",
+    "^llama_stack/distributions/sambanova/sambanova\\.py$",
+    "^llama_stack/distributions/template\\.py$",
 ]
 
 [[tool.mypy.overrides]]
@@ -339,3 +354,9 @@ warn_required_dynamic_aliases = true
 
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = ["classmethod", "pydantic.field_validator"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "allow_network: Allow network access for specific unit tests",
+]

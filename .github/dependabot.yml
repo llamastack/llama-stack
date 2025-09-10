@@ -9,15 +9,25 @@ updates:
       day: "saturday"
     commit-message:
       prefix: chore(github-deps)
+
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "saturday"
-    # ignore all non-security updates: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#open-pull-requests-limit
-    open-pull-requests-limit: 0
     labels:
       - type/dependencies
       - python
     commit-message:
       prefix: chore(python-deps)
+
+  - package-ecosystem: npm
+    directory: "/llama_stack/ui"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+    labels:
+      - type/dependencies
+      - javascript
+    commit-message:
+      prefix: chore(ui-deps)

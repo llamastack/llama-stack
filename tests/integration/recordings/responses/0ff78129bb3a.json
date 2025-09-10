@@ -1,0 +1,167 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/api/generate",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "raw": true,
+      "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant. You have access to functions, but you should only use them if they are required.\nYou are an expert in composing functions. You are given a question and a set of possible functions.\nBased on the question, you may or may not need to make one function/tool call to achieve the purpose.\n\nIf you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)]\nIf you decide to invoke a function, you SHOULD NOT include any other text in the response. besides the function call in the above format.\nFor a boolean parameter, be sure to use `True` or `False` (capitalized) for the value.\n\n\nHere is a list of functions in JSON format that you can invoke.\n\n[\n    {\n        \"name\": \"greet_everyone\",\n        \"description\": \"\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\"url\"],\n            \"properties\": {\n                \"url\": {\n                    \"type\": \"string\",\n                    \"description\": \"\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"get_boiling_point\",\n        \"description\": \"\nReturns the boiling point of a liquid in Celsius or Fahrenheit.\n\n:param liquid_name: The name of the liquid\n:param celsius: Whether to return the boiling point in Celsius\n:return: The boiling point of the liquid in Celcius or Fahrenheit\n\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\"liquid_name\", \"celsius\"],\n            \"properties\": {\n                \"liquid_name\": {\n                    \"type\": \"string\",\n                    \"description\": \"\"\n                },\n                \"celsius\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\"\n                }\n            }\n        }\n    }\n]\n\nYou can answer general questions or invoke tools when necessary.\nIn addition to tool calls, you should also augment your responses by using the tool outputs.\nYou are a helpful assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nSay hi to the world. Use tools to do so.<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n[greet_everyone(url=\"world\")]<|eot_id|><|start_header_id|>ipython<|end_header_id|>\n\nHello, world!<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+      "options": {
+        "temperature": 0.0
+      },
+      "stream": true
+    },
+    "endpoint": "/api/generate",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.143606Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "How",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.186151Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " can",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.229036Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " I",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.271516Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " assist",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.316272Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " you",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.361005Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " further",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.404689Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "?",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-07-29T23:26:18.447699Z",
+          "done": true,
+          "done_reason": "stop",
+          "total_duration": 456939083,
+          "load_duration": 79653292,
+          "prompt_eval_count": 471,
+          "prompt_eval_duration": 71724667,
+          "eval_count": 8,
+          "eval_duration": 304859000,
+          "response": "",
+          "thinking": null,
+          "context": null
+        }
+      }
+    ],
+    "is_streaming": true
+  }
+}

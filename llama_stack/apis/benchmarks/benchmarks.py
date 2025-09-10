@@ -22,6 +22,14 @@ class CommonBenchmarkFields(BaseModel):
 
 @json_schema_type
 class Benchmark(CommonBenchmarkFields, Resource):
+    """A benchmark resource for evaluating model performance.
+
+    :param dataset_id: Identifier of the dataset to use for the benchmark evaluation
+    :param scoring_functions: List of scoring function identifiers to apply during evaluation
+    :param metadata: Metadata for this evaluation task
+    :param type: The resource type, always benchmark
+    """
+
     type: Literal[ResourceType.benchmark] = ResourceType.benchmark
 
     @property

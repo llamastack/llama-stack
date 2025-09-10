@@ -58,7 +58,7 @@ from llama_stack.models.llama.sku_list import resolve_model
 from llama_stack.models.llama.sku_types import ModelFamily, is_multimodal
 from llama_stack.providers.utils.inference import supported_inference_models
 
-log = get_logger(name=__name__, category="inference")
+log = get_logger(name=__name__, category="providers::utils")
 
 
 class ChatCompletionRequestWithRawContent(ChatCompletionRequest):
@@ -180,11 +180,10 @@ def request_has_media(request: ChatCompletionRequest | CompletionRequest):
         return content_has_media(request.content)
 
 
-async def localize_image_content(media: ImageContentItem) -> tuple[bytes, str]:
-    image = media.image
-    if image.url and image.url.uri.startswith("http"):
+async def localize_image_content(uri: str) -> tuple[bytes, str] | None:
+    if uri.startswith("http"):
         async with httpx.AsyncClient() as client:
-            r = await client.get(image.url.uri)
+            r = await client.get(uri)
             content = r.content
             content_type = r.headers.get("content-type")
             if content_type:
@@ -194,11 +193,7 @@ async def localize_image_content(media: ImageContentItem) -> tuple[bytes, str]:
 
         return content, format
     else:
-        # data is a base64 encoded string, decode it to bytes first
-        # TODO(mf): do this more efficiently, decode less
-        data_bytes = base64.b64decode(image.data)
-        pil_image = PIL_Image.open(io.BytesIO(data_bytes))
-        return data_bytes, pil_image.format
+        return None
 
 
 async def convert_image_content_to_url(
@@ -208,7 +203,18 @@ async def convert_image_content_to_url(
     if image.url and (not download or image.url.uri.startswith("data")):
         return image.url.uri
 
-    content, format = await localize_image_content(media)
+    if image.data:
+        # data is a base64 encoded string, decode it to bytes first
+        # TODO(mf): do this more efficiently, decode less
+        content = base64.b64decode(image.data)
+        pil_image = PIL_Image.open(io.BytesIO(content))
+        format = pil_image.format
+    else:
+        localize_result = await localize_image_content(image.url.uri)
+        if localize_result is None:
+            raise ValueError(f"Failed to localize image content from {image.url.uri}")
+        content, format = localize_result
+
     if include_format:
         return f"data:image/{format};base64," + base64.b64encode(content).decode("utf-8")
     else:

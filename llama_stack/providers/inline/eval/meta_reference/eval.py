@@ -208,7 +208,7 @@ class MetaReferenceEvalImpl(
                 for scoring_fn_id in scoring_functions
             }
         else:
-            scoring_functions_dict = {scoring_fn_id: None for scoring_fn_id in scoring_functions}
+            scoring_functions_dict = dict.fromkeys(scoring_functions)
 
         score_response = await self.scoring_api.score(
             input_rows=score_input_rows, scoring_functions=scoring_functions_dict

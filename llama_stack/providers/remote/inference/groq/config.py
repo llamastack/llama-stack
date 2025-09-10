@@ -32,7 +32,7 @@ class GroqConfig(BaseModel):
     )
 
     @classmethod
-    def sample_run_config(cls, api_key: str = "${env.GROQ_API_KEY}", **kwargs) -> dict[str, Any]:
+    def sample_run_config(cls, api_key: str = "${env.GROQ_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {
             "url": "https://api.groq.com",
             "api_key": api_key,

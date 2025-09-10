@@ -114,7 +114,7 @@ podman run --rm -it \
 
 ## Running Llama Stack
 
-Now you are ready to run Llama Stack with TGI as the inference provider. You can do this via Conda (build code) or Docker which has a pre-built image.
+Now you are ready to run Llama Stack with TGI as the inference provider. You can do this via venv or Docker which has a pre-built image.
 
 ### Via Docker
 
@@ -153,7 +153,7 @@ docker run \
   --pull always \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
-  -v ./llama_stack/templates/tgi/run-with-safety.yaml:/root/my-run.yaml \
+  -v ./llama_stack/distributions/tgi/run-with-safety.yaml:/root/my-run.yaml \
   llamastack/distribution-dell \
   --config /root/my-run.yaml \
   --port $LLAMA_STACK_PORT \
@@ -164,12 +164,12 @@ docker run \
   --env CHROMA_URL=$CHROMA_URL
 ```
 
-### Via Conda
+### Via venv
 
 Make sure you have done `pip install llama-stack` and have the Llama Stack CLI available.
 
 ```bash
-llama stack build --template dell --image-type conda
+llama stack build --distro dell --image-type venv
 llama stack run dell
   --port $LLAMA_STACK_PORT \
   --env INFERENCE_MODEL=$INFERENCE_MODEL \

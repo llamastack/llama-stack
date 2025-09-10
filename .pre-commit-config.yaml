@@ -1,7 +1,8 @@
 exclude: 'build/'
 
 default_language_version:
-    python: python3
+    python: python3.12
+    node: "22"
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
@@ -14,12 +15,11 @@ repos:
     -   id: check-added-large-files
         args: ['--maxkb=1000']
     -   id: end-of-file-fixer
-        exclude: '^(.*\.svg)$'
+        exclude: '^(.*\.svg|.*\.md)$'
     -   id: no-commit-to-branch
     -   id: check-yaml
         args: ["--unsafe"]
     -   id: detect-private-key
-    -   id: requirements-txt-fixer
     -   id: mixed-line-ending
         args: [--fix=lf] # Forces to replace line ending by LF (line feed)
     -   id: check-executables-have-shebangs
@@ -29,7 +29,7 @@ repos:
     -   id: check-toml
 
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.4
+    rev: v1.5.5
     hooks:
     -   id: insert-license
         files: \.py$|\.sh$
@@ -38,7 +38,7 @@ repos:
           - docs/license_header.txt
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.4
+    rev: v0.12.2
     hooks:
     -   id: ruff
         args: [ --fix ]
@@ -46,27 +46,19 @@ repos:
     -   id: ruff-format
 
 -   repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.19.0
+    rev: 1.19.1
     hooks:
     -   id: blacken-docs
         additional_dependencies:
         - black==24.3.0
 
 -   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.8
+    rev: 0.7.20
     hooks:
     -   id: uv-lock
-    -   id: uv-export
-        args: [
-            "--frozen",
-            "--no-hashes",
-            "--no-emit-project",
-            "--no-default-groups",
-            "--output-file=requirements.txt"
-        ]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.16.1
     hooks:
     -   id: mypy
         additional_dependencies:
@@ -94,7 +86,16 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/templates/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
+        files: ^llama_stack/distributions/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
+      - id: provider-codegen
+        name: Provider Codegen
+        additional_dependencies:
+          - uv==0.7.8
+        entry: uv run --group codegen ./scripts/provider_codegen.py
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^llama_stack/providers/.*$
       - id: openapi-codegen
         name: API Spec Codegen
         additional_dependencies:
@@ -112,7 +113,71 @@ repos:
         require_serial: true
         always_run: true
         files: ^\.github/workflows/.*\.ya?ml$
+      - id: check-init-py
+        name: Check for missing __init__.py files
+        entry: ./scripts/check-init-py.sh
+        language: system
+        pass_filenames: false
+        require_serial: true
+        always_run: true
+        files: ^llama_stack/.*$
+      - id: forbid-pytest-asyncio
+        name: Block @pytest.mark.asyncio and @pytest_asyncio.fixture
+        entry: bash
+        language: system
+        types: [python]
+        pass_filenames: true
+        args:
+          - -c
+          - |
+            grep -EnH '^[^#]*@pytest\.mark\.asyncio|@pytest_asyncio\.fixture' "$@" && {
+              echo;
+              echo "❌ Do not use @pytest.mark.asyncio or @pytest_asyncio.fixture."
+              echo "   pytest is already configured with async-mode=auto."
+              echo;
+              exit 1;
+            } || true
+      - id: generate-ci-docs
+        name: Generate CI documentation
+        additional_dependencies:
+          - uv==0.7.8
+        entry: uv run ./scripts/gen-ci-docs.py
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^.github/workflows/.*$
+      - id: ui-linter
+        name: Format & Lint UI
+        entry: bash ./scripts/run-ui-linter.sh
+        language: system
+        files: ^llama_stack/ui/.*\.(ts|tsx)$
+        pass_filenames: false
+        require_serial: true
+
+      - id: check-log-usage
+        name: Ensure 'llama_stack.log' usage for logging
+        entry: bash
+        language: system
+        types: [python]
+        pass_filenames: true
+        args:
+          - -c
+          - |
+            matches=$(grep -EnH '^[^#]*\b(import\s+logging|from\s+logging\b)' "$@" | grep -v -e '#\s*allow-direct-logging' || true)
+            if [ -n "$matches" ]; then
+              # GitHub Actions annotation format
+              while IFS=: read -r file line_num rest; do
+                echo "::error file=$file,line=$line_num::Do not use 'import logging' or 'from logging import' in $file. Use the custom log instead: from llama_stack.log import get_logger; logger = get_logger(). If direct logging is truly needed, add: # allow-direct-logging"
+              done <<< "$matches"
+              exit 1
+            fi
+            exit 0
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
     autoupdate_commit_msg: ⬆ [pre-commit.ci] pre-commit autoupdate
+    autofix_prs: true
+    autoupdate_branch: ''
+    autoupdate_schedule: weekly
+    skip: []
+    submodules: false

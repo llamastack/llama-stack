@@ -1,0 +1,117 @@
+version: 2
+image_name: nvidia
+apis:
+- agents
+- datasetio
+- eval
+- inference
+- post_training
+- safety
+- scoring
+- telemetry
+- tool_runtime
+- vector_io
+providers:
+  inference:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      url: ${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com}
+      api_key: ${env.NVIDIA_API_KEY:=}
+      append_api_version: ${env.NVIDIA_APPEND_API_VERSION:=True}
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      guardrails_service_url: ${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}
+      config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
+  vector_io:
+  - provider_id: faiss
+    provider_type: inline::faiss
+    config:
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/faiss_store.db
+  safety:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      guardrails_service_url: ${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}
+      config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
+  agents:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      persistence_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/agents_store.db
+      responses_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/responses_store.db
+  telemetry:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
+      sinks: ${env.TELEMETRY_SINKS:=console,sqlite}
+      sqlite_db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/trace_store.db
+      otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
+  eval:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      evaluator_url: ${env.NVIDIA_EVALUATOR_URL:=http://localhost:7331}
+  post_training:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      api_key: ${env.NVIDIA_API_KEY:=}
+      dataset_namespace: ${env.NVIDIA_DATASET_NAMESPACE:=default}
+      project_id: ${env.NVIDIA_PROJECT_ID:=test-project}
+      customizer_url: ${env.NVIDIA_CUSTOMIZER_URL:=http://nemo.test}
+  datasetio:
+  - provider_id: localfs
+    provider_type: inline::localfs
+    config:
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/localfs_datasetio.db
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      api_key: ${env.NVIDIA_API_KEY:=}
+      dataset_namespace: ${env.NVIDIA_DATASET_NAMESPACE:=default}
+      project_id: ${env.NVIDIA_PROJECT_ID:=test-project}
+      datasets_url: ${env.NVIDIA_DATASETS_URL:=http://nemo.test}
+  scoring:
+  - provider_id: basic
+    provider_type: inline::basic
+  tool_runtime:
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
+metadata_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/registry.db
+inference_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/inference_store.db
+models:
+- metadata: {}
+  model_id: ${env.INFERENCE_MODEL}
+  provider_id: nvidia
+  model_type: llm
+- metadata: {}
+  model_id: ${env.SAFETY_MODEL}
+  provider_id: nvidia
+  model_type: llm
+shields:
+- shield_id: ${env.SAFETY_MODEL}
+  provider_id: nvidia
+vector_dbs: []
+datasets: []
+scoring_fns: []
+benchmarks: []
+tool_groups:
+- toolgroup_id: builtin::rag
+  provider_id: rag-runtime
+server:
+  port: 8321

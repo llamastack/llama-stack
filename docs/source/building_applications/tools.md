@@ -76,7 +76,9 @@ Features:
 - Context retrieval with token limits
 
 
-> **Note:** By default, llama stack run.yaml defines toolgroups for web search, wolfram alpha and rag, that are provided by tavily-search, wolfram-alpha and rag providers.
+```{note}
+By default, llama stack run.yaml defines toolgroups for web search, wolfram alpha and rag, that are provided by tavily-search, wolfram-alpha and rag providers.
+```
 
 ## Model Context Protocol (MCP)
 

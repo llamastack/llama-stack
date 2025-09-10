@@ -1,8 +1,0 @@
-# LLAMA_STACK_PORT=5002 llama stack run meta-reference-gpu --env INFERENCE_MODEL=meta-llama/Llama-4-Scout-17B-16E-Instruct --env INFERENCE_CHECKPOINT_DIR=<path_to_ckpt>
-base_url: http://localhost:5002/v1/openai/v1
-api_key_var: foo
-models:
-- meta-llama/Llama-4-Scout-17B-16E-Instruct
-model_display_names:
-  meta-llama/Llama-4-Scout-17B-16E-Instruct: Llama-4-Scout-Instruct
-test_exclusions: {}

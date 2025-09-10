@@ -5,23 +5,22 @@
 # the root directory of this source tree.
 
 import re
+import uuid
 from string import Template
 from typing import Any
 
 from llama_stack.apis.common.content_types import ImageContentItem, TextContentItem
-from llama_stack.apis.inference import (
-    Inference,
-    Message,
-    UserMessage,
-)
+from llama_stack.apis.inference import Inference, Message, UserMessage
 from llama_stack.apis.safety import (
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ViolationLevel,
 )
+from llama_stack.apis.safety.safety import ModerationObject, ModerationObjectResults
 from llama_stack.apis.shields import Shield
-from llama_stack.distribution.datatypes import Api
+from llama_stack.core.datatypes import Api
+from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import Role
 from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
@@ -67,7 +66,7 @@ SAFETY_CATEGORIES_TO_CODE_MAP = {
     CAT_ELECTIONS: "S13",
     CAT_CODE_INTERPRETER_ABUSE: "S14",
 }
-
+SAFETY_CODE_TO_CATEGORIES_MAP = {v: k for k, v in SAFETY_CATEGORIES_TO_CODE_MAP.items()}
 
 DEFAULT_LG_V3_SAFETY_CATEGORIES = [
     CAT_VIOLENT_CRIMES,
@@ -93,12 +92,17 @@ LLAMA_GUARD_MODEL_IDS = {
     "meta-llama/Llama-Guard-3-1B": "meta-llama/Llama-Guard-3-1B",
     CoreModelId.llama_guard_3_11b_vision.value: "meta-llama/Llama-Guard-3-11B-Vision",
     "meta-llama/Llama-Guard-3-11B-Vision": "meta-llama/Llama-Guard-3-11B-Vision",
+    CoreModelId.llama_guard_4_12b.value: "meta-llama/Llama-Guard-4-12B",
+    "meta-llama/Llama-Guard-4-12B": "meta-llama/Llama-Guard-4-12B",
 }
 
 MODEL_TO_SAFETY_CATEGORIES_MAP = {
     "meta-llama/Llama-Guard-3-8B": DEFAULT_LG_V3_SAFETY_CATEGORIES + [CAT_CODE_INTERPRETER_ABUSE],
     "meta-llama/Llama-Guard-3-1B": DEFAULT_LG_V3_SAFETY_CATEGORIES,
     "meta-llama/Llama-Guard-3-11B-Vision": DEFAULT_LG_V3_SAFETY_CATEGORIES,
+    # Llama Guard 4 uses the same categories as Llama Guard 3
+    # source: https://github.com/meta-llama/PurpleLlama/blob/main/Llama-Guard4/12B/MODEL_CARD.md
+    "meta-llama/Llama-Guard-4-12B": DEFAULT_LG_V3_SAFETY_CATEGORIES,
 }
 
 
@@ -128,6 +132,8 @@ Provide your safety assessment for ONLY THE LAST $agent_type message in the abov
 
 PROMPT_TEMPLATE = Template(f"{PROMPT_TASK}{SAFETY_CATEGORIES}{PROMPT_CONVERSATION}{PROMPT_INSTRUCTIONS}")
 
+logger = get_logger(name=__name__, category="safety")
+
 
 class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
     def __init__(self, config: LlamaGuardConfig, deps) -> None:
@@ -141,10 +147,14 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         pass
 
     async def register_shield(self, shield: Shield) -> None:
-        if shield.provider_resource_id not in LLAMA_GUARD_MODEL_IDS:
-            raise ValueError(
-                f"Unsupported Llama Guard type: {shield.provider_resource_id}. Allowed types: {LLAMA_GUARD_MODEL_IDS}"
-            )
+        model_id = shield.provider_resource_id
+        if not model_id:
+            raise ValueError("Llama Guard shield must have a model id")
+
+    async def unregister_shield(self, identifier: str) -> None:
+        # LlamaGuard doesn't need to do anything special for unregistration
+        # The routing table handles the removal from the registry
+        pass
 
     async def run_shield(
         self,
@@ -162,14 +172,56 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         if len(messages) > 0 and messages[0].role != Role.user.value:
             messages[0] = UserMessage(content=messages[0].content)
 
-        model = LLAMA_GUARD_MODEL_IDS[shield.provider_resource_id]
+        # Use the inference API's model resolution instead of hardcoded mappings
+        # This allows the shield to work with any registered model
+        model_id = shield.provider_resource_id
+
+        # Determine safety categories based on the model type
+        # For known Llama Guard models, use specific categories
+        if model_id in LLAMA_GUARD_MODEL_IDS:
+            # Use the mapped model for categories but the original model_id for inference
+            mapped_model = LLAMA_GUARD_MODEL_IDS[model_id]
+            safety_categories = MODEL_TO_SAFETY_CATEGORIES_MAP.get(mapped_model, DEFAULT_LG_V3_SAFETY_CATEGORIES)
+        else:
+            # For unknown models, use default Llama Guard 3 8B categories
+            safety_categories = DEFAULT_LG_V3_SAFETY_CATEGORIES + [CAT_CODE_INTERPRETER_ABUSE]
+
+        impl = LlamaGuardShield(
+            model=model_id,
+            inference_api=self.inference_api,
+            excluded_categories=self.config.excluded_categories,
+            safety_categories=safety_categories,
+        )
+
+        return await impl.run(messages)
+
+    async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
+        if isinstance(input, list):
+            messages = input.copy()
+        else:
+            messages = [input]
+
+        # convert to user messages format with role
+        messages = [UserMessage(content=m) for m in messages]
+
+        # Determine safety categories based on the model type
+        # For known Llama Guard models, use specific categories
+        if model in LLAMA_GUARD_MODEL_IDS:
+            # Use the mapped model for categories but the original model_id for inference
+            mapped_model = LLAMA_GUARD_MODEL_IDS[model]
+            safety_categories = MODEL_TO_SAFETY_CATEGORIES_MAP.get(mapped_model, DEFAULT_LG_V3_SAFETY_CATEGORIES)
+        else:
+            # For unknown models, use default Llama Guard 3 8B categories
+            safety_categories = DEFAULT_LG_V3_SAFETY_CATEGORIES + [CAT_CODE_INTERPRETER_ABUSE]
+
         impl = LlamaGuardShield(
             model=model,
             inference_api=self.inference_api,
             excluded_categories=self.config.excluded_categories,
+            safety_categories=safety_categories,
         )
 
-        return await impl.run(messages)
+        return await impl.run_moderation(messages)
 
 
 class LlamaGuardShield:
@@ -178,20 +230,21 @@ class LlamaGuardShield:
         model: str,
         inference_api: Inference,
         excluded_categories: list[str] | None = None,
+        safety_categories: list[str] | None = None,
     ):
         if excluded_categories is None:
             excluded_categories = []
+        if safety_categories is None:
+            safety_categories = []
 
         assert len(excluded_categories) == 0 or all(
             x in SAFETY_CATEGORIES_TO_CODE_MAP.values() for x in excluded_categories
         ), "Invalid categories in excluded categories. Expected format is ['S1', 'S2', ..]"
 
-        if model not in MODEL_TO_SAFETY_CATEGORIES_MAP:
-            raise ValueError(f"Unsupported model: {model}")
-
         self.model = model
         self.inference_api = inference_api
         self.excluded_categories = excluded_categories
+        self.safety_categories = safety_categories
 
     def check_unsafe_response(self, response: str) -> str | None:
         match = re.match(r"^unsafe\n(.*)$", response)
@@ -209,7 +262,7 @@ class LlamaGuardShield:
 
         final_categories = []
 
-        all_categories = MODEL_TO_SAFETY_CATEGORIES_MAP[self.model]
+        all_categories = self.safety_categories
         for cat in all_categories:
             cat_code = SAFETY_CATEGORIES_TO_CODE_MAP[cat]
             if cat_code in excluded_categories:
@@ -316,3 +369,113 @@ class LlamaGuardShield:
             )
 
         raise ValueError(f"Unexpected response: {response}")
+
+    async def run_moderation(self, messages: list[Message]) -> ModerationObject:
+        if not messages:
+            return self.create_moderation_object(self.model)
+
+        # TODO: Add Image based support for OpenAI Moderations
+        shield_input_message = self.build_text_shield_input(messages)
+
+        response = await self.inference_api.openai_chat_completion(
+            model=self.model,
+            messages=[shield_input_message],
+            stream=False,
+        )
+        content = response.choices[0].message.content
+        content = content.strip()
+        return self.get_moderation_object(content)
+
+    def create_moderation_object(self, model: str, unsafe_code: str | None = None) -> ModerationObject:
+        """Create a ModerationObject for either safe or unsafe content.
+
+        Args:
+            model: The model name
+            unsafe_code: Optional comma-separated list of safety codes. If None, creates safe object.
+
+        Returns:
+            ModerationObject with appropriate configuration
+        """
+        # Set default values for safe case
+        categories = dict.fromkeys(SAFETY_CATEGORIES_TO_CODE_MAP.keys(), False)
+        category_scores = dict.fromkeys(SAFETY_CATEGORIES_TO_CODE_MAP.keys(), 1.0)
+        category_applied_input_types = {key: [] for key in SAFETY_CATEGORIES_TO_CODE_MAP.keys()}
+        flagged = False
+        user_message = None
+        metadata = {}
+
+        # Handle unsafe case
+        if unsafe_code:
+            unsafe_code_list = [code.strip() for code in unsafe_code.split(",")]
+            invalid_codes = [code for code in unsafe_code_list if code not in SAFETY_CODE_TO_CATEGORIES_MAP]
+            if invalid_codes:
+                logger.warning(f"Invalid safety codes returned: {invalid_codes}")
+                # just returning safe object, as we don't know what the invalid codes can map to
+                return ModerationObject(
+                    id=f"modr-{uuid.uuid4()}",
+                    model=model,
+                    results=[
+                        ModerationObjectResults(
+                            flagged=flagged,
+                            categories=categories,
+                            category_applied_input_types=category_applied_input_types,
+                            category_scores=category_scores,
+                            user_message=user_message,
+                            metadata=metadata,
+                        )
+                    ],
+                )
+
+            llama_guard_category = [SAFETY_CODE_TO_CATEGORIES_MAP[code] for code in unsafe_code_list]
+
+            # Update categories for unsafe content
+            categories = {k: k in llama_guard_category for k in SAFETY_CATEGORIES_TO_CODE_MAP.keys()}
+            category_scores = {
+                k: 1.0 if k in llama_guard_category else 0.0 for k in SAFETY_CATEGORIES_TO_CODE_MAP.keys()
+            }
+            category_applied_input_types = {
+                k: ["text"] if k in llama_guard_category else [] for k in SAFETY_CATEGORIES_TO_CODE_MAP.keys()
+            }
+            flagged = True
+            user_message = CANNED_RESPONSE_TEXT
+            metadata = {"violation_type": unsafe_code_list}
+
+        return ModerationObject(
+            id=f"modr-{uuid.uuid4()}",
+            model=model,
+            results=[
+                ModerationObjectResults(
+                    flagged=flagged,
+                    categories=categories,
+                    category_applied_input_types=category_applied_input_types,
+                    category_scores=category_scores,
+                    user_message=user_message,
+                    metadata=metadata,
+                )
+            ],
+        )
+
+    def is_content_safe(self, response: str, unsafe_code: str | None = None) -> bool:
+        """Check if content is safe based on response and unsafe code."""
+        if response.strip().lower().startswith(SAFE_RESPONSE):
+            return True
+
+        if unsafe_code:
+            unsafe_code_list = unsafe_code.split(",")
+            if set(unsafe_code_list).issubset(set(self.excluded_categories)):
+                return True
+
+        return False
+
+    def get_moderation_object(self, response: str) -> ModerationObject:
+        response = response.strip()
+        if self.is_content_safe(response):
+            return self.create_moderation_object(self.model)
+        unsafe_code = self.check_unsafe_response(response)
+        if not unsafe_code:
+            raise ValueError(f"Unexpected response: {response}")
+
+        if self.is_content_safe(response, unsafe_code):
+            return self.create_moderation_object(self.model)
+        else:
+            return self.create_moderation_object(self.model, unsafe_code)

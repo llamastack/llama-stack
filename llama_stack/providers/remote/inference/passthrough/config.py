@@ -24,8 +24,10 @@ class PassthroughImplConfig(BaseModel):
     )
 
     @classmethod
-    def sample_run_config(cls, **kwargs) -> dict[str, Any]:
+    def sample_run_config(
+        cls, url: str = "${env.PASSTHROUGH_URL}", api_key: str = "${env.PASSTHROUGH_API_KEY}", **kwargs
+    ) -> dict[str, Any]:
         return {
-            "url": "${env.PASSTHROUGH_URL}",
-            "api_key": "${env.PASSTHROUGH_API_KEY}",
+            "url": url,
+            "api_key": api_key,
         }

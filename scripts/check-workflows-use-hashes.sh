@@ -12,21 +12,23 @@ set -euo pipefail
 failed=0
 
 # Find all workflow YAML files
+
+# Use GitHub Actions error format
+# ::error file={name},line={line},col={col}::{message}
+
 for file in $(find .github/workflows/ -type f \( -name "*.yml" -o -name "*.yaml" \)); do
     IFS=$'\n'
-    # Grep for `uses:` lines that look like actions
-    for line in $(grep -E '^.*uses:[^@]+@[^ ]+' "$file"); do
-        # Extract the ref part after the last @
+    # Get line numbers for each 'uses:'
+    while IFS= read -r match; do
+        line_num=$(echo "$match" | cut -d: -f1)
+        line=$(echo "$match" | cut -d: -f2-)
         ref=$(echo "$line" | sed -E 's/.*@([A-Za-z0-9._-]+).*/\1/')
-        # Check if ref is a 40-character hex string (full SHA).
-        #
-        # Note: strictly speaking, this could also be a tag or branch name, but
-        # we'd have to pull this info from the remote. Meh.
         if ! [[ $ref =~ ^[0-9a-fA-F]{40}$ ]]; then
-            echo "ERROR: $file uses non-SHA action ref: $line"
+            # Output in GitHub Actions annotation format
+            echo "::error file=$file,line=$line_num::uses non-SHA action ref: $line"
             failed=1
         fi
-    done
+    done < <(grep -n -E '^.*uses:[^@]+@[^ ]+' "$file")
 done
 
 exit $failed

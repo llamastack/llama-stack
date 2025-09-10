@@ -4,15 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import pytest
-from openai import OpenAI
+from openai import BadRequestError, OpenAI
 
-from llama_stack.distribution.library_client import LlamaStackAsLibraryClient
-
-
-@pytest.fixture
-def openai_client(client_with_models):
-    base_url = f"{client_with_models.base_url}/v1/openai/v1"
-    return OpenAI(base_url=base_url, api_key="bar")
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
 
 @pytest.mark.parametrize(
@@ -41,15 +35,14 @@ def openai_client(client_with_models):
         ],
     ],
 )
-def test_responses_store(openai_client, client_with_models, text_model_id, stream, tools):
-    if isinstance(client_with_models, LlamaStackAsLibraryClient):
-        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
+def test_responses_store(compat_client, text_model_id, stream, tools):
+    if not isinstance(compat_client, OpenAI):
+        pytest.skip("OpenAI client is required until responses.delete() exists in llama-stack-client")
 
-    client = openai_client
     message = "What's the weather in Tokyo?" + (
         " YOU MUST USE THE get_weather function to get the weather." if tools else ""
     )
-    response = client.responses.create(
+    response = compat_client.responses.create(
         model=text_model_id,
         input=[
             {
@@ -78,31 +71,28 @@ def test_responses_store(openai_client, client_with_models, text_model_id, strea
         if output_type == "message":
             content = response.output[0].content[0].text
 
-    # list responses - use the underlying HTTP client for endpoints not in SDK
-    list_response = client._client.get("/responses")
-    assert list_response.status_code == 200
-    data = list_response.json()["data"]
-    assert response_id in [r["id"] for r in data]
-
     # test retrieve response
-    retrieved_response = client.responses.retrieve(response_id)
+    retrieved_response = compat_client.responses.retrieve(response_id)
     assert retrieved_response.id == response_id
     assert retrieved_response.model == text_model_id
     assert retrieved_response.output[0].type == output_type, retrieved_response
     if output_type == "message":
         assert retrieved_response.output[0].content[0].text == content
 
+    # Delete the response
+    delete_response = compat_client.responses.delete(response_id)
+    assert delete_response is None
 
-def test_list_response_input_items(openai_client, client_with_models, text_model_id):
+    with pytest.raises(BadRequestError):
+        compat_client.responses.retrieve(response_id)
+
+
+def test_list_response_input_items(compat_client, text_model_id):
     """Test the new list_openai_response_input_items endpoint."""
-    if isinstance(client_with_models, LlamaStackAsLibraryClient):
-        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
-
-    client = openai_client
     message = "What is the capital of France?"
 
     # Create a response first
-    response = client.responses.create(
+    response = compat_client.responses.create(
         model=text_model_id,
         input=[
             {
@@ -116,7 +106,7 @@ def test_list_response_input_items(openai_client, client_with_models, text_model
     response_id = response.id
 
     # Test the new list input items endpoint
-    input_items_response = client.responses.input_items.list(response_id=response_id)
+    input_items_response = compat_client.responses.input_items.list(response_id=response_id)
 
     # Verify the structure follows OpenAI API spec
     assert input_items_response.object == "list"
@@ -221,3 +211,56 @@ def test_list_response_input_items_with_limit_and_order(openai_client, client_wi
             assert hasattr(item, "type")
             assert item.type == "message"
             assert item.role in ["user", "assistant"]
+
+
+@pytest.mark.skip(reason="Tool calling is not reliable.")
+def test_function_call_output_response(openai_client, client_with_models, text_model_id):
+    """Test handling of function call outputs in responses."""
+    if isinstance(client_with_models, LlamaStackAsLibraryClient):
+        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
+
+    client = openai_client
+
+    # First create a response that triggers a function call
+    response = client.responses.create(
+        model=text_model_id,
+        input=[
+            {
+                "role": "user",
+                "content": "what's the weather in tokyo? You MUST call the `get_weather` function to find out.",
+            }
+        ],
+        tools=[
+            {
+                "type": "function",
+                "name": "get_weather",
+                "description": "Get the weather in a given city",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {"type": "string", "description": "The city to get the weather for"},
+                    },
+                },
+            }
+        ],
+        stream=False,
+    )
+
+    # Verify we got a function call
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    # Now send the function call output as a follow-up
+    response2 = client.responses.create(
+        model=text_model_id,
+        input=[{"type": "function_call_output", "call_id": call_id, "output": "sunny and warm"}],
+        previous_response_id=response.id,
+        stream=False,
+    )
+
+    # Verify the second response processed successfully
+    assert response2.id is not None
+    assert response2.output[0].type == "message"
+    assert (
+        "sunny" in response2.output[0].content[0].text.lower() or "warm" in response2.output[0].content[0].text.lower()
+    )

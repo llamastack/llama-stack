@@ -47,7 +47,7 @@ async function proxyRequest(request: NextRequest, method: string) {
     const responseText = await response.text();
 
     console.log(
-      `Response from FastAPI: ${response.status} ${response.statusText}`,
+      `Response from FastAPI: ${response.status} ${response.statusText}`
     );
 
     // Create response with same status and headers
@@ -74,7 +74,7 @@ async function proxyRequest(request: NextRequest, method: string) {
         backend_url: BACKEND_URL,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

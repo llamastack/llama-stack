@@ -14,6 +14,15 @@ from llama_stack.schema_utils import json_schema_type, webmethod
 
 @json_schema_type
 class ProviderInfo(BaseModel):
+    """Information about a registered provider including its configuration and health status.
+
+    :param api: The API name this provider implements
+    :param provider_id: Unique identifier for the provider
+    :param provider_type: The type of provider implementation
+    :param config: Configuration parameters for the provider
+    :param health: Current health status of the provider
+    """
+
     api: str
     provider_id: str
     provider_type: str
@@ -22,6 +31,11 @@ class ProviderInfo(BaseModel):
 
 
 class ListProvidersResponse(BaseModel):
+    """Response containing a list of all available providers.
+
+    :param data: List of provider information objects
+    """
+
     data: list[ProviderInfo]
 
 

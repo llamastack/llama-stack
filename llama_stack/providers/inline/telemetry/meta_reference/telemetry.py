@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import datetime
 import threading
 from typing import Any
 
@@ -36,7 +37,8 @@ from llama_stack.apis.telemetry import (
     Trace,
     UnstructuredLogEvent,
 )
-from llama_stack.distribution.datatypes import Api
+from llama_stack.core.datatypes import Api
+from llama_stack.log import get_logger
 from llama_stack.providers.inline.telemetry.meta_reference.console_span_processor import (
     ConsoleSpanProcessor,
 )
@@ -57,6 +59,8 @@ _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
 }
 _global_lock = threading.Lock()
 _TRACER_PROVIDER = None
+
+logger = get_logger(name=__name__, category="telemetry")
 
 
 def is_tracing_enabled(tracer):
@@ -86,24 +90,31 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
             provider = TracerProvider(resource=resource)
             trace.set_tracer_provider(provider)
             _TRACER_PROVIDER = provider
-            if TelemetrySink.OTEL_TRACE in self.config.sinks:
-                span_exporter = OTLPSpanExporter(
-                    endpoint=self.config.otel_trace_endpoint,
-                )
-                span_processor = BatchSpanProcessor(span_exporter)
-                trace.get_tracer_provider().add_span_processor(span_processor)
-            if TelemetrySink.OTEL_METRIC in self.config.sinks:
-                metric_reader = PeriodicExportingMetricReader(
-                    OTLPMetricExporter(
-                        endpoint=self.config.otel_metric_endpoint,
+
+            # Use single OTLP endpoint for all telemetry signals
+            if TelemetrySink.OTEL_TRACE in self.config.sinks or TelemetrySink.OTEL_METRIC in self.config.sinks:
+                if self.config.otel_exporter_otlp_endpoint is None:
+                    raise ValueError(
+                        "otel_exporter_otlp_endpoint is required when OTEL_TRACE or OTEL_METRIC is enabled"
                     )
-                )
-                metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
-                metrics.set_meter_provider(metric_provider)
+
+                # Let OpenTelemetry SDK handle endpoint construction automatically
+                # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
+                # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
+                if TelemetrySink.OTEL_TRACE in self.config.sinks:
+                    span_exporter = OTLPSpanExporter()
+                    span_processor = BatchSpanProcessor(span_exporter)
+                    trace.get_tracer_provider().add_span_processor(span_processor)
+
+                if TelemetrySink.OTEL_METRIC in self.config.sinks:
+                    metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+                    metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+                    metrics.set_meter_provider(metric_provider)
+
             if TelemetrySink.SQLITE in self.config.sinks:
                 trace.get_tracer_provider().add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
             if TelemetrySink.CONSOLE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(ConsoleSpanProcessor())
+                trace.get_tracer_provider().add_span_processor(ConsoleSpanProcessor(print_attributes=True))
 
         if TelemetrySink.OTEL_METRIC in self.config.sinks:
             self.meter = metrics.get_meter(__name__)
@@ -119,9 +130,11 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         trace.get_tracer_provider().force_flush()
 
     async def log_event(self, event: Event, ttl_seconds: int = 604800) -> None:
+        logger.debug(f"DEBUG: log_event called with event type: {type(event).__name__}")
         if isinstance(event, UnstructuredLogEvent):
             self._log_unstructured(event, ttl_seconds)
         elif isinstance(event, MetricEvent):
+            logger.debug("DEBUG: Routing MetricEvent to _log_metric")
             self._log_metric(event)
         elif isinstance(event, StructuredLogEvent):
             self._log_structured(event, ttl_seconds)
@@ -133,11 +146,41 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         metric_name: str,
         start_time: int,
         end_time: int | None = None,
-        granularity: str | None = "1d",
+        granularity: str | None = None,
         query_type: MetricQueryType = MetricQueryType.RANGE,
         label_matchers: list[MetricLabelMatcher] | None = None,
     ) -> QueryMetricsResponse:
-        raise NotImplementedError("Querying metrics is not implemented")
+        """Query metrics from the telemetry store.
+
+        Args:
+            metric_name: The name of the metric to query (e.g., "prompt_tokens")
+            start_time: Start time as Unix timestamp
+            end_time: End time as Unix timestamp (defaults to now if None)
+            granularity: Time granularity for aggregation
+            query_type: Type of query (RANGE or INSTANT)
+            label_matchers: Label filters to apply
+
+        Returns:
+            QueryMetricsResponse with metric time series data
+        """
+        # Convert timestamps to datetime objects
+        start_dt = datetime.datetime.fromtimestamp(start_time, datetime.UTC)
+        end_dt = datetime.datetime.fromtimestamp(end_time, datetime.UTC) if end_time else None
+
+        # Use SQLite trace store if available
+        if hasattr(self, "trace_store") and self.trace_store:
+            return await self.trace_store.query_metrics(
+                metric_name=metric_name,
+                start_time=start_dt,
+                end_time=end_dt,
+                granularity=granularity,
+                query_type=query_type,
+                label_matchers=label_matchers,
+            )
+        else:
+            raise ValueError(
+                f"In order to query_metrics, you must have {TelemetrySink.SQLITE} set in your telemetry sinks"
+            )
 
     def _log_unstructured(self, event: UnstructuredLogEvent, ttl_seconds: int) -> None:
         with self._lock:
@@ -181,6 +224,38 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         return _GLOBAL_STORAGE["gauges"][name]
 
     def _log_metric(self, event: MetricEvent) -> None:
+        # Always log to console if console sink is enabled (debug)
+        if TelemetrySink.CONSOLE in self.config.sinks:
+            logger.debug(f"METRIC: {event.metric}={event.value} {event.unit} {event.attributes}")
+
+        # Add metric as an event to the current span
+        try:
+            with self._lock:
+                # Only try to add to span if we have a valid span_id
+                if event.span_id:
+                    try:
+                        span_id = int(event.span_id, 16)
+                        span = _GLOBAL_STORAGE["active_spans"].get(span_id)
+
+                        if span:
+                            timestamp_ns = int(event.timestamp.timestamp() * 1e9)
+                            span.add_event(
+                                name=f"metric.{event.metric}",
+                                attributes={
+                                    "value": event.value,
+                                    "unit": event.unit,
+                                    **(event.attributes or {}),
+                                },
+                                timestamp=timestamp_ns,
+                            )
+                    except (ValueError, KeyError):
+                        # Invalid span_id or span not found, but we already logged to console above
+                        pass
+        except Exception:
+            # Lock acquisition failed
+            logger.debug("Failed to acquire lock to add metric to span")
+
+        # Log to OpenTelemetry meter if available
         if self.meter is None:
             return
         if isinstance(event.value, int):

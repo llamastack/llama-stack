@@ -5,13 +5,12 @@
 # the root directory of this source tree.
 
 import asyncio
+from unittest.mock import AsyncMock, MagicMock
 
-import pytest
+from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack.core.server.server import create_dynamic_typed_route, create_sse_event, sse_generator
 
-from llama_stack.distribution.server.server import create_sse_event, sse_generator
 
-
-@pytest.mark.asyncio
 async def test_sse_generator_basic():
     # An AsyncIterator wrapped in an Awaitable, just like our web methods
     async def async_event_gen():
@@ -33,7 +32,6 @@ async def test_sse_generator_basic():
     assert seen_events[1] == create_sse_event("Test event 2")
 
 
-@pytest.mark.asyncio
 async def test_sse_generator_client_disconnected():
     # An AsyncIterator wrapped in an Awaitable, just like our web methods
     async def async_event_gen():
@@ -56,7 +54,6 @@ async def test_sse_generator_client_disconnected():
     assert seen_events[0] == create_sse_event("Test event 1")
 
 
-@pytest.mark.asyncio
 async def test_sse_generator_client_disconnected_before_response_starts():
     # Disconnect before the response starts
     async def async_event_gen():
@@ -73,7 +70,6 @@ async def test_sse_generator_client_disconnected_before_response_starts():
     assert len(seen_events) == 0
 
 
-@pytest.mark.asyncio
 async def test_sse_generator_error_before_response_starts():
     # Raise an error before the response starts
     async def async_event_gen():
@@ -89,3 +85,23 @@ async def test_sse_generator_error_before_response_starts():
     # We should have 1 error event
     assert len(seen_events) == 1
     assert 'data: {"error":' in seen_events[0]
+
+
+async def test_paginated_response_url_setting():
+    """Test that PaginatedResponse gets url set to route path."""
+
+    async def mock_api_method():
+        return PaginatedResponse(data=[], has_more=False, url=None)
+
+    route_handler = create_dynamic_typed_route(mock_api_method, "get", "/test/route")
+
+    # Mock minimal request
+    request = MagicMock()
+    request.scope = {"user_attributes": {}, "principal": ""}
+    request.headers = {}
+    request.body = AsyncMock(return_value=b"")
+
+    result = await route_handler(request)
+
+    assert isinstance(result, PaginatedResponse)
+    assert result.url == "/test/route"

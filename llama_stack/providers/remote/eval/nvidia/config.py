@@ -25,5 +25,5 @@ class NVIDIAEvalConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, **kwargs) -> dict[str, Any]:
         return {
-            "evaluator_url": "${env.NVIDIA_EVALUATOR_URL:http://localhost:7331}",
+            "evaluator_url": "${env.NVIDIA_EVALUATOR_URL:=http://localhost:7331}",
         }

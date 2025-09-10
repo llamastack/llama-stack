@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 from typing import Any
 
 import torch
@@ -15,10 +14,13 @@ from llama_stack.apis.safety import (
     RunShieldResponse,
     Safety,
     SafetyViolation,
+    ShieldStore,
     ViolationLevel,
 )
+from llama_stack.apis.safety.safety import ModerationObject
 from llama_stack.apis.shields import Shield
-from llama_stack.distribution.utils.model_utils import model_local_dir
+from llama_stack.core.utils.model_utils import model_local_dir
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
@@ -26,12 +28,14 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 
 from .config import PromptGuardConfig, PromptGuardType
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="safety")
 
 PROMPT_GUARD_MODEL = "Prompt-Guard-86M"
 
 
 class PromptGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
+    shield_store: ShieldStore
+
     def __init__(self, config: PromptGuardConfig, _deps) -> None:
         self.config = config
 
@@ -46,17 +50,23 @@ class PromptGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         if shield.provider_resource_id != PROMPT_GUARD_MODEL:
             raise ValueError(f"Only {PROMPT_GUARD_MODEL} is supported for Prompt Guard. ")
 
+    async def unregister_shield(self, identifier: str) -> None:
+        pass
+
     async def run_shield(
         self,
         shield_id: str,
         messages: list[Message],
-        params: dict[str, Any] = None,
+        params: dict[str, Any],
     ) -> RunShieldResponse:
         shield = await self.shield_store.get_shield(shield_id)
         if not shield:
             raise ValueError(f"Unknown shield {shield_id}")
 
         return await self.shield.run(messages)
+
+    async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
+        raise NotImplementedError("run_moderation is not implemented for Prompt Guard")
 
 
 class PromptGuardShield:
@@ -114,8 +124,10 @@ class PromptGuardShield:
         elif self.config.guard_type == PromptGuardType.jailbreak.value and score_malicious > self.threshold:
             violation = SafetyViolation(
                 violation_level=ViolationLevel.ERROR,
-                violation_type=f"prompt_injection:malicious={score_malicious}",
-                violation_return_message="Sorry, I cannot do this.",
+                user_message="Sorry, I cannot do this.",
+                metadata={
+                    "violation_type": f"prompt_injection:malicious={score_malicious}",
+                },
             )
 
         return RunShieldResponse(violation=violation)

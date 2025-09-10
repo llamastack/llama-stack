@@ -10,9 +10,9 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import pytest_asyncio
 
-from llama_stack.apis.inference import EmbeddingsResponse, Inference
+from llama_stack.apis.inference import Inference
+from llama_stack.apis.inference.inference import OpenAIEmbeddingData, OpenAIEmbeddingsResponse, OpenAIEmbeddingUsage
 from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     VectorDB,
@@ -24,6 +24,7 @@ from llama_stack.providers.inline.vector_io.qdrant.config import (
 from llama_stack.providers.remote.vector_io.qdrant.qdrant import (
     QdrantVectorIOAdapter,
 )
+from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 # This test is a unit test for the QdrantVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -37,7 +38,8 @@ from llama_stack.providers.remote.vector_io.qdrant.qdrant import (
 
 @pytest.fixture
 def qdrant_config(tmp_path) -> InlineQdrantVectorIOConfig:
-    return InlineQdrantVectorIOConfig(path=os.path.join(tmp_path, "qdrant.db"))
+    kvstore_config = SqliteKVStoreConfig(db_name=os.path.join(tmp_path, "test_kvstore.db"))
+    return InlineQdrantVectorIOConfig(path=os.path.join(tmp_path, "qdrant.db"), kvstore=kvstore_config)
 
 
 @pytest.fixture(scope="session")
@@ -51,6 +53,11 @@ def mock_vector_db(vector_db_id) -> MagicMock:
     mock_vector_db.embedding_model = "embedding_model"
     mock_vector_db.identifier = vector_db_id
     mock_vector_db.embedding_dimension = 384
+    mock_vector_db.model_dump_json.return_value = (
+        '{"identifier": "'
+        + vector_db_id
+        + '", "provider_id": "qdrant", "embedding_model": "embedding_model", "embedding_dimension": 384}'
+    )
     return mock_vector_db
 
 
@@ -64,13 +71,19 @@ def mock_vector_db_store(mock_vector_db) -> MagicMock:
 @pytest.fixture
 def mock_api_service(sample_embeddings):
     mock_api_service = MagicMock(spec=Inference)
-    mock_api_service.embeddings = AsyncMock(return_value=EmbeddingsResponse(embeddings=sample_embeddings))
+    mock_api_service.openai_embeddings = AsyncMock(
+        return_value=OpenAIEmbeddingsResponse(
+            model="mock-embedding-model",
+            data=[OpenAIEmbeddingData(embedding=sample, index=i) for i, sample in enumerate(sample_embeddings)],
+            usage=OpenAIEmbeddingUsage(prompt_tokens=10, total_tokens=10),
+        )
+    )
     return mock_api_service
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def qdrant_adapter(qdrant_config, mock_vector_db_store, mock_api_service, loop) -> QdrantVectorIOAdapter:
-    adapter = QdrantVectorIOAdapter(config=qdrant_config, inference_api=mock_api_service)
+    adapter = QdrantVectorIOAdapter(config=qdrant_config, inference_api=mock_api_service, files_api=None)
     adapter.vector_db_store = mock_vector_db_store
     await adapter.initialize()
     yield adapter
@@ -80,8 +93,7 @@ async def qdrant_adapter(qdrant_config, mock_vector_db_store, mock_api_service, 
 __QUERY = "Sample query"
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("max_query_chunks, expected_chunks", [(2, 2), (100, 30)])
+@pytest.mark.parametrize("max_query_chunks, expected_chunks", [(2, 2), (100, 60)])
 async def test_qdrant_adapter_returns_expected_chunks(
     qdrant_adapter: QdrantVectorIOAdapter,
     vector_db_id,
@@ -111,7 +123,6 @@ def _prepare_for_json(value: Any) -> str:
 
 
 @patch("llama_stack.providers.utils.telemetry.trace_protocol._prepare_for_json", new=_prepare_for_json)
-@pytest.mark.asyncio
 async def test_qdrant_register_and_unregister_vector_db(
     qdrant_adapter: QdrantVectorIOAdapter,
     mock_vector_db,

@@ -3,8 +3,9 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+import base64
 import json
-import logging
+import struct
 import time
 import uuid
 import warnings
@@ -29,14 +30,20 @@ from openai.types.chat import (
 from openai.types.chat import (
     ChatCompletionContentPartTextParam as OpenAIChatCompletionContentPartTextParam,
 )
+
+try:
+    from openai.types.chat import (
+        ChatCompletionMessageFunctionToolCall as OpenAIChatCompletionMessageFunctionToolCall,
+    )
+except ImportError:
+    from openai.types.chat.chat_completion_message_tool_call import (
+        ChatCompletionMessageToolCall as OpenAIChatCompletionMessageFunctionToolCall,
+    )
 from openai.types.chat import (
     ChatCompletionMessageParam as OpenAIChatCompletionMessage,
 )
 from openai.types.chat import (
     ChatCompletionMessageToolCall,
-)
-from openai.types.chat import (
-    ChatCompletionMessageToolCallParam as OpenAIChatCompletionMessageToolCall,
 )
 from openai.types.chat import (
     ChatCompletionSystemMessageParam as OpenAIChatCompletionSystemMessage,
@@ -68,7 +75,7 @@ from openai.types.chat.chat_completion_chunk import (
 from openai.types.chat.chat_completion_content_part_image_param import (
     ImageURL as OpenAIImageURL,
 )
-from openai.types.chat.chat_completion_message_tool_call_param import (
+from openai.types.chat.chat_completion_message_tool_call import (
     Function as OpenAIFunction,
 )
 from pydantic import BaseModel
@@ -93,28 +100,28 @@ from llama_stack.apis.inference import (
     CompletionResponse,
     CompletionResponseStreamChunk,
     GreedySamplingStrategy,
+    JsonSchemaResponseFormat,
     Message,
+    OpenAIChatCompletion,
+    OpenAICompletion,
+    OpenAICompletionChoice,
+    OpenAIEmbeddingData,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     SamplingParams,
     SystemMessage,
     TokenLogProbs,
     ToolChoice,
+    ToolConfig,
     ToolResponseMessage,
     TopKSamplingStrategy,
     TopPSamplingStrategy,
     UserMessage,
 )
-from llama_stack.apis.inference.inference import (
-    JsonSchemaResponseFormat,
-    OpenAIChatCompletion,
-    OpenAICompletion,
-    OpenAICompletionChoice,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
-    ToolConfig,
-)
-from llama_stack.apis.inference.inference import (
+from llama_stack.apis.inference import (
     OpenAIChoice as OpenAIChatCompletionChoice,
 )
+from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     StopReason,
@@ -127,7 +134,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
     decode_assistant_message,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="providers::utils")
 
 
 class OpenAICompatCompletionChoiceDelta(BaseModel):
@@ -563,6 +570,7 @@ class UnparseableToolCall(BaseModel):
 
 async def convert_message_to_openai_dict_new(
     message: Message | dict,
+    download_images: bool = False,
 ) -> OpenAIChatCompletionMessage:
     """
     Convert a Message to an OpenAI API-compatible dictionary.
@@ -606,7 +614,9 @@ async def convert_message_to_openai_dict_new(
             elif isinstance(content_, ImageContentItem):
                 return OpenAIChatCompletionContentPartImageParam(
                     type="image_url",
-                    image_url=OpenAIImageURL(url=await convert_image_content_to_url(content_)),
+                    image_url=OpenAIImageURL(
+                        url=await convert_image_content_to_url(content_, download=download_images)
+                    ),
                 )
             elif isinstance(content_, list):
                 return [await impl(item) for item in content_]
@@ -629,7 +639,7 @@ async def convert_message_to_openai_dict_new(
         )
     elif isinstance(message, CompletionMessage):
         tool_calls = [
-            OpenAIChatCompletionMessageToolCall(
+            OpenAIChatCompletionMessageFunctionToolCall(
                 id=tool.call_id,
                 function=OpenAIFunction(
                     name=(tool.tool_name if not isinstance(tool.tool_name, BuiltinTool) else tool.tool_name.value),
@@ -899,7 +909,7 @@ def _convert_openai_request_response_format(
 
 
 def _convert_openai_tool_calls(
-    tool_calls: list[OpenAIChatCompletionMessageToolCall],
+    tool_calls: list[OpenAIChatCompletionMessageFunctionToolCall],
 ) -> list[ToolCall]:
     """
     Convert an OpenAI ChatCompletionMessageToolCall list into a list of ToolCall.
@@ -1023,7 +1033,9 @@ def openai_messages_to_messages(
     return converted_messages
 
 
-def openai_content_to_content(content: str | Iterable[OpenAIChatCompletionContentPartParam]):
+def openai_content_to_content(content: str | Iterable[OpenAIChatCompletionContentPartParam] | None):
+    if content is None:
+        return ""
     if isinstance(content, str):
         return content
     elif isinstance(content, list):
@@ -1287,6 +1299,7 @@ class OpenAICompletionToLlamaStackMixin:
         user: str | None = None,
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
+        suffix: str | None = None,
     ) -> OpenAICompletion:
         if stream:
             raise ValueError(f"{self.__class__.__name__} doesn't support streaming openai completions")
@@ -1483,3 +1496,55 @@ class OpenAIChatCompletionToLlamaStackMixin:
             model=model,
             object="chat.completion",
         )
+
+
+def prepare_openai_embeddings_params(
+    model: str,
+    input: str | list[str],
+    encoding_format: str | None = "float",
+    dimensions: int | None = None,
+    user: str | None = None,
+):
+    if model is None:
+        raise ValueError("Model must be provided for embeddings")
+
+    input_list = [input] if isinstance(input, str) else input
+
+    params: dict[str, Any] = {
+        "model": model,
+        "input": input_list,
+    }
+
+    if encoding_format is not None:
+        params["encoding_format"] = encoding_format
+    if dimensions is not None:
+        params["dimensions"] = dimensions
+    if user is not None:
+        params["user"] = user
+
+    return params
+
+
+def b64_encode_openai_embeddings_response(
+    response_data: dict, encoding_format: str | None = "float"
+) -> list[OpenAIEmbeddingData]:
+    """
+    Process the OpenAI embeddings response to encode the embeddings in base64 format if specified.
+    """
+    data = []
+    for i, embedding_data in enumerate(response_data):
+        if encoding_format == "base64":
+            byte_array = bytearray()
+            for embedding_value in embedding_data.embedding:
+                byte_array.extend(struct.pack("f", float(embedding_value)))
+
+            response_embedding = base64.b64encode(byte_array).decode("utf-8")
+        else:
+            response_embedding = embedding_data.embedding
+        data.append(
+            OpenAIEmbeddingData(
+                embedding=response_embedding,
+                index=i,
+            )
+        )
+    return data

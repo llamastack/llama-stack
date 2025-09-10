@@ -4,9 +4,12 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import re
+
 import pytest
 
 from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.apis.common.errors import ToolGroupNotFoundError
 from tests.common.mcp import MCP_TOOLGROUP_ID, make_mcp_server
 
 
@@ -48,8 +51,18 @@ def test_register_and_unregister_toolgroup(llama_stack_client):
         llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
 
         # Verify it is unregistered
-        with pytest.raises(Exception, match=f"Tool group '{test_toolgroup_id}' not found"):
+        with pytest.raises(
+            ToolGroupNotFoundError,
+            match=re.escape(
+                f"Tool Group '{test_toolgroup_id}' not found. Use 'client.toolgroups.list()' to list available Tool Groups."
+            ),
+        ):
             llama_stack_client.toolgroups.get(toolgroup_id=test_toolgroup_id)
 
-        with pytest.raises(Exception, match=f"Tool group '{test_toolgroup_id}' not found"):
+        with pytest.raises(
+            ToolGroupNotFoundError,
+            match=re.escape(
+                f"Tool Group '{test_toolgroup_id}' not found. Use 'client.toolgroups.list()' to list available Tool Groups."
+            ),
+        ):
             llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)

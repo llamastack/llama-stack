@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack.distribution.utils.model_utils import model_local_dir
+from llama_stack.core.utils.model_utils import model_local_dir
 
 
 def model_checkpoint_dir(model_id) -> str:

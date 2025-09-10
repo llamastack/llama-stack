@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 2"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-273",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I'd be happy to help you test the OpenAI 2 model, also known as GPT-2. Keep in mind that I'll be providing information and guidance based on publicly available resources, and not directly testing the model myself.\n\nOpenAI 2 is a large language model developed by OpenAI Research, which was released in 2019. It's a transformer-based model with 1.5 billion parameters, making it one of the largest language models at that time.\n\nTo test the OpenAI 2 model, you can try the following:\n\n1. **Read the paper**: Start by reading the original paper published in the ArXiv preprint repository [1]. This will give you a deeper understanding of the model's architecture and capabilities.\n2. **Use online generators**: Websites like [2] and [3] provide interactive interfaces to test and generate text using the OpenAI 2 model.\n3. **Try code examples**: You can find code examples in various programming languages, such as Python, that demonstrate how to use the OpenAI 2 model for tasks like text processing and generation.\n\nSome specific things you might want to try when testing OpenAI 2 include:\n\n* Generating coherent paragraphs on a given topic\n* Answering questions based on context\n* Completing sentences or stories with missing information\n* Translating short texts from one language to another\n\nKeep in mind that the OpenAI 2 model is quite large and computationally intensive, so it might not be suitable for use on all devices or platforms.\n\nReferences:\n\n[1] Radford, A., Narasimhan, K., Salimans, T., & Sutskever, I. (2019). Improving Language Understanding by Generative Pre-Training. Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics (ACL).\n\n[2] https://beta.openai.com/ (use the \"chat\" interface to interact with the OpenAI 2 model)\n\n[3] https://gpt2-test.openai.co/ (test a demo version of the OpenAI 2 model)\n\nI hope this helps! If you have any specific questions or need further guidance, feel free to ask.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1754051834,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 450,
+          "prompt_tokens": 31,
+          "total_tokens": 481,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

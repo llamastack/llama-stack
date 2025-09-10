@@ -23,7 +23,7 @@ class StackListProviders(Subcommand):
 
     @property
     def providable_apis(self):
-        from llama_stack.distribution.distribution import providable_apis
+        from llama_stack.core.distribution import providable_apis
 
         return [api.value for api in providable_apis()]
 
@@ -38,7 +38,7 @@ class StackListProviders(Subcommand):
 
     def _run_providers_list_cmd(self, args: argparse.Namespace) -> None:
         from llama_stack.cli.table import print_table
-        from llama_stack.distribution.distribution import Api, get_provider_registry
+        from llama_stack.core.distribution import Api, get_provider_registry
 
         all_providers = get_provider_registry()
         if args.api:

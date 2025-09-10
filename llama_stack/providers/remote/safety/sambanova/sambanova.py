@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import json
-import logging
 from typing import Any
 
 import litellm
@@ -19,13 +18,14 @@ from llama_stack.apis.safety import (
     ViolationLevel,
 )
 from llama_stack.apis.shields import Shield
-from llama_stack.distribution.request_headers import NeedsRequestProviderData
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
 from llama_stack.providers.utils.inference.openai_compat import convert_message_to_openai_dict_new
 
 from .config import SambaNovaSafetyConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="safety::sambanova")
 
 CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 
@@ -33,6 +33,7 @@ CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
     def __init__(self, config: SambaNovaSafetyConfig) -> None:
         self.config = config
+        self.environment_available_models = []
 
     async def initialize(self) -> None:
         pass
@@ -54,18 +55,21 @@ class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProvide
 
     async def register_shield(self, shield: Shield) -> None:
         list_models_url = self.config.url + "/models"
-        try:
-            response = requests.get(list_models_url)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Request to {list_models_url} failed") from e
-        available_models = [model.get("id") for model in response.json().get("data", {})]
+        if len(self.environment_available_models) == 0:
+            try:
+                response = requests.get(list_models_url)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                raise RuntimeError(f"Request to {list_models_url} failed") from e
+            self.environment_available_models = [model.get("id") for model in response.json().get("data", {})]
         if (
-            len(available_models) == 0
-            or "guard" not in shield.provider_resource_id.lower()
-            or shield.provider_resource_id.split("sambanova/")[-1] not in available_models
+            "guard" not in shield.provider_resource_id.lower()
+            or shield.provider_resource_id.split("sambanova/")[-1] not in self.environment_available_models
         ):
-            raise ValueError(f"Shield {shield.provider_resource_id} not found in SambaNova")
+            logger.warning(f"Shield {shield.provider_resource_id} not available in {list_models_url}")
+
+    async def unregister_shield(self, identifier: str) -> None:
+        pass
 
     async def run_shield(
         self, shield_id: str, messages: list[Message], params: dict[str, Any] | None = None

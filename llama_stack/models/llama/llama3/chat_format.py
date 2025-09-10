@@ -8,6 +8,7 @@ import io
 import json
 import uuid
 from dataclasses import dataclass
+from typing import Any
 
 from PIL import Image as PIL_Image
 
@@ -184,16 +185,26 @@ class ChatFormat:
             content = content[: -len("<|eom_id|>")]
             stop_reason = StopReason.end_of_message
 
-        tool_name = None
-        tool_arguments = {}
+        tool_name: str | BuiltinTool | None = None
+        tool_arguments: dict[str, Any] = {}
 
         custom_tool_info = ToolUtils.maybe_extract_custom_tool_call(content)
         if custom_tool_info is not None:
-            tool_name, tool_arguments = custom_tool_info
+            # Type guard: ensure custom_tool_info is a tuple of correct types
+            if isinstance(custom_tool_info, tuple) and len(custom_tool_info) == 2:
+                extracted_tool_name, extracted_tool_arguments = custom_tool_info
+                # Handle both dict and str return types from the function
+                if isinstance(extracted_tool_arguments, dict):
+                    tool_name, tool_arguments = extracted_tool_name, extracted_tool_arguments
+                else:
+                    # If it's a string, treat it as a query parameter
+                    tool_name, tool_arguments = extracted_tool_name, {"query": extracted_tool_arguments}
+            else:
+                tool_name, tool_arguments = None, {}
             # Sometimes when agent has custom tools alongside builin tools
             # Agent responds for builtin tool calls in the format of the custom tools
             # This code tries to handle that case
-            if tool_name in BuiltinTool.__members__:
+            if tool_name is not None and tool_name in BuiltinTool.__members__:
                 tool_name = BuiltinTool[tool_name]
                 if isinstance(tool_arguments, dict):
                     tool_arguments = {
@@ -225,6 +236,7 @@ class ChatFormat:
                     arguments_json=json.dumps(tool_arguments),
                 )
             )
+            content = ""
 
         return RawMessage(
             role="assistant",

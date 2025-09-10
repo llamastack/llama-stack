@@ -1,0 +1,27 @@
+name: Setup VLLM
+description: Start VLLM
+runs:
+  using: "composite"
+  steps:
+    - name: Start VLLM
+      shell: bash
+      run: |
+        # Start vllm container
+        docker run -d \
+          --name vllm \
+          -p 8000:8000 \
+          --privileged=true \
+          quay.io/higginsd/vllm-cpu:65393ee064 \
+          --host 0.0.0.0 \
+          --port 8000 \
+          --enable-auto-tool-choice \
+          --tool-call-parser llama3_json \
+          --model /root/.cache/Llama-3.2-1B-Instruct \
+          --served-model-name meta-llama/Llama-3.2-1B-Instruct
+
+          # Wait for vllm to be ready
+          echo "Waiting for vllm to be ready..."
+          timeout 900 bash -c 'until curl -f http://localhost:8000/health; do
+            echo "Waiting for vllm..."
+            sleep 5
+          done'

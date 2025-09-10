@@ -29,7 +29,7 @@ export type AnyResponseItem =
   | FunctionCallOutputItem;
 
 export function isMessageInput(
-  item: ResponseInput,
+  item: ResponseInput
 ): item is ResponseInput & { type: "message" } {
   return item.type === "message";
 }
@@ -39,23 +39,23 @@ export function isMessageItem(item: AnyResponseItem): item is MessageItem {
 }
 
 export function isFunctionCallItem(
-  item: AnyResponseItem,
+  item: AnyResponseItem
 ): item is FunctionCallItem {
   return item.type === "function_call" && "name" in item;
 }
 
 export function isWebSearchCallItem(
-  item: AnyResponseItem,
+  item: AnyResponseItem
 ): item is WebSearchCallItem {
   return item.type === "web_search_call";
 }
 
 export function isFunctionCallOutputItem(
-  item: AnyResponseItem,
+  item: AnyResponseItem
 ): item is FunctionCallOutputItem {
   return (
     item.type === "function_call_output" &&
     "call_id" in item &&
-    typeof (item as any).call_id === "string"
+    typeof (item as Record<string, unknown>).call_id === "string"
   );
 }

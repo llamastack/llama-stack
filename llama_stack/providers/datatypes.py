@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
@@ -43,13 +43,29 @@ class ModelsProtocolPrivate(Protocol):
        -> Provider uses provider-model-id for inference
     """
 
+    # this should be called `on_model_register` or something like that.
+    # the provider should _not_ be able to change the object in this
+    # callback
     async def register_model(self, model: Model) -> Model: ...
 
     async def unregister_model(self, model_id: str) -> None: ...
 
+    # the Stack router will query each provider for their list of models
+    # if a `refresh_interval_seconds` is provided, this method will be called
+    # periodically to refresh the list of models
+    #
+    # NOTE: each model returned will be registered with the model registry. this means
+    # a callback to the `register_model()` method will be made. this is duplicative and
+    # may be removed in the future.
+    async def list_models(self) -> list[Model] | None: ...
+
+    async def should_refresh_models(self) -> bool: ...
+
 
 class ShieldsProtocolPrivate(Protocol):
     async def register_shield(self, shield: Shield) -> None: ...
+
+    async def unregister_shield(self, identifier: str) -> None: ...
 
 
 class VectorDBsProtocolPrivate(Protocol):
@@ -104,6 +120,19 @@ class ProviderSpec(BaseModel):
         description="If this provider is deprecated and does NOT work, specify the error message here",
     )
 
+    module: str | None = Field(
+        default=None,
+        description="""
+ Fully-qualified name of the module to import. The module is expected to have:
+
+  - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+  Example: `module: ramalama_stack`
+ """,
+    )
+
+    is_external: bool = Field(default=False, description="Notes whether this provider is an external provider.")
+
     # used internally by the resolver; this is a hack for now
     deps__: list[str] = Field(default_factory=list)
 
@@ -113,7 +142,7 @@ class ProviderSpec(BaseModel):
 
 
 class RoutingTable(Protocol):
-    def get_provider_impl(self, routing_key: str) -> Any: ...
+    async def get_provider_impl(self, routing_key: str) -> Any: ...
 
 
 # TODO: this can now be inlined into RemoteProviderSpec
@@ -124,7 +153,7 @@ class AdapterSpec(BaseModel):
         description="Unique identifier for this adapter",
     )
     module: str = Field(
-        ...,
+        default_factory=str,
         description="""
 Fully-qualified name of the module to import. The module is expected to have:
 
@@ -141,6 +170,12 @@ Fully-qualified name of the module to import. The module is expected to have:
     provider_data_validator: str | None = Field(
         default=None,
     )
+    description: str | None = Field(
+        default=None,
+        description="""
+A description of the provider. This is used to display in the documentation.
+""",
+    )
 
 
 @json_schema_type
@@ -156,16 +191,15 @@ The container image to use for this implementation. If one is provided, pip_pack
 If a provider depends on other providers, the dependencies MUST NOT specify a container image.
 """,
     )
-    module: str = Field(
-        ...,
-        description="""
-Fully-qualified name of the module to import. The module is expected to have:
-
- - `get_provider_impl(config, deps)`: returns the local implementation
-""",
-    )
+    # module field is inherited from ProviderSpec
     provider_data_validator: str | None = Field(
         default=None,
+    )
+    description: str | None = Field(
+        default=None,
+        description="""
+A description of the provider. This is used to display in the documentation.
+""",
     )
 
 
@@ -200,9 +234,7 @@ API responses, specify the adapter here.
     def container_image(self) -> str | None:
         return None
 
-    @property
-    def module(self) -> str:
-        return self.adapter.module
+    # module field is inherited from ProviderSpec
 
     @property
     def pip_packages(self) -> list[str]:
@@ -214,18 +246,23 @@ API responses, specify the adapter here.
 
 
 def remote_provider_spec(
-    api: Api, adapter: AdapterSpec, api_dependencies: list[Api] | None = None
+    api: Api,
+    adapter: AdapterSpec,
+    api_dependencies: list[Api] | None = None,
+    optional_api_dependencies: list[Api] | None = None,
 ) -> RemoteProviderSpec:
     return RemoteProviderSpec(
         api=api,
         provider_type=f"remote::{adapter.adapter_type}",
         config_class=adapter.config_class,
+        module=adapter.module,
         adapter=adapter,
         api_dependencies=api_dependencies or [],
+        optional_api_dependencies=optional_api_dependencies or [],
     )
 
 
-class HealthStatus(str, Enum):
+class HealthStatus(StrEnum):
     OK = "OK"
     ERROR = "Error"
     NOT_IMPLEMENTED = "Not Implemented"

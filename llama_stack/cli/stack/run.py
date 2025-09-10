@@ -15,7 +15,7 @@ from llama_stack.log import get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
-logger = get_logger(name=__name__, category="server")
+logger = get_logger(name=__name__, category="cli")
 
 
 class StackRun(Subcommand):
@@ -35,8 +35,8 @@ class StackRun(Subcommand):
             "config",
             type=str,
             nargs="?",  # Make it optional
-            metavar="config | template",
-            help="Path to config file to use for the run or name of known template (`llama stack list` for a list).",
+            metavar="config | distro",
+            help="Path to config file to use for the run or name of known distro (`llama stack list` for a list).",
         )
         self.parser.add_argument(
             "--port",
@@ -47,7 +47,7 @@ class StackRun(Subcommand):
         self.parser.add_argument(
             "--image-name",
             type=str,
-            default=os.environ.get("CONDA_DEFAULT_ENV"),
+            default=None,
             help="Name of the image to run. Defaults to the current environment",
         )
         self.parser.add_argument(
@@ -59,7 +59,7 @@ class StackRun(Subcommand):
         self.parser.add_argument(
             "--image-type",
             type=str,
-            help="Image Type used during the build. This can be either conda or container or venv.",
+            help="Image Type used during the build. This can be only venv.",
             choices=[e.value for e in ImageType if e.value != ImageType.CONTAINER.value],
         )
         self.parser.add_argument(
@@ -68,61 +68,64 @@ class StackRun(Subcommand):
             help="Start the UI server",
         )
 
-    # If neither image type nor image name is provided, but at the same time
-    # the current environment has conda breadcrumbs, then assume what the user
-    # wants to use conda mode and not the usual default mode (using
-    # pre-installed system packages).
-    #
-    # Note: yes, this is hacky. It's implemented this way to keep the existing
-    # conda users unaffected by the switch of the default behavior to using
-    # system packages.
-    def _get_image_type_and_name(self, args: argparse.Namespace) -> tuple[str, str]:
-        conda_env = os.environ.get("CONDA_DEFAULT_ENV")
-        if conda_env and args.image_name == conda_env:
-            logger.warning(f"Conda detected. Using conda environment {conda_env} for the run.")
-            return ImageType.CONDA.value, args.image_name
-        return args.image_type, args.image_name
+    def _resolve_config_and_distro(self, args: argparse.Namespace) -> tuple[Path | None, str | None]:
+        """Resolve config file path and distribution name from args.config"""
+        from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
+
+        if not args.config:
+            return None, None
+
+        config_file = Path(args.config)
+        has_yaml_suffix = args.config.endswith(".yaml")
+        distro_name = None
+
+        if not config_file.exists() and not has_yaml_suffix:
+            # check if this is a distribution
+            config_file = Path(REPO_ROOT) / "llama_stack" / "distributions" / args.config / "run.yaml"
+            if config_file.exists():
+                distro_name = args.config
+
+        if not config_file.exists() and not has_yaml_suffix:
+            # check if it's a build config saved to ~/.llama dir
+            config_file = Path(DISTRIBS_BASE_DIR / f"llamastack-{args.config}" / f"{args.config}-run.yaml")
+
+        if not config_file.exists():
+            self.parser.error(
+                f"File {str(config_file)} does not exist.\n\nPlease run `llama stack build` to generate (and optionally edit) a run.yaml file"
+            )
+
+        if not config_file.is_file():
+            self.parser.error(
+                f"Config file must be a valid file path, '{config_file}' is not a file: type={type(config_file)}"
+            )
+
+        return config_file, distro_name
 
     def _run_stack_run_cmd(self, args: argparse.Namespace) -> None:
         import yaml
 
-        from llama_stack.distribution.configure import parse_and_maybe_upgrade_config
-        from llama_stack.distribution.utils.config_dirs import DISTRIBS_BASE_DIR
-        from llama_stack.distribution.utils.exec import formulate_run_args, run_command
+        from llama_stack.core.configure import parse_and_maybe_upgrade_config
+        from llama_stack.core.utils.exec import formulate_run_args, run_command
 
         if args.enable_ui:
             self._start_ui_development_server(args.port)
-        image_type, image_name = self._get_image_type_and_name(args)
-
-        # Check if config is required based on image type
-        if (image_type in [ImageType.CONDA.value, ImageType.VENV.value]) and not args.config:
-            self.parser.error("Config file is required for venv and conda environments")
+        image_type, image_name = args.image_type, args.image_name
 
         if args.config:
-            config_file = Path(args.config)
-            has_yaml_suffix = args.config.endswith(".yaml")
-            template_name = None
+            try:
+                from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 
-            if not config_file.exists() and not has_yaml_suffix:
-                # check if this is a template
-                config_file = Path(REPO_ROOT) / "llama_stack" / "templates" / args.config / "run.yaml"
-                if config_file.exists():
-                    template_name = args.config
+                config_file = resolve_config_or_distro(args.config, Mode.RUN)
+            except ValueError as e:
+                self.parser.error(str(e))
+        else:
+            config_file = None
 
-            if not config_file.exists() and not has_yaml_suffix:
-                # check if it's a build config saved to ~/.llama dir
-                config_file = Path(DISTRIBS_BASE_DIR / f"llamastack-{args.config}" / f"{args.config}-run.yaml")
+        # Check if config is required based on image type
+        if image_type == ImageType.VENV.value and not config_file:
+            self.parser.error("Config file is required for venv environment")
 
-            if not config_file.exists():
-                self.parser.error(
-                    f"File {str(config_file)} does not exist.\n\nPlease run `llama stack build` to generate (and optionally edit) a run.yaml file"
-                )
-
-            if not config_file.is_file():
-                self.parser.error(
-                    f"Config file must be a valid file path, '{config_file}' is not a file: type={type(config_file)}"
-                )
-
+        if config_file:
             logger.info(f"Using run configuration: {config_file}")
 
             try:
@@ -138,14 +141,12 @@ class StackRun(Subcommand):
                 self.parser.error(f"failed to parse config file '{config_file}':\n {e}")
         else:
             config = None
-            config_file = None
-            template_name = None
 
         # If neither image type nor image name is provided, assume the server should be run directly
         # using the current environment packages.
         if not image_type and not image_name:
             logger.info("No image type or image name provided. Assuming environment packages.")
-            from llama_stack.distribution.server.server import main as server_main
+            from llama_stack.core.server.server import main as server_main
 
             # Build the server args from the current args passed to the CLI
             server_args = argparse.Namespace()
@@ -155,7 +156,7 @@ class StackRun(Subcommand):
                 # func=<bound method StackRun._run_stack_run_cmd of <llama_stack.cli.stack.run.StackRun object at 0x10484b010>>
                 if callable(getattr(args, arg)):
                     continue
-                if arg == "config" and template_name:
+                if arg == "config":
                     server_args.config = str(config_file)
                 else:
                     setattr(server_args, arg, getattr(args, arg))
@@ -163,7 +164,7 @@ class StackRun(Subcommand):
             # Run the server
             server_main(server_args)
         else:
-            run_args = formulate_run_args(image_type, image_name, config, template_name)
+            run_args = formulate_run_args(image_type, image_name)
 
             run_args.extend([str(args.port)])
 

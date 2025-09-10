@@ -6,17 +6,12 @@
 
 from dataclasses import dataclass
 
-from llama_stack.apis.models.models import ModelType
+from llama_stack.apis.models import ModelType
 from llama_stack.providers.utils.inference.model_registry import (
     ProviderModelEntry,
 )
 
 LLM_MODEL_IDS = [
-    # the models w/ "openai/" prefix are the litellm specific model names.
-    # they should be deprecated in favor of the canonical openai model names.
-    "openai/gpt-4o",
-    "openai/gpt-4o-mini",
-    "openai/chatgpt-4o-latest",
     "gpt-3.5-turbo-0125",
     "gpt-3.5-turbo",
     "gpt-3.5-turbo-instruct",
@@ -43,21 +38,23 @@ class EmbeddingModelInfo:
 
 
 EMBEDDING_MODEL_IDS: dict[str, EmbeddingModelInfo] = {
-    "openai/text-embedding-3-small": EmbeddingModelInfo(1536, 8192),
-    "openai/text-embedding-3-large": EmbeddingModelInfo(3072, 8192),
     "text-embedding-3-small": EmbeddingModelInfo(1536, 8192),
     "text-embedding-3-large": EmbeddingModelInfo(3072, 8192),
 }
+SAFETY_MODELS_ENTRIES = []
 
-
-MODEL_ENTRIES = [ProviderModelEntry(provider_model_id=m) for m in LLM_MODEL_IDS] + [
-    ProviderModelEntry(
-        provider_model_id=model_id,
-        model_type=ModelType.embedding,
-        metadata={
-            "embedding_dimension": model_info.embedding_dimension,
-            "context_length": model_info.context_length,
-        },
-    )
-    for model_id, model_info in EMBEDDING_MODEL_IDS.items()
-]
+MODEL_ENTRIES = (
+    [ProviderModelEntry(provider_model_id=m) for m in LLM_MODEL_IDS]
+    + [
+        ProviderModelEntry(
+            provider_model_id=model_id,
+            model_type=ModelType.embedding,
+            metadata={
+                "embedding_dimension": model_info.embedding_dimension,
+                "context_length": model_info.context_length,
+            },
+        )
+        for model_id, model_info in EMBEDDING_MODEL_IDS.items()
+    ]
+    + SAFETY_MODELS_ENTRIES
+)

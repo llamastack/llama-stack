@@ -1,5 +1,7 @@
 name: Test Llama Stack Build
 
+run-name: Test llama stack build
+
 on:
   push:
     branches:
@@ -7,63 +9,66 @@ on:
     paths:
       - 'llama_stack/cli/stack/build.py'
       - 'llama_stack/cli/stack/_build.py'
-      - 'llama_stack/distribution/build.*'
-      - 'llama_stack/distribution/*.sh'
+      - 'llama_stack/core/build.*'
+      - 'llama_stack/core/*.sh'
       - '.github/workflows/providers-build.yml'
-      - 'llama_stack/templates/**'
+      - 'llama_stack/distributions/**'
+      - 'pyproject.toml'
+
   pull_request:
     paths:
       - 'llama_stack/cli/stack/build.py'
       - 'llama_stack/cli/stack/_build.py'
-      - 'llama_stack/distribution/build.*'
-      - 'llama_stack/distribution/*.sh'
+      - 'llama_stack/core/build.*'
+      - 'llama_stack/core/*.sh'
       - '.github/workflows/providers-build.yml'
-      - 'llama_stack/templates/**'
+      - 'llama_stack/distributions/**'
+      - 'pyproject.toml'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
   generate-matrix:
     runs-on: ubuntu-latest
     outputs:
-      templates: ${{ steps.set-matrix.outputs.templates }}
+      distros: ${{ steps.set-matrix.outputs.distros }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Generate Template List
+      - name: Generate Distribution List
         id: set-matrix
         run: |
-          templates=$(ls llama_stack/templates/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
-          echo "templates=$templates" >> "$GITHUB_OUTPUT"
+          distros=$(ls llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
+          echo "distros=$distros" >> "$GITHUB_OUTPUT"
 
   build:
     needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        template: ${{ fromJson(needs.generate-matrix.outputs.templates) }}
+        distro: ${{ fromJson(needs.generate-matrix.outputs.distros) }}
         image-type: [venv, container]
       fail-fast: false # We want to run all jobs even if some fail
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
       - name: Print build dependencies
         run: |
-          uv run llama stack build --template ${{ matrix.template }} --image-type ${{ matrix.image-type }} --image-name test --print-deps-only
+          uv run llama stack build --distro ${{ matrix.distro }} --image-type ${{ matrix.image-type }} --image-name test --print-deps-only
 
       - name: Run Llama Stack Build
         run: |
           # USE_COPY_NOT_MOUNT is set to true since mounting is not supported by docker buildx, we use COPY instead
           # LLAMA_STACK_DIR is set to the current directory so we are building from the source
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run llama stack build --template ${{ matrix.template }} --image-type ${{ matrix.image-type }} --image-name test
+          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run llama stack build --distro ${{ matrix.distro }} --image-type ${{ matrix.image-type }} --image-name test
 
       - name: Print dependencies in the image
         if: matrix.image-type == 'venv'
@@ -74,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -87,23 +92,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
       - name: Build a single provider
         run: |
-          yq -i '.image_type = "container"' llama_stack/templates/starter/build.yaml
-          yq -i '.image_name = "test"' llama_stack/templates/starter/build.yaml
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run llama stack build --config llama_stack/templates/starter/build.yaml
+          yq -i '.image_type = "container"' llama_stack/distributions/ci-tests/build.yaml
+          yq -i '.image_name = "test"' llama_stack/distributions/ci-tests/build.yaml
+          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run llama stack build --config llama_stack/distributions/ci-tests/build.yaml
 
       - name: Inspect the container image entrypoint
         run: |
           IMAGE_ID=$(docker images --format "{{.Repository}}:{{.Tag}}" | head -n 1)
+          if [ -z "$IMAGE_ID" ]; then
+            echo "No image found"
+            exit 1
+          fi
           entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
           echo "Entrypoint: $entrypoint"
-          if [ "$entrypoint" != "[python -m llama_stack.distribution.server.server --config /app/run.yaml]" ]; then
+          if [ "$entrypoint" != "[python -m llama_stack.core.server.server /app/run.yaml]" ]; then
             echo "Entrypoint is not correct"
             exit 1
           fi
@@ -112,32 +121,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
-      - name: Pin template to UBI9 base
+      - name: Pin distribution to UBI9 base
         run: |
           yq -i '
             .image_type    = "container" |
             .image_name    = "ubi9-test" |
             .distribution_spec.container_image = "registry.access.redhat.com/ubi9:latest"
-          ' llama_stack/templates/starter/build.yaml
+          ' llama_stack/distributions/ci-tests/build.yaml
 
       - name: Build dev container (UBI9)
         env:
           USE_COPY_NOT_MOUNT: "true"
           LLAMA_STACK_DIR: "."
         run: |
-          uv run llama stack build --config llama_stack/templates/starter/build.yaml
+          uv run llama stack build --config llama_stack/distributions/ci-tests/build.yaml
 
       - name: Inspect UBI9 image
         run: |
           IMAGE_ID=$(docker images --format "{{.Repository}}:{{.Tag}}" | head -n 1)
+          if [ -z "$IMAGE_ID" ]; then
+            echo "No image found"
+            exit 1
+          fi
           entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
           echo "Entrypoint: $entrypoint"
-          if [ "$entrypoint" != "[python -m llama_stack.distribution.server.server --config /app/run.yaml]" ]; then
+          if [ "$entrypoint" != "[python -m llama_stack.core.server.server /app/run.yaml]" ]; then
             echo "Entrypoint is not correct"
             exit 1
           fi

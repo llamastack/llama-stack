@@ -6,13 +6,14 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import Field, SecretStr
 
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
 @json_schema_type
-class TogetherImplConfig(BaseModel):
+class TogetherImplConfig(RemoteInferenceProviderConfig):
     url: str = Field(
         default="https://api.together.xyz/v1",
         description="The URL for the Together AI server",
@@ -26,5 +27,5 @@ class TogetherImplConfig(BaseModel):
     def sample_run_config(cls, **kwargs) -> dict[str, Any]:
         return {
             "url": "https://api.together.xyz/v1",
-            "api_key": "${env.TOGETHER_API_KEY:}",
+            "api_key": "${env.TOGETHER_API_KEY:=}",
         }

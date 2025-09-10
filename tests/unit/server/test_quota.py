@@ -9,8 +9,8 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from llama_stack.distribution.datatypes import QuotaConfig, QuotaPeriod
-from llama_stack.distribution.server.quota import QuotaMiddleware
+from llama_stack.core.datatypes import QuotaConfig, QuotaPeriod
+from llama_stack.core.server.quota import QuotaMiddleware
 from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 

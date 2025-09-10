@@ -52,7 +52,7 @@ export function ItemRenderer({
   // Fallback to generic item for unknown types
   return (
     <GenericItemComponent
-      item={item as any}
+      item={item as Record<string, unknown>}
       index={index}
       keyPrefix={keyPrefix}
     />

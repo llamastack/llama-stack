@@ -22,7 +22,7 @@ export function GroupedItemsDisplay({
 
   return (
     <>
-      {groupedItems.map((groupedItem) => {
+      {groupedItems.map(groupedItem => {
         // If this is a function call with an output, render the grouped component
         if (
           groupedItem.outputItem &&

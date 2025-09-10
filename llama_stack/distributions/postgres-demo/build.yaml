@@ -1,0 +1,25 @@
+version: 2
+distribution_spec:
+  description: Quick start template for running Llama Stack with several popular providers
+  providers:
+    inference:
+    - provider_type: remote::vllm
+    - provider_type: inline::sentence-transformers
+    vector_io:
+    - provider_type: remote::chromadb
+    safety:
+    - provider_type: inline::llama-guard
+    agents:
+    - provider_type: inline::meta-reference
+    telemetry:
+    - provider_type: inline::meta-reference
+    tool_runtime:
+    - provider_type: remote::brave-search
+    - provider_type: remote::tavily-search
+    - provider_type: inline::rag-runtime
+    - provider_type: remote::model-context-protocol
+image_type: venv
+additional_pip_packages:
+- asyncpg
+- psycopg2-binary
+- sqlalchemy[asyncio]

@@ -12,6 +12,6 @@ from .config import ChromaVectorIOConfig
 async def get_adapter_impl(config: ChromaVectorIOConfig, deps: dict[Api, ProviderSpec]):
     from .chroma import ChromaVectorIOAdapter
 
-    impl = ChromaVectorIOAdapter(config, deps[Api.inference])
+    impl = ChromaVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
     await impl.initialize()
     return impl

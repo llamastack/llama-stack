@@ -12,6 +12,6 @@ from .config import WeaviateVectorIOConfig
 async def get_adapter_impl(config: WeaviateVectorIOConfig, deps: dict[Api, ProviderSpec]):
     from .weaviate import WeaviateVectorIOAdapter
 
-    impl = WeaviateVectorIOAdapter(config, deps[Api.inference])
+    impl = WeaviateVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files, None))
     await impl.initialize()
     return impl

@@ -4,11 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from enum import Enum
-from typing import Annotated, Literal, Protocol, runtime_checkable
+from enum import StrEnum
+from typing import Annotated, ClassVar, Literal, Protocol, runtime_checkable
 
 from fastapi import File, Form, Response, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.responses import Order
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
@@ -16,12 +16,13 @@ from llama_stack.schema_utils import json_schema_type, webmethod
 
 
 # OpenAI Files API Models
-class OpenAIFilePurpose(str, Enum):
+class OpenAIFilePurpose(StrEnum):
     """
     Valid purpose values for OpenAI Files API.
     """
 
     ASSISTANTS = "assistants"
+    BATCH = "batch"
     # TODO: Add other purposes as needed
 
 
@@ -49,11 +50,31 @@ class OpenAIFileObject(BaseModel):
 
 
 @json_schema_type
+class ExpiresAfter(BaseModel):
+    """
+    Control expiration of uploaded files.
+
+    Params:
+     - anchor, must be "created_at"
+     - seconds, must be int between 3600 and 2592000 (1 hour to 30 days)
+    """
+
+    MIN: ClassVar[int] = 3600  # 1 hour
+    MAX: ClassVar[int] = 2592000  # 30 days
+
+    anchor: Literal["created_at"]
+    seconds: int = Field(..., ge=3600, le=2592000)
+
+
+@json_schema_type
 class ListOpenAIFileResponse(BaseModel):
     """
     Response for listing files in OpenAI Files API.
 
     :param data: List of file objects
+    :param has_more: Whether there are more files available beyond this page
+    :param first_id: ID of the first file in the list for pagination
+    :param last_id: ID of the last file in the list for pagination
     :param object: The object type, which is always "list"
     """
 
@@ -88,6 +109,9 @@ class Files(Protocol):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
+        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
+        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
+        # TODO: expires_after is producing strange openapi spec, params are showing up as a required w/ oneOf being null
     ) -> OpenAIFileObject:
         """
         Upload a file that can be used across various endpoints.
@@ -95,6 +119,7 @@ class Files(Protocol):
         The file upload should be a multipart form request with:
         - file: The File object (not file name) to be uploaded.
         - purpose: The intended purpose of the uploaded file.
+        - expires_after: Optional form values describing expiration for the file. Expected expires_after[anchor] = "created_at", expires_after[seconds] = <int>. Seconds must be between 3600 and 2592000 (1 hour to 30 days).
 
         :param file: The uploaded file object containing content and metadata (filename, content_type, etc.).
         :param purpose: The intended purpose of the uploaded file (e.g., "assistants", "fine-tune").

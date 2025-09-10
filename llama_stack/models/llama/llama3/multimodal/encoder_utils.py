@@ -13,14 +13,15 @@
 
 # Copyright (c) Meta Platforms, Inc. and its affiliates.
 import math
-from logging import getLogger
 
 import torch
 import torch.nn.functional as F
 
+from llama_stack.log import get_logger
+
 from .utils import get_negative_inf_value, to_2tuple
 
-logger = getLogger()
+logger = get_logger(name=__name__, category="models::llama")
 
 
 def resize_local_position_embedding(orig_pos_embed, grid_size):

@@ -25,23 +25,17 @@ spec:
         app.kubernetes.io/name: vllm
         workload-type: inference
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: workload-type
-                operator: In
-                values:
-                - inference
-            topologyKey: kubernetes.io/hostname  # Ensures no two inference pods on same node
+      nodeSelector:
+        eks.amazonaws.com/nodegroup: gpu
       containers:
       - name: vllm
         image: vllm/vllm-openai:latest
         command: ["/bin/sh", "-c"]
         args:
-        - "vllm serve ${INFERENCE_MODEL} --dtype float16 --enforce-eager --max-model-len 4096 --gpu-memory-utilization 0.6"
+        - "vllm serve ${INFERENCE_MODEL} --dtype float16 --enforce-eager --max-model-len 4096 --gpu-memory-utilization 0.6 --enable-auto-tool-choice --tool-call-parser llama4_pythonic"
         env:
+        - name: INFERENCE_MODEL
+          value: "${INFERENCE_MODEL}"
         - name: HUGGING_FACE_HUB_TOKEN
           valueFrom:
             secretKeyRef:
@@ -49,6 +43,11 @@ spec:
               key: token
         ports:
           - containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
         volumeMounts:
           - name: llama-storage
             mountPath: /root/.cache/huggingface

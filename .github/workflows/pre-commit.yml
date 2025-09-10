@@ -1,41 +1,91 @@
 name: Pre-commit
 
+run-name: Run pre-commit checks
+
 on:
   pull_request:
   push:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          # For dependabot PRs, we need to checkout with a token that can push changes
+          token: ${{ github.actor == 'dependabot[bot]' && secrets.GITHUB_TOKEN || github.token }}
+          # Fetch full history for dependabot PRs to allow commits
+          fetch-depth: ${{ github.actor == 'dependabot[bot]' && 0 || 1 }}
 
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: pip
           cache-dependency-path: |
             **/requirements*.txt
             .pre-commit-config.yaml
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'llama_stack/ui/'
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: llama_stack/ui
 
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
         env:
           SKIP: no-commit-to-branch
           RUFF_OUTPUT_FORMAT: github
 
+      - name: Debug
+        run: |
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.actor: ${{ github.actor }}"
+
+      - name: Commit changes for dependabot PRs
+        if: github.actor == 'dependabot[bot]'
+        run: |
+          if ! git diff --exit-code || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+
+            # Ensure we're on the correct branch
+            git checkout -B ${{ github.head_ref }}
+            git add -A
+            git commit -m "Apply pre-commit fixes"
+
+            # Pull latest changes from the PR branch and rebase our commit on top
+            git pull --rebase origin ${{ github.head_ref }}
+
+            # Push to the PR branch
+            git push origin ${{ github.head_ref }}
+            echo "Pre-commit fixes committed and pushed"
+          else
+            echo "No changes to commit"
+          fi
+
       - name: Verify if there are any diff files after pre-commit
+        if: github.actor != 'dependabot[bot]'
         run: |
           git diff --exit-code || (echo "There are uncommitted changes, run pre-commit locally and commit again" && exit 1)
 
       - name: Verify if there are any new files after pre-commit
+        if: github.actor != 'dependabot[bot]'
         run: |
           unstaged_files=$(git ls-files --others --exclude-standard)
           if [ -n "$unstaged_files" ]; then

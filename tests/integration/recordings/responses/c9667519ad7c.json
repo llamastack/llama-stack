@@ -1,0 +1,58 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai with temperature 1"
+        }
+      ],
+      "max_tokens": 100,
+      "stream": false,
+      "temperature": 0.7
+    },
+    "endpoint": "/v1/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-521",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "You want to test the functionality of OpenAI's Text Completion model, also known as \"text completion\" or \"prompt engineering,\" by setting the temperature parameter to 1.\n\n**What is Temperature?**\n\nTemperature controls how different and diverse the generated text will be. A lower temperature (e.g., 0.5) produces more coherent and similar outputs, while a higher temperature (e.g., 2) produces more varied and less likely outputs. In this case, setting the temperature to ",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1754051837,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 100,
+          "prompt_tokens": 33,
+          "total_tokens": 133,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

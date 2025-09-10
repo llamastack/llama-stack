@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, MagicMock
 import numpy as np
 import pytest
 
+from llama_stack.apis.inference.inference import OpenAIEmbeddingData
 from llama_stack.apis.tools import RAGDocument
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.providers.utils.memory.vector_store import (
@@ -112,7 +113,6 @@ class TestValidateEmbedding:
 
 
 class TestVectorStore:
-    @pytest.mark.asyncio
     async def test_returns_content_from_pdf_data_uri(self):
         data_uri = data_url_from_file(DUMMY_PDF_PATH)
         doc = RAGDocument(
@@ -124,7 +124,7 @@ class TestVectorStore:
         content = await content_from_doc(doc)
         assert content in DUMMY_PDF_TEXT_CHOICES
 
-    @pytest.mark.asyncio
+    @pytest.mark.allow_network
     async def test_downloads_pdf_and_returns_content(self):
         # Using GitHub to host the PDF file
         url = "https://raw.githubusercontent.com/meta-llama/llama-stack/da035d69cfca915318eaf485770a467ca3c2a238/llama_stack/providers/tests/memory/fixtures/dummy.pdf"
@@ -137,7 +137,7 @@ class TestVectorStore:
         content = await content_from_doc(doc)
         assert content in DUMMY_PDF_TEXT_CHOICES
 
-    @pytest.mark.asyncio
+    @pytest.mark.allow_network
     async def test_downloads_pdf_and_returns_content_with_url_object(self):
         # Using GitHub to host the PDF file
         url = "https://raw.githubusercontent.com/meta-llama/llama-stack/da035d69cfca915318eaf485770a467ca3c2a238/llama_stack/providers/tests/memory/fixtures/dummy.pdf"
@@ -204,7 +204,6 @@ class TestVectorStore:
 
 
 class TestVectorDBWithIndex:
-    @pytest.mark.asyncio
     async def test_insert_chunks_without_embeddings(self):
         mock_vector_db = MagicMock()
         mock_vector_db.embedding_model = "test-model without embeddings"
@@ -220,17 +219,21 @@ class TestVectorDBWithIndex:
             Chunk(content="Test 2", embedding=None, metadata={}),
         ]
 
-        mock_inference_api.embeddings.return_value.embeddings = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+        mock_inference_api.openai_embeddings.return_value.data = [
+            OpenAIEmbeddingData(embedding=[0.1, 0.2, 0.3], index=0),
+            OpenAIEmbeddingData(embedding=[0.4, 0.5, 0.6], index=1),
+        ]
 
         await vector_db_with_index.insert_chunks(chunks)
 
-        mock_inference_api.embeddings.assert_called_once_with("test-model without embeddings", ["Test 1", "Test 2"])
+        mock_inference_api.openai_embeddings.assert_called_once_with(
+            "test-model without embeddings", ["Test 1", "Test 2"]
+        )
         mock_index.add_chunks.assert_called_once()
         args = mock_index.add_chunks.call_args[0]
         assert args[0] == chunks
         assert np.array_equal(args[1], np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
 
-    @pytest.mark.asyncio
     async def test_insert_chunks_with_valid_embeddings(self):
         mock_vector_db = MagicMock()
         mock_vector_db.embedding_model = "test-model with embeddings"
@@ -249,13 +252,12 @@ class TestVectorDBWithIndex:
 
         await vector_db_with_index.insert_chunks(chunks)
 
-        mock_inference_api.embeddings.assert_not_called()
+        mock_inference_api.openai_embeddings.assert_not_called()
         mock_index.add_chunks.assert_called_once()
         args = mock_index.add_chunks.call_args[0]
         assert args[0] == chunks
         assert np.array_equal(args[1], np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
 
-    @pytest.mark.asyncio
     async def test_insert_chunks_with_invalid_embeddings(self):
         mock_vector_db = MagicMock()
         mock_vector_db.embedding_dimension = 3
@@ -292,10 +294,9 @@ class TestVectorDBWithIndex:
         with pytest.raises(ValueError, match="has dimension 4, expected 3"):
             await vector_db_with_index.insert_chunks(chunks_wrong_dim)
 
-        mock_inference_api.embeddings.assert_not_called()
+        mock_inference_api.openai_embeddings.assert_not_called()
         mock_index.add_chunks.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_insert_chunks_with_partially_precomputed_embeddings(self):
         mock_vector_db = MagicMock()
         mock_vector_db.embedding_model = "test-model with partial embeddings"
@@ -313,11 +314,14 @@ class TestVectorDBWithIndex:
             Chunk(content="Test 3", embedding=None, metadata={}),
         ]
 
-        mock_inference_api.embeddings.return_value.embeddings = [[0.1, 0.1, 0.1], [0.3, 0.3, 0.3]]
+        mock_inference_api.openai_embeddings.return_value.data = [
+            OpenAIEmbeddingData(embedding=[0.1, 0.1, 0.1], index=0),
+            OpenAIEmbeddingData(embedding=[0.3, 0.3, 0.3], index=1),
+        ]
 
         await vector_db_with_index.insert_chunks(chunks)
 
-        mock_inference_api.embeddings.assert_called_once_with(
+        mock_inference_api.openai_embeddings.assert_called_once_with(
             "test-model with partial embeddings", ["Test 1", "Test 3"]
         )
         mock_index.add_chunks.assert_called_once()

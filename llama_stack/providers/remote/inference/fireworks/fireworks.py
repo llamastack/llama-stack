@@ -24,6 +24,12 @@ from llama_stack.apis.inference import (
     Inference,
     LogProbConfig,
     Message,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAICompletion,
+    OpenAIEmbeddingsResponse,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
@@ -33,15 +39,7 @@ from llama_stack.apis.inference import (
     ToolDefinition,
     ToolPromptFormat,
 )
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAICompletion,
-    OpenAIEmbeddingsResponse,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
-)
-from llama_stack.distribution.request_headers import NeedsRequestProviderData
+from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import (
     ModelRegistryHelper,
@@ -67,12 +65,12 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 from .config import FireworksImplConfig
 from .models import MODEL_ENTRIES
 
-logger = get_logger(name=__name__, category="inference")
+logger = get_logger(name=__name__, category="inference::fireworks")
 
 
 class FireworksInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProviderData):
     def __init__(self, config: FireworksImplConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES)
+        ModelRegistryHelper.__init__(self, MODEL_ENTRIES, config.allowed_models)
         self.config = config
 
     async def initialize(self) -> None:
@@ -237,6 +235,7 @@ class FireworksInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProv
 
         llama_model = self.get_llama_model(request.model)
         if isinstance(request, ChatCompletionRequest):
+            # TODO: tools are never added to the request, so we need to add them here
             if media_present or not llama_model:
                 input_dict["messages"] = [
                     await convert_message_to_openai_dict(m, download=True) for m in request.messages
@@ -318,6 +317,7 @@ class FireworksInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProv
         user: str | None = None,
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
+        suffix: str | None = None,
     ) -> OpenAICompletion:
         model_obj = await self.model_store.get_model(model)
 
@@ -379,6 +379,7 @@ class FireworksInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProv
         # Fireworks chat completions OpenAI-compatible API does not support
         # tool calls properly.
         llama_model = self.get_llama_model(model_obj.provider_resource_id)
+
         if llama_model:
             return await OpenAIChatCompletionToLlamaStackMixin.openai_chat_completion(
                 self,
@@ -432,4 +433,5 @@ class FireworksInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProv
             user=user,
         )
 
+        logger.debug(f"fireworks params: {params}")
         return await self._get_openai_client().chat.completions.create(model=model_obj.provider_resource_id, **params)

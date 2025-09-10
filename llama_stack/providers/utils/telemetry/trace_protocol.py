@@ -9,13 +9,11 @@ import inspect
 import json
 from collections.abc import AsyncGenerator, Callable
 from functools import wraps
-from typing import Any, TypeVar
+from typing import Any
 
 from pydantic import BaseModel
 
 from llama_stack.models.llama.datatypes import Primitive
-
-T = TypeVar("T")
 
 
 def serialize_value(value: Any) -> Primitive:
@@ -44,7 +42,7 @@ def _prepare_for_json(value: Any) -> str:
             return str(value)
 
 
-def trace_protocol(cls: type[T]) -> type[T]:
+def trace_protocol[T](cls: type[T]) -> type[T]:
     """
     A class decorator that automatically traces all methods in a protocol/base class
     and its inheriting classes.

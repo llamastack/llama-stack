@@ -6,7 +6,6 @@ spec:
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem
-  storageClassName: gp2
   resources:
     requests:
       storage: 30Gi
@@ -26,16 +25,8 @@ spec:
         app.kubernetes.io/name: vllm-safety
         workload-type: inference
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: workload-type
-                operator: In
-                values:
-                - inference
-            topologyKey: kubernetes.io/hostname  # Ensures no two inference pods on same node
+      nodeSelector:
+        eks.amazonaws.com/nodegroup: gpu
       containers:
       - name: vllm-safety
         image: vllm/vllm-openai:latest
@@ -44,6 +35,8 @@ spec:
           "vllm serve ${SAFETY_MODEL} --dtype float16 --enforce-eager --max-model-len 4096 --port 8001 --gpu-memory-utilization 0.3"
         ]
         env:
+        - name: SAFETY_MODEL
+          value: "${SAFETY_MODEL}"
         - name: HUGGING_FACE_HUB_TOKEN
           valueFrom:
             secretKeyRef:
@@ -51,6 +44,11 @@ spec:
               key: token
         ports:
           - containerPort: 8001
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
         volumeMounts:
           - name: llama-storage
             mountPath: /root/.cache/huggingface

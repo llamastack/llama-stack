@@ -1,7 +1,0 @@
-adapter:
-  adapter_type: custom_ollama
-  pip_packages: ["ollama", "aiohttp", "tests/external-provider/llama-stack-provider-ollama"]
-  config_class: llama_stack_provider_ollama.config.OllamaImplConfig
-  module: llama_stack_provider_ollama
-api_dependencies: []
-optional_api_dependencies: []

@@ -6,10 +6,11 @@
 
 
 import pytest
-import pytest_asyncio
 
+from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.files import OpenAIFilePurpose
+from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.providers.inline.files.localfs import (
     LocalfsFilesImpl,
     LocalfsFilesImplConfig,
@@ -29,7 +30,7 @@ class MockUploadFile:
         return self.content
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def files_provider(tmp_path):
     """Create a files provider with temporary storage for testing."""
     storage_dir = tmp_path / "files"
@@ -39,7 +40,7 @@ async def files_provider(tmp_path):
         storage_dir=storage_dir.as_posix(), metadata_store=SqliteSqlStoreConfig(db_path=db_path.as_posix())
     )
 
-    provider = LocalfsFilesImpl(config)
+    provider = LocalfsFilesImpl(config, default_policy())
     await provider.initialize()
     yield provider
 
@@ -68,7 +69,6 @@ def large_file():
 class TestOpenAIFilesAPI:
     """Test suite for OpenAI Files API endpoints."""
 
-    @pytest.mark.asyncio
     async def test_upload_file_success(self, files_provider, sample_text_file):
         """Test successful file upload."""
         # Upload file
@@ -82,7 +82,6 @@ class TestOpenAIFilesAPI:
         assert result.created_at > 0
         assert result.expires_at > result.created_at
 
-    @pytest.mark.asyncio
     async def test_upload_different_purposes(self, files_provider, sample_text_file):
         """Test uploading files with different purposes."""
         purposes = list(OpenAIFilePurpose)
@@ -93,7 +92,6 @@ class TestOpenAIFilesAPI:
             uploaded_files.append(result)
             assert result.purpose == purpose
 
-    @pytest.mark.asyncio
     async def test_upload_different_file_types(self, files_provider, sample_text_file, sample_json_file, large_file):
         """Test uploading different types and sizes of files."""
         files_to_test = [
@@ -107,7 +105,6 @@ class TestOpenAIFilesAPI:
             assert result.filename == expected_filename
             assert result.bytes == len(file_obj.content)
 
-    @pytest.mark.asyncio
     async def test_list_files_empty(self, files_provider):
         """Test listing files when no files exist."""
         result = await files_provider.openai_list_files()
@@ -117,7 +114,6 @@ class TestOpenAIFilesAPI:
         assert result.first_id == ""
         assert result.last_id == ""
 
-    @pytest.mark.asyncio
     async def test_list_files_with_content(self, files_provider, sample_text_file, sample_json_file):
         """Test listing files when files exist."""
         # Upload multiple files
@@ -132,7 +128,6 @@ class TestOpenAIFilesAPI:
         assert file1.id in file_ids
         assert file2.id in file_ids
 
-    @pytest.mark.asyncio
     async def test_list_files_with_purpose_filter(self, files_provider, sample_text_file):
         """Test listing files with purpose filtering."""
         # Upload file with specific purpose
@@ -146,7 +141,6 @@ class TestOpenAIFilesAPI:
         assert result.data[0].id == uploaded_file.id
         assert result.data[0].purpose == OpenAIFilePurpose.ASSISTANTS
 
-    @pytest.mark.asyncio
     async def test_list_files_with_limit(self, files_provider, sample_text_file):
         """Test listing files with limit parameter."""
         # Upload multiple files
@@ -157,7 +151,6 @@ class TestOpenAIFilesAPI:
         result = await files_provider.openai_list_files(limit=3)
         assert len(result.data) == 3
 
-    @pytest.mark.asyncio
     async def test_list_files_with_order(self, files_provider, sample_text_file):
         """Test listing files with different order."""
         # Upload multiple files
@@ -178,7 +171,6 @@ class TestOpenAIFilesAPI:
         # Oldest should be first
         assert result_asc.data[0].created_at <= result_asc.data[1].created_at <= result_asc.data[2].created_at
 
-    @pytest.mark.asyncio
     async def test_retrieve_file_success(self, files_provider, sample_text_file):
         """Test successful file retrieval."""
         # Upload file
@@ -197,13 +189,11 @@ class TestOpenAIFilesAPI:
         assert retrieved_file.created_at == uploaded_file.created_at
         assert retrieved_file.expires_at == uploaded_file.expires_at
 
-    @pytest.mark.asyncio
     async def test_retrieve_file_not_found(self, files_provider):
         """Test retrieving a non-existent file."""
-        with pytest.raises(ValueError, match="File with id file-nonexistent not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file("file-nonexistent")
 
-    @pytest.mark.asyncio
     async def test_retrieve_file_content_success(self, files_provider, sample_text_file):
         """Test successful file content retrieval."""
         # Upload file
@@ -217,13 +207,11 @@ class TestOpenAIFilesAPI:
         # Verify content
         assert content.body == sample_text_file.content
 
-    @pytest.mark.asyncio
     async def test_retrieve_file_content_not_found(self, files_provider):
         """Test retrieving content of a non-existent file."""
-        with pytest.raises(ValueError, match="File with id file-nonexistent not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file_content("file-nonexistent")
 
-    @pytest.mark.asyncio
     async def test_delete_file_success(self, files_provider, sample_text_file):
         """Test successful file deletion."""
         # Upload file
@@ -242,16 +230,14 @@ class TestOpenAIFilesAPI:
         assert delete_response.deleted is True
 
         # Verify file no longer exists
-        with pytest.raises(ValueError, match=f"File with id {uploaded_file.id} not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file(uploaded_file.id)
 
-    @pytest.mark.asyncio
     async def test_delete_file_not_found(self, files_provider):
         """Test deleting a non-existent file."""
-        with pytest.raises(ValueError, match="File with id file-nonexistent not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_delete_file("file-nonexistent")
 
-    @pytest.mark.asyncio
     async def test_file_persistence_across_operations(self, files_provider, sample_text_file):
         """Test that files persist correctly across multiple operations."""
         # Upload file
@@ -279,7 +265,6 @@ class TestOpenAIFilesAPI:
         files_list = await files_provider.openai_list_files()
         assert len(files_list.data) == 0
 
-    @pytest.mark.asyncio
     async def test_multiple_files_operations(self, files_provider, sample_text_file, sample_json_file):
         """Test operations with multiple files."""
         # Upload multiple files
@@ -302,7 +287,6 @@ class TestOpenAIFilesAPI:
         content = await files_provider.openai_retrieve_file_content(file2.id)
         assert content.body == sample_json_file.content
 
-    @pytest.mark.asyncio
     async def test_file_id_uniqueness(self, files_provider, sample_text_file):
         """Test that each uploaded file gets a unique ID."""
         file_ids = set()
@@ -316,7 +300,6 @@ class TestOpenAIFilesAPI:
             file_ids.add(uploaded_file.id)
             assert uploaded_file.id.startswith("file-")
 
-    @pytest.mark.asyncio
     async def test_file_no_filename_handling(self, files_provider):
         """Test handling files with no filename."""
         file_without_name = MockUploadFile(b"content", None)  # No filename
@@ -327,8 +310,24 @@ class TestOpenAIFilesAPI:
 
         assert uploaded_file.filename == "uploaded_file"  # Default filename
 
-    @pytest.mark.asyncio
-    async def test_after_pagination_not_implemented(self, files_provider):
-        """Test that 'after' pagination raises NotImplementedError."""
-        with pytest.raises(NotImplementedError, match="After pagination not yet implemented"):
-            await files_provider.openai_list_files(after="file-some-id")
+    async def test_after_pagination_works(self, files_provider, sample_text_file):
+        """Test that 'after' pagination works correctly."""
+        # Upload multiple files to test pagination
+        uploaded_files = []
+        for _ in range(5):
+            file = await files_provider.openai_upload_file(file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS)
+            uploaded_files.append(file)
+
+        # Get first page without 'after' parameter
+        first_page = await files_provider.openai_list_files(limit=2, order=Order.desc)
+        assert len(first_page.data) == 2
+        assert first_page.has_more is True
+
+        # Get second page using 'after' parameter
+        second_page = await files_provider.openai_list_files(after=first_page.data[-1].id, limit=2, order=Order.desc)
+        assert len(second_page.data) <= 2
+
+        # Verify no overlap between pages
+        first_page_ids = {f.id for f in first_page.data}
+        second_page_ids = {f.id for f in second_page.data}
+        assert first_page_ids.isdisjoint(second_page_ids)

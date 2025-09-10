@@ -1,0 +1,89 @@
+name: Test External API and Providers
+
+run-name: Test the External API and Provider mechanisms
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'llama_stack/**'
+      - '!llama_stack/ui/**'
+      - 'tests/integration/**'
+      - 'uv.lock'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - 'tests/external/*'
+      - '.github/workflows/test-external.yml' # This workflow
+
+jobs:
+  test-external:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image-type: [venv]
+        # We don't do container yet, it's tricky to install a package from the host into the
+        # container and point 'uv pip install' to the correct path...
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+
+      - name: Create API configuration
+        run: |
+          mkdir -p /home/runner/.llama/apis.d
+          cp tests/external/weather.yaml /home/runner/.llama/apis.d/weather.yaml
+
+      - name: Create provider configuration
+        run: |
+          mkdir -p /home/runner/.llama/providers.d/remote/weather
+          cp tests/external/kaze.yaml /home/runner/.llama/providers.d/remote/weather/kaze.yaml
+
+      - name: Print distro dependencies
+        run: |
+          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack build --config tests/external/build.yaml --print-deps-only
+
+      - name: Build distro from config file
+        run: |
+          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack build --config tests/external/build.yaml
+
+      - name: Start Llama Stack server in background
+        if: ${{ matrix.image-type }} == 'venv'
+        env:
+          INFERENCE_MODEL: "meta-llama/Llama-3.2-3B-Instruct"
+          LLAMA_STACK_LOG_FILE: "server.log"
+        run: |
+          # Use the virtual environment created by the build step (name comes from build config)
+          source ci-test/bin/activate
+          uv pip list
+          nohup llama stack run tests/external/run-byoa.yaml --image-type ${{ matrix.image-type }} > server.log 2>&1 &
+
+      - name: Wait for Llama Stack server to be ready
+        run: |
+          echo "Waiting for Llama Stack server..."
+          for i in {1..30}; do
+            if curl -sSf http://localhost:8321/v1/health | grep -q "OK"; then
+              echo "Llama Stack server is up!"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Llama Stack server failed to start"
+          cat server.log
+          exit 1
+
+      - name: Test external API
+        run: |
+          curl -sSf http://localhost:8321/v1/weather/locations
+
+      - name: Upload all logs to artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: logs-${{ github.run_id }}-${{ github.run_attempt }}-external-test
+          path: |
+            *.log
+          retention-days: 1

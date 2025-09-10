@@ -9,10 +9,41 @@ from datetime import datetime
 import pytest
 import yaml
 
-from llama_stack.distribution.configure import (
+from llama_stack.core.configure import (
     LLAMA_STACK_RUN_CONFIG_VERSION,
     parse_and_maybe_upgrade_config,
 )
+
+
+@pytest.fixture
+def config_with_image_name_int():
+    return yaml.safe_load(
+        f"""
+        version: {LLAMA_STACK_RUN_CONFIG_VERSION}
+        image_name: 1234
+        apis_to_serve: []
+        built_at: {datetime.now().isoformat()}
+        providers:
+          inference:
+            - provider_id: provider1
+              provider_type: inline::meta-reference
+              config: {{}}
+          safety:
+            - provider_id: provider1
+              provider_type: inline::meta-reference
+              config:
+                llama_guard_shield:
+                  model: Llama-Guard-3-1B
+                  excluded_categories: []
+                  disable_input_check: false
+                  disable_output_check: false
+                enable_prompt_guard: false
+          memory:
+            - provider_id: provider1
+              provider_type: inline::meta-reference
+              config: {{}}
+    """
+    )
 
 
 @pytest.fixture
@@ -125,3 +156,8 @@ def test_parse_and_maybe_upgrade_config_old_format(old_config):
 def test_parse_and_maybe_upgrade_config_invalid(invalid_config):
     with pytest.raises(KeyError):
         parse_and_maybe_upgrade_config(invalid_config)
+
+
+def test_parse_and_maybe_upgrade_config_image_name_int(config_with_image_name_int):
+    result = parse_and_maybe_upgrade_config(config_with_image_name_int)
+    assert isinstance(result.image_name, str)

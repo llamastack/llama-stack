@@ -202,7 +202,7 @@ pprint(response)
 
 Llama Stack offers a library of scoring functions and the `/scoring` API, allowing you to run evaluations on your pre-annotated AI application datasets.
 
-In this example, we will work with an example RAG dataset you have built previously, label with an annotation, and use LLM-As-Judge with custom judge prompt for scoring. Please checkout our [Llama Stack Playground](https://llama-stack.readthedocs.io/en/latest/playground/index.html) for an interactive interface to upload datasets and run scorings.
+In this example, we will work with an example RAG dataset you have built previously, label with an annotation, and use LLM-As-Judge with custom judge prompt for scoring. Please checkout our [Llama Stack Playground](../../building_applications/playground/index.md) for an interactive interface to upload datasets and run scorings.
 
 ```python
 judge_model_id = "meta-llama/Llama-3.1-405B-Instruct-FP8"
@@ -366,7 +366,7 @@ The purpose of scoring function is to calculate the score for each example based
 Firstly, you can see if the existing [llama stack scoring functions](https://github.com/meta-llama/llama-stack/tree/main/llama_stack/providers/inline/scoring) can fulfill your need. If not, you need to write a new scoring function based on what benchmark author / other open source repo describe.
 
 ### Add new benchmark into template
-Firstly, you need to add the evaluation dataset associated with your benchmark under `datasets` resource in the [open-benchmark](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/templates/open-benchmark/run.yaml)
+Firstly, you need to add the evaluation dataset associated with your benchmark under `datasets` resource in the [open-benchmark](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/distributions/open-benchmark/run.yaml)
 
 Secondly, you need to add the new benchmark you just created under the `benchmarks` resource in the same template. To add the new benchmark, you need to have
 - `benchmark_id`: identifier of the benchmark
@@ -378,7 +378,7 @@ Secondly, you need to add the new benchmark you just created under the `benchmar
 
 Spin up llama stack server with 'open-benchmark' templates
 ```
-llama stack run llama_stack/templates/open-benchmark/run.yaml
+llama stack run llama_stack/distributions/open-benchmark/run.yaml
 
 ```
 

@@ -6,32 +6,14 @@
 
 import gc
 import json
-import logging
 import multiprocessing
-import os
-import signal
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
-import psutil
-
-from llama_stack.providers.inline.post_training.common.utils import evacuate_model_from_device
-
-# Set tokenizer parallelism environment variable
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-# Force PyTorch to use OpenBLAS instead of MKL
-os.environ["MKL_THREADING_LAYER"] = "GNU"
-os.environ["MKL_SERVICE_FORCE_INTEL"] = "0"
-os.environ["MKL_NUM_THREADS"] = "1"
 
 import torch
 from datasets import Dataset
 from peft import LoraConfig
 from transformers import (
-    AutoConfig,
     AutoModelForCausalLM,
     AutoTokenizer,
 )
@@ -45,91 +27,24 @@ from llama_stack.apis.post_training import (
     LoraFinetuningConfig,
     TrainingConfig,
 )
+from llama_stack.log import get_logger
+from llama_stack.providers.inline.post_training.common.utils import evacuate_model_from_device
 
 from ..config import HuggingFacePostTrainingConfig
+from ..utils import (
+    calculate_training_steps,
+    create_checkpoints,
+    get_memory_stats,
+    get_save_strategy,
+    load_model,
+    load_rows_from_dataset,
+    setup_environment,
+    setup_signal_handlers,
+    setup_torch_device,
+    split_dataset,
+)
 
-logger = logging.getLogger(__name__)
-
-
-def get_gb(to_convert: int) -> str:
-    """Converts memory stats to GB and formats to 2 decimal places.
-    Args:
-        to_convert: Memory value in bytes
-    Returns:
-        str: Memory value in GB formatted to 2 decimal places
-    """
-    return f"{(to_convert / (1024**3)):.2f}"
-
-
-def get_memory_stats(device: torch.device) -> dict[str, Any]:
-    """Get memory statistics for the given device."""
-    stats = {
-        "system_memory": {
-            "total": get_gb(psutil.virtual_memory().total),
-            "available": get_gb(psutil.virtual_memory().available),
-            "used": get_gb(psutil.virtual_memory().used),
-            "percent": psutil.virtual_memory().percent,
-        }
-    }
-
-    if device.type == "cuda":
-        stats["device_memory"] = {
-            "allocated": get_gb(torch.cuda.memory_allocated(device)),
-            "reserved": get_gb(torch.cuda.memory_reserved(device)),
-            "max_allocated": get_gb(torch.cuda.max_memory_allocated(device)),
-        }
-    elif device.type == "mps":
-        # MPS doesn't provide direct memory stats, but we can track system memory
-        stats["device_memory"] = {
-            "note": "MPS memory stats not directly available",
-            "system_memory_used": get_gb(psutil.virtual_memory().used),
-        }
-    elif device.type == "cpu":
-        # For CPU, we track process memory usage
-        process = psutil.Process()
-        stats["device_memory"] = {
-            "process_rss": get_gb(process.memory_info().rss),
-            "process_vms": get_gb(process.memory_info().vms),
-            "process_percent": process.memory_percent(),
-        }
-
-    return stats
-
-
-def setup_torch_device(device_str: str) -> torch.device:
-    """Initialize and validate a PyTorch device.
-    This function handles device initialization and validation for different device types:
-    - CUDA: Validates CUDA availability and handles device selection
-    - MPS: Validates MPS availability for Apple Silicon
-    - CPU: Basic validation
-    - HPU: Raises error as it's not supported
-    Args:
-        device_str: String specifying the device ('cuda', 'cpu', 'mps')
-    Returns:
-        torch.device: The initialized and validated device
-    Raises:
-        RuntimeError: If device initialization fails or device is not supported
-    """
-    try:
-        device = torch.device(device_str)
-    except RuntimeError as e:
-        raise RuntimeError(f"Error getting Torch Device {str(e)}") from e
-
-    # Validate device capabilities
-    if device.type == "cuda":
-        if not torch.cuda.is_available():
-            raise RuntimeError(
-                f"{device.type}: Torch has no CUDA/ROCm support or could not detect a compatible device."
-            )
-        if device.index is None:
-            device = torch.device(device.type, torch.cuda.current_device())
-    elif device.type == "mps":
-        if not torch.backends.mps.is_available():
-            raise RuntimeError(f"{device.type}: Torch has no MPS support or could not detect a compatible device.")
-    elif device.type == "hpu":
-        raise RuntimeError(f"{device.type}: training does not support Intel Gaudi.")
-
-    return device
+logger = get_logger(name=__name__, category="post_training")
 
 
 class HFFinetuningSingleDevice:
@@ -262,19 +177,6 @@ class HFFinetuningSingleDevice:
             remove_columns=ds.column_names,
         )
 
-    async def _setup_data(self, dataset_id: str) -> list[dict[str, Any]]:
-        """Load dataset from llama stack dataset provider"""
-        try:
-            all_rows = await self.datasetio_api.iterrows(
-                dataset_id=dataset_id,
-                limit=-1,
-            )
-            if not isinstance(all_rows.data, list):
-                raise RuntimeError("Expected dataset data to be a list")
-            return all_rows.data
-        except Exception as e:
-            raise RuntimeError(f"Failed to load dataset: {str(e)}") from e
-
     def _run_training_sync(
         self,
         model: str,
@@ -327,7 +229,7 @@ class HFFinetuningSingleDevice:
 
         # Load dataset
         logger.info(f"Loading dataset: {config.data_config.dataset_id}")
-        rows = await self._setup_data(config.data_config.dataset_id)
+        rows = await load_rows_from_dataset(self.datasetio_api, config.data_config.dataset_id)
         if not self.validate_dataset_format(rows):
             raise ValueError("Dataset is missing required fields: input_query, expected_answer, chat_completion_input")
         logger.info(f"Loaded {len(rows)} rows from dataset")
@@ -369,46 +271,9 @@ class HFFinetuningSingleDevice:
             raise ValueError(f"Failed to create dataset: {str(e)}") from e
 
         # Split dataset
-        logger.info("Splitting dataset into train and validation sets")
-        train_val_split = ds.train_test_split(test_size=0.1, seed=42)
-        train_dataset = train_val_split["train"]
-        eval_dataset = train_val_split["test"]
-        logger.info(f"Split dataset into {len(train_dataset)} training and {len(eval_dataset)} validation examples")
+        train_dataset, eval_dataset = split_dataset(ds)
 
         return train_dataset, eval_dataset, tokenizer
-
-    def load_model(
-        self,
-        model: str,
-        device: torch.device,
-        provider_config: HuggingFacePostTrainingConfig,
-    ) -> AutoModelForCausalLM:
-        """Load and initialize the model for training.
-        Args:
-            model: The model identifier to load
-            device: The device to load the model onto
-            provider_config: Provider-specific configuration
-        Returns:
-            The loaded and initialized model
-        Raises:
-            RuntimeError: If model loading fails
-        """
-        logger.info("Loading the base model")
-        try:
-            model_config = AutoConfig.from_pretrained(model, **provider_config.model_specific_config)
-            model_obj = AutoModelForCausalLM.from_pretrained(
-                model,
-                torch_dtype="auto" if device.type != "cpu" else "float32",
-                quantization_config=None,
-                config=model_config,
-                **provider_config.model_specific_config,
-            )
-            # Always move model to specified device
-            model_obj = model_obj.to(device)
-            logger.info(f"Model loaded and moved to device: {model_obj.device}")
-            return model_obj
-        except Exception as e:
-            raise RuntimeError(f"Failed to load model: {str(e)}") from e
 
     def setup_training_args(
         self,
@@ -439,39 +304,22 @@ class HFFinetuningSingleDevice:
             raise ValueError("DataConfig is required for training")
         data_config = config.data_config
 
-        # Calculate steps
-        total_steps = steps_per_epoch * config.n_epochs
-        max_steps = min(config.max_steps_per_epoch, total_steps)
-        eval_steps = max(1, steps_per_epoch // 10)  # Evaluate 10 times per epoch
-        save_steps = max(1, steps_per_epoch // 5)  # Save 5 times per epoch
-        logging_steps = max(1, steps_per_epoch // 50)  # Log 50 times per epoch
-
-        logger.info("Training configuration:")
-        logger.info(f"- Steps per epoch: {steps_per_epoch}")
-        logger.info(f"- Total steps: {total_steps}")
-        logger.info(f"- Max steps: {max_steps}")
-        logger.info(f"- Eval steps: {eval_steps}")
-        logger.info(f"- Save steps: {save_steps}")
-        logger.info(f"- Logging steps: {logging_steps}")
-
-        # Configure save strategy
-        save_strategy = "no"
-        if output_dir_path:
-            save_strategy = "steps"
-            logger.info(f"Will save checkpoints to {output_dir_path}")
+        # Calculate steps and get save strategy
+        step_info = calculate_training_steps(steps_per_epoch, config)
+        save_strategy, eval_strategy = get_save_strategy(output_dir_path)
 
         return SFTConfig(
-            max_steps=max_steps,
+            max_steps=step_info["max_steps"],
             output_dir=str(output_dir_path) if output_dir_path is not None else None,
             num_train_epochs=config.n_epochs,
             per_device_train_batch_size=data_config.batch_size,
             fp16=device.type == "cuda",
             bf16=False,  # Causes CPU issues.
-            eval_strategy="steps",
+            eval_strategy=eval_strategy,
             use_cpu=True if device.type == "cpu" and not torch.backends.mps.is_available() else False,
             save_strategy=save_strategy,
             report_to="none",
-            max_seq_length=provider_config.max_seq_length,
+            max_length=provider_config.max_seq_length,
             gradient_accumulation_steps=config.gradient_accumulation_steps,
             gradient_checkpointing=provider_config.gradient_checkpointing,
             learning_rate=lr,
@@ -485,9 +333,7 @@ class HFFinetuningSingleDevice:
             load_best_model_at_end=True if output_dir_path else False,
             metric_for_best_model="eval_loss",
             greater_is_better=False,
-            eval_steps=eval_steps,
-            save_steps=save_steps,
-            logging_steps=logging_steps,
+            logging_steps=step_info["logging_steps"],
         )
 
     def save_model(
@@ -527,13 +373,11 @@ class HFFinetuningSingleDevice:
     ) -> None:
         """Run the training process with signal handling."""
 
-        def signal_handler(signum, frame):
-            """Handle termination signals gracefully."""
-            logger.info(f"Received signal {signum}, initiating graceful shutdown")
-            sys.exit(0)
+        # Setup environment variables
+        setup_environment()
 
-        signal.signal(signal.SIGTERM, signal_handler)
-        signal.signal(signal.SIGINT, signal_handler)
+        # Setup signal handlers
+        setup_signal_handlers()
 
         # Convert config dicts back to objects
         logger.info("Initializing configuration objects")
@@ -562,7 +406,7 @@ class HFFinetuningSingleDevice:
         )
 
         # Load model
-        model_obj = self.load_model(model, device, provider_config_obj)
+        model_obj = load_model(model, device, provider_config_obj)
 
         # Initialize trainer
         logger.info("Initializing SFTTrainer")
@@ -637,7 +481,7 @@ class HFFinetuningSingleDevice:
         # Train in a separate process
         logger.info("Starting training in separate process")
         try:
-            # Set multiprocessing start method to 'spawn' for CUDA/MPS compatibility
+            # Setup multiprocessing for device
             if device.type in ["cuda", "mps"]:
                 multiprocessing.set_start_method("spawn", force=True)
 
@@ -665,19 +509,11 @@ class HFFinetuningSingleDevice:
 
             memory_stats["after_training"] = get_memory_stats(device)
 
-            checkpoints = None
+            checkpoints = []
             if output_dir_path:
-                # Create checkpoint
-                checkpoint = Checkpoint(
-                    identifier=f"{model}-sft-{config.n_epochs}",
-                    created_at=datetime.now(timezone.utc),
-                    epoch=config.n_epochs,
-                    post_training_job_id=job_uuid,
-                    path=str(output_dir_path / "merged_model"),
-                )
-                checkpoints = [checkpoint]
+                checkpoints = create_checkpoints(output_dir_path, job_uuid, model, config, "merged_model")
 
-            return memory_stats, checkpoints
+            return memory_stats, checkpoints if checkpoints else None
         finally:
             memory_stats["final"] = get_memory_stats(device)
             gc.collect()

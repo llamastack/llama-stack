@@ -40,7 +40,7 @@ class NVIDIAConfig(BaseModel):
         description="A base url for accessing the NVIDIA NIM",
     )
     api_key: SecretStr | None = Field(
-        default_factory=lambda: os.getenv("NVIDIA_API_KEY"),
+        default_factory=lambda: SecretStr(os.getenv("NVIDIA_API_KEY")),
         description="The NVIDIA API key, only needed of using the hosted service",
     )
     timeout: int = Field(
@@ -53,9 +53,15 @@ class NVIDIAConfig(BaseModel):
     )
 
     @classmethod
-    def sample_run_config(cls, **kwargs) -> dict[str, Any]:
+    def sample_run_config(
+        cls,
+        url: str = "${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com}",
+        api_key: str = "${env.NVIDIA_API_KEY:=}",
+        append_api_version: bool = "${env.NVIDIA_APPEND_API_VERSION:=True}",
+        **kwargs,
+    ) -> dict[str, Any]:
         return {
-            "url": "${env.NVIDIA_BASE_URL:https://integrate.api.nvidia.com}",
-            "api_key": "${env.NVIDIA_API_KEY:}",
-            "append_api_version": "${env.NVIDIA_APPEND_API_VERSION:True}",
+            "url": url,
+            "api_key": api_key,
+            "append_api_version": append_api_version,
         }

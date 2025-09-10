@@ -25,12 +25,6 @@ def base64_image_data(image_path):
     return base64.b64encode(image_path.read_bytes()).decode("utf-8")
 
 
-@pytest.fixture
-def base64_image_url(base64_image_data, image_path):
-    # suffix includes the ., so we remove it
-    return f"data:image/{image_path.suffix[1:]};base64,{base64_image_data}"
-
-
 def test_image_chat_completion_non_streaming(client_with_models, vision_model_id):
     message = {
         "role": "user",
@@ -78,7 +72,9 @@ def multi_image_data():
 def test_image_chat_completion_multiple_images(client_with_models, vision_model_id, multi_image_data, stream):
     supported_models = ["llama-4", "gpt-4o", "llama4"]
     if not any(model in vision_model_id.lower() for model in supported_models):
-        pytest.skip(f"Skip for non-supported model: {vision_model_id}")
+        pytest.skip(
+            f"Skip since multi-image tests are only supported for {supported_models}, not for {vision_model_id}"
+        )
 
     messages = [
         {
@@ -183,24 +179,13 @@ def test_image_chat_completion_streaming(client_with_models, vision_model_id):
     assert any(expected in streamed_content for expected in {"dog", "puppy", "pup"})
 
 
-@pytest.mark.parametrize("type_", ["url", "data"])
-def test_image_chat_completion_base64(client_with_models, vision_model_id, base64_image_data, base64_image_url, type_):
+def test_image_chat_completion_base64(client_with_models, vision_model_id, base64_image_data):
     image_spec = {
-        "url": {
-            "type": "image",
-            "image": {
-                "url": {
-                    "uri": base64_image_url,
-                },
-            },
+        "type": "image",
+        "image": {
+            "data": base64_image_data,
         },
-        "data": {
-            "type": "image",
-            "image": {
-                "data": base64_image_data,
-            },
-        },
-    }[type_]
+    }
 
     message = {
         "role": "user",

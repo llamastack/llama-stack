@@ -26,7 +26,7 @@ class StackListApis(Subcommand):
 
     def _run_apis_list_cmd(self, args: argparse.Namespace) -> None:
         from llama_stack.cli.table import print_table
-        from llama_stack.distribution.distribution import stack_apis
+        from llama_stack.core.distribution import stack_apis
 
         # eventually, this should query a registry at llama.meta.com/llamastack/distributions
         headers = [

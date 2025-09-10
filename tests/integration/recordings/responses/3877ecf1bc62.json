@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/api/pull",
+    "headers": {},
+    "body": {},
+    "endpoint": "/api/pull",
+    "model": ""
+  },
+  "response": {
+    "body": {
+      "__type__": "ollama._types.ProgressResponse",
+      "__data__": {
+        "status": "success",
+        "completed": null,
+        "total": null,
+        "digest": null
+      }
+    },
+    "is_streaming": false
+  }
+}

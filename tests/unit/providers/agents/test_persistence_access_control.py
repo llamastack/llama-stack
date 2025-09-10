@@ -12,7 +12,7 @@ import pytest
 
 from llama_stack.apis.agents import Turn
 from llama_stack.apis.inference import CompletionMessage, StopReason
-from llama_stack.distribution.datatypes import User
+from llama_stack.core.datatypes import User
 from llama_stack.providers.inline.agents.meta_reference.persistence import AgentPersistence, AgentSessionInfo
 
 
@@ -22,7 +22,6 @@ async def test_setup(sqlite_kvstore):
     yield agent_persistence
 
 
-@pytest.mark.asyncio
 @patch("llama_stack.providers.inline.agents.meta_reference.persistence.get_authenticated_user")
 async def test_session_creation_with_access_attributes(mock_get_authenticated_user, test_setup):
     agent_persistence = test_setup
@@ -43,7 +42,6 @@ async def test_session_creation_with_access_attributes(mock_get_authenticated_us
     assert session_info.owner.attributes["teams"] == ["ai-team"]
 
 
-@pytest.mark.asyncio
 @patch("llama_stack.providers.inline.agents.meta_reference.persistence.get_authenticated_user")
 async def test_session_access_control(mock_get_authenticated_user, test_setup):
     agent_persistence = test_setup
@@ -78,7 +76,6 @@ async def test_session_access_control(mock_get_authenticated_user, test_setup):
     assert retrieved_session is None
 
 
-@pytest.mark.asyncio
 @patch("llama_stack.providers.inline.agents.meta_reference.persistence.get_authenticated_user")
 async def test_turn_access_control(mock_get_authenticated_user, test_setup):
     agent_persistence = test_setup
@@ -132,7 +129,6 @@ async def test_turn_access_control(mock_get_authenticated_user, test_setup):
         await agent_persistence.get_session_turns(session_id)
 
 
-@pytest.mark.asyncio
 @patch("llama_stack.providers.inline.agents.meta_reference.persistence.get_authenticated_user")
 async def test_tool_call_and_infer_iters_access_control(mock_get_authenticated_user, test_setup):
     agent_persistence = test_setup

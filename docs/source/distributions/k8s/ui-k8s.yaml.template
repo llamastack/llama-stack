@@ -26,6 +26,12 @@ spec:
           value: "http://llama-stack-service:8321"
         - name: LLAMA_STACK_UI_PORT
           value: "8322"
+        - name: GITHUB_CLIENT_ID
+          value: "${GITHUB_CLIENT_ID}"
+        - name: GITHUB_CLIENT_SECRET
+          value: "${GITHUB_CLIENT_SECRET}"
+        - name: NEXTAUTH_URL
+          value: "${LLAMA_STACK_UI_URL}:8322"
         args:
           - -c
           - |

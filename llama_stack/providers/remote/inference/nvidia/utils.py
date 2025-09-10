@@ -4,13 +4,13 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
-
 import httpx
+
+from llama_stack.log import get_logger
 
 from . import NVIDIAConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="inference::nvidia")
 
 
 def _is_nvidia_hosted(config: NVIDIAConfig) -> bool:

@@ -1,0 +1,13 @@
+version: 2
+distribution_spec:
+  description: Use (an external) Ramalama server for running LLM inference
+  container_image: null
+  providers:
+    inference:
+    - provider_type: remote::ramalama
+      module: ramalama_stack==0.3.0a0
+image_type: venv
+image_name: ramalama-stack-test
+additional_pip_packages:
+- aiosqlite
+- sqlalchemy[asyncio]

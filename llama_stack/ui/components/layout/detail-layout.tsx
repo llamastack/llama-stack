@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function DetailLoadingView({ title }: { title: string }) {
+export function DetailLoadingView() {
   return (
     <>
       <Skeleton className="h-8 w-3/4 mb-6" /> {/* Title Skeleton */}
@@ -93,7 +93,9 @@ export function PropertyItem({
     >
       <strong>{label}:</strong>{" "}
       {typeof value === "string" || typeof value === "number" ? (
-        <span className="text-gray-900 font-medium">{value}</span>
+        <span className="text-gray-900 dark:text-gray-100 font-medium">
+          {value}
+        </span>
       ) : (
         value
       )}
@@ -112,7 +114,9 @@ export function PropertiesCard({ children }: PropertiesCardProps) {
         <CardTitle>Properties</CardTitle>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-2 text-sm text-gray-600">{children}</ul>
+        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          {children}
+        </ul>
       </CardContent>
     </Card>
   );

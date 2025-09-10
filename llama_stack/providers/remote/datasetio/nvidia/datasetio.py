@@ -36,6 +36,10 @@ class NvidiaDatasetIOAdapter:
         url = f"{self.config.datasets_url}{path}"
         request_headers = self.headers.copy()
 
+        # Set default Content-Type for JSON requests
+        if json is not None:
+            request_headers["Content-Type"] = "application/json"
+
         if headers:
             request_headers.update(headers)
 
@@ -62,7 +66,7 @@ class NvidiaDatasetIOAdapter:
         Returns:
             Dataset
         """
-        ## add warnings for unsupported params
+        # add warnings for unsupported params
         request_body = {
             "name": dataset_def.identifier,
             "namespace": self.config.dataset_namespace,

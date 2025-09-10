@@ -26,7 +26,7 @@ class AnthropicConfig(BaseModel):
     )
 
     @classmethod
-    def sample_run_config(cls, api_key: str = "${env.ANTHROPIC_API_KEY}", **kwargs) -> dict[str, Any]:
+    def sample_run_config(cls, api_key: str = "${env.ANTHROPIC_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {
             "api_key": api_key,
         }

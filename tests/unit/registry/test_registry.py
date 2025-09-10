@@ -9,7 +9,7 @@ import pytest
 
 from llama_stack.apis.inference import Model
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.distribution.store.registry import (
+from llama_stack.core.store.registry import (
     KEY_FORMAT,
     CachedDiskDistributionRegistry,
     DiskDistributionRegistry,
@@ -38,14 +38,12 @@ def sample_model():
     )
 
 
-@pytest.mark.asyncio
 async def test_registry_initialization(disk_dist_registry):
     # Test empty registry
     result = await disk_dist_registry.get("nonexistent", "nonexistent")
     assert result is None
 
 
-@pytest.mark.asyncio
 async def test_basic_registration(disk_dist_registry, sample_vector_db, sample_model):
     print(f"Registering {sample_vector_db}")
     await disk_dist_registry.register(sample_vector_db)
@@ -64,7 +62,6 @@ async def test_basic_registration(disk_dist_registry, sample_vector_db, sample_m
     assert result_model.provider_id == sample_model.provider_id
 
 
-@pytest.mark.asyncio
 async def test_cached_registry_initialization(sqlite_kvstore, sample_vector_db, sample_model):
     # First populate the disk registry
     disk_registry = DiskDistributionRegistry(sqlite_kvstore)
@@ -85,7 +82,6 @@ async def test_cached_registry_initialization(sqlite_kvstore, sample_vector_db, 
     assert result_vector_db.provider_id == sample_vector_db.provider_id
 
 
-@pytest.mark.asyncio
 async def test_cached_registry_updates(cached_disk_dist_registry):
     new_vector_db = VectorDB(
         identifier="test_vector_db_2",
@@ -112,7 +108,6 @@ async def test_cached_registry_updates(cached_disk_dist_registry):
     assert result_vector_db.provider_id == new_vector_db.provider_id
 
 
-@pytest.mark.asyncio
 async def test_duplicate_provider_registration(cached_disk_dist_registry):
     original_vector_db = VectorDB(
         identifier="test_vector_db_2",
@@ -137,7 +132,6 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
     assert result.embedding_model == original_vector_db.embedding_model  # Original values preserved
 
 
-@pytest.mark.asyncio
 async def test_get_all_objects(cached_disk_dist_registry):
     # Create multiple test banks
     # Create multiple test banks
@@ -170,7 +164,6 @@ async def test_get_all_objects(cached_disk_dist_registry):
         assert stored_vector_db.embedding_dimension == original_vector_db.embedding_dimension
 
 
-@pytest.mark.asyncio
 async def test_parse_registry_values_error_handling(sqlite_kvstore):
     valid_db = VectorDB(
         identifier="valid_vector_db",
@@ -209,7 +202,6 @@ async def test_parse_registry_values_error_handling(sqlite_kvstore):
     assert invalid_obj is None
 
 
-@pytest.mark.asyncio
 async def test_cached_registry_error_handling(sqlite_kvstore):
     valid_db = VectorDB(
         identifier="valid_cached_db",

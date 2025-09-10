@@ -7,7 +7,6 @@
 import collections
 import functools
 import json
-import logging
 import random
 import re
 import string
@@ -20,7 +19,9 @@ import nltk
 from pythainlp.tokenize import sent_tokenize as sent_tokenize_thai
 from pythainlp.tokenize import word_tokenize as word_tokenize_thai
 
-logger = logging.getLogger()
+from llama_stack.log import get_logger
+
+logger = get_logger(name=__name__, category="scoring")
 
 WORD_LIST = [
     "western",

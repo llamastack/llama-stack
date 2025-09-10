@@ -22,12 +22,8 @@ from llama_stack.apis.post_training import (
 from llama_stack.providers.inline.post_training.huggingface.config import (
     HuggingFacePostTrainingConfig,
 )
-from llama_stack.providers.inline.post_training.huggingface.recipes.finetune_single_device import (
-    HFFinetuningSingleDevice,
-)
 from llama_stack.providers.utils.scheduler import JobArtifact, Scheduler
 from llama_stack.providers.utils.scheduler import JobStatus as SchedulerJobStatus
-from llama_stack.schema_utils import webmethod
 
 
 class TrainingArtifactType(Enum):
@@ -36,6 +32,7 @@ class TrainingArtifactType(Enum):
 
 
 _JOB_TYPE_SUPERVISED_FINE_TUNE = "supervised-fine-tune"
+_JOB_TYPE_DPO_TRAINING = "dpo-training"
 
 
 class HuggingFacePostTrainingImpl:
@@ -81,6 +78,10 @@ class HuggingFacePostTrainingImpl:
         algorithm_config: AlgorithmConfig | None = None,
     ) -> PostTrainingJob:
         async def handler(on_log_message_cb, on_status_change_cb, on_artifact_collected_cb):
+            from llama_stack.providers.inline.post_training.huggingface.recipes.finetune_single_device import (
+                HFFinetuningSingleDevice,
+            )
+
             on_log_message_cb("Starting HF finetuning")
 
             recipe = HFFinetuningSingleDevice(
@@ -119,12 +120,41 @@ class HuggingFacePostTrainingImpl:
         hyperparam_search_config: dict[str, Any],
         logger_config: dict[str, Any],
     ) -> PostTrainingJob:
-        raise NotImplementedError("DPO alignment is not implemented yet")
+        async def handler(on_log_message_cb, on_status_change_cb, on_artifact_collected_cb):
+            from llama_stack.providers.inline.post_training.huggingface.recipes.finetune_single_device_dpo import (
+                HFDPOAlignmentSingleDevice,
+            )
 
-    async def get_training_jobs(self) -> ListPostTrainingJobsResponse:
-        return ListPostTrainingJobsResponse(
-            data=[PostTrainingJob(job_uuid=job.id) for job in self._scheduler.get_jobs()]
-        )
+            on_log_message_cb("Starting HF DPO alignment")
+
+            recipe = HFDPOAlignmentSingleDevice(
+                job_uuid=job_uuid,
+                datasetio_api=self.datasetio_api,
+                datasets_api=self.datasets_api,
+            )
+
+            resources_allocated, checkpoints = await recipe.train(
+                model=finetuned_model,
+                output_dir=f"{self.config.dpo_output_dir}/{job_uuid}",
+                job_uuid=job_uuid,
+                dpo_config=algorithm_config,
+                config=training_config,
+                provider_config=self.config,
+            )
+
+            on_artifact_collected_cb(self._resources_stats_to_artifact(resources_allocated))
+            if checkpoints:
+                for checkpoint in checkpoints:
+                    artifact = self._checkpoint_to_artifact(checkpoint)
+                    on_artifact_collected_cb(artifact)
+            else:
+                on_log_message_cb("Warning: No checkpoints were saved during DPO training")
+
+            on_status_change_cb(SchedulerJobStatus.completed)
+            on_log_message_cb("HF DPO alignment completed")
+
+        job_uuid = self._scheduler.schedule(_JOB_TYPE_DPO_TRAINING, job_uuid, handler)
+        return PostTrainingJob(job_uuid=job_uuid)
 
     @staticmethod
     def _get_artifacts_metadata_by_type(job, artifact_type):
@@ -139,7 +169,6 @@ class HuggingFacePostTrainingImpl:
         data = cls._get_artifacts_metadata_by_type(job, TrainingArtifactType.RESOURCES_STATS.value)
         return data[0] if data else None
 
-    @webmethod(route="/post-training/job/status")
     async def get_training_job_status(self, job_uuid: str) -> PostTrainingJobStatusResponse | None:
         job = self._scheduler.get_job(job_uuid)
 
@@ -166,11 +195,14 @@ class HuggingFacePostTrainingImpl:
             resources_allocated=self._get_resources_allocated(job),
         )
 
-    @webmethod(route="/post-training/job/cancel")
     async def cancel_training_job(self, job_uuid: str) -> None:
         self._scheduler.cancel(job_uuid)
 
-    @webmethod(route="/post-training/job/artifacts")
     async def get_training_job_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse | None:
         job = self._scheduler.get_job(job_uuid)
         return PostTrainingJobArtifactsResponse(job_uuid=job_uuid, checkpoints=self._get_checkpoints(job))
+
+    async def get_training_jobs(self) -> ListPostTrainingJobsResponse:
+        return ListPostTrainingJobsResponse(
+            data=[PostTrainingJob(job_uuid=job.id) for job in self._scheduler.get_jobs()]
+        )

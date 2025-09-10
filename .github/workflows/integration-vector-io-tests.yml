@@ -1,0 +1,203 @@
+name: Vector IO Integration Tests
+
+run-name: Run the integration test suite with various VectorIO providers
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'llama_stack/**'
+      - '!llama_stack/ui/**'
+      - 'tests/integration/vector_io/**'
+      - 'uv.lock'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - '.github/workflows/integration-vector-io-tests.yml' # This workflow
+  schedule:
+    - cron: '0 0 * * *'  # (test on python 3.13) Daily at 12 AM UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant"]
+        python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
+      fail-fast: false # we want to run all tests regardless of failure
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup Chroma
+        if: matrix.vector-io-provider == 'remote::chromadb'
+        run: |
+          docker run --rm -d --pull always \
+            --name chromadb \
+            -p 8000:8000 \
+            -v ~/chroma:/chroma/chroma \
+            -e IS_PERSISTENT=TRUE \
+            -e ANONYMIZED_TELEMETRY=FALSE \
+            chromadb/chroma:latest
+
+      - name: Setup Weaviate
+        if: matrix.vector-io-provider == 'remote::weaviate'
+        run: |
+          docker run --rm -d --pull always \
+          --name weaviate \
+          -p 8080:8080 -p 50051:50051 \
+          cr.weaviate.io/semitechnologies/weaviate:1.32.0
+
+      - name: Start PGVector DB
+        if: matrix.vector-io-provider == 'remote::pgvector'
+        run: |
+          docker run -d \
+            --name pgvector \
+            -e POSTGRES_USER=llamastack \
+            -e POSTGRES_PASSWORD=llamastack \
+            -e POSTGRES_DB=llamastack \
+            -p 5432:5432 \
+            pgvector/pgvector:pg17
+
+      - name: Wait for PGVector to be ready
+        if: matrix.vector-io-provider == 'remote::pgvector'
+        run: |
+          echo "Waiting for Postgres to be ready..."
+          for i in {1..30}; do
+            if docker exec pgvector pg_isready -U llamastack > /dev/null 2>&1; then
+              echo "Postgres is ready!"
+              break
+            fi
+            echo "Not ready yet... ($i)"
+            sleep 1
+          done
+
+      - name: Enable pgvector extension
+        if: matrix.vector-io-provider == 'remote::pgvector'
+        run: |
+          PGPASSWORD=llamastack psql -h localhost -U llamastack -d llamastack \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Setup Qdrant
+        if: matrix.vector-io-provider == 'remote::qdrant'
+        run: |
+          docker run --rm -d --pull always \
+            --name qdrant \
+            -p 6333:6333 \
+            qdrant/qdrant
+
+      - name: Wait for Qdrant to be ready
+        if: matrix.vector-io-provider == 'remote::qdrant'
+        run: |
+          echo "Waiting for Qdrant to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:6333/collections | grep -q '"status":"ok"'; then
+              echo "Qdrant is ready!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Qdrant failed to start"
+          docker logs qdrant
+          exit 1
+
+      - name: Wait for ChromaDB to be ready
+        if: matrix.vector-io-provider == 'remote::chromadb'
+        run: |
+          echo "Waiting for ChromaDB to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8000/api/v2/heartbeat | grep -q "nanosecond heartbeat"; then
+              echo "ChromaDB is ready!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "ChromaDB failed to start"
+          docker logs chromadb
+          exit 1
+
+      - name: Wait for Weaviate to be ready
+        if: matrix.vector-io-provider == 'remote::weaviate'
+        run: |
+          echo "Waiting for Weaviate to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080 | grep -q "https://weaviate.io/developers/weaviate/current/"; then
+              echo "Weaviate is ready!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Weaviate failed to start"
+          docker logs weaviate
+          exit 1
+
+      - name: Build Llama Stack
+        run: |
+          uv run --no-sync llama stack build --template ci-tests --image-type venv
+
+      - name: Check Storage and Memory Available Before Tests
+        if: ${{ always() }}
+        run: |
+          free -h
+          df -h
+
+      - name: Run Vector IO Integration Tests
+        env:
+          ENABLE_CHROMADB: ${{ matrix.vector-io-provider == 'remote::chromadb' && 'true' || '' }}
+          CHROMADB_URL: ${{ matrix.vector-io-provider == 'remote::chromadb' && 'http://localhost:8000' || '' }}
+          ENABLE_PGVECTOR: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'true' || '' }}
+          PGVECTOR_HOST: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'localhost' || '' }}
+          PGVECTOR_PORT: ${{ matrix.vector-io-provider == 'remote::pgvector' && '5432' || '' }}
+          PGVECTOR_DB: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
+          PGVECTOR_USER: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
+          PGVECTOR_PASSWORD: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
+          ENABLE_QDRANT: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'true' || '' }}
+          QDRANT_URL: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'http://localhost:6333' || '' }}
+          ENABLE_WEAVIATE: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'true' || '' }}
+          WEAVIATE_CLUSTER_URL: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'localhost:8080' || '' }}
+        run: |
+          uv run --no-sync \
+            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
+            tests/integration/vector_io \
+            --embedding-model inline::sentence-transformers/all-MiniLM-L6-v2
+
+      - name: Check Storage and Memory Available After Tests
+        if: ${{ always() }}
+        run: |
+          free -h
+          df -h
+
+      - name: Create sanitized provider name
+        if: ${{ always() }}
+        run: |
+          echo "SANITIZED_PROVIDER=$(echo "${{ matrix.vector-io-provider }}" | tr ':' '_')" >> $GITHUB_ENV
+
+      - name: Write ChromaDB logs to file
+        if: ${{ always() && matrix.vector-io-provider == 'remote::chromadb' }}
+        run: |
+          docker logs chromadb > chromadb.log
+
+      - name: Write Qdrant logs to file
+        if: ${{ always() && matrix.vector-io-provider == 'remote::qdrant' }}
+        run: |
+          docker logs qdrant > qdrant.log
+
+      - name: Upload all logs to artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: vector-io-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.SANITIZED_PROVIDER }}-${{ matrix.python-version }}
+          path: |
+            *.log
+          retention-days: 1

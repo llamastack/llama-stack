@@ -37,13 +37,11 @@ export default function LogsLayout({
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <>
-        {segments.length > 0 && (
-          <PageBreadcrumb segments={segments} className="mb-4" />
-        )}
-        {children}
-      </>
+    <div className="container mx-auto p-4 h-[calc(100vh-64px)] flex flex-col">
+      {segments.length > 0 && (
+        <PageBreadcrumb segments={segments} className="mb-4" />
+      )}
+      <div className="flex-1 min-h-0 flex flex-col">{children}</div>
     </div>
   );
 }

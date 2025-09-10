@@ -2,7 +2,7 @@ import { ChatMessage, ChatMessageContentPart } from "@/lib/types";
 import { formatToolCallToString } from "@/lib/format-tool-call";
 
 export function extractTextFromContentPart(
-  content: string | ChatMessageContentPart[] | null | undefined,
+  content: string | ChatMessageContentPart[] | null | undefined
 ): string {
   if (content === null || content === undefined) {
     return "";
@@ -37,7 +37,7 @@ export function extractTextFromContentPart(
 }
 
 export function extractDisplayableText(
-  message: ChatMessage | undefined | null,
+  message: ChatMessage | undefined | null
 ): string {
   if (!message) {
     return "";

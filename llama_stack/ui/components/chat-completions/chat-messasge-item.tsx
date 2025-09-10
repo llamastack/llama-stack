@@ -7,7 +7,7 @@ import { extractTextFromContentPart } from "@/lib/format-message-content";
 import {
   MessageBlock,
   ToolCallBlock,
-} from "@/components/ui/message-components";
+} from "@/components/chat-playground/message-components";
 
 interface ChatMessageItemProps {
   message: ChatMessage;
@@ -37,21 +37,26 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
       ) {
         return (
           <>
-            {message.tool_calls.map((toolCall: any, index: number) => {
-              const formattedToolCall = formatToolCallToString(toolCall);
-              const toolCallContent = (
-                <ToolCallBlock>
-                  {formattedToolCall || "Error: Could not display tool call"}
-                </ToolCallBlock>
-              );
-              return (
-                <MessageBlock
-                  key={index}
-                  label="Tool Call"
-                  content={toolCallContent}
-                />
-              );
-            })}
+            {message.tool_calls.map(
+              (
+                toolCall: { function?: { name?: string; arguments?: unknown } },
+                index: number
+              ) => {
+                const formattedToolCall = formatToolCallToString(toolCall);
+                const toolCallContent = (
+                  <ToolCallBlock>
+                    {formattedToolCall || "Error: Could not display tool call"}
+                  </ToolCallBlock>
+                );
+                return (
+                  <MessageBlock
+                    key={index}
+                    label="Tool Call"
+                    content={toolCallContent}
+                  />
+                );
+              }
+            )}
           </>
         );
       } else {

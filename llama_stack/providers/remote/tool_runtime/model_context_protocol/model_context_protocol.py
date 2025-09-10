@@ -15,7 +15,7 @@ from llama_stack.apis.tools import (
     ToolInvocationResult,
     ToolRuntime,
 )
-from llama_stack.distribution.request_headers import NeedsRequestProviderData
+from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
 from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool, list_mcp_tools

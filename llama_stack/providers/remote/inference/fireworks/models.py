@@ -4,12 +4,23 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.apis.models.models import ModelType
+from llama_stack.apis.models import ModelType
 from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack.providers.utils.inference.model_registry import (
     ProviderModelEntry,
     build_hf_repo_model_entry,
 )
+
+SAFETY_MODELS_ENTRIES = [
+    build_hf_repo_model_entry(
+        "accounts/fireworks/models/llama-guard-3-8b",
+        CoreModelId.llama_guard_3_8b.value,
+    ),
+    build_hf_repo_model_entry(
+        "accounts/fireworks/models/llama-guard-3-11b-vision",
+        CoreModelId.llama_guard_3_11b_vision.value,
+    ),
+]
 
 MODEL_ENTRIES = [
     build_hf_repo_model_entry(
@@ -41,14 +52,6 @@ MODEL_ENTRIES = [
         CoreModelId.llama3_3_70b_instruct.value,
     ),
     build_hf_repo_model_entry(
-        "accounts/fireworks/models/llama-guard-3-8b",
-        CoreModelId.llama_guard_3_8b.value,
-    ),
-    build_hf_repo_model_entry(
-        "accounts/fireworks/models/llama-guard-3-11b-vision",
-        CoreModelId.llama_guard_3_11b_vision.value,
-    ),
-    build_hf_repo_model_entry(
         "accounts/fireworks/models/llama4-scout-instruct-basic",
         CoreModelId.llama4_scout_17b_16e_instruct.value,
     ),
@@ -64,4 +67,4 @@ MODEL_ENTRIES = [
             "context_length": 8192,
         },
     ),
-]
+] + SAFETY_MODELS_ENTRIES

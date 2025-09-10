@@ -7,8 +7,8 @@
 import pytest
 from pydantic import BaseModel
 
-from llama_stack.distribution.distribution import get_provider_registry, providable_apis
-from llama_stack.distribution.utils.dynamic import instantiate_class_type
+from llama_stack.core.distribution import get_provider_registry, providable_apis
+from llama_stack.core.utils.dynamic import instantiate_class_type
 
 
 class TestProviderConfigurations:

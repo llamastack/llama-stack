@@ -1,0 +1,222 @@
+# remote::milvus
+
+## Description
+
+
+[Milvus](https://milvus.io/) is an inline and remote vector database provider for Llama Stack. It
+allows you to store and query vectors directly within a Milvus database.
+That means you're not limited to storing vectors in memory or in a separate service.
+
+## Features
+
+- Easy to use
+- Fully integrated with Llama Stack
+- Supports all search modes: vector, keyword, and hybrid search (both inline and remote configurations)
+
+## Usage
+
+To use Milvus in your Llama Stack project, follow these steps:
+
+1. Install the necessary dependencies.
+2. Configure your Llama Stack project to use Milvus.
+3. Start storing and querying vectors.
+
+## Installation
+
+You can install Milvus using pymilvus:
+
+```bash
+pip install pymilvus
+```
+
+## Configuration
+
+In Llama Stack, Milvus can be configured in two ways:
+- **Inline (Local) Configuration** - Uses Milvus-Lite for local storage
+- **Remote Configuration** - Connects to a remote Milvus server
+
+### Inline (Local) Configuration
+
+The simplest method is local configuration, which requires setting `db_path`, a path for locally storing Milvus-Lite files:
+
+```yaml
+vector_io:
+  - provider_id: milvus
+    provider_type: inline::milvus
+    config:
+      db_path: ~/.llama/distributions/together/milvus_store.db
+```
+
+### Remote Configuration
+
+Remote configuration is suitable for larger data storage requirements:
+
+#### Standard Remote Connection
+
+```yaml
+vector_io:
+  - provider_id: milvus
+    provider_type: remote::milvus
+    config:
+      uri: "http://<host>:<port>"
+      token: "<user>:<password>"
+```
+
+#### TLS-Enabled Remote Connection (One-way TLS)
+
+For connections to Milvus instances with one-way TLS enabled:
+
+```yaml
+vector_io:
+  - provider_id: milvus
+    provider_type: remote::milvus
+    config:
+      uri: "https://<host>:<port>"
+      token: "<user>:<password>"
+      secure: True
+      server_pem_path: "/path/to/server.pem"
+```
+
+#### Mutual TLS (mTLS) Remote Connection
+
+For connections to Milvus instances with mutual TLS (mTLS) enabled:
+
+```yaml
+vector_io:
+  - provider_id: milvus
+    provider_type: remote::milvus
+    config:
+      uri: "https://<host>:<port>"
+      token: "<user>:<password>"
+      secure: True
+      ca_pem_path: "/path/to/ca.pem"
+      client_pem_path: "/path/to/client.pem"
+      client_key_path: "/path/to/client.key"
+```
+
+#### Key Parameters for TLS Configuration
+
+- **`secure`**: Enables TLS encryption when set to `true`. Defaults to `false`.
+- **`server_pem_path`**: Path to the **server certificate** for verifying the server's identity (used in one-way TLS).
+- **`ca_pem_path`**: Path to the **Certificate Authority (CA) certificate** for validating the server certificate (required in mTLS).
+- **`client_pem_path`**: Path to the **client certificate** file (required for mTLS).
+- **`client_key_path`**: Path to the **client private key** file (required for mTLS).
+
+## Search Modes
+
+Milvus supports three different search modes for both inline and remote configurations:
+
+### Vector Search
+Vector search uses semantic similarity to find the most relevant chunks based on embedding vectors. This is the default search mode and works well for finding conceptually similar content.
+
+```python
+# Vector search example
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="What is machine learning?",
+    search_mode="vector",
+    max_num_results=5,
+)
+```
+
+### Keyword Search
+Keyword search uses traditional text-based matching to find chunks containing specific terms or phrases. This is useful when you need exact term matches.
+
+```python
+# Keyword search example
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="Python programming language",
+    search_mode="keyword",
+    max_num_results=5,
+)
+```
+
+### Hybrid Search
+Hybrid search combines both vector and keyword search methods to provide more comprehensive results. It leverages the strengths of both semantic similarity and exact term matching.
+
+#### Basic Hybrid Search
+```python
+# Basic hybrid search example (uses RRF ranker with default impact_factor=60.0)
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="neural networks in Python",
+    search_mode="hybrid",
+    max_num_results=5,
+)
+```
+
+**Note**: The default `impact_factor` value of 60.0 was empirically determined to be optimal in the original RRF research paper: ["Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods"](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) (Cormack et al., 2009).
+
+#### Hybrid Search with RRF (Reciprocal Rank Fusion) Ranker
+RRF combines rankings from vector and keyword search by using reciprocal ranks. The impact factor controls how much weight is given to higher-ranked results.
+
+```python
+# Hybrid search with custom RRF parameters
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="neural networks in Python",
+    search_mode="hybrid",
+    max_num_results=5,
+    ranking_options={
+        "ranker": {
+            "type": "rrf",
+            "impact_factor": 100.0,  # Higher values give more weight to top-ranked results
+        }
+    },
+)
+```
+
+#### Hybrid Search with Weighted Ranker
+Weighted ranker linearly combines normalized scores from vector and keyword search. The alpha parameter controls the balance between the two search methods.
+
+```python
+# Hybrid search with weighted ranker
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="neural networks in Python",
+    search_mode="hybrid",
+    max_num_results=5,
+    ranking_options={
+        "ranker": {
+            "type": "weighted",
+            "alpha": 0.7,  # 70% vector search, 30% keyword search
+        }
+    },
+)
+```
+
+For detailed documentation on RRF and Weighted rankers, please refer to the [Milvus Reranking Guide](https://milvus.io/docs/reranking.md).
+
+## Documentation
+See the [Milvus documentation](https://milvus.io/docs/install-overview.md) for more details about Milvus in general.
+
+For more details on TLS configuration, refer to the [TLS setup guide](https://milvus.io/docs/tls.md).
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `uri` | `<class 'str'>` | No |  | The URI of the Milvus server |
+| `token` | `str \| None` | No |  | The token of the Milvus server |
+| `consistency_level` | `<class 'str'>` | No | Strong | The consistency level of the Milvus server |
+| `kvstore` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig` | No | sqlite | Config for KV store backend |
+| `config` | `dict` | No | {} | This configuration allows additional fields to be passed through to the underlying Milvus client. See the [Milvus](https://milvus.io/docs/install-overview.md) documentation for more details about Milvus in general. |
+
+```{note}
+ This configuration class accepts additional fields beyond those listed above. You can pass any additional configuration options that will be forwarded to the underlying provider.
+ ```
+
+
+## Sample Configuration
+
+```yaml
+uri: ${env.MILVUS_ENDPOINT}
+token: ${env.MILVUS_TOKEN}
+kvstore:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/milvus_remote_registry.db
+
+```
+

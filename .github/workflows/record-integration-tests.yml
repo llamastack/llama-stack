@@ -1,0 +1,70 @@
+# This workflow should be run manually when needing to re-record tests. This happens when you have
+#  - added a new test
+#  - or changed an existing test such that a new inference call is made
+# You should make a PR and then run this workflow on that PR branch. The workflow will re-record the
+# tests and commit the recordings to the PR branch.
+name: Integration Tests (Record)
+
+run-name: Run the integration test suite from tests/integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      test-setup:
+        description: 'Test against a specific setup'
+        type: string
+        default: 'ollama'
+      suite:
+        description: 'Test suite to use: base, responses, vision, etc.'
+        type: string
+        default: ''
+      subdirs:
+        description: 'Comma-separated list of test subdirectories to run; overrides suite'
+        type: string
+        default: ''
+      pattern:
+        description: 'Regex pattern to pass to pytest -k'
+        type: string
+        default: ''
+
+jobs:
+  record-tests:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Echo workflow inputs
+        run: |
+          echo "::group::Workflow Inputs"
+          echo "branch: ${{ github.ref_name }}"
+          echo "test-setup: ${{ inputs.test-setup }}"
+          echo "suite: ${{ inputs.suite }}"
+          echo "subdirs: ${{ inputs.subdirs }}"
+          echo "pattern: ${{ inputs.pattern }}"
+          echo "::endgroup::"
+
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup test environment
+        uses: ./.github/actions/setup-test-environment
+        with:
+          python-version: "3.12"  # Use single Python version for recording
+          client-version: "latest"
+          setup: ${{ inputs.test-setup || 'ollama' }}
+          suite: ${{ inputs.suite }}
+          inference-mode: 'record'
+
+      - name: Run and record tests
+        uses: ./.github/actions/run-and-record-tests
+        with:
+          stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
+          setup: ${{ inputs.test-setup || 'ollama' }}
+          inference-mode: 'record'
+          suite: ${{ inputs.suite }}
+          subdirs: ${{ inputs.subdirs }}
+          pattern: ${{ inputs.pattern }}

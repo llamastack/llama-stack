@@ -5,7 +5,9 @@
  *                 with `name` and `arguments`.
  * @returns A formatted string or an empty string if data is malformed.
  */
-export function formatToolCallToString(toolCall: any): string {
+export function formatToolCallToString(toolCall: {
+  function?: { name?: string; arguments?: unknown };
+}): string {
   if (
     !toolCall ||
     !toolCall.function ||
@@ -24,7 +26,7 @@ export function formatToolCallToString(toolCall: any): string {
   } else {
     try {
       argsString = JSON.stringify(args);
-    } catch (error) {
+    } catch {
       return "";
     }
   }

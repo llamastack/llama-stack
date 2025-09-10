@@ -23,7 +23,7 @@ class LocalfsFilesImplConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
         return {
-            "storage_dir": "${env.FILES_STORAGE_DIR:" + __distro_dir__ + "/files}",
+            "storage_dir": "${env.FILES_STORAGE_DIR:=" + __distro_dir__ + "/files}",
             "metadata_store": SqliteSqlStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="files_metadata.db",

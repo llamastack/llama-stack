@@ -65,6 +65,7 @@ class CerebrasInferenceAdapter(
         )
         self.config = config
 
+        # TODO: make this use provider data, etc. like other providers
         self.client = AsyncCerebras(
             base_url=self.config.base_url,
             api_key=self.config.api_key.get_secret_value(),

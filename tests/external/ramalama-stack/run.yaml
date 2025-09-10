@@ -1,0 +1,12 @@
+version: 2
+image_name: ramalama
+apis:
+- inference
+providers:
+  inference:
+  - provider_id: ramalama
+    provider_type: remote::ramalama
+    module: ramalama_stack==0.3.0a0
+    config: {}
+server:
+  port: 8321

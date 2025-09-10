@@ -57,7 +57,7 @@ Make sure you have access to a watsonx API Key. You can get one by referring [wa
 
 ## Running Llama Stack with watsonx
 
-You can do this via Conda (build code), venv or Docker which has a pre-built image.
+You can do this via venv or Docker which has a pre-built image.
 
 ### Via Docker
 
@@ -75,14 +75,4 @@ docker run \
   --env WATSONX_API_KEY=$WATSONX_API_KEY \
   --env WATSONX_PROJECT_ID=$WATSONX_PROJECT_ID \
   --env WATSONX_BASE_URL=$WATSONX_BASE_URL
-```
-
-### Via Conda
-
-```bash
-llama stack build --template watsonx --image-type conda
-llama stack run ./run.yaml \
-  --port $LLAMA_STACK_PORT \
-  --env WATSONX_API_KEY=$WATSONX_API_KEY \
-  --env WATSONX_PROJECT_ID=$WATSONX_PROJECT_ID
 ```

@@ -18,6 +18,9 @@ class SqliteKVStoreImpl(KVStore):
         self.db_path = config.db_path
         self.table_name = "kvstore"
 
+    def __str__(self):
+        return f"SqliteKVStoreImpl(db_path={self.db_path}, table_name={self.table_name})"
+
     async def initialize(self):
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         async with aiosqlite.connect(self.db_path) as db:

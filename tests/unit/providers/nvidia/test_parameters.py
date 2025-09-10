@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import os
-import unittest
 import warnings
 from unittest.mock import patch
 
@@ -20,21 +19,20 @@ from llama_stack.apis.post_training.post_training import (
     OptimizerType,
     TrainingConfig,
 )
-from llama_stack.distribution.library_client import convert_pydantic_to_json_value
+from llama_stack.core.library_client import convert_pydantic_to_json_value
 from llama_stack.providers.remote.post_training.nvidia.post_training import (
     NvidiaPostTrainingAdapter,
     NvidiaPostTrainingConfig,
 )
 
 
-class TestNvidiaParameters(unittest.TestCase):
-    def setUp(self):
-        os.environ["NVIDIA_BASE_URL"] = "http://nemo.test"
+class TestNvidiaParameters:
+    @pytest.fixture(autouse=True)
+    def setup_and_teardown(self):
+        """Setup and teardown for each test method."""
         os.environ["NVIDIA_CUSTOMIZER_URL"] = "http://nemo.test"
 
-        config = NvidiaPostTrainingConfig(
-            base_url=os.environ["NVIDIA_BASE_URL"], customizer_url=os.environ["NVIDIA_CUSTOMIZER_URL"], api_key=None
-        )
+        config = NvidiaPostTrainingConfig(customizer_url=os.environ["NVIDIA_CUSTOMIZER_URL"], api_key=None)
         self.adapter = NvidiaPostTrainingAdapter(config)
 
         self.make_request_patcher = patch(
@@ -48,7 +46,8 @@ class TestNvidiaParameters(unittest.TestCase):
             "updated_at": "2025-03-04T13:07:47.543605",
         }
 
-    def tearDown(self):
+        yield
+
         self.make_request_patcher.stop()
 
     def _assert_request_params(self, expected_json):
@@ -166,8 +165,8 @@ class TestNvidiaParameters(unittest.TestCase):
 
             self.run_async(
                 self.adapter.supervised_fine_tune(
-                    job_uuid=required_job_uuid,  # Required parameter
-                    model=required_model,  # Required parameter
+                    job_uuid=required_job_uuid,
+                    model=required_model,
                     checkpoint_dir="",
                     algorithm_config=algorithm_config,
                     training_config=convert_pydantic_to_json_value(training_config),
@@ -198,7 +197,6 @@ class TestNvidiaParameters(unittest.TestCase):
         data_config = DataConfig(
             dataset_id="test-dataset",
             batch_size=8,
-            # Unsupported parameters
             shuffle=True,
             data_format=DatasetFormat.instruct,
             validation_dataset_id="val-dataset",
@@ -207,20 +205,16 @@ class TestNvidiaParameters(unittest.TestCase):
         optimizer_config = OptimizerConfig(
             lr=0.0001,
             weight_decay=0.01,
-            # Unsupported parameters
             optimizer_type=OptimizerType.adam,
             num_warmup_steps=100,
         )
 
-        efficiency_config = EfficiencyConfig(
-            enable_activation_checkpointing=True  # Unsupported parameter
-        )
+        efficiency_config = EfficiencyConfig(enable_activation_checkpointing=True)
 
         training_config = TrainingConfig(
             n_epochs=1,
             data_config=data_config,
             optimizer_config=optimizer_config,
-            # Unsupported parameters
             efficiency_config=efficiency_config,
             max_steps_per_epoch=1000,
             gradient_accumulation_steps=4,
@@ -228,7 +222,6 @@ class TestNvidiaParameters(unittest.TestCase):
             dtype="bf16",
         )
 
-        # Capture warnings
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
@@ -236,7 +229,7 @@ class TestNvidiaParameters(unittest.TestCase):
                 self.adapter.supervised_fine_tune(
                     job_uuid="test-job",
                     model="meta-llama/Llama-3.1-8B-Instruct",
-                    checkpoint_dir="test-dir",  # Unsupported parameter
+                    checkpoint_dir="test-dir",
                     algorithm_config=LoraFinetuningConfig(
                         type="LoRA",
                         apply_lora_to_mlp=True,
@@ -246,8 +239,8 @@ class TestNvidiaParameters(unittest.TestCase):
                         lora_attn_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
                     ),
                     training_config=convert_pydantic_to_json_value(training_config),
-                    logger_config={"test": "value"},  # Unsupported parameter
-                    hyperparam_search_config={"test": "value"},  # Unsupported parameter
+                    logger_config={"test": "value"},
+                    hyperparam_search_config={"test": "value"},
                 )
             )
 
@@ -265,7 +258,6 @@ class TestNvidiaParameters(unittest.TestCase):
                 "gradient_accumulation_steps",
                 "max_validation_steps",
                 "dtype",
-                # required unsupported parameters
                 "rank",
                 "apply_lora_to_output",
                 "lora_attn_modules",
@@ -273,7 +265,3 @@ class TestNvidiaParameters(unittest.TestCase):
             ]
             for field in fields:
                 assert any(field in text for text in warning_texts)
-
-
-if __name__ == "__main__":
-    unittest.main()

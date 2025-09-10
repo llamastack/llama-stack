@@ -100,6 +100,7 @@ const config: Config = {
     // However, for mocks, sometimes explicit mapping is needed.
     "^@/lib/(.*)$": "<rootDir>/lib/$1",
     "^@/components/(.*)$": "<rootDir>/components/$1",
+    "^@/hooks/(.*)$": "<rootDir>/hooks/$1",
     // Add other aliases here if needed
   },
 
@@ -148,7 +149,7 @@ const config: Config = {
   // setupFiles: [],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
-  // setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
 
   // The number of seconds after which a test is considered as slow and reported as such in the results.
   // slowTestThreshold: 5,
@@ -172,9 +173,7 @@ const config: Config = {
   // ],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-  // testPathIgnorePatterns: [
-  //   "/node_modules/"
-  // ],
+  testPathIgnorePatterns: ["/e2e/"],
 
   // The regexp pattern or array of patterns that Jest uses to detect test files
   // testRegex: [],

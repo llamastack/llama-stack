@@ -107,7 +107,7 @@ def verify_files(model_dir: Path, checksums: dict[str, str], console: Console) -
 
 
 def run_verify_cmd(args: argparse.Namespace, parser: argparse.ArgumentParser):
-    from llama_stack.distribution.utils.model_utils import model_local_dir
+    from llama_stack.core.utils.model_utils import model_local_dir
 
     console = Console()
     model_dir = Path(model_local_dir(args.model_id))

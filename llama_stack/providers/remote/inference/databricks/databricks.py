@@ -47,7 +47,10 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 
 from .config import DatabricksImplConfig
 
-model_entries = [
+SAFETY_MODELS_ENTRIES = []
+
+# https://docs.databricks.com/aws/en/machine-learning/model-serving/foundation-model-overview
+MODEL_ENTRIES = [
     build_hf_repo_model_entry(
         "databricks-meta-llama-3-1-70b-instruct",
         CoreModelId.llama3_1_70b_instruct.value,
@@ -56,7 +59,7 @@ model_entries = [
         "databricks-meta-llama-3-1-405b-instruct",
         CoreModelId.llama3_1_405b_instruct.value,
     ),
-]
+] + SAFETY_MODELS_ENTRIES
 
 
 class DatabricksInferenceAdapter(
@@ -66,7 +69,7 @@ class DatabricksInferenceAdapter(
     OpenAICompletionToLlamaStackMixin,
 ):
     def __init__(self, config: DatabricksImplConfig) -> None:
-        ModelRegistryHelper.__init__(self, model_entries=model_entries)
+        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
         self.config = config
 
     async def initialize(self) -> None:

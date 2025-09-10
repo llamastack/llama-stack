@@ -22,6 +22,7 @@ class WebMethod:
     # A descriptive name of the corresponding span created by tracing
     descriptive_name: str | None = None
     experimental: bool | None = False
+    required_scope: str | None = None
 
 
 T = TypeVar("T", bound=Callable[..., Any])
@@ -36,6 +37,7 @@ def webmethod(
     raw_bytes_request_body: bool | None = False,
     descriptive_name: str | None = None,
     experimental: bool | None = False,
+    required_scope: str | None = None,
 ) -> Callable[[T], T]:
     """
     Decorator that supplies additional metadata to an endpoint operation function.
@@ -45,6 +47,7 @@ def webmethod(
     :param request_examples: Sample requests that the operation might take. Pass a list of objects, not JSON.
     :param response_examples: Sample responses that the operation might produce. Pass a list of objects, not JSON.
     :param experimental: True if the operation is experimental and subject to change.
+    :param required_scope: Required scope for this endpoint (e.g., 'monitoring.viewer').
     """
 
     def wrap(func: T) -> T:
@@ -57,6 +60,7 @@ def webmethod(
             raw_bytes_request_body=raw_bytes_request_body,
             descriptive_name=descriptive_name,
             experimental=experimental,
+            required_scope=required_scope,
         )
         return func
 

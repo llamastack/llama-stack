@@ -63,18 +63,20 @@ class BedrockInferenceAdapter(
     def __init__(self, config: BedrockConfig) -> None:
         ModelRegistryHelper.__init__(self, MODEL_ENTRIES)
         self._config = config
-
-        self._client = create_bedrock_client(config)
+        self._client = None
 
     @property
     def client(self) -> BaseClient:
+        if self._client is None:
+            self._client = create_bedrock_client(self._config)
         return self._client
 
     async def initialize(self) -> None:
         pass
 
     async def shutdown(self) -> None:
-        self.client.close()
+        if self._client is not None:
+            self._client.close()
 
     async def completion(
         self,

@@ -1,0 +1,30 @@
+name: 🔧 Tech Debt
+description: Something that is functional but should be improved or optimizied
+labels: ["tech-debt"]
+body:
+- type: textarea
+  id: tech-debt-explanation
+  attributes:
+    label: 🤔 What is the technical debt you think should be addressed?
+    description: >
+      A clear and concise description of _what_ needs to be addressed - ensure you are describing
+      constitutes [technical debt](https://en.wikipedia.org/wiki/Technical_debt) and is not a bug
+      or feature request.
+  validations:
+    required: true
+
+- type: textarea
+  id: tech-debt-motivation
+  attributes:
+    label: 💡 What is the benefit of addressing this technical debt?
+    description: >
+      A clear and concise description of _why_ this work is needed.
+  validations:
+    required: true
+
+- type: textarea
+  id: other-thoughts
+  attributes:
+    label: Other thoughts
+    description: >
+      Any thoughts about how this may result in complexity in the codebase, or other trade-offs.

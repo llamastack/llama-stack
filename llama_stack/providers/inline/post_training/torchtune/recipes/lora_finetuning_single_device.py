@@ -4,10 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -19,6 +18,7 @@ from torch.utils.data import DataLoader, DistributedSampler
 from torchtune import modules, training
 from torchtune import utils as torchtune_utils
 from torchtune.data import padded_collate_sft
+from torchtune.models.llama3._tokenizer import Llama3Tokenizer
 from torchtune.modules.loss import CEWithChunkedOutputLoss
 from torchtune.modules.peft import (
     get_adapter_params,
@@ -43,8 +43,9 @@ from llama_stack.apis.post_training import (
     QATFinetuningConfig,
     TrainingConfig,
 )
-from llama_stack.distribution.utils.config_dirs import DEFAULT_CHECKPOINT_DIR
-from llama_stack.distribution.utils.model_utils import model_local_dir
+from llama_stack.core.utils.config_dirs import DEFAULT_CHECKPOINT_DIR
+from llama_stack.core.utils.model_utils import model_local_dir
+from llama_stack.log import get_logger
 from llama_stack.models.llama.sku_list import resolve_model
 from llama_stack.providers.inline.post_training.common.utils import evacuate_model_from_device
 from llama_stack.providers.inline.post_training.torchtune.common import utils
@@ -56,9 +57,7 @@ from llama_stack.providers.inline.post_training.torchtune.config import (
 )
 from llama_stack.providers.inline.post_training.torchtune.datasets.sft import SFTDataset
 
-log = logging.getLogger(__name__)
-
-from torchtune.models.llama3._tokenizer import Llama3Tokenizer
+log = get_logger(name=__name__, category="post_training")
 
 
 class LoraFinetuningSingleDevice:
@@ -537,7 +536,7 @@ class LoraFinetuningSingleDevice:
             checkpoint_path = await self.save_checkpoint(epoch=curr_epoch)
             checkpoint = Checkpoint(
                 identifier=f"{self.model_id}-sft-{curr_epoch}",
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 epoch=curr_epoch,
                 post_training_job_id=self.job_uuid,
                 path=checkpoint_path,

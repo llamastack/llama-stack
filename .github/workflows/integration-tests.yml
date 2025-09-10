@@ -1,120 +1,77 @@
-name: Integration Tests
+name: Integration Tests (Replay)
+
+run-name: Run the integration test suites from tests/integration in replay mode
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    types: [opened, synchronize, reopened]
     paths:
       - 'llama_stack/**'
-      - 'tests/integration/**'
+      - '!llama_stack/ui/**'
+      - 'tests/**'
       - 'uv.lock'
       - 'pyproject.toml'
-      - 'requirements.txt'
       - '.github/workflows/integration-tests.yml' # This workflow
+      - '.github/actions/setup-ollama/action.yml'
+      - '.github/actions/setup-test-environment/action.yml'
+      - '.github/actions/run-and-record-tests/action.yml'
+  schedule:
+    # If changing the cron schedule, update the provider in the test-matrix job
+    - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC
+    - cron: '1 0 * * 0'  # (test vllm) Weekly on Sunday at 1 AM UTC
+  workflow_dispatch:
+    inputs:
+      test-all-client-versions:
+        description: 'Test against both the latest and published versions'
+        type: boolean
+        default: false
+      test-setup:
+        description: 'Test against a specific setup'
+        type: string
+        default: 'ollama'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Skip concurrency for pushes to main - each commit should be tested independently
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test-matrix:
+
+  run-replay-mode-tests:
     runs-on: ubuntu-latest
+    name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.setup, matrix.python-version, matrix.client-version, matrix.suite) }}
+
     strategy:
+      fail-fast: false
       matrix:
-        # Listing tests manually since some of them currently fail
-        # TODO: generate matrix list from tests/integration when fixed
-        test-type: [agents, inference, datasets, inspect, scoring, post_training, providers, tool_runtime]
-        client-type: [library, http]
-        python-version: ["3.10", "3.11", "3.12"]
-      fail-fast: false # we want to run all tests regardless of failure
+        client-type: [library, server]
+        # Use vllm on weekly schedule, otherwise use test-setup input (defaults to ollama)
+        setup: ${{ (github.event.schedule == '1 0 * * 0') && fromJSON('["vllm"]') || fromJSON(format('["{0}"]', github.event.inputs.test-setup || 'ollama')) }}
+        # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
+        python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
+        client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
+        suite: [base, vision]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Install dependencies
-        uses: ./.github/actions/setup-runner
+      - name: Setup test environment
+        uses: ./.github/actions/setup-test-environment
         with:
           python-version: ${{ matrix.python-version }}
+          client-version: ${{ matrix.client-version }}
+          setup: ${{ matrix.setup }}
+          suite: ${{ matrix.suite }}
+          inference-mode: 'replay'
 
-      - name: Setup ollama
-        uses: ./.github/actions/setup-ollama
-
-      - name: Build Llama Stack
-        run: |
-          uv run llama stack build --template ollama --image-type venv
-
-      - name: Start Llama Stack server in background
-        if: matrix.client-type == 'http'
-        env:
-          INFERENCE_MODEL: "meta-llama/Llama-3.2-3B-Instruct"
-        run: |
-          LLAMA_STACK_LOG_FILE=server.log nohup uv run llama stack run ./llama_stack/templates/ollama/run.yaml --image-type venv --env OLLAMA_URL="http://0.0.0.0:11434" &
-
-      - name: Wait for Llama Stack server to be ready
-        if: matrix.client-type == 'http'
-        run: |
-          echo "Waiting for Llama Stack server..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8321/v1/health | grep -q "OK"; then
-              echo "Llama Stack server is up!"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Llama Stack server failed to start"
-          cat server.log
-          exit 1
-
-      - name: Verify Ollama status is OK
-        if: matrix.client-type == 'http'
-        run: |
-          echo "Verifying Ollama status..."
-          ollama_status=$(curl -s -L http://127.0.0.1:8321/v1/providers/ollama|jq --raw-output .health.status)
-          echo "Ollama status: $ollama_status"
-          if [ "$ollama_status" != "OK" ]; then
-            echo "Ollama health check failed"
-            exit 1
-          fi
-
-      - name: Check Storage and Memory Available Before Tests
-        if: ${{ always() }}
-        run: |
-          free -h
-          df -h
-
-      - name: Run Integration Tests
-        env:
-          INFERENCE_MODEL: "meta-llama/Llama-3.2-3B-Instruct"
-          OLLAMA_URL: "http://0.0.0.0:11434"
-        run: |
-          if [ "${{ matrix.client-type }}" == "library" ]; then
-            stack_config="ollama"
-          else
-            stack_config="http://localhost:8321"
-          fi
-          uv run pytest -s -v tests/integration/${{ matrix.test-type }} --stack-config=${stack_config} \
-            -k "not(builtin_tool or safety_with_image or code_interpreter or test_rag)" \
-            --text-model="meta-llama/Llama-3.2-3B-Instruct" \
-            --embedding-model=all-MiniLM-L6-v2
-
-      - name: Check Storage and Memory Available After Tests
-        if: ${{ always() }}
-        run: |
-          free -h
-          df -h
-
-      - name: Write ollama logs to file
-        if: ${{ always() }}
-        run: |
-          sudo docker logs ollama > ollama.log
-
-      - name: Upload all logs to artifacts
-        if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - name: Run tests
+        uses: ./.github/actions/run-and-record-tests
         with:
-          name: logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.client-type }}-${{ matrix.test-type }}-${{ matrix.python-version }}
-          path: |
-            *.log
-          retention-days: 1
+          stack-config: ${{ matrix.client-type == 'library' && 'ci-tests' || 'server:ci-tests' }}
+          setup: ${{ matrix.setup }}
+          inference-mode: 'replay'
+          suite: ${{ matrix.suite }}

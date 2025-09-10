@@ -1,0 +1,49 @@
+name: Python Package Build Test
+
+run-name: Test building the llama-stack PyPI project
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+        - 'llama_stack/ui/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12', '3.13']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
+      with:
+        python-version: ${{ matrix.python-version }}
+        activate-environment: true
+        version: 0.7.6
+
+    - name: Build Llama Stack package
+      run: |
+        uv build
+
+    - name: Install Llama Stack package
+      run: |
+        uv pip install dist/*.whl
+
+    - name: Verify Llama Stack package
+      run: |
+        uv pip list
+        uv pip show llama-stack
+        command -v llama
+        llama model prompt-format -m Llama3.2-90B-Vision-Instruct
+        llama model list
+        llama stack list-apis
+        llama stack list-providers inference

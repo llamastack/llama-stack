@@ -7,7 +7,7 @@ from typing import Any
 
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.inference.inference import Inference
+from llama_stack.apis.inference import Inference
 from llama_stack.apis.scoring import (
     ScoreBatchResponse,
     ScoreResponse,
@@ -15,7 +15,7 @@ from llama_stack.apis.scoring import (
     ScoringResult,
 )
 from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnParams
-from llama_stack.distribution.datatypes import Api
+from llama_stack.core.datatypes import Api
 from llama_stack.providers.datatypes import ScoringFunctionsProtocolPrivate
 from llama_stack.providers.utils.common.data_schema_validator import (
     get_valid_schemas,

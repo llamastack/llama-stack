@@ -15,10 +15,18 @@ from llama_stack.schema_utils import json_schema_type, webmethod
 
 @json_schema_type
 class VectorDB(Resource):
+    """Vector database resource for storing and querying vector embeddings.
+
+    :param type: Type of resource, always 'vector_db' for vector databases
+    :param embedding_model: Name of the embedding model to use for vector generation
+    :param embedding_dimension: Dimension of the embedding vectors
+    """
+
     type: Literal[ResourceType.vector_db] = ResourceType.vector_db
 
     embedding_model: str
     embedding_dimension: int
+    vector_db_name: str | None = None
 
     @property
     def vector_db_id(self) -> str:
@@ -30,13 +38,27 @@ class VectorDB(Resource):
 
 
 class VectorDBInput(BaseModel):
+    """Input parameters for creating or configuring a vector database.
+
+    :param vector_db_id: Unique identifier for the vector database
+    :param embedding_model: Name of the embedding model to use for vector generation
+    :param embedding_dimension: Dimension of the embedding vectors
+    :param provider_vector_db_id: (Optional) Provider-specific identifier for the vector database
+    """
+
     vector_db_id: str
     embedding_model: str
     embedding_dimension: int
+    provider_id: str | None = None
     provider_vector_db_id: str | None = None
 
 
 class ListVectorDBsResponse(BaseModel):
+    """Response from listing vector databases.
+
+    :param data: List of vector databases
+    """
+
     data: list[VectorDB]
 
 
@@ -70,6 +92,7 @@ class VectorDBs(Protocol):
         embedding_model: str,
         embedding_dimension: int | None = 384,
         provider_id: str | None = None,
+        vector_db_name: str | None = None,
         provider_vector_db_id: str | None = None,
     ) -> VectorDB:
         """Register a vector database.
@@ -78,6 +101,7 @@ class VectorDBs(Protocol):
         :param embedding_model: The embedding model to use.
         :param embedding_dimension: The dimension of the embedding model.
         :param provider_id: The identifier of the provider.
+        :param vector_db_name: The name of the vector database.
         :param provider_vector_db_id: The identifier of the vector database in the provider.
         :returns: A VectorDB.
         """

@@ -1,0 +1,13 @@
+version: "2"
+image_name: "llama-stack-api-weather"
+apis:
+  - weather
+providers:
+  weather:
+  - provider_id: kaze
+    provider_type: remote::kaze
+    config: {}
+external_apis_dir: ~/.llama/apis.d
+external_providers_dir: ~/.llama/providers.d
+server:
+  port: 8321

@@ -15,6 +15,11 @@ from llama_stack.schema_utils import json_schema_type, register_schema
 
 @json_schema_type
 class URL(BaseModel):
+    """A URL reference to external content.
+
+    :param uri: The URL string pointing to the resource
+    """
+
     uri: str
 
 
@@ -76,17 +81,36 @@ register_schema(InterleavedContent, name="InterleavedContent")
 
 @json_schema_type
 class TextDelta(BaseModel):
+    """A text content delta for streaming responses.
+
+    :param type: Discriminator type of the delta. Always "text"
+    :param text: The incremental text content
+    """
+
     type: Literal["text"] = "text"
     text: str
 
 
 @json_schema_type
 class ImageDelta(BaseModel):
+    """An image content delta for streaming responses.
+
+    :param type: Discriminator type of the delta. Always "image"
+    :param image: The incremental image data as bytes
+    """
+
     type: Literal["image"] = "image"
     image: bytes
 
 
 class ToolCallParseStatus(Enum):
+    """Status of tool call parsing during streaming.
+    :cvar started: Tool call parsing has begun
+    :cvar in_progress: Tool call parsing is ongoing
+    :cvar failed: Tool call parsing failed
+    :cvar succeeded: Tool call parsing completed successfully
+    """
+
     started = "started"
     in_progress = "in_progress"
     failed = "failed"
@@ -95,6 +119,13 @@ class ToolCallParseStatus(Enum):
 
 @json_schema_type
 class ToolCallDelta(BaseModel):
+    """A tool call content delta for streaming responses.
+
+    :param type: Discriminator type of the delta. Always "tool_call"
+    :param tool_call: Either an in-progress tool call string or the final parsed tool call
+    :param parse_status: Current parsing status of the tool call
+    """
+
     type: Literal["tool_call"] = "tool_call"
 
     # you either send an in-progress tool call so the client can stream a long

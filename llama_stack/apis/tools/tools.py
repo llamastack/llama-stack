@@ -5,10 +5,10 @@
 # the root directory of this source tree.
 
 from enum import Enum
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
-from typing_extensions import Protocol, runtime_checkable
+from typing_extensions import runtime_checkable
 
 from llama_stack.apis.common.content_types import URL, InterleavedContent
 from llama_stack.apis.resource import Resource, ResourceType
@@ -20,6 +20,15 @@ from .rag_tool import RAGToolRuntime
 
 @json_schema_type
 class ToolParameter(BaseModel):
+    """Parameter definition for a tool.
+
+    :param name: Name of the parameter
+    :param parameter_type: Type of the parameter (e.g., string, integer)
+    :param description: Human-readable description of what the parameter does
+    :param required: Whether this parameter is required for tool invocation
+    :param default: (Optional) Default value for the parameter if not provided
+    """
+
     name: str
     parameter_type: str
     description: str
@@ -29,6 +38,15 @@ class ToolParameter(BaseModel):
 
 @json_schema_type
 class Tool(Resource):
+    """A tool that can be invoked by agents.
+
+    :param type: Type of resource, always 'tool'
+    :param toolgroup_id: ID of the tool group this tool belongs to
+    :param description: Human-readable description of what the tool does
+    :param parameters: List of parameters this tool accepts
+    :param metadata: (Optional) Additional metadata about the tool
+    """
+
     type: Literal[ResourceType.tool] = ResourceType.tool
     toolgroup_id: str
     description: str
@@ -38,6 +56,14 @@ class Tool(Resource):
 
 @json_schema_type
 class ToolDef(BaseModel):
+    """Tool definition used in runtime contexts.
+
+    :param name: Name of the tool
+    :param description: (Optional) Human-readable description of what the tool does
+    :param parameters: (Optional) List of parameters this tool accepts
+    :param metadata: (Optional) Additional metadata about the tool
+    """
+
     name: str
     description: str | None = None
     parameters: list[ToolParameter] | None = None
@@ -46,6 +72,14 @@ class ToolDef(BaseModel):
 
 @json_schema_type
 class ToolGroupInput(BaseModel):
+    """Input data for registering a tool group.
+
+    :param toolgroup_id: Unique identifier for the tool group
+    :param provider_id: ID of the provider that will handle this tool group
+    :param args: (Optional) Additional arguments to pass to the provider
+    :param mcp_endpoint: (Optional) Model Context Protocol endpoint for remote tools
+    """
+
     toolgroup_id: str
     provider_id: str
     args: dict[str, Any] | None = None
@@ -54,6 +88,13 @@ class ToolGroupInput(BaseModel):
 
 @json_schema_type
 class ToolGroup(Resource):
+    """A group of related tools managed together.
+
+    :param type: Type of resource, always 'tool_group'
+    :param mcp_endpoint: (Optional) Model Context Protocol endpoint for remote tools
+    :param args: (Optional) Additional arguments for the tool group
+    """
+
     type: Literal[ResourceType.tool_group] = ResourceType.tool_group
     mcp_endpoint: URL | None = None
     args: dict[str, Any] | None = None
@@ -61,6 +102,14 @@ class ToolGroup(Resource):
 
 @json_schema_type
 class ToolInvocationResult(BaseModel):
+    """Result of a tool invocation.
+
+    :param content: (Optional) The output content from the tool execution
+    :param error_message: (Optional) Error message if the tool execution failed
+    :param error_code: (Optional) Numeric error code if the tool execution failed
+    :param metadata: (Optional) Additional metadata about the tool execution
+    """
+
     content: InterleavedContent | None = None
     error_message: str | None = None
     error_code: int | None = None
@@ -73,14 +122,29 @@ class ToolStore(Protocol):
 
 
 class ListToolGroupsResponse(BaseModel):
+    """Response containing a list of tool groups.
+
+    :param data: List of tool groups
+    """
+
     data: list[ToolGroup]
 
 
 class ListToolsResponse(BaseModel):
+    """Response containing a list of tools.
+
+    :param data: List of tools
+    """
+
     data: list[Tool]
 
 
 class ListToolDefsResponse(BaseModel):
+    """Response containing a list of tool definitions.
+
+    :param data: List of tool definitions
+    """
+
     data: list[ToolDef]
 
 
@@ -158,6 +222,11 @@ class ToolGroups(Protocol):
 
 
 class SpecialToolGroup(Enum):
+    """Special tool groups with predefined functionality.
+
+    :cvar rag_tool: Retrieval-Augmented Generation tool group for document search and retrieval
+    """
+
     rag_tool = "rag_tool"
 
 

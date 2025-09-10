@@ -9,7 +9,7 @@ import os
 import shutil
 
 from llama_stack.cli.subcommand import Subcommand
-from llama_stack.distribution.utils.config_dirs import DEFAULT_CHECKPOINT_DIR
+from llama_stack.core.utils.config_dirs import DEFAULT_CHECKPOINT_DIR
 from llama_stack.models.llama.sku_list import resolve_model
 
 

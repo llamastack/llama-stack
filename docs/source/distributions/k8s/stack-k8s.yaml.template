@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: llama-stack
-        image: llamastack/distribution-remote-vllm:latest
+        image: llamastack/distribution-starter:latest
         imagePullPolicy: Always # since we have specified latest instead of a version
         env:
         - name: ENABLE_CHROMADB
@@ -40,19 +40,19 @@ spec:
           value: "3072"
         - name: VLLM_SAFETY_URL
           value: http://vllm-server-safety.default.svc.cluster.local:8001/v1
+        - name: VLLM_TLS_VERIFY
+          value: "false"
         - name: POSTGRES_HOST
           value: postgres-server.default.svc.cluster.local
         - name: POSTGRES_PORT
           value: "5432"
-        - name: VLLM_TLS_VERIFY
-          value: "false"
         - name: INFERENCE_MODEL
           value: "${INFERENCE_MODEL}"
         - name: SAFETY_MODEL
           value: "${SAFETY_MODEL}"
         - name: TAVILY_SEARCH_API_KEY
           value: "${TAVILY_SEARCH_API_KEY}"
-        command: ["python", "-m", "llama_stack.distribution.server.server", "--config", "/etc/config/stack_run_config.yaml", "--port", "8321"]
+        command: ["python", "-m", "llama_stack.core.server.server", "/etc/config/stack_run_config.yaml", "--port", "8321"]
         ports:
           - containerPort: 8321
         volumeMounts:

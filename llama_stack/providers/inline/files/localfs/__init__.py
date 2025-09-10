@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from llama_stack.distribution.datatypes import Api
+from llama_stack.core.datatypes import AccessRule, Api
 
 from .config import LocalfsFilesImplConfig
 from .files import LocalfsFilesImpl
@@ -14,7 +14,7 @@ from .files import LocalfsFilesImpl
 __all__ = ["LocalfsFilesImpl", "LocalfsFilesImplConfig"]
 
 
-async def get_provider_impl(config: LocalfsFilesImplConfig, deps: dict[Api, Any]):
-    impl = LocalfsFilesImpl(config)
+async def get_provider_impl(config: LocalfsFilesImplConfig, deps: dict[Api, Any], policy: list[AccessRule]):
+    impl = LocalfsFilesImpl(config, policy)
     await impl.initialize()
     return impl

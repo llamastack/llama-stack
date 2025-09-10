@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from llama_stack.distribution.datatypes import AccessRule, Api
+from llama_stack.core.datatypes import AccessRule, Api
 
 from .config import MetaReferenceAgentsImplConfig
 

@@ -12,6 +12,7 @@ from .config import QdrantVectorIOConfig
 async def get_adapter_impl(config: QdrantVectorIOConfig, deps: dict[Api, ProviderSpec]):
     from .qdrant import QdrantVectorIOAdapter
 
-    impl = QdrantVectorIOAdapter(config, deps[Api.inference])
+    files_api = deps.get(Api.files)
+    impl = QdrantVectorIOAdapter(config, deps[Api.inference], files_api)
     await impl.initialize()
     return impl

@@ -10,8 +10,7 @@ import pytest
 from llama_stack_client import Agent
 
 from llama_stack import LlamaStackAsLibraryClient
-from llama_stack.apis.models import ModelType
-from llama_stack.distribution.datatypes import AuthenticationRequiredError
+from llama_stack.core.datatypes import AuthenticationRequiredError
 
 AUTH_TOKEN = "test-token"
 
@@ -24,7 +23,7 @@ def mcp_server():
         yield mcp_server_info
 
 
-def test_mcp_invocation(llama_stack_client, mcp_server):
+def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
         pytest.skip("The local MCP server only reliably reachable from library client.")
 
@@ -69,14 +68,10 @@ def test_mcp_invocation(llama_stack_client, mcp_server):
     assert content[0].type == "text"
     assert content[0].text == "Hello, world!"
 
-    models = [
-        m for m in llama_stack_client.models.list() if m.model_type == ModelType.llm and "guard" not in m.identifier
-    ]
-    model_id = models[0].identifier
-    print(f"Using model: {model_id}")
+    print(f"Using model: {text_model_id}")
     agent = Agent(
         client=llama_stack_client,
-        model=model_id,
+        model=text_model_id,
         instructions="You are a helpful assistant.",
         tools=[test_toolgroup_id],
     )

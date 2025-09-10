@@ -12,7 +12,7 @@ from typing import TextIO
 from typing import Any, List, Optional, Union, get_type_hints, get_origin, get_args
 
 from llama_stack.strong_typing.schema import object_to_json, StrictJsonType
-from llama_stack.distribution.resolver import api_protocol_map
+from llama_stack.core.resolver import api_protocol_map
 
 from .generator import Generator
 from .options import Options
@@ -156,7 +156,7 @@ def _validate_api_delete_method_returns_none(method) -> str | None:
     
     # Allow OpenAI endpoints to return response objects since they follow OpenAI specification
     method_name = getattr(method, '__name__', '')
-    if method_name.startswith('openai_'):
+    if method_name.__contains__('openai_'):
         return None
     
     if return_type is not None and return_type is not type(None):

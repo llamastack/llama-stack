@@ -11,6 +11,9 @@ from llama_stack.providers.utils.inference.model_registry import (
     build_hf_repo_model_entry,
 )
 
+SAFETY_MODELS_ENTRIES = []
+
+# https://docs.nvidia.com/nim/large-language-models/latest/supported-llm-agnostic-architectures.html
 MODEL_ENTRIES = [
     build_hf_repo_model_entry(
         "meta/llama3-8b-instruct",
@@ -51,6 +54,10 @@ MODEL_ENTRIES = [
     build_hf_repo_model_entry(
         "meta/llama-3.3-70b-instruct",
         CoreModelId.llama3_3_70b_instruct.value,
+    ),
+    ProviderModelEntry(
+        provider_model_id="nvidia/vila",
+        model_type=ModelType.llm,
     ),
     # NeMo Retriever Text Embedding models -
     #
@@ -99,4 +106,4 @@ MODEL_ENTRIES = [
     ),
     # TODO(mf): how do we handle Nemotron models?
     # "Llama3.1-Nemotron-51B-Instruct" -> "meta/llama-3.1-nemotron-51b-instruct",
-]
+] + SAFETY_MODELS_ENTRIES

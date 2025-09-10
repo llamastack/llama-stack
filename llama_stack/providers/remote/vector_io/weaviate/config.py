@@ -6,15 +6,32 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from llama_stack.providers.utils.kvstore.config import (
+    KVStoreConfig,
+    SqliteKVStoreConfig,
+)
+from llama_stack.schema_utils import json_schema_type
 
 
-class WeaviateRequestProviderData(BaseModel):
-    weaviate_api_key: str
-    weaviate_cluster_url: str
-
-
+@json_schema_type
 class WeaviateVectorIOConfig(BaseModel):
+    weaviate_api_key: str | None = Field(description="The API key for the Weaviate instance", default=None)
+    weaviate_cluster_url: str | None = Field(description="The URL of the Weaviate cluster", default="localhost:8080")
+    kvstore: KVStoreConfig | None = Field(description="Config for KV store backend (SQLite only for now)", default=None)
+
     @classmethod
-    def sample_run_config(cls, **kwargs: Any) -> dict[str, Any]:
-        return {}
+    def sample_run_config(
+        cls,
+        __distro_dir__: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        return {
+            "weaviate_api_key": None,
+            "weaviate_cluster_url": "${env.WEAVIATE_CLUSTER_URL:=localhost:8080}",
+            "kvstore": SqliteKVStoreConfig.sample_run_config(
+                __distro_dir__=__distro_dir__,
+                db_name="weaviate_registry.db",
+            ),
+        }

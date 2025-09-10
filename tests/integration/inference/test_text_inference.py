@@ -29,6 +29,7 @@ def skip_if_model_doesnt_support_completion(client_with_models, model_id):
             "remote::openai",
             "remote::anthropic",
             "remote::gemini",
+            "remote::vertexai",
             "remote::groq",
             "remote::sambanova",
         )

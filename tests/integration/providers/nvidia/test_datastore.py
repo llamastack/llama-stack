@@ -7,12 +7,15 @@
 
 import pytest
 
+from . import skip_in_github_actions
+
 # How to run this test:
 #
 # LLAMA_STACK_CONFIG="nvidia" pytest -v tests/integration/providers/nvidia/test_datastore.py
 
 
 # nvidia provider only
+@skip_in_github_actions
 @pytest.mark.parametrize(
     "provider_id",
     [

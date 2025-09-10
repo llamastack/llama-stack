@@ -7,8 +7,8 @@
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
-from ibm_watson_machine_learning.foundation_models import Model
-from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
+from ibm_watsonx_ai.foundation_models import Model
+from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from openai import AsyncOpenAI
 
 from llama_stack.apis.common.content_types import InterleavedContent, InterleavedContentItem
@@ -18,10 +18,16 @@ from llama_stack.apis.inference import (
     CompletionRequest,
     EmbeddingsResponse,
     EmbeddingTaskType,
+    GreedySamplingStrategy,
     Inference,
     LogProbConfig,
     Message,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAICompletion,
     OpenAIEmbeddingsResponse,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
     TextTruncation,
@@ -29,14 +35,6 @@ from llama_stack.apis.inference import (
     ToolConfig,
     ToolDefinition,
     ToolPromptFormat,
-)
-from llama_stack.apis.inference.inference import (
-    GreedySamplingStrategy,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAICompletion,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
     TopKSamplingStrategy,
     TopPSamplingStrategy,
 )
@@ -292,6 +290,7 @@ class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
         user: str | None = None,
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
+        suffix: str | None = None,
     ) -> OpenAICompletion:
         model_obj = await self.model_store.get_model(model)
         params = await prepare_openai_completion_params(

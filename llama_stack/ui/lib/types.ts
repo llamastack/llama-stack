@@ -43,6 +43,33 @@ export interface ChatCompletion {
   input_messages: ChatMessage[];
 }
 
+export interface ListChatCompletionsResponse {
+  data: ChatCompletion[];
+  has_more: boolean;
+  first_id: string;
+  last_id: string;
+  object: "list";
+}
+
+export type PaginationStatus = "idle" | "loading" | "loading-more" | "error";
+
+export interface PaginationState {
+  data: ChatCompletion[];
+  status: PaginationStatus;
+  hasMore: boolean;
+  error: Error | null;
+  lastId: string | null;
+}
+
+export interface UsePaginationOptions {
+  /** Number of items to load per page (default: 20) */
+  limit?: number;
+  /** Filter by specific model */
+  model?: string;
+  /** Sort order for results (default: "desc") */
+  order?: "asc" | "desc";
+}
+
 // Response types for OpenAI Responses API
 export interface ResponseInputMessageContent {
   text?: string;

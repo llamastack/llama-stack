@@ -8,10 +8,10 @@ from collections.abc import AsyncGenerator
 from openai import OpenAI
 
 from llama_stack.apis.inference import *  # noqa: F403
-from llama_stack.apis.inference.inference import OpenAIEmbeddingsResponse
+from llama_stack.apis.inference import OpenAIEmbeddingsResponse
 
 # from llama_stack.providers.datatypes import ModelsProtocolPrivate
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, build_hf_repo_model_entry
 from llama_stack.providers.utils.inference.openai_compat import (
     OpenAIChatCompletionToLlamaStackMixin,
     OpenAICompletionToLlamaStackMixin,
@@ -25,6 +25,8 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 
 from .config import RunpodImplConfig
 
+# https://docs.runpod.io/serverless/vllm/overview#compatible-models
+# https://github.com/runpod-workers/worker-vllm/blob/main/README.md#compatible-model-architectures
 RUNPOD_SUPPORTED_MODELS = {
     "Llama3.1-8B": "meta-llama/Llama-3.1-8B",
     "Llama3.1-70B": "meta-llama/Llama-3.1-70B",
@@ -39,6 +41,14 @@ RUNPOD_SUPPORTED_MODELS = {
     "Llama3.2-1B": "meta-llama/Llama-3.2-1B",
     "Llama3.2-3B": "meta-llama/Llama-3.2-3B",
 }
+
+SAFETY_MODELS_ENTRIES = []
+
+# Create MODEL_ENTRIES from RUNPOD_SUPPORTED_MODELS for compatibility with starter template
+MODEL_ENTRIES = [
+    build_hf_repo_model_entry(provider_model_id, model_descriptor)
+    for provider_model_id, model_descriptor in RUNPOD_SUPPORTED_MODELS.items()
+] + SAFETY_MODELS_ENTRIES
 
 
 class RunpodInferenceAdapter(
@@ -61,25 +71,25 @@ class RunpodInferenceAdapter(
         self,
         model: str,
         content: InterleavedContent,
-        sampling_params: Optional[SamplingParams] = None,
-        response_format: Optional[ResponseFormat] = None,
-        stream: Optional[bool] = False,
-        logprobs: Optional[LogProbConfig] = None,
+        sampling_params: SamplingParams | None = None,
+        response_format: ResponseFormat | None = None,
+        stream: bool | None = False,
+        logprobs: LogProbConfig | None = None,
     ) -> AsyncGenerator:
         raise NotImplementedError()
 
     async def chat_completion(
         self,
         model: str,
-        messages: List[Message],
-        sampling_params: Optional[SamplingParams] = None,
-        response_format: Optional[ResponseFormat] = None,
-        tools: Optional[List[ToolDefinition]] = None,
-        tool_choice: Optional[ToolChoice] = ToolChoice.auto,
-        tool_prompt_format: Optional[ToolPromptFormat] = None,
-        stream: Optional[bool] = False,
-        logprobs: Optional[LogProbConfig] = None,
-        tool_config: Optional[ToolConfig] = None,
+        messages: list[Message],
+        sampling_params: SamplingParams | None = None,
+        response_format: ResponseFormat | None = None,
+        tools: list[ToolDefinition] | None = None,
+        tool_choice: ToolChoice | None = ToolChoice.auto,
+        tool_prompt_format: ToolPromptFormat | None = None,
+        stream: bool | None = False,
+        logprobs: LogProbConfig | None = None,
+        tool_config: ToolConfig | None = None,
     ) -> AsyncGenerator:
         if sampling_params is None:
             sampling_params = SamplingParams()
@@ -129,10 +139,10 @@ class RunpodInferenceAdapter(
     async def embeddings(
         self,
         model: str,
-        contents: List[str] | List[InterleavedContentItem],
-        text_truncation: Optional[TextTruncation] = TextTruncation.none,
-        output_dimension: Optional[int] = None,
-        task_type: Optional[EmbeddingTaskType] = None,
+        contents: list[str] | list[InterleavedContentItem],
+        text_truncation: TextTruncation | None = TextTruncation.none,
+        output_dimension: int | None = None,
+        task_type: EmbeddingTaskType | None = None,
     ) -> EmbeddingsResponse:
         raise NotImplementedError()
 

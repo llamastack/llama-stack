@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 
-import logging
 from collections.abc import AsyncGenerator
 
 from huggingface_hub import AsyncInferenceClient, HfApi
@@ -34,6 +33,7 @@ from llama_stack.apis.inference import (
     ToolPromptFormat,
 )
 from llama_stack.apis.models import Model
+from llama_stack.log import get_logger
 from llama_stack.models.llama.sku_list import all_registered_models
 from llama_stack.providers.datatypes import ModelsProtocolPrivate
 from llama_stack.providers.utils.inference.model_registry import (
@@ -58,7 +58,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 
 from .config import InferenceAPIImplConfig, InferenceEndpointImplConfig, TGIImplConfig
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="inference::tgi")
 
 
 def build_hf_repo_model_entries():
@@ -305,10 +305,10 @@ class _HfAdapter(
 
 class TGIAdapter(_HfAdapter):
     async def initialize(self, config: TGIImplConfig) -> None:
+        if not config.url:
+            raise ValueError("You must provide a URL in run.yaml (or via the TGI_URL environment variable) to use TGI.")
         log.info(f"Initializing TGI client with url={config.url}")
-        self.client = AsyncInferenceClient(
-            model=config.url,
-        )
+        self.client = AsyncInferenceClient(model=config.url, provider="hf-inference")
         endpoint_info = await self.client.get_endpoint_info()
         self.max_tokens = endpoint_info["max_total_tokens"]
         self.model_id = endpoint_info["model_id"]
@@ -327,7 +327,6 @@ class InferenceEndpointAdapter(_HfAdapter):
         # Get the inference endpoint details
         api = HfApi(token=config.api_token.get_secret_value())
         endpoint = api.get_inference_endpoint(config.endpoint_name)
-
         # Wait for the endpoint to be ready (if not already)
         endpoint.wait(timeout=60)
 

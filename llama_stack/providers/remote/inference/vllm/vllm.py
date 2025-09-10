@@ -4,12 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import json
-import logging
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 import httpx
-from openai import AsyncOpenAI
+from openai import APIConnectionError, AsyncOpenAI
 from openai.types.chat.chat_completion_chunk import (
     ChatCompletionChunk as OpenAIChatCompletionChunk,
 )
@@ -38,7 +37,14 @@ from llama_stack.apis.inference import (
     JsonSchemaResponseFormat,
     LogProbConfig,
     Message,
+    ModelStore,
+    OpenAIChatCompletion,
+    OpenAICompletion,
+    OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
+    OpenAIEmbeddingUsage,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
     TextTruncation,
@@ -47,13 +53,8 @@ from llama_stack.apis.inference import (
     ToolDefinition,
     ToolPromptFormat,
 )
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletion,
-    OpenAICompletion,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
-)
 from llama_stack.apis.models import Model, ModelType
+from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import BuiltinTool, StopReason, ToolCall
 from llama_stack.models.llama.sku_list import all_registered_models
 from llama_stack.providers.datatypes import (
@@ -84,7 +85,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 
 from .config import VLLMInferenceAdapterConfig
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="inference::vllm")
 
 
 def build_hf_repo_model_entries():
@@ -288,13 +289,40 @@ async def _process_vllm_chat_completion_stream_response(
 
 
 class VLLMInferenceAdapter(Inference, ModelsProtocolPrivate):
+    # automatically set by the resolver when instantiating the provider
+    __provider_id__: str
+    model_store: ModelStore | None = None
+
     def __init__(self, config: VLLMInferenceAdapterConfig) -> None:
         self.register_helper = ModelRegistryHelper(build_hf_repo_model_entries())
         self.config = config
         self.client = None
 
     async def initialize(self) -> None:
-        pass
+        if not self.config.url:
+            raise ValueError(
+                "You must provide a URL in run.yaml (or via the VLLM_URL environment variable) to use vLLM."
+            )
+
+    async def should_refresh_models(self) -> bool:
+        return self.config.refresh_models
+
+    async def list_models(self) -> list[Model] | None:
+        self._lazy_initialize_client()
+        assert self.client is not None  # mypy
+        models = []
+        async for m in self.client.models.list():
+            model_type = ModelType.llm  # unclear how to determine embedding vs. llm models
+            models.append(
+                Model(
+                    identifier=m.id,
+                    provider_resource_id=m.id,
+                    provider_id=self.__provider_id__,
+                    metadata={},
+                    model_type=model_type,
+                )
+            )
+        return models
 
     async def shutdown(self) -> None:
         pass
@@ -459,7 +487,12 @@ class VLLMInferenceAdapter(Inference, ModelsProtocolPrivate):
             model = await self.register_helper.register_model(model)
         except ValueError:
             pass  # Ignore statically unknown model, will check live listing
-        res = await client.models.list()
+        try:
+            res = await client.models.list()
+        except APIConnectionError as e:
+            raise ValueError(
+                f"Failed to connect to vLLM at {self.config.url}. Please check if vLLM is running and accessible at that URL."
+            ) from e
         available_models = [m.id async for m in res]
         if model.provider_resource_id not in available_models:
             raise ValueError(
@@ -536,7 +569,39 @@ class VLLMInferenceAdapter(Inference, ModelsProtocolPrivate):
         dimensions: int | None = None,
         user: str | None = None,
     ) -> OpenAIEmbeddingsResponse:
-        raise NotImplementedError()
+        self._lazy_initialize_client()
+        assert self.client is not None
+        model_obj = await self._get_model(model)
+        assert model_obj.model_type == ModelType.embedding
+
+        # Convert input to list if it's a string
+        input_list = [input] if isinstance(input, str) else input
+
+        # Call vLLM embeddings endpoint with encoding_format
+        response = await self.client.embeddings.create(
+            model=model_obj.provider_resource_id,
+            input=input_list,
+            dimensions=dimensions,
+            encoding_format=encoding_format,
+        )
+
+        # Convert response to OpenAI format
+        data = [
+            OpenAIEmbeddingData(
+                embedding=embedding_data.embedding,
+                index=i,
+            )
+            for i, embedding_data in enumerate(response.data)
+        ]
+
+        # Not returning actual token usage since vLLM doesn't provide it
+        usage = OpenAIEmbeddingUsage(prompt_tokens=-1, total_tokens=-1)
+
+        return OpenAIEmbeddingsResponse(
+            data=data,
+            model=model_obj.provider_resource_id,
+            usage=usage,
+        )
 
     async def openai_completion(
         self,
@@ -559,6 +624,7 @@ class VLLMInferenceAdapter(Inference, ModelsProtocolPrivate):
         user: str | None = None,
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
+        suffix: str | None = None,
     ) -> OpenAICompletion:
         self._lazy_initialize_client()
         model_obj = await self._get_model(model)
@@ -645,25 +711,3 @@ class VLLMInferenceAdapter(Inference, ModelsProtocolPrivate):
             user=user,
         )
         return await self.client.chat.completions.create(**params)  # type: ignore
-
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ):
-        raise NotImplementedError("Batch completion is not supported for Ollama")
-
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_config: ToolConfig | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ):
-        raise NotImplementedError("Batch chat completion is not supported for Ollama")

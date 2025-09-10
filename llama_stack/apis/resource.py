@@ -4,20 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import sys
-from enum import Enum
+
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
-
-# TODO: use enum.StrEnum when we drop support for python 3.10
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-
-    class StrEnum(str, Enum):
-        """Backport of StrEnum for Python 3.10 and below."""
-
-        pass
 
 
 class ResourceType(StrEnum):
@@ -29,6 +19,7 @@ class ResourceType(StrEnum):
     benchmark = "benchmark"
     tool = "tool"
     tool_group = "tool_group"
+    prompt = "prompt"
 
 
 class Resource(BaseModel):

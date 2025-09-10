@@ -24,9 +24,19 @@ class OpenAIConfig(BaseModel):
         default=None,
         description="API key for OpenAI models",
     )
+    base_url: str = Field(
+        default="https://api.openai.com/v1",
+        description="Base URL for OpenAI API",
+    )
 
     @classmethod
-    def sample_run_config(cls, api_key: str = "${env.OPENAI_API_KEY}", **kwargs) -> dict[str, Any]:
+    def sample_run_config(
+        cls,
+        api_key: str = "${env.OPENAI_API_KEY:=}",
+        base_url: str = "${env.OPENAI_BASE_URL:=https://api.openai.com/v1}",
+        **kwargs,
+    ) -> dict[str, Any]:
         return {
             "api_key": api_key,
+            "base_url": base_url,
         }

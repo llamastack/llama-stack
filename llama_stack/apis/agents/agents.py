@@ -4,10 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import sys
 from collections.abc import AsyncIterator
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -33,20 +32,13 @@ from llama_stack.schema_utils import json_schema_type, register_schema, webmetho
 from .openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
+    OpenAIDeleteResponseObject,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     OpenAIResponseText,
 )
-
-# TODO: use enum.StrEnum when we drop support for python 3.10
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-
-    class StrEnum(str, Enum):
-        """Backport of StrEnum for Python 3.10 and below."""
 
 
 class Attachment(BaseModel):
@@ -160,7 +152,17 @@ Step = Annotated[
 
 @json_schema_type
 class Turn(BaseModel):
-    """A single turn in an interaction with an Agentic System."""
+    """A single turn in an interaction with an Agentic System.
+
+    :param turn_id: Unique identifier for the turn within a session
+    :param session_id: Unique identifier for the conversation session
+    :param input_messages: List of messages that initiated this turn
+    :param steps: Ordered list of processing steps executed during this turn
+    :param output_message: The model's generated response containing content and metadata
+    :param output_attachments: (Optional) Files or media attached to the agent's response
+    :param started_at: Timestamp when the turn began
+    :param completed_at: (Optional) Timestamp when the turn finished, if completed
+    """
 
     turn_id: str
     session_id: str
@@ -175,7 +177,13 @@ class Turn(BaseModel):
 
 @json_schema_type
 class Session(BaseModel):
-    """A single session of an interaction with an Agentic System."""
+    """A single session of an interaction with an Agentic System.
+
+    :param session_id: Unique identifier for the conversation session
+    :param session_name: Human-readable name for the session
+    :param turns: List of all turns that have occurred in this session
+    :param started_at: Timestamp when the session was created
+    """
 
     session_id: str
     session_name: str
@@ -240,6 +248,13 @@ class AgentConfig(AgentConfigCommon):
 
 @json_schema_type
 class Agent(BaseModel):
+    """An agent instance with configuration and metadata.
+
+    :param agent_id: Unique identifier for the agent
+    :param agent_config: Configuration settings for the agent
+    :param created_at: Timestamp when the agent was created
+    """
+
     agent_id: str
     agent_config: AgentConfig
     created_at: datetime
@@ -261,6 +276,14 @@ class AgentTurnResponseEventType(StrEnum):
 
 @json_schema_type
 class AgentTurnResponseStepStartPayload(BaseModel):
+    """Payload for step start events in agent turn responses.
+
+    :param event_type: Type of event being reported
+    :param step_type: Type of step being executed
+    :param step_id: Unique identifier for the step within a turn
+    :param metadata: (Optional) Additional metadata for the step
+    """
+
     event_type: Literal[AgentTurnResponseEventType.step_start] = AgentTurnResponseEventType.step_start
     step_type: StepType
     step_id: str
@@ -269,6 +292,14 @@ class AgentTurnResponseStepStartPayload(BaseModel):
 
 @json_schema_type
 class AgentTurnResponseStepCompletePayload(BaseModel):
+    """Payload for step completion events in agent turn responses.
+
+    :param event_type: Type of event being reported
+    :param step_type: Type of step being executed
+    :param step_id: Unique identifier for the step within a turn
+    :param step_details: Complete details of the executed step
+    """
+
     event_type: Literal[AgentTurnResponseEventType.step_complete] = AgentTurnResponseEventType.step_complete
     step_type: StepType
     step_id: str
@@ -277,6 +308,14 @@ class AgentTurnResponseStepCompletePayload(BaseModel):
 
 @json_schema_type
 class AgentTurnResponseStepProgressPayload(BaseModel):
+    """Payload for step progress events in agent turn responses.
+
+    :param event_type: Type of event being reported
+    :param step_type: Type of step being executed
+    :param step_id: Unique identifier for the step within a turn
+    :param delta: Incremental content changes during step execution
+    """
+
     model_config = ConfigDict(protected_namespaces=())
 
     event_type: Literal[AgentTurnResponseEventType.step_progress] = AgentTurnResponseEventType.step_progress
@@ -288,18 +327,36 @@ class AgentTurnResponseStepProgressPayload(BaseModel):
 
 @json_schema_type
 class AgentTurnResponseTurnStartPayload(BaseModel):
+    """Payload for turn start events in agent turn responses.
+
+    :param event_type: Type of event being reported
+    :param turn_id: Unique identifier for the turn within a session
+    """
+
     event_type: Literal[AgentTurnResponseEventType.turn_start] = AgentTurnResponseEventType.turn_start
     turn_id: str
 
 
 @json_schema_type
 class AgentTurnResponseTurnCompletePayload(BaseModel):
+    """Payload for turn completion events in agent turn responses.
+
+    :param event_type: Type of event being reported
+    :param turn: Complete turn data including all steps and results
+    """
+
     event_type: Literal[AgentTurnResponseEventType.turn_complete] = AgentTurnResponseEventType.turn_complete
     turn: Turn
 
 
 @json_schema_type
 class AgentTurnResponseTurnAwaitingInputPayload(BaseModel):
+    """Payload for turn awaiting input events in agent turn responses.
+
+    :param event_type: Type of event being reported
+    :param turn: Turn data when waiting for external tool responses
+    """
+
     event_type: Literal[AgentTurnResponseEventType.turn_awaiting_input] = AgentTurnResponseEventType.turn_awaiting_input
     turn: Turn
 
@@ -318,21 +375,47 @@ register_schema(AgentTurnResponseEventPayload, name="AgentTurnResponseEventPaylo
 
 @json_schema_type
 class AgentTurnResponseEvent(BaseModel):
+    """An event in an agent turn response stream.
+
+    :param payload: Event-specific payload containing event data
+    """
+
     payload: AgentTurnResponseEventPayload
 
 
 @json_schema_type
 class AgentCreateResponse(BaseModel):
+    """Response returned when creating a new agent.
+
+    :param agent_id: Unique identifier for the created agent
+    """
+
     agent_id: str
 
 
 @json_schema_type
 class AgentSessionCreateResponse(BaseModel):
+    """Response returned when creating a new agent session.
+
+    :param session_id: Unique identifier for the created session
+    """
+
     session_id: str
 
 
 @json_schema_type
 class AgentTurnCreateRequest(AgentConfigOverridablePerTurn):
+    """Request to create a new turn for an agent.
+
+    :param agent_id: Unique identifier for the agent
+    :param session_id: Unique identifier for the conversation session
+    :param messages: List of messages to start the turn with
+    :param documents: (Optional) List of documents to provide to the agent
+    :param toolgroups: (Optional) List of tool groups to make available for this turn
+    :param stream: (Optional) Whether to stream the response
+    :param tool_config: (Optional) Tool configuration to override agent defaults
+    """
+
     agent_id: str
     session_id: str
 
@@ -350,6 +433,15 @@ class AgentTurnCreateRequest(AgentConfigOverridablePerTurn):
 
 @json_schema_type
 class AgentTurnResumeRequest(BaseModel):
+    """Request to resume an agent turn with tool responses.
+
+    :param agent_id: Unique identifier for the agent
+    :param session_id: Unique identifier for the conversation session
+    :param turn_id: Unique identifier for the turn within a session
+    :param tool_responses: List of tool responses to submit to continue the turn
+    :param stream: (Optional) Whether to stream the response
+    """
+
     agent_id: str
     session_id: str
     turn_id: str
@@ -359,13 +451,21 @@ class AgentTurnResumeRequest(BaseModel):
 
 @json_schema_type
 class AgentTurnResponseStreamChunk(BaseModel):
-    """streamed agent turn completion response."""
+    """Streamed agent turn completion response.
+
+    :param event: Individual event in the agent turn response stream
+    """
 
     event: AgentTurnResponseEvent
 
 
 @json_schema_type
 class AgentStepResponse(BaseModel):
+    """Response containing details of a specific agent step.
+
+    :param step: The complete step data and execution details
+    """
+
     step: Step
 
 
@@ -606,6 +706,7 @@ class Agents(Protocol):
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
+        include: list[str] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a new OpenAI response.
@@ -613,6 +714,7 @@ class Agents(Protocol):
         :param input: Input message(s) to create the response.
         :param model: The underlying LLM used for completions.
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
+        :param include: (Optional) Additional fields to include in the response.
         :returns: An OpenAIResponseObject.
         """
         ...
@@ -654,5 +756,14 @@ class Agents(Protocol):
         :param limit: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.
         :param order: The order to return the input items in. Default is desc.
         :returns: An ListOpenAIResponseInputItem.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/responses/{response_id}", method="DELETE")
+    async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
+        """Delete an OpenAI response by its ID.
+
+        :param response_id: The ID of the OpenAI response to delete.
+        :returns: An OpenAIDeleteResponseObject
         """
         ...

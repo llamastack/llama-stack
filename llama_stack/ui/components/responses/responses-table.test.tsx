@@ -12,29 +12,73 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+// Mock next-auth
+jest.mock("next-auth/react", () => ({
+  useSession: () => ({
+    status: "authenticated",
+    data: { accessToken: "mock-token" },
+  }),
+}));
+
 // Mock helper functions
 jest.mock("@/lib/truncate-text");
 
+// Mock the auth client hook
+const mockClient = {
+  responses: {
+    list: jest.fn(),
+  },
+};
+
+jest.mock("@/hooks/use-auth-client", () => ({
+  useAuthClient: () => mockClient,
+}));
+
+// Mock the usePagination hook
+const mockLoadMore = jest.fn();
+jest.mock("@/hooks/use-pagination", () => ({
+  usePagination: jest.fn(() => ({
+    data: [],
+    status: "idle",
+    hasMore: false,
+    error: null,
+    loadMore: mockLoadMore,
+  })),
+}));
+
 // Import the mocked functions
 import { truncateText as originalTruncateText } from "@/lib/truncate-text";
+
+// Import the mocked hook
+import { usePagination } from "@/hooks/use-pagination";
+const mockedUsePagination = usePagination as jest.MockedFunction<
+  typeof usePagination
+>;
 
 // Cast to jest.Mock for typings
 const truncateText = originalTruncateText as jest.Mock;
 
 describe("ResponsesTable", () => {
-  const defaultProps = {
-    data: [] as OpenAIResponse[],
-    isLoading: false,
-    error: null,
-  };
+  const defaultProps = {};
 
   beforeEach(() => {
     // Reset all mocks before each test
     mockPush.mockClear();
     truncateText.mockClear();
+    mockLoadMore.mockClear();
+    jest.clearAllMocks();
 
     // Default pass-through implementation
     truncateText.mockImplementation((text: string | undefined) => text);
+
+    // Default hook return value
+    mockedUsePagination.mockReturnValue({
+      data: [],
+      status: "idle",
+      hasMore: false,
+      error: null,
+      loadMore: mockLoadMore,
+    });
   });
 
   test("renders without crashing with default props", () => {
@@ -65,7 +109,16 @@ describe("ResponsesTable", () => {
       ],
     };
 
-    render(<ResponsesTable {...defaultProps} data={[mockResponse]} />);
+    // Configure the mock to return our test data
+    mockedUsePagination.mockReturnValue({
+      data: [mockResponse],
+      status: "idle",
+      hasMore: false,
+      error: null,
+      loadMore: mockLoadMore,
+    });
+
+    render(<ResponsesTable {...defaultProps} />);
 
     const row = screen.getByText("Test input").closest("tr");
     if (row) {
@@ -77,17 +130,23 @@ describe("ResponsesTable", () => {
   });
 
   describe("Loading State", () => {
-    test("renders skeleton UI when isLoading is true", () => {
-      const { container } = render(
-        <ResponsesTable {...defaultProps} isLoading={true} />,
-      );
+    test("renders skeleton UI when status is loading", () => {
+      mockedUsePagination.mockReturnValue({
+        data: [],
+        status: "loading",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      const { container } = render(<ResponsesTable {...defaultProps} />);
 
       // Check for skeleton in the table caption
       const tableCaption = container.querySelector("caption");
       expect(tableCaption).toBeInTheDocument();
       if (tableCaption) {
         const captionSkeleton = tableCaption.querySelector(
-          '[data-slot="skeleton"]',
+          '[data-slot="skeleton"]'
         );
         expect(captionSkeleton).toBeInTheDocument();
       }
@@ -97,7 +156,7 @@ describe("ResponsesTable", () => {
       expect(tableBody).toBeInTheDocument();
       if (tableBody) {
         const bodySkeletons = tableBody.querySelectorAll(
-          '[data-slot="skeleton"]',
+          '[data-slot="skeleton"]'
         );
         expect(bodySkeletons.length).toBeGreaterThan(0);
       }
@@ -105,42 +164,50 @@ describe("ResponsesTable", () => {
   });
 
   describe("Error State", () => {
-    test("renders error message when error prop is provided", () => {
+    test("renders error message when error is provided", () => {
       const errorMessage = "Network Error";
-      render(
-        <ResponsesTable
-          {...defaultProps}
-          error={{ name: "Error", message: errorMessage }}
-        />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [],
+        status: "error",
+        hasMore: false,
+        error: { name: "Error", message: errorMessage } as Error,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(
-        screen.getByText(`Error fetching data: ${errorMessage}`),
+        screen.getByText("Unable to load chat completions")
       ).toBeInTheDocument();
+      expect(screen.getByText(errorMessage)).toBeInTheDocument();
     });
 
-    test("renders default error message when error.message is not available", () => {
-      render(
-        <ResponsesTable
-          {...defaultProps}
-          error={{ name: "Error", message: "" }}
-        />,
-      );
-      expect(
-        screen.getByText("Error fetching data: An unknown error occurred"),
-      ).toBeInTheDocument();
-    });
+    test.each([{ name: "Error", message: "" }, {}])(
+      "renders default error message when error has no message",
+      errorObject => {
+        mockedUsePagination.mockReturnValue({
+          data: [],
+          status: "error",
+          hasMore: false,
+          error: errorObject as Error,
+          loadMore: mockLoadMore,
+        });
 
-    test("renders default error message when error prop is an object without message", () => {
-      render(<ResponsesTable {...defaultProps} error={{} as Error} />);
-      expect(
-        screen.getByText("Error fetching data: An unknown error occurred"),
-      ).toBeInTheDocument();
-    });
+        render(<ResponsesTable {...defaultProps} />);
+        expect(
+          screen.getByText("Unable to load chat completions")
+        ).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "An unexpected error occurred while loading the data."
+          )
+        ).toBeInTheDocument();
+      }
+    );
   });
 
   describe("Empty State", () => {
     test('renders "No responses found." and no table when data array is empty', () => {
-      render(<ResponsesTable data={[]} isLoading={false} error={null} />);
+      render(<ResponsesTable {...defaultProps} />);
       expect(screen.getByText("No responses found.")).toBeInTheDocument();
 
       // Ensure that the table structure is NOT rendered in the empty state
@@ -151,7 +218,7 @@ describe("ResponsesTable", () => {
 
   describe("Data Rendering", () => {
     test("renders table caption, headers, and response data correctly", () => {
-      const mockResponses = [
+      const mockResponses: OpenAIResponse[] = [
         {
           id: "resp_1",
           object: "response" as const,
@@ -196,13 +263,19 @@ describe("ResponsesTable", () => {
         },
       ];
 
-      render(
-        <ResponsesTable data={mockResponses} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: mockResponses,
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
 
       // Table caption
       expect(
-        screen.getByText("A list of your recent responses."),
+        screen.getByText("A list of your recent responses.")
       ).toBeInTheDocument();
 
       // Table headers
@@ -216,14 +289,14 @@ describe("ResponsesTable", () => {
       expect(screen.getByText("Test output")).toBeInTheDocument();
       expect(screen.getByText("llama-test-model")).toBeInTheDocument();
       expect(
-        screen.getByText(new Date(1710000000 * 1000).toLocaleString()),
+        screen.getByText(new Date(1710000000 * 1000).toLocaleString())
       ).toBeInTheDocument();
 
       expect(screen.getByText("Another input")).toBeInTheDocument();
       expect(screen.getByText("Another output")).toBeInTheDocument();
       expect(screen.getByText("llama-another-model")).toBeInTheDocument();
       expect(
-        screen.getByText(new Date(1710001000 * 1000).toLocaleString()),
+        screen.getByText(new Date(1710001000 * 1000).toLocaleString())
       ).toBeInTheDocument();
     });
   });
@@ -246,9 +319,15 @@ describe("ResponsesTable", () => {
         ],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(screen.getByText("Simple string input")).toBeInTheDocument();
     });
 
@@ -272,9 +351,15 @@ describe("ResponsesTable", () => {
         ],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(screen.getByText("Array input text")).toBeInTheDocument();
     });
 
@@ -294,9 +379,15 @@ describe("ResponsesTable", () => {
         ],
       };
 
-      const { container } = render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      const { container } = render(<ResponsesTable {...defaultProps} />);
 
       // Find the input cell (first cell in the data row) and verify it's empty
       const inputCell = container.querySelector("tbody tr td:first-child");
@@ -323,9 +414,15 @@ describe("ResponsesTable", () => {
         input: [{ type: "message", content: "input" }],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(screen.getByText("Simple string output")).toBeInTheDocument();
     });
 
@@ -349,9 +446,15 @@ describe("ResponsesTable", () => {
         input: [{ type: "message", content: "input" }],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(screen.getByText("Array output text")).toBeInTheDocument();
     });
 
@@ -374,11 +477,17 @@ describe("ResponsesTable", () => {
         input: [{ type: "message", content: "input" }],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(
-        screen.getByText('search_function({"query": "test"})'),
+        screen.getByText('search_function({"query": "test"})')
       ).toBeInTheDocument();
     });
 
@@ -400,9 +509,15 @@ describe("ResponsesTable", () => {
         input: [{ type: "message", content: "input" }],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(screen.getByText("simple_function({})")).toBeInTheDocument();
     });
 
@@ -423,11 +538,17 @@ describe("ResponsesTable", () => {
         input: [{ type: "message", content: "input" }],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       expect(
-        screen.getByText("web_search_call(status: completed)"),
+        screen.getByText("web_search_call(status: completed)")
       ).toBeInTheDocument();
     });
 
@@ -444,14 +565,20 @@ describe("ResponsesTable", () => {
             id: "unknown_123",
             status: "completed",
             custom_field: "custom_value",
-          } as any,
+          } as unknown,
         ],
         input: [{ type: "message", content: "input" }],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       // Should contain the JSON stringified version
       expect(screen.getByText(/unknown_call/)).toBeInTheDocument();
     });
@@ -467,14 +594,20 @@ describe("ResponsesTable", () => {
           {
             type: "unknown_type",
             data: "some data",
-          } as any,
+          } as unknown,
         ],
         input: [{ type: "message", content: "input" }],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
       // Should contain the JSON stringified version of the output array
       expect(screen.getByText(/unknown_type/)).toBeInTheDocument();
     });
@@ -490,7 +623,7 @@ describe("ResponsesTable", () => {
           return typeof text === "string" && text.length > effectiveMaxLength
             ? text.slice(0, effectiveMaxLength) + "..."
             : text;
-        },
+        }
       );
 
       const longInput =
@@ -520,18 +653,21 @@ describe("ResponsesTable", () => {
         ],
       };
 
-      render(
-        <ResponsesTable data={[mockResponse]} isLoading={false} error={null} />,
-      );
+      mockedUsePagination.mockReturnValue({
+        data: [mockResponse],
+        status: "idle",
+        hasMore: false,
+        error: null,
+        loadMore: mockLoadMore,
+      });
+
+      render(<ResponsesTable {...defaultProps} />);
 
       // The truncated text should be present for both input and output
       const truncatedTexts = screen.getAllByText(
-        longInput.slice(0, 10) + "...",
+        longInput.slice(0, 10) + "..."
       );
       expect(truncatedTexts.length).toBe(2); // one for input, one for output
-      truncatedTexts.forEach((textElement) =>
-        expect(textElement).toBeInTheDocument(),
-      );
     });
   });
 });

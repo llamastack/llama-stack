@@ -1,0 +1,128 @@
+version: 2
+image_name: meta-reference-gpu
+apis:
+- agents
+- datasetio
+- eval
+- inference
+- safety
+- scoring
+- telemetry
+- tool_runtime
+- vector_io
+providers:
+  inference:
+  - provider_id: meta-reference-inference
+    provider_type: inline::meta-reference
+    config:
+      model: ${env.INFERENCE_MODEL}
+      checkpoint_dir: ${env.INFERENCE_CHECKPOINT_DIR:=null}
+      quantization:
+        type: ${env.QUANTIZATION_TYPE:=bf16}
+      model_parallel_size: ${env.MODEL_PARALLEL_SIZE:=0}
+      max_batch_size: ${env.MAX_BATCH_SIZE:=1}
+      max_seq_len: ${env.MAX_SEQ_LEN:=4096}
+  - provider_id: sentence-transformers
+    provider_type: inline::sentence-transformers
+  vector_io:
+  - provider_id: faiss
+    provider_type: inline::faiss
+    config:
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/faiss_store.db
+  safety:
+  - provider_id: llama-guard
+    provider_type: inline::llama-guard
+    config:
+      excluded_categories: []
+  agents:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      persistence_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/agents_store.db
+      responses_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/responses_store.db
+  telemetry:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
+      sinks: ${env.TELEMETRY_SINKS:=console,sqlite}
+      sqlite_db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/trace_store.db
+      otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
+  eval:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/meta_reference_eval.db
+  datasetio:
+  - provider_id: huggingface
+    provider_type: remote::huggingface
+    config:
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/huggingface_datasetio.db
+  - provider_id: localfs
+    provider_type: inline::localfs
+    config:
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/localfs_datasetio.db
+  scoring:
+  - provider_id: basic
+    provider_type: inline::basic
+  - provider_id: llm-as-judge
+    provider_type: inline::llm-as-judge
+  - provider_id: braintrust
+    provider_type: inline::braintrust
+    config:
+      openai_api_key: ${env.OPENAI_API_KEY:=}
+  tool_runtime:
+  - provider_id: brave-search
+    provider_type: remote::brave-search
+    config:
+      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
+      max_results: 3
+  - provider_id: tavily-search
+    provider_type: remote::tavily-search
+    config:
+      api_key: ${env.TAVILY_SEARCH_API_KEY:=}
+      max_results: 3
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
+  - provider_id: model-context-protocol
+    provider_type: remote::model-context-protocol
+metadata_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/registry.db
+inference_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/inference_store.db
+models:
+- metadata: {}
+  model_id: ${env.INFERENCE_MODEL}
+  provider_id: meta-reference-inference
+  model_type: llm
+- metadata:
+    embedding_dimension: 384
+  model_id: all-MiniLM-L6-v2
+  provider_id: sentence-transformers
+  model_type: embedding
+shields: []
+vector_dbs: []
+datasets: []
+scoring_fns: []
+benchmarks: []
+tool_groups:
+- toolgroup_id: builtin::websearch
+  provider_id: tavily-search
+- toolgroup_id: builtin::rag
+  provider_id: rag-runtime
+server:
+  port: 8321

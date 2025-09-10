@@ -23,6 +23,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.inference,
                 Api.agents,
             ],
+            description="Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics.",
         ),
         remote_provider_spec(
             api=Api.eval,
@@ -33,6 +34,7 @@ def available_providers() -> list[ProviderSpec]:
                 ],
                 module="llama_stack.providers.remote.eval.nvidia",
                 config_class="llama_stack.providers.remote.eval.nvidia.NVIDIAEvalConfig",
+                description="NVIDIA's evaluation provider for running evaluation tasks on NVIDIA's platform.",
             ),
             api_dependencies=[
                 Api.datasetio,

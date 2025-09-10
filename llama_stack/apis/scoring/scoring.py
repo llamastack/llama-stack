@@ -31,6 +31,12 @@ class ScoringResult(BaseModel):
 
 @json_schema_type
 class ScoreBatchResponse(BaseModel):
+    """Response from batch scoring operations on datasets.
+
+    :param dataset_id: (Optional) The identifier of the dataset that was scored
+    :param results: A map of scoring function name to ScoringResult
+    """
+
     dataset_id: str | None = None
     results: dict[str, ScoringResult]
 

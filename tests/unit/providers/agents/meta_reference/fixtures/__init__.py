@@ -8,7 +8,7 @@ import os
 
 import yaml
 
-from llama_stack.apis.inference.inference import (
+from llama_stack.apis.inference import (
     OpenAIChatCompletion,
 )
 

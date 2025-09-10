@@ -5,17 +5,18 @@ import { useParams } from "next/navigation";
 import type { ResponseObject } from "llama-stack-client/resources/responses/responses";
 import { OpenAIResponse, InputItemListResponse } from "@/lib/types";
 import { ResponseDetailView } from "@/components/responses/responses-detail";
-import { client } from "@/lib/client";
+import { useAuthClient } from "@/hooks/use-auth-client";
 
 export default function ResponseDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const client = useAuthClient();
 
   const [responseDetail, setResponseDetail] = useState<OpenAIResponse | null>(
-    null,
+    null
   );
   const [inputItems, setInputItems] = useState<InputItemListResponse | null>(
-    null,
+    null
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLoadingInputItems, setIsLoadingInputItems] = useState<boolean>(true);
@@ -24,7 +25,7 @@ export default function ResponseDetailPage() {
 
   // Helper function to convert ResponseObject to OpenAIResponse
   const convertResponseObject = (
-    responseData: ResponseObject,
+    responseData: ResponseObject
   ): OpenAIResponse => {
     return {
       id: responseData.id,
@@ -72,12 +73,12 @@ export default function ResponseDetailPage() {
         } else {
           console.error(
             `Error fetching response detail for ID ${id}:`,
-            responseResult.reason,
+            responseResult.reason
           );
           setError(
             responseResult.reason instanceof Error
               ? responseResult.reason
-              : new Error("Failed to fetch response detail"),
+              : new Error("Failed to fetch response detail")
           );
         }
 
@@ -89,18 +90,18 @@ export default function ResponseDetailPage() {
         } else {
           console.error(
             `Error fetching input items for response ID ${id}:`,
-            inputItemsResult.reason,
+            inputItemsResult.reason
           );
           setInputItemsError(
             inputItemsResult.reason instanceof Error
               ? inputItemsResult.reason
-              : new Error("Failed to fetch input items"),
+              : new Error("Failed to fetch input items")
           );
         }
       } catch (err) {
         console.error(`Unexpected error fetching data for ID ${id}:`, err);
         setError(
-          err instanceof Error ? err : new Error("Unexpected error occurred"),
+          err instanceof Error ? err : new Error("Unexpected error occurred")
         );
       } finally {
         setIsLoading(false);
@@ -109,7 +110,7 @@ export default function ResponseDetailPage() {
     };
 
     fetchResponseDetail();
-  }, [id]);
+  }, [id, client]);
 
   return (
     <ResponseDetailView

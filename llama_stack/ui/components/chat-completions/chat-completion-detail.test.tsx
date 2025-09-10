@@ -14,7 +14,7 @@ describe("ChatCompletionDetailView", () => {
         isLoading={true}
         error={null}
         id="test-id"
-      />,
+      />
     );
     // Use the data-slot attribute for Skeletons
     const skeletons = container.querySelectorAll('[data-slot="skeleton"]');
@@ -28,10 +28,10 @@ describe("ChatCompletionDetailView", () => {
         isLoading={false}
         error={{ name: "Error", message: "Network Error" }}
         id="err-id"
-      />,
+      />
     );
     expect(
-      screen.getByText(/Error loading details for ID err-id: Network Error/),
+      screen.getByText(/Error loading details for ID err-id: Network Error/)
     ).toBeInTheDocument();
   });
 
@@ -42,11 +42,11 @@ describe("ChatCompletionDetailView", () => {
         isLoading={false}
         error={{ name: "Error", message: "" }}
         id="err-id"
-      />,
+      />
     );
     // Use regex to match the error message regardless of whitespace
     expect(
-      screen.getByText(/Error loading details for ID\s*err-id\s*:/),
+      screen.getByText(/Error loading details for ID\s*err-id\s*:/)
     ).toBeInTheDocument();
   });
 
@@ -57,11 +57,11 @@ describe("ChatCompletionDetailView", () => {
         isLoading={false}
         error={{} as Error}
         id="err-id"
-      />,
+      />
     );
     // Use regex to match the error message regardless of whitespace
     expect(
-      screen.getByText(/Error loading details for ID\s*err-id\s*:/),
+      screen.getByText(/Error loading details for ID\s*err-id\s*:/)
     ).toBeInTheDocument();
   });
 
@@ -72,10 +72,10 @@ describe("ChatCompletionDetailView", () => {
         isLoading={false}
         error={null}
         id="notfound-id"
-      />,
+      />
     );
     expect(
-      screen.getByText("No details found for ID: notfound-id."),
+      screen.getByText("No details found for ID: notfound-id.")
     ).toBeInTheDocument();
   });
 
@@ -100,7 +100,7 @@ describe("ChatCompletionDetailView", () => {
         isLoading={false}
         error={null}
         id={mockCompletion.id}
-      />,
+      />
     );
     // Input
     expect(screen.getByText("Input")).toBeInTheDocument();
@@ -112,7 +112,7 @@ describe("ChatCompletionDetailView", () => {
     expect(screen.getByText("Properties")).toBeInTheDocument();
     expect(screen.getByText("Created:")).toBeInTheDocument();
     expect(
-      screen.getByText(new Date(1710000000 * 1000).toLocaleString()),
+      screen.getByText(new Date(1710000000 * 1000).toLocaleString())
     ).toBeInTheDocument();
     expect(screen.getByText("ID:")).toBeInTheDocument();
     expect(screen.getByText("comp_123")).toBeInTheDocument();
@@ -150,7 +150,7 @@ describe("ChatCompletionDetailView", () => {
         isLoading={false}
         error={null}
         id={mockCompletion.id}
-      />,
+      />
     );
     // Output should include the tool call block (should be present twice: input and output)
     const toolCallLabels = screen.getAllByText("Tool Call");
@@ -178,13 +178,13 @@ describe("ChatCompletionDetailView", () => {
         isLoading={false}
         error={null}
         id={mockCompletion.id}
-      />,
+      />
     );
     // Input section should be present but empty
     expect(screen.getByText("Input")).toBeInTheDocument();
     // Output section should show fallback message
     expect(
-      screen.getByText("No message found in assistant's choice."),
+      screen.getByText("No message found in assistant's choice.")
     ).toBeInTheDocument();
     // Properties should show N/A for finish reason
     expect(screen.getByText("Finish Reason:")).toBeInTheDocument();

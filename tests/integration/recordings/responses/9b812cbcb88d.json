@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/api/generate",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "raw": true,
+      "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant. You have access to functions, but you should only use them if they are required.\nYou are an expert in composing functions. You are given a question and a set of possible functions.\nBased on the question, you may or may not need to make one function/tool call to achieve the purpose.\n\nIf you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)]\nIf you decide to invoke a function, you SHOULD NOT include any other text in the response. besides the function call in the above format.\nFor a boolean parameter, be sure to use `True` or `False` (capitalized) for the value.\n\n\nHere is a list of functions in JSON format that you can invoke.\n\n[\n    {\n        \"name\": \"get_weather\",\n        \"description\": \"Get the current weather\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\"location\"],\n            \"properties\": {\n                \"location\": {\n                    \"type\": \"string\",\n                    \"description\": \"The city and state (both required), e.g. San Francisco, CA.\"\n                }\n            }\n        }\n    }\n]\n\nYou can answer general questions or invoke tools when necessary.\nIn addition to tool calls, you should also augment your responses by using the tool outputs.\nPretend you are a weather assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nWhat's the weather like in San Francisco?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+      "options": {
+        "temperature": 0.0
+      },
+      "stream": false
+    },
+    "endpoint": "/api/generate",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "ollama._types.GenerateResponse",
+      "__data__": {
+        "model": "llama3.2:3b-instruct-fp16",
+        "created_at": "2025-08-01T20:56:51.035807Z",
+        "done": true,
+        "done_reason": "stop",
+        "total_duration": 1044135792,
+        "load_duration": 50873709,
+        "prompt_eval_count": 324,
+        "prompt_eval_duration": 511000000,
+        "eval_count": 11,
+        "eval_duration": 481000000,
+        "response": "[get_weather(location=\"San Francisco, CA\")]",
+        "thinking": null,
+        "context": null
+      }
+    },
+    "is_streaming": false
+  }
+}

@@ -9,12 +9,12 @@ import base64
 import io
 from urllib.parse import unquote
 
-import pandas
-
 from llama_stack.providers.utils.memory.vector_store import parse_data_url
 
 
 async def get_dataframe_from_uri(uri: str):
+    import pandas
+
     df = None
     if uri.endswith(".csv"):
         # Moving to its own thread to avoid io from blocking the eventloop

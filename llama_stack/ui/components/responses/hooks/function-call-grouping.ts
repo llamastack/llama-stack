@@ -18,7 +18,7 @@ export interface GroupedItem {
  * @returns Array of grouped items with their outputs
  */
 export function useFunctionCallGrouping(
-  items: AnyResponseItem[],
+  items: AnyResponseItem[]
 ): GroupedItem[] {
   return useMemo(() => {
     const groupedItems: GroupedItem[] = [];

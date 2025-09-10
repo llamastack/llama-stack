@@ -44,7 +44,6 @@ def common_params(inference_model):
     )
 
 
-@pytest.mark.asyncio
 @pytest.mark.skip(reason="This test needs to be migrated to api / client-sdk world")
 async def test_delete_agents_and_sessions(self, agents_stack, common_params):
     agents_impl = agents_stack.impls[Api.agents]
@@ -73,7 +72,6 @@ async def test_delete_agents_and_sessions(self, agents_stack, common_params):
     assert agent_response is None
 
 
-@pytest.mark.asyncio
 @pytest.mark.skip(reason="This test needs to be migrated to api / client-sdk world")
 async def test_get_agent_turns_and_steps(self, agents_stack, sample_messages, common_params):
     agents_impl = agents_stack.impls[Api.agents]

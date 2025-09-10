@@ -10,6 +10,6 @@ from .config import OllamaImplConfig
 async def get_adapter_impl(config: OllamaImplConfig, _deps):
     from .ollama import OllamaInferenceAdapter
 
-    impl = OllamaInferenceAdapter(config.url)
+    impl = OllamaInferenceAdapter(config)
     await impl.initialize()
     return impl

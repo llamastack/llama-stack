@@ -19,7 +19,11 @@ class CommonShieldFields(BaseModel):
 
 @json_schema_type
 class Shield(CommonShieldFields, Resource):
-    """A safety shield resource that can be used to check content"""
+    """A safety shield resource that can be used to check content.
+
+    :param params: (Optional) Configuration parameters for the shield
+    :param type: The resource type, always shield
+    """
 
     type: Literal[ResourceType.shield] = ResourceType.shield
 
@@ -77,5 +81,13 @@ class Shields(Protocol):
         :param provider_id: The identifier of the provider.
         :param params: The parameters of the shield.
         :returns: A Shield.
+        """
+        ...
+
+    @webmethod(route="/shields/{identifier:path}", method="DELETE")
+    async def unregister_shield(self, identifier: str) -> None:
+        """Unregister a shield.
+
+        :param identifier: The identifier of the shield to unregister.
         """
         ...

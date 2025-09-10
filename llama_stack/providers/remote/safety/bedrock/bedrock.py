@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import json
-import logging
 from typing import Any
 
 from llama_stack.apis.inference import Message
@@ -16,12 +15,13 @@ from llama_stack.apis.safety import (
     ViolationLevel,
 )
 from llama_stack.apis.shields import Shield
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client
 
 from .config import BedrockSafetyConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="safety::bedrock")
 
 
 class BedrockSafetyAdapter(Safety, ShieldsProtocolPrivate):
@@ -51,6 +51,9 @@ class BedrockSafetyAdapter(Safety, ShieldsProtocolPrivate):
             raise ValueError(
                 f"Shield {shield.provider_resource_id} with version {shield.params['guardrailVersion']} not found in Bedrock"
             )
+
+    async def unregister_shield(self, identifier: str) -> None:
+        pass
 
     async def run_shield(
         self, shield_id: str, messages: list[Message], params: dict[str, Any] = None

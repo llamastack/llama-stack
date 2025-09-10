@@ -6,7 +6,7 @@
 
 import pytest
 
-from llama_stack.distribution.store.registry import CachedDiskDistributionRegistry, DiskDistributionRegistry
+from llama_stack.core.store.registry import CachedDiskDistributionRegistry, DiskDistributionRegistry
 from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 from llama_stack.providers.utils.kvstore.sqlite import SqliteKVStoreImpl
 

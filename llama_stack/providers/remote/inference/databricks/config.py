@@ -25,8 +25,8 @@ class DatabricksImplConfig(BaseModel):
     @classmethod
     def sample_run_config(
         cls,
-        url: str = "${env.DATABRICKS_URL}",
-        api_token: str = "${env.DATABRICKS_API_TOKEN}",
+        url: str = "${env.DATABRICKS_URL:=}",
+        api_token: str = "${env.DATABRICKS_API_TOKEN:=}",
         **kwargs: Any,
     ) -> dict[str, Any]:
         return {

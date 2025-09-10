@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 0"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-695",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "You want to test the OpenAI API v0, but I need to clarify a few things.\n\nThe OpenAI API has undergone significant changes since its release in 2019. The v0 API was retired in favor of newer versions like v1 \"GPT-2\" and v3 \"GPT-3\".\n\nAfter verifying with OpenAI's Documentation: https://api.openai.com/docs/en/v1/basics, I found that there is no longer an API endpoint for testing with version 0.\n\nHowever, I can guide you through the steps to interact with the latest version of the OpenAI API, which should give you a similar experience:\n\nTo use the OpenAI v3 (GPT-3) API, you'll need to create an account on the OpenAI website and obtain an API key. Here are the general steps:\n\n1. Create an account on the OpenAI website: https://openai.com/\n2. Enable the API feature in your account settings\n3. Obtain an API key: go to your account dashboard \u2192 API\n4. Install a library that supports the v3 API, such as `python-openai` or `transformers`\n5. Use the library to send requests to the OpenAI API\n\nHere's some sample Python code using the `python-openai` library:\n\n```python\nimport openai\n\n# Initialize the OpenAI API client with your access token\naccess_token = \"YOUR_API_KEY_HERE\"\nopenai.api_key = access_token\nassistant = openai.pytorch.GPT3Small()\n\n# Test the assistant with a simple function call\nresponse = assistant.call(\n    prompt=\"Hello, how are you?\",\n)\nprint(response)\n```\n\nPlease note that this is just an example, and you should replace `YOUR_API_KEY_HERE` with your actual API key.\n\nIf you're interested in using an older version of the OpenAI API for testing, I can try to provide more guidance on implementing it. However, keep in mind that v0 is no longer supported by OpenAI, and this might lead to limitations or inconsistencies.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1754051825,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 423,
+          "prompt_tokens": 31,
+          "total_tokens": 454,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

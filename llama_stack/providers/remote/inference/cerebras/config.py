@@ -26,8 +26,8 @@ class CerebrasImplConfig(BaseModel):
     )
 
     @classmethod
-    def sample_run_config(cls, **kwargs) -> dict[str, Any]:
+    def sample_run_config(cls, api_key: str = "${env.CEREBRAS_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {
             "base_url": DEFAULT_BASE_URL,
-            "api_key": "${env.CEREBRAS_API_KEY}",
+            "api_key": api_key,
         }

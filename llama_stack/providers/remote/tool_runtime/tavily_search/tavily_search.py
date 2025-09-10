@@ -18,7 +18,7 @@ from llama_stack.apis.tools import (
     ToolParameter,
     ToolRuntime,
 )
-from llama_stack.distribution.request_headers import NeedsRequestProviderData
+from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
 
 from .config import TavilySearchToolConfig

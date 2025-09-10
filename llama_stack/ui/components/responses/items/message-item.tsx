@@ -1,4 +1,4 @@
-import { MessageBlock } from "@/components/ui/message-components";
+import { MessageBlock } from "@/components/chat-playground/message-components";
 import { MessageItem } from "../utils/item-types";
 
 interface MessageItemProps {
@@ -20,7 +20,7 @@ export function MessageItemComponent({
     content = item.content;
   } else if (Array.isArray(item.content)) {
     content = item.content
-      .map((c) => {
+      .map(c => {
         return c.type === "input_text" || c.type === "output_text"
           ? c.text
           : JSON.stringify(c);

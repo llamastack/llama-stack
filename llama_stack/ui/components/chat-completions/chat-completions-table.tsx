@@ -1,16 +1,21 @@
 "use client";
 
-import { ChatCompletion } from "@/lib/types";
+import {
+  ChatCompletion,
+  UsePaginationOptions,
+  ListChatCompletionsResponse,
+} from "@/lib/types";
+import { ListChatCompletionsParams } from "@/lib/llama-stack-client";
 import { LogsTable, LogTableRow } from "@/components/logs/logs-table";
 import {
   extractTextFromContentPart,
   extractDisplayableText,
 } from "@/lib/format-message-content";
+import { usePagination } from "@/hooks/use-pagination";
 
 interface ChatCompletionsTableProps {
-  data: ChatCompletion[];
-  isLoading: boolean;
-  error: Error | null;
+  /** Optional pagination configuration */
+  paginationOptions?: UsePaginationOptions;
 }
 
 function formatChatCompletionToRow(completion: ChatCompletion): LogTableRow {
@@ -25,17 +30,42 @@ function formatChatCompletionToRow(completion: ChatCompletion): LogTableRow {
 }
 
 export function ChatCompletionsTable({
-  data,
-  isLoading,
-  error,
+  paginationOptions,
 }: ChatCompletionsTableProps) {
+  const fetchFunction = async (
+    client: ReturnType<typeof import("@/hooks/use-auth-client").useAuthClient>,
+    params: {
+      after?: string;
+      limit: number;
+      model?: string;
+      order?: string;
+    }
+  ) => {
+    const response = await client.chat.completions.list({
+      after: params.after,
+      limit: params.limit,
+      ...(params.model && { model: params.model }),
+      ...(params.order && { order: params.order }),
+    } as ListChatCompletionsParams);
+
+    return response as ListChatCompletionsResponse;
+  };
+
+  const { data, status, hasMore, error, loadMore } = usePagination({
+    ...paginationOptions,
+    fetchFunction,
+    errorMessagePrefix: "chat completions",
+  });
+
   const formattedData = data.map(formatChatCompletionToRow);
 
   return (
     <LogsTable
       data={formattedData}
-      isLoading={isLoading}
+      status={status}
+      hasMore={hasMore}
       error={error}
+      onLoadMore={loadMore}
       caption="A list of your recent chat completions."
       emptyMessage="No chat completions found."
     />

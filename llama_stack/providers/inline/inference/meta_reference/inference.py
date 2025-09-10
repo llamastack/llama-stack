@@ -102,6 +102,12 @@ class MetaReferenceInferenceImpl(
         if self.config.create_distributed_process_group:
             self.generator.stop()
 
+    async def should_refresh_models(self) -> bool:
+        return False
+
+    async def list_models(self) -> list[Model] | None:
+        return None
+
     async def unregister_model(self, model_id: str) -> None:
         pass
 

@@ -1,0 +1,94 @@
+name: 'Run and Record Tests'
+description: 'Run integration tests and handle recording/artifact upload'
+
+inputs:
+  stack-config:
+    description: 'Stack configuration to use'
+    required: true
+  setup:
+    description: 'Setup to use for tests (e.g., ollama, gpt, vllm)'
+    required: false
+    default: ''
+  inference-mode:
+    description: 'Inference mode (record or replay)'
+    required: true
+  suite:
+    description: 'Test suite to use: base, responses, vision, etc.'
+    required: false
+    default: ''
+  subdirs:
+    description: 'Comma-separated list of test subdirectories to run; overrides suite'
+    required: false
+    default: ''
+  pattern:
+    description: 'Regex pattern to pass to pytest -k'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Storage and Memory Available Before Tests
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        free -h
+        df -h
+
+    - name: Run Integration Tests
+      shell: bash
+      run: |
+        SCRIPT_ARGS="--stack-config ${{ inputs.stack-config }} --inference-mode ${{ inputs.inference-mode }}"
+
+        # Add optional arguments only if they are provided
+        if [ -n '${{ inputs.setup }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --setup ${{ inputs.setup }}"
+        fi
+        if [ -n '${{ inputs.suite }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --suite ${{ inputs.suite }}"
+        fi
+        if [ -n '${{ inputs.subdirs }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --subdirs ${{ inputs.subdirs }}"
+        fi
+        if [ -n '${{ inputs.pattern }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --pattern ${{ inputs.pattern }}"
+        fi
+
+        uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS | tee pytest-${{ inputs.inference-mode }}.log
+
+
+    - name: Commit and push recordings
+      if: ${{ inputs.inference-mode == 'record' }}
+      shell: bash
+      run: |
+        echo "Checking for recording changes"
+        git status --porcelain tests/integration/recordings/
+
+        if [[ -n $(git status --porcelain tests/integration/recordings/) ]]; then
+          echo "New recordings detected, committing and pushing"
+          git add tests/integration/recordings/
+
+          git commit -m "Recordings update from CI (suite: ${{ inputs.suite }})"
+          git fetch origin ${{ github.ref_name }}
+          git rebase origin/${{ github.ref_name }}
+          echo "Rebased successfully"
+          git push origin HEAD:${{ github.ref_name }}
+          echo "Pushed successfully"
+        else
+          echo "No recording changes"
+        fi
+
+    - name: Write inference logs to file
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log || true
+
+    - name: Upload logs
+      if: ${{ always() }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: logs-${{ github.run_id }}-${{ github.run_attempt || '' }}-${{ strategy.job-index }}
+        path: |
+          *.log
+        retention-days: 1

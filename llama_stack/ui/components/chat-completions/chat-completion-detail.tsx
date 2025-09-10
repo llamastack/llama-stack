@@ -53,14 +53,14 @@ export function ChatCompletionDetailView({
           {completion.choices?.[0]?.message?.tool_calls &&
           Array.isArray(completion.choices[0].message.tool_calls) &&
           !completion.input_messages?.some(
-            (im) =>
+            im =>
               im.role === "assistant" &&
               im.tool_calls &&
               Array.isArray(im.tool_calls) &&
-              im.tool_calls.length > 0,
+              im.tool_calls.length > 0
           )
             ? completion.choices[0].message.tool_calls.map(
-                (toolCall: any, index: number) => {
+                (toolCall: { function?: { name?: string } }, index: number) => {
                   const assistantToolCallMessage: ChatMessage = {
                     role: "assistant",
                     tool_calls: [toolCall],
@@ -72,7 +72,7 @@ export function ChatCompletionDetailView({
                       message={assistantToolCallMessage}
                     />
                   );
-                },
+                }
               )
             : null}
         </CardContent>
@@ -89,7 +89,7 @@ export function ChatCompletionDetailView({
             />
           ) : (
             <p className="text-gray-500 italic text-sm">
-              No message found in assistant's choice.
+              No message found in assistant&apos;s choice.
             </p>
           )}
         </CardContent>
@@ -120,13 +120,18 @@ export function ChatCompletionDetailView({
               value={
                 <div>
                   <ul className="list-disc list-inside pl-4 mt-1">
-                    {toolCalls.map((toolCall: any, index: number) => (
-                      <li key={index}>
-                        <span className="text-gray-900 font-medium">
-                          {toolCall.function?.name || "N/A"}
-                        </span>
-                      </li>
-                    ))}
+                    {toolCalls.map(
+                      (
+                        toolCall: { function?: { name?: string } },
+                        index: number
+                      ) => (
+                        <li key={index}>
+                          <span className="text-gray-900 font-medium">
+                            {toolCall.function?.name || "N/A"}
+                          </span>
+                        </li>
+                      )
+                    )}
                   </ul>
                 </div>
               }

@@ -5,10 +5,9 @@
 # the root directory of this source tree.
 
 
-import pytest
-from openai import OpenAI
+import time
 
-from llama_stack.distribution.library_client import LlamaStackAsLibraryClient
+import pytest
 
 from ..test_cases.test_case import TestCase
 
@@ -22,9 +21,6 @@ def provider_from_model(client_with_models, model_id):
 
 
 def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id):
-    if isinstance(client_with_models, LlamaStackAsLibraryClient):
-        pytest.skip("OpenAI completions are not supported when testing with library client yet.")
-
     provider = provider_from_model(client_with_models, model_id)
     if provider.provider_type in (
         "inline::meta-reference",
@@ -40,14 +36,54 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         "remote::runpod",
         "remote::sambanova",
         "remote::tgi",
+        "remote::vertexai",
+        # {"error":{"message":"Unknown request URL: GET /openai/v1/completions. Please check the URL for typos,
+        # or see the docs at https://console.groq.com/docs/","type":"invalid_request_error","code":"unknown_url"}}
+        "remote::groq",
+        "remote::gemini",  # https://generativelanguage.googleapis.com/v1beta/openai/completions -> 404
+        "remote::anthropic",  # at least claude-3-{5,7}-{haiku,sonnet}-* / claude-{sonnet,opus}-4-* are not supported
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI completions.")
 
 
-def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, model_id):
-    if isinstance(client_with_models, LlamaStackAsLibraryClient):
-        pytest.skip("OpenAI chat completions are not supported when testing with library client yet.")
+def skip_if_model_doesnt_support_suffix(client_with_models, model_id):
+    # To test `fim` ( fill in the middle ) completion, we need to use a model that supports suffix.
+    # Use this to specifically test this API functionality.
 
+    # pytest -sv --stack-config="inference=starter" \
+    # tests/integration/inference/test_openai_completion.py \
+    # --text-model qwen2.5-coder:1.5b \
+    # -k test_openai_completion_non_streaming_suffix
+
+    if model_id != "qwen2.5-coder:1.5b":
+        pytest.skip(f"Suffix is not supported for the model: {model_id}.")
+
+    provider = provider_from_model(client_with_models, model_id)
+    if provider.provider_type != "remote::ollama":
+        pytest.skip(f"Provider {provider.provider_type} doesn't support suffix.")
+
+
+def skip_if_doesnt_support_n(client_with_models, model_id):
+    provider = provider_from_model(client_with_models, model_id)
+    if provider.provider_type in (
+        "remote::sambanova",
+        "remote::ollama",
+        # https://console.groq.com/docs/openai#currently-unsupported-openai-features
+        # -> Error code: 400 - {'error': {'message': "'n' : number must be at most 1", 'type': 'invalid_request_error'}}
+        "remote::groq",
+        # Error code: 400 - [{'error': {'code': 400, 'message': 'Only one candidate can be specified in the
+        # current model', 'status': 'INVALID_ARGUMENT'}}]
+        "remote::gemini",
+        # https://docs.anthropic.com/en/api/openai-sdk#simple-fields
+        "remote::anthropic",
+        "remote::vertexai",
+        #  Error code: 400 - [{'error': {'code': 400, 'message': 'Unable to submit request because candidateCount must be 1 but
+        #  the entered value was 2. Update the candidateCount value and try again.', 'status': 'INVALID_ARGUMENT'}
+    ):
+        pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support n param.")
+
+
+def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, model_id):
     provider = provider_from_model(client_with_models, model_id)
     if provider.provider_type in (
         "inline::meta-reference",
@@ -57,7 +93,6 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
         "remote::cerebras",
         "remote::databricks",
         "remote::runpod",
-        "remote::sambanova",
         "remote::tgi",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI chat completions.")
@@ -69,15 +104,12 @@ def skip_if_provider_isnt_vllm(client_with_models, model_id):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support vllm extra_body parameters.")
 
 
-@pytest.fixture
-def openai_client(client_with_models):
-    base_url = f"{client_with_models.base_url}/v1/openai/v1"
-    return OpenAI(base_url=base_url, api_key="bar")
-
-
-@pytest.fixture(params=["openai_client", "llama_stack_client"])
-def compat_client(request):
-    return request.getfixturevalue(request.param)
+def skip_if_provider_isnt_openai(client_with_models, model_id):
+    provider = provider_from_model(client_with_models, model_id)
+    if provider.provider_type != "remote::openai":
+        pytest.skip(
+            f"Model {model_id} hosted by {provider.provider_type} doesn't support chat completion calls with base64 encoded files."
+        )
 
 
 @pytest.mark.parametrize(
@@ -100,6 +132,32 @@ def test_openai_completion_non_streaming(llama_stack_client, client_with_models,
     assert len(response.choices) > 0
     choice = response.choices[0]
     assert len(choice.text) > 10
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:completion:suffix",
+    ],
+)
+def test_openai_completion_non_streaming_suffix(llama_stack_client, client_with_models, text_model_id, test_case):
+    skip_if_model_doesnt_support_openai_completion(client_with_models, text_model_id)
+    skip_if_model_doesnt_support_suffix(client_with_models, text_model_id)
+    tc = TestCase(test_case)
+
+    # ollama needs more verbose prompting for some reason here...
+    response = llama_stack_client.completions.create(
+        model=text_model_id,
+        prompt=tc["content"],
+        stream=False,
+        suffix=tc["suffix"],
+        max_tokens=10,
+    )
+
+    assert len(response.choices) > 0
+    choice = response.choices[0]
+    assert len(choice.text) > 5
+    assert "france" in choice.text.lower()
 
 
 @pytest.mark.parametrize(
@@ -140,9 +198,7 @@ def test_openai_completion_prompt_logprobs(llama_stack_client, client_with_model
         model=text_model_id,
         prompt=prompt,
         stream=False,
-        extra_body={
-            "prompt_logprobs": prompt_logprobs,
-        },
+        prompt_logprobs=prompt_logprobs,
     )
     assert len(response.choices) > 0
     choice = response.choices[0]
@@ -157,9 +213,7 @@ def test_openai_completion_guided_choice(llama_stack_client, client_with_models,
         model=text_model_id,
         prompt=prompt,
         stream=False,
-        extra_body={
-            "guided_choice": ["joy", "sadness"],
-        },
+        guided_choice=["joy", "sadness"],
     )
     assert len(response.choices) > 0
     choice = response.choices[0]
@@ -233,10 +287,7 @@ def test_openai_chat_completion_streaming(compat_client, client_with_models, tex
 )
 def test_openai_chat_completion_streaming_with_n(compat_client, client_with_models, text_model_id, test_case):
     skip_if_model_doesnt_support_openai_chat_completion(client_with_models, text_model_id)
-
-    provider = provider_from_model(client_with_models, text_model_id)
-    if provider.provider_type == "remote::ollama":
-        pytest.skip(f"Model {text_model_id} hosted by {provider.provider_type} doesn't support n > 1.")
+    skip_if_doesnt_support_n(client_with_models, text_model_id)
 
     tc = TestCase(test_case)
     question = tc["question"]
@@ -296,8 +347,15 @@ def test_inference_store(compat_client, client_with_models, text_model_id, strea
         response_id = response.id
         content = response.choices[0].message.content
 
-    responses = client.chat.completions.list()
-    assert response_id in [r.id for r in responses.data]
+    tries = 0
+    while tries < 10:
+        responses = client.chat.completions.list(limit=1000)
+        if response_id in [r.id for r in responses.data]:
+            break
+        else:
+            tries += 1
+            time.sleep(0.1)
+    assert tries < 10, f"Response {response_id} not found after 1 second"
 
     retrieved_response = client.chat.completions.retrieve(response_id)
     assert retrieved_response.id == response_id
@@ -361,7 +419,19 @@ def test_inference_store_tool_calls(compat_client, client_with_models, text_mode
         response_id = response.id
         content = response.choices[0].message.content
 
-    responses = client.chat.completions.list()
+    # wait for the response to be stored
+    tries = 0
+    while tries < 10:
+        responses = client.chat.completions.list(limit=1000)
+        if response_id in [r.id for r in responses.data]:
+            break
+        else:
+            tries += 1
+            time.sleep(0.1)
+
+    assert tries < 10, f"Response {response_id} not found after 1 second"
+
+    responses = client.chat.completions.list(limit=1000)
     assert response_id in [r.id for r in responses.data]
 
     retrieved_response = client.chat.completions.retrieve(response_id)
@@ -383,3 +453,35 @@ def test_inference_store_tool_calls(compat_client, client_with_models, text_mode
         # failed tool call parses show up as a message with content, so ensure
         # that the retrieve response content matches the original request
         assert retrieved_response.choices[0].message.content == content
+
+
+def test_openai_chat_completion_non_streaming_with_file(openai_client, client_with_models, text_model_id):
+    skip_if_provider_isnt_openai(client_with_models, text_model_id)
+
+    # Hardcoded base64-encoded PDF with "Hello World" text
+    pdf_base64 = "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovRm9udCA8PAovRjEgPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+Cj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggNDQKPj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzUwIFRkCihIZWxsbyBXb3JsZCkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgNQowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1OCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIG4gCjAwMDAwMDAzMTUgMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSA1Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgo0MDkKJSVFT0Y="
+
+    response = openai_client.chat.completions.create(
+        model=text_model_id,
+        messages=[
+            {
+                "role": "user",
+                "content": "Describe what you see in this PDF file.",
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "file",
+                        "file": {
+                            "filename": "my-temp-hello-world-pdf",
+                            "file_data": f"data:application/pdf;base64,{pdf_base64}",
+                        },
+                    }
+                ],
+            },
+        ],
+        stream=False,
+    )
+    message_content = response.choices[0].message.content.lower().strip()
+    assert "hello world" in message_content

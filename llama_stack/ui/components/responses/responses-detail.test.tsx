@@ -18,7 +18,7 @@ describe("ResponseDetailView", () => {
   describe("Loading State", () => {
     test("renders loading skeleton when isLoading is true", () => {
       const { container } = render(
-        <ResponseDetailView {...defaultProps} isLoading={true} />,
+        <ResponseDetailView {...defaultProps} isLoading={true} />
       );
 
       // Check for skeleton elements
@@ -36,13 +36,13 @@ describe("ResponseDetailView", () => {
         <ResponseDetailView
           {...defaultProps}
           error={{ name: "Error", message: errorMessage }}
-        />,
+        />
       );
 
       expect(screen.getByText("Responses Details")).toBeInTheDocument();
       // The error message is split across elements, so we check for parts
       expect(
-        screen.getByText(/Error loading details for ID/),
+        screen.getByText(/Error loading details for ID/)
       ).toBeInTheDocument();
       expect(screen.getByText(/test_id/)).toBeInTheDocument();
       expect(screen.getByText(/Network Error/)).toBeInTheDocument();
@@ -53,11 +53,11 @@ describe("ResponseDetailView", () => {
         <ResponseDetailView
           {...defaultProps}
           error={{ name: "Error", message: "" }}
-        />,
+        />
       );
 
       expect(
-        screen.getByText(/Error loading details for ID/),
+        screen.getByText(/Error loading details for ID/)
       ).toBeInTheDocument();
       expect(screen.getByText(/test_id/)).toBeInTheDocument();
     });
@@ -124,14 +124,14 @@ describe("ResponseDetailView", () => {
       // Check properties - use regex to handle text split across elements
       expect(screen.getByText(/Created/)).toBeInTheDocument();
       expect(
-        screen.getByText(new Date(1710000000 * 1000).toLocaleString()),
+        screen.getByText(new Date(1710000000 * 1000).toLocaleString())
       ).toBeInTheDocument();
 
       // Check for the specific ID label (not Previous Response ID)
       expect(
         screen.getByText((content, element) => {
           return element?.tagName === "STRONG" && content === "ID:";
-        }),
+        })
       ).toBeInTheDocument();
       expect(screen.getByText("resp_123")).toBeInTheDocument();
 
@@ -166,7 +166,7 @@ describe("ResponseDetailView", () => {
       };
 
       render(
-        <ResponseDetailView {...defaultProps} response={minimalResponse} />,
+        <ResponseDetailView {...defaultProps} response={minimalResponse} />
       );
 
       // Should show required properties
@@ -179,7 +179,7 @@ describe("ResponseDetailView", () => {
       expect(screen.queryByText("Top P")).not.toBeInTheDocument();
       expect(screen.queryByText("Parallel Tool Calls")).not.toBeInTheDocument();
       expect(
-        screen.queryByText("Previous Response ID"),
+        screen.queryByText("Previous Response ID")
       ).not.toBeInTheDocument();
     });
 
@@ -196,7 +196,7 @@ describe("ResponseDetailView", () => {
 
       // The error is shown in the properties sidebar, not as a separate "Error" label
       expect(
-        screen.getByText("invalid_request: The request was invalid"),
+        screen.getByText("invalid_request: The request was invalid")
       ).toBeInTheDocument();
     });
   });
@@ -218,7 +218,7 @@ describe("ResponseDetailView", () => {
           {...defaultProps}
           response={mockResponse}
           isLoadingInputItems={true}
-        />,
+        />
       );
 
       // Check for skeleton loading in input items section
@@ -227,7 +227,7 @@ describe("ResponseDetailView", () => {
           {...defaultProps}
           response={mockResponse}
           isLoadingInputItems={true}
-        />,
+        />
       );
 
       const skeletons = container.querySelectorAll('[data-slot="skeleton"]');
@@ -243,16 +243,16 @@ describe("ResponseDetailView", () => {
             name: "Error",
             message: "Failed to load input items",
           }}
-        />,
+        />
       );
 
       expect(
         screen.getByText(
-          "Error loading input items: Failed to load input items",
-        ),
+          "Error loading input items: Failed to load input items"
+        )
       ).toBeInTheDocument();
       expect(
-        screen.getByText("Falling back to response input data."),
+        screen.getByText("Falling back to response input data.")
       ).toBeInTheDocument();
 
       // Should still show fallback input data
@@ -276,7 +276,7 @@ describe("ResponseDetailView", () => {
           {...defaultProps}
           response={mockResponse}
           inputItems={mockInputItems}
-        />,
+        />
       );
 
       // Should show input items data, not response.input
@@ -295,7 +295,7 @@ describe("ResponseDetailView", () => {
           {...defaultProps}
           response={mockResponse}
           inputItems={emptyInputItems}
-        />,
+        />
       );
 
       // Should show fallback input data
@@ -313,7 +313,7 @@ describe("ResponseDetailView", () => {
           {...defaultProps}
           response={responseWithoutInput}
           inputItems={null}
-        />,
+        />
       );
 
       expect(screen.getByText("No input data available.")).toBeInTheDocument();
@@ -443,7 +443,7 @@ describe("ResponseDetailView", () => {
       render(<ResponseDetailView {...defaultProps} response={mockResponse} />);
 
       expect(
-        screen.getByText('input_function({"param": "value"})'),
+        screen.getByText('input_function({"param": "value"})')
       ).toBeInTheDocument();
       expect(screen.getByText("Function Call")).toBeInTheDocument();
     });
@@ -468,7 +468,7 @@ describe("ResponseDetailView", () => {
       render(<ResponseDetailView {...defaultProps} response={mockResponse} />);
 
       expect(
-        screen.getByText("web_search_call(status: completed)"),
+        screen.getByText("web_search_call(status: completed)")
       ).toBeInTheDocument();
       expect(screen.getByText("Function Call")).toBeInTheDocument();
       expect(screen.getByText("(Web Search)")).toBeInTheDocument();
@@ -522,7 +522,7 @@ describe("ResponseDetailView", () => {
       render(<ResponseDetailView {...defaultProps} response={mockResponse} />);
 
       expect(
-        screen.getByText("First output Second output"),
+        screen.getByText("First output Second output")
       ).toBeInTheDocument();
       expect(screen.getByText("Assistant")).toBeInTheDocument();
     });
@@ -549,7 +549,7 @@ describe("ResponseDetailView", () => {
       render(<ResponseDetailView {...defaultProps} response={mockResponse} />);
 
       expect(
-        screen.getByText('search_function({"query": "test"})'),
+        screen.getByText('search_function({"query": "test"})')
       ).toBeInTheDocument();
       expect(screen.getByText("Function Call")).toBeInTheDocument();
     });
@@ -598,7 +598,7 @@ describe("ResponseDetailView", () => {
       render(<ResponseDetailView {...defaultProps} response={mockResponse} />);
 
       expect(
-        screen.getByText("web_search_call(status: completed)"),
+        screen.getByText("web_search_call(status: completed)")
       ).toBeInTheDocument();
       expect(screen.getByText(/Function Call/)).toBeInTheDocument();
       expect(screen.getByText("(Web Search)")).toBeInTheDocument();
@@ -616,7 +616,7 @@ describe("ResponseDetailView", () => {
             type: "unknown_type",
             custom_field: "custom_value",
             data: { nested: "object" },
-          } as any,
+          } as unknown,
         ],
         input: [],
       };
@@ -625,7 +625,7 @@ describe("ResponseDetailView", () => {
 
       // Should show JSON stringified content
       expect(
-        screen.getByText(/custom_field.*custom_value/),
+        screen.getByText(/custom_field.*custom_value/)
       ).toBeInTheDocument();
       expect(screen.getByText("(unknown_type)")).toBeInTheDocument();
     });
@@ -666,7 +666,7 @@ describe("ResponseDetailView", () => {
             role: "assistant",
             call_id: "call_123",
             content: "sunny and warm",
-          } as any, // Using any to bypass the type restriction for this test
+          } as unknown, // Using any to bypass the type restriction for this test
         ],
         input: [],
       };
@@ -676,7 +676,7 @@ describe("ResponseDetailView", () => {
       // Should show the function call and message as separate items (not grouped)
       expect(screen.getByText("Function Call")).toBeInTheDocument();
       expect(
-        screen.getByText('get_weather({"city": "Tokyo"})'),
+        screen.getByText('get_weather({"city": "Tokyo"})')
       ).toBeInTheDocument();
       expect(screen.getByText("Assistant")).toBeInTheDocument();
       expect(screen.getByText("sunny and warm")).toBeInTheDocument();
@@ -706,7 +706,7 @@ describe("ResponseDetailView", () => {
             status: "completed",
             call_id: "call_123",
             output: "sunny and warm",
-          } as any, // Using any to bypass the type restriction for this test
+          } as unknown,
         ],
         input: [],
       };
@@ -717,7 +717,7 @@ describe("ResponseDetailView", () => {
       expect(screen.getByText("Function Call")).toBeInTheDocument();
       expect(screen.getByText("Arguments")).toBeInTheDocument();
       expect(
-        screen.getByText('get_weather({"city": "Tokyo"})'),
+        screen.getByText('get_weather({"city": "Tokyo"})')
       ).toBeInTheDocument();
       // Use getAllByText since there are multiple "Output" elements (card title and output label)
       const outputElements = screen.getAllByText("Output");

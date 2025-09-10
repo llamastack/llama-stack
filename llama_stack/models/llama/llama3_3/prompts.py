@@ -178,6 +178,7 @@ def usecases() -> list[UseCase | str]:
                     ),
                     RawMessage(role="user", content="What is the 100th decimal of pi?"),
                     RawMessage(
+                        role="assistant",
                         content="",
                         stop_reason=StopReason.end_of_message,
                         tool_calls=[

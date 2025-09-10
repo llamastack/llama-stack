@@ -1,7 +1,7 @@
 import {
   MessageBlock,
   ToolCallBlock,
-} from "@/components/ui/message-components";
+} from "@/components/chat-playground/message-components";
 import { FunctionCallItem, FunctionCallOutputItem } from "../utils/item-types";
 
 interface GroupedFunctionCallItemProps {

@@ -1,0 +1,66 @@
+name: 'Setup Test Environment'
+description: 'Common setup steps for integration tests including dependencies, providers, and build'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: true
+  client-version:
+    description: 'Client version (latest or published)'
+    required: true
+  setup:
+    description: 'Setup to configure (ollama, vllm, gpt, etc.)'
+    required: false
+    default: 'ollama'
+  suite:
+    description: 'Test suite to use: base, responses, vision, etc.'
+    required: false
+    default: ''
+  inference-mode:
+    description: 'Inference mode (record or replay)'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install dependencies
+      uses: ./.github/actions/setup-runner
+      with:
+        python-version: ${{ inputs.python-version }}
+        client-version: ${{ inputs.client-version }}
+
+    - name: Setup ollama
+      if: ${{ (inputs.setup == 'ollama' || inputs.setup == 'ollama-vision') && inputs.inference-mode == 'record' }}
+      uses: ./.github/actions/setup-ollama
+      with:
+        suite: ${{ inputs.suite }}
+
+    - name: Setup vllm
+      if: ${{ inputs.setup == 'vllm' && inputs.inference-mode == 'record' }}
+      uses: ./.github/actions/setup-vllm
+
+    - name: Build Llama Stack
+      shell: bash
+      run: |
+        # Install llama-stack-client-python based on the client-version input
+        if [ "${{ inputs.client-version }}" = "latest" ]; then
+          echo "Installing latest llama-stack-client-python from main branch"
+          export LLAMA_STACK_CLIENT_DIR=git+https://github.com/llamastack/llama-stack-client-python.git@main
+        elif [ "${{ inputs.client-version }}" = "published" ]; then
+          echo "Installing published llama-stack-client-python from PyPI"
+          unset LLAMA_STACK_CLIENT_DIR
+        else
+          echo "Invalid client-version: ${{ inputs.client-version }}"
+          exit 1
+        fi
+
+        echo "Building Llama Stack"
+
+        LLAMA_STACK_DIR=. \
+          uv run --no-sync llama stack build --template ci-tests --image-type venv
+
+    - name: Configure git for commits
+      shell: bash
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"

@@ -22,7 +22,7 @@ This provider enables fine-tuning of LLMs using NVIDIA's NeMo Customizer service
 Build the NVIDIA environment:
 
 ```bash
-llama stack build --template nvidia --image-type conda
+llama stack build --distro nvidia --image-type venv
 ```
 
 ### Basic Usage using the LlamaStack Python Client
@@ -40,7 +40,7 @@ os.environ["NVIDIA_DATASET_NAMESPACE"] = "default"
 os.environ["NVIDIA_PROJECT_ID"] = "test-project"
 os.environ["NVIDIA_OUTPUT_MODEL_DIR"] = "test-example-model@v1"
 
-from llama_stack.distribution.library_client import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
 client = LlamaStackAsLibraryClient("nvidia")
 client.initialize()

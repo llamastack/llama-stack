@@ -10,10 +10,9 @@ import pytest
 
 from llama_stack.apis.common.content_types import URL, TextContentItem
 from llama_stack.apis.tools import RAGDocument
-from llama_stack.providers.utils.memory.vector_store import content_from_doc
+from llama_stack.providers.utils.memory.vector_store import content_from_data_and_mime_type, content_from_doc
 
 
-@pytest.mark.asyncio
 async def test_content_from_doc_with_url():
     """Test extracting content from RAGDocument with URL content."""
     mock_url = URL(uri="https://example.com")
@@ -33,7 +32,6 @@ async def test_content_from_doc_with_url():
         mock_instance.get.assert_called_once_with(mock_url.uri)
 
 
-@pytest.mark.asyncio
 async def test_content_from_doc_with_pdf_url():
     """Test extracting content from RAGDocument with URL pointing to a PDF."""
     mock_url = URL(uri="https://example.com/document.pdf")
@@ -58,7 +56,6 @@ async def test_content_from_doc_with_pdf_url():
         mock_parse_pdf.assert_called_once_with(b"PDF binary data")
 
 
-@pytest.mark.asyncio
 async def test_content_from_doc_with_data_url():
     """Test extracting content from RAGDocument with data URL content."""
     data_url = "data:text/plain;base64,SGVsbG8gV29ybGQ="  # "Hello World" base64 encoded
@@ -74,7 +71,6 @@ async def test_content_from_doc_with_data_url():
         mock_content_from_data.assert_called_once_with(data_url)
 
 
-@pytest.mark.asyncio
 async def test_content_from_doc_with_string():
     """Test extracting content from RAGDocument with string content."""
     content_string = "This is plain text content"
@@ -85,7 +81,6 @@ async def test_content_from_doc_with_string():
     assert result == content_string
 
 
-@pytest.mark.asyncio
 async def test_content_from_doc_with_string_url():
     """Test extracting content from RAGDocument with string URL content."""
     url_string = "https://example.com"
@@ -105,7 +100,6 @@ async def test_content_from_doc_with_string_url():
         mock_instance.get.assert_called_once_with(url_string)
 
 
-@pytest.mark.asyncio
 async def test_content_from_doc_with_string_pdf_url():
     """Test extracting content from RAGDocument with string URL pointing to a PDF."""
     url_string = "https://example.com/document.pdf"
@@ -130,7 +124,6 @@ async def test_content_from_doc_with_string_pdf_url():
         mock_parse_pdf.assert_called_once_with(b"PDF binary data")
 
 
-@pytest.mark.asyncio
 async def test_content_from_doc_with_interleaved_content():
     """Test extracting content from RAGDocument with InterleavedContent (the new case added in the commit)."""
     interleaved_content = [TextContentItem(text="First item"), TextContentItem(text="Second item")]
@@ -143,3 +136,45 @@ async def test_content_from_doc_with_interleaved_content():
 
         assert result == "First item\nSecond item"
         mock_interleaved.assert_called_once_with(interleaved_content)
+
+
+def test_content_from_data_and_mime_type_success_utf8():
+    """Test successful decoding with UTF-8 encoding."""
+    data = "Hello World! 🌍".encode()
+    mime_type = "text/plain"
+
+    with patch("chardet.detect") as mock_detect:
+        mock_detect.return_value = {"encoding": "utf-8"}
+
+        result = content_from_data_and_mime_type(data, mime_type)
+
+        mock_detect.assert_called_once_with(data)
+        assert result == "Hello World! 🌍"
+
+
+def test_content_from_data_and_mime_type_error_win1252():
+    """Test fallback to UTF-8 when Windows-1252 encoding detection fails."""
+    data = "Hello World! 🌍".encode()
+    mime_type = "text/plain"
+
+    with patch("chardet.detect") as mock_detect:
+        mock_detect.return_value = {"encoding": "Windows-1252"}
+
+        result = content_from_data_and_mime_type(data, mime_type)
+
+        assert result == "Hello World! 🌍"
+        mock_detect.assert_called_once_with(data)
+
+
+def test_content_from_data_and_mime_type_both_encodings_fail():
+    """Test that exceptions are raised when both primary and UTF-8 encodings fail."""
+    # Create invalid byte sequence that fails with both encodings
+    data = b"\xff\xfe\x00\x8f"  # Invalid UTF-8 sequence
+    mime_type = "text/plain"
+
+    with patch("chardet.detect") as mock_detect:
+        mock_detect.return_value = {"encoding": "windows-1252"}
+
+        # Should raise an exception instead of returning empty string
+        with pytest.raises(UnicodeDecodeError):
+            content_from_data_and_mime_type(data, mime_type)

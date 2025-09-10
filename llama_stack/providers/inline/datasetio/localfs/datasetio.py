@@ -5,8 +5,6 @@
 # the root directory of this source tree.
 from typing import Any
 
-import pandas
-
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Dataset
@@ -44,6 +42,8 @@ class PandasDataframeDataset:
         if self.dataset_def.source.type == "uri":
             self.df = await get_dataframe_from_uri(self.dataset_def.source.uri)
         elif self.dataset_def.source.type == "rows":
+            import pandas
+
             self.df = pandas.DataFrame(self.dataset_def.source.rows)
         else:
             raise ValueError(f"Unsupported dataset source type: {self.dataset_def.source.type}")
@@ -103,6 +103,8 @@ class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
         return paginate_records(records, start_index, limit)
 
     async def append_rows(self, dataset_id: str, rows: list[dict[str, Any]]) -> None:
+        import pandas
+
         dataset_def = self.dataset_infos[dataset_id]
         dataset_impl = PandasDataframeDataset(dataset_def)
         await dataset_impl.load()

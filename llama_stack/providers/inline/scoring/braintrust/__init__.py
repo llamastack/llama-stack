@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from llama_stack.distribution.datatypes import Api
+from llama_stack.core.datatypes import Api
 
 from .config import BraintrustScoringConfig
 

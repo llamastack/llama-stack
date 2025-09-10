@@ -19,7 +19,12 @@ from llama_stack.apis.inference import (
     Inference,
     LogProbConfig,
     Message,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAICompletion,
     OpenAIEmbeddingsResponse,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
     TextTruncation,
@@ -28,15 +33,8 @@ from llama_stack.apis.inference import (
     ToolDefinition,
     ToolPromptFormat,
 )
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAICompletion,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
-)
 from llama_stack.apis.models import Model
-from llama_stack.distribution.library_client import convert_pydantic_to_json_value, convert_to_pydantic
+from llama_stack.core.library_client import convert_pydantic_to_json_value, convert_to_pydantic
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 
@@ -242,6 +240,7 @@ class PassthroughInferenceAdapter(Inference):
         user: str | None = None,
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
+        suffix: str | None = None,
     ) -> OpenAICompletion:
         client = self._get_client()
         model_obj = await self.model_store.get_model(model)

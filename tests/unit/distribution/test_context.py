@@ -10,10 +10,9 @@ from contextvars import ContextVar
 
 import pytest
 
-from llama_stack.distribution.utils.context import preserve_contexts_async_generator
+from llama_stack.core.utils.context import preserve_contexts_async_generator
 
 
-@pytest.mark.asyncio
 async def test_preserve_contexts_with_exception():
     # Create context variable
     context_var = ContextVar("exception_var", default="initial")
@@ -41,7 +40,6 @@ async def test_preserve_contexts_with_exception():
     context_var.reset(token)
 
 
-@pytest.mark.asyncio
 async def test_preserve_contexts_empty_generator():
     # Create context variable
     context_var = ContextVar("empty_var", default="initial")
@@ -66,7 +64,6 @@ async def test_preserve_contexts_empty_generator():
     context_var.reset(token)
 
 
-@pytest.mark.asyncio
 async def test_preserve_contexts_across_event_loops():
     """
     Test that context variables are preserved across event loop boundaries with nested generators.

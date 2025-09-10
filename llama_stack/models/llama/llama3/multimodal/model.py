@@ -3,8 +3,6 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-
-import logging
 import math
 from collections.abc import Callable
 from functools import partial
@@ -22,6 +20,8 @@ from PIL import Image as PIL_Image
 from torch import Tensor, nn
 from torch.distributed import _functional_collectives as funcol
 
+from llama_stack.log import get_logger
+
 from ..model import ModelArgs, RMSNorm, apply_rotary_emb, precompute_freqs_cis
 from .encoder_utils import (
     build_encoder_attention_mask,
@@ -34,8 +34,9 @@ from .encoder_utils import (
 from .image_transform import VariableSizeImageTransform
 from .utils import get_negative_inf_value, to_2tuple
 
-logger = logging.getLogger(__name__)
 MP_SCALE = 8
+
+logger = get_logger(name=__name__, category="models::llama")
 
 
 def reduce_from_tensor_model_parallel_region(input_):
@@ -771,7 +772,7 @@ class TilePositionEmbedding(nn.Module):
         if embed is not None:
             # reshape the weights to the correct shape
             nt_old, nt_old, _, w = embed.shape
-            logging.info(f"Resizing tile embedding from {nt_old}x{nt_old} to {self.num_tiles}x{self.num_tiles}")
+            logger.info(f"Resizing tile embedding from {nt_old}x{nt_old} to {self.num_tiles}x{self.num_tiles}")
             embed_new = TilePositionEmbedding._dynamic_resize(embed, self.num_tiles)
             # assign the weights to the module
             state_dict[prefix + "embedding"] = embed_new

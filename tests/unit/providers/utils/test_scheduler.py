@@ -11,13 +11,20 @@ import pytest
 from llama_stack.providers.utils.scheduler import JobStatus, Scheduler
 
 
-@pytest.mark.asyncio
 async def test_scheduler_unknown_backend():
     with pytest.raises(ValueError):
         Scheduler(backend="unknown")
 
 
-@pytest.mark.asyncio
+async def wait_for_job_completed(sched: Scheduler, job_id: str) -> None:
+    for _ in range(10):
+        job = sched.get_job(job_id)
+        if job.completed_at is not None:
+            return
+        await asyncio.sleep(0.1)
+    raise TimeoutError(f"Job {job_id} did not complete in time.")
+
+
 async def test_scheduler_naive():
     sched = Scheduler()
 
@@ -52,6 +59,9 @@ async def test_scheduler_naive():
     assert sched.get_jobs("unknown") == []
     assert sched.get_jobs(job_type) == [sched.get_job(job_id)]
 
+    # give the job handler a chance to run
+    await wait_for_job_completed(sched, job_id)
+
     # now shut the scheduler down and make sure the job ran
     await sched.shutdown()
 
@@ -75,7 +85,6 @@ async def test_scheduler_naive():
     assert job.logs[0][0] < job.logs[1][0]
 
 
-@pytest.mark.asyncio
 async def test_scheduler_naive_handler_raises():
     sched = Scheduler()
 
@@ -92,10 +101,7 @@ async def test_scheduler_naive_handler_raises():
 
     # confirm the exception made the job transition to failed state, even
     # though it was set to `running` before the error
-    for _ in range(10):
-        if job.status == JobStatus.failed:
-            break
-        await asyncio.sleep(0.1)
+    await wait_for_job_completed(sched, job_id)
     assert job.status == JobStatus.failed
 
     # confirm that the raised error got registered in log
@@ -111,6 +117,7 @@ async def test_scheduler_naive_handler_raises():
 
     job_id = "test_job_id2"
     sched.schedule(job_type, job_id, successful_job_handler)
+    await wait_for_job_completed(sched, job_id)
 
     await sched.shutdown()
 

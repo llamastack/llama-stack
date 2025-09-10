@@ -12,7 +12,7 @@ from llama_stack.apis.common.type_system import (
     CompletionInputType,
     StringType,
 )
-from llama_stack.distribution.datatypes import Api
+from llama_stack.core.datatypes import Api
 
 
 class ColumnName(Enum):

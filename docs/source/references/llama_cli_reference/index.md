@@ -19,11 +19,11 @@ You have two ways to install Llama Stack:
     cd ~/local
     git clone git@github.com:meta-llama/llama-stack.git
 
-    conda create -n myenv python=3.10
-    conda activate myenv
+    uv venv myenv --python 3.12
+    source myenv/bin/activate  # On Windows: myenv\Scripts\activate
 
     cd llama-stack
-    $CONDA_PREFIX/bin/pip install -e .
+    pip install -e .
 
 
 ## `llama` subcommands
@@ -152,7 +152,9 @@ llama download --source huggingface --model-id Prompt-Guard-86M --ignore-pattern
 
 **Important:** Set your environment variable `HF_TOKEN` or pass in `--hf-token` to the command to validate your access. You can find your token at [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
 
-> **Tip:** Default for `llama download` is to run with `--ignore-patterns *.safetensors` since we use the `.pth` files in the `original` folder. For Llama Guard and Prompt Guard, however, we need safetensors. Hence, please run with `--ignore-patterns original` so that safetensors are downloaded and `.pth` files are ignored.
+```{tip}
+Default for `llama download` is to run with `--ignore-patterns *.safetensors` since we use the `.pth` files in the `original` folder. For Llama Guard and Prompt Guard, however, we need safetensors. Hence, please run with `--ignore-patterns original` so that safetensors are downloaded and `.pth` files are ignored.
+```
 
 ## List the downloaded models
 

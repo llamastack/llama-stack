@@ -27,21 +27,31 @@ class StackBuild(Subcommand):
             "--config",
             type=str,
             default=None,
-            help="Path to a config file to use for the build. You can find example configs in llama_stack/distributions/**/build.yaml. If this argument is not provided, you will be prompted to enter information interactively",
+            help="Path to a config file to use for the build. You can find example configs in llama_stack.cores/**/build.yaml. If this argument is not provided, you will be prompted to enter information interactively",
         )
 
         self.parser.add_argument(
             "--template",
             type=str,
             default=None,
-            help="Name of the example template config to use for build. You may use `llama stack build --list-templates` to check out the available templates",
+            help="""(deprecated) Name of the example template config to use for build. You may use `llama stack build --list-distros` to check out the available distributions""",
+        )
+        self.parser.add_argument(
+            "--distro",
+            "--distribution",
+            dest="distribution",
+            type=str,
+            default=None,
+            help="""Name of the distribution to use for build. You may use `llama stack build --list-distros` to check out the available distributions""",
         )
 
         self.parser.add_argument(
-            "--list-templates",
+            "--list-distros",
+            "--list-distributions",
             action="store_true",
+            dest="list_distros",
             default=False,
-            help="Show the available templates for building a Llama Stack distribution",
+            help="Show the available distributions for building a Llama Stack distribution",
         )
 
         self.parser.add_argument(
@@ -56,7 +66,7 @@ class StackBuild(Subcommand):
             "--image-name",
             type=str,
             help=textwrap.dedent(
-                f"""[for image-type={"|".join(e.value for e in ImageType)}] Name of the conda or virtual environment to use for
+                f"""[for image-type={"|".join(e.value for e in ImageType)}] Name of the virtual environment to use for
 the build. If not specified, currently active environment will be used if found.
             """
             ),

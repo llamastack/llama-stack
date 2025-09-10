@@ -1,0 +1,46 @@
+version: 2
+distribution_spec:
+  description: Use watsonx for running LLM inference
+  providers:
+    inference:
+    - provider_id: watsonx
+      provider_type: remote::watsonx
+    - provider_id: sentence-transformers
+      provider_type: inline::sentence-transformers
+    vector_io:
+    - provider_id: faiss
+      provider_type: inline::faiss
+    safety:
+    - provider_id: llama-guard
+      provider_type: inline::llama-guard
+    agents:
+    - provider_id: meta-reference
+      provider_type: inline::meta-reference
+    telemetry:
+    - provider_id: meta-reference
+      provider_type: inline::meta-reference
+    eval:
+    - provider_id: meta-reference
+      provider_type: inline::meta-reference
+    datasetio:
+    - provider_id: huggingface
+      provider_type: remote::huggingface
+    - provider_id: localfs
+      provider_type: inline::localfs
+    scoring:
+    - provider_id: basic
+      provider_type: inline::basic
+    - provider_id: llm-as-judge
+      provider_type: inline::llm-as-judge
+    - provider_id: braintrust
+      provider_type: inline::braintrust
+    tool_runtime:
+    - provider_type: remote::brave-search
+    - provider_type: remote::tavily-search
+    - provider_type: inline::rag-runtime
+    - provider_type: remote::model-context-protocol
+image_type: venv
+additional_pip_packages:
+- sqlalchemy[asyncio]
+- aiosqlite
+- aiosqlite
