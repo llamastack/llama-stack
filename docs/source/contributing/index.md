@@ -35,5 +35,5 @@ testing/record-replay
 
 ### Benchmarking
 
-```{include} ../../../docs/source/distributions/k8s-benchmark/README.md
+```{include} ../../../benchmarking/k8s-benchmark/README.md
 ```
