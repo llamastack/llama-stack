@@ -1019,7 +1019,7 @@ def openai_messages_to_messages(
     converted_messages = []
     for message in messages:
         # Check if this individual message is already a Llama Stack Message
-        if isinstance(message, Message):
+        if isinstance(message, (UserMessage | SystemMessage | ToolResponseMessage | CompletionMessage)):
             # Already a Llama Stack Message, use as-is
             converted_messages.append(message)
             continue

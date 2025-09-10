@@ -155,13 +155,12 @@ def test_message_accepts_text_list(message_class, kwargs):
     "message_class,kwargs",
     [
         (OpenAISystemMessageParam, {}),
-        (OpenAIAssistantMessageParam, {}),
         (OpenAIDeveloperMessageParam, {}),
-        (OpenAIToolMessageParam, {"tool_call_id": "call_123"}),
+        (OpenAIAssistantMessageParam, {}),
     ],
 )
 def test_message_rejects_images(message_class, kwargs):
-    """Test that system, assistant, developer, and tool messages reject image content."""
+    """Test that system, assistant, and developer messages reject image content."""
     with pytest.raises(ValidationError):
         message_class(
             content=[
@@ -169,6 +168,20 @@ def test_message_rejects_images(message_class, kwargs):
             ],
             **kwargs,
         )
+
+
+def test_tool_message_accepts_images():
+    """Test that tool messages accept image content (consistent with tool_executor behavior)."""
+    msg = OpenAIToolMessageParam(
+        tool_call_id="call_123",
+        content=[
+            OpenAIChatCompletionContentPartTextParam(text="Result with image"),
+            OpenAIChatCompletionContentPartImageParam(image_url=OpenAIImageURL(url="http://example.com/image.jpg")),
+        ],
+    )
+    assert len(msg.content) == 2
+    assert msg.content[0].text == "Result with image"
+    assert msg.content[1].image_url.url == "http://example.com/image.jpg"
 
 
 def test_user_message_accepts_images():

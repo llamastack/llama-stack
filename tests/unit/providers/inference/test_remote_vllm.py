@@ -181,13 +181,17 @@ async def test_tool_call_response(vllm_inference_adapter):
             tool_config=ToolConfig(tool_choice=ToolChoice.auto),
         )
 
-        assert mock_client.chat.completions.create.call_args.kwargs["messages"][2]["tool_calls"] == [
-            {
-                "id": "foo",
-                "type": "function",
-                "function": {"name": "knowledge_search", "arguments": '{"query": "How many?"}'},
-            }
-        ]
+        # The message structure contains both dict and Pydantic objects
+        message_with_tools = mock_client.chat.completions.create.call_args.kwargs["messages"][2]
+        assert "tool_calls" in message_with_tools
+        tool_calls = message_with_tools["tool_calls"]
+        assert len(tool_calls) == 1
+        tool_call = tool_calls[0]
+        # tool_call is still a Pydantic object (ChatCompletionMessageFunctionToolCall)
+        assert tool_call.id == "foo"
+        assert tool_call.type == "function"
+        assert tool_call.function.name == "knowledge_search"
+        assert tool_call.function.arguments == '{"query": "How many?"}'
 
 
 async def test_tool_call_delta_empty_tool_call_buf():
