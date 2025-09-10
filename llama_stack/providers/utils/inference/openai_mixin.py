@@ -67,6 +67,17 @@ class OpenAIMixin(ABC):
         """
         pass
 
+    def get_extra_client_params(self) -> dict[str, Any]:
+        """
+        Get any extra parameters to pass to the AsyncOpenAI client.
+
+        Child classes can override this method to provide additional parameters
+        such as timeout settings, proxies, etc.
+
+        :return: A dictionary of extra parameters
+        """
+        return {}
+
     @property
     def client(self) -> AsyncOpenAI:
         """
@@ -78,6 +89,7 @@ class OpenAIMixin(ABC):
         return AsyncOpenAI(
             api_key=self.get_api_key(),
             base_url=self.get_base_url(),
+            **self.get_extra_client_params(),
         )
 
     async def _get_provider_model_id(self, model: str) -> str:
@@ -124,10 +136,15 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI completion API call.
         """
-        if guided_choice is not None:
-            logger.warning("guided_choice is not supported by the OpenAI API. Ignoring.")
-        if prompt_logprobs is not None:
-            logger.warning("prompt_logprobs is not supported by the OpenAI API. Ignoring.")
+        # Handle parameters that are not supported by OpenAI API, but may be by the provider
+        #  prompt_logprobs is supported by vLLM
+        #  guided_choice is supported by vLLM
+        # TODO: test coverage
+        extra_body: dict[str, Any] = {}
+        if prompt_logprobs is not None and prompt_logprobs >= 0:
+            extra_body["prompt_logprobs"] = prompt_logprobs
+        if guided_choice:
+            extra_body["guided_choice"] = guided_choice
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
         return await self.client.completions.create(  # type: ignore[no-any-return]
@@ -150,7 +167,8 @@ class OpenAIMixin(ABC):
                 top_p=top_p,
                 user=user,
                 suffix=suffix,
-            )
+            ),
+            extra_body=extra_body,
         )
 
     async def openai_chat_completion(

@@ -1,0 +1,129 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_object_namespace_list",
+            "description": "Get the list of objects in a namespace",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "the type of object"
+                },
+                "namespace": {
+                  "type": "string",
+                  "description": "the name of the namespace"
+                }
+              },
+              "required": [
+                "kind",
+                "namespace"
+              ]
+            }
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "You are a helpful assistant."
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What pods are in the namespace openshift-lightspeed?"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": ""
+            }
+          ],
+          "tool_calls": [
+            {
+              "id": "1",
+              "type": "function",
+              "function": {
+                "name": "get_object_namespace_list",
+                "arguments": "{\"kind\": \"pod\", \"namespace\": \"openshift-lightspeed\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "text",
+              "text": "the objects are pod1, pod2, pod3"
+            }
+          ]
+        }
+      ],
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-042380355dac4046b0510320198e5563",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user asked for the pods in the namespace openshift-lightspeed. I called the get_object_namespace_list function with kind \"pod\" and namespace \"openshift-lightspeed\". The response came back with three objects: pod1, pod2, pod3. Now I need to present this information clearly.\n\nI should confirm the answer by listing each pod. Maybe mention that the list includes those specific pods. Keep it straightforward and make sure the user knows the result. No need for extra details since the tool response already provided the list. Just relay the information back in a friendly manner.\n</think>\n\nThe pods in the namespace openshift-lightspeed are: pod1, pod2, and pod3.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757524154,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 148,
+          "prompt_tokens": 256,
+          "total_tokens": 404,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null
+      }
+    },
+    "is_streaming": false
+  }
+}

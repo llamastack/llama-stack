@@ -1,0 +1,124 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "You are a helpful assistant. Michael Jordan was born in 1963. He played basketball for the Chicago Bulls for 15 seasons."
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Please give me information about Michael Jordan."
+            }
+          ]
+        }
+      ],
+      "extra_body": {
+        "guided_json": {
+          "$defs": {
+            "NBAStats": {
+              "properties": {
+                "year_for_draft": {
+                  "title": "Year For Draft",
+                  "type": "integer"
+                },
+                "num_seasons_in_nba": {
+                  "title": "Num Seasons In Nba",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "year_for_draft",
+                "num_seasons_in_nba"
+              ],
+              "title": "NBAStats",
+              "type": "object"
+            }
+          },
+          "properties": {
+            "first_name": {
+              "title": "First Name",
+              "type": "string"
+            },
+            "last_name": {
+              "title": "Last Name",
+              "type": "string"
+            },
+            "year_of_birth": {
+              "title": "Year Of Birth",
+              "type": "integer"
+            },
+            "nba_stats": {
+              "$ref": "#/$defs/NBAStats"
+            }
+          },
+          "required": [
+            "first_name",
+            "last_name",
+            "year_of_birth",
+            "nba_stats"
+          ],
+          "title": "AnswerFormat",
+          "type": "object"
+        }
+      },
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-ba863ae481964bcca497a7feba2a2689",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "{\"first_name\": \"Michael\", \"last_name\": \"Jordan\", \"year_of_birth\": 1963, \"nba_stats\":  {\"year_for_draft\": 1984, \"num_seasons_in_nba\": 15}}",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757524142,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 61,
+          "prompt_tokens": 51,
+          "total_tokens": 112,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null
+      }
+    },
+    "is_streaming": false
+  }
+}

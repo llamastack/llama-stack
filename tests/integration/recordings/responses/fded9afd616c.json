@@ -1,0 +1,85 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "prompt": "Hello, world!",
+      "stream": false,
+      "extra_body": {
+        "prompt_logprobs": 1
+      }
+    },
+    "endpoint": "/v1/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-df4fc1ac600a43778b6ad1e3781a4129",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "text": " I'm a 14-year-old girl with a passion for science and tech",
+            "stop_reason": null,
+            "prompt_logprobs": [
+              null,
+              {
+                "11": {
+                  "logprob": -8.8668212890625,
+                  "rank": 1031,
+                  "decoded_token": ","
+                },
+                "21806": {
+                  "logprob": -4.8355712890625,
+                  "rank": 1,
+                  "decoded_token": "\u0120Answer"
+                }
+              },
+              {
+                "1879": {
+                  "logprob": -4.7821879386901855,
+                  "rank": 10,
+                  "decoded_token": "\u0120world"
+                },
+                "358": {
+                  "logprob": -0.9071879386901855,
+                  "rank": 1,
+                  "decoded_token": "\u0120I"
+                }
+              },
+              {
+                "0": {
+                  "logprob": -1.6575366258621216,
+                  "rank": 2,
+                  "decoded_token": "!"
+                },
+                "13": {
+                  "logprob": -1.4700366258621216,
+                  "rank": 1,
+                  "decoded_token": "."
+                }
+              }
+            ]
+          }
+        ],
+        "created": 1757524113,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 4,
+          "total_tokens": 20,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

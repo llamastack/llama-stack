@@ -1,0 +1,1021 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "prompt": "Respond to this question and explain your answer. Complete the sentence using one word: Roses are red, violets are ",
+      "max_tokens": 50,
+      "stream": true,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " __",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "__\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "A",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " green",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "B",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " yellow",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "C",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " blue",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "D",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " purple",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "The",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " correct",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " answer",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " is",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " A",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " green",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "Answer",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ":\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "The",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " correct",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " answer",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " is",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " A",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " green",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "Explanation",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ":",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " Roses",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " are",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " red",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ",",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " v",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "io",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "lets",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " are",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " green",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "Answer",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "cmpl-b82780f1b2ca4348b2d7d8067ff6d2a8",
+          "choices": [
+            {
+              "finish_reason": "length",
+              "index": 0,
+              "logprobs": null,
+              "text": ":\n",
+              "stop_reason": null
+            }
+          ],
+          "created": 1757524113,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "text_completion",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      }
+    ],
+    "is_streaming": true
+  }
+}

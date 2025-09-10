@@ -1,0 +1,105 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "description": "Get the current weather",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state (both required), e.g. San Francisco, CA."
+                }
+              },
+              "required": [
+                "location"
+              ]
+            }
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "Pretend you are a weather assistant."
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What's the weather like in San Francisco, CA?"
+            }
+          ]
+        }
+      ],
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-3d55352696e445f598c3d881a1130454",
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user is asking about the weather in San Francisco, CA. I need to use the get_weather function. The function requires the location parameter, which in this case is \"San Francisco, CA\". I should make sure to format the arguments correctly as a JSON object. Let me check the required parameters again to confirm. The location is required, so I'll include that. No other parameters are needed. Alright, I'll structure the tool call accordingly.\n</think>\n\n",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-98de38728cf6486d925102e0515d6d8f",
+                  "function": {
+                    "arguments": "{\"location\": \"San Francisco, CA\"}",
+                    "name": "get_weather"
+                  },
+                  "type": "function"
+                }
+              ],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757524137,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 120,
+          "prompt_tokens": 185,
+          "total_tokens": 305,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null
+      }
+    },
+    "is_streaming": false
+  }
+}

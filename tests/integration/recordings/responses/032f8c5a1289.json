@@ -1,0 +1,66 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Which planet has rings around it with a name starting with letter S?"
+            }
+          ]
+        }
+      ],
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-307d8869f9a341439fef1e92274a89ec",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, so the question is asking which planet has rings around it and the name starts with the letter S. Let me think. I know that there are many planets in our solar system, right? The ones we usually mention are Mercury, Venus, Earth, Mars, Jupiter, Saturn, etc. Now, the key here is that the planet has rings, and the name starts with S.\n\nFirst, I remember that Saturn is the planet with rings. But wait, the name starts with S, so that's correct. But let me make sure. Are there any other planets with rings that start with S? Like maybe something else? Let me think. Oh, right! There's also Neptune, but Neptune is a gas giant, not a planet with rings. Wait, no, Neptune does have rings, but they're not as prominent as Saturn's. So Saturn is the one with rings and the name starting with S. \n\nWait, but maybe I should double-check. Let me recall. The planets in order are Mercury, Venus, Earth, Mars, Jupiter, Saturn, and then Neptune. So Saturn comes after Jupiter. So yes, Saturn has rings. And the name starts with S. So the answer should be Saturn.\n</think>\n\nThe planet with rings around it and a name starting with the letter S is **Saturn**.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757524152,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 274,
+          "prompt_tokens": 22,
+          "total_tokens": 296,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null
+      }
+    },
+    "is_streaming": false
+  }
+}

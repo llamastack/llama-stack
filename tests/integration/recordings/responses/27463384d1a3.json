@@ -1,0 +1,59 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hello, world!"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-5434d48fcb354eb498e3909a87c4bf39",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user just said \"Hello, world!\" so I need to respond in a friendly way. Let me start by acknowledging their input. Maybe say \"Hello, world!\" and then offer help. Keep it simple and positive. No need for any complex messages. Just a straightforward reply.\n</think>\n\nHello, world! \ud83d\ude0a How can I assist you today?",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757524166,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 77,
+          "prompt_tokens": 12,
+          "total_tokens": 89,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null
+      }
+    },
+    "is_streaming": false
+  }
+}

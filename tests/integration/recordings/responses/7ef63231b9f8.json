@@ -1,0 +1,59 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Which planet has rings around it with a name starting with letter S?"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-ab6b31bfc8244a48bee3f9ed8bff6455",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, so the question is asking which planet has rings around it and the name starts with the letter S. Let me think. I know that there are many planets in our solar system, like Earth, Mars, Venus, Jupiter, etc. But the question specifically mentions rings and the name starting with S. \n\nFirst, I should recall the planets and their names. Let me list them in order of their distance from the Sun. From the Sun, we have Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, and then Pluto. Wait, Pluto was once considered a planet but was reclassified. So maybe the question is about the planets that are now in order with the rings. \n\nNow, Saturn is the next one after Jupiter. Saturn is the planet that has rings around it. The name starts with S. So the answer would be Saturn. Let me double-check. Yes, Saturn is the planet with rings and the name starts with S. I don't think there's another planet with rings and a starting letter S. For example, maybe another planet in another system, but the question is about the solar system. So I think the answer is Saturn.\n</think>\n\nThe planet with rings around it and a name starting with the letter S is **Saturn**.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1757524161,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 266,
+          "prompt_tokens": 22,
+          "total_tokens": 288,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null
+      }
+    },
+    "is_streaming": false
+  }
+}

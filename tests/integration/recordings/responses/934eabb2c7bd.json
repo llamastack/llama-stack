@@ -1,0 +1,71 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "prompt": "<|begin_of_text|>Michael Jordan was born in 1963. He played basketball for the Chicago Bulls. He retired in 2003.Please respond in JSON format with the schema: {\"properties\": {\"name\": {\"title\": \"Name\", \"type\": \"string\"}, \"year_born\": {\"title\": \"Year Born\", \"type\": \"string\"}, \"year_retired\": {\"title\": \"Year Retired\", \"type\": \"string\"}}, \"required\": [\"name\", \"year_born\", \"year_retired\"], \"title\": \"AnswerFormat\", \"type\": \"object\"}",
+      "extra_body": {
+        "guided_json": {
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "year_born": {
+              "title": "Year Born",
+              "type": "string"
+            },
+            "year_retired": {
+              "title": "Year Retired",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "year_born",
+            "year_retired"
+          ],
+          "title": "AnswerFormat",
+          "type": "object"
+        }
+      },
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 50
+    },
+    "endpoint": "/v1/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-d0abbd0dc22c41a091a2a72ce913cbed",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "text": "{ \n  \"name\": \"Michael Jordan\",\n  \"year_born\": \"1963\",\n  \"year_retired\": \"2003\"\n}",
+            "stop_reason": null,
+            "prompt_logprobs": null
+          }
+        ],
+        "created": 1757524134,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 36,
+          "prompt_tokens": 128,
+          "total_tokens": 164,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "prompt": "Hello, world!",
+      "stream": false,
+      "extra_body": {
+        "prompt_logprobs": 0
+      }
+    },
+    "endpoint": "/v1/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-f7da1cba36ba427c8acd9ad2f0722fa4",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "text": " I'm a 3-year-old girl who loves to play with my cat.",
+            "stop_reason": null,
+            "prompt_logprobs": [
+              null,
+              {
+                "11": {
+                  "logprob": -8.8668212890625,
+                  "rank": 1031,
+                  "decoded_token": ","
+                }
+              },
+              {
+                "1879": {
+                  "logprob": -4.7821879386901855,
+                  "rank": 10,
+                  "decoded_token": "\u0120world"
+                }
+              },
+              {
+                "0": {
+                  "logprob": -1.6575366258621216,
+                  "rank": 2,
+                  "decoded_token": "!"
+                }
+              }
+            ]
+          }
+        ],
+        "created": 1757524144,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 4,
+          "total_tokens": 20,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
