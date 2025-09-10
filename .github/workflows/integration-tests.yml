@@ -28,8 +28,8 @@ on:
         description: 'Test against both the latest and published versions'
         type: boolean
         default: false
-      test-provider:
-        description: 'Test against a specific provider'
+      test-setup:
+        description: 'Test against a specific setup'
         type: string
         default: 'ollama'
 
@@ -42,18 +42,18 @@ jobs:
 
   run-replay-mode-tests:
     runs-on: ubuntu-latest
-    name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.provider, matrix.python-version, matrix.client-version, matrix.test-suite) }}
+    name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.setup, matrix.python-version, matrix.client-version, matrix.suite) }}
 
     strategy:
       fail-fast: false
       matrix:
         client-type: [library, server]
-        # Use vllm on weekly schedule, otherwise use test-provider input (defaults to ollama)
-        provider: ${{ (github.event.schedule == '1 0 * * 0') && fromJSON('["vllm"]') || fromJSON(format('["{0}"]', github.event.inputs.test-provider || 'ollama')) }}
+        # Use vllm on weekly schedule, otherwise use test-setup input (defaults to ollama)
+        setup: ${{ (github.event.schedule == '1 0 * * 0') && fromJSON('["vllm"]') || fromJSON(format('["{0}"]', github.event.inputs.test-setup || 'ollama')) }}
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        test-suite: [base, vision]
+        suite: [base, vision]
 
     steps:
       - name: Checkout repository
@@ -64,14 +64,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
-          provider: ${{ matrix.provider }}
-          test-suite: ${{ matrix.test-suite }}
+          setup: ${{ matrix.setup }}
+          suite: ${{ matrix.suite }}
           inference-mode: 'replay'
 
       - name: Run tests
         uses: ./.github/actions/run-and-record-tests
         with:
           stack-config: ${{ matrix.client-type == 'library' && 'ci-tests' || 'server:ci-tests' }}
-          provider: ${{ matrix.provider }}
+          setup: ${{ matrix.setup }}
           inference-mode: 'replay'
-          test-suite: ${{ matrix.test-suite }}
+          suite: ${{ matrix.suite }}

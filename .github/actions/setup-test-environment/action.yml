@@ -8,11 +8,11 @@ inputs:
   client-version:
     description: 'Client version (latest or published)'
     required: true
-  provider:
-    description: 'Provider to setup (ollama or vllm)'
-    required: true
+  setup:
+    description: 'Setup to configure (ollama, vllm, gpt, etc.)'
+    required: false
     default: 'ollama'
-  test-suite:
+  suite:
     description: 'Test suite to use: base, responses, vision, etc.'
     required: false
     default: ''
@@ -30,13 +30,13 @@ runs:
         client-version: ${{ inputs.client-version }}
 
     - name: Setup ollama
-      if: ${{ inputs.provider == 'ollama' && inputs.inference-mode == 'record' }}
+      if: ${{ (inputs.setup == 'ollama' || inputs.setup == 'ollama-vision') && inputs.inference-mode == 'record' }}
       uses: ./.github/actions/setup-ollama
       with:
-        test-suite: ${{ inputs.test-suite }}
+        suite: ${{ inputs.suite }}
 
     - name: Setup vllm
-      if: ${{ inputs.provider == 'vllm' && inputs.inference-mode == 'record' }}
+      if: ${{ inputs.setup == 'vllm' && inputs.inference-mode == 'record' }}
       uses: ./.github/actions/setup-vllm
 
     - name: Build Llama Stack

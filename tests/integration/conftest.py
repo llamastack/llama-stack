@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 from llama_stack.log import get_logger
 
-from .suites import SUITE_DEFINITIONS
+from .suites import SETUP_DEFINITIONS, SUITE_DEFINITIONS
 
 logger = get_logger(__name__, category="tests")
 
@@ -63,19 +63,33 @@ def pytest_configure(config):
         key, value = env_var.split("=", 1)
         os.environ[key] = value
 
-    suites_raw = config.getoption("--suite")
-    suites: list[str] = []
-    if suites_raw:
-        suites = [p.strip() for p in str(suites_raw).split(",") if p.strip()]
-        unknown = [p for p in suites if p not in SUITE_DEFINITIONS]
-        if unknown:
+    inference_mode = config.getoption("--inference-mode")
+    os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = inference_mode
+
+    suite = config.getoption("--suite")
+    if suite:
+        if suite not in SUITE_DEFINITIONS:
+            raise pytest.UsageError(f"Unknown suite: {suite}. Available: {', '.join(sorted(SUITE_DEFINITIONS.keys()))}")
+
+    # Apply setups (global parameterizations): env + defaults
+    setup = config.getoption("--setup")
+    if suite and not setup:
+        setup = SUITE_DEFINITIONS[suite].default_setup
+
+    if setup:
+        if setup not in SETUP_DEFINITIONS:
             raise pytest.UsageError(
-                f"Unknown suite(s): {', '.join(unknown)}. Available: {', '.join(sorted(SUITE_DEFINITIONS.keys()))}"
+                f"Unknown setup '{setup}'. Available: {', '.join(sorted(SETUP_DEFINITIONS.keys()))}"
             )
-    for suite in suites:
-        suite_def = SUITE_DEFINITIONS.get(suite, {})
-        defaults: dict = suite_def.get("defaults", {})
-        for dest, value in defaults.items():
+
+        setup_obj = SETUP_DEFINITIONS[setup]
+        logger.info(f"Applying setup '{setup}'{' for suite ' + suite if suite else ''}")
+        # Apply env first
+        for k, v in setup_obj.env.items():
+            if k not in os.environ:
+                os.environ[k] = str(v)
+        # Apply defaults if not provided explicitly
+        for dest, value in setup_obj.defaults.items():
             current = getattr(config.option, dest, None)
             if not current:
                 setattr(config.option, dest, value)
@@ -120,6 +134,13 @@ def pytest_addoption(parser):
         default=384,
         help="Output dimensionality of the embedding model to use for testing. Default: 384",
     )
+
+    parser.addoption(
+        "--inference-mode",
+        help="Inference mode: { record, replay, live } (default: replay)",
+        choices=["record", "replay", "live"],
+        default="replay",
+    )
     parser.addoption(
         "--report",
         help="Path where the test report should be written, e.g. --report=/path/to/report.md",
@@ -127,13 +148,17 @@ def pytest_addoption(parser):
 
     available_suites = ", ".join(sorted(SUITE_DEFINITIONS.keys()))
     suite_help = (
-        "Comma-separated integration test suites to narrow collection and prefill defaults. "
-        "Available: "
-        f"{available_suites}. "
-        "Explicit CLI flags (e.g., --text-model) override suite defaults. "
-        "Examples: --suite=responses or --suite=responses,vision."
+        f"Single test suite to run (narrows collection). Available: {available_suites}. Example: --suite=responses"
     )
     parser.addoption("--suite", help=suite_help)
+
+    # Global setups for any suite
+    available_setups = ", ".join(sorted(SETUP_DEFINITIONS.keys()))
+    setup_help = (
+        f"Global test setup configuration. Available: {available_setups}. "
+        "Can be used with any suite. Example: --setup=ollama"
+    )
+    parser.addoption("--setup", help=setup_help)
 
 
 MODEL_SHORT_IDS = {
@@ -221,16 +246,12 @@ pytest_plugins = ["tests.integration.fixtures.common"]
 
 def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
     """Skip collecting paths outside the selected suite roots for speed."""
-    suites_raw = config.getoption("--suite")
-    if not suites_raw:
+    suite = config.getoption("--suite")
+    if not suite:
         return False
 
-    names = [p.strip() for p in str(suites_raw).split(",") if p.strip()]
-    roots: list[str] = []
-    for name in names:
-        suite_def = SUITE_DEFINITIONS.get(name)
-        if suite_def:
-            roots.extend(suite_def.get("roots", []))
+    sobj = SUITE_DEFINITIONS.get(suite)
+    roots: list[str] = sobj.get("roots", []) if isinstance(sobj, dict) else getattr(sobj, "roots", [])
     if not roots:
         return False
 

@@ -167,8 +167,18 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
             for vector_db_id in vector_db_ids
         ]
         results: list[QueryChunksResponse] = await asyncio.gather(*tasks)
-        chunks = [c for r in results for c in r.chunks]
-        scores = [s for r in results for s in r.scores]
+
+        chunks = []
+        scores = []
+
+        for vector_db_id, result in zip(vector_db_ids, results, strict=False):
+            for chunk, score in zip(result.chunks, result.scores, strict=False):
+                if not hasattr(chunk, "metadata") or chunk.metadata is None:
+                    chunk.metadata = {}
+                chunk.metadata["vector_db_id"] = vector_db_id
+
+                chunks.append(chunk)
+                scores.append(score)
 
         if not chunks:
             return RAGQueryResult(content=None)
@@ -203,6 +213,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
             metadata_keys_to_exclude_from_context = [
                 "token_count",
                 "metadata_token_count",
+                "vector_db_id",
             ]
             metadata_for_context = {}
             for k in chunk_metadata_keys_to_include_from_context:
@@ -227,6 +238,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
                 "document_ids": [c.metadata["document_id"] for c in chunks[: len(picked)]],
                 "chunks": [c.content for c in chunks[: len(picked)]],
                 "scores": scores[: len(picked)],
+                "vector_db_ids": [c.metadata["vector_db_id"] for c in chunks[: len(picked)]],
             },
         )
 
