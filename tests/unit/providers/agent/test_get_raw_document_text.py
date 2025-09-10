@@ -111,10 +111,10 @@ async def test_get_raw_document_text_rejects_unsupported_mime_types():
     """Test that the function rejects unsupported mime types."""
     document = Document(
         content="Some content",
-        mime_type="application/json",  # Not supported
+        mime_type="application/pdf",  # Not supported
     )
 
-    with pytest.raises(ValueError, match="Unexpected document mime type: application/json"):
+    with pytest.raises(ValueError, match="Unexpected document mime type: application/pdf"):
         await get_raw_document_text(document)
 
 
@@ -174,3 +174,47 @@ async def test_get_raw_document_text_rejects_unexpected_content_type():
 
     with pytest.raises(ValueError, match="Unexpected document content type: <class 'int'>"):
         await get_raw_document_text(mock_document)
+
+
+async def test_get_raw_document_text_supports_application_json():
+    """Test that the function accepts application/json mime type."""
+    json_content = '{"name": "test", "version": "1.0", "items": ["item1", "item2"]}'
+
+    document = Document(content=json_content, mime_type="application/json")
+
+    result = await get_raw_document_text(document)
+    assert result == json_content
+
+
+async def test_get_raw_document_text_supports_text_json():
+    """Test that the function accepts text/json mime type."""
+    json_content = '{"name": "test", "version": "1.0", "items": ["item1", "item2"]}'
+
+    document = Document(content=json_content, mime_type="text/json")
+
+    result = await get_raw_document_text(document)
+    assert result == json_content
+
+
+async def test_get_raw_document_text_with_application_json_url():
+    """Test that the function handles application/json URLs correctly."""
+    json_content = '{"api_response": "success", "data": [1, 2, 3]}'
+
+    with patch("llama_stack.providers.inline.agents.meta_reference.agent_instance.load_data_from_url") as mock_load:
+        mock_load.return_value = json_content
+
+        document = Document(content=URL(uri="https://api.example.com/data.json"), mime_type="application/json")
+
+        result = await get_raw_document_text(document)
+        assert result == json_content
+        mock_load.assert_called_once_with("https://api.example.com/data.json")
+
+
+async def test_get_raw_document_text_with_application_json_text_content_item():
+    """Test that the function handles application/json TextContentItem correctly."""
+    json_content = '{"config": {"enabled": true, "settings": {"theme": "dark", "language": "en"}}}'
+
+    document = Document(content=TextContentItem(text=json_content), mime_type="application/json")
+
+    result = await get_raw_document_text(document)
+    assert result == json_content
