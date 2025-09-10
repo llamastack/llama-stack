@@ -1,5 +1,106 @@
 @import url("theme.css");
 
+/* Horizontal Navigation Bar */
+.horizontal-nav {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    height: 50px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] .horizontal-nav {
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #333;
+}
+
+.horizontal-nav .nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 100%;
+}
+
+.horizontal-nav .nav-brand {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    text-decoration: none;
+}
+
+[data-theme="dark"] .horizontal-nav .nav-brand {
+    color: #fff;
+}
+
+.horizontal-nav .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.horizontal-nav .nav-links a {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.horizontal-nav .nav-links a:hover,
+.horizontal-nav .nav-links a.active {
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.horizontal-nav .nav-links a.active {
+    font-weight: 600;
+}
+
+[data-theme="dark"] .horizontal-nav .nav-links a {
+    color: #ccc;
+}
+
+[data-theme="dark"] .horizontal-nav .nav-links a:hover,
+[data-theme="dark"] .horizontal-nav .nav-links a.active {
+    color: #fff;
+    background-color: #333;
+}
+
+.horizontal-nav .nav-links .github-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.horizontal-nav .nav-links .github-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* Adjust main content to account for fixed nav */
+.wy-nav-side {
+    top: 50px;
+    height: calc(100vh - 50px);
+}
+
+.wy-nav-content-wrap {
+    margin-top: 50px;
+}
+
 .wy-nav-content {
     max-width: 90%;
 }
