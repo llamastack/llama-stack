@@ -435,7 +435,6 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
         self, request: ChatCompletionRequest, client: AsyncOpenAI
     ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
         params = await self._get_params(request)
-
         stream = await client.chat.completions.create(**params)
         if request.tools:
             res = _process_vllm_chat_completion_stream_response(stream)
@@ -490,9 +489,36 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
             input_dict = {"tools": _convert_to_vllm_tools_in_request(request.tools)}
 
         if isinstance(request, ChatCompletionRequest):
-            input_dict["messages"] = [
+            converted_messages = [
                 await convert_message_to_openai_dict_new(m, download_images=True) for m in request.messages
             ]
+            # Coerce tool message content to a string to avoid nested content lists
+            safe_messages: list[dict[str, Any]] = []
+            for msg in converted_messages:
+                msg_dict = msg.model_dump(exclude_none=True) if hasattr(msg, "model_dump") else dict(msg)
+                if msg_dict.get("role") == "tool":
+                    content = msg_dict.get("content")
+                    if isinstance(content, list):
+                        text_parts: list[str] = []
+                        for part in content:
+                            if isinstance(part, dict):
+                                if part.get("type") == "text":
+                                    text_parts.append(part.get("text", ""))
+                                elif part.get("type") == "image_url":
+                                    url = (part.get("image_url") or {}).get("url", "")
+                                    if url:
+                                        text_parts.append(url)
+                                else:
+                                    text_parts.append(str(part))
+                            elif hasattr(part, "text"):
+                                text_parts.append(getattr(part, "text", ""))
+                            elif hasattr(part, "image_url") and hasattr(part.image_url, "url"):
+                                text_parts.append(getattr(part.image_url, "url", ""))
+                            else:
+                                text_parts.append(str(part))
+                        msg_dict["content"] = "\n".join([p for p in text_parts if p])
+                safe_messages.append(msg_dict)
+            input_dict["messages"] = safe_messages
         else:
             assert not request_has_media(request), "vLLM does not support media for Completion requests"
             input_dict["prompt"] = await completion_request_to_prompt(request)
