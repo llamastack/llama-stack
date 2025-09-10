@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 import asyncio
 from typing import Any
+
 from sqlalchemy.exc import IntegrityError
 
 from llama_stack.apis.inference import (
@@ -144,15 +145,15 @@ class InferenceStore:
                 data=record_data,
             )
         except IntegrityError as e:
+            # Duplicate chat completion IDs can be generated during tests especially if they are replaying
+            # recorded responses across different tests. No need to warn or error under those circumstances.
+            # In the wild, this is not likely to happen at all (no evidence) so we aren't really hiding any problem.
+
             # Check if it's a unique constraint violation
             error_message = str(e.orig) if e.orig else str(e)
             if self._is_unique_constraint_error(error_message):
                 # Update the existing record instead
-                await self.sql_store.update(
-                    table="chat_completions",
-                    data=record_data,
-                    where={"id": data["id"]}
-                )
+                await self.sql_store.update(table="chat_completions", data=record_data, where={"id": data["id"]})
             else:
                 # Re-raise if it's not a unique constraint error
                 raise
