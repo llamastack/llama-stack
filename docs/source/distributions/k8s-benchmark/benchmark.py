@@ -58,14 +58,6 @@ class BenchmarkStats:
         
         print(f"\n{'='*60}")
         print(f"BENCHMARK RESULTS")
-        print(f"{'='*60}")
-        print(f"Total time: {total_time:.2f}s")
-        print(f"Concurrent users: {self.concurrent_users}")
-        print(f"Total requests: {self.total_requests}")
-        print(f"Successful requests: {self.success_count}")
-        print(f"Failed requests: {len(self.errors)}")
-        print(f"Success rate: {success_rate:.1f}%")
-        print(f"Requests per second: {self.success_count / total_time:.2f}")
         
         print(f"\nResponse Time Statistics:")
         print(f"  Mean: {statistics.mean(self.response_times):.3f}s")
@@ -105,6 +97,15 @@ class BenchmarkStats:
             print(f"\nStreaming Statistics:")
             print(f"  Mean chunks per response: {statistics.mean(self.chunks_received):.1f}")
             print(f"  Total chunks received: {sum(self.chunks_received)}")
+        
+        print(f"{'='*60}")
+        print(f"Total time: {total_time:.2f}s")
+        print(f"Concurrent users: {self.concurrent_users}")
+        print(f"Total requests: {self.total_requests}")
+        print(f"Successful requests: {self.success_count}")
+        print(f"Failed requests: {len(self.errors)}")
+        print(f"Success rate: {success_rate:.1f}%")
+        print(f"Requests per second: {self.success_count / total_time:.2f}")
         
         if self.errors:
             print(f"\nErrors (showing first 5):")
@@ -215,7 +216,7 @@ class LlamaStackBenchmark:
                         await asyncio.sleep(1)  # Report every second
                         if time.time() >= last_report_time + 10:  # Report every 10 seconds
                             elapsed = time.time() - stats.start_time
-                            print(f"Completed: {stats.total_requests} requests in {elapsed:.1f}s")
+                            print(f"Completed: {stats.total_requests} requests in {elapsed:.1f}s, RPS: {stats.total_requests / elapsed:.1f}")
                             last_report_time = time.time()
                     except asyncio.CancelledError:
                         break

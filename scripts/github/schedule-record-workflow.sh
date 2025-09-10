@@ -239,8 +239,9 @@ echo "Test pattern: ${TEST_PATTERN:-"(none)"}"
 echo ""
 
 # Prepare inputs for gh workflow run
+INPUTS=
 if [[ -n "$TEST_SUBDIRS" ]]; then
-    INPUTS="-f subdirs='$TEST_SUBDIRS'"
+    INPUTS="$INPUTS -f subdirs='$TEST_SUBDIRS'"
 fi
 if [[ -n "$TEST_SETUP" ]]; then
     INPUTS="$INPUTS -f test-setup='$TEST_SETUP'"
