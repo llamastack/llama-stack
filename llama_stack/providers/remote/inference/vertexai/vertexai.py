@@ -41,7 +41,7 @@ class VertexAIInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
             # Get default credentials - will read from GOOGLE_APPLICATION_CREDENTIALS
             credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
             credentials.refresh(google.auth.transport.requests.Request())
-            return credentials.token
+            return str(credentials.token)
         except Exception:
             # If we can't get credentials, return empty string to let LiteLLM handle it
             # This allows the LiteLLM mixin to work with ADC directly
