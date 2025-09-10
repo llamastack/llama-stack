@@ -13,10 +13,10 @@ set -euo pipefail
 
 # Default values
 STACK_CONFIG=""
-PROVIDER=""
+TEST_SUITE="base"
+TEST_SETUP=""
 TEST_SUBDIRS=""
 TEST_PATTERN=""
-TEST_SUITE="base"
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
 
@@ -27,29 +27,30 @@ Usage: $0 [OPTIONS]
 
 Options:
     --stack-config STRING    Stack configuration to use (required)
-    --provider STRING        Provider to use (ollama, vllm, etc.) (required)
-    --test-suite STRING      Comma-separated list of test suites to run (default: 'base')
+    --suite STRING           Test suite to run (default: 'base')
+    --setup STRING           Test setup (models, env) to use (e.g., 'ollama', 'ollama-vision', 'gpt', 'vllm')
     --inference-mode STRING  Inference mode: record or replay (default: replay)
-    --test-subdirs STRING    Comma-separated list of test subdirectories to run (overrides suite)
-    --test-pattern STRING    Regex pattern to pass to pytest -k
+    --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
+    --pattern STRING         Regex pattern to pass to pytest -k
     --help                   Show this help message
 
-Suites are defined in tests/integration/suites.py. They are used to narrow the collection of tests and provide default model options.
+Suites are defined in tests/integration/suites.py and define which tests to run.
+Setups are defined in tests/integration/setups.py and provide global configuration (models, env).
 
 You can also specify subdirectories (of tests/integration) to select tests from, which will override the suite.
 
 Examples:
     # Basic inference tests with ollama
-    $0 --stack-config server:ci-tests --provider ollama
+    $0 --stack-config server:ci-tests --suite base --setup ollama
 
     # Multiple test directories with vllm
-    $0 --stack-config server:ci-tests --provider vllm --test-subdirs 'inference,agents'
+    $0 --stack-config server:ci-tests --subdirs 'inference,agents' --setup vllm
 
     # Vision tests with ollama
-    $0 --stack-config server:ci-tests --provider ollama --test-suite vision
+    $0 --stack-config server:ci-tests --suite vision  # default setup for this suite is ollama-vision
 
     # Record mode for updating test recordings
-    $0 --stack-config server:ci-tests --provider ollama --inference-mode record
+    $0 --stack-config server:ci-tests --suite base --inference-mode record
 EOF
 }
 
@@ -60,15 +61,15 @@ while [[ $# -gt 0 ]]; do
             STACK_CONFIG="$2"
             shift 2
             ;;
-        --provider)
-            PROVIDER="$2"
+        --setup)
+            TEST_SETUP="$2"
             shift 2
             ;;
-        --test-subdirs)
+        --subdirs)
             TEST_SUBDIRS="$2"
             shift 2
             ;;
-        --test-suite)
+        --suite)
             TEST_SUITE="$2"
             shift 2
             ;;
@@ -76,7 +77,7 @@ while [[ $# -gt 0 ]]; do
             INFERENCE_MODE="$2"
             shift 2
             ;;
-        --test-pattern)
+        --pattern)
             TEST_PATTERN="$2"
             shift 2
             ;;
@@ -96,11 +97,13 @@ done
 # Validate required parameters
 if [[ -z "$STACK_CONFIG" ]]; then
     echo "Error: --stack-config is required"
+    usage
     exit 1
 fi
 
-if [[ -z "$PROVIDER" ]]; then
-    echo "Error: --provider is required"
+if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" ]]; then
+    echo "Error: --test-setup is required when --test-subdirs is provided"
+    usage
     exit 1
 fi
 
@@ -111,7 +114,7 @@ fi
 
 echo "=== Llama Stack Integration Test Runner ==="
 echo "Stack Config: $STACK_CONFIG"
-echo "Provider: $PROVIDER"
+echo "Setup: $TEST_SETUP"
 echo "Inference Mode: $INFERENCE_MODE"
 echo "Test Suite: $TEST_SUITE"
 echo "Test Subdirs: $TEST_SUBDIRS"
@@ -129,21 +132,25 @@ echo ""
 
 # Set environment variables
 export LLAMA_STACK_CLIENT_TIMEOUT=300
-export LLAMA_STACK_TEST_INFERENCE_MODE="$INFERENCE_MODE"
-
-# Configure provider-specific settings
-if [[ "$PROVIDER" == "ollama" ]]; then
-    export OLLAMA_URL="http://0.0.0.0:11434"
-    export TEXT_MODEL="ollama/llama3.2:3b-instruct-fp16"
-    export SAFETY_MODEL="ollama/llama-guard3:1b"
-    EXTRA_PARAMS="--safety-shield=llama-guard"
-else
-    export VLLM_URL="http://localhost:8000/v1"
-    export TEXT_MODEL="vllm/meta-llama/Llama-3.2-1B-Instruct"
-    EXTRA_PARAMS=""
-fi
 
 THIS_DIR=$(dirname "$0")
+
+if [[ -n "$TEST_SETUP" ]]; then
+    EXTRA_PARAMS="--setup=$TEST_SETUP"
+fi
+
+# Apply setup-specific environment variables (needed for server startup and tests)
+echo "=== Applying Setup Environment Variables ==="
+
+# the server needs this
+export LLAMA_STACK_TEST_INFERENCE_MODE="$INFERENCE_MODE"
+
+SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
+echo "Setting up environment variables:"
+echo "$SETUP_ENV"
+eval "$SETUP_ENV"
+echo ""
+
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
 
@@ -162,6 +169,18 @@ fi
 
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* ]]; then
+    stop_server() {
+        echo "Stopping Llama Stack Server..."
+        pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
+        if [[ -n "$pids" ]]; then
+            echo "Killing Llama Stack Server processes: $pids"
+            kill -9 $pids
+        else
+            echo "No Llama Stack Server processes found ?!"
+        fi
+        echo "Llama Stack Server stopped"
+    }
+
     # check if server is already running
     if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
         echo "Llama Stack Server is already running, skipping start"
@@ -185,14 +204,16 @@ if [[ "$STACK_CONFIG" == *"server:"* ]]; then
         done
         echo ""
     fi
+
+    trap stop_server EXIT ERR INT TERM
 fi
 
 # Run tests
 echo "=== Running Integration Tests ==="
 EXCLUDE_TESTS="builtin_tool or safety_with_image or code_interpreter or test_rag"
 
-# Additional exclusions for vllm provider
-if [[ "$PROVIDER" == "vllm" ]]; then
+# Additional exclusions for vllm setup
+if [[ "$TEST_SETUP" == "vllm" ]]; then
     EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls"
 fi
 
@@ -229,20 +250,22 @@ if [[ -n "$TEST_SUBDIRS" ]]; then
     echo "Total test files: $(echo $TEST_FILES | wc -w)"
 
     PYTEST_TARGET="$TEST_FILES"
-    EXTRA_PARAMS="$EXTRA_PARAMS --text-model=$TEXT_MODEL --embedding-model=sentence-transformers/all-MiniLM-L6-v2"
 else
     PYTEST_TARGET="tests/integration/"
     EXTRA_PARAMS="$EXTRA_PARAMS --suite=$TEST_SUITE"
 fi
 
 set +e
+set -x
 pytest -s -v $PYTEST_TARGET \
     --stack-config="$STACK_CONFIG" \
+    --inference-mode="$INFERENCE_MODE" \
     -k "$PYTEST_PATTERN" \
     $EXTRA_PARAMS \
     --color=yes \
     --capture=tee-sys
 exit_code=$?
+set +x
 set -e
 
 if [ $exit_code -eq 0 ]; then
@@ -259,19 +282,6 @@ echo ""
 echo "=== System Resources After Tests ==="
 free -h 2>/dev/null || echo "free command not available"
 df -h
-
-# stop server
-if [[ "$STACK_CONFIG" == *"server:"* ]]; then
-    echo "Stopping Llama Stack Server..."
-    pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
-    if [[ -n "$pids" ]]; then
-        echo "Killing Llama Stack Server processes: $pids"
-        kill -9 $pids
-    else
-        echo "No Llama Stack Server processes found ?!"
-    fi
-    echo "Llama Stack Server stopped"
-fi
 
 echo ""
 echo "=== Integration Tests Complete ==="

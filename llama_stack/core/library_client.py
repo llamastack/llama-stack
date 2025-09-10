@@ -10,7 +10,6 @@ import json
 import logging  # allow-direct-logging
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
@@ -148,7 +147,6 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         self.async_client = AsyncLlamaStackAsLibraryClient(
             config_path_or_distro_name, custom_provider_registry, provider_data, skip_logger_removal
         )
-        self.pool_executor = ThreadPoolExecutor(max_workers=4)
         self.provider_data = provider_data
 
         self.loop = asyncio.new_event_loop()

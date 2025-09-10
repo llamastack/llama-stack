@@ -5,21 +5,22 @@ inputs:
   stack-config:
     description: 'Stack configuration to use'
     required: true
-  provider:
-    description: 'Provider to use for tests'
-    required: true
+  setup:
+    description: 'Setup to use for tests (e.g., ollama, gpt, vllm)'
+    required: false
+    default: ''
   inference-mode:
     description: 'Inference mode (record or replay)'
     required: true
-  test-suite:
+  suite:
     description: 'Test suite to use: base, responses, vision, etc.'
     required: false
     default: ''
-  test-subdirs:
-    description: 'Comma-separated list of test subdirectories to run; overrides test-suite'
+  subdirs:
+    description: 'Comma-separated list of test subdirectories to run; overrides suite'
     required: false
     default: ''
-  test-pattern:
+  pattern:
     description: 'Regex pattern to pass to pytest -k'
     required: false
     default: ''
@@ -37,14 +38,23 @@ runs:
     - name: Run Integration Tests
       shell: bash
       run: |
-        uv run --no-sync ./scripts/integration-tests.sh \
-          --stack-config '${{ inputs.stack-config }}' \
-          --provider '${{ inputs.provider }}' \
-          --test-subdirs '${{ inputs.test-subdirs }}' \
-          --test-pattern '${{ inputs.test-pattern }}' \
-          --inference-mode '${{ inputs.inference-mode }}' \
-          --test-suite '${{ inputs.test-suite }}' \
-          | tee pytest-${{ inputs.inference-mode }}.log
+        SCRIPT_ARGS="--stack-config ${{ inputs.stack-config }} --inference-mode ${{ inputs.inference-mode }}"
+
+        # Add optional arguments only if they are provided
+        if [ -n '${{ inputs.setup }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --setup ${{ inputs.setup }}"
+        fi
+        if [ -n '${{ inputs.suite }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --suite ${{ inputs.suite }}"
+        fi
+        if [ -n '${{ inputs.subdirs }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --subdirs ${{ inputs.subdirs }}"
+        fi
+        if [ -n '${{ inputs.pattern }}' ]; then
+          SCRIPT_ARGS="$SCRIPT_ARGS --pattern ${{ inputs.pattern }}"
+        fi
+
+        uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS | tee pytest-${{ inputs.inference-mode }}.log
 
 
     - name: Commit and push recordings
@@ -58,7 +68,7 @@ runs:
           echo "New recordings detected, committing and pushing"
           git add tests/integration/recordings/
 
-          git commit -m "Recordings update from CI (test-suite: ${{ inputs.test-suite }})"
+          git commit -m "Recordings update from CI (suite: ${{ inputs.suite }})"
           git fetch origin ${{ github.ref_name }}
           git rebase origin/${{ github.ref_name }}
           echo "Rebased successfully"
