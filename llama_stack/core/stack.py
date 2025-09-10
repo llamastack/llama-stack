@@ -321,10 +321,10 @@ async def construct_stack(
     run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None
 ) -> dict[Api, Any]:
     if "LLAMA_STACK_TEST_INFERENCE_MODE" in os.environ:
-        from llama_stack.testing.inference_recorder import setup_inference_recording
+        from llama_stack.testing.api_recorder import setup_api_recording
 
         global TEST_RECORDING_CONTEXT
-        TEST_RECORDING_CONTEXT = setup_inference_recording()
+        TEST_RECORDING_CONTEXT = setup_api_recording()
         if TEST_RECORDING_CONTEXT:
             TEST_RECORDING_CONTEXT.__enter__()
             logger.info(f"Inference recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
