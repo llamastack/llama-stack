@@ -136,7 +136,7 @@ class ChromaIndex(EmbeddingIndex):
                 doc_data = json.loads(doc)
                 chunk = Chunk(**doc_data)
             except Exception:
-                log.exception(f"Failed to parse document: {doc}")
+                log.exception(f"Failed to load chunk: {doc}")
                 continue
 
             score = 1.0 / (1.0 + float(dist)) if dist is not None else 1.0
