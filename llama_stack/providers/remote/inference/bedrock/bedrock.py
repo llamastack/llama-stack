@@ -53,6 +53,43 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 
 from .models import MODEL_ENTRIES
 
+REGION_PREFIX_MAP = {
+    "us": "us.",
+    "eu": "eu.",
+    "ap": "ap.",
+}
+
+
+def _get_region_prefix(region: str | None) -> str:
+    # AWS requires region prefixes for inference profiles
+    if region is None:
+        return "us."  # default to US when we don't know
+
+    # Handle case insensitive region matching
+    region_lower = region.lower()
+    for prefix in REGION_PREFIX_MAP:
+        if region_lower.startswith(f"{prefix}-"):
+            return REGION_PREFIX_MAP[prefix]
+
+    # Fallback to US for anything we don't recognize
+    return "us."
+
+
+def _to_inference_profile_id(model_id: str, region: str = None) -> str:
+    # Return ARNs unchanged
+    if model_id.startswith("arn:"):
+        return model_id
+
+    # Return inference profile IDs that already have regional prefixes
+    if any(model_id.startswith(p) for p in REGION_PREFIX_MAP.values()):
+        return model_id
+
+    # Default to US East when no region is provided
+    if region is None:
+        region = "us-east-1"
+
+    return _get_region_prefix(region) + model_id
+
 
 class BedrockInferenceAdapter(
     ModelRegistryHelper,
@@ -166,8 +203,13 @@ class BedrockInferenceAdapter(
             options["repetition_penalty"] = sampling_params.repetition_penalty
 
         prompt = await chat_completion_request_to_prompt(request, self.get_llama_model(request.model))
+
+        # Convert foundation model ID to inference profile ID
+        region_name = self.client.meta.region_name
+        inference_profile_id = _to_inference_profile_id(bedrock_model, region_name)
+
         return {
-            "modelId": bedrock_model,
+            "modelId": inference_profile_id,
             "body": json.dumps(
                 {
                     "prompt": prompt,
@@ -185,6 +227,11 @@ class BedrockInferenceAdapter(
         task_type: EmbeddingTaskType | None = None,
     ) -> EmbeddingsResponse:
         model = await self.model_store.get_model(model_id)
+
+        # Convert foundation model ID to inference profile ID
+        region_name = self.client.meta.region_name
+        inference_profile_id = _to_inference_profile_id(model.provider_resource_id, region_name)
+
         embeddings = []
         for content in contents:
             assert not content_has_media(content), "Bedrock does not support media for embeddings"
@@ -193,7 +240,7 @@ class BedrockInferenceAdapter(
             body = json.dumps(input_body)
             response = self.client.invoke_model(
                 body=body,
-                modelId=model.provider_resource_id,
+                modelId=inference_profile_id,
                 accept="application/json",
                 contentType="application/json",
             )
