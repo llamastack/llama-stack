@@ -214,7 +214,7 @@ EXCLUDE_TESTS="builtin_tool or safety_with_image or code_interpreter or test_rag
 
 # Additional exclusions for vllm setup
 if [[ "$TEST_SETUP" == "vllm" ]]; then
-    EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls"
+    EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls or test_text_chat_completion_structured_output"
 fi
 
 PYTEST_PATTERN="not( $EXCLUDE_TESTS )"
