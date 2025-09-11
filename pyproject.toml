@@ -49,7 +49,6 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
     "aiosqlite>=0.21.0", # server - for metadata store
     "asyncpg", # for metadata store
-    "pre-commit>=4.2.0",
 ]
 
 [project.optional-dependencies]
