@@ -47,7 +47,7 @@ class OpenAIMixin(ABC):
     # Allow subclasses to control whether to overwrite the 'id' field in OpenAI responses
     # is overwritten with a client-side generated id.
     #
-    # This is useful for providers that do not return a unique id in the response,
+    # This is useful for providers that do not return a unique id in the response.
     overwrite_completion_id: bool = False
 
     @abstractmethod
