@@ -89,28 +89,28 @@ providers:
     config:
       kvstore:
         type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/faiss_store.db
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/faiss_store.db
   - provider_id: sqlite-vec
     provider_type: inline::sqlite-vec
     config:
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/sqlite_vec.db
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sqlite_vec.db
       kvstore:
         type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/sqlite_vec_registry.db
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sqlite_vec_registry.db
   - provider_id: ${env.MILVUS_URL:+milvus}
     provider_type: inline::milvus
     config:
-      db_path: ${env.MILVUS_DB_PATH:=~/.llama/distributions/starter}/milvus.db
+      db_path: ${env.MILVUS_DB_PATH:=~/.llama/distributions/ci-tests}/milvus.db
       kvstore:
         type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/milvus_registry.db
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/milvus_registry.db
   - provider_id: ${env.CHROMADB_URL:+chromadb}
     provider_type: remote::chromadb
     config:
       url: ${env.CHROMADB_URL:=}
       kvstore:
         type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter/}/chroma_remote_registry.db
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests/}/chroma_remote_registry.db
   - provider_id: ${env.PGVECTOR_DB:+pgvector}
     provider_type: remote::pgvector
     config:
@@ -121,15 +121,15 @@ providers:
       password: ${env.PGVECTOR_PASSWORD:=}
       kvstore:
         type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/pgvector_registry.db
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/pgvector_registry.db
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs
     config:
-      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
+      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/ci-tests/files}
       metadata_store:
         type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/files_metadata.db
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/files_metadata.db
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard

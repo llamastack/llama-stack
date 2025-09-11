@@ -7,8 +7,8 @@
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
-from ibm_watson_machine_learning.foundation_models import Model
-from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
+from ibm_watsonx_ai.foundation_models import Model
+from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from openai import AsyncOpenAI
 
 from llama_stack.apis.common.content_types import InterleavedContent, InterleavedContentItem

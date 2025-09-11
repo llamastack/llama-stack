@@ -131,6 +131,7 @@ html_static_path = ["../_static"]
 def setup(app):
     app.add_css_file("css/my_theme.css")
     app.add_js_file("js/detect_theme.js")
+    app.add_js_file("js/horizontal_nav.js")
     app.add_js_file("js/keyboard_shortcuts.js")
 
     def dockerhub_role(name, rawtext, text, lineno, inliner, options={}, content=[]):

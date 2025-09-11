@@ -53,6 +53,7 @@ class VectorDBsRoutingTable(CommonRoutingTableImpl, VectorDBs):
         vector_db_name: str | None = None,
     ) -> VectorDB:
         provider_vector_db_id = provider_vector_db_id or vector_db_id
+
         model = await lookup_model(self, embedding_model)
         if model is None:
             raise ModelNotFoundError(embedding_model)
@@ -60,14 +61,33 @@ class VectorDBsRoutingTable(CommonRoutingTableImpl, VectorDBs):
             raise ModelTypeError(embedding_model, model.model_type, ModelType.embedding)
         if "embedding_dimension" not in model.metadata:
             raise ValueError(f"Model {embedding_model} does not have an embedding dimension")
+
+        provider = self.impls_by_provider_id[provider_id]
+        logger.warning(
+            "VectorDB is being deprecated in future releases in favor of VectorStore. Please migrate your usage accordingly."
+        )
+        vector_store = await provider.openai_create_vector_store(
+            name=vector_db_name or vector_db_id,
+            embedding_model=embedding_model,
+            embedding_dimension=model.metadata["embedding_dimension"],
+            provider_id=provider_id,
+            provider_vector_db_id=provider_vector_db_id,
+        )
+
+        vector_store_id = vector_store.id
+        actual_provider_vector_db_id = provider_vector_db_id or vector_store_id
+        logger.warning(
+            f"Ignoring vector_db_id {vector_db_id} and using vector_store_id {vector_store_id} instead. Setting VectorDB {vector_db_id} to VectorDB.vector_db_name"
+        )
+
         vector_db_data = {
-            "identifier": vector_db_id,
+            "identifier": vector_store_id,
             "type": ResourceType.vector_db.value,
             "provider_id": provider_id,
-            "provider_resource_id": provider_vector_db_id,
+            "provider_resource_id": actual_provider_vector_db_id,
             "embedding_model": embedding_model,
             "embedding_dimension": model.metadata["embedding_dimension"],
-            "vector_db_name": vector_db_name,
+            "vector_db_name": vector_store.name,
         }
         vector_db = TypeAdapter(VectorDBWithOwner).validate_python(vector_db_data)
         await self.register_object(vector_db)

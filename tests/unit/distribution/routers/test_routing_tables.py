@@ -146,6 +146,20 @@ class VectorDBImpl(Impl):
     async def unregister_vector_db(self, vector_db_id: str):
         return vector_db_id
 
+    async def openai_create_vector_store(self, **kwargs):
+        import time
+        import uuid
+
+        from llama_stack.apis.vector_io.vector_io import VectorStoreFileCounts, VectorStoreObject
+
+        vector_store_id = kwargs.get("provider_vector_db_id") or f"vs_{uuid.uuid4()}"
+        return VectorStoreObject(
+            id=vector_store_id,
+            name=kwargs.get("name", vector_store_id),
+            created_at=int(time.time()),
+            file_counts=VectorStoreFileCounts(completed=0, cancelled=0, failed=0, in_progress=0, total=0),
+        )
+
 
 async def test_models_routing_table(cached_disk_dist_registry):
     table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
@@ -247,17 +261,21 @@ async def test_vectordbs_routing_table(cached_disk_dist_registry):
     )
 
     # Register multiple vector databases and verify listing
-    await table.register_vector_db(vector_db_id="test-vectordb", embedding_model="test_provider/test-model")
-    await table.register_vector_db(vector_db_id="test-vectordb-2", embedding_model="test_provider/test-model")
+    vdb1 = await table.register_vector_db(vector_db_id="test-vectordb", embedding_model="test_provider/test-model")
+    vdb2 = await table.register_vector_db(vector_db_id="test-vectordb-2", embedding_model="test_provider/test-model")
     vector_dbs = await table.list_vector_dbs()
 
     assert len(vector_dbs.data) == 2
     vector_db_ids = {v.identifier for v in vector_dbs.data}
-    assert "test-vectordb" in vector_db_ids
-    assert "test-vectordb-2" in vector_db_ids
+    assert vdb1.identifier in vector_db_ids
+    assert vdb2.identifier in vector_db_ids
 
-    await table.unregister_vector_db(vector_db_id="test-vectordb")
-    await table.unregister_vector_db(vector_db_id="test-vectordb-2")
+    # Verify they have UUID-based identifiers
+    assert vdb1.identifier.startswith("vs_")
+    assert vdb2.identifier.startswith("vs_")
+
+    await table.unregister_vector_db(vector_db_id=vdb1.identifier)
+    await table.unregister_vector_db(vector_db_id=vdb2.identifier)
 
     vector_dbs = await table.list_vector_dbs()
     assert len(vector_dbs.data) == 0

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:11434/v1/v1/chat/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -38,7 +38,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-549",
+        "id": "chatcmpl-10",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -53,7 +53,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_ybj7t2qt",
+                  "id": "call_7cm57k1b",
                   "function": {
                     "arguments": "{\"city\":\"Tokyo\"}",
                     "name": "get_weather"
@@ -65,7 +65,7 @@
             }
           }
         ],
-        "created": 1754081857,
+        "created": 1756921368,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,

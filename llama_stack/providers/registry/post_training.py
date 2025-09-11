@@ -48,7 +48,7 @@ def available_providers() -> list[ProviderSpec]:
         InlineProviderSpec(
             api=Api.post_training,
             provider_type="inline::huggingface-gpu",
-            pip_packages=["trl", "transformers", "peft", "datasets", "torch"],
+            pip_packages=["trl", "transformers", "peft", "datasets>=4.0.0", "torch"],
             module="llama_stack.providers.inline.post_training.huggingface",
             config_class="llama_stack.providers.inline.post_training.huggingface.HuggingFacePostTrainingConfig",
             api_dependencies=[

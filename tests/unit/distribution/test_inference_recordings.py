@@ -266,7 +266,7 @@ class TestInferenceRecording:
             return real_openai_chat_response
 
         with patch("openai.resources.chat.completions.AsyncCompletions.create", side_effect=mock_create):
-            with inference_recording(mode=InferenceMode.LIVE):
+            with inference_recording(mode=InferenceMode.LIVE, storage_dir="foo"):
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
 
                 response = await client.chat.completions.create(

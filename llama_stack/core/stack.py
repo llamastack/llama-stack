@@ -24,6 +24,7 @@ from llama_stack.apis.inference import Inference
 from llama_stack.apis.inspect import Inspect
 from llama_stack.apis.models import Models
 from llama_stack.apis.post_training import PostTraining
+from llama_stack.apis.prompts import Prompts
 from llama_stack.apis.providers import Providers
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.scoring import Scoring
@@ -37,6 +38,7 @@ from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.datatypes import Provider, StackRunConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
+from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
 from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.resolver import ProviderRegistry, resolve_impls
 from llama_stack.core.routing_tables.common import CommonRoutingTableImpl
@@ -72,6 +74,7 @@ class LlamaStack(
     ToolRuntime,
     RAGToolRuntime,
     Files,
+    Prompts,
 ):
     pass
 
@@ -305,6 +308,12 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     )
     impls[Api.providers] = providers_impl
 
+    prompts_impl = PromptServiceImpl(
+        PromptServiceConfig(run_config=run_config),
+        deps=impls,
+    )
+    impls[Api.prompts] = prompts_impl
+
 
 # Produces a stack of providers for the given run config. Not all APIs may be
 # asked for in the run config.
@@ -328,6 +337,9 @@ async def construct_stack(
 
     # Add internal implementations after all other providers are resolved
     add_internal_implementations(impls, run_config)
+
+    if Api.prompts in impls:
+        await impls[Api.prompts].initialize()
 
     await register_resources(run_config, impls)
 
