@@ -11,7 +11,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 from openai.types.chat.chat_completion_chunk import (
@@ -150,10 +150,12 @@ async def test_tool_call_response(vllm_inference_adapter):
     """Verify that tool call arguments from a CompletionMessage are correctly converted
     into the expected JSON format."""
 
-    # Patch the call to vllm so we can inspect the arguments sent were correct
-    with patch.object(
-        vllm_inference_adapter.client.chat.completions, "create", new_callable=AsyncMock
-    ) as mock_nonstream_completion:
+    # Patch the client property to avoid instantiating a real AsyncOpenAI client
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock()
+        mock_create_client.return_value = mock_client
+
         messages = [
             SystemMessage(content="You are a helpful assistant"),
             UserMessage(content="How many?"),
@@ -179,7 +181,7 @@ async def test_tool_call_response(vllm_inference_adapter):
             tool_config=ToolConfig(tool_choice=ToolChoice.auto),
         )
 
-        assert mock_nonstream_completion.call_args.kwargs["messages"][2]["tool_calls"] == [
+        assert mock_client.chat.completions.create.call_args.kwargs["messages"][2]["tool_calls"] == [
             {
                 "id": "foo",
                 "type": "function",
@@ -641,9 +643,7 @@ async def test_health_status_success(vllm_inference_adapter):
     This test verifies that the health method returns a HealthResponse with status OK, only
     when the connection to the vLLM server is successful.
     """
-    # Set vllm_inference_adapter.client to None to ensure _create_client is called
-    vllm_inference_adapter.client = None
-    with patch.object(vllm_inference_adapter, "_create_client") as mock_create_client:
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
         # Create mock client and models
         mock_client = MagicMock()
         mock_models = MagicMock()
@@ -674,8 +674,7 @@ async def test_health_status_failure(vllm_inference_adapter):
     This test verifies that the health method returns a HealthResponse with status ERROR
     and an appropriate error message when the connection to the vLLM server fails.
     """
-    vllm_inference_adapter.client = None
-    with patch.object(vllm_inference_adapter, "_create_client") as mock_create_client:
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
         # Create mock client and models
         mock_client = MagicMock()
         mock_models = MagicMock()
