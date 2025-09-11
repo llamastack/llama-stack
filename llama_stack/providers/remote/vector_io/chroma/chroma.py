@@ -31,7 +31,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorDBWithIndex,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import Reranker
+from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
 from .config import ChromaVectorIOConfig as RemoteChromaVectorIOConfig
 
@@ -192,7 +192,9 @@ class ChromaIndex(EmbeddingIndex):
         }
 
         # Combine scores using the reranking utility
-        combined_scores = Reranker.combine_search_results(vector_scores, keyword_scores, reranker_type, reranker_params)
+        combined_scores = WeightedInMemoryAggregator.combine_search_results(
+            vector_scores, keyword_scores, reranker_type, reranker_params
+        )
 
         # Efficient top-k selection because it only tracks the k best candidates it's seen so far
         top_k_items = heapq.nlargest(k, combined_scores.items(), key=lambda x: x[1])

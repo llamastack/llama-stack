@@ -39,7 +39,6 @@ def sanitize_collection_name(name: str, weaviate_format=False) -> str:
     return s
 
 
-
 class WeightedInMemoryAggregator:
     @staticmethod
     def _normalize_scores(scores: dict[str, float]) -> dict[str, float]:

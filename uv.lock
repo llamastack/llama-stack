@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
@@ -1767,6 +1767,7 @@ dependencies = [
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
     { name = "pillow" },
+    { name = "pre-commit" },
     { name = "prompt-toolkit" },
     { name = "pydantic" },
     { name = "python-dotenv" },
@@ -1892,6 +1893,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
     { name = "pandas", marker = "extra == 'ui'" },
     { name = "pillow" },
+    { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "prompt-toolkit" },
     { name = "pydantic", specifier = ">=2" },
     { name = "python-dotenv" },
