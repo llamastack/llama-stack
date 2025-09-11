@@ -478,7 +478,6 @@ llama-stack-client scoring_functions list
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
 ┃ identifier                                 ┃ provider_id  ┃ description                                                   ┃ type             ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│ basic::bfcl                                │ basic        │ BFCL complex scoring                                          │ scoring_function │
 │ basic::docvqa                              │ basic        │ DocVQA Visual Question & Answer scoring function              │ scoring_function │
 │ basic::equality                            │ basic        │ Returns 1.0 if the input is equal to the target, 0.0          │ scoring_function │
 │                                            │              │ otherwise.                                                    │                  │

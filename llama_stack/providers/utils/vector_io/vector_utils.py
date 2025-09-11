@@ -39,13 +39,16 @@ def sanitize_collection_name(name: str, weaviate_format=False) -> str:
     return s
 
 
-class Reranker:
+
+class WeightedInMemoryAggregator:
     @staticmethod
     def _normalize_scores(scores: dict[str, float]) -> dict[str, float]:
         """
         Normalize scores to 0-1 range using min-max normalization.
+
         Args:
             scores: dictionary of scores with document IDs as keys and scores as values
+
         Returns:
             Normalized scores with document IDs as keys and normalized scores as values
         """
@@ -65,17 +68,20 @@ class Reranker:
     ) -> dict[str, float]:
         """
         Rerank via weighted average of scores.
+
         Args:
             vector_scores: scores from vector search
             keyword_scores: scores from keyword search
             alpha: weight factor between 0 and 1 (default: 0.5)
                    0 = keyword only, 1 = vector only, 0.5 = equal weight
+
         Returns:
             All unique document IDs with weighted combined scores
         """
         all_ids = set(vector_scores.keys()) | set(keyword_scores.keys())
-        normalized_vector_scores = Reranker._normalize_scores(vector_scores)
-        normalized_keyword_scores = Reranker._normalize_scores(keyword_scores)
+
+        normalized_vector_scores = WeightedInMemoryAggregator._normalize_scores(vector_scores)
+        normalized_keyword_scores = WeightedInMemoryAggregator._normalize_scores(keyword_scores)
 
         # Weighted formula: score = (1-alpha) * keyword_score + alpha * vector_score
         # alpha=0 means keyword only, alpha=1 means vector only
@@ -93,10 +99,12 @@ class Reranker:
     ) -> dict[str, float]:
         """
         Rerank via Reciprocal Rank Fusion.
+
         Args:
             vector_scores: scores from vector search
             keyword_scores: scores from keyword search
             impact_factor: impact factor for RRF (default: 60.0)
+
         Returns:
             All unique document IDs with RRF combined scores
         """
@@ -130,11 +138,13 @@ class Reranker:
     ) -> dict[str, float]:
         """
         Combine vector and keyword search results using specified reranking strategy.
+
         Args:
             vector_scores: scores from vector search
             keyword_scores: scores from keyword search
             reranker_type: type of reranker to use (default: RERANKER_TYPE_RRF)
             reranker_params: parameters for the reranker
+
         Returns:
             All unique document IDs with combined scores
         """
@@ -143,8 +153,9 @@ class Reranker:
 
         if reranker_type == "weighted":
             alpha = reranker_params.get("alpha", 0.5)
-            return Reranker.weighted_rerank(vector_scores, keyword_scores, alpha)
+
+            return WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha)
         else:
             # Default to RRF for None, RRF, or any unknown types
             impact_factor = reranker_params.get("impact_factor", 60.0)
-            return Reranker.rrf_rerank(vector_scores, keyword_scores, impact_factor)
+            return WeightedInMemoryAggregator.rrf_rerank(vector_scores, keyword_scores, impact_factor)

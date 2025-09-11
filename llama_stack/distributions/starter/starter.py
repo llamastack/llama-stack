@@ -99,9 +99,8 @@ def get_remote_inference_providers() -> list[Provider]:
     return inference_providers
 
 
-def get_distribution_template() -> DistributionTemplate:
+def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     remote_inference_providers = get_remote_inference_providers()
-    name = "starter"
 
     providers = {
         "inference": [BuildProvider(provider_type=p.provider_type, module=p.module) for p in remote_inference_providers]
@@ -120,7 +119,7 @@ def get_distribution_template() -> DistributionTemplate:
         ],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
         "telemetry": [BuildProvider(provider_type="inline::meta-reference")],
-        "post_training": [BuildProvider(provider_type="inline::huggingface-cpu")],
+        "post_training": [BuildProvider(provider_type="inline::torchtune-cpu")],
         "eval": [BuildProvider(provider_type="inline::meta-reference")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),

@@ -35,7 +35,7 @@ distribution_spec:
     telemetry:
     - provider_type: inline::meta-reference
     post_training:
-    - provider_type: inline::huggingface-cpu
+    - provider_type: inline::torchtune-cpu
     eval:
     - provider_type: inline::meta-reference
     datasetio:

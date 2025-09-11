@@ -27,7 +27,7 @@ Then, you can access the APIs like `models` and `inference` on the client and ca
 response = client.models.list()
 ```
 
-If you've created a [custom distribution](https://llama-stack.readthedocs.io/en/latest/distributions/building_distro.html), you can also use the run.yaml configuration file directly:
+If you've created a [custom distribution](building_distro.md), you can also use the run.yaml configuration file directly:
 
 ```python
 client = LlamaStackAsLibraryClient(config_path)

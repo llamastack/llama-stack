@@ -35,3 +35,6 @@ device: cpu
 
 ```
 
+[Find more detailed information here!](huggingface.md)
+
+

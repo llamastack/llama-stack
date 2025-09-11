@@ -332,6 +332,63 @@ async def test_sqlstore_pagination_error_handling():
             )
 
 
+async def test_where_operator_gt_and_update_delete():
+    with TemporaryDirectory() as tmp_dir:
+        db_path = tmp_dir + "/test.db"
+        store = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=db_path))
+
+        await store.create_table(
+            "items",
+            {
+                "id": ColumnType.INTEGER,
+                "value": ColumnType.INTEGER,
+                "name": ColumnType.STRING,
+            },
+        )
+
+        await store.insert("items", {"id": 1, "value": 10, "name": "one"})
+        await store.insert("items", {"id": 2, "value": 20, "name": "two"})
+        await store.insert("items", {"id": 3, "value": 30, "name": "three"})
+
+        result = await store.fetch_all("items", where={"value": {">": 15}})
+        assert {r["id"] for r in result.data} == {2, 3}
+
+        row = await store.fetch_one("items", where={"value": {">=": 30}})
+        assert row["id"] == 3
+
+        await store.update("items", {"name": "small"}, {"value": {"<": 25}})
+        rows = (await store.fetch_all("items")).data
+        names = {r["id"]: r["name"] for r in rows}
+        assert names[1] == "small"
+        assert names[2] == "small"
+        assert names[3] == "three"
+
+        await store.delete("items", {"id": {"==": 2}})
+        rows_after = (await store.fetch_all("items")).data
+        assert {r["id"] for r in rows_after} == {1, 3}
+
+
+async def test_where_operator_edge_cases():
+    with TemporaryDirectory() as tmp_dir:
+        db_path = tmp_dir + "/test.db"
+        store = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=db_path))
+
+        await store.create_table(
+            "events",
+            {"id": ColumnType.STRING, "ts": ColumnType.INTEGER},
+        )
+
+        base = 1024
+        await store.insert("events", {"id": "a", "ts": base - 10})
+        await store.insert("events", {"id": "b", "ts": base + 10})
+
+        row = await store.fetch_one("events", where={"id": "a"})
+        assert row["id"] == "a"
+
+        with pytest.raises(ValueError, match="Unsupported operator"):
+            await store.fetch_all("events", where={"ts": {"!=": base}})
+
+
 async def test_sqlstore_pagination_custom_key_column():
     """Test pagination with custom primary key column (not 'id')."""
     with TemporaryDirectory() as tmp_dir:

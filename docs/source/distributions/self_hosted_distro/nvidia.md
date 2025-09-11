@@ -50,6 +50,7 @@ The following models are available by default:
 - `meta/llama-3.2-11b-vision-instruct `
 - `meta/llama-3.2-90b-vision-instruct `
 - `meta/llama-3.3-70b-instruct `
+- `nvidia/vila `
 - `nvidia/llama-3.2-nv-embedqa-1b-v2 `
 - `nvidia/nv-embedqa-e5-v5 `
 - `nvidia/nv-embedqa-mistral-7b-v2 `
