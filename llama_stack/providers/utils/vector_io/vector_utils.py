@@ -78,7 +78,6 @@ class WeightedInMemoryAggregator:
             All unique document IDs with weighted combined scores
         """
         all_ids = set(vector_scores.keys()) | set(keyword_scores.keys())
-
         normalized_vector_scores = WeightedInMemoryAggregator._normalize_scores(vector_scores)
         normalized_keyword_scores = WeightedInMemoryAggregator._normalize_scores(keyword_scores)
 
@@ -152,7 +151,6 @@ class WeightedInMemoryAggregator:
 
         if reranker_type == "weighted":
             alpha = reranker_params.get("alpha", 0.5)
-
             return WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha)
         else:
             # Default to RRF for None, RRF, or any unknown types
