@@ -30,7 +30,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter=AdapterSpec(
                 adapter_type="huggingface",
                 pip_packages=[
-                    "datasets",
+                    "datasets>=4.0.0",
                 ],
                 module="llama_stack.providers.remote.datasetio.huggingface",
                 config_class="llama_stack.providers.remote.datasetio.huggingface.HuggingfaceDatasetIOConfig",
@@ -42,7 +42,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter=AdapterSpec(
                 adapter_type="nvidia",
                 pip_packages=[
-                    "datasets",
+                    "datasets>=4.0.0",
                 ],
                 module="llama_stack.providers.remote.datasetio.nvidia",
                 config_class="llama_stack.providers.remote.datasetio.nvidia.NvidiaDatasetIOConfig",

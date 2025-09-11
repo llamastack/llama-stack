@@ -75,7 +75,7 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="vllm",
-                pip_packages=["openai"],
+                pip_packages=[],
                 module="llama_stack.providers.remote.inference.vllm",
                 config_class="llama_stack.providers.remote.inference.vllm.VLLMInferenceAdapterConfig",
                 description="Remote vLLM inference provider for connecting to vLLM servers.",
@@ -116,7 +116,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter=AdapterSpec(
                 adapter_type="fireworks",
                 pip_packages=[
-                    "fireworks-ai<=0.18.0",
+                    "fireworks-ai<=0.17.16",
                 ],
                 module="llama_stack.providers.remote.inference.fireworks",
                 config_class="llama_stack.providers.remote.inference.fireworks.FireworksImplConfig",
@@ -151,9 +151,7 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="databricks",
-                pip_packages=[
-                    "openai",
-                ],
+                pip_packages=[],
                 module="llama_stack.providers.remote.inference.databricks",
                 config_class="llama_stack.providers.remote.inference.databricks.DatabricksImplConfig",
                 description="Databricks inference provider for running models on Databricks' unified analytics platform.",
@@ -163,9 +161,7 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="nvidia",
-                pip_packages=[
-                    "openai",
-                ],
+                pip_packages=[],
                 module="llama_stack.providers.remote.inference.nvidia",
                 config_class="llama_stack.providers.remote.inference.nvidia.NVIDIAConfig",
                 description="NVIDIA inference provider for accessing NVIDIA NIM models and AI services.",
@@ -175,7 +171,7 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="runpod",
-                pip_packages=["openai"],
+                pip_packages=[],
                 module="llama_stack.providers.remote.inference.runpod",
                 config_class="llama_stack.providers.remote.inference.runpod.RunpodImplConfig",
                 description="RunPod inference provider for running models on RunPod's cloud GPU platform.",
@@ -292,11 +288,26 @@ Available Models:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="watsonx",
-                pip_packages=["ibm_watson_machine_learning"],
+                pip_packages=["ibm_watsonx_ai"],
                 module="llama_stack.providers.remote.inference.watsonx",
                 config_class="llama_stack.providers.remote.inference.watsonx.WatsonXConfig",
                 provider_data_validator="llama_stack.providers.remote.inference.watsonx.WatsonXProviderDataValidator",
                 description="IBM WatsonX inference provider for accessing AI models on IBM's WatsonX platform.",
+            ),
+        ),
+        remote_provider_spec(
+            api=Api.inference,
+            adapter=AdapterSpec(
+                adapter_type="azure",
+                pip_packages=["litellm"],
+                module="llama_stack.providers.remote.inference.azure",
+                config_class="llama_stack.providers.remote.inference.azure.AzureConfig",
+                provider_data_validator="llama_stack.providers.remote.inference.azure.config.AzureProviderDataValidator",
+                description="""
+Azure OpenAI inference provider for accessing GPT models and other Azure services.
+Provider documentation
+https://learn.microsoft.com/en-us/azure/ai-foundry/openai/overview
+""",
             ),
         ),
     ]

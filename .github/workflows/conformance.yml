@@ -1,0 +1,57 @@
+# API Conformance Tests
+# This workflow ensures that API changes maintain backward compatibility and don't break existing integrations
+# It runs schema validation and OpenAPI diff checks to catch breaking changes early
+
+name: API Conformance Tests
+
+run-name: Run the API Conformance test suite on the changes.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'llama_stack/**'
+      - '!llama_stack/ui/**'
+      - 'tests/**'
+      - 'uv.lock'
+      - 'pyproject.toml'
+      - '.github/workflows/conformance.yml' # This workflow itself
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  # Cancel in-progress runs when new commits are pushed to avoid wasting CI resources
+  cancel-in-progress: true
+
+jobs:
+  # Job to check if API schema changes maintain backward compatibility
+  check-schema-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      # Using specific version 4.1.7 because 5.0.0 fails when trying to run this locally using `act`
+      # This ensures consistent behavior between local testing and CI
+      - name: Checkout PR Code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # Checkout the base branch to compare against (usually main)
+      # This allows us to diff the current changes against the previous state
+      - name: Checkout Base Branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: 'base'
+
+      # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
+      - name: Install oasdiff
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
+
+      # Run oasdiff to detect breaking changes in the API specification
+      # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
+      - name: Run OpenAPI Breaking Change Diff
+        run: |
+          oasdiff breaking --fail-on ERR base/docs/_static/llama-stack-spec.yaml docs/_static/llama-stack-spec.yaml --match-path '^/v1/openai/v1' \
+          --match-path '^/v1/vector-io' \
+          --match-path '^/v1/vector-dbs'

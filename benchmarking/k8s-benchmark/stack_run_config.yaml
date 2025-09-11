@@ -2,7 +2,10 @@ version: '2'
 image_name: kubernetes-benchmark-demo
 apis:
 - agents
+- files
 - inference
+- files
+- safety
 - telemetry
 - tool_runtime
 - vector_io
@@ -18,6 +21,14 @@ providers:
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
     config: {}
+  files:
+  - provider_id: meta-reference-files
+    provider_type: inline::localfs
+    config:
+      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
+      metadata_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/files_metadata.db
   vector_io:
   - provider_id: ${env.ENABLE_CHROMADB:+chromadb}
     provider_type: remote::chromadb
@@ -30,6 +41,19 @@ providers:
         db: ${env.POSTGRES_DB:=llamastack}
         user: ${env.POSTGRES_USER:=llamastack}
         password: ${env.POSTGRES_PASSWORD:=llamastack}
+  files:
+  - provider_id: meta-reference-files
+    provider_type: inline::localfs
+    config:
+      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
+      metadata_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/files_metadata.db
+  safety:
+  - provider_id: llama-guard
+    provider_type: inline::llama-guard
+    config:
+      excluded_categories: []
   agents:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -95,6 +119,8 @@ models:
 - model_id: ${env.INFERENCE_MODEL}
   provider_id: vllm-inference
   model_type: llm
+shields:
+- shield_id: ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}
 vector_dbs: []
 datasets: []
 scoring_fns: []
