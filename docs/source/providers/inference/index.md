@@ -18,6 +18,7 @@ This section contains documentation for all available providers for the **infere
 inline_meta-reference
 inline_sentence-transformers
 remote_anthropic
+remote_azure
 remote_bedrock
 remote_cerebras
 remote_databricks

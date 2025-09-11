@@ -105,8 +105,12 @@ def _deserialize_response(data: dict[str, Any]) -> Any:
 
             return cls.model_validate(data["__data__"])
         except (ImportError, AttributeError, TypeError, ValueError) as e:
-            logger.warning(f"Failed to deserialize object of type {data['__type__']}: {e}")
-            return data["__data__"]
+            logger.warning(f"Failed to deserialize object of type {data['__type__']} with model_validate: {e}")
+            try:
+                return cls.model_construct(**data["__data__"])
+            except Exception as e:
+                logger.warning(f"Failed to deserialize object of type {data['__type__']} with model_construct: {e}")
+                return data["__data__"]
 
     return data
 
