@@ -5,13 +5,13 @@
 # the root directory of this source tree.
 
 
-from typing import cast
+from typing import Any, cast
 
 from llama_stack.providers.datatypes import AdapterSpec, Api, InlineProviderSpec, ProviderSpec, remote_provider_spec
 
 # We provide two versions of these providers so that distributions can package the appropriate version of torch.
 # The CPU version is used for distributions that don't have GPU support -- they result in smaller container images.
-torchtune_def = dict(
+torchtune_def: dict[str, Any] = dict(
     api=Api.post_training,
     pip_packages=["numpy"],
     module="llama_stack.providers.inline.post_training.torchtune",
