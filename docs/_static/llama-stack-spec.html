@@ -17023,13 +17023,13 @@
                         "type": "string",
                         "description": "The embedding model to use."
                     },
-                    "embedding_dimension": {
-                        "type": "integer",
-                        "description": "The dimension of the embedding model."
-                    },
                     "provider_id": {
                         "type": "string",
                         "description": "The identifier of the provider."
+                    },
+                    "embedding_dimension": {
+                        "type": "integer",
+                        "description": "The dimension of the embedding model."
                     },
                     "vector_db_name": {
                         "type": "string",
@@ -17043,7 +17043,8 @@
                 "additionalProperties": false,
                 "required": [
                     "vector_db_id",
-                    "embedding_model"
+                    "embedding_model",
+                    "provider_id"
                 ],
                 "title": "RegisterVectorDbRequest"
             },
