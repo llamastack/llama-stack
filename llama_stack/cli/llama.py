@@ -11,6 +11,7 @@ from .model import ModelParser
 from .stack import StackParser
 from .stack.utils import print_subcommand_description
 from .verify_download import VerifyDownload
+from .version import VersionCommand
 
 
 class LlamaCLIParser:
@@ -34,6 +35,7 @@ class LlamaCLIParser:
         StackParser.create(subparsers)
         Download.create(subparsers)
         VerifyDownload.create(subparsers)
+        VersionCommand.create(subparsers)
 
         print_subcommand_description(self.parser, subparsers)
 

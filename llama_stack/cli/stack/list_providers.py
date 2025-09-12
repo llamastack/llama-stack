@@ -28,10 +28,11 @@ class StackListProviders(Subcommand):
         return [api.value for api in providable_apis()]
 
     def _add_arguments(self):
+        choices = self.providable_apis
         self.parser.add_argument(
             "api",
             type=str,
-            choices=self.providable_apis,
+            choices=choices if choices else None,
             nargs="?",
             help="API to list providers for. List all if not specified.",
         )
