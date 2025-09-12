@@ -13,6 +13,7 @@ from .strong_typing.schema import json_schema_type, register_schema  # noqa: F40
 
 @dataclass
 class WebMethod:
+    level: str | None = "v1"
     route: str | None = None
     public: bool = False
     request_examples: list[Any] | None = None
@@ -31,6 +32,7 @@ T = TypeVar("T", bound=Callable[..., Any])
 def webmethod(
     route: str | None = None,
     method: str | None = None,
+    level: str | None = "v1",
     public: bool | None = False,
     request_examples: list[Any] | None = None,
     response_examples: list[Any] | None = None,
@@ -54,6 +56,7 @@ def webmethod(
         func.__webmethod__ = WebMethod(  # type: ignore
             route=route,
             method=method,
+            level=level,
             public=public or False,
             request_examples=request_examples,
             response_examples=response_examples,

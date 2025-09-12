@@ -14,7 +14,6 @@ from starlette.routing import Route
 
 from llama_stack.apis.datatypes import Api, ExternalApiSpec
 from llama_stack.apis.tools import RAGToolRuntime, SpecialToolGroup
-from llama_stack.apis.version import LLAMA_STACK_API_VERSION
 from llama_stack.core.resolver import api_protocol_map
 from llama_stack.schema_utils import WebMethod
 
@@ -60,7 +59,7 @@ def get_all_api_routes(
             # The __webmethod__ attribute is dynamically added by the @webmethod decorator
             # mypy doesn't know about this dynamic attribute, so we ignore the attr-defined error
             webmethod = method.__webmethod__  # type: ignore[attr-defined]
-            path = f"/{LLAMA_STACK_API_VERSION}/{webmethod.route.lstrip('/')}"
+            path = f"/{webmethod.level}/{webmethod.route.lstrip('/')}"
             if webmethod.method == hdrs.METH_GET:
                 http_method = hdrs.METH_GET
             elif webmethod.method == hdrs.METH_DELETE:
