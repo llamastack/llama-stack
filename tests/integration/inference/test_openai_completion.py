@@ -58,6 +58,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         #  does not work with the specified model, gpt-5-mini. Please choose different model and try
         #  again. You can learn more about which models can be used with each operation here:
         #  https://go.microsoft.com/fwlink/?linkid=2197993.'}}"}
+        "remote::watsonx",  # return 404 when hitting the /openai/v1 endpoint
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI completions.")
 
@@ -110,6 +111,8 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
         "remote::cerebras",
         "remote::databricks",
         "remote::runpod",
+        "remote::tgi",
+        "remote::watsonx",  # watsonx returns 404 when hitting the /openai/v1 endpoint
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI chat completions.")
 
