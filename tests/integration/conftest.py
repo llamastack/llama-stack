@@ -131,8 +131,8 @@ def pytest_addoption(parser):
     parser.addoption(
         "--embedding-dimension",
         type=int,
-        default=384,
-        help="Output dimensionality of the embedding model to use for testing. Default: 384",
+        default=768,
+        help="Output dimensionality of the embedding model to use for testing. Default: 768",
     )
 
     parser.addoption(
@@ -171,7 +171,7 @@ MODEL_SHORT_IDS = {
     "meta-llama/Llama-3.3-70B-Instruct": "70B",
     "meta-llama/Llama-Guard-3-1B": "Guard1B",
     "meta-llama/Llama-Guard-3-8B": "Guard8B",
-    "all-MiniLM-L6-v2": "MiniLM",
+    "nomic-ai/nomic-embed-text-v1.5": "Nomic-v1.5",
 }
 
 

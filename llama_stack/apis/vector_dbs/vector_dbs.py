@@ -90,7 +90,7 @@ class VectorDBs(Protocol):
         self,
         vector_db_id: str,
         embedding_model: str,
-        embedding_dimension: int | None = 384,
+        embedding_dimension: int | None = 768,
         provider_id: str | None = None,
         vector_db_name: str | None = None,
         provider_vector_db_id: str | None = None,

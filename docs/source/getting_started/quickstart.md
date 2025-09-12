@@ -62,7 +62,7 @@ Congratulations! You've successfully built your first RAG application using Llam
 ```{admonition} HuggingFace access
 :class: tip
 
-If you are getting a **401 Client Error** from HuggingFace for the **all-MiniLM-L6-v2** model, try setting **HF_TOKEN** to a valid HuggingFace token in your environment
+If you are getting a **401 Client Error** from HuggingFace for the **nomic-embed-text-v1.5** model, try setting **HF_TOKEN** to a valid HuggingFace token in your environment
 ```
 
 ### Next Steps

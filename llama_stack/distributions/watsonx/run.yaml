@@ -192,8 +192,8 @@ models:
   provider_model_id: meta-llama/llama-guard-3-11b-vision
   model_type: llm
 - metadata:
-    embedding_dimension: 384
-  model_id: all-MiniLM-L6-v2
+    embedding_dimension: 768
+  model_id: nomic-embed-text-v1.5
   provider_id: sentence-transformers
   model_type: embedding
 shields: []
