@@ -31,10 +31,12 @@ class RedisKVStoreConfig(CommonConfig):
     type: Literal[KVStoreType.redis.value] = KVStoreType.redis.value
     host: str = "localhost"
     port: int = 6379
+    db: int = 0
+    ttl: int = None
 
     @property
     def url(self) -> str:
-        return f"redis://{self.host}:{self.port}"
+        return f"redis://{self.host}:{self.port}/{self.db}"
 
     @classmethod
     def pip_packages(cls) -> list[str]:
