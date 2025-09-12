@@ -78,6 +78,7 @@ def available_providers() -> list[ProviderSpec]:
                 pip_packages=[],
                 module="llama_stack.providers.remote.inference.vllm",
                 config_class="llama_stack.providers.remote.inference.vllm.VLLMInferenceAdapterConfig",
+                provider_data_validator="llama_stack.providers.remote.inference.vllm.VLLMProviderDataValidator",
                 description="Remote vLLM inference provider for connecting to vLLM servers.",
             ),
         ),
