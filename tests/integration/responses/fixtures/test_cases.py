@@ -29,7 +29,7 @@ class ResponsesTestCase(BaseModel):
 basic_test_cases = [
     pytest.param(
         ResponsesTestCase(
-            input="Which planet do humans live on?",
+            input="Humans live on which planet: Mars, Venus, or Earth?",
             expected="earth",
         ),
         id="earth",
@@ -76,7 +76,7 @@ multi_turn_test_cases = [
             input="",  # Not used for multi-turn
             expected="",  # Not used for multi-turn
             turns=[
-                ("Which planet do humans live on?", "earth"),
+                ("Humans live on which planet: Mars, Venus, or Earth?", "earth"),
                 ("What is the name of the planet from your previous response?", "earth"),
             ],
         ),
