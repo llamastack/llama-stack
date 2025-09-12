@@ -6,7 +6,7 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from openai import AsyncOpenAI
@@ -159,7 +159,9 @@ class TestInferenceRecording:
             return real_openai_chat_response
 
         temp_storage_dir = temp_storage_dir / "test_recording_mode"
-        with patch("openai.resources.chat.completions.AsyncCompletions.create", side_effect=mock_create):
+        with patch(
+            "openai.resources.chat.completions.AsyncCompletions.create", new_callable=AsyncMock, side_effect=mock_create
+        ):
             with inference_recording(mode=InferenceMode.RECORD, storage_dir=str(temp_storage_dir)):
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
 
@@ -185,7 +187,9 @@ class TestInferenceRecording:
 
         temp_storage_dir = temp_storage_dir / "test_replay_mode"
         # First, record a response
-        with patch("openai.resources.chat.completions.AsyncCompletions.create", side_effect=mock_create):
+        with patch(
+            "openai.resources.chat.completions.AsyncCompletions.create", new_callable=AsyncMock, side_effect=mock_create
+        ):
             with inference_recording(mode=InferenceMode.RECORD, storage_dir=str(temp_storage_dir)):
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
 
@@ -277,7 +281,9 @@ class TestInferenceRecording:
 
         temp_storage_dir = temp_storage_dir / "test_embeddings_recording"
         # Record
-        with patch("openai.resources.embeddings.AsyncEmbeddings.create", side_effect=mock_create):
+        with patch(
+            "openai.resources.embeddings.AsyncEmbeddings.create", new_callable=AsyncMock, side_effect=mock_create
+        ):
             with inference_recording(mode=InferenceMode.RECORD, storage_dir=str(temp_storage_dir)):
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
 
