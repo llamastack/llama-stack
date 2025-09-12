@@ -175,7 +175,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             provider_shield_id="${env.CODE_SCANNER_MODEL:=}",
         ),
     ]
-
+    postgres_config = PostgresSqlStoreConfig.sample_run_config()
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -228,6 +228,22 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 default_models=[],
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
+            ),
+            "run-with-postgres-store.yaml": RunConfigSettings(
+                provider_overrides={
+                    "agents": [
+                        Provider(
+                            provider_id="meta-reference",
+                            provider_type="inline::meta-reference",
+                            config=dict(
+                                persistence_store=postgres_config,
+                                responses_store=postgres_config,
+                            ),
+                        )
+                    ],
+                },
+                inference_store=postgres_config,
+                metadata_store=postgres_config,
             ),
         },
         run_config_env_vars={

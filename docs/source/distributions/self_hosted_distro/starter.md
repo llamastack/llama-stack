@@ -164,7 +164,41 @@ docker run \
   --port $LLAMA_STACK_PORT
 ```
 
-### Via venv
+The container will run the distribution with a SQLite store by default. This store is used for the following components:
+
+- Metadata store: store metadata about the models, providers, etc.
+- Inference store: collect of responses from the inference provider
+- Agents store: store agent configurations (sessions, turns, etc.)
+- Agents Responses store: store responses from the agents
+
+However, you can override the default behavior by setting the `ENABLE_POSTGRES_STORE` environment variable to `1`.
+To run the distribution with a Postgres store, you can use the following command:
+
+```bash
+docker run \
+  -it \
+  --pull always \
+  -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+  -e OPENAI_API_KEY=your_openai_key \
+  -e FIREWORKS_API_KEY=your_fireworks_key \
+  -e TOGETHER_API_KEY=your_together_key \
+  -e POSTGRES_HOST=your_postgres_host \
+  -e POSTGRES_PORT=your_postgres_port \
+  -e POSTGRES_DB=your_postgres_db \
+  -e POSTGRES_USER=your_postgres_user \
+  -e POSTGRES_PASSWORD=your_postgres_password \
+  -e ENABLE_POSTGRES_STORE=1
+```
+
+Postgres environment variables:
+
+- `POSTGRES_HOST`: Postgres host (default: `localhost`)
+- `POSTGRES_PORT`: Postgres port (default: `5432`)
+- `POSTGRES_DB`: Postgres database name (default: `llamastack`)
+- `POSTGRES_USER`: Postgres username (default: `llamastack`)
+- `POSTGRES_PASSWORD`: Postgres password (default: `llamastack`)
+
+### Via Conda or venv
 
 Ensure you have configured the starter distribution using the environment variables explained above.
 
