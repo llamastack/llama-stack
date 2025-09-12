@@ -135,7 +135,7 @@ class HuggingFacePostTrainingImpl:
 
             resources_allocated, checkpoints = await recipe.train(
                 model=finetuned_model,
-                output_dir=f"{self.config.dpo_output_dir}/{job_uuid}",
+                output_dir=f"{self.config.dpo_output_dir}/{job_uuid}" if self.config.dpo_output_dir else None,
                 job_uuid=job_uuid,
                 dpo_config=algorithm_config,
                 config=training_config,
