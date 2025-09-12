@@ -378,17 +378,17 @@ def patch_inference_clients():
 
     def patched_models_list(self, *args, **kwargs):
         import asyncio
-        import concurrent.futures
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(
-                lambda: asyncio.run(
-                    _patched_inference_method(
-                        _original_methods["models_list"], self, "openai", "/v1/models", *args, **kwargs
-                    )
-                )
-            )
-            return future.result()
+        task = asyncio.create_task(
+            _patched_inference_method(_original_methods["models_list"], self, "openai", "/v1/models", *args, **kwargs)
+        )
+
+        async def _iter():
+            result = await task
+            async for item in result:
+                yield item
+
+        return _iter()
 
     # Apply OpenAI patches
     AsyncChatCompletions.create = patched_chat_completions_create
