@@ -52,8 +52,6 @@ class VectorDBsRoutingTable(CommonRoutingTableImpl, VectorDBs):
         provider_vector_db_id: str | None = None,
         vector_db_name: str | None = None,
     ) -> VectorDB:
-        provider_vector_db_id = provider_vector_db_id or vector_db_id
-
         model = await lookup_model(self, embedding_model)
         if model is None:
             raise ModelNotFoundError(embedding_model)
