@@ -24,6 +24,7 @@ from llama_stack.apis.telemetry import (
     MetricEvent,
     MetricLabelMatcher,
     MetricQueryType,
+    MetricType,
     QueryCondition,
     QueryMetricsResponse,
     QuerySpanTreeResponse,
@@ -56,6 +57,7 @@ _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
     "counters": {},
     "gauges": {},
     "up_down_counters": {},
+    "histograms": {},
 }
 _global_lock = threading.Lock()
 _TRACER_PROVIDER = None
@@ -258,12 +260,20 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         # Log to OpenTelemetry meter if available
         if self.meter is None:
             return
-        if isinstance(event.value, int):
-            counter = self._get_or_create_counter(event.metric, event.unit)
-            counter.add(event.value, attributes=event.attributes)
-        elif isinstance(event.value, float):
+
+        if event.metric_type == MetricType.HISTOGRAM:
+            histogram = self._get_or_create_histogram(
+                event.metric,
+                event.unit,
+                [0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 25.0, 50.0, 100.0],
+            )
+            histogram.record(event.value, attributes=event.attributes)
+        elif event.metric_type == MetricType.UP_DOWN_COUNTER:
             up_down_counter = self._get_or_create_up_down_counter(event.metric, event.unit)
             up_down_counter.add(event.value, attributes=event.attributes)
+        else:
+            counter = self._get_or_create_counter(event.metric, event.unit)
+            counter.add(event.value, attributes=event.attributes)
 
     def _get_or_create_up_down_counter(self, name: str, unit: str) -> metrics.UpDownCounter:
         assert self.meter is not None
@@ -274,6 +284,16 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 description=f"UpDownCounter for {name}",
             )
         return _GLOBAL_STORAGE["up_down_counters"][name]
+
+    def _get_or_create_histogram(self, name: str, unit: str, buckets: list[float] | None = None) -> metrics.Histogram:
+        assert self.meter is not None
+        if name not in _GLOBAL_STORAGE["histograms"]:
+            _GLOBAL_STORAGE["histograms"][name] = self.meter.create_histogram(
+                name=name,
+                unit=unit,
+                description=f"Histogram for {name}",
+            )
+        return _GLOBAL_STORAGE["histograms"][name]
 
     def _log_structured(self, event: StructuredLogEvent, ttl_seconds: int) -> None:
         with self._lock:
