@@ -175,6 +175,43 @@
                 }
             }
         },
+        "/v1alpha/post-training/job/cancel": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "PostTraining (Coming Soon)"
+                ],
+                "summary": "Cancel a training job.",
+                "description": "Cancel a training job.",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CancelTrainingJobRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
         "/v1/post-training/job/cancel": {
             "post": {
                 "responses": {
@@ -1179,6 +1216,60 @@
                 }
             }
         },
+        "/v1alpha/eval/benchmarks/{benchmark_id}/evaluations": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "EvaluateResponse object containing generations and scores.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EvaluateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Eval"
+                ],
+                "summary": "Evaluate a list of rows on a benchmark.",
+                "description": "Evaluate a list of rows on a benchmark.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to run the evaluation on.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EvaluateRowsRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
         "/v1/eval/benchmarks/{benchmark_id}/evaluations": {
             "post": {
                 "responses": {
@@ -1358,6 +1449,85 @@
                         "name": "turn_id",
                         "in": "path",
                         "description": "The ID of the turn to get.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/v1alpha/eval/benchmarks/{benchmark_id}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "A Benchmark.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Benchmark"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Benchmarks"
+                ],
+                "summary": "Get a benchmark by its ID.",
+                "description": "Get a benchmark by its ID.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to get.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Benchmarks"
+                ],
+                "summary": "Unregister a benchmark.",
+                "description": "Unregister a benchmark.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to unregister.",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -2079,6 +2249,50 @@
                 ]
             }
         },
+        "/v1alpha/post-training/job/artifacts": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "A PostTrainingJobArtifactsResponse.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostTrainingJobArtifactsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "PostTraining (Coming Soon)"
+                ],
+                "summary": "Get the artifacts of a training job.",
+                "description": "Get the artifacts of a training job.",
+                "parameters": [
+                    {
+                        "name": "job_uuid",
+                        "in": "query",
+                        "description": "The UUID of the job to get the artifacts of.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
         "/v1/post-training/job/artifacts": {
             "get": {
                 "responses": {
@@ -2115,6 +2329,50 @@
                         "name": "job_uuid",
                         "in": "query",
                         "description": "The UUID of the job to get the artifacts of.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/v1alpha/post-training/job/status": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "A PostTrainingJobStatusResponse.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostTrainingJobStatusResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "PostTraining (Coming Soon)"
+                ],
+                "summary": "Get the status of a training job.",
+                "description": "Get the status of a training job.",
+                "parameters": [
+                    {
+                        "name": "job_uuid",
+                        "in": "query",
+                        "description": "The UUID of the job to get the status of.",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -2165,6 +2423,40 @@
                         }
                     }
                 ]
+            }
+        },
+        "/v1alpha/post-training/jobs": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "A ListPostTrainingJobsResponse.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListPostTrainingJobsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "PostTraining (Coming Soon)"
+                ],
+                "summary": "Get all training jobs.",
+                "description": "Get all training jobs.",
+                "parameters": []
             }
         },
         "/v1/post-training/jobs": {
@@ -2538,6 +2830,103 @@
                 ]
             }
         },
+        "/v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "The status of the evaluation job.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Eval"
+                ],
+                "summary": "Get the status of a job.",
+                "description": "Get the status of a job.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to run the evaluation on.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "description": "The ID of the job to get the status of.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Eval"
+                ],
+                "summary": "Cancel a job.",
+                "description": "Cancel a job.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to run the evaluation on.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "description": "The ID of the job to cancel.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
         "/v1/eval/benchmarks/{benchmark_id}/jobs/{job_id}": {
             "get": {
                 "responses": {
@@ -2627,6 +3016,59 @@
                         "name": "job_id",
                         "in": "path",
                         "description": "The ID of the job to cancel.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "The result of the job.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EvaluateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Eval"
+                ],
+                "summary": "Get the result of a job.",
+                "description": "Get the result of a job.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to run the evaluation on.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "description": "The ID of the job to get the result of.",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -2748,6 +3190,75 @@
                         }
                     }
                 ]
+            }
+        },
+        "/v1alpha/eval/benchmarks": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "A ListBenchmarksResponse.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListBenchmarksResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Benchmarks"
+                ],
+                "summary": "List all benchmarks.",
+                "description": "List all benchmarks.",
+                "parameters": []
+            },
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Benchmarks"
+                ],
+                "summary": "Register a benchmark.",
+                "description": "Register a benchmark.",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterBenchmarkRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                }
             }
         },
         "/v1/eval/benchmarks": {
@@ -4783,6 +5294,50 @@
                 }
             }
         },
+        "/v1alpha/post-training/preference-optimize": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "A PostTrainingJob.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostTrainingJob"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "PostTraining (Coming Soon)"
+                ],
+                "summary": "Run preference optimization of a model.",
+                "description": "Run preference optimization of a model.",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PreferenceOptimizeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
         "/v1/post-training/preference-optimize": {
             "post": {
                 "responses": {
@@ -5178,6 +5733,60 @@
                 }
             }
         },
+        "/v1alpha/eval/benchmarks/{benchmark_id}/jobs": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "The job that was created to run the evaluation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Eval"
+                ],
+                "summary": "Run an evaluation on a benchmark.",
+                "description": "Run an evaluation on a benchmark.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to run the evaluation on.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RunEvalRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
         "/v1/eval/benchmarks/{benchmark_id}/jobs": {
             "post": {
                 "responses": {
@@ -5492,6 +6101,50 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/SetDefaultVersionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
+        "/v1alpha/post-training/supervised-fine-tune": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "A PostTrainingJob.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostTrainingJob"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "PostTraining (Coming Soon)"
+                ],
+                "summary": "Run supervised fine-tuning of a model.",
+                "description": "Run supervised fine-tuning of a model.",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SupervisedFineTuneRequest"
                             }
                         }
                     },

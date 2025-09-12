@@ -11,7 +11,7 @@ import typing
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
-from llama_stack.apis.version import LLAMA_STACK_API_VERSION
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA, LLAMA_STACK_API_V1ALPHA
 
 from termcolor import colored
 
@@ -113,11 +113,13 @@ class EndpointOperation:
     request_examples: Optional[List[Any]] = None
     response_examples: Optional[List[Any]] = None
 
-    def get_route(self) -> str:
-        if self.route is not None:
-            return "/".join(["", LLAMA_STACK_API_VERSION, self.route.lstrip("/")])
+    def get_route(self, webmethod) -> str:
+        api_level = webmethod.level
 
-        route_parts = ["", LLAMA_STACK_API_VERSION, self.name]
+        if self.route is not None:
+            return "/".join(["", api_level, self.route.lstrip("/")])
+
+        route_parts = ["", api_level, self.name]
         for param_name, _ in self.path_params:
             route_parts.append("{" + param_name + "}")
         return "/".join(route_parts)
@@ -152,33 +154,39 @@ def _get_endpoint_functions(
 
     functions = inspect.getmembers(endpoint, inspect.isfunction)
     for func_name, func_ref in functions:
-        webmethod = getattr(func_ref, "__webmethod__", None)
-        if not webmethod:
+        webmethods = []
+
+        # Check for multiple webmethods (stacked decorators)
+        if hasattr(func_ref, "__webmethods__"):
+            webmethods = func_ref.__webmethods__
+
+        if not webmethods:
             continue
 
-        print(f"Processing {colored(func_name, 'white')}...")
-        operation_name = func_name
-        
-        if webmethod.method == "GET":
-            prefix = "get"
-        elif webmethod.method == "DELETE":
-            prefix = "delete"
-        elif webmethod.method == "POST":
-            prefix = "post"
-        elif operation_name.startswith("get_") or operation_name.endswith("/get"):
-            prefix = "get"
-        elif (
-            operation_name.startswith("delete_")
-            or operation_name.startswith("remove_")
-            or operation_name.endswith("/delete")
-            or operation_name.endswith("/remove")
-        ):
-            prefix = "delete"
-        else:
-            # by default everything else is a POST
-            prefix = "post"
+        for webmethod in webmethods:
+            print(f"Processing {colored(func_name, 'white')}...")
+            operation_name = func_name
+            
+            if webmethod.method == "GET":
+                prefix = "get"
+            elif webmethod.method == "DELETE":
+                prefix = "delete"
+            elif webmethod.method == "POST":
+                prefix = "post"
+            elif operation_name.startswith("get_") or operation_name.endswith("/get"):
+                prefix = "get"
+            elif (
+                operation_name.startswith("delete_")
+                or operation_name.startswith("remove_")
+                or operation_name.endswith("/delete")
+                or operation_name.endswith("/remove")
+            ):
+                prefix = "delete"
+            else:
+                # by default everything else is a POST
+                prefix = "post"
 
-        yield prefix, operation_name, func_name, func_ref
+            yield prefix, operation_name, func_name, func_ref
 
 
 def _get_defining_class(member_fn: str, derived_cls: type) -> type:
@@ -239,105 +247,101 @@ def get_endpoint_operations(
             "update",
         ],
     ):
-        # extract routing information from function metadata
-        webmethod = getattr(func_ref, "__webmethod__", None)
-        if webmethod is not None:
+        # Get all webmethods for this function
+        webmethods = getattr(func_ref, "__webmethods__", [])
+
+        # Create one EndpointOperation for each webmethod
+        for webmethod in webmethods:
             route = webmethod.route
             route_params = _get_route_parameters(route) if route is not None else None
             public = webmethod.public
             request_examples = webmethod.request_examples
             response_examples = webmethod.response_examples
-        else:
-            route = None
-            route_params = None
-            public = False
-            request_examples = None
-            response_examples = None
 
-        # inspect function signature for path and query parameters, and request/response payload type
-        signature = get_signature(func_ref)
+            # inspect function signature for path and query parameters, and request/response payload type
+            signature = get_signature(func_ref)
 
-        path_params = []
-        query_params = []
-        request_params = []
-        multipart_params = []
+            path_params = []
+            query_params = []
+            request_params = []
+            multipart_params = []
 
-        for param_name, parameter in signature.parameters.items():
-            param_type = _get_annotation_type(parameter.annotation, func_ref)
+            for param_name, parameter in signature.parameters.items():
+                param_type = _get_annotation_type(parameter.annotation, func_ref)
 
-            # omit "self" for instance methods
-            if param_name == "self" and param_type is inspect.Parameter.empty:
-                continue
+                # omit "self" for instance methods
+                if param_name == "self" and param_type is inspect.Parameter.empty:
+                    continue
 
-            # check if all parameters have explicit type
-            if parameter.annotation is inspect.Parameter.empty:
+                # check if all parameters have explicit type
+                if parameter.annotation is inspect.Parameter.empty:
+                    raise ValidationError(
+                        f"parameter '{param_name}' in function '{func_name}' has no type annotation"
+                    )
+
+                is_multipart = _is_multipart_param(param_type)
+
+                if prefix in ["get", "delete"]:
+                    if route_params is not None and param_name in route_params:
+                        path_params.append((param_name, param_type))
+                    else:
+                        query_params.append((param_name, param_type))
+                else:
+                    if route_params is not None and param_name in route_params:
+                        path_params.append((param_name, param_type))
+                    elif is_multipart:
+                        multipart_params.append((param_name, param_type))
+                    else:
+                        request_params.append((param_name, param_type))
+
+            # check if function has explicit return type
+            if signature.return_annotation is inspect.Signature.empty:
                 raise ValidationError(
-                    f"parameter '{param_name}' in function '{func_name}' has no type annotation"
+                    f"function '{func_name}' has no return type annotation"
                 )
 
-            is_multipart = _is_multipart_param(param_type)
-            
-            if prefix in ["get", "delete"]:
-                if route_params is not None and param_name in route_params:
-                    path_params.append((param_name, param_type))
-                else:
-                    query_params.append((param_name, param_type))
+            return_type = _get_annotation_type(signature.return_annotation, func_ref)
+
+            # operations that produce events are labeled as Generator[YieldType, SendType, ReturnType]
+            # where YieldType is the event type, SendType is None, and ReturnType is the immediate response type to the request
+            if typing.get_origin(return_type) is collections.abc.Generator:
+                event_type, send_type, response_type = typing.get_args(return_type)
+                if send_type is not type(None):
+                    raise ValidationError(
+                        f"function '{func_name}' has a return type Generator[Y,S,R] and therefore looks like an event but has an explicit send type"
+                    )
             else:
-                if route_params is not None and param_name in route_params:
-                    path_params.append((param_name, param_type))
-                elif is_multipart:
-                    multipart_params.append((param_name, param_type))
+                event_type = None
+
+                def process_type(t):
+                    if typing.get_origin(t) is collections.abc.AsyncIterator:
+                        # NOTE(ashwin): this is SSE and there is no way to represent it. either we make it a List
+                        # or the item type. I am choosing it to be the latter
+                        args = typing.get_args(t)
+                        return args[0]
+                    elif typing.get_origin(t) is typing.Union:
+                        types = [process_type(a) for a in typing.get_args(t)]
+                        return typing._UnionGenericAlias(typing.Union, tuple(types))
+                    else:
+                        return t
+
+                response_type = process_type(return_type)
+
+                if prefix in ["delete", "remove"]:
+                    http_method = HTTPMethod.DELETE
+                elif prefix == "post":
+                    http_method = HTTPMethod.POST
+                elif prefix == "get":
+                    http_method = HTTPMethod.GET
+                elif prefix == "set":
+                    http_method = HTTPMethod.PUT
+                elif prefix == "update":
+                    http_method = HTTPMethod.PATCH
                 else:
-                    request_params.append((param_name, param_type))
+                    raise ValidationError(f"unknown prefix {prefix}")
 
-        # check if function has explicit return type
-        if signature.return_annotation is inspect.Signature.empty:
-            raise ValidationError(
-                f"function '{func_name}' has no return type annotation"
-            )
-
-        return_type = _get_annotation_type(signature.return_annotation, func_ref)
-
-        # operations that produce events are labeled as Generator[YieldType, SendType, ReturnType]
-        # where YieldType is the event type, SendType is None, and ReturnType is the immediate response type to the request
-        if typing.get_origin(return_type) is collections.abc.Generator:
-            event_type, send_type, response_type = typing.get_args(return_type)
-            if send_type is not type(None):
-                raise ValidationError(
-                    f"function '{func_name}' has a return type Generator[Y,S,R] and therefore looks like an event but has an explicit send type"
-                )
-        else:
-            event_type = None
-
-            def process_type(t):
-                if typing.get_origin(t) is collections.abc.AsyncIterator:
-                    # NOTE(ashwin): this is SSE and there is no way to represent it. either we make it a List
-                    # or the item type. I am choosing it to be the latter
-                    args = typing.get_args(t)
-                    return args[0]
-                elif typing.get_origin(t) is typing.Union:
-                    types = [process_type(a) for a in typing.get_args(t)]
-                    return typing._UnionGenericAlias(typing.Union, tuple(types))
-                else:
-                    return t
-
-            response_type = process_type(return_type)
-
-            if prefix in ["delete", "remove"]:
-                http_method = HTTPMethod.DELETE
-            elif prefix == "post":
-                http_method = HTTPMethod.POST
-            elif prefix == "get":
-                http_method = HTTPMethod.GET
-            elif prefix == "set":
-                http_method = HTTPMethod.PUT
-            elif prefix == "update":
-                http_method = HTTPMethod.PATCH
-            else:
-                raise ValidationError(f"unknown prefix {prefix}")
-
-        result.append(
-            EndpointOperation(
+            # Create an EndpointOperation for this specific webmethod
+            operation = EndpointOperation(
                 defining_class=_get_defining_class(func_name, endpoint),
                 name=operation_name,
                 func_name=func_name,
@@ -354,7 +358,10 @@ def get_endpoint_operations(
                 request_examples=request_examples if use_examples else None,
                 response_examples=response_examples if use_examples else None,
             )
-        )
+
+            # Store the specific webmethod with this operation
+            operation.webmethod = webmethod
+            result.append(operation)
 
     if not result:
         raise ValidationError(f"no eligible endpoint operations in type {endpoint}")

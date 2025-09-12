@@ -11,6 +11,7 @@ from fastapi import File, Form, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.responses import Order
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -104,7 +105,7 @@ class OpenAIFileDeleteResponse(BaseModel):
 @trace_protocol
 class Files(Protocol):
     # OpenAI Files API Endpoints
-    @webmethod(route="/openai/v1/files", method="POST")
+    @webmethod(route="/openai/v1/files", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_upload_file(
         self,
         file: Annotated[UploadFile, File()],
@@ -127,7 +128,7 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files", method="GET")
+    @webmethod(route="/openai/v1/files", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_files(
         self,
         after: str | None = None,
@@ -146,7 +147,7 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}", method="GET")
+    @webmethod(route="/openai/v1/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_file(
         self,
         file_id: str,
@@ -159,7 +160,7 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}", method="DELETE")
+    @webmethod(route="/openai/v1/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_file(
         self,
         file_id: str,
@@ -172,7 +173,7 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}/content", method="GET")
+    @webmethod(route="/openai/v1/files/{file_id}/content", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_file_content(
         self,
         file_id: str,

@@ -829,7 +829,7 @@ class Generator:
             else:
                 raise NotImplementedError(f"unknown HTTP method: {op.http_method}")
 
-            route = op.get_route()
+            route = op.get_route(op.webmethod)
             route = route.replace(":path", "")
             print(f"route: {route}")
             if route in paths:

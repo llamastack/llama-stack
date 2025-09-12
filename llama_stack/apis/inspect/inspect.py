@@ -8,6 +8,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.datatypes import HealthStatus
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -57,7 +58,7 @@ class ListRoutesResponse(BaseModel):
 
 @runtime_checkable
 class Inspect(Protocol):
-    @webmethod(route="/inspect/routes", method="GET")
+    @webmethod(route="/inspect/routes", method="GET", level=LLAMA_STACK_API_V1)
     async def list_routes(self) -> ListRoutesResponse:
         """List all available API routes with their methods and implementing providers.
 
@@ -65,7 +66,7 @@ class Inspect(Protocol):
         """
         ...
 
-    @webmethod(route="/health", method="GET")
+    @webmethod(route="/health", method="GET", level=LLAMA_STACK_API_V1)
     async def health(self) -> HealthInfo:
         """Get the current health status of the service.
 
@@ -73,7 +74,7 @@ class Inspect(Protocol):
         """
         ...
 
-    @webmethod(route="/version", method="GET")
+    @webmethod(route="/version", method="GET", level=LLAMA_STACK_API_V1)
     async def version(self) -> VersionInfo:
         """Get the version of the service.
 

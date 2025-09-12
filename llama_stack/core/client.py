@@ -15,7 +15,6 @@ import httpx
 from pydantic import BaseModel, parse_obj_as
 from termcolor import cprint
 
-from llama_stack.apis.version import LLAMA_STACK_API_VERSION
 from llama_stack.providers.datatypes import RemoteProviderConfig
 
 _CLIENT_CLASSES = {}
@@ -114,7 +113,24 @@ def create_api_client_class(protocol) -> type:
                     break
                 kwargs[param.name] = args[i]
 
-            url = f"{self.base_url}/{LLAMA_STACK_API_VERSION}/{webmethod.route.lstrip('/')}"
+            # Get all webmethods for this method (supports multiple decorators)
+            webmethods = getattr(method, "__webmethods__", [])
+
+            if not webmethods:
+                raise RuntimeError(f"Method {method} has no webmethod decorators")
+
+            # Choose the preferred webmethod (non-deprecated if available)
+            preferred_webmethod = None
+            for wm in webmethods:
+                if not getattr(wm, "deprecated", False):
+                    preferred_webmethod = wm
+                    break
+
+            # If no non-deprecated found, use the first one
+            if preferred_webmethod is None:
+                preferred_webmethod = webmethods[0]
+
+            url = f"{self.base_url}/{preferred_webmethod.level}/{preferred_webmethod.route.lstrip('/')}"
 
             def convert(value):
                 if isinstance(value, list):

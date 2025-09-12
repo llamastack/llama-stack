@@ -45,6 +45,14 @@ class TracingMiddleware:
             logger.debug(f"No matching route found for path: {path}, falling back to FastAPI")
             return await self.app(scope, receive, send)
 
+        # Log deprecation warning if route is deprecated
+        if getattr(webmethod, "deprecated", False):
+            logger.warning(
+                f"DEPRECATED ROUTE USED: {scope.get('method', 'GET')} {path} - "
+                f"This route is deprecated and may be removed in a future version. "
+                f"Please check the docs for the supported version."
+            )
+
         trace_attributes = {"__location__": "server", "raw_path": path}
 
         # Extract W3C trace context headers and store as trace attributes

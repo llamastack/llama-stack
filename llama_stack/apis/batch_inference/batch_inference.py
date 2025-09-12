@@ -17,6 +17,7 @@ from llama_stack.apis.inference import (
     ToolDefinition,
     ToolPromptFormat,
 )
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import webmethod
 
 
@@ -30,7 +31,7 @@ class BatchInference(Protocol):
     including (post-training, evals, etc).
     """
 
-    @webmethod(route="/batch-inference/completion", method="POST")
+    @webmethod(route="/batch-inference/completion", method="POST", level=LLAMA_STACK_API_V1)
     async def completion(
         self,
         model: str,
@@ -50,7 +51,7 @@ class BatchInference(Protocol):
         """
         ...
 
-    @webmethod(route="/batch-inference/chat-completion", method="POST")
+    @webmethod(route="/batch-inference/chat-completion", method="POST", level=LLAMA_STACK_API_V1)
     async def chat_completion(
         self,
         model: str,
