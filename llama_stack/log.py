@@ -17,6 +17,7 @@ from llama_stack.core.datatypes import LoggingConfig
 
 # Default log level
 DEFAULT_LOG_LEVEL = logging.INFO
+DEFAULT_TELEMETRY_LEVEL = logging.WARN
 
 # Predefined categories
 CATEGORIES = [
@@ -33,8 +34,10 @@ CATEGORIES = [
     "openai_responses",
 ]
 
-# Initialize category levels with default level
-_category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
+# Initialize category levels with default level, except for telemetry which gets WARN
+_category_levels: dict[str, int] = {
+    category: DEFAULT_TELEMETRY_LEVEL if category == "telemetry" else DEFAULT_LOG_LEVEL for category in CATEGORIES
+}
 
 
 def config_to_category_levels(category: str, level: str):
@@ -96,6 +99,7 @@ def parse_environment_config(env_config: str) -> dict[str, int]:
     Returns:
         Dict[str, int]: A dictionary mapping categories to their log levels.
     """
+
     category_levels = {}
     delimiter = ","
     for pair in env_config.split(delimiter):
@@ -190,6 +194,7 @@ def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None
             "filename": log_file,
             "mode": "a",
             "encoding": "utf-8",
+            "filters": ["category_filter"],
         }
 
     logging_config = {
@@ -210,7 +215,9 @@ def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None
         "loggers": {
             category: {
                 "handlers": list(handlers.keys()),  # Apply all handlers
-                "level": category_levels.get(category, DEFAULT_LOG_LEVEL),
+                "level": category_levels.get(
+                    category, (DEFAULT_LOG_LEVEL if category != "telemetry" else DEFAULT_TELEMETRY_LEVEL)
+                ),
                 "propagate": False,  # Disable propagation to root logger
             }
             for category in CATEGORIES
@@ -234,6 +241,7 @@ def get_logger(
     """
     Returns a logger with the specified name and category.
     If no category is provided, defaults to 'uncategorized'.
+    Note: telemetry category defaults to WARN as the default level
 
     Parameters:
         name (str): The name of the logger (e.g., module or filename).

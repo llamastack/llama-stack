@@ -21,9 +21,6 @@ class ConsoleSpanProcessor(SpanProcessor):
         self.print_attributes = print_attributes
 
     def on_start(self, span: ReadableSpan, parent_context=None) -> None:
-        if span.attributes and span.attributes.get("__autotraced__"):
-            return
-
         timestamp = datetime.fromtimestamp(span.start_time / 1e9, tz=UTC).strftime("%H:%M:%S.%f")[:-3]
         logger.info(f"[dim]{timestamp}[/dim] [bold magenta][START][/bold magenta] [dim]{span.name}[/dim]")
 
