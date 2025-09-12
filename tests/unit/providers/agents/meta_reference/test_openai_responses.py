@@ -868,3 +868,20 @@ async def test_create_openai_response_with_invalid_text_format(openai_responses_
             model=model,
             text=OpenAIResponseText(format={"type": "invalid"}),
         )
+
+
+def test_openai_response_text_default_format_unique_instance():
+    a = OpenAIResponseText()
+    b = OpenAIResponseText()
+
+    assert a.format is not None
+    assert b.format is not None
+
+    # Defaults to text format
+    assert a.format.get("type") == "text"
+    assert b.format.get("type") == "text"
+
+    # Unique instances (no shared mutable default)
+    assert a.format is not b.format
+    a.format["name"] = "custom-name"
+    assert "name" not in b.format
