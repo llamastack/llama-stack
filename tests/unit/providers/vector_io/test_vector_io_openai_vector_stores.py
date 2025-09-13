@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
+from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse, VectorStoreContent
 from llama_stack.providers.remote.vector_io.milvus.milvus import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectoerIO providers. This should only contain
@@ -294,3 +294,35 @@ async def test_delete_openai_vector_store_file_from_storage(vector_io_adapter, t
     assert loaded_file_info == {}
     loaded_contents = await vector_io_adapter._load_openai_vector_store_file_contents(store_id, file_id)
     assert loaded_contents == []
+
+
+async def test_chunk_to_vector_store_content_with_new_fields(vector_io_adapter):
+    sample_chunk_metadata = ChunkMetadata(
+        chunk_id="chunk123",
+        document_id="doc456",
+        source="test_source",
+        created_timestamp=1625133600,
+        updated_timestamp=1625133600,
+        chunk_window="0-100",
+        chunk_tokenizer="test_tokenizer",
+        chunk_embedding_model="dummy_model",
+        chunk_embedding_dimension=384,
+        content_token_count=100,
+        metadata_token_count=100,
+    )
+
+    sample_chunk = Chunk(
+        content="hello world", metadata={"lang": "en"}, embedding=[0.5, 0.7, 0.9], chunk_metadata=sample_chunk_metadata
+    )
+
+    vsc_list: VectorStoreContent = vector_io_adapter._chunk_to_vector_store_content(sample_chunk)
+    assert isinstance(vsc_list, list)
+    assert len(vsc_list) > 0
+
+    vsc = vsc_list[0]
+    assert vsc.text == "hello world"
+    assert vsc.type == "text"
+    assert vsc.metadata == {"lang": "en"}
+    assert vsc.chunk_metadata == sample_chunk_metadata
+    assert vsc.embedding == [0.5, 0.7, 0.9]
+    assert vsc.created_timestamp == 1625133600

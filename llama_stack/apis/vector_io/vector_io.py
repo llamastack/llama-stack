@@ -226,10 +226,18 @@ class VectorStoreContent(BaseModel):
 
     :param type: Content type, currently only "text" is supported
     :param text: The actual text content
+    :param embedding: (Optional) Embedding vector for the content, if available
+    :param created_timestamp: (Optional) Timestamp when the content was created
+    :param metadata: (Optional) Metadata associated with the content, such as source, author, etc.
+    :param chunk_metadata: (Optional) Metadata associated with the chunk, such as document ID, source, etc.
     """
 
     type: Literal["text"]
     text: str
+    embedding: list[float] | None = None
+    created_timestamp: int | None = None
+    metadata: dict[str, Any] | None = None
+    chunk_metadata: ChunkMetadata | None = None
 
 
 @json_schema_type
