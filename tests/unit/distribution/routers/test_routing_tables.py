@@ -105,6 +105,9 @@ class ScoringFunctionsImpl(Impl):
     async def register_scoring_function(self, scoring_fn):
         return scoring_fn
 
+    async def unregister_scoring_function(self, scoring_fn_id: str):
+        return scoring_fn_id
+
 
 class BenchmarksImpl(Impl):
     def __init__(self):
@@ -112,6 +115,9 @@ class BenchmarksImpl(Impl):
 
     async def register_benchmark(self, benchmark):
         return benchmark
+
+    async def unregister_benchmark(self, benchmark_id: str):
+        return benchmark_id
 
 
 class ToolGroupsImpl(Impl):
@@ -330,6 +336,13 @@ async def test_scoring_functions_routing_table(cached_disk_dist_registry):
     assert "test-scoring-fn" in scoring_fn_ids
     assert "test-scoring-fn-2" in scoring_fn_ids
 
+    # Unregister scoring functions and verify listing
+    for i in range(len(scoring_functions.data)):
+        await table.unregister_scoring_function(scoring_functions.data[i].scoring_fn_id)
+
+    scoring_functions_list_after_deletion = await table.list_scoring_functions()
+    assert len(scoring_functions_list_after_deletion.data) == 0
+
 
 async def test_benchmarks_routing_table(cached_disk_dist_registry):
     table = BenchmarksRoutingTable({"test_provider": BenchmarksImpl()}, cached_disk_dist_registry, {})
@@ -346,6 +359,15 @@ async def test_benchmarks_routing_table(cached_disk_dist_registry):
     assert len(benchmarks.data) == 1
     benchmark_ids = {b.identifier for b in benchmarks.data}
     assert "test-benchmark" in benchmark_ids
+
+    # Unregister the benchmark and verify removal
+    await table.unregister_benchmark(benchmark_id="test-benchmark")
+    benchmarks_after = await table.list_benchmarks()
+    assert len(benchmarks_after.data) == 0
+
+    # Unregistering a non-existent benchmark should raise a clear error
+    with pytest.raises(ValueError, match="Benchmark 'dummy_benchmark' not found"):
+        await table.unregister_benchmark(benchmark_id="dummy_benchmark")
 
 
 async def test_tool_groups_routing_table(cached_disk_dist_registry):

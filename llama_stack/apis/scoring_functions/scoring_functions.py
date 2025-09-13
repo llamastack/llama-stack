@@ -197,3 +197,11 @@ class ScoringFunctions(Protocol):
         :param params: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
         """
         ...
+
+    @webmethod(route="/scoring-functions/{scoring_fn_id:path}", method="DELETE")
+    async def unregister_scoring_function(self, scoring_fn_id: str) -> None:
+        """Unregister a scoring function.
+
+        :param scoring_fn_id: The ID of the scoring function to unregister.
+        """
+        ...
