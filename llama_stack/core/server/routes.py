@@ -60,7 +60,9 @@ def get_all_api_routes(
             # The __webmethod__ attribute is dynamically added by the @webmethod decorator
             # mypy doesn't know about this dynamic attribute, so we ignore the attr-defined error
             webmethod = method.__webmethod__  # type: ignore[attr-defined]
-            path = f"/{LLAMA_STACK_API_VERSION}/{webmethod.route.lstrip('/')}"
+            path = webmethod.route.lstrip("/")
+            if webmethod.add_version:
+                path = f"/{LLAMA_STACK_API_VERSION}/{path}"
             if webmethod.method == hdrs.METH_GET:
                 http_method = hdrs.METH_GET
             elif webmethod.method == hdrs.METH_DELETE:
