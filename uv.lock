@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
@@ -1887,7 +1887,7 @@ requires-dist = [
     { name = "jsonschema" },
     { name = "llama-stack-client", specifier = ">=0.2.21" },
     { name = "llama-stack-client", marker = "extra == 'ui'", specifier = ">=0.2.21" },
-    { name = "openai", specifier = ">=1.100.0" },
+    { name = "openai", specifier = ">=1.107" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
     { name = "pandas", marker = "extra == 'ui'" },
