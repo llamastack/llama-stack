@@ -35,6 +35,11 @@ class ProviderModelEntry(BaseModel):
     llama_model: str | None = None
     model_type: ModelType = ModelType.llm
     metadata: dict[str, Any] = Field(default_factory=dict)
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.model_type == ModelType.embedding and "embedding_dimension" not in self.metadata:
+            raise ValueError("Embedding models must specify 'embedding_dimension' in metadata")
 
 
 def get_huggingface_repo(model_descriptor: str) -> str | None:
@@ -103,7 +108,7 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
                     Model(
                         identifier=id,
                         provider_resource_id=entry.provider_model_id,
-                        model_type=ModelType.llm,
+                        model_type=entry.model_type or ModelType.llm,
                         metadata=entry.metadata,
                         provider_id=self.__provider_id__,
                     )
