@@ -451,6 +451,7 @@ def create_app(
     apis_to_serve.add("inspect")
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
+    apis_to_serve.add("conversations")
     for api_str in apis_to_serve:
         api = Api(api_str)
 

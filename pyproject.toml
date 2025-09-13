@@ -32,7 +32,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "jsonschema",
     "llama-stack-client>=0.2.23",
-    "openai>=1.100.0",                                # for expires_after support
+    "openai>=1.107",                                # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
     "python-jose[cryptography]",
@@ -49,6 +49,7 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
     "aiosqlite>=0.21.0",                      # server - for metadata store
     "asyncpg",                                # for metadata store
+    "sqlalchemy[asyncio]>=2.0.41",           # server - for conversations
 ]
 
 [project.optional-dependencies]
