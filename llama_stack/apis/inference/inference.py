@@ -639,7 +639,7 @@ class OpenAIToolMessageParam(BaseModel):
 
     role: Literal["tool"] = "tool"
     tool_call_id: str
-    content: OpenAIChatCompletionTextOnlyMessageContent
+    content: OpenAIChatCompletionMessageContent
 
 
 @json_schema_type

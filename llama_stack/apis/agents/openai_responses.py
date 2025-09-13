@@ -724,6 +724,8 @@ OpenAIResponseInput = Annotated[
     OpenAIResponseOutputMessageWebSearchToolCall
     | OpenAIResponseOutputMessageFileSearchToolCall
     | OpenAIResponseOutputMessageFunctionToolCall
+    | OpenAIResponseOutputMessageMCPCall
+    | OpenAIResponseOutputMessageMCPListTools
     | OpenAIResponseInputFunctionToolCallOutput
     |
     # Fallback to the generic message type as a last resort

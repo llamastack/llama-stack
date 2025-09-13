@@ -147,8 +147,10 @@ async def convert_response_input_to_chat_messages(
                     )
                 )
             elif isinstance(input_item, OpenAIResponseOutputMessageMCPListTools):
-                # the tool list will be handled separately
-                pass
+                # Workaround for now, to be removed when MCP list tools is supported
+                tool_count = len(input_item.tools)
+                content_text = f"Discovered {tool_count} tools from MCP server '{input_item.server_label}'"
+                messages.append(OpenAIAssistantMessageParam(content=content_text))
             else:
                 content = await convert_response_content_to_chat_content(input_item.content)
                 message_type = await get_message_type_by_role(input_item.role)
