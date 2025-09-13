@@ -12,6 +12,7 @@ Here are some key topics that will help you build effective agents:
 - **[Agent](agent)**: Understand the components and design patterns of the Llama Stack agent framework.
 - **[Agent Execution Loop](agent_execution_loop)**: Understand how agents process information, make decisions, and execute actions in a continuous loop.
 - **[Agents vs Responses API](responses_vs_agents)**: Learn the differences between the Agents API and Responses API, and when to use each one.
+- **[OpenAI API](more_on_openai_compatibility)**: Learn how Llama Stack's OpenAI API Compatibility also allows for use of other AI frameworks on the platform.
 - **[Tools](tools)**: Extend your agents' capabilities by integrating with external tools and APIs.
 - **[Evals](evals)**: Evaluate your agents' effectiveness and identify areas for improvement.
 - **[Telemetry](telemetry)**: Monitor and analyze your agents' performance and behavior.
@@ -25,6 +26,7 @@ rag
 agent
 agent_execution_loop
 responses_vs_agents
+more_on_openai_compatibility
 tools
 evals
 telemetry
