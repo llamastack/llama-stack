@@ -16,6 +16,7 @@ import yaml
 from llama_stack.apis.agents import Agents
 from llama_stack.apis.batch_inference import BatchInference
 from llama_stack.apis.benchmarks import Benchmarks
+from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.eval import Eval
@@ -35,6 +36,7 @@ from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, StackRunConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
@@ -75,6 +77,7 @@ class LlamaStack(
     RAGToolRuntime,
     Files,
     Prompts,
+    Conversations,
 ):
     pass
 
@@ -313,6 +316,12 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
         deps=impls,
     )
     impls[Api.prompts] = prompts_impl
+
+    conversations_impl = ConversationServiceImpl(
+        ConversationServiceConfig(run_config=run_config),
+        deps=impls,
+    )
+    impls[Api.conversations] = conversations_impl
 
 
 # Produces a stack of providers for the given run config. Not all APIs may be
