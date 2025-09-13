@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from openai import AsyncOpenAI
+from openai import NOT_GIVEN, AsyncOpenAI
 from openai.types.model import Model as OpenAIModel
 
 # Import the real Pydantic response types instead of using Mocks
@@ -17,6 +17,7 @@ from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChoice,
+    OpenAICompletion,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
@@ -170,6 +171,7 @@ class TestInferenceRecording:
                     messages=[{"role": "user", "content": "Hello, how are you?"}],
                     temperature=0.7,
                     max_tokens=50,
+                    user=NOT_GIVEN,
                 )
 
                 # Verify the response was returned correctly
@@ -198,6 +200,7 @@ class TestInferenceRecording:
                     messages=[{"role": "user", "content": "Hello, how are you?"}],
                     temperature=0.7,
                     max_tokens=50,
+                    user=NOT_GIVEN,
                 )
 
         # Now test replay mode - should not call the original method
@@ -281,7 +284,11 @@ class TestInferenceRecording:
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
 
                 response = await client.embeddings.create(
-                    model="nomic-embed-text", input=["Hello world", "Test embedding"]
+                    model=real_embeddings_response.model,
+                    input=["Hello world", "Test embedding"],
+                    encoding_format=NOT_GIVEN,
+                    dimensions=NOT_GIVEN,
+                    user=NOT_GIVEN,
                 )
 
                 assert len(response.data) == 2
@@ -292,7 +299,8 @@ class TestInferenceRecording:
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
 
                 response = await client.embeddings.create(
-                    model="nomic-embed-text", input=["Hello world", "Test embedding"]
+                    model=real_embeddings_response.model,
+                    input=["Hello world", "Test embedding"],
                 )
 
                 # Verify we got the recorded response
@@ -300,6 +308,57 @@ class TestInferenceRecording:
                 assert response.data[0].embedding == [0.1, 0.2, 0.3]
 
                 # Verify original method was not called
+                mock_create_patch.assert_not_called()
+
+    async def test_completions_recording(self, temp_storage_dir):
+        real_completions_response = OpenAICompletion(
+            id="test_completion",
+            object="text_completion",
+            created=1234567890,
+            model="llama3.2:3b",
+            choices=[
+                {
+                    "text": "Hello! I'm doing well, thank you for asking.",
+                    "index": 0,
+                    "logprobs": None,
+                    "finish_reason": "stop",
+                }
+            ],
+        )
+
+        async def mock_create(*args, **kwargs):
+            return real_completions_response
+
+        temp_storage_dir = temp_storage_dir / "test_completions_recording"
+
+        # Record
+        with patch(
+            "openai.resources.completions.AsyncCompletions.create", new_callable=AsyncMock, side_effect=mock_create
+        ):
+            with inference_recording(mode=InferenceMode.RECORD, storage_dir=str(temp_storage_dir)):
+                client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
+
+                response = await client.completions.create(
+                    model=real_completions_response.model,
+                    prompt="Hello, how are you?",
+                    temperature=0.7,
+                    max_tokens=50,
+                    user=NOT_GIVEN,
+                )
+
+                assert response.choices[0].text == real_completions_response.choices[0].text
+
+        # Replay
+        with patch("openai.resources.completions.AsyncCompletions.create") as mock_create_patch:
+            with inference_recording(mode=InferenceMode.REPLAY, storage_dir=str(temp_storage_dir)):
+                client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
+                response = await client.completions.create(
+                    model=real_completions_response.model,
+                    prompt="Hello, how are you?",
+                    temperature=0.7,
+                    max_tokens=50,
+                )
+                assert response.choices[0].text == real_completions_response.choices[0].text
                 mock_create_patch.assert_not_called()
 
     async def test_live_mode(self, real_openai_chat_response):

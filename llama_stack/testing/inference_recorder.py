@@ -16,6 +16,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, cast
 
+from openai import NOT_GIVEN
+
 from llama_stack.log import get_logger
 
 logger = get_logger(__name__, category="testing")
@@ -250,6 +252,9 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
     # Get base URL based on client type
     if client_type == "openai":
         base_url = str(self._client.base_url)
+
+        # the OpenAI client methods may pass NOT_GIVEN for unset parameters; filter these out
+        kwargs = {k: v for k, v in kwargs.items() if v is not NOT_GIVEN}
     elif client_type == "ollama":
         # Get base URL from the client (Ollama client uses host attribute)
         base_url = getattr(self, "host", "http://localhost:11434")
