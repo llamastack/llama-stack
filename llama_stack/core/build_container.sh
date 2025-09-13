@@ -324,6 +324,25 @@ fi
 RUN pip uninstall -y uv
 EOF
 
+# Add non-root user setup before entrypoint
+add_to_container << EOF
+
+# Create group with GID 1001 and user with UID 1001
+RUN groupadd -g 1001 appgroup && useradd -u 1001 -g appgroup -M appuser
+
+# Create necessary directories with appropriate permissions for UID 1001
+RUN mkdir -p /.llama /.cache && chown -R 1001:1001 /.llama /.cache && chmod -R 775 /.llama /.cache && chmod -R g+w /app
+
+# Set the Llama Stack config directory environment variable to use /.llama
+ENV LLAMA_STACK_CONFIG_DIR=/.llama
+
+# This prevents dual storage while keeping /app as working directory for CI compatibility
+ENV HOME=/
+
+# Switch to non-root user (UID 1001 directly)
+USER 1001
+EOF
+
 # If a run config is provided, we use the --config flag
 if [[ -n "$run_config" ]]; then
   add_to_container << EOF
@@ -334,12 +353,6 @@ elif [[ "$distro_or_config" != *.yaml ]]; then
 ENTRYPOINT ["python", "-m", "llama_stack.core.server.server", "$distro_or_config"]
 EOF
 fi
-
-# Add other require item commands genearic to all containers
-add_to_container << EOF
-
-RUN mkdir -p /.llama /.cache && chmod -R g+rw /app /.llama /.cache
-EOF
 
 printf "Containerfile created successfully in %s/Containerfile\n\n" "$TEMP_DIR"
 cat "$TEMP_DIR"/Containerfile
