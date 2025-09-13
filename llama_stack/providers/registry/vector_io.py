@@ -503,7 +503,7 @@ See [PGVector's documentation](https://github.com/pgvector/pgvector) for more de
             Api.vector_io,
             AdapterSpec(
                 adapter_type="weaviate",
-                pip_packages=["weaviate-client"],
+                pip_packages=["weaviate-client>=4.16.5"],
                 module="llama_stack.providers.remote.vector_io.weaviate",
                 config_class="llama_stack.providers.remote.vector_io.weaviate.WeaviateVectorIOConfig",
                 provider_data_validator="llama_stack.providers.remote.vector_io.weaviate.WeaviateRequestProviderData",
