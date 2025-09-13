@@ -798,6 +798,8 @@ class ChatAgent(ShieldRunnerMixin):
                         param_type=param.parameter_type,
                         description=param.description,
                         required=param.required,
+                        items=param.items,
+                        title=param.title,
                         default=param.default,
                     )
                     for param in tool_def.parameters
@@ -841,6 +843,8 @@ class ChatAgent(ShieldRunnerMixin):
                                 param_type=param.parameter_type,
                                 description=param.description,
                                 required=param.required,
+                                items=param.items,
+                                title=param.title,
                                 default=param.default,
                             )
                             for param in tool_def.parameters
