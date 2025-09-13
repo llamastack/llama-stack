@@ -11,6 +11,7 @@ from typing import Any
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
 )
+from llama_stack.apis.common.vector_store_config import VectorStoreConfig
 from llama_stack.apis.models import ModelType
 from llama_stack.apis.vector_io import (
     Chunk,
@@ -76,6 +77,30 @@ class VectorIORouter(VectorIO):
             logger.error(f"Error getting embedding models: {e}")
             return None
 
+    async def _resolve_embedding_model(self, explicit_model: str | None = None) -> tuple[str, int]:
+        """Figure out which embedding model to use and what dimension it has."""
+
+        # if they passed a model explicitly, use that
+        if explicit_model is not None:
+            # try to look up dimension from our routing table
+            models = await self.routing_table.get_all_with_type("model")
+            for model in models:
+                if getattr(model, "identifier", None) == explicit_model:
+                    dim = model.metadata.get("embedding_dimension")
+                    if dim is None:
+                        raise ValueError(f"Model {explicit_model} found but no embedding dimension in metadata")
+                    return explicit_model, dim
+            # model not in our registry, let caller deal with dimension
+            return explicit_model, None  # type: ignore
+
+        # check if we have global defaults set via env vars
+        config = VectorStoreConfig()
+        if config.default_embedding_model is not None:
+            return config.default_embedding_model, config.default_embedding_dimension or 384
+
+        # fallback to existing default model for compatibility
+        return "all-MiniLM-L6-v2", 384
+
     async def register_vector_db(
         self,
         vector_db_id: str,
@@ -102,7 +127,7 @@ class VectorIORouter(VectorIO):
         ttl_seconds: int | None = None,
     ) -> None:
         logger.debug(
-            f"VectorIORouter.insert_chunks: {vector_db_id}, {len(chunks)} chunks, ttl_seconds={ttl_seconds}, chunk_ids={[chunk.metadata['document_id'] for chunk in chunks[:3]]}{' and more...' if len(chunks) > 3 else ''}",
+            f"VectorIORouter.insert_chunks: {vector_db_id}, {len(chunks)} chunks, ttl_seconds={ttl_seconds}, chunk_ids={[chunk.chunk_id for chunk in chunks[:3]]}{' and more...' if len(chunks) > 3 else ''}",
         )
         provider = await self.routing_table.get_provider_impl(vector_db_id)
         return await provider.insert_chunks(vector_db_id, chunks, ttl_seconds)
@@ -131,13 +156,8 @@ class VectorIORouter(VectorIO):
     ) -> VectorStoreObject:
         logger.debug(f"VectorIORouter.openai_create_vector_store: name={name}, provider_id={provider_id}")
 
-        # If no embedding model is provided, use the first available one
-        if embedding_model is None:
-            embedding_model_info = await self._get_first_embedding_model()
-            if embedding_model_info is None:
-                raise ValueError("No embedding model provided and no embedding models available in the system")
-            embedding_model, embedding_dimension = embedding_model_info
-            logger.info(f"No embedding model specified, using first available: {embedding_model}")
+        # Determine which embedding model to use based on new precedence
+        embedding_model, embedding_dimension = await self._resolve_embedding_model(embedding_model)
 
         vector_db_id = f"vs_{uuid.uuid4()}"
         registered_vector_db = await self.routing_table.register_vector_db(
