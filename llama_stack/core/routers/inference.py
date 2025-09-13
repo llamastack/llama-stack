@@ -383,7 +383,6 @@ class InferenceRouter(Inference):
         items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
         max_num_results: int | None = None,
     ) -> RerankResponse:
-        """Route rerank requests to the appropriate provider based on the model."""
         logger.debug(f"InferenceRouter.rerank: {model}")
         model_obj = await self._get_model(model, ModelType.rerank)
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
