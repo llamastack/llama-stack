@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
+from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
 from llama_stack.providers.remote.vector_io.milvus.milvus import VECTOR_DBS_PREFIX
@@ -294,3 +295,510 @@ async def test_delete_openai_vector_store_file_from_storage(vector_io_adapter, t
     assert loaded_file_info == {}
     loaded_contents = await vector_io_adapter._load_openai_vector_store_file_contents(store_id, file_id)
     assert loaded_contents == []
+
+
+async def test_openai_retrieve_vector_store_chunk(vector_io_adapter):
+    """Test retrieving a specific chunk from a vector store file."""
+    store_id = "vs_1234"
+    file_id = "file_1234"
+    chunk_id = "chunk_001"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [file_id],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    file_info = {
+        "id": file_id,
+        "status": "completed",
+        "vector_store_id": store_id,
+        "filename": "test_file.txt",
+        "created_at": int(time.time()),
+    }
+
+    file_contents = [
+        {
+            "content": {"type": "text", "text": "First chunk content"},
+            "stored_chunk_id": chunk_id,
+            "metadata": {"file_id": file_id, "position": 0},
+            "chunk_metadata": {"chunk_id": chunk_id},
+        },
+        {
+            "content": {"type": "text", "text": "Second chunk content"},
+            "stored_chunk_id": "chunk_002",
+            "metadata": {"file_id": file_id, "position": 1},
+            "chunk_metadata": {"chunk_id": "chunk_002"},
+        },
+    ]
+
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, file_contents)
+
+    chunk_object = await vector_io_adapter.openai_retrieve_vector_store_chunk(
+        vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id
+    )
+
+    assert chunk_object.id == chunk_id
+    assert chunk_object.vector_store_id == store_id
+    assert chunk_object.file_id == file_id
+    assert chunk_object.object == "vector_store.file.chunk"
+    assert chunk_object.content.type == "text"
+    assert chunk_object.content.text == "First chunk content"
+    assert chunk_object.metadata["file_id"] == file_id
+    assert chunk_object.metadata["position"] == 0
+
+
+async def test_openai_retrieve_vector_store_chunk_not_found(vector_io_adapter):
+    """Test retrieving a non-existent chunk raises appropriate error."""
+    store_id = "vs_1234"
+    file_id = "file_1234"
+    chunk_id = "nonexistent_chunk"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [file_id],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    file_info = {"id": file_id, "created_at": int(time.time())}
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, [])
+
+    with pytest.raises(ValueError, match="Chunk nonexistent_chunk not found"):
+        await vector_io_adapter.openai_retrieve_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id
+        )
+
+
+async def test_openai_update_vector_store_chunk_metadata_only(vector_io_adapter):
+    """Test updating only the metadata of a chunk."""
+    store_id = "vs_1234"
+    file_id = "file_1234"
+    chunk_id = "chunk_001"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [file_id],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    file_info = {
+        "id": file_id,
+        "status": "completed",
+        "vector_store_id": store_id,
+        "filename": "test_file.txt",
+        "created_at": int(time.time()),
+    }
+
+    original_content = "Original chunk content"
+    file_contents = [
+        {
+            "content": {"type": "text", "text": original_content},
+            "stored_chunk_id": chunk_id,
+            "metadata": {"file_id": file_id, "version": 1},
+            "chunk_metadata": {"chunk_id": chunk_id},
+        }
+    ]
+
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, file_contents)
+
+    vector_io_adapter.delete_chunks = AsyncMock()
+    vector_io_adapter.insert_chunks = AsyncMock()
+
+    new_metadata = {"file_id": file_id, "version": 2, "updated": True}
+    updated_chunk = await vector_io_adapter.openai_update_vector_store_chunk(
+        vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id, metadata=new_metadata
+    )
+
+    vector_io_adapter.delete_chunks.assert_not_called()
+    vector_io_adapter.insert_chunks.assert_not_called()
+
+    assert updated_chunk.id == chunk_id
+    assert updated_chunk.metadata["version"] == 2
+    assert updated_chunk.metadata["updated"] is True
+    assert updated_chunk.content.text == original_content
+
+
+async def test_openai_update_vector_store_chunk_content(vector_io_adapter):
+    """Test updating the content of a chunk."""
+    store_id = "vs_1234"
+    file_id = "file_1234"
+    chunk_id = "chunk_001"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [file_id],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    file_info = {
+        "id": file_id,
+        "status": "completed",
+        "vector_store_id": store_id,
+        "filename": "test_file.txt",
+        "created_at": int(time.time()),
+    }
+
+    file_contents = [
+        {
+            "content": {"type": "text", "text": "Original chunk content"},
+            "stored_chunk_id": chunk_id,
+            "metadata": {"file_id": file_id},
+            "chunk_metadata": {"chunk_id": chunk_id},
+        }
+    ]
+
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, file_contents)
+
+    vector_io_adapter.delete_chunks = AsyncMock()
+    vector_io_adapter.insert_chunks = AsyncMock()
+
+    new_content = {"type": "text", "text": "Updated chunk content"}
+    updated_chunk = await vector_io_adapter.openai_update_vector_store_chunk(
+        vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id, content=new_content
+    )
+
+    vector_io_adapter.delete_chunks.assert_awaited_once_with(store_id, [chunk_id])
+    vector_io_adapter.insert_chunks.assert_awaited_once()
+
+    assert updated_chunk.id == chunk_id
+    assert updated_chunk.content.text == "Updated chunk content"
+
+
+async def test_openai_update_vector_store_chunk_both_content_and_metadata(vector_io_adapter):
+    """Test updating both content and metadata of a chunk."""
+    store_id = "vs_1234"
+    file_id = "file_1234"
+    chunk_id = "chunk_001"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [file_id],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    file_info = {
+        "id": file_id,
+        "status": "completed",
+        "vector_store_id": store_id,
+        "filename": "test_file.txt",
+        "created_at": int(time.time()),
+    }
+
+    file_contents = [
+        {
+            "content": {"type": "text", "text": "Original chunk content"},
+            "stored_chunk_id": chunk_id,
+            "metadata": {"file_id": file_id, "version": 1},
+            "chunk_metadata": {"chunk_id": chunk_id},
+        }
+    ]
+
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, file_contents)
+
+    vector_io_adapter.delete_chunks = AsyncMock()
+    vector_io_adapter.insert_chunks = AsyncMock()
+
+    new_content = {"type": "text", "text": "Updated chunk content"}
+    new_metadata = {"file_id": file_id, "version": 2, "updated": True}
+    updated_chunk = await vector_io_adapter.openai_update_vector_store_chunk(
+        vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id, content=new_content, metadata=new_metadata
+    )
+
+    vector_io_adapter.delete_chunks.assert_awaited_once_with(store_id, [chunk_id])
+    vector_io_adapter.insert_chunks.assert_awaited_once()
+
+    assert updated_chunk.id == chunk_id
+    assert updated_chunk.content.text == "Updated chunk content"
+    assert updated_chunk.metadata["version"] == 2
+    assert updated_chunk.metadata["updated"] is True
+
+
+async def test_openai_delete_vector_store_chunk(vector_io_adapter):
+    """Test deleting a specific chunk from a vector store file."""
+    store_id = "vs_1234"
+    file_id = "file_1234"
+    chunk_id_to_delete = "chunk_001"
+    chunk_id_to_keep = "chunk_002"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [file_id],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    file_info = {
+        "id": file_id,
+        "status": "completed",
+        "vector_store_id": store_id,
+        "filename": "test_file.txt",
+        "created_at": int(time.time()),
+    }
+
+    file_contents = [
+        {
+            "content": {"type": "text", "text": "First chunk content"},
+            "stored_chunk_id": chunk_id_to_delete,
+            "metadata": {"file_id": file_id, "position": 0},
+            "chunk_metadata": {"chunk_id": chunk_id_to_delete},
+        },
+        {
+            "content": {"type": "text", "text": "Second chunk content"},
+            "stored_chunk_id": chunk_id_to_keep,
+            "metadata": {"file_id": file_id, "position": 1},
+            "chunk_metadata": {"chunk_id": chunk_id_to_keep},
+        },
+    ]
+
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, file_contents)
+
+    vector_io_adapter.delete_chunks = AsyncMock()
+
+    delete_response = await vector_io_adapter.openai_delete_vector_store_chunk(
+        vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id_to_delete
+    )
+
+    vector_io_adapter.delete_chunks.assert_awaited_once_with(store_id, [chunk_id_to_delete])
+
+    assert delete_response.id == chunk_id_to_delete
+    assert delete_response.object == "vector_store.file.chunk.deleted"
+    assert delete_response.deleted is True
+
+    remaining_contents = await vector_io_adapter._load_openai_vector_store_file_contents(store_id, file_id)
+    assert len(remaining_contents) == 1
+    assert remaining_contents[0]["stored_chunk_id"] == chunk_id_to_keep
+
+
+async def test_openai_delete_vector_store_chunk_not_found(vector_io_adapter):
+    """Test deleting a non-existent chunk raises appropriate error."""
+    store_id = "vs_1234"
+    file_id = "file_1234"
+    chunk_id = "nonexistent_chunk"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [file_id],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    file_info = {"id": file_id, "created_at": int(time.time())}
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, [])
+
+    with pytest.raises(ValueError, match="Chunk nonexistent_chunk not found"):
+        await vector_io_adapter.openai_delete_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id
+        )
+
+
+async def test_chunk_operations_with_nonexistent_vector_store(vector_io_adapter):
+    """Test that chunk operations raise errors for non-existent vector stores."""
+
+    store_id = "nonexistent_store"
+    file_id = "file_1234"
+    chunk_id = "chunk_001"
+
+    with pytest.raises(VectorStoreNotFoundError):
+        await vector_io_adapter.openai_retrieve_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id
+        )
+
+    with pytest.raises(VectorStoreNotFoundError):
+        await vector_io_adapter.openai_update_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id, metadata={"test": "value"}
+        )
+
+    with pytest.raises(VectorStoreNotFoundError):
+        await vector_io_adapter.openai_delete_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id
+        )
+
+
+async def test_chunk_operations_with_nonexistent_file(vector_io_adapter):
+    """Test that chunk operations raise errors for non-existent files."""
+    store_id = "vs_1234"
+    file_id = "nonexistent_file"
+    chunk_id = "chunk_001"
+
+    store_info = {
+        "id": store_id,
+        "file_ids": [],
+        "created_at": int(time.time()),
+    }
+    vector_io_adapter.openai_vector_stores[store_id] = store_info
+
+    with pytest.raises(ValueError, match=f"File {file_id} not found in vector store"):
+        await vector_io_adapter.openai_retrieve_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id
+        )
+
+    with pytest.raises(ValueError, match=f"File {file_id} not found in vector store"):
+        await vector_io_adapter.openai_update_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id, metadata={"test": "value"}
+        )
+
+    with pytest.raises(ValueError, match=f"File {file_id} not found in vector store"):
+        await vector_io_adapter.openai_delete_vector_store_chunk(
+            vector_store_id=store_id, file_id=file_id, chunk_id=chunk_id
+        )
+
+    with pytest.raises(ValueError, match=f"File {file_id} not found in vector store"):
+        await vector_io_adapter.openai_list_vector_store_chunks(vector_store_id=store_id, file_id=file_id)
+
+
+async def test_openai_list_vector_store_chunks(vector_io_adapter):
+    """Test listing chunks in a vector store file."""
+    store_id = "test_store_123"
+    await vector_io_adapter.openai_create_vector_store(
+        provider_vector_db_id=store_id,
+        name="Test Store",
+        embedding_model="test_model",
+        embedding_dimension=512,
+        provider_id="test_provider",
+    )
+
+    test_content = "This is test content for chunk listing."
+    file_id = "test_file_456"
+    test_metadata = {"source": "test_file", "chunk_number": "1", "file_id": file_id}
+    test_embedding = [0.1] * 512
+
+    chunk1 = Chunk(
+        content=test_content + " First chunk.",
+        metadata={**test_metadata, "chunk_id": "1"},
+        embedding=test_embedding,
+        chunk_id="chunk_1",
+    )
+    chunk2 = Chunk(
+        content=test_content + " Second chunk.",
+        metadata={**test_metadata, "chunk_id": "2"},
+        embedding=[0.2] * 512,
+        chunk_id="chunk_2",
+    )
+    chunk3 = Chunk(
+        content=test_content + " Third chunk.",
+        metadata={**test_metadata, "chunk_id": "3"},
+        embedding=[0.3] * 512,
+        chunk_id="chunk_3",
+    )
+
+    await vector_io_adapter.insert_chunks(store_id, [chunk1, chunk2, chunk3])
+    file_info = {
+        "id": file_id,
+        "object": "vector_store.file",
+        "created_at": int(time.time()),
+        "vector_store_id": store_id,
+        "status": "completed",
+        "usage_bytes": 1024,
+        "chunking_strategy": {"type": "static", "static": {"max_chunk_size_tokens": 800, "chunk_overlap_tokens": 400}},
+        "filename": "test_file.txt",
+    }
+
+    dict_chunks = [chunk1.model_dump(), chunk2.model_dump(), chunk3.model_dump()]
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, dict_chunks)
+
+    vector_io_adapter.openai_vector_stores[store_id]["file_ids"].append(file_id)
+
+    response = await vector_io_adapter.openai_list_vector_store_chunks(vector_store_id=store_id, file_id=file_id)
+
+    assert response.object == "list"
+    assert len(response.data) == 3
+    assert response.has_more is False
+    assert response.first_id is not None
+    assert response.last_id is not None
+
+    chunk_ids = [chunk.id for chunk in response.data]
+    expected_chunk_ids = {"chunk_1", "chunk_2", "chunk_3", "1", "2", "3"}  # Accept either format
+    for chunk_id in chunk_ids:
+        assert chunk_id in expected_chunk_ids, f"Unexpected chunk_id: {chunk_id}"
+
+    for chunk in response.data:
+        assert chunk.embedding is not None
+        assert len(chunk.embedding) == 512
+        assert chunk.vector_store_id == store_id
+        assert chunk.file_id == file_id
+
+    limited_response = await vector_io_adapter.openai_list_vector_store_chunks(
+        vector_store_id=store_id, file_id=file_id, limit=2
+    )
+
+    assert len(limited_response.data) == 2
+    assert limited_response.has_more is True
+
+    desc_response = await vector_io_adapter.openai_list_vector_store_chunks(
+        vector_store_id=store_id, file_id=file_id, order="desc"
+    )
+
+    assert len(desc_response.data) == 3
+
+    asc_response = await vector_io_adapter.openai_list_vector_store_chunks(
+        vector_store_id=store_id, file_id=file_id, order="asc"
+    )
+
+    assert len(asc_response.data) == 3
+
+    first_chunk_id = response.data[0].id
+    after_response = await vector_io_adapter.openai_list_vector_store_chunks(
+        vector_store_id=store_id, file_id=file_id, after=first_chunk_id
+    )
+
+    assert len(after_response.data) <= 2
+    after_chunk_ids = [chunk.id for chunk in after_response.data]
+    assert first_chunk_id not in after_chunk_ids
+
+
+async def test_openai_list_vector_store_chunks_empty_file(vector_io_adapter):
+    """Test listing chunks in an empty file."""
+    store_id = "test_store_empty"
+    await vector_io_adapter.openai_create_vector_store(
+        provider_vector_db_id=store_id,
+        name="Test Store",
+        embedding_model="test_model",
+        embedding_dimension=512,
+        provider_id="test_provider",
+    )
+
+    file_id = "empty_file"
+    file_info = {
+        "id": file_id,
+        "object": "vector_store.file",
+        "created_at": int(time.time()),
+        "vector_store_id": store_id,
+        "status": "completed",
+        "usage_bytes": 0,
+        "chunking_strategy": {"type": "static", "static": {"max_chunk_size_tokens": 800, "chunk_overlap_tokens": 400}},
+        "filename": "empty_file.txt",
+    }
+
+    await vector_io_adapter._save_openai_vector_store_file(store_id, file_id, file_info, [])
+
+    vector_io_adapter.openai_vector_stores[store_id]["file_ids"].append(file_id)
+
+    response = await vector_io_adapter.openai_list_vector_store_chunks(vector_store_id=store_id, file_id=file_id)
+
+    assert response.object == "list"
+    assert len(response.data) == 0
+    assert response.has_more is False
+    assert response.first_id is None
+    assert response.last_id is None
+
+
+async def test_openai_list_vector_store_chunks_nonexistent_resources(vector_io_adapter):
+    with pytest.raises(VectorStoreNotFoundError):
+        await vector_io_adapter.openai_list_vector_store_chunks(vector_store_id="nonexistent_store", file_id="any_file")
+
+    store_id = "test_store_list"
+    await vector_io_adapter.openai_create_vector_store(
+        provider_vector_db_id=store_id,
+        name="Test Store",
+        embedding_model="test_model",
+        embedding_dimension=512,
+        provider_id="test_provider",
+    )
+
+    with pytest.raises(ValueError, match="File nonexistent_file not found in vector store"):
+        await vector_io_adapter.openai_list_vector_store_chunks(vector_store_id=store_id, file_id="nonexistent_file")

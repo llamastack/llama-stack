@@ -17,7 +17,9 @@ from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     SearchRankingOptions,
     VectorIO,
+    VectorStoreChunkDeleteResponse,
     VectorStoreChunkingStrategy,
+    VectorStoreChunkObject,
     VectorStoreDeleteResponse,
     VectorStoreFileContentsResponse,
     VectorStoreFileDeleteResponse,
@@ -339,6 +341,68 @@ class VectorIORouter(VectorIO):
         return await self.routing_table.openai_delete_vector_store_file(
             vector_store_id=vector_store_id,
             file_id=file_id,
+        )
+
+    async def openai_retrieve_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+    ) -> VectorStoreChunkObject:
+        logger.debug(f"VectorIORouter.openai_retrieve_vector_store_chunk: {vector_store_id}, {file_id}, {chunk_id}")
+        return await self.routing_table.openai_retrieve_vector_store_chunk(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            chunk_id=chunk_id,
+        )
+
+    async def openai_update_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+        content: InterleavedContent | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> VectorStoreChunkObject:
+        logger.debug(f"VectorIORouter.openai_update_vector_store_chunk: {vector_store_id}, {file_id}, {chunk_id}")
+        return await self.routing_table.openai_update_vector_store_chunk(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            chunk_id=chunk_id,
+            content=content,
+            metadata=metadata,
+        )
+
+    async def openai_delete_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+    ) -> VectorStoreChunkDeleteResponse:
+        logger.debug(f"VectorIORouter.openai_delete_vector_store_chunk: {vector_store_id}, {file_id}, {chunk_id}")
+        return await self.routing_table.openai_delete_vector_store_chunk(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            chunk_id=chunk_id,
+        )
+
+    async def openai_list_vector_store_chunks(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        limit: int | None = 20,
+        order: str | None = "desc",
+        after: str | None = None,
+        before: str | None = None,
+    ):
+        logger.debug(f"VectorIORouter.openai_list_vector_store_chunks: {vector_store_id}, {file_id}")
+        return await self.routing_table.openai_list_vector_store_chunks(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            limit=limit,
+            order=order,
+            after=after,
+            before=before,
         )
 
     async def health(self) -> dict[str, HealthResponse]:
