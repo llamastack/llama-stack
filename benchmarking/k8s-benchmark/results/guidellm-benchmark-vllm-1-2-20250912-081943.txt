@@ -1,0 +1,178 @@
+Collecting uv
+  Downloading uv-0.8.17-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+Downloading uv-0.8.17-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (21.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 21.1/21.1 MB 137.7 MB/s eta 0:00:00
+Installing collected packages: uv
+Successfully installed uv-0.8.17
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 25.2
+[notice] To update, run: pip install --upgrade pip
+Using Python 3.11.13 environment at: /usr/local
+Resolved 61 packages in 494ms
+Downloading pyarrow (40.8MiB)
+Downloading hf-xet (3.0MiB)
+Downloading aiohttp (1.7MiB)
+Downloading numpy (16.2MiB)
+Downloading pandas (11.8MiB)
+Downloading pydantic-core (1.9MiB)
+Downloading pillow (6.3MiB)
+Downloading pygments (1.2MiB)
+Downloading transformers (11.1MiB)
+Downloading tokenizers (3.2MiB)
+ Downloading pydantic-core
+ Downloading aiohttp
+ Downloading tokenizers
+ Downloading hf-xet
+ Downloading pillow
+ Downloading pygments
+ Downloading numpy
+ Downloading pandas
+ Downloading pyarrow
+ Downloading transformers
+Prepared 61 packages in 1.26s
+Installed 61 packages in 139ms
+ + aiohappyeyeballs==2.6.1
+ + aiohttp==3.12.15
+ + aiosignal==1.4.0
+ + annotated-types==0.7.0
+ + anyio==4.10.0
+ + attrs==25.3.0
+ + certifi==2025.8.3
+ + charset-normalizer==3.4.3
+ + click==8.1.8
+ + datasets==4.0.0
+ + dill==0.3.8
+ + filelock==3.19.1
+ + frozenlist==1.7.0
+ + fsspec==2025.3.0
+ + ftfy==6.3.1
+ + guidellm==0.3.0
+ + h11==0.16.0
+ + h2==4.3.0
+ + hf-xet==1.1.9
+ + hpack==4.1.0
+ + httpcore==1.0.9
+ + httpx==0.28.1
+ + huggingface-hub==0.34.4
+ + hyperframe==6.1.0
+ + idna==3.10
+ + loguru==0.7.3
+ + markdown-it-py==4.0.0
+ + mdurl==0.1.2
+ + multidict==6.6.4
+ + multiprocess==0.70.16
+ + numpy==2.3.3
+ + packaging==25.0
+ + pandas==2.3.2
+ + pillow==11.3.0
+ + propcache==0.3.2
+ + protobuf==6.32.1
+ + pyarrow==21.0.0
+ + pydantic==2.11.7
+ + pydantic-core==2.33.2
+ + pydantic-settings==2.10.1
+ + pygments==2.19.2
+ + python-dateutil==2.9.0.post0
+ + python-dotenv==1.1.1
+ + pytz==2025.2
+ + pyyaml==6.0.2
+ + regex==2025.9.1
+ + requests==2.32.5
+ + rich==14.1.0
+ + safetensors==0.6.2
+ + six==1.17.0
+ + sniffio==1.3.1
+ + tokenizers==0.22.0
+ + tqdm==4.67.1
+ + transformers==4.56.1
+ + typing-extensions==4.15.0
+ + typing-inspection==0.4.1
+ + tzdata==2025.2
+ + urllib3==2.5.0
+ + wcwidth==0.2.13
+ + xxhash==3.5.0
+ + yarl==1.20.1
+Using Python 3.11.13 environment at: /usr/local
+Audited 1 package in 3ms
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
+Creating backend...
+Backend openai_http connected to http://vllm-server:8000 for model meta-llama/Llama-3.2-3B-Instruct.
+Creating request loader...
+Created loader with 1000 unique requests from prompt_tokens=512,output_tokens=256.
+
+
+╭─ Benchmarks ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [15:20:05] ⠋ 100% synchronous    (complete)   Req:    0.3 req/s,    3.83s Lat,     1.0 Conc,      15 Comp,        1 Inc,        0 Err                                                                │
+│                                               Tok:   66.8 gen/s,  209.3 tot/s,  29.9ms TTFT,   14.9ms ITL,   547 Prompt,      256 Gen                                                                │
+│ [15:21:10] ⠋ 100% throughput     (complete)   Req:   30.3 req/s,   15.23s Lat,   461.2 Conc,    1817 Comp,      510 Inc,        0 Err                                                                │
+│                                               Tok: 7752.9 gen/s, 24303.5 tot/s, 2172.1ms TTFT,   51.2ms ITL,   546 Prompt,      256 Gen                                                              │
+│ [15:22:22] ⠋ 100% constant@4.01  (complete)   Req:    3.8 req/s,    3.59s Lat,    13.8 Conc,     230 Comp,       14 Inc,        0 Err                                                                │
+│                                               Tok:  981.4 gen/s, 3076.4 tot/s,  36.8ms TTFT,   13.9ms ITL,   547 Prompt,      256 Gen                                                                │
+│ [15:23:51] ⠋ 100% constant@7.77  (complete)   Req:    7.4 req/s,    3.71s Lat,    27.4 Conc,     444 Comp,       28 Inc,        0 Err                                                                │
+│                                               Tok: 1894.9 gen/s, 5940.1 tot/s,  40.6ms TTFT,   14.4ms ITL,   546 Prompt,      256 Gen                                                                │
+│ [15:25:09] ⠋ 100% constant@11.52 (complete)   Req:   11.0 req/s,    3.70s Lat,    40.6 Conc,     659 Comp,       43 Inc,        0 Err                                                                │
+│                                               Tok: 2813.2 gen/s, 8818.9 tot/s,  41.5ms TTFT,   14.3ms ITL,   547 Prompt,      256 Gen                                                                │
+│ [15:26:24] ⠋ 100% constant@15.27 (complete)   Req:   14.5 req/s,    3.83s Lat,    55.7 Conc,     872 Comp,       59 Inc,        0 Err                                                                │
+│                                               Tok: 3723.0 gen/s, 11670.9 tot/s,  45.7ms TTFT,   14.8ms ITL,   547 Prompt,      256 Gen                                                               │
+│ [15:27:37] ⠋ 100% constant@19.03 (complete)   Req:   18.1 req/s,    4.16s Lat,    75.1 Conc,    1083 Comp,       77 Inc,        0 Err                                                                │
+│                                               Tok: 4621.8 gen/s, 14487.9 tot/s,  47.3ms TTFT,   16.1ms ITL,   546 Prompt,      256 Gen                                                               │
+│ [15:28:49] ⠋ 100% constant@22.78 (complete)   Req:   21.4 req/s,    4.48s Lat,    96.1 Conc,    1285 Comp,      103 Inc,        0 Err                                                                │
+│                                               Tok: 5487.0 gen/s, 17200.2 tot/s,  50.9ms TTFT,   17.4ms ITL,   546 Prompt,      256 Gen                                                               │
+│ [15:30:00] ⠋ 100% constant@26.53 (complete)   Req:   24.6 req/s,    4.87s Lat,   119.9 Conc,    1477 Comp,      140 Inc,        0 Err                                                                │
+│                                               Tok: 6304.3 gen/s, 19762.5 tot/s,  56.4ms TTFT,   18.9ms ITL,   547 Prompt,      256 Gen                                                               │
+│ [15:31:12] ⠋ 100% constant@30.28 (complete)   Req:   26.5 req/s,    6.98s Lat,   184.6 Conc,    1584 Comp,      262 Inc,        0 Err                                                                │
+│                                               Tok: 6775.2 gen/s, 21238.8 tot/s,  82.2ms TTFT,   27.0ms ITL,   546 Prompt,      256 Gen                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+Generating... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ (10/10) [ 0:12:06 < 0:00:00 ]
+
+Benchmarks Metadata:
+    Run id:209290f3-6e0f-4467-a2ac-c1e7a7bdf723
+    Duration:734.9 seconds
+    Profile:type=sweep, strategies=['synchronous', 'throughput', 'constant', 'constant', 'constant', 'constant', 'constant', 'constant', 'constant', 'constant'], max_concurrency=None
+    Args:max_number=None, max_duration=60.0, warmup_number=None, warmup_duration=None, cooldown_number=None, cooldown_duration=None
+    Worker:type_='generative_requests_worker' backend_type='openai_http' backend_target='http://vllm-server:8000' backend_model='meta-llama/Llama-3.2-3B-Instruct' backend_info={'max_output_tokens':
+    16384, 'timeout': 300, 'http2': True, 'follow_redirects': True, 'headers': {}, 'text_completions_path': '/v1/completions', 'chat_completions_path': '/v1/chat/completions'}
+    Request Loader:type_='generative_request_loader' data='prompt_tokens=512,output_tokens=256' data_args=None processor='meta-llama/Llama-3.2-3B-Instruct' processor_args=None
+    Extras:None
+
+
+Benchmarks Info:
+====================================================================================================================================================
+Metadata                                       |||| Requests Made  ||| Prompt Tok/Req ||| Output Tok/Req ||| Prompt Tok Total ||| Output Tok Total||
+     Benchmark| Start Time| End Time| Duration (s)|  Comp|  Inc|  Err|  Comp|   Inc| Err|  Comp|   Inc| Err|   Comp|    Inc| Err|   Comp|   Inc| Err
+--------------|-----------|---------|-------------|------|-----|-----|------|------|----|------|------|----|-------|-------|----|-------|------|----
+   synchronous|   15:20:10| 15:21:10|         60.0|    15|    1|    0| 546.5| 512.0| 0.0| 256.0| 185.0| 0.0|   8198|    512|   0|   3840|   185|   0
+    throughput|   15:21:16| 15:22:16|         60.1|  1817|  510|    0| 546.5| 512.0| 0.0| 256.0| 110.8| 0.0| 992985| 261120|   0| 465152| 56500|   0
+ constant@4.01|   15:22:27| 15:23:27|         60.0|   230|   14|    0| 546.5| 512.0| 0.0| 256.0| 124.9| 0.0| 125698|   7168|   0|  58880|  1749|   0
+ constant@7.77|   15:23:56| 15:24:56|         60.0|   444|   28|    0| 546.5| 512.0| 0.0| 256.0| 129.0| 0.0| 242646|  14336|   0| 113664|  3613|   0
+constant@11.52|   15:25:14| 15:26:14|         60.0|   659|   43|    0| 546.5| 512.0| 0.0| 256.0| 131.6| 0.0| 360152|  22016|   0| 168704|  5659|   0
+constant@15.27|   15:26:29| 15:27:29|         60.0|   872|   59|    0| 546.5| 512.0| 0.0| 256.0| 130.2| 0.0| 476553|  30208|   0| 223232|  7682|   0
+constant@19.03|   15:27:42| 15:28:42|         60.1|  1083|   77|    0| 546.5| 512.0| 0.0| 256.0| 131.8| 0.0| 591840|  39424|   0| 277248| 10150|   0
+constant@22.78|   15:28:54| 15:29:54|         60.1|  1285|  103|    0| 546.5| 512.0| 0.0| 256.0| 130.4| 0.0| 702242|  52736|   0| 328960| 13430|   0
+constant@26.53|   15:30:05| 15:31:05|         60.2|  1477|  140|    0| 546.5| 512.0| 0.0| 256.0| 132.6| 0.0| 807187|  71680|   0| 378112| 18560|   0
+constant@30.28|   15:31:17| 15:32:17|         60.3|  1584|  262|    0| 546.5| 512.0| 0.0| 256.0| 129.1| 0.0| 865656| 134144|   0| 405504| 33816|   0
+====================================================================================================================================================
+
+
+Benchmarks Stats:
+========================================================================================================================================================
+Metadata      | Request Stats         || Out Tok/sec| Tot Tok/sec| Req Latency (sec) ||| TTFT (ms)            ||| ITL (ms)        ||| TPOT (ms)       ||
+     Benchmark| Per Second| Concurrency|        mean|        mean|  mean| median|   p99|   mean| median|     p99| mean| median|  p99| mean| median|  p99
+--------------|-----------|------------|------------|------------|------|-------|------|-------|-------|--------|-----|-------|-----|-----|-------|-----
+   synchronous|       0.26|        1.00|        66.8|       209.3|  3.83|   4.03|  4.06|   29.9|   29.3|    40.1| 14.9|   15.7| 15.8| 14.9|   15.6| 15.7
+    throughput|      30.28|      461.22|      7752.9|     24303.5| 15.23|  15.04| 26.54| 2172.1| 2029.6| 13178.5| 51.2|   51.2| 71.8| 51.0|   51.0| 71.5
+ constant@4.01|       3.83|       13.75|       981.4|      3076.4|  3.59|   3.58|  3.87|   36.8|   36.5|    54.6| 13.9|   13.9| 15.0| 13.9|   13.8| 15.0
+ constant@7.77|       7.40|       27.45|      1894.9|      5940.1|  3.71|   3.71|  3.89|   40.6|   39.1|   102.1| 14.4|   14.4| 15.1| 14.3|   14.3| 15.1
+constant@11.52|      10.99|       40.64|      2813.2|      8818.9|  3.70|   3.69|  3.95|   41.5|   40.1|   104.8| 14.3|   14.3| 15.4| 14.3|   14.3| 15.3
+constant@15.27|      14.54|       55.71|      3723.0|     11670.9|  3.83|   3.82|  4.26|   45.7|   41.9|   177.0| 14.8|   14.8| 16.5| 14.8|   14.7| 16.5
+constant@19.03|      18.05|       75.11|      4621.8|     14487.9|  4.16|   4.16|  4.42|   47.3|   44.6|   169.9| 16.1|   16.1| 17.1| 16.1|   16.0| 17.1
+constant@22.78|      21.43|       96.11|      5487.0|     17200.2|  4.48|   4.47|  4.94|   50.9|   46.9|   201.7| 17.4|   17.3| 19.2| 17.3|   17.3| 19.1
+constant@26.53|      24.63|      119.92|      6304.3|     19762.5|  4.87|   4.81|  5.62|   56.4|   50.1|   288.3| 18.9|   18.6| 21.8| 18.8|   18.6| 21.7
+constant@30.28|      26.47|      184.61|      6775.2|     21238.8|  6.98|   6.61| 11.22|   82.2|   75.8|   279.4| 27.0|   25.7| 43.6| 26.9|   25.6| 43.5
+========================================================================================================================================================
+
+Saving benchmarks report...
+Benchmarks report saved to /shared/guidellm-results.json
+
+Benchmarking complete.
