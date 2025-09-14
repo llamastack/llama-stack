@@ -7,7 +7,6 @@
 from __future__ import annotations  # for forward references
 
 import hashlib
-import inspect
 import json
 import os
 from collections.abc import Generator
@@ -243,11 +242,10 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
     global _current_mode, _current_storage
 
     if _current_mode == InferenceMode.LIVE or _current_storage is None:
-        # Normal operation
-        if inspect.iscoroutinefunction(original_method):
-            return await original_method(self, *args, **kwargs)
-        else:
+        if endpoint == "/v1/models":
             return original_method(self, *args, **kwargs)
+        else:
+            return await original_method(self, *args, **kwargs)
 
     # Get base URL based on client type
     if client_type == "openai":
@@ -298,10 +296,10 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             )
 
     elif _current_mode == InferenceMode.RECORD:
-        if inspect.iscoroutinefunction(original_method):
-            response = await original_method(self, *args, **kwargs)
-        else:
+        if endpoint == "/v1/models":
             response = original_method(self, *args, **kwargs)
+        else:
+            response = await original_method(self, *args, **kwargs)
 
         # we want to store the result of the iterator, not the iterator itself
         if endpoint == "/v1/models":
