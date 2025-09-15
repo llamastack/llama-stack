@@ -59,6 +59,7 @@ ENABLED_INFERENCE_PROVIDERS = [
     "cerebras",
     "nvidia",
     "bedrock",
+    "azure",
 ]
 
 INFERENCE_PROVIDER_IDS = {
@@ -68,6 +69,7 @@ INFERENCE_PROVIDER_IDS = {
     "cerebras": "${env.CEREBRAS_API_KEY:+cerebras}",
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
+    "azure": "${env.AZURE_API_KEY:+azure}",
 }
 
 
@@ -276,6 +278,22 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "OLLAMA_URL": (
                 "http://localhost:11434",
                 "Ollama URL",
+            ),
+            "AZURE_API_KEY": (
+                "",
+                "Azure API Key",
+            ),
+            "AZURE_API_BASE": (
+                "",
+                "Azure API Base",
+            ),
+            "AZURE_API_VERSION": (
+                "",
+                "Azure API Version",
+            ),
+            "AZURE_API_TYPE": (
+                "azure",
+                "Azure API Type",
             ),
         },
     )

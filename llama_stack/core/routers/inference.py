@@ -63,7 +63,7 @@ from llama_stack.models.llama.llama3.chat_format import ChatFormat
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
-from llama_stack.providers.utils.telemetry.tracing import get_current_span
+from llama_stack.providers.utils.telemetry.tracing import enqueue_event, get_current_span
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -90,6 +90,11 @@ class InferenceRouter(Inference):
 
     async def shutdown(self) -> None:
         logger.debug("InferenceRouter.shutdown")
+        if self.store:
+            try:
+                await self.store.shutdown()
+            except Exception as e:
+                logger.warning(f"Error during InferenceStore shutdown: {e}")
 
     async def register_model(
         self,
@@ -160,7 +165,7 @@ class InferenceRouter(Inference):
         metrics = self._construct_metrics(prompt_tokens, completion_tokens, total_tokens, model)
         if self.telemetry:
             for metric in metrics:
-                await self.telemetry.log_event(metric)
+                enqueue_event(metric)
         return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in metrics]
 
     async def _count_tokens(
@@ -431,7 +436,7 @@ class InferenceRouter(Inference):
                 model=model_obj,
             )
             for metric in metrics:
-                await self.telemetry.log_event(metric)
+                enqueue_event(metric)
 
             # these metrics will show up in the client response.
             response.metrics = (
@@ -537,7 +542,7 @@ class InferenceRouter(Inference):
                 model=model_obj,
             )
             for metric in metrics:
-                await self.telemetry.log_event(metric)
+                enqueue_event(metric)
             # these metrics will show up in the client response.
             response.metrics = (
                 metrics if not hasattr(response, "metrics") or response.metrics is None else response.metrics + metrics
@@ -664,7 +669,7 @@ class InferenceRouter(Inference):
                             "completion_tokens",
                             "total_tokens",
                         ]:  # Only log completion and total tokens
-                            await self.telemetry.log_event(metric)
+                            enqueue_event(metric)
 
                         # Return metrics in response
                         async_metrics = [
@@ -710,7 +715,7 @@ class InferenceRouter(Inference):
             )
             for metric in completion_metrics:
                 if metric.metric in ["completion_tokens", "total_tokens"]:  # Only log completion and total tokens
-                    await self.telemetry.log_event(metric)
+                    enqueue_event(metric)
 
             # Return metrics in response
             return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in completion_metrics]
@@ -806,7 +811,7 @@ class InferenceRouter(Inference):
                             model=model,
                         )
                         for metric in metrics:
-                            await self.telemetry.log_event(metric)
+                            enqueue_event(metric)
 
                 yield chunk
         finally:

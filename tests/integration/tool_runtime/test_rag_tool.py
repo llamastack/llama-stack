@@ -183,6 +183,110 @@ def test_vector_db_insert_from_url_and_query(
     assert any("llama2" in chunk.content.lower() for chunk in response2.chunks)
 
 
+def test_rag_tool_openai_apis(client_with_empty_registry, embedding_model_id, embedding_dimension):
+    vector_db_id = "test_openai_vector_db"
+
+    client_with_empty_registry.vector_dbs.register(
+        vector_db_id=vector_db_id,
+        embedding_model=embedding_model_id,
+        embedding_dimension=embedding_dimension,
+    )
+
+    available_vector_dbs = [vector_db.identifier for vector_db in client_with_empty_registry.vector_dbs.list()]
+    actual_vector_db_id = available_vector_dbs[0]
+
+    # different document formats that should work with OpenAI APIs
+    documents = [
+        Document(
+            document_id="text-doc",
+            content="This is a plain text document about machine learning algorithms.",
+            metadata={"type": "text", "category": "AI"},
+        ),
+        Document(
+            document_id="url-doc",
+            content="https://raw.githubusercontent.com/pytorch/torchtune/main/docs/source/tutorials/chat.rst",
+            mime_type="text/plain",
+            metadata={"type": "url", "source": "pytorch"},
+        ),
+        Document(
+            document_id="data-url-doc",
+            content="data:text/plain;base64,VGhpcyBpcyBhIGRhdGEgVVJMIGRvY3VtZW50IGFib3V0IGRlZXAgbGVhcm5pbmcu",  # "This is a data URL document about deep learning."
+            metadata={"type": "data_url", "encoding": "base64"},
+        ),
+    ]
+
+    client_with_empty_registry.tool_runtime.rag_tool.insert(
+        documents=documents,
+        vector_db_id=actual_vector_db_id,
+        chunk_size_in_tokens=256,
+    )
+
+    files_list = client_with_empty_registry.files.list()
+    assert len(files_list.data) >= len(documents), (
+        f"Expected at least {len(documents)} files, got {len(files_list.data)}"
+    )
+
+    vector_store_files = client_with_empty_registry.vector_io.openai_list_files_in_vector_store(
+        vector_store_id=actual_vector_db_id
+    )
+    assert len(vector_store_files.data) >= len(documents), f"Expected at least {len(documents)} files in vector store"
+
+    response = client_with_empty_registry.tool_runtime.rag_tool.query(
+        vector_db_ids=[actual_vector_db_id],
+        content="Tell me about machine learning and deep learning",
+    )
+
+    assert_valid_text_response(response)
+    content_text = " ".join([chunk.text for chunk in response.content]).lower()
+    assert "machine learning" in content_text or "deep learning" in content_text
+
+
+def test_rag_tool_exception_handling(client_with_empty_registry, embedding_model_id, embedding_dimension):
+    vector_db_id = "test_exception_handling"
+
+    client_with_empty_registry.vector_dbs.register(
+        vector_db_id=vector_db_id,
+        embedding_model=embedding_model_id,
+        embedding_dimension=embedding_dimension,
+    )
+
+    available_vector_dbs = [vector_db.identifier for vector_db in client_with_empty_registry.vector_dbs.list()]
+    actual_vector_db_id = available_vector_dbs[0]
+
+    documents = [
+        Document(
+            document_id="valid-doc",
+            content="This is a valid document that should be processed successfully.",
+            metadata={"status": "valid"},
+        ),
+        Document(
+            document_id="invalid-url-doc",
+            content="https://nonexistent-domain-12345.com/invalid.txt",
+            metadata={"status": "invalid_url"},
+        ),
+        Document(
+            document_id="another-valid-doc",
+            content="This is another valid document for testing resilience.",
+            metadata={"status": "valid"},
+        ),
+    ]
+
+    client_with_empty_registry.tool_runtime.rag_tool.insert(
+        documents=documents,
+        vector_db_id=actual_vector_db_id,
+        chunk_size_in_tokens=256,
+    )
+
+    response = client_with_empty_registry.tool_runtime.rag_tool.query(
+        vector_db_ids=[actual_vector_db_id],
+        content="valid document",
+    )
+
+    assert_valid_text_response(response)
+    content_text = " ".join([chunk.text for chunk in response.content]).lower()
+    assert "valid document" in content_text
+
+
 def test_rag_tool_insert_and_query(client_with_empty_registry, embedding_model_id, embedding_dimension):
     providers = [p for p in client_with_empty_registry.providers.list() if p.api == "vector_io"]
     assert len(providers) > 0
@@ -249,3 +353,107 @@ def test_rag_tool_insert_and_query(client_with_empty_registry, embedding_model_i
                 "chunk_template": "This should raise a ValueError because it is missing the proper template variables",
             },
         )
+
+
+def test_rag_tool_query_generation(client_with_empty_registry, embedding_model_id, embedding_dimension):
+    vector_db_id = "test_query_generation_db"
+
+    client_with_empty_registry.vector_dbs.register(
+        vector_db_id=vector_db_id,
+        embedding_model=embedding_model_id,
+        embedding_dimension=embedding_dimension,
+    )
+
+    available_vector_dbs = [vector_db.identifier for vector_db in client_with_empty_registry.vector_dbs.list()]
+    actual_vector_db_id = available_vector_dbs[0]
+
+    documents = [
+        Document(
+            document_id="ai-doc",
+            content="Artificial intelligence and machine learning are transforming technology.",
+            metadata={"category": "AI"},
+        ),
+        Document(
+            document_id="banana-doc",
+            content="Don't bring a banana to a knife fight.",
+            metadata={"category": "wisdom"},
+        ),
+    ]
+
+    client_with_empty_registry.tool_runtime.rag_tool.insert(
+        documents=documents,
+        vector_db_id=actual_vector_db_id,
+        chunk_size_in_tokens=256,
+    )
+
+    response = client_with_empty_registry.tool_runtime.rag_tool.query(
+        vector_db_ids=[actual_vector_db_id],
+        content="Tell me about AI",
+    )
+
+    assert_valid_text_response(response)
+    content_text = " ".join([chunk.text for chunk in response.content]).lower()
+    assert "artificial intelligence" in content_text or "machine learning" in content_text
+
+
+def test_rag_tool_pdf_data_url_handling(client_with_empty_registry, embedding_model_id, embedding_dimension):
+    vector_db_id = "test_pdf_data_url_db"
+
+    client_with_empty_registry.vector_dbs.register(
+        vector_db_id=vector_db_id,
+        embedding_model=embedding_model_id,
+        embedding_dimension=embedding_dimension,
+    )
+
+    available_vector_dbs = [vector_db.identifier for vector_db in client_with_empty_registry.vector_dbs.list()]
+    actual_vector_db_id = available_vector_dbs[0]
+
+    sample_pdf = b"%PDF-1.3\n3 0 obj\n<</Type /Page\n/Parent 1 0 R\n/Resources 2 0 R\n/Contents 4 0 R>>\nendobj\n4 0 obj\n<</Filter /FlateDecode /Length 115>>\nstream\nx\x9c\x15\xcc1\x0e\x820\x18@\xe1\x9dS\xbcM]jk$\xd5\xd5(\x83!\x86\xa1\x17\xf8\xa3\xa5`LIh+\xd7W\xc6\xf7\r\xef\xc0\xbd\xd2\xaa\xb6,\xd5\xc5\xb1o\x0c\xa6VZ\xe3znn%\xf3o\xab\xb1\xe7\xa3:Y\xdc\x8bm\xeb\xf3&1\xc8\xd7\xd3\x97\xc82\xe6\x81\x87\xe42\xcb\x87Vb(\x12<\xdd<=}Jc\x0cL\x91\xee\xda$\xb5\xc3\xbd\xd7\xe9\x0f\x8d\x97 $\nendstream\nendobj\n1 0 obj\n<</Type /Pages\n/Kids [3 0 R ]\n/Count 1\n/MediaBox [0 0 595.28 841.89]\n>>\nendobj\n5 0 obj\n<</Type /Font\n/BaseFont /Helvetica\n/Subtype /Type1\n/Encoding /WinAnsiEncoding\n>>\nendobj\n2 0 obj\n<<\n/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]\n/Font <<\n/F1 5 0 R\n>>\n/XObject <<\n>>\n>>\nendobj\n6 0 obj\n<<\n/Producer (PyFPDF 1.7.2 http://pyfpdf.googlecode.com/)\n/Title (This is a sample title.)\n/Author (Llama Stack Developers)\n/CreationDate (D:20250312165548)\n>>\nendobj\n7 0 obj\n<<\n/Type /Catalog\n/Pages 1 0 R\n/OpenAction [3 0 R /FitH null]\n/PageLayout /OneColumn\n>>\nendobj\nxref\n0 8\n0000000000 65535 f \n0000000272 00000 n \n0000000455 00000 n \n0000000009 00000 n \n0000000087 00000 n \n0000000359 00000 n \n0000000559 00000 n \n0000000734 00000 n \ntrailer\n<<\n/Size 8\n/Root 7 0 R\n/Info 6 0 R\n>>\nstartxref\n837\n%%EOF\n"
+
+    import base64
+
+    pdf_base64 = base64.b64encode(sample_pdf).decode("utf-8")
+    pdf_data_url = f"data:application/pdf;base64,{pdf_base64}"
+
+    documents = [
+        Document(
+            document_id="test-pdf-data-url",
+            content=pdf_data_url,
+            metadata={"type": "pdf", "source": "data_url"},
+        ),
+    ]
+
+    client_with_empty_registry.tool_runtime.rag_tool.insert(
+        documents=documents,
+        vector_db_id=actual_vector_db_id,
+        chunk_size_in_tokens=256,
+    )
+
+    files_list = client_with_empty_registry.files.list()
+    assert len(files_list.data) >= 1, "PDF should have been uploaded to Files API"
+
+    pdf_file = None
+    for file in files_list.data:
+        if file.filename and "test-pdf-data-url" in file.filename:
+            pdf_file = file
+            break
+
+    assert pdf_file is not None, "PDF file should be found in Files API"
+    assert pdf_file.bytes == len(sample_pdf), f"File size should match original PDF ({len(sample_pdf)} bytes)"
+
+    file_content = client_with_empty_registry.files.retrieve_content(pdf_file.id)
+    assert file_content.startswith(b"%PDF-"), "Retrieved file should be a valid PDF"
+
+    vector_store_files = client_with_empty_registry.vector_io.openai_list_files_in_vector_store(
+        vector_store_id=actual_vector_db_id
+    )
+    assert len(vector_store_files.data) >= 1, "PDF should be attached to vector store"
+
+    response = client_with_empty_registry.tool_runtime.rag_tool.query(
+        vector_db_ids=[actual_vector_db_id],
+        content="sample title",
+    )
+
+    assert_valid_text_response(response)
+    content_text = " ".join([chunk.text for chunk in response.content]).lower()
+    assert "sample title" in content_text or "title" in content_text

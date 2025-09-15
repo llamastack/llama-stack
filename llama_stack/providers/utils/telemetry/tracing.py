@@ -18,6 +18,7 @@ from functools import wraps
 from typing import Any
 
 from llama_stack.apis.telemetry import (
+    Event,
     LogSeverity,
     Span,
     SpanEndPayload,
@@ -98,7 +99,7 @@ class BackgroundLogger:
     def __init__(self, api: Telemetry, capacity: int = 100000):
         self.api = api
         self.log_queue: queue.Queue[Any] = queue.Queue(maxsize=capacity)
-        self.worker_thread = threading.Thread(target=self._process_logs, daemon=True)
+        self.worker_thread = threading.Thread(target=self._worker, daemon=True)
         self.worker_thread.start()
         self._last_queue_full_log_time: float = 0.0
         self._dropped_since_last_notice: int = 0
@@ -118,12 +119,16 @@ class BackgroundLogger:
                 self._last_queue_full_log_time = current_time
                 self._dropped_since_last_notice = 0
 
-    def _process_logs(self):
+    def _worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._process_logs())
+
+    async def _process_logs(self):
         while True:
             try:
                 event = self.log_queue.get()
-                # figure out how to use a thread's native loop
-                asyncio.run(self.api.log_event(event))
+                await self.api.log_event(event)
             except Exception:
                 import traceback
 
@@ -134,6 +139,19 @@ class BackgroundLogger:
 
     def __del__(self):
         self.log_queue.join()
+
+
+def enqueue_event(event: Event) -> None:
+    """Enqueue a telemetry event to the background logger if available.
+
+    This provides a non-blocking path for routers and other hot paths to
+    submit telemetry without awaiting the Telemetry API, reducing contention
+    with the main event loop.
+    """
+    global BACKGROUND_LOGGER
+    if BACKGROUND_LOGGER is None:
+        raise RuntimeError("Telemetry API not initialized")
+    BACKGROUND_LOGGER.log_event(event)
 
 
 class TraceContext:
@@ -256,11 +274,7 @@ class TelemetryHandler(logging.Handler):
         if record.module in ("asyncio", "selector_events"):
             return
 
-        global CURRENT_TRACE_CONTEXT, BACKGROUND_LOGGER
-
-        if BACKGROUND_LOGGER is None:
-            raise RuntimeError("Telemetry API not initialized")
-
+        global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if context is None:
             return
@@ -269,7 +283,7 @@ class TelemetryHandler(logging.Handler):
         if span is None:
             return
 
-        BACKGROUND_LOGGER.log_event(
+        enqueue_event(
             UnstructuredLogEvent(
                 trace_id=span.trace_id,
                 span_id=span.span_id,

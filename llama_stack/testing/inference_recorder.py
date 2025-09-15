@@ -15,6 +15,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, cast
 
+from openai import NOT_GIVEN
+
 from llama_stack.log import get_logger
 
 logger = get_logger(__name__, category="testing")
@@ -105,8 +107,12 @@ def _deserialize_response(data: dict[str, Any]) -> Any:
 
             return cls.model_validate(data["__data__"])
         except (ImportError, AttributeError, TypeError, ValueError) as e:
-            logger.warning(f"Failed to deserialize object of type {data['__type__']}: {e}")
-            return data["__data__"]
+            logger.warning(f"Failed to deserialize object of type {data['__type__']} with model_validate: {e}")
+            try:
+                return cls.model_construct(**data["__data__"])
+            except Exception as e:
+                logger.warning(f"Failed to deserialize object of type {data['__type__']} with model_construct: {e}")
+                return data["__data__"]
 
     return data
 
@@ -194,20 +200,15 @@ def _model_identifiers_digest(endpoint: str, response: dict[str, Any]) -> str:
 
         Supported endpoints:
         - '/api/tags' (Ollama): response body has 'models': [ { name/model/digest/id/... }, ... ]
-        - '/v1/models' (OpenAI): response body has 'data': [ { id: ... }, ... ]
+        - '/v1/models' (OpenAI): response body is: [ { id: ... }, ... ]
         Returns a list of unique identifiers or None if structure doesn't match.
         """
-        body = response["body"]
-        if endpoint == "/api/tags":
-            items = body.get("models")
-            idents = [m.model for m in items]
-        else:
-            items = body.get("data")
-            idents = [m.id for m in items]
+        items = response["body"]
+        idents = [m.model if endpoint == "/api/tags" else m.id for m in items]
         return sorted(set(idents))
 
     identifiers = _extract_model_identifiers()
-    return hashlib.sha1(("|".join(identifiers)).encode("utf-8")).hexdigest()[:8]
+    return hashlib.sha256(("|".join(identifiers)).encode("utf-8")).hexdigest()[:8]
 
 
 def _combine_model_list_responses(endpoint: str, records: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -215,28 +216,22 @@ def _combine_model_list_responses(endpoint: str, records: list[dict[str, Any]]) 
     seen: dict[str, dict[str, Any]] = {}
     for rec in records:
         body = rec["response"]["body"]
-        if endpoint == "/api/tags":
-            items = body.models
-        elif endpoint == "/v1/models":
-            items = body.data
-        else:
-            items = []
-
-        for m in items:
-            if endpoint == "/v1/models":
+        if endpoint == "/v1/models":
+            for m in body:
                 key = m.id
-            else:
+                seen[key] = m
+        elif endpoint == "/api/tags":
+            for m in body.models:
                 key = m.model
-            seen[key] = m
+                seen[key] = m
 
     ordered = [seen[k] for k in sorted(seen.keys())]
     canonical = records[0]
     canonical_req = canonical.get("request", {})
     if isinstance(canonical_req, dict):
         canonical_req["endpoint"] = endpoint
-    if endpoint == "/v1/models":
-        body = {"data": ordered, "object": "list"}
-    else:
+    body = ordered
+    if endpoint == "/api/tags":
         from ollama import ListResponse
 
         body = ListResponse(models=ordered)
@@ -247,12 +242,17 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
     global _current_mode, _current_storage
 
     if _current_mode == InferenceMode.LIVE or _current_storage is None:
-        # Normal operation
-        return await original_method(self, *args, **kwargs)
+        if endpoint == "/v1/models":
+            return original_method(self, *args, **kwargs)
+        else:
+            return await original_method(self, *args, **kwargs)
 
     # Get base URL based on client type
     if client_type == "openai":
         base_url = str(self._client.base_url)
+
+        # the OpenAI client methods may pass NOT_GIVEN for unset parameters; filter these out
+        kwargs = {k: v for k, v in kwargs.items() if v is not NOT_GIVEN}
     elif client_type == "ollama":
         # Get base URL from the client (Ollama client uses host attribute)
         base_url = getattr(self, "host", "http://localhost:11434")
@@ -296,7 +296,14 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             )
 
     elif _current_mode == InferenceMode.RECORD:
-        response = await original_method(self, *args, **kwargs)
+        if endpoint == "/v1/models":
+            response = original_method(self, *args, **kwargs)
+        else:
+            response = await original_method(self, *args, **kwargs)
+
+        # we want to store the result of the iterator, not the iterator itself
+        if endpoint == "/v1/models":
+            response = [m async for m in response]
 
         request_data = {
             "method": method,
@@ -376,10 +383,14 @@ def patch_inference_clients():
             _original_methods["embeddings_create"], self, "openai", "/v1/embeddings", *args, **kwargs
         )
 
-    async def patched_models_list(self, *args, **kwargs):
-        return await _patched_inference_method(
-            _original_methods["models_list"], self, "openai", "/v1/models", *args, **kwargs
-        )
+    def patched_models_list(self, *args, **kwargs):
+        async def _iter():
+            for item in await _patched_inference_method(
+                _original_methods["models_list"], self, "openai", "/v1/models", *args, **kwargs
+            ):
+                yield item
+
+        return _iter()
 
     # Apply OpenAI patches
     AsyncChatCompletions.create = patched_chat_completions_create

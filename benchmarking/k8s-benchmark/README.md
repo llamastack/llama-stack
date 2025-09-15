@@ -34,13 +34,12 @@ This data enables data-driven architectural decisions and performance optimizati
 
 **1. Deploy base k8s infrastructure:**
 ```bash
-cd ../k8s
+cd ../../docs/source/distributions/k8s
 ./apply.sh
 ```
 
 **2. Deploy benchmark components:**
 ```bash
-cd ../k8s-benchmark
 ./apply.sh
 ```
 
@@ -56,7 +55,6 @@ kubectl get pods
 
 **Benchmark Llama Stack (default):**
 ```bash
-cd docs/source/distributions/k8s-benchmark/
 ./run-benchmark.sh
 ```
 

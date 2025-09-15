@@ -81,6 +81,13 @@ providers:
     config:
       url: https://api.sambanova.ai/v1
       api_key: ${env.SAMBANOVA_API_KEY:=}
+  - provider_id: ${env.AZURE_API_KEY:+azure}
+    provider_type: remote::azure
+    config:
+      api_key: ${env.AZURE_API_KEY:=}
+      api_base: ${env.AZURE_API_BASE:=}
+      api_version: ${env.AZURE_API_VERSION:=}
+      api_type: ${env.AZURE_API_TYPE:=}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
   vector_io:

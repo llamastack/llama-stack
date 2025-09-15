@@ -32,6 +32,7 @@ def skip_if_model_doesnt_support_completion(client_with_models, model_id):
             "remote::vertexai",
             "remote::groq",
             "remote::sambanova",
+            "remote::azure",
         )
         or "openai-compat" in provider.provider_type
     ):
@@ -44,7 +45,7 @@ def skip_if_model_doesnt_support_json_schema_structured_output(client_with_model
     provider_id = models[model_id].provider_id
     providers = {p.provider_id: p for p in client_with_models.providers.list()}
     provider = providers[provider_id]
-    if provider.provider_type in ("remote::sambanova",):
+    if provider.provider_type in ("remote::sambanova", "remote::azure"):
         pytest.skip(
             f"Model {model_id} hosted by {provider.provider_type} doesn't support json_schema structured output"
         )
