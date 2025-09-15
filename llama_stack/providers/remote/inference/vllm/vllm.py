@@ -6,6 +6,7 @@
 import json
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
+from urllib.parse import urljoin
 
 import httpx
 from openai import APIConnectionError, AsyncOpenAI
@@ -316,6 +317,10 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             )
 
     async def should_refresh_models(self) -> bool:
+        # Get the default value from the field definition
+        default_api_token = self.config.__class__.model_fields["api_token"].default
+        if not self.config.api_token or self.config.api_token == default_api_token:
+            return False
         return self.config.refresh_models
 
     async def list_models(self) -> list[Model] | None:
@@ -344,21 +349,19 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
         Performs a health check by verifying connectivity to the remote vLLM server.
         This method is used by the Provider API to verify
         that the service is running correctly.
-        Only performs the test when a static API key is provided.
+        Uses the unauthenticated /health endpoint.
         Returns:
 
             HealthResponse: A dictionary containing the health status.
         """
-        # Get the default value from the field definition
-        default_api_token = self.config.__class__.model_fields["api_token"].default
-
-        # Only perform health check if static API key is provided
-        if not self.config.api_token or self.config.api_token == default_api_token:
-            return HealthResponse(status=HealthStatus.OK)
-
         try:
-            _ = [m async for m in self.client.models.list()]  # Ensure the client is initialized
-            return HealthResponse(status=HealthStatus.OK)
+            base_url = self.get_base_url()
+            health_url = urljoin(base_url, "health")
+
+            async with httpx.AsyncClient() as client:
+                response = await client.get(health_url)
+                response.raise_for_status()
+                return HealthResponse(status=HealthStatus.OK)
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")
 
