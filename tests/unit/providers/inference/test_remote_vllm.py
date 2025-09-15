@@ -573,7 +573,7 @@ async def test_health_status_success(vllm_inference_adapter):
 
         # Create mock client instance
         mock_client_instance = MagicMock()
-        mock_client_instance.get.return_value = mock_response
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
         # Call the health method
@@ -623,7 +623,7 @@ async def test_health_status_no_static_api_key(vllm_inference_adapter):
 
         # Create mock client instance
         mock_client_instance = MagicMock()
-        mock_client_instance.get.return_value = mock_response
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
         mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
         # Call the health method
@@ -676,6 +676,50 @@ async def test_openai_chat_completion_is_async(vllm_inference_adapter):
 
         assert mock_create_client.call_count == 4  # no cheating
         assert total_time < (sleep_time * 2), f"Total time taken: {total_time}s exceeded expected max"
+
+
+async def test_should_refresh_models():
+    """
+    Test the should_refresh_models method with different api_token configurations.
+
+    This test verifies that:
+    1. When api_token is None or empty, should_refresh_models returns False
+    2. When api_token is "fake" (default), should_refresh_models returns False
+    3. When api_token is a real token and refresh_models is True, should_refresh_models returns True
+    4. When api_token is a real token and refresh_models is False, should_refresh_models returns False
+    """
+
+    # Test case 1: api_token is None, refresh_models is True
+    config1 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token=None, refresh_models=True)
+    adapter1 = VLLMInferenceAdapter(config1)
+    result1 = await adapter1.should_refresh_models()
+    assert result1 is False, "should_refresh_models should return False when api_token is None"
+
+    # Test case 2: api_token is empty string, refresh_models is True
+    config2 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="", refresh_models=True)
+    adapter2 = VLLMInferenceAdapter(config2)
+    result2 = await adapter2.should_refresh_models()
+    assert result2 is False, "should_refresh_models should return False when api_token is empty"
+
+    # Test case 3: api_token is "fake" (default), refresh_models is True
+    config3 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="fake", refresh_models=True)
+    adapter3 = VLLMInferenceAdapter(config3)
+    result3 = await adapter3.should_refresh_models()
+    assert result3 is False, "should_refresh_models should return False when api_token is 'fake'"
+
+    # Test case 4: api_token is real token, refresh_models is True
+    config4 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="real-token-123", refresh_models=True)
+    adapter4 = VLLMInferenceAdapter(config4)
+    result4 = await adapter4.should_refresh_models()
+    assert result4 is True, "should_refresh_models should return True when api_token is real and refresh_models is True"
+
+    # Test case 5: api_token is real token, refresh_models is False
+    config5 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="real-token-456", refresh_models=False)
+    adapter5 = VLLMInferenceAdapter(config5)
+    result5 = await adapter5.should_refresh_models()
+    assert result5 is False, (
+        "should_refresh_models should return False when api_token is real but refresh_models is False"
+    )
 
 
 async def test_provider_data_var_context_propagation(vllm_inference_adapter):
