@@ -9,7 +9,7 @@ import time
 from typing import Any
 
 from openai import NOT_GIVEN
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.apis.conversations.conversations import (
     Conversation,
@@ -106,7 +106,10 @@ class ConversationServiceImpl(Conversations):
         )
 
         conversation = Conversation(
-            id=conversation_id, created_at=created_at, items=request.items or [], metadata=request.metadata
+            id=conversation_id,
+            created_at=created_at,
+            metadata=request.metadata,
+            object="conversation",
         )
 
         logger.info(f"Created conversation {conversation_id}")
@@ -121,13 +124,7 @@ class ConversationServiceImpl(Conversations):
         if record is None:
             raise ValueError(f"Conversation {conversation_id} not found")
 
-        items = []
-        for item_data in record.get("items", []):
-            items.append(item_data)
-
-        return Conversation(
-            id=record["id"], created_at=record["created_at"], items=items, metadata=record.get("metadata")
-        )
+        return Conversation(id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"))
 
     async def update_conversation(self, conversation_id: str, request: ConversationUpdateRequest) -> Conversation:
         """Update a conversation's metadata with the given ID"""
@@ -163,7 +160,7 @@ class ConversationServiceImpl(Conversations):
 
     async def create(self, conversation_id: str, request: ConversationItemCreateRequest) -> ConversationItemList:
         """Create items in the conversation."""
-        conversation = await self._get_validated_conversation(conversation_id)
+        await self._get_validated_conversation(conversation_id)
 
         created_items = []
 
@@ -183,24 +180,22 @@ class ConversationServiceImpl(Conversations):
 
             created_items.append(item_dict)
 
-        conversation_items_json = []
-        for item in conversation.items:
-            if hasattr(item, "model_dump"):
-                conversation_items_json.append(item.model_dump())
-            elif isinstance(item, dict):
-                conversation_items_json.append(item)
-            else:
-                # For any other type, convert to dict if possible
-                conversation_items_json.append(dict(item) if hasattr(item, "__dict__") else {})
+        # Get existing items from database
+        record = await self.sql_store.fetch_one(
+            table="openai_conversations", policy=self.policy, where={"id": conversation_id}
+        )
+        existing_items = record.get("items", []) if record else []
 
-        updated_items = conversation_items_json + created_items
+        updated_items = existing_items + created_items
         await self.sql_store.update(
             table="openai_conversations", data={"items": updated_items}, where={"id": conversation_id}
         )
 
         logger.info(f"Created {len(created_items)} items in conversation {conversation_id}")
-        # Return the original items from the request, which are already OpenAIResponseInput types
-        response_items = request.items
+
+        # Convert created items (dicts) to proper ConversationItem types
+        adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
+        response_items: list[ConversationItem] = [adapter.validate_python(item_dict) for item_dict in created_items]
 
         return ConversationItemList(
             data=response_items,
@@ -216,25 +211,24 @@ class ConversationServiceImpl(Conversations):
         if not item_id:
             raise ValueError(f"Expected a non-empty value for `item_id` but received {item_id!r}")
 
-        conversation = await self._get_validated_conversation(conversation_id)
+        record = await self.sql_store.fetch_one(
+            table="openai_conversations", policy=self.policy, where={"id": conversation_id}
+        )
+        items = record.get("items", []) if record else []
 
-        for item in conversation.items:
+        for item in items:
             if isinstance(item, dict) and item.get("id") == item_id:
-                return ConversationItem(
-                    id=item_id, conversation_id=conversation_id, created_at=conversation.created_at, content=item
-                )
-            elif hasattr(item, "id") and item.id == item_id:
-                return ConversationItem(
-                    id=item_id, conversation_id=conversation_id, created_at=conversation.created_at, content=item
-                )
+                adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
+                return adapter.validate_python(item)
 
         raise ValueError(f"Item {item_id} not found in conversation {conversation_id}")
 
     async def list(self, conversation_id: str, after=NOT_GIVEN, include=NOT_GIVEN, limit=NOT_GIVEN, order=NOT_GIVEN):
         """List items in the conversation."""
-        conversation = await self._get_validated_conversation(conversation_id)
-
-        items = conversation.items or []
+        record = await self.sql_store.fetch_one(
+            table="openai_conversations", policy=self.policy, where={"id": conversation_id}
+        )
+        items = record.get("items", []) if record else []
 
         if order != NOT_GIVEN and order == "asc":
             items = items
@@ -247,19 +241,26 @@ class ConversationServiceImpl(Conversations):
 
         items = items[:actual_limit]
 
-        response_items = []
-        for item in items:
-            # Items can be either dicts (stored in DB) or OpenAI objects (in memory)
-            response_items.append(item)
+        # Items from database are stored as dicts, convert them to ConversationItem
+        adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
+        response_items: list[ConversationItem] = [
+            adapter.validate_python(item) if isinstance(item, dict) else item for item in items
+        ]
+
+        # Get first and last IDs safely
+        first_id = None
+        last_id = None
+        if items:
+            first_item = items[0]
+            last_item = items[-1]
+
+            first_id = first_item.get("id") if isinstance(first_item, dict) else getattr(first_item, "id", None)
+            last_id = last_item.get("id") if isinstance(last_item, dict) else getattr(last_item, "id", None)
 
         return ConversationItemList(
             data=response_items,
-            first_id=items[0].get("id")
-            if items and isinstance(items[0], dict)
-            else (getattr(items[0], "id", None) if items else None),
-            last_id=items[-1].get("id")
-            if items and isinstance(items[-1], dict)
-            else (getattr(items[-1], "id", None) if items else None),
+            first_id=first_id,
+            last_id=last_id,
             has_more=False,
         )
 
@@ -270,12 +271,17 @@ class ConversationServiceImpl(Conversations):
         if not item_id:
             raise ValueError(f"Expected a non-empty value for `item_id` but received {item_id!r}")
 
-        conversation = await self._get_validated_conversation(conversation_id)
+        _ = await self._get_validated_conversation(conversation_id)  # executes validation
+
+        record = await self.sql_store.fetch_one(
+            table="openai_conversations", policy=self.policy, where={"id": conversation_id}
+        )
+        items = record.get("items", []) if record else []
 
         updated_items = []
         item_found = False
 
-        for item in conversation.items:
+        for item in items:
             current_item_id = item.get("id") if isinstance(item, dict) else getattr(item, "id", None)
             if current_item_id != item_id:
                 updated_items.append(item)

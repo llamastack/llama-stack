@@ -8,6 +8,9 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from openai.types.conversations.conversation import Conversation as OpenAIConversation
+from openai.types.conversations.conversation_item import ConversationItem as OpenAIConversationItem
+from pydantic import TypeAdapter
 
 from llama_stack.apis.conversations.conversations import (
     ConversationCreateRequest,
@@ -58,7 +61,15 @@ async def test_conversation_items(service):
     conversation = await service.create_conversation(ConversationCreateRequest())
 
     items_request = ConversationItemCreateRequest(
-        items=[{"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Hello"}]}]
+        items=[
+            {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": "Hello"}],
+                "id": "msg_test123",
+                "status": "completed",
+            }
+        ]
     )
     item_list = await service.create(conversation.id, items_request)
 
@@ -79,16 +90,26 @@ async def test_empty_parameter_validation(service):
         await service.retrieve("", "item_123")
 
 
-async def test_openai_compatibility(service):
-    request = ConversationCreateRequest(metadata={"key": "value"})
+async def test_openai_type_compatibility(service):
+    request = ConversationCreateRequest(metadata={"test": "value"})
     conversation = await service.create_conversation(request)
 
+    conversation_dict = conversation.model_dump()
+    openai_conversation = OpenAIConversation.model_validate(conversation_dict)
+
     for attr in ["id", "object", "created_at", "metadata"]:
-        assert hasattr(conversation, attr)
-    assert conversation.object == "conversation"
+        assert getattr(openai_conversation, attr) == getattr(conversation, attr)
 
     items_request = ConversationItemCreateRequest(
-        items=[{"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Test"}]}]
+        items=[
+            {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": "Hello"}],
+                "id": "msg_test456",
+                "status": "completed",
+            }
+        ]
     )
     item_list = await service.create(conversation.id, items_request)
 
@@ -96,8 +117,9 @@ async def test_openai_compatibility(service):
         assert hasattr(item_list, attr)
     assert item_list.object == "list"
 
-    message = item_list.data[0]
-    for attr in ["type", "role", "status", "id", "content"]:
-        assert hasattr(message, attr)
-    assert message.type == "message"
-    assert message.id.startswith("msg_")
+    items = await service.list(conversation.id)
+    item = await service.retrieve(conversation.id, items.data[0].id)
+    item_dict = item.model_dump()
+
+    openai_item_adapter = TypeAdapter(OpenAIConversationItem)
+    openai_item_adapter.validate_python(item_dict)

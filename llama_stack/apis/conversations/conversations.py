@@ -4,25 +4,107 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import Annotated, Literal, Protocol, runtime_checkable
 
 from openai import NOT_GIVEN
 from openai._types import NotGiven
 from openai.types.responses.response_includable import ResponseIncludable
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.agents.openai_responses import OpenAIResponseInput
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 Metadata = dict[str, str]
+
+# create our own OpenAI-compatible types to avoid schema generation
+# issues with external types that have ClassVar imports not available in our context
+
+
+@json_schema_type
+class Conversation(BaseModel):
+    """Conversation object - compatible with OpenAI Conversation type."""
+
+    id: str = Field(..., description="conversation identifier")
+    object: str = Field(default="conversation", description="object type")
+    created_at: int = Field(..., description="timestamp when the conversation was created")
+    metadata: Metadata | None = Field(default=None, description="conversation metadata")
+
+
+@json_schema_type
+class ConversationMessage(BaseModel):
+    """Message item for conversations - compatible with OpenAI Message type."""
+
+    id: str = Field(..., description="unique identifier for this message")
+    content: list[dict] = Field(..., description="message content")
+    role: str = Field(..., description="message role")
+    status: str = Field(..., description="message status")
+    type: Literal["message"] = "message"
+
+
+@json_schema_type
+class ConversationFunctionCall(BaseModel):
+    """Function tool call item - compatible with OpenAI ResponseFunctionToolCallItem."""
+
+    arguments: str = Field(..., description="arguments for the function call")
+    call_id: str = Field(..., description="unique identifier for the function call")
+    name: str = Field(..., description="name of the function to call")
+    type: Literal["function_call"] = "function_call"
+    id: str = Field(..., description="unique identifier for this item")
+    status: str | None = None
+
+
+@json_schema_type
+class ConversationFunctionCallOutput(BaseModel):
+    """Function call output item - compatible with OpenAI ResponseFunctionToolCallOutputItem."""
+
+    id: str = Field(..., description="unique identifier for this item")
+    call_id: str = Field(..., description="identifier of the function call this responds to")
+    output: str = Field(..., description="output from the function call")
+    type: Literal["function_call_output"] = "function_call_output"
+    status: str | None = None
+
+
+@json_schema_type
+class ConversationReasoning(BaseModel):
+    """Reasoning item - compatible with OpenAI ResponseReasoningItem."""
+
+    id: str = Field(..., description="unique identifier for this item")
+    summary: list[dict] = Field(..., description="summary of the reasoning")
+    type: Literal["reasoning"] = "reasoning"
+    content: list[dict] | None = None
+    encrypted_content: str | None = None
+    status: str | None = None
+
+
+# define ConversationItem union with discriminator for proper validation
+ConversationItem = Annotated[
+    ConversationMessage | ConversationFunctionCall | ConversationFunctionCallOutput | ConversationReasoning,
+    Field(discriminator="type"),
+]
+
+
+# ID prefix mapping for different conversation item types
+CONVERSATION_ITEM_ID_PREFIXES = {
+    "message": "msg_",
+    "function_call": "call_",
+    "function_call_output": "out_",
+    "reasoning": "reasoning_",
+}
+
+
+def generate_conversation_item_id(item_type: str) -> str:
+    """Generate a unique ID for a conversation item with appropriate prefix."""
+    import uuid
+
+    prefix = CONVERSATION_ITEM_ID_PREFIXES.get(item_type, "item_")
+    return f"{prefix}{uuid.uuid4().hex}"
 
 
 @json_schema_type
 class ConversationCreateRequest(BaseModel):
     """Request body for creating a conversation."""
 
-    items: list[OpenAIResponseInput] | None = Field(
+    items: list[ConversationItem] | None = Field(
         default=[],
         description="Initial items to include in the conversation context. You may add up to 20 items at a time.",
         max_length=20,
@@ -44,17 +126,6 @@ class ConversationUpdateRequest(BaseModel):
 
 
 @json_schema_type
-class Conversation(BaseModel):
-    """Conversation object."""
-
-    id: str = Field(..., description="The conversation identifier")
-    object: str = Field(default="conversation", description="Object type")
-    created_at: int = Field(..., description="Timestamp when the conversation was created")
-    items: list[OpenAIResponseInput] = Field(default=[], description="Items in the conversation")
-    metadata: Metadata | None = Field(default=None, description="Conversation metadata")
-
-
-@json_schema_type
 class ConversationDeletedResource(BaseModel):
     """Response for deleted conversation."""
 
@@ -64,21 +135,10 @@ class ConversationDeletedResource(BaseModel):
 
 
 @json_schema_type
-class ConversationItem(BaseModel):
-    """A conversation item with metadata wrapper around OpenAIResponseInput."""
-
-    id: str = Field(..., description="The item identifier")
-    object: str = Field(default="conversation.item", description="Object type")
-    created_at: int = Field(..., description="Timestamp when the item was created")
-    conversation_id: str = Field(..., description="The conversation this item belongs to")
-    content: OpenAIResponseInput = Field(..., description="The actual item content")
-
-
-@json_schema_type
 class ConversationItemCreateRequest(BaseModel):
     """Request body for creating conversation items."""
 
-    items: list[OpenAIResponseInput] = Field(
+    items: list[ConversationItem] = Field(
         ...,
         description="Items to include in the conversation context. You may add up to 20 items at a time.",
         max_length=20,
@@ -90,7 +150,7 @@ class ConversationItemList(BaseModel):
     """List of conversation items with pagination."""
 
     object: str = Field(default="list", description="Object type")
-    data: list[OpenAIResponseInput] = Field(..., description="List of conversation items")
+    data: list[ConversationItem] = Field(..., description="List of conversation items")
     first_id: str | None = Field(default=None, description="The ID of the first item in the list")
     last_id: str | None = Field(default=None, description="The ID of the last item in the list")
     has_more: bool = Field(default=False, description="Whether there are more items available")

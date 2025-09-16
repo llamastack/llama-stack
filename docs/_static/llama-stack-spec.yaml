@@ -723,7 +723,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConversationItem'
+                oneOf:
+                  - $ref: '#/components/schemas/ConversationMessage'
+                  - $ref: '#/components/schemas/ConversationFunctionCall'
+                  - $ref: '#/components/schemas/ConversationFunctionCallOutput'
+                  - $ref: '#/components/schemas/ConversationReasoning'
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    message: '#/components/schemas/ConversationMessage'
+                    function_call: '#/components/schemas/ConversationFunctionCall'
+                    function_call_output: '#/components/schemas/ConversationFunctionCallOutput'
+                    reasoning: '#/components/schemas/ConversationReasoning'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -5319,147 +5330,38 @@ components:
       title: CompletionResponseStreamChunk
       description: >-
         A chunk of a streamed completion response.
-    ConversationItemCreateRequest:
+    ConversationFunctionCall:
       type: object
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OpenAIResponseInput'
+        arguments:
+          type: string
+        call_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          const: function_call
+          default: function_call
+        id:
+          type: string
+        status:
+          type: string
       additionalProperties: false
       required:
-        - items
-      title: ConversationItemCreateRequest
+        - arguments
+        - call_id
+        - name
+        - type
+        - id
+      title: ConversationFunctionCall
       description: >-
-        Request body for creating conversation items.
-    OpenAIResponseAnnotationCitation:
+        Function tool call item - compatible with OpenAI ResponseFunctionToolCallItem.
+    ConversationFunctionCallOutput:
       type: object
       properties:
-        type:
+        id:
           type: string
-          const: url_citation
-          default: url_citation
-          description: >-
-            Annotation type identifier, always "url_citation"
-        end_index:
-          type: integer
-          description: >-
-            End position of the citation span in the content
-        start_index:
-          type: integer
-          description: >-
-            Start position of the citation span in the content
-        title:
-          type: string
-          description: Title of the referenced web resource
-        url:
-          type: string
-          description: URL of the referenced web resource
-      additionalProperties: false
-      required:
-        - type
-        - end_index
-        - start_index
-        - title
-        - url
-      title: OpenAIResponseAnnotationCitation
-      description: >-
-        URL citation annotation for referencing external web resources.
-    "OpenAIResponseAnnotationContainerFileCitation":
-      type: object
-      properties:
-        type:
-          type: string
-          const: container_file_citation
-          default: container_file_citation
-        container_id:
-          type: string
-        end_index:
-          type: integer
-        file_id:
-          type: string
-        filename:
-          type: string
-        start_index:
-          type: integer
-      additionalProperties: false
-      required:
-        - type
-        - container_id
-        - end_index
-        - file_id
-        - filename
-        - start_index
-      title: >-
-        OpenAIResponseAnnotationContainerFileCitation
-    OpenAIResponseAnnotationFileCitation:
-      type: object
-      properties:
-        type:
-          type: string
-          const: file_citation
-          default: file_citation
-          description: >-
-            Annotation type identifier, always "file_citation"
-        file_id:
-          type: string
-          description: Unique identifier of the referenced file
-        filename:
-          type: string
-          description: Name of the referenced file
-        index:
-          type: integer
-          description: >-
-            Position index of the citation within the content
-      additionalProperties: false
-      required:
-        - type
-        - file_id
-        - filename
-        - index
-      title: OpenAIResponseAnnotationFileCitation
-      description: >-
-        File citation annotation for referencing specific files in response content.
-    OpenAIResponseAnnotationFilePath:
-      type: object
-      properties:
-        type:
-          type: string
-          const: file_path
-          default: file_path
-        file_id:
-          type: string
-        index:
-          type: integer
-      additionalProperties: false
-      required:
-        - type
-        - file_id
-        - index
-      title: OpenAIResponseAnnotationFilePath
-    OpenAIResponseAnnotations:
-      oneOf:
-        - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-        - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
-        - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-        - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-      discriminator:
-        propertyName: type
-        mapping:
-          file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-          url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
-          container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-          file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-    OpenAIResponseInput:
-      oneOf:
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-        - $ref: '#/components/schemas/OpenAIResponseMessage'
-    "OpenAIResponseInputFunctionToolCallOutput":
-      type: object
-      properties:
         call_id:
           type: string
         output:
@@ -5468,275 +5370,118 @@ components:
           type: string
           const: function_call_output
           default: function_call_output
-        id:
-          type: string
         status:
           type: string
       additionalProperties: false
       required:
+        - id
         - call_id
         - output
         - type
-      title: >-
-        OpenAIResponseInputFunctionToolCallOutput
+      title: ConversationFunctionCallOutput
       description: >-
-        This represents the output of a function call that gets passed back to the
-        model.
-    OpenAIResponseInputMessageContent:
-      oneOf:
-        - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
-        - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
-      discriminator:
-        propertyName: type
-        mapping:
-          input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
-          input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
-    OpenAIResponseInputMessageContentImage:
+        Function call output item - compatible with OpenAI ResponseFunctionToolCallOutputItem.
+    ConversationItemCreateRequest:
       type: object
       properties:
-        detail:
-          oneOf:
-            - type: string
-              const: low
-            - type: string
-              const: high
-            - type: string
-              const: auto
-          default: auto
-          description: >-
-            Level of detail for image processing, can be "low", "high", or "auto"
-        type:
-          type: string
-          const: input_image
-          default: input_image
-          description: >-
-            Content type identifier, always "input_image"
-        image_url:
-          type: string
-          description: (Optional) URL of the image content
+        items:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/ConversationMessage'
+              - $ref: '#/components/schemas/ConversationFunctionCall'
+              - $ref: '#/components/schemas/ConversationFunctionCallOutput'
+              - $ref: '#/components/schemas/ConversationReasoning'
+            discriminator:
+              propertyName: type
+              mapping:
+                message: '#/components/schemas/ConversationMessage'
+                function_call: '#/components/schemas/ConversationFunctionCall'
+                function_call_output: '#/components/schemas/ConversationFunctionCallOutput'
+                reasoning: '#/components/schemas/ConversationReasoning'
       additionalProperties: false
       required:
-        - detail
-        - type
-      title: OpenAIResponseInputMessageContentImage
+        - items
+      title: ConversationItemCreateRequest
       description: >-
-        Image content for input messages in OpenAI response format.
-    OpenAIResponseInputMessageContentText:
+        Request body for creating conversation items.
+    ConversationMessage:
       type: object
       properties:
-        text:
+        id:
           type: string
-          description: The text content of the input message
-        type:
-          type: string
-          const: input_text
-          default: input_text
-          description: >-
-            Content type identifier, always "input_text"
-      additionalProperties: false
-      required:
-        - text
-        - type
-      title: OpenAIResponseInputMessageContentText
-      description: >-
-        Text content for input messages in OpenAI response format.
-    OpenAIResponseMessage:
-      type: object
-      properties:
         content:
-          oneOf:
-            - type: string
-            - type: array
-              items:
-                $ref: '#/components/schemas/OpenAIResponseInputMessageContent'
-            - type: array
-              items:
-                $ref: '#/components/schemas/OpenAIResponseOutputMessageContent'
+          type: array
+          items:
+            type: object
+            title: dict
+            description: >-
+              dict() -> new empty dictionary dict(mapping) -> new dictionary initialized
+              from a mapping object's     (key, value) pairs dict(iterable) -> new
+              dictionary initialized as if via:     d = {}     for k, v in iterable:         d[k]
+              = v dict(**kwargs) -> new dictionary initialized with the name=value
+              pairs     in the keyword argument list.  For example:  dict(one=1, two=2)
         role:
-          oneOf:
-            - type: string
-              const: system
-            - type: string
-              const: developer
-            - type: string
-              const: user
-            - type: string
-              const: assistant
+          type: string
+        status:
+          type: string
         type:
           type: string
           const: message
           default: message
-        id:
-          type: string
-        status:
-          type: string
       additionalProperties: false
       required:
+        - id
         - content
         - role
+        - status
         - type
-      title: OpenAIResponseMessage
+      title: ConversationMessage
       description: >-
-        Corresponds to the various Message types in the Responses API. They are all
-        under one type because the Responses API gives them all the same "type" value,
-        and there is no way to tell them apart in certain scenarios.
-    OpenAIResponseOutputMessageContent:
-      type: object
-      properties:
-        text:
-          type: string
-        type:
-          type: string
-          const: output_text
-          default: output_text
-        annotations:
-          type: array
-          items:
-            $ref: '#/components/schemas/OpenAIResponseAnnotations'
-      additionalProperties: false
-      required:
-        - text
-        - type
-        - annotations
-      title: >-
-        OpenAIResponseOutputMessageContentOutputText
-    "OpenAIResponseOutputMessageFileSearchToolCall":
+        Message item for conversations - compatible with OpenAI Message type.
+    ConversationReasoning:
       type: object
       properties:
         id:
           type: string
-          description: Unique identifier for this tool call
-        queries:
-          type: array
-          items:
-            type: string
-          description: List of search queries executed
-        status:
-          type: string
-          description: >-
-            Current status of the file search operation
-        type:
-          type: string
-          const: file_search_call
-          default: file_search_call
-          description: >-
-            Tool call type identifier, always "file_search_call"
-        results:
+        summary:
           type: array
           items:
             type: object
-            properties:
-              attributes:
-                type: object
-                additionalProperties:
-                  oneOf:
-                    - type: 'null'
-                    - type: boolean
-                    - type: number
-                    - type: string
-                    - type: array
-                    - type: object
-                description: >-
-                  (Optional) Key-value attributes associated with the file
-              file_id:
-                type: string
-                description: >-
-                  Unique identifier of the file containing the result
-              filename:
-                type: string
-                description: Name of the file containing the result
-              score:
-                type: number
-                description: >-
-                  Relevance score for this search result (between 0 and 1)
-              text:
-                type: string
-                description: Text content of the search result
-            additionalProperties: false
-            required:
-              - attributes
-              - file_id
-              - filename
-              - score
-              - text
-            title: >-
-              OpenAIResponseOutputMessageFileSearchToolCallResults
+            title: dict
             description: >-
-              Search results returned by the file search operation.
-          description: >-
-            (Optional) Search results returned by the file search operation
+              dict() -> new empty dictionary dict(mapping) -> new dictionary initialized
+              from a mapping object's     (key, value) pairs dict(iterable) -> new
+              dictionary initialized as if via:     d = {}     for k, v in iterable:         d[k]
+              = v dict(**kwargs) -> new dictionary initialized with the name=value
+              pairs     in the keyword argument list.  For example:  dict(one=1, two=2)
+        type:
+          type: string
+          const: reasoning
+          default: reasoning
+        content:
+          type: array
+          items:
+            type: object
+            title: dict
+            description: >-
+              dict() -> new empty dictionary dict(mapping) -> new dictionary initialized
+              from a mapping object's     (key, value) pairs dict(iterable) -> new
+              dictionary initialized as if via:     d = {}     for k, v in iterable:         d[k]
+              = v dict(**kwargs) -> new dictionary initialized with the name=value
+              pairs     in the keyword argument list.  For example:  dict(one=1, two=2)
+        encrypted_content:
+          type: string
+        status:
+          type: string
       additionalProperties: false
       required:
         - id
-        - queries
-        - status
+        - summary
         - type
-      title: >-
-        OpenAIResponseOutputMessageFileSearchToolCall
+      title: ConversationReasoning
       description: >-
-        File search tool call output message for OpenAI responses.
-    "OpenAIResponseOutputMessageFunctionToolCall":
-      type: object
-      properties:
-        call_id:
-          type: string
-          description: Unique identifier for the function call
-        name:
-          type: string
-          description: Name of the function being called
-        arguments:
-          type: string
-          description: >-
-            JSON string containing the function arguments
-        type:
-          type: string
-          const: function_call
-          default: function_call
-          description: >-
-            Tool call type identifier, always "function_call"
-        id:
-          type: string
-          description: >-
-            (Optional) Additional identifier for the tool call
-        status:
-          type: string
-          description: >-
-            (Optional) Current status of the function call execution
-      additionalProperties: false
-      required:
-        - call_id
-        - name
-        - arguments
-        - type
-      title: >-
-        OpenAIResponseOutputMessageFunctionToolCall
-      description: >-
-        Function tool call output message for OpenAI responses.
-    "OpenAIResponseOutputMessageWebSearchToolCall":
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier for this tool call
-        status:
-          type: string
-          description: >-
-            Current status of the web search operation
-        type:
-          type: string
-          const: web_search_call
-          default: web_search_call
-          description: >-
-            Tool call type identifier, always "web_search_call"
-      additionalProperties: false
-      required:
-        - id
-        - status
-        - type
-      title: >-
-        OpenAIResponseOutputMessageWebSearchToolCall
-      description: >-
-        Web search tool call output message for OpenAI responses.
+        Reasoning item - compatible with OpenAI ResponseReasoningItem.
     CreateRequest:
       type: object
       properties:
@@ -5756,7 +5501,18 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/OpenAIResponseInput'
+            oneOf:
+              - $ref: '#/components/schemas/ConversationMessage'
+              - $ref: '#/components/schemas/ConversationFunctionCall'
+              - $ref: '#/components/schemas/ConversationFunctionCallOutput'
+              - $ref: '#/components/schemas/ConversationReasoning'
+            discriminator:
+              propertyName: type
+              mapping:
+                message: '#/components/schemas/ConversationMessage'
+                function_call: '#/components/schemas/ConversationFunctionCall'
+                function_call_output: '#/components/schemas/ConversationFunctionCallOutput'
+                reasoning: '#/components/schemas/ConversationReasoning'
         first_id:
           type: string
         last_id:
@@ -6636,7 +6392,18 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OpenAIResponseInput'
+            oneOf:
+              - $ref: '#/components/schemas/ConversationMessage'
+              - $ref: '#/components/schemas/ConversationFunctionCall'
+              - $ref: '#/components/schemas/ConversationFunctionCallOutput'
+              - $ref: '#/components/schemas/ConversationReasoning'
+            discriminator:
+              propertyName: type
+              mapping:
+                message: '#/components/schemas/ConversationMessage'
+                function_call: '#/components/schemas/ConversationFunctionCall'
+                function_call_output: '#/components/schemas/ConversationFunctionCallOutput'
+                reasoning: '#/components/schemas/ConversationReasoning'
         metadata:
           type: object
           additionalProperties:
@@ -6665,10 +6432,6 @@ components:
           default: conversation
         created_at:
           type: integer
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OpenAIResponseInput'
         metadata:
           type: object
           additionalProperties:
@@ -6678,9 +6441,217 @@ components:
         - id
         - object
         - created_at
-        - items
       title: Conversation
-      description: Conversation object.
+      description: >-
+        Conversation object - compatible with OpenAI Conversation type.
+    OpenAIResponseAnnotationCitation:
+      type: object
+      properties:
+        type:
+          type: string
+          const: url_citation
+          default: url_citation
+          description: >-
+            Annotation type identifier, always "url_citation"
+        end_index:
+          type: integer
+          description: >-
+            End position of the citation span in the content
+        start_index:
+          type: integer
+          description: >-
+            Start position of the citation span in the content
+        title:
+          type: string
+          description: Title of the referenced web resource
+        url:
+          type: string
+          description: URL of the referenced web resource
+      additionalProperties: false
+      required:
+        - type
+        - end_index
+        - start_index
+        - title
+        - url
+      title: OpenAIResponseAnnotationCitation
+      description: >-
+        URL citation annotation for referencing external web resources.
+    "OpenAIResponseAnnotationContainerFileCitation":
+      type: object
+      properties:
+        type:
+          type: string
+          const: container_file_citation
+          default: container_file_citation
+        container_id:
+          type: string
+        end_index:
+          type: integer
+        file_id:
+          type: string
+        filename:
+          type: string
+        start_index:
+          type: integer
+      additionalProperties: false
+      required:
+        - type
+        - container_id
+        - end_index
+        - file_id
+        - filename
+        - start_index
+      title: >-
+        OpenAIResponseAnnotationContainerFileCitation
+    OpenAIResponseAnnotationFileCitation:
+      type: object
+      properties:
+        type:
+          type: string
+          const: file_citation
+          default: file_citation
+          description: >-
+            Annotation type identifier, always "file_citation"
+        file_id:
+          type: string
+          description: Unique identifier of the referenced file
+        filename:
+          type: string
+          description: Name of the referenced file
+        index:
+          type: integer
+          description: >-
+            Position index of the citation within the content
+      additionalProperties: false
+      required:
+        - type
+        - file_id
+        - filename
+        - index
+      title: OpenAIResponseAnnotationFileCitation
+      description: >-
+        File citation annotation for referencing specific files in response content.
+    OpenAIResponseAnnotationFilePath:
+      type: object
+      properties:
+        type:
+          type: string
+          const: file_path
+          default: file_path
+        file_id:
+          type: string
+        index:
+          type: integer
+      additionalProperties: false
+      required:
+        - type
+        - file_id
+        - index
+      title: OpenAIResponseAnnotationFilePath
+    OpenAIResponseAnnotations:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+      discriminator:
+        propertyName: type
+        mapping:
+          file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+          url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+          container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+          file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+    OpenAIResponseInput:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+        - $ref: '#/components/schemas/OpenAIResponseMessage'
+    "OpenAIResponseInputFunctionToolCallOutput":
+      type: object
+      properties:
+        call_id:
+          type: string
+        output:
+          type: string
+        type:
+          type: string
+          const: function_call_output
+          default: function_call_output
+        id:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+      required:
+        - call_id
+        - output
+        - type
+      title: >-
+        OpenAIResponseInputFunctionToolCallOutput
+      description: >-
+        This represents the output of a function call that gets passed back to the
+        model.
+    OpenAIResponseInputMessageContent:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
+        - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+      discriminator:
+        propertyName: type
+        mapping:
+          input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
+          input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+    OpenAIResponseInputMessageContentImage:
+      type: object
+      properties:
+        detail:
+          oneOf:
+            - type: string
+              const: low
+            - type: string
+              const: high
+            - type: string
+              const: auto
+          default: auto
+          description: >-
+            Level of detail for image processing, can be "low", "high", or "auto"
+        type:
+          type: string
+          const: input_image
+          default: input_image
+          description: >-
+            Content type identifier, always "input_image"
+        image_url:
+          type: string
+          description: (Optional) URL of the image content
+      additionalProperties: false
+      required:
+        - detail
+        - type
+      title: OpenAIResponseInputMessageContentImage
+      description: >-
+        Image content for input messages in OpenAI response format.
+    OpenAIResponseInputMessageContentText:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The text content of the input message
+        type:
+          type: string
+          const: input_text
+          default: input_text
+          description: >-
+            Content type identifier, always "input_text"
+      additionalProperties: false
+      required:
+        - text
+        - type
+      title: OpenAIResponseInputMessageContentText
+      description: >-
+        Text content for input messages in OpenAI response format.
     OpenAIResponseInputTool:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
@@ -6891,6 +6862,203 @@ components:
       title: OpenAIResponseInputToolWebSearch
       description: >-
         Web search tool configuration for OpenAI response inputs.
+    OpenAIResponseMessage:
+      type: object
+      properties:
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIResponseInputMessageContent'
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIResponseOutputMessageContent'
+        role:
+          oneOf:
+            - type: string
+              const: system
+            - type: string
+              const: developer
+            - type: string
+              const: user
+            - type: string
+              const: assistant
+        type:
+          type: string
+          const: message
+          default: message
+        id:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+      required:
+        - content
+        - role
+        - type
+      title: OpenAIResponseMessage
+      description: >-
+        Corresponds to the various Message types in the Responses API. They are all
+        under one type because the Responses API gives them all the same "type" value,
+        and there is no way to tell them apart in certain scenarios.
+    OpenAIResponseOutputMessageContent:
+      type: object
+      properties:
+        text:
+          type: string
+        type:
+          type: string
+          const: output_text
+          default: output_text
+        annotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseAnnotations'
+      additionalProperties: false
+      required:
+        - text
+        - type
+        - annotations
+      title: >-
+        OpenAIResponseOutputMessageContentOutputText
+    "OpenAIResponseOutputMessageFileSearchToolCall":
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this tool call
+        queries:
+          type: array
+          items:
+            type: string
+          description: List of search queries executed
+        status:
+          type: string
+          description: >-
+            Current status of the file search operation
+        type:
+          type: string
+          const: file_search_call
+          default: file_search_call
+          description: >-
+            Tool call type identifier, always "file_search_call"
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              attributes:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: 'null'
+                    - type: boolean
+                    - type: number
+                    - type: string
+                    - type: array
+                    - type: object
+                description: >-
+                  (Optional) Key-value attributes associated with the file
+              file_id:
+                type: string
+                description: >-
+                  Unique identifier of the file containing the result
+              filename:
+                type: string
+                description: Name of the file containing the result
+              score:
+                type: number
+                description: >-
+                  Relevance score for this search result (between 0 and 1)
+              text:
+                type: string
+                description: Text content of the search result
+            additionalProperties: false
+            required:
+              - attributes
+              - file_id
+              - filename
+              - score
+              - text
+            title: >-
+              OpenAIResponseOutputMessageFileSearchToolCallResults
+            description: >-
+              Search results returned by the file search operation.
+          description: >-
+            (Optional) Search results returned by the file search operation
+      additionalProperties: false
+      required:
+        - id
+        - queries
+        - status
+        - type
+      title: >-
+        OpenAIResponseOutputMessageFileSearchToolCall
+      description: >-
+        File search tool call output message for OpenAI responses.
+    "OpenAIResponseOutputMessageFunctionToolCall":
+      type: object
+      properties:
+        call_id:
+          type: string
+          description: Unique identifier for the function call
+        name:
+          type: string
+          description: Name of the function being called
+        arguments:
+          type: string
+          description: >-
+            JSON string containing the function arguments
+        type:
+          type: string
+          const: function_call
+          default: function_call
+          description: >-
+            Tool call type identifier, always "function_call"
+        id:
+          type: string
+          description: >-
+            (Optional) Additional identifier for the tool call
+        status:
+          type: string
+          description: >-
+            (Optional) Current status of the function call execution
+      additionalProperties: false
+      required:
+        - call_id
+        - name
+        - arguments
+        - type
+      title: >-
+        OpenAIResponseOutputMessageFunctionToolCall
+      description: >-
+        Function tool call output message for OpenAI responses.
+    "OpenAIResponseOutputMessageWebSearchToolCall":
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this tool call
+        status:
+          type: string
+          description: >-
+            Current status of the web search operation
+        type:
+          type: string
+          const: web_search_call
+          default: web_search_call
+          description: >-
+            Tool call type identifier, always "web_search_call"
+      additionalProperties: false
+      required:
+        - id
+        - status
+        - type
+      title: >-
+        OpenAIResponseOutputMessageWebSearchToolCall
+      description: >-
+        Web search tool call output message for OpenAI responses.
     OpenAIResponseText:
       type: object
       properties:
@@ -13295,30 +13463,6 @@ components:
       required:
         - tool_responses
       title: ResumeAgentTurnRequest
-    ConversationItem:
-      type: object
-      properties:
-        id:
-          type: string
-        object:
-          type: string
-          default: conversation.item
-        created_at:
-          type: integer
-        conversation_id:
-          type: string
-        content:
-          $ref: '#/components/schemas/OpenAIResponseInput'
-      additionalProperties: false
-      required:
-        - id
-        - object
-        - created_at
-        - conversation_id
-        - content
-      title: ConversationItem
-      description: >-
-        A conversation item with metadata wrapper around OpenAIResponseInput.
     RunEvalRequest:
       type: object
       properties:
