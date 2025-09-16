@@ -63,6 +63,9 @@ class LlmAsJudgeScoringImpl(
     async def register_scoring_function(self, function_def: ScoringFn) -> None:
         self.llm_as_judge_fn.register_scoring_fn_def(function_def)
 
+    async def unregister_scoring_function(self, scoring_fn_id: str) -> None:
+        self.llm_as_judge_fn.unregister_scoring_fn_def(scoring_fn_id)
+
     async def score_batch(
         self,
         dataset_id: str,

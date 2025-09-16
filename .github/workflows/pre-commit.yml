@@ -47,10 +47,20 @@ jobs:
         run: npm ci
         working-directory: llama_stack/ui
 
-      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+      - name: Run pre-commit
+        id: precommit
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+        continue-on-error: true
         env:
           SKIP: no-commit-to-branch
           RUFF_OUTPUT_FORMAT: github
+
+      - name: Check pre-commit results
+        if: steps.precommit.outcome == 'failure'
+        run: |
+          echo "::error::Pre-commit hooks failed. Please run 'pre-commit run --all-files' locally and commit the fixes."
+          echo "::warning::Some pre-commit hooks failed. Check the output above for details."
+          exit 1
 
       - name: Debug
         run: |
@@ -79,17 +89,23 @@ jobs:
             echo "No changes to commit"
           fi
 
-      - name: Verify if there are any diff files after pre-commit
+      - name: Verify no uncommitted changes
         if: github.actor != 'dependabot[bot]'
         run: |
-          git diff --exit-code || (echo "There are uncommitted changes, run pre-commit locally and commit again" && exit 1)
+          if ! git diff --exit-code; then
+            echo "::error::There are uncommitted changes after pre-commit. Please run 'pre-commit run --all-files' locally and commit the fixes."
+            echo "::warning::Files with changes:"
+            git diff --name-status
+            exit 1
+          fi
 
       - name: Verify if there are any new files after pre-commit
         if: github.actor != 'dependabot[bot]'
         run: |
           unstaged_files=$(git ls-files --others --exclude-standard)
           if [ -n "$unstaged_files" ]; then
-            echo "There are uncommitted new files, run pre-commit locally and commit again"
+            echo "::error::There are new untracked files after pre-commit. Please run 'pre-commit run --all-files' locally and commit the fixes."
+            echo "::warning::New files:"
             echo "$unstaged_files"
             exit 1
           fi

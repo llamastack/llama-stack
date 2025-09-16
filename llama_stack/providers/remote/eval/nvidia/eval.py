@@ -51,17 +51,22 @@ class NVIDIAEvalImpl(
 
     async def shutdown(self) -> None: ...
 
-    async def _evaluator_get(self, path):
+    async def _evaluator_get(self, path: str):
         """Helper for making GET requests to the evaluator service."""
         response = requests.get(url=f"{self.config.evaluator_url}{path}")
         response.raise_for_status()
         return response.json()
 
-    async def _evaluator_post(self, path, data):
+    async def _evaluator_post(self, path: str, data: dict[str, Any]):
         """Helper for making POST requests to the evaluator service."""
         response = requests.post(url=f"{self.config.evaluator_url}{path}", json=data)
         response.raise_for_status()
         return response.json()
+
+    async def _evaluator_delete(self, path: str) -> None:
+        """Helper for making DELETE requests to the evaluator service."""
+        response = requests.delete(url=f"{self.config.evaluator_url}{path}")
+        response.raise_for_status()
 
     async def register_benchmark(self, task_def: Benchmark) -> None:
         """Register a benchmark as an evaluation configuration."""
@@ -74,6 +79,10 @@ class NVIDIAEvalImpl(
                 **task_def.metadata,
             },
         )
+
+    async def unregister_benchmark(self, benchmark_id: str) -> None:
+        """Unregister a benchmark evaluation configuration from NeMo Evaluator."""
+        await self._evaluator_delete(f"/v1/evaluation/configs/{DEFAULT_NAMESPACE}/{benchmark_id}")
 
     async def run_eval(
         self,

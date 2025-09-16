@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import requests
 
 
 @pytest.fixture
@@ -77,7 +78,46 @@ def test_scoring_functions_register(
     assert len(list_response) > 0
     assert any(x.identifier == sample_scoring_fn_id for x in list_response)
 
-    # TODO: add unregister api for scoring functions
+
+def test_scoring_functions_unregister(
+    llama_stack_client,
+    sample_scoring_fn_id,
+    judge_model_id,
+    sample_judge_prompt_template,
+):
+    llm_as_judge_provider = [
+        x
+        for x in llama_stack_client.providers.list()
+        if x.api == "scoring" and x.provider_type == "inline::llm-as-judge"
+    ]
+    if len(llm_as_judge_provider) == 0:
+        pytest.skip("No llm-as-judge provider found, cannot test unregister")
+
+    llm_as_judge_provider_id = llm_as_judge_provider[0].provider_id
+
+    # Register first
+    register_scoring_function(
+        llama_stack_client,
+        llm_as_judge_provider_id,
+        sample_scoring_fn_id,
+        judge_model_id,
+        sample_judge_prompt_template,
+    )
+
+    # Ensure it is present
+    list_response = llama_stack_client.scoring_functions.list()
+    assert any(x.identifier == sample_scoring_fn_id for x in list_response)
+
+    # Unregister scoring fn
+    try:
+        base_url = llama_stack_client.base_url
+    except AttributeError:
+        pytest.skip("No server base_url available; cannot test HTTP unregister in library mode")
+
+    resp = requests.delete(f"{base_url}/v1/scoring-functions/{sample_scoring_fn_id}", timeout=30)
+    assert resp.status_code in (200, 204)
+    list_after = llama_stack_client.scoring_functions.list()
+    assert all(x.identifier != sample_scoring_fn_id for x in list_after)
 
 
 @pytest.mark.parametrize("scoring_fn_id", ["basic::equality"])

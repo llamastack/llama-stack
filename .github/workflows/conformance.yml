@@ -13,11 +13,8 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened]
     paths:
-      - 'llama_stack/**'
-      - '!llama_stack/ui/**'
-      - 'tests/**'
-      - 'uv.lock'
-      - 'pyproject.toml'
+      - 'docs/_static/llama-stack-spec.yaml'
+      - 'docs/_static/llama-stack-spec.html'
       - '.github/workflows/conformance.yml' # This workflow itself
 
 concurrency:
@@ -43,10 +40,27 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
           path: 'base'
 
+      # Cache oasdiff to avoid checksum failures and speed up builds
+      - name: Cache oasdiff
+        id: cache-oasdiff
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ~/oasdiff
+          key: oasdiff-${{ runner.os }}
+
       # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
       - name: Install oasdiff
+        if: steps.cache-oasdiff.outputs.cache-hit != 'true'
         run: |
           curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
+          cp /usr/local/bin/oasdiff ~/oasdiff
+
+      # Setup cached oasdiff
+      - name: Setup cached oasdiff
+        if: steps.cache-oasdiff.outputs.cache-hit == 'true'
+        run: |
+          sudo cp ~/oasdiff /usr/local/bin/oasdiff
+          sudo chmod +x /usr/local/bin/oasdiff
 
       # Run oasdiff to detect breaking changes in the API specification
       # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
