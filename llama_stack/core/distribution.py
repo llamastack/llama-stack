@@ -70,7 +70,8 @@ def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
 
 def providable_apis() -> list[Api]:
     routing_table_apis = {x.routing_table_api for x in builtin_automatically_routed_apis()}
-    return [api for api in Api if api not in routing_table_apis and api != Api.inspect and api != Api.providers]
+    internal_apis = {Api.inspect, Api.providers, Api.prompts}
+    return [api for api in Api if api not in routing_table_apis and api not in internal_apis]
 
 
 def _load_remote_provider_spec(spec_data: dict[str, Any], api: Api) -> ProviderSpec:
