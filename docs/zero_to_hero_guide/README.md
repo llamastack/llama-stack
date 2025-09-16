@@ -9,13 +9,18 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 > If you'd prefer not to set up a local server, explore our notebook on [tool calling with the Together API](Tool_Calling101_Using_Together_Llama_Stack_Server.ipynb). This notebook will show you how to leverage together.ai's Llama Stack Server API, allowing you to get started with Llama Stack without the need for a locally built and running server.
 
 ## Table of Contents
-1. [Setup and run ollama](#setup-ollama)
-2. [Install Dependencies and Set Up Environment](#install-dependencies-and-set-up-environment)
-3. [Build, Configure, and Run Llama Stack](#build-configure-and-run-llama-stack)
-4. [Test with llama-stack-client CLI](#test-with-llama-stack-client-cli)
-5. [Test with curl](#test-with-curl)
-6. [Test with Python](#test-with-python)
-7. [Next Steps](#next-steps)
+- [Llama Stack: from Zero to Hero](#llama-stack-from-zero-to-hero)
+  - [Table of Contents](#table-of-contents)
+  - [Setup ollama](#setup-ollama)
+  - [Install Dependencies and Set Up Environment](#install-dependencies-and-set-up-environment)
+  - [Build, Configure, and Run Llama Stack](#build-configure-and-run-llama-stack)
+  - [Test with `llama-stack-client` CLI](#test-with-llama-stack-client-cli)
+  - [Test with `curl`](#test-with-curl)
+  - [Test with Python](#test-with-python)
+    - [1. Create Python Script (`test_llama_stack.py`)](#1-create-python-script-test_llama_stackpy)
+    - [2. Create a Chat Completion Request in Python](#2-create-a-chat-completion-request-in-python)
+    - [3. Run the Python Script](#3-run-the-python-script)
+  - [Next Steps](#next-steps)
 
 ---
 
@@ -242,7 +247,7 @@ This command initializes the model to interact with your local Llama Stack insta
 ## Next Steps
 
 **Explore Other Guides**: Dive deeper into specific topics by following these guides:
-- [Understanding Distribution](https://llama-stack.readthedocs.io/en/latest/concepts/index.html#distributions)
+- [Understanding Distribution](https://llamastack.github.io/latest/concepts/index.html#distributions)
 - [Inference 101](00_Inference101.ipynb)
 - [Local and Cloud Model Toggling 101](01_Local_Cloud_Inference101.ipynb)
 - [Prompt Engineering](02_Prompt_Engineering101.ipynb)
@@ -259,7 +264,7 @@ This command initializes the model to interact with your local Llama Stack insta
   - [Swift SDK](https://github.com/meta-llama/llama-stack-client-swift)
   - [Kotlin SDK](https://github.com/meta-llama/llama-stack-client-kotlin)
 
-**Advanced Configuration**: Learn how to customize your Llama Stack distribution by referring to the [Building a Llama Stack Distribution](https://llama-stack.readthedocs.io/en/latest/distributions/building_distro.html) guide.
+**Advanced Configuration**: Learn how to customize your Llama Stack distribution by referring to the [Building a Llama Stack Distribution](https://llamastack.github.io/latest/distributions/building_distro.html) guide.
 
 **Explore Example Apps**: Check out [llama-stack-apps](https://github.com/meta-llama/llama-stack-apps/tree/main/examples) for example applications built using Llama Stack.
 

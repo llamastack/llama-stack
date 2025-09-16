@@ -123,6 +123,6 @@ if [[ "$env_type" == "venv" ]]; then
     $other_args
 elif [[ "$env_type" == "container" ]]; then
     echo -e "${RED}Warning: Llama Stack no longer supports running Containers via the 'llama stack run' command.${NC}"
-    echo -e "Please refer to the documentation for more information: https://llama-stack.readthedocs.io/en/latest/distributions/building_distro.html#llama-stack-build"
+    echo -e "Please refer to the documentation for more information: https://llamastack.github.io/latest/distributions/building_distro.html#llama-stack-build"
     exit 1
 fi
