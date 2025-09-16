@@ -36,7 +36,7 @@ dependencies = [
     "prompt-toolkit",
     "python-dotenv",
     "python-jose[cryptography]",
-    "pydantic>=2",
+    "pydantic>=2.11.9",
     "rich",
     "starlette",
     "termcolor",
@@ -141,7 +141,7 @@ docs = [
     "sphinxcontrib.openapi",
     "requests",
 ]
-codegen = ["rich", "pydantic", "jinja2>=3.1.6"]
+codegen = ["rich", "pydantic>=2.11.9", "jinja2>=3.1.6"]
 benchmark = [
     "locust>=2.39.1",
 ]
