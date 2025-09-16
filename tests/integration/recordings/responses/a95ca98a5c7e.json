@@ -1,0 +1,139 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_object_namespace_list",
+            "description": "Get the list of objects in a namespace",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "the type of object"
+                },
+                "namespace": {
+                  "type": "string",
+                  "description": "the name of the namespace"
+                }
+              },
+              "required": [
+                "kind",
+                "namespace"
+              ]
+            }
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "You are a helpful assistant."
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What pods are in the namespace openshift-lightspeed?"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": ""
+            }
+          ],
+          "tool_calls": [
+            {
+              "id": "1",
+              "type": "function",
+              "function": {
+                "name": "get_object_namespace_list",
+                "arguments": "{\"kind\": \"pod\", \"namespace\": \"openshift-lightspeed\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "text",
+              "text": "the objects are pod1, pod2, pod3"
+            }
+          ]
+        }
+      ],
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-d5cabe9d26c7417e917f38c46dda9c8d",
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": null,
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-1bf7c25fc09e4e788b069b0b35c933c2",
+                  "function": {
+                    "arguments": "{\"kind\": \"pod\", \"namespace\": \"openshift-lightspeed\"}",
+                    "name": "get_object_namespace_list"
+                  },
+                  "type": "function"
+                }
+              ],
+              "reasoning_content": null
+            },
+            "stop_reason": 128008
+          }
+        ],
+        "created": 1758035967,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 30,
+          "prompt_tokens": 286,
+          "total_tokens": 316,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

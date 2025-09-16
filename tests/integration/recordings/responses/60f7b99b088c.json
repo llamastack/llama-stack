@@ -1,0 +1,47 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "prompt": "<|begin_of_text|>Complete the sentence using one word: Roses are red, violets are ",
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 50
+    },
+    "endpoint": "/v1/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-a73bb64c63234016b20617029f12f144",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "text": " blue, and the sky is _______.\n\nThe best answer is green.",
+            "stop_reason": null,
+            "prompt_logprobs": null
+          }
+        ],
+        "created": 1758035592,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 18,
+          "total_tokens": 34,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

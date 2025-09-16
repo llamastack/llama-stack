@@ -1,0 +1,93 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "prompt": "Hello, world!",
+      "stream": false,
+      "extra_body": {
+        "prompt_logprobs": 1
+      }
+    },
+    "endpoint": "/v1/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-d7904249ff244612a2ab440f8657c247",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "text": " I'm excited to be a part of this community. I've been learning about",
+            "stop_reason": null,
+            "prompt_logprobs": [
+              null,
+              {
+                "9906": {
+                  "logprob": -9.223112106323242,
+                  "rank": 466,
+                  "decoded_token": "Hello"
+                },
+                "2": {
+                  "logprob": -5.473112106323242,
+                  "rank": 1,
+                  "decoded_token": "#"
+                }
+              },
+              {
+                "11": {
+                  "logprob": -1.4462913274765015,
+                  "rank": 1,
+                  "decoded_token": ","
+                }
+              },
+              {
+                "1917": {
+                  "logprob": -5.506766319274902,
+                  "rank": 10,
+                  "decoded_token": " world"
+                },
+                "358": {
+                  "logprob": -0.4442664682865143,
+                  "rank": 1,
+                  "decoded_token": " I"
+                }
+              },
+              {
+                "0": {
+                  "logprob": -1.1048365831375122,
+                  "rank": 2,
+                  "decoded_token": "!"
+                },
+                "2268": {
+                  "logprob": -0.4798365533351898,
+                  "rank": 1,
+                  "decoded_token": "!\n\n"
+                }
+              }
+            ]
+          }
+        ],
+        "created": 1758035495,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 5,
+          "total_tokens": 21,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

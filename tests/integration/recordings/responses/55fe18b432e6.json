@@ -1,0 +1,51 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "prompt": "I am feeling really sad today.",
+      "stream": false,
+      "extra_body": {
+        "guided_choice": [
+          "joy",
+          "sadness"
+        ]
+      }
+    },
+    "endpoint": "/v1/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-b15d5862c2f54a8a9ebe83e4f19c3e0b",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "text": "sadness",
+            "stop_reason": null,
+            "prompt_logprobs": null
+          }
+        ],
+        "created": 1758035499,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 8,
+          "total_tokens": 11,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

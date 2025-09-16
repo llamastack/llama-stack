@@ -1,0 +1,78 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "prompt": "Hello, world!",
+      "stream": false,
+      "extra_body": {
+        "prompt_logprobs": 0
+      }
+    },
+    "endpoint": "/v1/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-eca3197888914854a6ed09e551908a70",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "text": " I am a simple program written in Python. Here is my code:\n```\n",
+            "stop_reason": null,
+            "prompt_logprobs": [
+              null,
+              {
+                "9906": {
+                  "logprob": -9.223112106323242,
+                  "rank": 466,
+                  "decoded_token": "Hello"
+                }
+              },
+              {
+                "11": {
+                  "logprob": -1.4462913274765015,
+                  "rank": 1,
+                  "decoded_token": ","
+                }
+              },
+              {
+                "1917": {
+                  "logprob": -5.506766319274902,
+                  "rank": 10,
+                  "decoded_token": " world"
+                }
+              },
+              {
+                "0": {
+                  "logprob": -1.1048365831375122,
+                  "rank": 2,
+                  "decoded_token": "!"
+                }
+              }
+            ]
+          }
+        ],
+        "created": 1758035876,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 5,
+          "total_tokens": 21,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

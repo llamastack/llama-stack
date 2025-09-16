@@ -1,0 +1,106 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "description": "Get the current weather",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state (both required), e.g. San Francisco, CA."
+                }
+              },
+              "required": [
+                "location"
+              ]
+            }
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "Pretend you are a weather assistant."
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What's the weather like in San Francisco, CA?"
+            }
+          ]
+        }
+      ],
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-2bc44114f02742259d92d2095037a5d6",
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": null,
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-5937b489aaa148f0b0e64126fda0a344",
+                  "function": {
+                    "arguments": "{\"location\": \"San Francisco, CA\"}",
+                    "name": "get_weather"
+                  },
+                  "type": "function"
+                }
+              ],
+              "reasoning_content": null
+            },
+            "stop_reason": 128008
+          }
+        ],
+        "created": 1758035674,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 21,
+          "prompt_tokens": 212,
+          "total_tokens": 233,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

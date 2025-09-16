@@ -1,0 +1,72 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "prompt": "<|begin_of_text|>Michael Jordan was born in 1963. He played basketball for the Chicago Bulls. He retired in 2003.Please respond in JSON format with the schema: {\"properties\": {\"name\": {\"title\": \"Name\", \"type\": \"string\"}, \"year_born\": {\"title\": \"Year Born\", \"type\": \"string\"}, \"year_retired\": {\"title\": \"Year Retired\", \"type\": \"string\"}}, \"required\": [\"name\", \"year_born\", \"year_retired\"], \"title\": \"AnswerFormat\", \"type\": \"object\"}",
+      "extra_body": {
+        "guided_json": {
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "year_born": {
+              "title": "Year Born",
+              "type": "string"
+            },
+            "year_retired": {
+              "title": "Year Retired",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "year_born",
+            "year_retired"
+          ],
+          "title": "AnswerFormat",
+          "type": "object"
+        }
+      },
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 50
+    },
+    "endpoint": "/v1/completions",
+    "model": "meta-llama/Llama-3.2-1B-Instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-01fa807a87b844dcaaebce2bdcf808a4",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "text": "{\"name\": \"Michael Jordan\", \"year_born\": \"1963\", \"year_retired\": \"2003\"}",
+            "stop_reason": null,
+            "prompt_logprobs": null
+          }
+        ],
+        "created": 1758035627,
+        "model": "meta-llama/Llama-3.2-1B-Instruct",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 26,
+          "prompt_tokens": 119,
+          "total_tokens": 145,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}
