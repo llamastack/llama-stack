@@ -96,7 +96,7 @@ class DiskDistributionRegistry(DistributionRegistry):
 
     async def register(self, obj: RoutableObjectWithProvider) -> bool:
         existing_obj = await self.get(obj.type, obj.identifier)
-        # warn if the object's providerid already exists but proceed with registration
+        # warn if the object's providerid is different but proceed with registration
         if existing_obj and existing_obj.provider_id != obj.provider_id:
             logger.warning(
                 f"Object {existing_obj.type}:{existing_obj.identifier} with provider_id {existing_obj.provider_id} is being replaced with {existing_obj.type}:{existing_obj.identifier} with provider_id {obj.provider_id}, overwriting"
