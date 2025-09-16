@@ -49,6 +49,7 @@ def skip_if_model_doesnt_support_variable_dimensions(client_with_models, model_i
     provider = provider_from_model(client_with_models, model_id)
     if provider.provider_type in (
         "remote::together",  # returns 400
+        "inline::sentence-transformers",
     ):
         pytest.skip(
             f"Model {model_id} hosted by {provider.provider_type} does not support variable output embedding dimensions."
