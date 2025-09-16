@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: llama-stack-benchmark
-        image: llamastack/distribution-starter:latest
+        image: ehhuang/distribution-starter:latest
         imagePullPolicy: Always # since we have specified latest instead of a version
         env:
         - name: ENABLE_CHROMADB
@@ -52,6 +52,8 @@ spec:
           value: http://vllm-server-safety.default.svc.cluster.local:8001/v1
         - name: VLLM_TLS_VERIFY
           value: "false"
+        - name: LLAMA_STACK_LOGGING
+          value: "all=WARNING"
         command: ["python", "-m", "llama_stack.core.server.server", "/etc/config/stack_run_config.yaml", "--port", "8323"]
         ports:
           - containerPort: 8323
