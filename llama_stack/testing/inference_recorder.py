@@ -383,14 +383,43 @@ def patch_inference_clients():
             _original_methods["embeddings_create"], self, "openai", "/v1/embeddings", *args, **kwargs
         )
 
+    # Special handling for models.list which needs to return something directly async-iterable
+    # Direct iteration: async for m in client.models.list()
+    # Await then iterate: res = await client.models.list(); async for m in res
     def patched_models_list(self, *args, **kwargs):
-        async def _iter():
-            for item in await _patched_inference_method(
-                _original_methods["models_list"], self, "openai", "/v1/models", *args, **kwargs
-            ):
-                yield item
+        class AsyncIterableModelsWrapper:
+            def __init__(self, original_method, client_self, args, kwargs):
+                self.original_method = original_method
+                self.client_self = client_self
+                self.args = args
+                self.kwargs = kwargs
+                self._result = None
 
-        return _iter()
+            def __aiter__(self):
+                return self._async_iter()
+
+            async def _async_iter(self):
+                # Get the result from the patched method
+                result = await _patched_inference_method(
+                    self.original_method, self.client_self, "openai", "/v1/models", *self.args, **self.kwargs
+                )
+
+                # result is either a async_generator (replay) or a dict (record)
+                if isinstance(result, dict):
+                    for item in result["data"]:
+                        yield item
+                else:
+                    for item in result:
+                        yield item
+
+            def __await__(self):
+                # When awaited, return self (since we're already async-iterable)
+                async def _return_self():
+                    return self
+
+                return _return_self().__await__()
+
+        return AsyncIterableModelsWrapper(_original_methods["models_list"], self, args, kwargs)
 
     # Apply OpenAI patches
     AsyncChatCompletions.create = patched_chat_completions_create
