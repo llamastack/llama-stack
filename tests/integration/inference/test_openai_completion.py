@@ -111,7 +111,6 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
         "remote::cerebras",
         "remote::databricks",
         "remote::runpod",
-        "remote::tgi",
         "remote::watsonx",  # watsonx returns 404 when hitting the /openai/v1 endpoint
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI chat completions.")
