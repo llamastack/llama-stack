@@ -292,7 +292,7 @@ async def test__initialize_tools(agents_impl, sample_agent_config):
     assert story_title is not None
     assert story_title.param_type == "string"
     assert story_title.description == "Title of the story"
-    assert story_title.required == True
+    assert story_title.required
     assert story_title.items is None
     assert story_title.title == "Story Title"
     assert story_title.default is None
@@ -302,7 +302,7 @@ async def test__initialize_tools(agents_impl, sample_agent_config):
     assert input_words is not None
     assert input_words.param_type == "array"
     assert input_words.description == "Input words"
-    assert input_words.required == False
+    assert not input_words.required
     assert input_words.items is not None
     assert len(input_words.items) == 1
     assert input_words.items.get("type") == "string"

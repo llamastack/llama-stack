@@ -6133,6 +6133,31 @@
                         "type": "boolean",
                         "default": true
                     },
+                    "items": {
+                        "oneOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "object"
+                            }
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
                     "default": {
                         "oneOf": [
                             {
@@ -7074,6 +7099,14 @@
                         "type": "boolean",
                         "default": true,
                         "description": "Whether this parameter is required for tool invocation"
+                    },
+                    "items": {
+                        "type": "object",
+                        "description": "Type of the elements when parameter_type is array"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "(Optional) Title of the parameter"
                     },
                     "default": {
                         "oneOf": [
