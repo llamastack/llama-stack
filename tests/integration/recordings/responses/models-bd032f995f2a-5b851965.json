@@ -1,0 +1,43 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/models",
+    "headers": {},
+    "body": {},
+    "endpoint": "/v1/models",
+    "model": ""
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "meta-llama/Llama-3.2-1B-Instruct",
+          "created": 1758036099,
+          "object": "model",
+          "owned_by": "vllm",
+          "root": "/root/.cache/Llama-3.2-1B-Instruct",
+          "parent": null,
+          "max_model_len": 131072,
+          "permission": [
+            {
+              "id": "modelperm-5566a0f136144b7b85ca7ddff38d6aaf",
+              "object": "model_permission",
+              "created": 1758036099,
+              "allow_create_engine": false,
+              "allow_sampling": true,
+              "allow_logprobs": true,
+              "allow_search_indices": false,
+              "allow_view": true,
+              "allow_fine_tuning": false,
+              "organization": "*",
+              "group": null,
+              "is_blocking": false
+            }
+          ]
+        }
+      }
+    ],
+    "is_streaming": false
+  }
+}
