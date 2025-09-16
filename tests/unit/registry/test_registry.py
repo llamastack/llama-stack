@@ -139,7 +139,7 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
     assert result is not None
     assert (
         result.embedding_model == duplicate_vector_db.embedding_model
-    )  # Warning is logged, but we still return the latest
+    )  # Original values preserved
 
 
 async def test_get_all_objects(cached_disk_dist_registry):
