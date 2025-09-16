@@ -52,14 +52,19 @@ class TestNVIDIAEvalImpl(unittest.TestCase):
         self.evaluator_post_patcher = patch(
             "llama_stack.providers.remote.eval.nvidia.eval.NVIDIAEvalImpl._evaluator_post"
         )
+        self.evaluator_delete_patcher = patch(
+            "llama_stack.providers.remote.eval.nvidia.eval.NVIDIAEvalImpl._evaluator_delete"
+        )
 
         self.mock_evaluator_get = self.evaluator_get_patcher.start()
         self.mock_evaluator_post = self.evaluator_post_patcher.start()
+        self.mock_evaluator_delete = self.evaluator_delete_patcher.start()
 
     def tearDown(self):
         """Clean up after each test."""
         self.evaluator_get_patcher.stop()
         self.evaluator_post_patcher.stop()
+        self.evaluator_delete_patcher.stop()
 
     def _assert_request_body(self, expected_json):
         """Helper method to verify request body in Evaluator POST request is correct"""
@@ -114,6 +119,13 @@ class TestNVIDIAEvalImpl(unittest.TestCase):
         # Verify the Evaluator API was called correctly
         self.mock_evaluator_post.assert_called_once()
         self._assert_request_body({"namespace": benchmark.provider_id, "name": benchmark.identifier, **eval_config})
+
+    def test_unregister_benchmark(self):
+        # Unregister the benchmark
+        self.run_async(self.eval_impl.unregister_benchmark(benchmark_id=MOCK_BENCHMARK_ID))
+
+        # Verify the Evaluator API was called correctly
+        self.mock_evaluator_delete.assert_called_once_with(f"/v1/evaluation/configs/nvidia/{MOCK_BENCHMARK_ID}")
 
     def test_run_eval(self):
         benchmark_config = BenchmarkConfig(

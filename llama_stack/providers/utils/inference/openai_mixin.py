@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from typing import Any
@@ -42,6 +43,12 @@ class OpenAIMixin(ABC):
       This provides model registry functionality for looking up registered models.
       The model_store is set in routing_tables/common.py during provider initialization.
     """
+
+    # Allow subclasses to control whether to overwrite the 'id' field in OpenAI responses
+    # is overwritten with a client-side generated id.
+    #
+    # This is useful for providers that do not return a unique id in the response.
+    overwrite_completion_id: bool = False
 
     @abstractmethod
     def get_api_key(self) -> str:
@@ -110,6 +117,23 @@ class OpenAIMixin(ABC):
             raise ValueError(f"Model {model} has no provider_resource_id")
         return model_obj.provider_resource_id
 
+    async def _maybe_overwrite_id(self, resp: Any, stream: bool | None) -> Any:
+        if not self.overwrite_completion_id:
+            return resp
+
+        new_id = f"cltsd-{uuid.uuid4()}"
+        if stream:
+
+            async def _gen():
+                async for chunk in resp:
+                    chunk.id = new_id
+                    yield chunk
+
+            return _gen()
+        else:
+            resp.id = new_id
+            return resp
+
     async def openai_completion(
         self,
         model: str,
@@ -147,7 +171,7 @@ class OpenAIMixin(ABC):
             extra_body["guided_choice"] = guided_choice
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
-        return await self.client.completions.create(  # type: ignore[no-any-return]
+        resp = await self.client.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
                 prompt=prompt,
@@ -170,6 +194,8 @@ class OpenAIMixin(ABC):
             ),
             extra_body=extra_body,
         )
+
+        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
     async def openai_chat_completion(
         self,
@@ -200,8 +226,7 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI chat completion API call.
         """
-        # Type ignore because return types are compatible
-        return await self.client.chat.completions.create(  # type: ignore[no-any-return]
+        resp = await self.client.chat.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
                 messages=messages,
@@ -228,6 +253,8 @@ class OpenAIMixin(ABC):
                 user=user,
             )
         )
+
+        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
     async def openai_embeddings(
         self,
