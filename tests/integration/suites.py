@@ -100,6 +100,14 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "tgi/Qwen/Qwen3-0.6B",
         },
     ),
+    "together": Setup(
+        name="together",
+        description="Together computer models",
+        defaults={
+            "text_model": "together/meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            "embedding_model": "together/togethercomputer/m2-bert-80M-32k-retrieval",
+        },
+    ),
 }
 
 
