@@ -92,14 +92,6 @@ CONVERSATION_ITEM_ID_PREFIXES = {
 }
 
 
-def generate_conversation_item_id(item_type: str) -> str:
-    """Generate a unique ID for a conversation item with appropriate prefix."""
-    import uuid
-
-    prefix = CONVERSATION_ITEM_ID_PREFIXES.get(item_type, "item_")
-    return f"{prefix}{uuid.uuid4().hex}"
-
-
 @json_schema_type
 class ConversationCreateRequest(BaseModel):
     """Request body for creating a conversation."""
