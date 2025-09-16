@@ -261,6 +261,7 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
 
     async def list_models(self) -> list[Model] | None:
         self._model_cache = {}
+        # Together's /v1/models is not compatible with OpenAI's /v1/models. Together support ticket #13355 -> will not fix, use Together's own client
         for m in await self._get_client().models.list():
             if m.type == "embedding":
                 if m.id not in EMBEDDING_MODEL_ENTRIES:
