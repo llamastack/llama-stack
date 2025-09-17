@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://any-hosted-llama-stack.com
 paths:
-  /v1/datasetio/append-rows/{dataset_id}:
+  /v1beta/datasetio/append-rows/{dataset_id}:
     post:
       responses:
         '200':
@@ -798,7 +798,7 @@ paths:
             schema:
               $ref: '#/components/schemas/EmbeddingsRequest'
         required: true
-  /v1/eval/benchmarks/{benchmark_id}/evaluations:
+  /v1beta/eval/benchmarks/{benchmark_id}/evaluations:
     post:
       responses:
         '200':
@@ -1007,7 +1007,7 @@ paths:
           required: true
           schema:
             type: string
-  /v1/datasets/{dataset_id}:
+  /v1beta/datasets/{dataset_id}:
     get:
       responses:
         '200':
@@ -1222,7 +1222,7 @@ paths:
           required: true
           schema:
             type: string
-  /v1/telemetry/traces/{trace_id}/spans/{span_id}:
+  /v1beta/telemetry/traces/{trace_id}/spans/{span_id}:
     get:
       responses:
         '200':
@@ -1258,7 +1258,7 @@ paths:
           required: true
           schema:
             type: string
-  /v1/telemetry/spans/{span_id}/tree:
+  /v1beta/telemetry/spans/{span_id}/tree:
     post:
       responses:
         '200':
@@ -1375,7 +1375,7 @@ paths:
           required: true
           schema:
             type: string
-  /v1/telemetry/traces/{trace_id}:
+  /v1beta/telemetry/traces/{trace_id}:
     get:
       responses:
         '200':
@@ -1678,7 +1678,7 @@ paths:
             schema:
               $ref: '#/components/schemas/InvokeToolRequest'
         required: true
-  /v1/datasetio/iterrows/{dataset_id}:
+  /v1beta/datasetio/iterrows/{dataset_id}:
     get:
       responses:
         '200':
@@ -1735,7 +1735,7 @@ paths:
           required: false
           schema:
             type: integer
-  /v1/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
+  /v1beta/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     get:
       responses:
         '200':
@@ -1802,7 +1802,7 @@ paths:
           required: true
           schema:
             type: string
-  /v1/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result:
+  /v1beta/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result:
     get:
       responses:
         '200':
@@ -2010,7 +2010,7 @@ paths:
             schema:
               $ref: '#/components/schemas/OpenaiChatCompletionRequest'
         required: true
-  /v1/datasets:
+  /v1beta/datasets:
     get:
       responses:
         '200':
@@ -2524,7 +2524,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterVectorDbRequest'
         required: true
-  /v1/telemetry/events:
+  /v1beta/telemetry/events:
     post:
       responses:
         '200':
@@ -3414,7 +3414,7 @@ paths:
             schema:
               $ref: '#/components/schemas/QueryChunksRequest'
         required: true
-  /v1/telemetry/metrics/{metric_name}:
+  /v1beta/telemetry/metrics/{metric_name}:
     post:
       responses:
         '200':
@@ -3449,7 +3449,7 @@ paths:
             schema:
               $ref: '#/components/schemas/QueryMetricsRequest'
         required: true
-  /v1/telemetry/spans:
+  /v1beta/telemetry/spans:
     post:
       responses:
         '200':
@@ -3478,7 +3478,7 @@ paths:
             schema:
               $ref: '#/components/schemas/QuerySpansRequest'
         required: true
-  /v1/telemetry/traces:
+  /v1beta/telemetry/traces:
     post:
       responses:
         '200':
@@ -3595,7 +3595,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ResumeAgentTurnRequest'
         required: true
-  /v1/eval/benchmarks/{benchmark_id}/jobs:
+  /v1beta/eval/benchmarks/{benchmark_id}/jobs:
     post:
       responses:
         '200':
@@ -3691,7 +3691,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RunShieldRequest'
         required: true
-  /v1/telemetry/spans/export:
+  /v1beta/telemetry/spans/export:
     post:
       responses:
         '200':
