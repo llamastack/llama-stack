@@ -27,13 +27,17 @@ class TestLlamaStackAsLibraryClientAutoInitialization:
         mock_impls = {}
         mock_route_impls = RouteImpls({})
 
-        async def mock_construct_stack(config, custom_provider_registry):
-            return mock_impls
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
 
         def mock_initialize_route_impls(impls):
             return mock_route_impls
 
-        monkeypatch.setattr("llama_stack.core.library_client.construct_stack", mock_construct_stack)
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
         monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
 
         client = LlamaStackAsLibraryClient("ci-tests")
@@ -46,13 +50,17 @@ class TestLlamaStackAsLibraryClientAutoInitialization:
         mock_impls = {}
         mock_route_impls = RouteImpls({})
 
-        async def mock_construct_stack(config, custom_provider_registry):
-            return mock_impls
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
 
         def mock_initialize_route_impls(impls):
             return mock_route_impls
 
-        monkeypatch.setattr("llama_stack.core.library_client.construct_stack", mock_construct_stack)
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
         monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
 
         client = AsyncLlamaStackAsLibraryClient("ci-tests")
@@ -68,13 +76,17 @@ class TestLlamaStackAsLibraryClientAutoInitialization:
         mock_impls = {}
         mock_route_impls = RouteImpls({})
 
-        async def mock_construct_stack(config, custom_provider_registry):
-            return mock_impls
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
 
         def mock_initialize_route_impls(impls):
             return mock_route_impls
 
-        monkeypatch.setattr("llama_stack.core.library_client.construct_stack", mock_construct_stack)
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
         monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
 
         client = LlamaStackAsLibraryClient("ci-tests")
@@ -90,13 +102,17 @@ class TestLlamaStackAsLibraryClientAutoInitialization:
         mock_impls = {}
         mock_route_impls = RouteImpls({})
 
-        async def mock_construct_stack(config, custom_provider_registry):
-            return mock_impls
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
 
         def mock_initialize_route_impls(impls):
             return mock_route_impls
 
-        monkeypatch.setattr("llama_stack.core.library_client.construct_stack", mock_construct_stack)
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
         monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
 
         client = AsyncLlamaStackAsLibraryClient("ci-tests")
@@ -112,13 +128,17 @@ class TestLlamaStackAsLibraryClientAutoInitialization:
         mock_impls = {}
         mock_route_impls = RouteImpls({})
 
-        async def mock_construct_stack(config, custom_provider_registry):
-            return mock_impls
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
 
         def mock_initialize_route_impls(impls):
             return mock_route_impls
 
-        monkeypatch.setattr("llama_stack.core.library_client.construct_stack", mock_construct_stack)
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
         monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
 
         sync_client = LlamaStackAsLibraryClient("ci-tests")

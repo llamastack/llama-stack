@@ -52,9 +52,20 @@ spec:
           value: http://vllm-server-safety.default.svc.cluster.local:8001/v1
         - name: VLLM_TLS_VERIFY
           value: "false"
-        command: ["python", "-m", "llama_stack.core.server.server", "/etc/config/stack_run_config.yaml", "--port", "8323"]
+        - name: LLAMA_STACK_LOGGING
+          value: "all=WARNING"
+        - name: LLAMA_STACK_CONFIG
+          value: "/etc/config/stack_run_config.yaml"
+        - name: LLAMA_STACK_WORKERS
+          value: "${LLAMA_STACK_WORKERS}"
+        command: ["uvicorn", "llama_stack.core.server.server:create_app", "--host", "0.0.0.0", "--port", "8323", "--workers", "$LLAMA_STACK_WORKERS", "--factory"]
         ports:
           - containerPort: 8323
+        resources:
+          requests:
+            cpu: "${LLAMA_STACK_WORKERS}"
+          limits:
+            cpu: "${LLAMA_STACK_WORKERS}"
         volumeMounts:
           - name: llama-storage
             mountPath: /root/.llama
