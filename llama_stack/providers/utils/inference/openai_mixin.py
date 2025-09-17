@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from typing import Any
 
-import openai
 from openai import NOT_GIVEN, AsyncOpenAI
 
 from llama_stack.apis.inference import (
@@ -23,6 +22,7 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
 )
+from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 
@@ -49,6 +49,10 @@ class OpenAIMixin(ABC):
     #
     # This is useful for providers that do not return a unique id in the response.
     overwrite_completion_id: bool = False
+
+    # Cache of available models keyed by model ID
+    # This is set in list_models() and used in check_model_availability()
+    _model_cache: dict[str, Model] = {}
 
     @abstractmethod
     def get_api_key(self) -> str:
@@ -296,22 +300,35 @@ class OpenAIMixin(ABC):
             usage=usage,
         )
 
+    async def list_models(self) -> list[Model] | None:
+        """
+        List available models from the provider's /v1/models endpoint.
+
+        Also, caches the models in self._model_cache for use in check_model_availability().
+
+        :return: A list of Model instances representing available models.
+        """
+        self._model_cache = {
+            m.id: Model(
+                # __provider_id__ is dynamically added by instantiate_provider in resolver.py
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=m.id,
+                identifier=m.id,
+                model_type=ModelType.llm,
+            )
+            async for m in self.client.models.list()
+        }
+
+        return list(self._model_cache.values())
+
     async def check_model_availability(self, model: str) -> bool:
         """
-        Check if a specific model is available from OpenAI.
+        Check if a specific model is available from the provider's /v1/models.
 
         :param model: The model identifier to check.
         :return: True if the model is available dynamically, False otherwise.
         """
-        try:
-            # Direct model lookup - returns model or raises NotFoundError
-            await self.client.models.retrieve(model)
-            return True
-        except openai.NotFoundError:
-            # Model doesn't exist - this is expected for unavailable models
-            pass
-        except Exception as e:
-            # All other errors (auth, rate limit, network, etc.)
-            logger.warning(f"Failed to check model availability for {model}: {e}")
+        if not self._model_cache:
+            await self.list_models()
 
-        return False
+        return model in self._model_cache
