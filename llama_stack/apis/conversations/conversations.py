@@ -25,7 +25,7 @@ class Conversation(BaseModel):
     """Conversation object - compatible with OpenAI Conversation type."""
 
     id: str = Field(..., description="conversation identifier")
-    object: str = Field(default="conversation", description="object type")
+    object: Literal["conversation"] = "conversation"
     created_at: int = Field(..., description="timestamp when the conversation was created")
     metadata: Metadata | None = Field(default=None, description="conversation metadata")
 
@@ -81,15 +81,6 @@ ConversationItem = Annotated[
     ConversationMessage | ConversationFunctionCall | ConversationFunctionCallOutput | ConversationReasoning,
     Field(discriminator="type"),
 ]
-
-
-# ID prefix mapping for different conversation item types
-CONVERSATION_ITEM_ID_PREFIXES = {
-    "message": "msg_",
-    "function_call": "call_",
-    "function_call_output": "out_",
-    "reasoning": "reasoning_",
-}
 
 
 @json_schema_type

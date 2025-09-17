@@ -6478,6 +6478,7 @@ components:
           type: string
         object:
           type: string
+          const: conversation
           default: conversation
         created_at:
           type: integer
