@@ -31,6 +31,8 @@ from openai.types.chat import (
     ChatCompletionContentPartTextParam as OpenAIChatCompletionContentPartTextParam,
 )
 
+from llama_stack.apis.inference.inference import UsageInfo
+
 try:
     from openai.types.chat import (
         ChatCompletionMessageFunctionToolCall as OpenAIChatCompletionMessageFunctionToolCall,
@@ -103,6 +105,7 @@ from llama_stack.apis.inference import (
     JsonSchemaResponseFormat,
     Message,
     OpenAIChatCompletion,
+    OpenAIChatCompletionUsage,
     OpenAICompletion,
     OpenAICompletionChoice,
     OpenAIEmbeddingData,
@@ -277,6 +280,11 @@ def process_chat_completion_response(
     request: ChatCompletionRequest,
 ) -> ChatCompletionResponse:
     choice = response.choices[0]
+    usage = UsageInfo(
+        prompt_tokens=response.usage.prompt_tokens,
+        completion_tokens=response.usage.completion_tokens,
+        total_tokens=response.usage.total_tokens,
+    )
     if choice.finish_reason == "tool_calls":
         if not choice.message or not choice.message.tool_calls:
             raise ValueError("Tool calls are not present in the response")
@@ -290,6 +298,7 @@ def process_chat_completion_response(
                     content=json.dumps(tool_calls, default=lambda x: x.model_dump()),
                 ),
                 logprobs=None,
+                usage=usage,
             )
         else:
             # Otherwise, return tool calls as normal
@@ -301,6 +310,7 @@ def process_chat_completion_response(
                     content="",
                 ),
                 logprobs=None,
+                usage=usage,
             )
 
     # TODO: This does not work well with tool calls for vLLM remote provider
@@ -335,6 +345,7 @@ def process_chat_completion_response(
             tool_calls=raw_message.tool_calls,
         ),
         logprobs=None,
+        usage=usage,
     )
 
 
@@ -646,7 +657,7 @@ async def convert_message_to_openai_dict_new(
                     arguments=json.dumps(tool.arguments),
                 ),
                 type="function",
-            )
+            ).model_dump()
             for tool in message.tool_calls
         ]
         params = {}
@@ -657,6 +668,7 @@ async def convert_message_to_openai_dict_new(
             content=await _convert_message_content(message.content),
             **params,
         )
+
     elif isinstance(message, ToolResponseMessage):
         out = OpenAIChatCompletionToolMessage(
             role="tool",
@@ -1375,6 +1387,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
         user: str | None = None,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         messages = openai_messages_to_messages(messages)
+
         response_format = _convert_openai_request_response_format(response_format)
         sampling_params = _convert_openai_sampling_params(
             max_tokens=max_tokens,
@@ -1401,7 +1414,6 @@ class OpenAIChatCompletionToLlamaStackMixin:
                 tools=tools,
             )
             outstanding_responses.append(response)
-
         if stream:
             return OpenAIChatCompletionToLlamaStackMixin._process_stream_response(self, model, outstanding_responses)
 
@@ -1476,11 +1488,21 @@ class OpenAIChatCompletionToLlamaStackMixin:
         self, model: str, outstanding_responses: list[Awaitable[ChatCompletionResponse]]
     ) -> OpenAIChatCompletion:
         choices = []
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        total_tokens = 0
+
         for outstanding_response in outstanding_responses:
             response = await outstanding_response
             completion_message = response.completion_message
             message = await convert_message_to_openai_dict_new(completion_message)
             finish_reason = _convert_stop_reason_to_openai_finish_reason(completion_message.stop_reason)
+
+            # Aggregate usage data
+            if response.usage:
+                total_prompt_tokens += response.usage.prompt_tokens
+                total_completion_tokens += response.usage.completion_tokens
+                total_tokens += response.usage.total_tokens
 
             choice = OpenAIChatCompletionChoice(
                 index=len(choices),
@@ -1489,12 +1511,17 @@ class OpenAIChatCompletionToLlamaStackMixin:
             )
             choices.append(choice)
 
+        usage = OpenAIChatCompletionUsage(
+            prompt_tokens=total_prompt_tokens, completion_tokens=total_completion_tokens, total_tokens=total_tokens
+        )
+
         return OpenAIChatCompletion(
             id=f"chatcmpl-{uuid.uuid4()}",
             choices=choices,
             created=int(time.time()),
             model=model,
             object="chat.completion",
+            usage=usage,
         )
 
 

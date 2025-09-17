@@ -130,7 +130,7 @@ class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Nee
     async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
         params = await self._get_params(request)
 
-        stream = self.client.completions.create(**params)
+        stream = await self.client.completions.create(**params)
         async for chunk in process_completion_stream_response(stream):
             yield chunk
 
@@ -208,9 +208,9 @@ class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Nee
         params = await self._get_params(request)
 
         if "messages" in params:
-            stream = self.client.chat.completions.create(**params)
+            stream = await self.client.chat.completions.create(**params)
         else:
-            stream = self.client.completions.create(**params)
+            stream = await self.client.completions.create(**params)
         async for chunk in process_chat_completion_stream_response(stream, request):
             yield chunk
 
