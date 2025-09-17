@@ -973,26 +973,6 @@ class EmbeddingTaskType(Enum):
     document = "document"
 
 
-@json_schema_type
-class BatchCompletionResponse(BaseModel):
-    """Response from a batch completion request.
-
-    :param batch: List of completion responses, one for each input in the batch
-    """
-
-    batch: list[CompletionResponse]
-
-
-@json_schema_type
-class BatchChatCompletionResponse(BaseModel):
-    """Response from a batch chat completion request.
-
-    :param batch: List of chat completion responses, one for each conversation in the batch
-    """
-
-    batch: list[ChatCompletionResponse]
-
-
 class OpenAICompletionWithInputMessages(OpenAIChatCompletion):
     input_messages: list[OpenAIMessageParam]
 
@@ -1049,27 +1029,6 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/inference/batch-completion", method="POST", experimental=True)
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchCompletionResponse:
-        """Generate completions for a batch of content using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param content_batch: The content to generate completions for.
-        :param sampling_params: (Optional) Parameters to control the sampling strategy.
-        :param response_format: (Optional) Grammar specification for guided (structured) decoding.
-        :param logprobs: (Optional) If specified, log probabilities for each token position will be returned.
-        :returns: A BatchCompletionResponse with the full completions.
-        """
-        raise NotImplementedError("Batch completion is not implemented")
-        return  # this is so mypy's safe-super rule will consider the method concrete
-
     @webmethod(route="/inference/chat-completion", method="POST")
     async def chat_completion(
         self,
@@ -1109,31 +1068,6 @@ class InferenceProvider(Protocol):
                  If stream=True, returns an SSE event stream of ChatCompletionResponseStreamChunk.
         """
         ...
-
-    @webmethod(route="/inference/batch-chat-completion", method="POST", experimental=True)
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_config: ToolConfig | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchChatCompletionResponse:
-        """Generate chat completions for a batch of messages using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param messages_batch: The messages to generate completions for.
-        :param sampling_params: (Optional) Parameters to control the sampling strategy.
-        :param tools: (Optional) List of tool definitions available to the model.
-        :param tool_config: (Optional) Configuration for tool use.
-        :param response_format: (Optional) Grammar specification for guided (structured) decoding.
-        :param logprobs: (Optional) If specified, log probabilities for each token position will be returned.
-        :returns: A BatchChatCompletionResponse with the full completions.
-        """
-        raise NotImplementedError("Batch chat completion is not implemented")
-        return  # this is so mypy's safe-super rule will consider the method concrete
 
     @webmethod(route="/inference/embeddings", method="POST")
     async def embeddings(
