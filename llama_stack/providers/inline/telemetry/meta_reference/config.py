@@ -22,7 +22,8 @@ class TelemetrySink(StrEnum):
 class TelemetryConfig(BaseModel):
     otel_exporter_otlp_endpoint: str | None = Field(
         default=None,
-        description="The OpenTelemetry collector endpoint URL (base URL for traces, metrics, and logs). If not set, the SDK will use OTEL_EXPORTER_OTLP_ENDPOINT environment variable.",
+        deprecated=True,
+        description="Deprecated.Please set the exporter using open telemetry environment variables instead. See https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/.",
     )
     service_name: str = Field(
         # service name is always the same, use zero-width space to avoid clutter
