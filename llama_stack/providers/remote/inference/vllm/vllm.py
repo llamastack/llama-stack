@@ -304,11 +304,10 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     get_api_key = LiteLLMOpenAIMixin.get_api_key
 
     def get_base_url(self) -> str:
-        """Get the base URL, falling back to the api_base from LiteLLMOpenAIMixin or config."""
-        url = self.api_base or self.config.url
-        if not url:
+        """Get the base URL from config."""
+        if not self.config.url:
             raise ValueError("No base URL configured")
-        return url
+        return self.config.url
 
     async def initialize(self) -> None:
         if not self.config.url:
@@ -317,10 +316,7 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             )
 
     async def should_refresh_models(self) -> bool:
-        # Get the default value from the field definition
-        default_api_token = self.config.__class__.model_fields["api_token"].default
-        if not self.config.api_token or self.config.api_token == default_api_token:
-            return False
+        # Strictly respecting the refresh_models directive
         return self.config.refresh_models
 
     async def list_models(self) -> list[Model] | None:
@@ -373,7 +369,7 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     def get_extra_client_params(self):
         return {"http_client": httpx.AsyncClient(verify=self.config.tls_verify)}
 
-    async def completion(  # type: ignore[override]
+    async def completion(  # type: ignore[override]  # Return type more specific than base class  which is allows for both streaming and non-streaming responses.
         self,
         model_id: str,
         content: InterleavedContent,
@@ -485,7 +481,8 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             yield chunk
 
     async def _nonstream_completion(self, request: CompletionRequest) -> CompletionResponse:
-        assert self.client is not None
+        if self.client is None:
+            raise RuntimeError("Client is not initialized")
         params = await self._get_params(request)
         r = await self.client.completions.create(**params)
         return process_completion_response(r)
@@ -493,7 +490,8 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     async def _stream_completion(
         self, request: CompletionRequest
     ) -> AsyncGenerator[CompletionResponseStreamChunk, None]:
-        assert self.client is not None
+        if self.client is None:
+            raise RuntimeError("Client is not initialized")
         params = await self._get_params(request)
 
         stream = await self.client.completions.create(**params)
