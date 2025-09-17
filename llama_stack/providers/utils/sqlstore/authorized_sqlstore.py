@@ -172,6 +172,20 @@ class AuthorizedSqlStore:
 
         return results.data[0] if results.data else None
 
+    async def update(self, table: str, data: Mapping[str, Any], where: Mapping[str, Any]) -> None:
+        """Update rows with automatic access control attribute capture."""
+        enhanced_data = dict(data)
+
+        current_user = get_authenticated_user()
+        if current_user:
+            enhanced_data["owner_principal"] = current_user.principal
+            enhanced_data["access_attributes"] = current_user.attributes
+        else:
+            enhanced_data["owner_principal"] = None
+            enhanced_data["access_attributes"] = None
+
+        await self.sql_store.update(table, enhanced_data, where)
+
     async def delete(self, table: str, where: Mapping[str, Any]) -> None:
         """Delete rows with automatic access control filtering."""
         await self.sql_store.delete(table, where)

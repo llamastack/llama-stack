@@ -134,6 +134,11 @@ models:
   provider_id: nvidia
   provider_model_id: meta/llama-3.3-70b-instruct
   model_type: llm
+- metadata: {}
+  model_id: nvidia/vila
+  provider_id: nvidia
+  provider_model_id: nvidia/vila
+  model_type: llm
 - metadata:
     embedding_dimension: 2048
     context_length: 8192

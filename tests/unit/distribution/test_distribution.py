@@ -12,7 +12,7 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError
 
 from llama_stack.core.datatypes import Api, Provider, StackRunConfig
-from llama_stack.core.distribution import get_provider_registry
+from llama_stack.core.distribution import INTERNAL_APIS, get_provider_registry, providable_apis
 from llama_stack.providers.datatypes import ProviderSpec
 
 
@@ -151,6 +151,24 @@ class TestProviderRegistry:
         assert "test_provider" in registry[Api.inference]
         assert registry[Api.inference]["test_provider"].provider_type == "test_provider"
         assert registry[Api.inference]["test_provider"].api == Api.inference
+
+    def test_internal_apis_excluded(self):
+        """Test that internal APIs are excluded and APIs without provider registries are marked as internal."""
+        import importlib
+
+        apis = providable_apis()
+
+        for internal_api in INTERNAL_APIS:
+            assert internal_api not in apis, f"Internal API {internal_api} should not be in providable_apis"
+
+        for api in apis:
+            module_name = f"llama_stack.providers.registry.{api.name.lower()}"
+            try:
+                importlib.import_module(module_name)
+            except ImportError as err:
+                raise AssertionError(
+                    f"API {api} is in providable_apis but has no provider registry module ({module_name})"
+                ) from err
 
     def test_external_remote_providers(self, api_directories, mock_providers, base_config, provider_spec_yaml):
         """Test loading external remote providers from YAML files."""

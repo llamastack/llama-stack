@@ -93,9 +93,30 @@ chunks_response = client.vector_io.query(
 
 ### Using the RAG Tool
 
+> **⚠️ DEPRECATION NOTICE**: The RAG Tool is being deprecated in favor of directly using the OpenAI-compatible Search
+> API. We recommend migrating to the OpenAI APIs for better compatibility and future support.
+
 A better way to ingest documents is to use the RAG Tool. This tool allows you to ingest documents from URLs, files, etc.
 and automatically chunks them into smaller pieces. More examples for how to format a RAGDocument can be found in the
 [appendix](#more-ragdocument-examples).
+
+#### OpenAI API Integration & Migration
+
+The RAG tool has been updated to use OpenAI-compatible APIs. This provides several benefits:
+
+- **Files API Integration**: Documents are now uploaded using OpenAI's file upload endpoints
+- **Vector Stores API**: Vector storage operations use OpenAI's vector store format with configurable chunking strategies
+- **Error Resilience:** When processing multiple documents, individual failures are logged but don't crash the operation. Failed documents are skipped while successful ones continue processing.
+
+**Migration Path:**
+We recommend migrating to the OpenAI-compatible Search API for:
+1. **Better OpenAI Ecosystem Integration**: Direct compatibility with OpenAI tools and workflows including the Responses API
+2**Future-Proof**: Continued support and feature development
+3**Full OpenAI Compatibility**: Vector Stores, Files, and Search APIs are fully compatible with OpenAI's Responses API
+
+The OpenAI APIs are used under the hood, so you can continue to use your existing RAG Tool code with minimal changes.
+However, we recommend updating your code to use the new OpenAI-compatible APIs for better long-term support. If any
+documents  fail to process, they will be logged in the response but will not cause the entire operation to fail.
 
 ```python
 from llama_stack_client import RAGDocument

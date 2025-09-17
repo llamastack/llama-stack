@@ -88,7 +88,7 @@ Interactive pages for users to play with and explore Llama Stack API capabilitie
 - **API Resources**: Inspect Llama Stack API resources
   - This page allows you to inspect Llama Stack API resources (`models`, `datasets`, `memory_banks`, `benchmarks`, `shields`).
   - Under the hood, it uses Llama Stack's `/<resources>/list` API to get information about each resources.
-  - Please visit [Core Concepts](https://llama-stack.readthedocs.io/en/latest/concepts/index.html) for more details about the resources.
+  - Please visit [Core Concepts](../../concepts/index.md) for more details about the resources.
 
 ### Starting the Llama Stack Playground
 

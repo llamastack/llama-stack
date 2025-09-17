@@ -8,6 +8,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+import requests
 
 from llama_stack.core.datatypes import User
 
@@ -77,6 +78,88 @@ def test_openai_client_basic_operations(openai_client):
                 client.files.delete(uploaded_file.id)
             except NotFoundError:
                 pass  # ignore 404
+
+
+@pytest.mark.xfail(message="expires_after not available on all providers")
+def test_expires_after(openai_client):
+    """Test uploading a file with expires_after parameter."""
+    client = openai_client
+
+    uploaded_file = None
+    try:
+        with BytesIO(b"expires_after test") as file_buffer:
+            file_buffer.name = "expires_after.txt"
+            uploaded_file = client.files.create(
+                file=file_buffer,
+                purpose="assistants",
+                expires_after={"anchor": "created_at", "seconds": 4545},
+            )
+
+        assert uploaded_file.expires_at is not None
+        assert uploaded_file.expires_at == uploaded_file.created_at + 4545
+
+        listed = client.files.list()
+        ids = [f.id for f in listed.data]
+        assert uploaded_file.id in ids
+
+        retrieved = client.files.retrieve(uploaded_file.id)
+        assert retrieved.id == uploaded_file.id
+
+    finally:
+        if uploaded_file is not None:
+            try:
+                client.files.delete(uploaded_file.id)
+            except Exception:
+                pass
+
+
+@pytest.mark.xfail(message="expires_after not available on all providers")
+def test_expires_after_requests(openai_client):
+    """Upload a file using requests multipart/form-data and bracketed expires_after fields.
+
+    This ensures clients that send form fields like `expires_after[anchor]` and
+    `expires_after[seconds]` are handled by the server.
+    """
+    base_url = f"{openai_client.base_url}files"
+
+    uploaded_id = None
+    try:
+        files = {"file": ("expires_after_with_requests.txt", BytesIO(b"expires_after via requests"))}
+        data = {
+            "purpose": "assistants",
+            "expires_after[anchor]": "created_at",
+            "expires_after[seconds]": "4545",
+        }
+
+        session = requests.Session()
+        request = requests.Request("POST", base_url, files=files, data=data)
+        prepared = session.prepare_request(request)
+        resp = session.send(prepared, timeout=30)
+        resp.raise_for_status()
+        result = resp.json()
+
+        assert result.get("id", "").startswith("file-")
+        uploaded_id = result["id"]
+        assert result.get("created_at") is not None
+        assert result.get("expires_at") == result["created_at"] + 4545
+
+        list_resp = requests.get(base_url, timeout=30)
+        list_resp.raise_for_status()
+        listed = list_resp.json()
+        ids = [f["id"] for f in listed.get("data", [])]
+        assert uploaded_id in ids
+
+        retrieve_resp = requests.get(f"{base_url}/{uploaded_id}", timeout=30)
+        retrieve_resp.raise_for_status()
+        retrieved = retrieve_resp.json()
+        assert retrieved["id"] == uploaded_id
+
+    finally:
+        if uploaded_id:
+            try:
+                requests.delete(f"{base_url}/{uploaded_id}", timeout=30)
+            except Exception:
+                pass
 
 
 @pytest.mark.xfail(message="User isolation broken for current providers, must be fixed.")

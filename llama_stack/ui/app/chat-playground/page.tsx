@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 import { Chat } from "@/components/chat-playground/chat";
 import { type Message } from "@/components/chat-playground/chat-message";
+import { VectorDBCreator } from "@/components/chat-playground/vector-db-creator";
 import { useAuthClient } from "@/hooks/use-auth-client";
 import type { Model } from "llama-stack-client/resources/models";
 import type { TurnCreateParams } from "llama-stack-client/resources/agents/turn";
@@ -22,6 +23,10 @@ import {
   SessionUtils,
   type ChatSession,
 } from "@/components/chat-playground/conversations";
+import {
+  cleanMessageContent,
+  extractCleanText,
+} from "@/lib/message-content-utils";
 export default function ChatPlaygroundPage() {
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(
     null
@@ -65,6 +70,20 @@ export default function ChatPlaygroundPage() {
       provider_resource_id?: string;
     }>
   >([]);
+  const [showCreateVectorDB, setShowCreateVectorDB] = useState(false);
+  const [availableVectorDBs, setAvailableVectorDBs] = useState<
+    Array<{
+      identifier: string;
+      vector_db_name?: string;
+      embedding_model: string;
+    }>
+  >([]);
+  const [uploadNotification, setUploadNotification] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error" | "loading";
+  }>({ show: false, message: "", type: "success" });
+  const [selectedVectorDBs, setSelectedVectorDBs] = useState<string[]>([]);
   const client = useAuthClient();
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -73,26 +92,22 @@ export default function ChatPlaygroundPage() {
   const loadAgentConfig = useCallback(
     async (agentId: string) => {
       try {
-        console.log("Loading agent config for:", agentId);
-
         // try to load from cache first
         const cachedConfig = SessionUtils.loadAgentConfig(agentId);
         if (cachedConfig) {
-          console.log("✅ Loaded agent config from cache:", cachedConfig);
           setSelectedAgentConfig({
             toolgroups: cachedConfig.toolgroups,
           });
           return;
         }
 
-        console.log("📡 Fetching agent config from API...");
         const agentDetails = await client.agents.retrieve(agentId);
-        console.log("Agent details retrieved:", agentDetails);
-        console.log("Agent config:", agentDetails.agent_config);
-        console.log("Agent toolgroups:", agentDetails.agent_config?.toolgroups);
 
-        // cache the config
-        SessionUtils.saveAgentConfig(agentId, agentDetails.agent_config);
+        // cache config
+        SessionUtils.saveAgentConfig(agentId, {
+          ...agentDetails.agent_config,
+          toolgroups: agentDetails.agent_config?.toolgroups,
+        });
 
         setSelectedAgentConfig({
           toolgroups: agentDetails.agent_config?.toolgroups,
@@ -116,7 +131,7 @@ export default function ChatPlaygroundPage() {
           id: response.session_id,
           name: "Default Session",
           messages: [],
-          selectedModel: selectedModel, // Use current selected model
+          selectedModel: selectedModel, // use current selected model
           systemMessage: "You are a helpful assistant.",
           agentId,
           createdAt: Date.now(),
@@ -124,10 +139,6 @@ export default function ChatPlaygroundPage() {
         };
 
         setCurrentSession(defaultSession);
-        console.log(
-          `💾 Saving default session ID for agent ${agentId}:`,
-          defaultSession.id
-        );
         SessionUtils.saveCurrentSessionId(defaultSession.id, agentId);
         // cache entire session data
         SessionUtils.saveSessionData(agentId, defaultSession);
@@ -152,7 +163,6 @@ export default function ChatPlaygroundPage() {
 
         const messages: Message[] = [];
         for (const turn of session.turns) {
-          // add user messages
           if (turn.input_messages && Array.isArray(turn.input_messages)) {
             for (const input of turn.input_messages) {
               if (input.role === "user" && input.content) {
@@ -169,15 +179,18 @@ export default function ChatPlaygroundPage() {
             }
           }
 
-          // add assistant message from output_message
           if (turn.output_message && turn.output_message.content) {
+            console.log("Raw message content:", turn.output_message.content);
+            console.log("Content type:", typeof turn.output_message.content);
+
+            const cleanContent = cleanMessageContent(
+              turn.output_message.content
+            );
+
             messages.push({
               id: `${turn.turn_id}-assistant-${messages.length}`,
               role: "assistant",
-              content:
-                typeof turn.output_message.content === "string"
-                  ? turn.output_message.content
-                  : JSON.stringify(turn.output_message.content),
+              content: cleanContent,
               createdAt: new Date(
                 turn.completed_at || turn.started_at || Date.now()
               ),
@@ -197,27 +210,22 @@ export default function ChatPlaygroundPage() {
   const loadAgentSessions = useCallback(
     async (agentId: string) => {
       try {
-        console.log("Loading sessions for agent:", agentId);
         const response = await client.agents.session.list(agentId);
-        console.log("Available sessions:", response.data);
 
         if (
           response.data &&
           Array.isArray(response.data) &&
           response.data.length > 0
         ) {
-          // check for a previously saved session ID for this specific agent
+          // check for saved session ID for this agent
           const savedSessionId = SessionUtils.loadCurrentSessionId(agentId);
-          console.log(`Saved session ID for agent ${agentId}:`, savedSessionId);
-
-          // try to load cached session data first
+          // try to load cached agent session data first
           if (savedSessionId) {
             const cachedSession = SessionUtils.loadSessionData(
               agentId,
               savedSessionId
             );
             if (cachedSession) {
-              console.log("✅ Loaded session from cache:", cachedSession.id);
               setCurrentSession(cachedSession);
               SessionUtils.saveCurrentSessionId(cachedSession.id, agentId);
               return;
@@ -238,7 +246,8 @@ export default function ChatPlaygroundPage() {
           // try to find saved session id in available sessions
           if (savedSessionId) {
             const foundSession = response.data.find(
-              (s: { session_id: string }) => s.session_id === savedSessionId
+              (s: { [key: string]: unknown }) =>
+                (s as { session_id: string }).session_id === savedSessionId
             );
             console.log("Found saved session in list:", foundSession);
             if (foundSession) {
@@ -269,7 +278,7 @@ export default function ChatPlaygroundPage() {
             id: sessionToLoad.session_id,
             name: sessionToLoad.session_name || "Session",
             messages,
-            selectedModel: selectedModel || "", // Preserve current model or use empty
+            selectedModel: selectedModel || "",
             systemMessage: "You are a helpful assistant.",
             agentId,
             createdAt: sessionToLoad.started_at
@@ -330,7 +339,8 @@ export default function ChatPlaygroundPage() {
           // if we have a saved agent ID, find it in the available agents
           if (savedAgentId) {
             const foundAgent = agentList.data.find(
-              (a: { agent_id: string }) => a.agent_id === savedAgentId
+              (a: { [key: string]: unknown }) =>
+                (a as { agent_id: string }).agent_id === savedAgentId
             );
             if (foundAgent) {
               agentToSelect = foundAgent as typeof agentToSelect;
@@ -353,14 +363,10 @@ export default function ChatPlaygroundPage() {
 
     fetchAgents();
 
-    // fetch available toolgroups
     const fetchToolgroups = async () => {
       try {
-        console.log("Fetching toolgroups...");
         const toolgroups = await client.toolgroups.list();
-        console.log("Toolgroups response:", toolgroups);
 
-        // The client returns data directly, not wrapped in .data
         const toolGroupsArray = Array.isArray(toolgroups)
           ? toolgroups
           : toolgroups &&
@@ -381,7 +387,6 @@ export default function ChatPlaygroundPage() {
 
         if (toolGroupsArray && Array.isArray(toolGroupsArray)) {
           setAvailableToolgroups(toolGroupsArray);
-          console.log("Set toolgroups:", toolGroupsArray);
         } else {
           console.error("Invalid toolgroups data format:", toolgroups);
         }
@@ -398,6 +403,24 @@ export default function ChatPlaygroundPage() {
     };
 
     fetchToolgroups();
+
+    const fetchVectorDBs = async () => {
+      try {
+        const vectorDBs = await client.vectorDBs.list();
+
+        const vectorDBsArray = Array.isArray(vectorDBs) ? vectorDBs : [];
+
+        if (vectorDBsArray && Array.isArray(vectorDBsArray)) {
+          setAvailableVectorDBs(vectorDBsArray);
+        } else {
+          console.error("Invalid vector DBs data format:", vectorDBs);
+        }
+      } catch (error) {
+        console.error("Error fetching vector DBs:", error);
+      }
+    };
+
+    fetchVectorDBs();
   }, [client, loadAgentSessions, loadAgentConfig]);
 
   const createNewAgent = useCallback(
@@ -405,24 +428,35 @@ export default function ChatPlaygroundPage() {
       name: string,
       instructions: string,
       model: string,
-      toolgroups: string[] = []
+      toolgroups: string[] = [],
+      vectorDBs: string[] = []
     ) => {
       try {
-        console.log("Creating agent with toolgroups:", toolgroups);
+        const processedToolgroups = toolgroups.map(toolgroup => {
+          if (toolgroup === "builtin::rag" && vectorDBs.length > 0) {
+            return {
+              name: "builtin::rag/knowledge_search",
+              args: {
+                vector_db_ids: vectorDBs,
+              },
+            };
+          }
+          return toolgroup;
+        });
+
         const agentConfig = {
           model,
           instructions,
           name: name || undefined,
           enable_session_persistence: true,
-          toolgroups: toolgroups.length > 0 ? toolgroups : undefined,
+          toolgroups:
+            processedToolgroups.length > 0 ? processedToolgroups : undefined,
         };
-        console.log("Agent config being sent:", agentConfig);
 
         const response = await client.agents.create({
           agent_config: agentConfig,
         });
 
-        // refresh agents list
         const agentList = await client.agents.list();
         setAgents(
           (agentList.data as Array<{
@@ -436,7 +470,6 @@ export default function ChatPlaygroundPage() {
           }>) || []
         );
 
-        // set the new agent as selected
         setSelectedAgentId(response.agent_id);
         await loadAgentConfig(response.agent_id);
         await loadAgentSessions(response.agent_id);
@@ -450,24 +483,47 @@ export default function ChatPlaygroundPage() {
     [client, loadAgentSessions, loadAgentConfig]
   );
 
+  const handleVectorDBCreated = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async (_vectorDbId: string) => {
+      setShowCreateVectorDB(false);
+
+      try {
+        const vectorDBs = await client.vectorDBs.list();
+        const vectorDBsArray = Array.isArray(vectorDBs) ? vectorDBs : [];
+
+        if (vectorDBsArray && Array.isArray(vectorDBsArray)) {
+          setAvailableVectorDBs(vectorDBsArray);
+        }
+      } catch (error) {
+        console.error("Error refreshing vector DBs:", error);
+      }
+    },
+    [client]
+  );
+
   const deleteAgent = useCallback(
     async (agentId: string) => {
-      if (agents.length <= 1) {
-        return;
-      }
-
       if (
         confirm(
-          "Are you sure you want to delete this agent? This action cannot be undone and will delete all associated sessions."
+          "Are you sure you want to delete this agent? This action cannot be undone and will delete the agent and all its sessions."
         )
       ) {
         try {
-          await client.agents.delete(agentId);
+          // there's a known error where the delete API returns 500 even on success
+          try {
+            await client.agents.delete(agentId);
+            console.log("Agent deleted successfully");
+          } catch (deleteError) {
+            // log the error but don't re-throw - we know deletion succeeded
+            console.log(
+              "Agent delete API returned error (but deletion likely succeeded):",
+              deleteError
+            );
+          }
 
-          // clear cached data for agent
           SessionUtils.clearAgentCache(agentId);
 
-          // Refresh agents list
           const agentList = await client.agents.list();
           setAgents(
             (agentList.data as Array<{
@@ -481,10 +537,11 @@ export default function ChatPlaygroundPage() {
             }>) || []
           );
 
-          // if we deleted the current agent, switch to another one
+          // if we delete current agent, switch to another
           if (selectedAgentId === agentId) {
             const remainingAgents = agentList.data?.filter(
-              (a: { agent_id: string }) => a.agent_id !== agentId
+              (a: { [key: string]: unknown }) =>
+                (a as { agent_id: string }).agent_id !== agentId
             );
             if (remainingAgents && remainingAgents.length > 0) {
               const newAgent = remainingAgents[0] as {
@@ -501,7 +558,7 @@ export default function ChatPlaygroundPage() {
               await loadAgentConfig(newAgent.agent_id);
               await loadAgentSessions(newAgent.agent_id);
             } else {
-              // No agents left
+              // no agents left
               setSelectedAgentId("");
               setCurrentSession(null);
               setSelectedAgentConfig(null);
@@ -509,10 +566,76 @@ export default function ChatPlaygroundPage() {
           }
         } catch (error) {
           console.error("Error deleting agent:", error);
+
+          // check if this is known server bug where deletion succeeds but returns 500
+          // The error message will typically contain status codes or "Could not find agent"
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          const isKnownServerBug =
+            errorMessage.includes("500") ||
+            errorMessage.includes("Internal Server Error") ||
+            errorMessage.includes("Could not find agent") ||
+            errorMessage.includes("400");
+
+          if (isKnownServerBug) {
+            console.log(
+              "Agent deletion succeeded despite error, cleaning up UI"
+            );
+            SessionUtils.clearAgentCache(agentId);
+            try {
+              const agentList = await client.agents.list();
+              setAgents(
+                (agentList.data as Array<{
+                  agent_id: string;
+                  agent_config?: {
+                    agent_name?: string;
+                    name?: string;
+                    instructions?: string;
+                  };
+                  [key: string]: unknown;
+                }>) || []
+              );
+
+              if (selectedAgentId === agentId) {
+                const remainingAgents = agentList.data?.filter(
+                  (a: { [key: string]: unknown }) =>
+                    (a as { agent_id: string }).agent_id !== agentId
+                );
+                if (remainingAgents && remainingAgents.length > 0) {
+                  const newAgent = remainingAgents[0] as {
+                    agent_id: string;
+                    agent_config?: {
+                      agent_name?: string;
+                      name?: string;
+                      instructions?: string;
+                    };
+                    [key: string]: unknown;
+                  };
+                  setSelectedAgentId(newAgent.agent_id);
+                  SessionUtils.saveCurrentAgentId(newAgent.agent_id);
+                  await loadAgentConfig(newAgent.agent_id);
+                  await loadAgentSessions(newAgent.agent_id);
+                } else {
+                  // no agents left
+                  setSelectedAgentId("");
+                  setCurrentSession(null);
+                  setSelectedAgentConfig(null);
+                }
+              }
+            } catch (refreshError) {
+              console.error("Error refreshing agents list:", refreshError);
+            }
+          } else {
+            // show error that we don't know about to user
+            console.error("Unexpected error during agent deletion:", error);
+            if (error instanceof Error) {
+              alert(`Failed to delete agent: ${error.message}`);
+            }
+          }
         }
       }
     },
-    [agents.length, client, selectedAgentId, loadAgentConfig, loadAgentSessions]
+    [client, selectedAgentId, loadAgentConfig, loadAgentSessions]
   );
 
   const handleModelChange = useCallback((newModel: string) => {
@@ -530,10 +653,6 @@ export default function ChatPlaygroundPage() {
 
   useEffect(() => {
     if (currentSession) {
-      console.log(
-        `💾 Auto-saving session ID for agent ${currentSession.agentId}:`,
-        currentSession.id
-      );
       SessionUtils.saveCurrentSessionId(
         currentSession.id,
         currentSession.agentId
@@ -556,8 +675,12 @@ export default function ChatPlaygroundPage() {
         setModelsLoading(true);
         setModelsError(null);
         const modelList = await client.models.list();
+
+        // store all models (including embedding models for vector DB creation)
+        setModels(modelList);
+
+        // set default LLM model for chat
         const llmModels = modelList.filter(model => model.model_type === "llm");
-        setModels(llmModels);
         if (llmModels.length > 0) {
           handleModelChange(llmModels[0].identifier);
         }
@@ -614,7 +737,7 @@ export default function ChatPlaygroundPage() {
         messages: [...prev.messages, userMessage],
         updatedAt: Date.now(),
       };
-      // Update cache with new message
+      // update cache with new message
       SessionUtils.saveSessionData(prev.agentId, updatedSession);
       return updatedSession;
     });
@@ -653,7 +776,8 @@ export default function ChatPlaygroundPage() {
         turnParams,
         {
           signal: abortController.signal,
-        } as { signal: AbortSignal }
+          timeout: 300000, // 5 minutes timeout for RAG queries
+        } as { signal: AbortSignal; timeout: number }
       );
 
       const assistantMessage: Message = {
@@ -663,42 +787,242 @@ export default function ChatPlaygroundPage() {
         createdAt: new Date(),
       };
 
-      const extractDeltaText = (chunk: unknown): string | null => {
-        // this is an awful way to handle different chunk formats, but i'm not sure if there's much of a better way
-        if (chunk?.delta?.text && typeof chunk.delta.text === "string") {
-          return chunk.delta.text;
-        }
+      const processChunk = (
+        chunk: unknown
+      ): { text: string | null; isToolCall: boolean } => {
+        const chunkObj = chunk as Record<string, unknown>;
 
-        if (
-          chunk?.event?.delta?.text &&
-          typeof chunk.event.delta.text === "string"
-        ) {
-          return chunk.event.delta.text;
-        }
+        // helper to check if content contains function call JSON
+        const containsToolCall = (content: string): boolean => {
+          return (
+            content.includes('"type": "function"') ||
+            content.includes('"name": "knowledge_search"') ||
+            content.includes('"parameters":') ||
+            !!content.match(/\{"type":\s*"function".*?\}/)
+          );
+        };
 
-        if (
-          chunk?.choices?.[0]?.delta?.content &&
-          typeof chunk.choices[0].delta.content === "string"
-        ) {
-          return chunk.choices[0].delta.content;
-        }
+        let isToolCall = false;
+        let potentialContent = "";
 
         if (typeof chunk === "string") {
-          return chunk;
+          potentialContent = chunk;
+          isToolCall = containsToolCall(chunk);
         }
 
         if (
-          chunk?.event?.payload?.delta?.text &&
-          typeof chunk.event.payload.delta.text === "string"
+          chunkObj?.delta &&
+          typeof chunkObj.delta === "object" &&
+          chunkObj.delta !== null
         ) {
-          return chunk.event.payload.delta.text;
+          const delta = chunkObj.delta as Record<string, unknown>;
+          if ("tool_calls" in delta) {
+            isToolCall = true;
+          }
+          if (typeof delta.text === "string") {
+            potentialContent = delta.text;
+            if (containsToolCall(delta.text)) {
+              isToolCall = true;
+            }
+          }
         }
 
-        if (process.env.NODE_ENV !== "production") {
-          console.debug("Unrecognized chunk format:", chunk);
+        if (
+          chunkObj?.event &&
+          typeof chunkObj.event === "object" &&
+          chunkObj.event !== null
+        ) {
+          const event = chunkObj.event as Record<string, unknown>;
+
+          if (
+            event?.payload &&
+            typeof event.payload === "object" &&
+            event.payload !== null
+          ) {
+            const payload = event.payload as Record<string, unknown>;
+            if (typeof payload.content === "string") {
+              potentialContent = payload.content;
+              if (containsToolCall(payload.content)) {
+                isToolCall = true;
+              }
+            }
+
+            if (
+              payload?.delta &&
+              typeof payload.delta === "object" &&
+              payload.delta !== null
+            ) {
+              const delta = payload.delta as Record<string, unknown>;
+              if (typeof delta.text === "string") {
+                potentialContent = delta.text;
+                if (containsToolCall(delta.text)) {
+                  isToolCall = true;
+                }
+              }
+            }
+          }
+
+          if (
+            event?.delta &&
+            typeof event.delta === "object" &&
+            event.delta !== null
+          ) {
+            const delta = event.delta as Record<string, unknown>;
+            if (typeof delta.text === "string") {
+              potentialContent = delta.text;
+              if (containsToolCall(delta.text)) {
+                isToolCall = true;
+              }
+            }
+            if (typeof delta.content === "string") {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              potentialContent = delta.content;
+              if (containsToolCall(delta.content)) {
+                isToolCall = true;
+              }
+            }
+          }
         }
 
-        return null;
+        // if it's a tool call, skip it (don't display in chat)
+        if (isToolCall) {
+          return { text: null, isToolCall: true };
+        }
+
+        let text: string | null = null;
+
+        if (
+          chunkObj?.delta &&
+          typeof chunkObj.delta === "object" &&
+          chunkObj.delta !== null
+        ) {
+          const delta = chunkObj.delta as Record<string, unknown>;
+          if (typeof delta.text === "string") {
+            text = extractCleanText(delta.text);
+          }
+        }
+
+        if (
+          !text &&
+          chunkObj?.event &&
+          typeof chunkObj.event === "object" &&
+          chunkObj.event !== null
+        ) {
+          const event = chunkObj.event as Record<string, unknown>;
+
+          if (
+            event?.payload &&
+            typeof event.payload === "object" &&
+            event.payload !== null
+          ) {
+            const payload = event.payload as Record<string, unknown>;
+
+            if (typeof payload.content === "string") {
+              text = extractCleanText(payload.content);
+            }
+
+            if (
+              !text &&
+              payload?.turn &&
+              typeof payload.turn === "object" &&
+              payload.turn !== null
+            ) {
+              const turn = payload.turn as Record<string, unknown>;
+              if (
+                turn?.output_message &&
+                typeof turn.output_message === "object" &&
+                turn.output_message !== null
+              ) {
+                const outputMessage = turn.output_message as Record<
+                  string,
+                  unknown
+                >;
+                if (typeof outputMessage.content === "string") {
+                  text = extractCleanText(outputMessage.content);
+                }
+              }
+
+              if (
+                !text &&
+                turn?.steps &&
+                Array.isArray(turn.steps) &&
+                turn.steps.length > 0
+              ) {
+                for (const step of turn.steps) {
+                  if (step && typeof step === "object" && step !== null) {
+                    const stepObj = step as Record<string, unknown>;
+                    if (
+                      stepObj?.model_response &&
+                      typeof stepObj.model_response === "object" &&
+                      stepObj.model_response !== null
+                    ) {
+                      const modelResponse = stepObj.model_response as Record<
+                        string,
+                        unknown
+                      >;
+                      if (typeof modelResponse.content === "string") {
+                        text = extractCleanText(modelResponse.content);
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            if (
+              !text &&
+              payload?.delta &&
+              typeof payload.delta === "object" &&
+              payload.delta !== null
+            ) {
+              const delta = payload.delta as Record<string, unknown>;
+              if (typeof delta.text === "string") {
+                text = extractCleanText(delta.text);
+              }
+            }
+          }
+
+          if (
+            !text &&
+            event?.delta &&
+            typeof event.delta === "object" &&
+            event.delta !== null
+          ) {
+            const delta = event.delta as Record<string, unknown>;
+            if (typeof delta.text === "string") {
+              text = extractCleanText(delta.text);
+            }
+            if (!text && typeof delta.content === "string") {
+              text = extractCleanText(delta.content);
+            }
+          }
+        }
+
+        if (
+          !text &&
+          chunkObj?.choices &&
+          Array.isArray(chunkObj.choices) &&
+          chunkObj.choices.length > 0
+        ) {
+          const choice = chunkObj.choices[0] as Record<string, unknown>;
+          if (
+            choice?.delta &&
+            typeof choice.delta === "object" &&
+            choice.delta !== null
+          ) {
+            const delta = choice.delta as Record<string, unknown>;
+            if (typeof delta.content === "string") {
+              text = extractCleanText(delta.content);
+            }
+          }
+        }
+
+        if (!text && typeof chunk === "string") {
+          text = extractCleanText(chunk);
+        }
+
+        return { text, isToolCall: false };
       };
       setCurrentSession(prev => {
         if (!prev) return null;
@@ -713,8 +1037,34 @@ export default function ChatPlaygroundPage() {
       });
 
       let fullContent = "";
+
       for await (const chunk of response) {
-        const deltaText = extractDeltaText(chunk);
+        const { text: deltaText } = processChunk(chunk);
+
+        // logging for debugging function calls
+        // if (deltaText && deltaText.includes("knowledge_search")) {
+        //   console.log("🔍 Function call detected in text output:", deltaText);
+        //   console.log("🔍 Original chunk:", JSON.stringify(chunk, null, 2));
+        // }
+
+        if (chunk && typeof chunk === "object" && "event" in chunk) {
+          const event = (
+            chunk as {
+              event: {
+                payload?: {
+                  event_type?: string;
+                  turn?: { output_message?: { content?: string } };
+                };
+              };
+            }
+          ).event;
+          if (event?.payload?.event_type === "turn_complete") {
+            const content = event?.payload?.turn?.output_message?.content;
+            if (content && content.includes("knowledge_search")) {
+              console.log("🔍 Function call found in turn_complete:", content);
+            }
+          }
+        }
 
         if (deltaText) {
           fullContent += deltaText;
@@ -732,9 +1082,9 @@ export default function ChatPlaygroundPage() {
                 messages: newMessages,
                 updatedAt: Date.now(),
               };
-              // update cache with streaming content (throttled)
+              // update cache with streaming content
               if (fullContent.length % 100 === 0) {
-                // Only cache every 100 characters to avoid spam
+                // Only cache every 100 characters
                 SessionUtils.saveSessionData(prev.agentId, updatedSession);
               }
               return updatedSession;
@@ -809,8 +1159,180 @@ export default function ChatPlaygroundPage() {
     setError(null);
   };
 
+  const handleRAGFileUpload = async (file: File) => {
+    if (!selectedAgentConfig?.toolgroups || !selectedAgentId) {
+      setError("No agent selected or agent has no RAG tools configured");
+      return;
+    }
+
+    // find RAG toolgroups that have vector_db_ids configured
+    const ragToolgroups = selectedAgentConfig.toolgroups.filter(toolgroup => {
+      if (typeof toolgroup === "object" && toolgroup.name?.includes("rag")) {
+        return toolgroup.args && "vector_db_ids" in toolgroup.args;
+      }
+      return false;
+    });
+
+    if (ragToolgroups.length === 0) {
+      setError("Current agent has no vector databases configured for RAG");
+      return;
+    }
+
+    try {
+      setError(null);
+      console.log("Uploading file using RAG tool...");
+
+      setUploadNotification({
+        show: true,
+        message: `📄 Uploading and indexing "${file.name}"...`,
+        type: "loading",
+      });
+
+      const vectorDbIds = ragToolgroups.flatMap(toolgroup => {
+        if (
+          typeof toolgroup === "object" &&
+          toolgroup.args &&
+          "vector_db_ids" in toolgroup.args
+        ) {
+          return toolgroup.args.vector_db_ids as string[];
+        }
+        return [];
+      });
+
+      // determine mime type from file extension - this should be in the Llama Stack Client IMO
+      const getContentType = (filename: string): string => {
+        const ext = filename.toLowerCase().split(".").pop();
+        switch (ext) {
+          case "pdf":
+            return "application/pdf";
+          case "txt":
+            return "text/plain";
+          case "md":
+            return "text/markdown";
+          case "html":
+            return "text/html";
+          case "csv":
+            return "text/csv";
+          case "json":
+            return "application/json";
+          case "docx":
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+          case "doc":
+            return "application/msword";
+          default:
+            return "application/octet-stream";
+        }
+      };
+
+      const mimeType = getContentType(file.name);
+      let fileContent: string;
+
+      // handle text files vs binary files differently
+      const isTextFile =
+        mimeType.startsWith("text/") ||
+        mimeType === "application/json" ||
+        mimeType === "text/markdown" ||
+        mimeType === "text/html" ||
+        mimeType === "text/csv";
+
+      if (isTextFile) {
+        fileContent = await file.text();
+      } else {
+        // for PDFs and other binary files, create a data URL
+        // use FileReader for efficient base64 conversion
+        fileContent = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      for (const vectorDbId of vectorDbIds) {
+        await client.toolRuntime.ragTool.insert({
+          documents: [
+            {
+              content: fileContent,
+              document_id: `${file.name}-${Date.now()}`,
+              metadata: {
+                filename: file.name,
+                file_size: file.size,
+                uploaded_at: new Date().toISOString(),
+                agent_id: selectedAgentId,
+              },
+              mime_type: mimeType,
+            },
+          ],
+          vector_db_id: vectorDbId,
+          // TODO: parameterize this somewhere, probably in settings
+          chunk_size_in_tokens: 512,
+        });
+      }
+
+      console.log("✅ File successfully uploaded using RAG tool");
+
+      setUploadNotification({
+        show: true,
+        message: `📄 File "${file.name}" uploaded and indexed successfully!`,
+        type: "success",
+      });
+
+      setTimeout(() => {
+        setUploadNotification(prev => ({ ...prev, show: false }));
+      }, 4000);
+    } catch (err) {
+      console.error("Error uploading file using RAG tool:", err);
+      const errorMessage =
+        err instanceof Error
+          ? `Failed to upload file: ${err.message}`
+          : "Failed to upload file using RAG tool";
+
+      setUploadNotification({
+        show: true,
+        message: errorMessage,
+        type: "error",
+      });
+
+      setTimeout(() => {
+        setUploadNotification(prev => ({ ...prev, show: false }));
+      }, 6000);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full max-w-7xl mx-auto">
+      {/* Upload Notification */}
+      {uploadNotification.show && (
+        <div
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+            uploadNotification.type === "success"
+              ? "bg-green-100 border border-green-300 text-green-800"
+              : uploadNotification.type === "error"
+                ? "bg-red-100 border border-red-300 text-red-800"
+                : "bg-blue-100 border border-blue-300 text-blue-800"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {uploadNotification.type === "loading" && (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+            )}
+            <span className="text-sm font-medium">
+              {uploadNotification.message}
+            </span>
+            {uploadNotification.type !== "loading" && (
+              <button
+                onClick={() =>
+                  setUploadNotification(prev => ({ ...prev, show: false }))
+                }
+                className="ml-2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
@@ -822,7 +1344,6 @@ export default function ChatPlaygroundPage() {
                 <Select
                   value={selectedAgentId}
                   onValueChange={agentId => {
-                    console.log("🤖 User selected agent:", agentId);
                     setSelectedAgentId(agentId);
                     SessionUtils.saveCurrentAgentId(agentId);
                     loadAgentConfig(agentId);
@@ -861,7 +1382,7 @@ export default function ChatPlaygroundPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {selectedAgentId && agents.length > 1 && (
+                {selectedAgentId && (
                   <Button
                     onClick={() => deleteAgent(selectedAgentId)}
                     variant="outline"
@@ -922,14 +1443,16 @@ export default function ChatPlaygroundPage() {
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {models.map(model => (
-                      <SelectItem
-                        key={model.identifier}
-                        value={model.identifier}
-                      >
-                        {model.identifier}
-                      </SelectItem>
-                    ))}
+                    {models
+                      .filter(model => model.model_type === "llm")
+                      .map(model => (
+                        <SelectItem
+                          key={model.identifier}
+                          value={model.identifier}
+                        >
+                          {model.identifier}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
                 {modelsError && (
@@ -982,34 +1505,63 @@ export default function ChatPlaygroundPage() {
                         const toolArgs =
                           typeof toolgroup === "object" ? toolgroup.args : null;
 
+                        const isRAGTool = toolName.includes("rag");
+                        const displayName = isRAGTool ? "RAG Search" : toolName;
+                        const displayIcon = isRAGTool
+                          ? "🔍"
+                          : toolName.includes("search")
+                            ? "🌐"
+                            : "🔧";
+
                         return (
                           <div
                             key={index}
                             className="p-3 border border-input rounded-md bg-muted text-muted-foreground"
                           >
                             <div className="flex items-center justify-between">
-                              <code className="text-sm font-mono text-primary">
-                                {toolName}
-                              </code>
-                              <span className="text-xs text-muted-foreground">
-                                {toolName.includes("rag")
-                                  ? "🔍 RAG"
-                                  : toolName.includes("search")
-                                    ? "🌐 Search"
-                                    : "🔧 Tool"}
-                              </span>
-                            </div>
-                            {toolArgs && Object.keys(toolArgs).length > 0 && (
-                              <div className="mt-2 text-xs text-muted-foreground">
-                                <span className="font-medium">Args:</span>{" "}
-                                {Object.entries(toolArgs)
-                                  .map(
-                                    ([key, value]) =>
-                                      `${key}: ${JSON.stringify(value)}`
-                                  )
-                                  .join(", ")}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">{displayIcon}</span>
+                                <span className="text-sm font-medium text-primary">
+                                  {displayName}
+                                </span>
                               </div>
-                            )}
+                            </div>
+                            {isRAGTool && toolArgs && toolArgs.vector_db_ids ? (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                <span className="font-medium">
+                                  Vector Databases:
+                                </span>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {Array.isArray(toolArgs.vector_db_ids) ? (
+                                    toolArgs.vector_db_ids.map(
+                                      (dbId: string, idx: number) => (
+                                        <code
+                                          key={idx}
+                                          className="px-1.5 py-0.5 bg-muted-foreground/10 rounded text-xs"
+                                        >
+                                          {dbId}
+                                        </code>
+                                      )
+                                    )
+                                  ) : (
+                                    <code className="px-1.5 py-0.5 bg-muted-foreground/10 rounded text-xs">
+                                      {String(toolArgs.vector_db_ids)}
+                                    </code>
+                                  )}
+                                </div>
+                              </div>
+                            ) : null}
+                            {!isRAGTool &&
+                              toolArgs &&
+                              Object.keys(toolArgs).length > 0 && (
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  <span className="font-medium">
+                                    Configuration:
+                                  </span>{" "}
+                                  {Object.keys(toolArgs).length} parameter
+                                  {Object.keys(toolArgs).length > 1 ? "s" : ""}
+                                </div>
+                              )}
                           </div>
                         );
                       }
@@ -1043,21 +1595,45 @@ export default function ChatPlaygroundPage() {
             </div>
           )}
 
-          <Chat
-            className="flex-1"
-            messages={currentSession?.messages || []}
-            handleSubmit={handleSubmit}
-            input={input}
-            handleInputChange={handleInputChange}
-            isGenerating={isGenerating}
-            append={append}
-            suggestions={suggestions}
-            setMessages={messages =>
-              setCurrentSession(prev =>
-                prev ? { ...prev, messages, updatedAt: Date.now() } : prev
-              )
-            }
-          />
+          {!agentsLoading && agents.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-4 max-w-md">
+                <div className="text-6xl mb-4">🦙</div>
+                <h2 className="text-2xl font-semibold text-muted-foreground">
+                  Create an Agent with Llama Stack
+                </h2>
+                <p className="text-muted-foreground">
+                  To get started, create your first agent. Each agent is
+                  configured with specific instructions, models, and tools to
+                  help you with different tasks.
+                </p>
+                <Button
+                  onClick={() => setShowCreateAgent(true)}
+                  size="lg"
+                  className="mt-4"
+                >
+                  Create Your First Agent
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Chat
+              className="flex-1"
+              messages={currentSession?.messages || []}
+              handleSubmit={handleSubmit}
+              input={input}
+              handleInputChange={handleInputChange}
+              isGenerating={isGenerating}
+              append={append}
+              suggestions={suggestions}
+              setMessages={messages =>
+                setCurrentSession(prev =>
+                  prev ? { ...prev, messages, updatedAt: Date.now() } : prev
+                )
+              }
+              onRAGFileUpload={handleRAGFileUpload}
+            />
+          )}
         </div>
       </div>
 
@@ -1086,14 +1662,16 @@ export default function ChatPlaygroundPage() {
                     <SelectValue placeholder="Select Model" />
                   </SelectTrigger>
                   <SelectContent>
-                    {models.map(model => (
-                      <SelectItem
-                        key={model.identifier}
-                        value={model.identifier}
-                      >
-                        {model.identifier}
-                      </SelectItem>
-                    ))}
+                    {models
+                      .filter(model => model.model_type === "llm")
+                      .map(model => (
+                        <SelectItem
+                          key={model.identifier}
+                          value={model.identifier}
+                        >
+                          {model.identifier}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1137,31 +1715,18 @@ export default function ChatPlaygroundPage() {
                             toolgroup.identifier
                           )}
                           onChange={e => {
-                            console.log(
-                              "Tool selection changed:",
-                              toolgroup.identifier,
-                              e.target.checked
-                            );
                             if (e.target.checked) {
                               setSelectedToolgroups(prev => {
                                 const newSelection = [
                                   ...prev,
                                   toolgroup.identifier,
                                 ];
-                                console.log(
-                                  "New selected toolgroups:",
-                                  newSelection
-                                );
                                 return newSelection;
                               });
                             } else {
                               setSelectedToolgroups(prev => {
                                 const newSelection = prev.filter(
                                   id => id !== toolgroup.identifier
-                                );
-                                console.log(
-                                  "New selected toolgroups:",
-                                  newSelection
                                 );
                                 return newSelection;
                               });
@@ -1194,6 +1759,80 @@ export default function ChatPlaygroundPage() {
                   text generation agents work without tools.
                 </p>
               </div>
+
+              {/* Vector DB Configuration for RAG */}
+              {selectedToolgroups.includes("builtin::rag") && (
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Vector Databases for RAG
+                  </label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCreateVectorDB(true)}
+                    >
+                      + Create Vector DB
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      {availableVectorDBs.length} available
+                    </span>
+                  </div>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {availableVectorDBs.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No vector databases available. Create one to use RAG
+                        tools.
+                      </p>
+                    ) : (
+                      availableVectorDBs.map(vectorDB => (
+                        <label
+                          key={vectorDB.identifier}
+                          className="flex items-center space-x-2"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedVectorDBs.includes(
+                              vectorDB.identifier
+                            )}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedVectorDBs(prev => [
+                                  ...prev,
+                                  vectorDB.identifier,
+                                ]);
+                              } else {
+                                setSelectedVectorDBs(prev =>
+                                  prev.filter(id => id !== vectorDB.identifier)
+                                );
+                              }
+                            }}
+                            className="rounded border-input"
+                          />
+                          <span className="text-sm">
+                            <code className="bg-muted px-1 rounded text-xs">
+                              {vectorDB.identifier}
+                            </code>
+                            {vectorDB.vector_db_name && (
+                              <span className="text-muted-foreground ml-2">
+                                ({vectorDB.vector_db_name})
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  {selectedVectorDBs.length === 0 &&
+                    selectedToolgroups.includes("builtin::rag") && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ⚠️ RAG tool selected but no vector databases chosen.
+                        Create or select a vector database.
+                      </p>
+                    )}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-4">
@@ -1204,12 +1843,14 @@ export default function ChatPlaygroundPage() {
                       newAgentName,
                       newAgentInstructions,
                       selectedModel,
-                      selectedToolgroups
+                      selectedToolgroups,
+                      selectedVectorDBs
                     );
                     setShowCreateAgent(false);
                     setNewAgentName("");
                     setNewAgentInstructions("You are a helpful assistant.");
                     setSelectedToolgroups([]);
+                    setSelectedVectorDBs([]);
                   } catch (error) {
                     console.error("Failed to create agent:", error);
                   }
@@ -1226,6 +1867,7 @@ export default function ChatPlaygroundPage() {
                   setNewAgentName("");
                   setNewAgentInstructions("You are a helpful assistant.");
                   setSelectedToolgroups([]);
+                  setSelectedVectorDBs([]);
                 }}
                 className="flex-1"
               >
@@ -1233,6 +1875,17 @@ export default function ChatPlaygroundPage() {
               </Button>
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* Create Vector DB Modal */}
+      {showCreateVectorDB && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <VectorDBCreator
+            models={models}
+            onVectorDBCreated={handleVectorDBCreated}
+            onCancel={() => setShowCreateVectorDB(false)}
+          />
         </div>
       )}
     </div>

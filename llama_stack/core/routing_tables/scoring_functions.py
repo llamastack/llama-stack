@@ -60,3 +60,7 @@ class ScoringFunctionsRoutingTable(CommonRoutingTableImpl, ScoringFunctions):
         )
         scoring_fn.provider_id = provider_id
         await self.register_object(scoring_fn)
+
+    async def unregister_scoring_function(self, scoring_fn_id: str) -> None:
+        existing_scoring_fn = await self.get_scoring_function(scoring_fn_id)
+        await self.unregister_object(existing_scoring_fn)

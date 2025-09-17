@@ -23,6 +23,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from sqlalchemy.sql.elements import ColumnElement
 
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.log import get_logger
@@ -41,6 +42,30 @@ TYPE_MAPPING: dict[ColumnType, Any] = {
     ColumnType.TEXT: Text,
     ColumnType.JSON: JSON,
 }
+
+
+def _build_where_expr(column: ColumnElement, value: Any) -> ColumnElement:
+    """Return a SQLAlchemy expression for a where condition.
+
+    `value` may be a simple scalar (equality) or a mapping like {">": 123}.
+    The returned expression is a SQLAlchemy ColumnElement usable in query.where(...).
+    """
+    if isinstance(value, Mapping):
+        if len(value) != 1:
+            raise ValueError(f"Operator mapping must have a single operator, got: {value}")
+        op, operand = next(iter(value.items()))
+        if op == "==" or op == "=":
+            return column == operand
+        if op == ">":
+            return column > operand
+        if op == "<":
+            return column < operand
+        if op == ">=":
+            return column >= operand
+        if op == "<=":
+            return column <= operand
+        raise ValueError(f"Unsupported operator '{op}' in where mapping")
+    return column == value
 
 
 class SqlAlchemySqlStoreImpl(SqlStore):
@@ -111,7 +136,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
 
             if where:
                 for key, value in where.items():
-                    query = query.where(table_obj.c[key] == value)
+                    query = query.where(_build_where_expr(table_obj.c[key], value))
 
             if where_sql:
                 query = query.where(text(where_sql))
@@ -222,7 +247,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         async with self.async_session() as session:
             stmt = self.metadata.tables[table].update()
             for key, value in where.items():
-                stmt = stmt.where(self.metadata.tables[table].c[key] == value)
+                stmt = stmt.where(_build_where_expr(self.metadata.tables[table].c[key], value))
             await session.execute(stmt, data)
             await session.commit()
 
@@ -233,7 +258,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         async with self.async_session() as session:
             stmt = self.metadata.tables[table].delete()
             for key, value in where.items():
-                stmt = stmt.where(self.metadata.tables[table].c[key] == value)
+                stmt = stmt.where(_build_where_expr(self.metadata.tables[table].c[key], value))
             await session.execute(stmt)
             await session.commit()
 

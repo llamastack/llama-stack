@@ -21,6 +21,7 @@ interface MessageInputBaseProps
   isGenerating: boolean;
   enableInterrupt?: boolean;
   transcribeAudio?: (blob: Blob) => Promise<string>;
+  onRAGFileUpload?: (file: File) => Promise<void>;
 }
 
 interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
@@ -213,8 +214,13 @@ export function MessageInput({
               className
             )}
             {...(props.allowAttachments
-              ? omit(props, ["allowAttachments", "files", "setFiles"])
-              : omit(props, ["allowAttachments"]))}
+              ? omit(props, [
+                  "allowAttachments",
+                  "files",
+                  "setFiles",
+                  "onRAGFileUpload",
+                ])
+              : omit(props, ["allowAttachments", "onRAGFileUpload"]))}
           />
 
           {props.allowAttachments && (
@@ -254,11 +260,19 @@ export function MessageInput({
             size="icon"
             variant="outline"
             className="h-8 w-8"
-            aria-label="Attach a file"
-            disabled={true}
+            aria-label="Upload file to RAG"
+            disabled={false}
             onClick={async () => {
-              const files = await showFileUploadDialog();
-              addFiles(files);
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = ".pdf,.txt,.md,.html,.csv,.json";
+              input.onchange = async e => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file && props.onRAGFileUpload) {
+                  await props.onRAGFileUpload(file);
+                }
+              };
+              input.click();
             }}
           >
             <Paperclip className="h-4 w-4" />
@@ -335,28 +349,6 @@ function FileUploadOverlay({ isDragging }: FileUploadOverlayProps) {
       )}
     </AnimatePresence>
   );
-}
-
-function showFileUploadDialog() {
-  const input = document.createElement("input");
-
-  input.type = "file";
-  input.multiple = true;
-  input.accept = "*/*";
-  input.click();
-
-  return new Promise<File[] | null>(resolve => {
-    input.onchange = e => {
-      const files = (e.currentTarget as HTMLInputElement).files;
-
-      if (files) {
-        resolve(Array.from(files));
-        return;
-      }
-
-      resolve(null);
-    };
-  });
 }
 
 function TranscribingOverlay() {

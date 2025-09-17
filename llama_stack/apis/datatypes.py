@@ -102,6 +102,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar benchmarks: Benchmark suite management
     :cvar tool_groups: Tool group organization
     :cvar files: File storage and management
+    :cvar prompts: Prompt versions and management
     :cvar inspect: Built-in system inspection and introspection
     """
 
@@ -127,6 +128,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     benchmarks = "benchmarks"
     tool_groups = "tool_groups"
     files = "files"
+    prompts = "prompts"
 
     # built-in API
     inspect = "inspect"

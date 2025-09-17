@@ -93,3 +93,11 @@ class Benchmarks(Protocol):
         :param metadata: The metadata to use for the benchmark.
         """
         ...
+
+    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="DELETE")
+    async def unregister_benchmark(self, benchmark_id: str) -> None:
+        """Unregister a benchmark.
+
+        :param benchmark_id: The ID of the benchmark to unregister.
+        """
+        ...

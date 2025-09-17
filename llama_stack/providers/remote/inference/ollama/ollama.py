@@ -118,10 +118,10 @@ class OllamaInferenceAdapter(
 
     async def initialize(self) -> None:
         logger.info(f"checking connectivity to Ollama at `{self.config.url}`...")
-        health_response = await self.health()
-        if health_response["status"] == HealthStatus.ERROR:
+        r = await self.health()
+        if r["status"] == HealthStatus.ERROR:
             logger.warning(
-                "Ollama Server is not running, make sure to start it using `ollama serve` in a separate terminal"
+                f"Ollama Server is not running (message: {r['message']}). Make sure to start it using `ollama serve` in a separate terminal"
             )
 
     async def should_refresh_models(self) -> bool:
@@ -156,7 +156,7 @@ class OllamaInferenceAdapter(
             ),
             Model(
                 identifier="nomic-embed-text",
-                provider_resource_id="nomic-embed-text",
+                provider_resource_id="nomic-embed-text:latest",
                 provider_id=provider_id,
                 metadata={
                     "embedding_dimension": 768,

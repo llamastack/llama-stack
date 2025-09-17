@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from typing import Any
@@ -43,6 +44,12 @@ class OpenAIMixin(ABC):
       The model_store is set in routing_tables/common.py during provider initialization.
     """
 
+    # Allow subclasses to control whether to overwrite the 'id' field in OpenAI responses
+    # is overwritten with a client-side generated id.
+    #
+    # This is useful for providers that do not return a unique id in the response.
+    overwrite_completion_id: bool = False
+
     @abstractmethod
     def get_api_key(self) -> str:
         """
@@ -67,6 +74,17 @@ class OpenAIMixin(ABC):
         """
         pass
 
+    def get_extra_client_params(self) -> dict[str, Any]:
+        """
+        Get any extra parameters to pass to the AsyncOpenAI client.
+
+        Child classes can override this method to provide additional parameters
+        such as timeout settings, proxies, etc.
+
+        :return: A dictionary of extra parameters
+        """
+        return {}
+
     @property
     def client(self) -> AsyncOpenAI:
         """
@@ -78,6 +96,7 @@ class OpenAIMixin(ABC):
         return AsyncOpenAI(
             api_key=self.get_api_key(),
             base_url=self.get_base_url(),
+            **self.get_extra_client_params(),
         )
 
     async def _get_provider_model_id(self, model: str) -> str:
@@ -97,6 +116,23 @@ class OpenAIMixin(ABC):
         if model_obj.provider_resource_id is None:
             raise ValueError(f"Model {model} has no provider_resource_id")
         return model_obj.provider_resource_id
+
+    async def _maybe_overwrite_id(self, resp: Any, stream: bool | None) -> Any:
+        if not self.overwrite_completion_id:
+            return resp
+
+        new_id = f"cltsd-{uuid.uuid4()}"
+        if stream:
+
+            async def _gen():
+                async for chunk in resp:
+                    chunk.id = new_id
+                    yield chunk
+
+            return _gen()
+        else:
+            resp.id = new_id
+            return resp
 
     async def openai_completion(
         self,
@@ -124,13 +160,18 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI completion API call.
         """
-        if guided_choice is not None:
-            logger.warning("guided_choice is not supported by the OpenAI API. Ignoring.")
-        if prompt_logprobs is not None:
-            logger.warning("prompt_logprobs is not supported by the OpenAI API. Ignoring.")
+        # Handle parameters that are not supported by OpenAI API, but may be by the provider
+        #  prompt_logprobs is supported by vLLM
+        #  guided_choice is supported by vLLM
+        # TODO: test coverage
+        extra_body: dict[str, Any] = {}
+        if prompt_logprobs is not None and prompt_logprobs >= 0:
+            extra_body["prompt_logprobs"] = prompt_logprobs
+        if guided_choice:
+            extra_body["guided_choice"] = guided_choice
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
-        return await self.client.completions.create(  # type: ignore[no-any-return]
+        resp = await self.client.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
                 prompt=prompt,
@@ -150,8 +191,11 @@ class OpenAIMixin(ABC):
                 top_p=top_p,
                 user=user,
                 suffix=suffix,
-            )
+            ),
+            extra_body=extra_body,
         )
+
+        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
     async def openai_chat_completion(
         self,
@@ -182,8 +226,7 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI chat completion API call.
         """
-        # Type ignore because return types are compatible
-        return await self.client.chat.completions.create(  # type: ignore[no-any-return]
+        resp = await self.client.chat.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
                 messages=messages,
@@ -210,6 +253,8 @@ class OpenAIMixin(ABC):
                 user=user,
             )
         )
+
+        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
     async def openai_embeddings(
         self,
