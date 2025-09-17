@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import datetime
+import os
 import threading
 from typing import Any
 
@@ -93,28 +94,36 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
 
             # Use single OTLP endpoint for all telemetry signals
             if TelemetrySink.OTEL_TRACE in self.config.sinks or TelemetrySink.OTEL_METRIC in self.config.sinks:
-                if self.config.otel_exporter_otlp_endpoint is None:
-                    raise ValueError(
-                        "otel_exporter_otlp_endpoint is required when OTEL_TRACE or OTEL_METRIC is enabled"
-                    )
-
                 # Let OpenTelemetry SDK handle endpoint construction automatically
                 # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
                 # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
                 if TelemetrySink.OTEL_TRACE in self.config.sinks:
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") or not os.environ.get(
+                        "OTEL_EXPORTER_OTLP_ENDPOINT"
+                    ):
+                        logger.warning(
+                            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is not set. Traces will not be exported."
+                        )
                     span_exporter = OTLPSpanExporter()
                     span_processor = BatchSpanProcessor(span_exporter)
-                    trace.get_tracer_provider().add_span_processor(span_processor)
+                    provider.add_span_processor(span_processor)
 
                 if TelemetrySink.OTEL_METRIC in self.config.sinks:
-                    metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") or not os.environ.get(
+                        "OTEL_EXPORTER_OTLP_ENDPOINT"
+                    ):
+                        logger.warning(
+                            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is not set. Metrics will not be exported."
+                        )
+                    metric_exporter = OTLPMetricExporter()
+                    metric_reader = PeriodicExportingMetricReader(metric_exporter)
                     metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
                     metrics.set_meter_provider(metric_provider)
 
             if TelemetrySink.SQLITE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
+                provider.add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
             if TelemetrySink.CONSOLE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(ConsoleSpanProcessor(print_attributes=True))
+                provider.add_span_processor(ConsoleSpanProcessor(print_attributes=True))
 
         if TelemetrySink.OTEL_METRIC in self.config.sinks:
             self.meter = metrics.get_meter(__name__)
@@ -127,7 +136,8 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         pass
 
     async def shutdown(self) -> None:
-        trace.get_tracer_provider().force_flush()
+        if isinstance(_TRACER_PROVIDER, TracerProvider):
+            _TRACER_PROVIDER.force_flush()
 
     async def log_event(self, event: Event, ttl_seconds: int = 604800) -> None:
         if isinstance(event, UnstructuredLogEvent):
