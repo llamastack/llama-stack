@@ -11,6 +11,7 @@ The `llamastack/distribution-nvidia` distribution consists of the following prov
 | agents | `inline::meta-reference` |
 | datasetio | `inline::localfs`, `remote::nvidia` |
 | eval | `remote::nvidia` |
+| files | `inline::localfs` |
 | inference | `remote::nvidia` |
 | post_training | `remote::nvidia` |
 | safety | `remote::nvidia` |
