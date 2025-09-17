@@ -99,7 +99,7 @@ class DiskDistributionRegistry(DistributionRegistry):
         # warn if the object's providerid is different but proceed with registration
         if existing_obj and existing_obj.provider_id != obj.provider_id:
             logger.warning(
-                f"Object {existing_obj.type}:{existing_obj.identifier} with provider_id {existing_obj.provider_id} is being replaced with {existing_obj.type}:{existing_obj.identifier} with provider_id {obj.provider_id}, overwriting"
+                f"Object {existing_obj.type}:{existing_obj.identifier} is being replaced with {obj.type}:{obj.identifier}"
             )
 
         await self.kvstore.set(
