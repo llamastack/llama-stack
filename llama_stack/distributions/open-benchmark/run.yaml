@@ -136,30 +136,32 @@ inference_store:
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/inference_store.db
 models:
 - metadata: {}
-  model_id: gpt-4o
-  provider_id: openai
   provider_model_id: gpt-4o
+  provider_id: openai
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata: {}
-  model_id: claude-3-5-sonnet-latest
-  provider_id: anthropic
   provider_model_id: claude-3-5-sonnet-latest
+  provider_id: anthropic
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata: {}
-  model_id: gemini/gemini-1.5-flash
-  provider_id: gemini
   provider_model_id: gemini/gemini-1.5-flash
+  provider_id: gemini
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata: {}
-  model_id: meta-llama/Llama-3.3-70B-Instruct
-  provider_id: groq
   provider_model_id: groq/llama-3.3-70b-versatile
+  provider_id: groq
   model_type: llm
+  model_id: meta-llama/Llama-3.3-70B-Instruct
+  use_provider_model_id_as_id: false
 - metadata: {}
-  model_id: meta-llama/Llama-3.1-405B-Instruct
-  provider_id: together
   provider_model_id: meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo
+  provider_id: together
   model_type: llm
+  model_id: meta-llama/Llama-3.1-405B-Instruct
+  use_provider_model_id_as_id: false
 shields:
 - shield_id: meta-llama/Llama-Guard-3-8B
 vector_dbs: []

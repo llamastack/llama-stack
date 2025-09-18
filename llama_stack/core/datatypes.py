@@ -26,6 +26,7 @@ from llama_stack.apis.tools import Tool, ToolGroup, ToolGroupInput, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.log import LoggingConfig
 from llama_stack.providers.datatypes import Api, ProviderSpec
 from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreConfig
@@ -182,14 +183,6 @@ class DistributionSpec(BaseModel):
         select multiple providers, you should provide an appropriate 'routing_map'
         in the runtime configuration to help route to the correct provider.
         """,
-    )
-
-
-class LoggingConfig(BaseModel):
-    category_levels: dict[str, str] = Field(
-        default_factory=dict,
-        description="""
- Dictionary of different logging configurations for different portions (ex: core, server) of llama stack""",
     )
 
 

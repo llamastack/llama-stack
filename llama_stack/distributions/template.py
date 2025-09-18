@@ -114,7 +114,7 @@ def get_model_registry(
                 identifier = f"{provider_id}/{model_id}" if ids_conflict and provider_id not in model_id else model_id
                 models.append(
                     ModelInput(
-                        model_id=identifier,
+                        model_id=identifier if identifier != entry.provider_model_id else None,
                         provider_model_id=entry.provider_model_id,
                         provider_id=provider_id,
                         model_type=entry.model_type,

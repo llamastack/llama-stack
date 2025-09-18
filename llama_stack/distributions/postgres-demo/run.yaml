@@ -88,14 +88,16 @@ inference_store:
   password: ${env.POSTGRES_PASSWORD:=llamastack}
 models:
 - metadata: {}
-  model_id: ${env.INFERENCE_MODEL}
+  provider_model_id: ${env.INFERENCE_MODEL}
   provider_id: vllm-inference
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata:
     embedding_dimension: 384
-  model_id: all-MiniLM-L6-v2
+  provider_model_id: all-MiniLM-L6-v2
   provider_id: sentence-transformers
   model_type: embedding
+  use_provider_model_id_as_id: false
 shields:
 - shield_id: meta-llama/Llama-Guard-3-8B
 vector_dbs: []

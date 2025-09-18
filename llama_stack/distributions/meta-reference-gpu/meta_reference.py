@@ -73,11 +73,11 @@ def get_distribution_template() -> DistributionTemplate:
     )
 
     inference_model = ModelInput(
-        model_id="${env.INFERENCE_MODEL}",
+        provider_model_id="${env.INFERENCE_MODEL}",
         provider_id="meta-reference-inference",
     )
     embedding_model = ModelInput(
-        model_id="all-MiniLM-L6-v2",
+        provider_model_id="all-MiniLM-L6-v2",
         provider_id="sentence-transformers",
         model_type=ModelType.embedding,
         metadata={
@@ -85,7 +85,7 @@ def get_distribution_template() -> DistributionTemplate:
         },
     )
     safety_model = ModelInput(
-        model_id="${env.SAFETY_MODEL}",
+        provider_model_id="${env.SAFETY_MODEL}",
         provider_id="meta-reference-safety",
     )
     default_tool_groups = [

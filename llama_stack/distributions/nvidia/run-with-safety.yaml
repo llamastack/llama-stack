@@ -96,13 +96,15 @@ inference_store:
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/inference_store.db
 models:
 - metadata: {}
-  model_id: ${env.INFERENCE_MODEL}
+  provider_model_id: ${env.INFERENCE_MODEL}
   provider_id: nvidia
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata: {}
-  model_id: ${env.SAFETY_MODEL}
+  provider_model_id: ${env.SAFETY_MODEL}
   provider_id: nvidia
   model_type: llm
+  use_provider_model_id_as_id: false
 shields:
 - shield_id: ${env.SAFETY_MODEL}
   provider_id: nvidia
