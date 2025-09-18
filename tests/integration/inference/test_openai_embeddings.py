@@ -33,6 +33,7 @@ def skip_if_model_doesnt_support_user_param(client, model_id):
     provider = provider_from_model(client, model_id)
     if provider.provider_type in (
         "remote::together",  # service returns 400
+        "remote::fireworks",  # service returns 400 malformed input
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} does not support user param.")
 
@@ -41,6 +42,7 @@ def skip_if_model_doesnt_support_encoding_format_base64(client, model_id):
     provider = provider_from_model(client, model_id)
     if provider.provider_type in (
         "remote::together",  # param silently ignored, always returns floats
+        "remote::fireworks",  # param silently ignored, always returns list of floats
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} does not support encoding_format='base64'.")
 
@@ -287,7 +289,6 @@ def test_openai_embeddings_base64_batch_processing(compat_client, client_with_mo
         input=input_texts,
         encoding_format="base64",
     )
-
     # Validate response structure
     assert response.object == "list"
     assert response.model == embedding_model_id

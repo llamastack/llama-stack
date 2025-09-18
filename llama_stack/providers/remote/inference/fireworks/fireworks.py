@@ -26,7 +26,6 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
-    OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
     ResponseFormat,
@@ -287,16 +286,6 @@ class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Nee
 
         embeddings = [data.embedding for data in response.data]
         return EmbeddingsResponse(embeddings=embeddings)
-
-    async def openai_embeddings(
-        self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
-    ) -> OpenAIEmbeddingsResponse:
-        raise NotImplementedError()
 
     async def openai_completion(
         self,
