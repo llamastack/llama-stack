@@ -590,7 +590,6 @@ class InferenceRouter(Inference):
 
     async def _nonstream_openai_chat_completion(self, provider: Inference, params: dict) -> OpenAIChatCompletion:
         response = await provider.openai_chat_completion(**params)
-
         for choice in response.choices:
             # some providers return an empty list for no tool calls in non-streaming responses
             # but the OpenAI API returns None. So, set tool_calls to None if it's empty

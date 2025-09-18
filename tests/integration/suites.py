@@ -115,7 +115,6 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "accounts/fireworks/models/llama-v3p1-8b-instruct",
             "vision_model": "accounts/fireworks/models/llama-v3p2-90b-vision-instruct",
             "embedding_model": "nomic-ai/nomic-embed-text-v1.5",
-            # "embedding_model": "accounts/fireworks/models/qwen3-embedding-8b",
         },
     ),
 }

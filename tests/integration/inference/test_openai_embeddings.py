@@ -6,19 +6,11 @@
 
 import base64
 import struct
-import time
 
 import pytest
 from openai import OpenAI
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
-
-
-@pytest.fixture(autouse=True)
-def rate_limit_delay():
-    """Add delay between tests to avoid rate limiting from providers like Fireworks"""
-    yield
-    time.sleep(30)  # 30 second delay after each test
 
 
 def decode_base64_to_floats(base64_string: str) -> list[float]:

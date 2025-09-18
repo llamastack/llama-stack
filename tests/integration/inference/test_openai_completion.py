@@ -13,13 +13,6 @@ import pytest
 from ..test_cases.test_case import TestCase
 
 
-@pytest.fixture(autouse=True)
-def rate_limit_delay():
-    """Add delay between tests to avoid rate limiting from providers like Fireworks"""
-    yield
-    time.sleep(30)  # 30 second delay after each test
-
-
 def _normalize_text(text: str) -> str:
     """
     Normalize Unicode text by removing diacritical marks for comparison.
