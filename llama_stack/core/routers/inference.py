@@ -739,6 +739,7 @@ class InferenceRouter(Inference):
         id = None
         created = None
         choices_data: dict[int, dict[str, Any]] = {}
+
         try:
             async for chunk in response:
                 # Skip None chunks
