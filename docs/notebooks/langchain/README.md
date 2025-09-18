@@ -123,14 +123,13 @@ import requests
 # Process a document
 response = requests.post(
     "http://localhost:8000/process",
-    json={"source": "https://en.wikipedia.org/wiki/Deep_learning"}
+    json={"source": "https://en.wikipedia.org/wiki/Deep_learning"},
 )
 print(response.json())
 
 # Ask a question
 response = requests.post(
-    "http://localhost:8000/ask",
-    json={"question": "What are neural networks?"}
+    "http://localhost:8000/ask", json={"question": "What are neural networks?"}
 )
 print(response.json())
 
@@ -180,6 +179,7 @@ To change the model, edit the `model_id` parameter in the respective files.
 To enable verbose logging, add this to the beginning of either file:
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 ```
 
