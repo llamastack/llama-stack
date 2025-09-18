@@ -8197,6 +8197,12 @@
                         "$ref": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall"
                     },
                     {
+                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPCall"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
+                    },
+                    {
                         "$ref": "#/components/schemas/OpenAIResponseInputFunctionToolCallOutput"
                     },
                     {
@@ -8841,6 +8847,129 @@
                 "title": "OpenAIResponseOutputMessageFunctionToolCall",
                 "description": "Function tool call output message for OpenAI responses."
             },
+            "OpenAIResponseOutputMessageMCPCall": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for this MCP call"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "mcp_call",
+                        "default": "mcp_call",
+                        "description": "Tool call type identifier, always \"mcp_call\""
+                    },
+                    "arguments": {
+                        "type": "string",
+                        "description": "JSON string containing the MCP call arguments"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the MCP method being called"
+                    },
+                    "server_label": {
+                        "type": "string",
+                        "description": "Label identifying the MCP server handling the call"
+                    },
+                    "error": {
+                        "type": "string",
+                        "description": "(Optional) Error message if the MCP call failed"
+                    },
+                    "output": {
+                        "type": "string",
+                        "description": "(Optional) Output result from the successful MCP call"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "type",
+                    "arguments",
+                    "name",
+                    "server_label"
+                ],
+                "title": "OpenAIResponseOutputMessageMCPCall",
+                "description": "Model Context Protocol (MCP) call output message for OpenAI responses."
+            },
+            "OpenAIResponseOutputMessageMCPListTools": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for this MCP list tools operation"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "mcp_list_tools",
+                        "default": "mcp_list_tools",
+                        "description": "Tool call type identifier, always \"mcp_list_tools\""
+                    },
+                    "server_label": {
+                        "type": "string",
+                        "description": "Label identifying the MCP server providing the tools"
+                    },
+                    "tools": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "input_schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "oneOf": [
+                                            {
+                                                "type": "null"
+                                            },
+                                            {
+                                                "type": "boolean"
+                                            },
+                                            {
+                                                "type": "number"
+                                            },
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "array"
+                                            },
+                                            {
+                                                "type": "object"
+                                            }
+                                        ]
+                                    },
+                                    "description": "JSON schema defining the tool's input parameters"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "description": "Name of the tool"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "(Optional) Description of what the tool does"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                                "input_schema",
+                                "name"
+                            ],
+                            "title": "MCPListToolsTool",
+                            "description": "Tool definition returned by MCP list tools operation."
+                        },
+                        "description": "List of available tools provided by the MCP server"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "type",
+                    "server_label",
+                    "tools"
+                ],
+                "title": "OpenAIResponseOutputMessageMCPListTools",
+                "description": "MCP list tools output message containing available tools from an MCP server."
+            },
             "OpenAIResponseOutputMessageWebSearchToolCall": {
                 "type": "object",
                 "properties": {
@@ -9137,129 +9266,6 @@
                         "mcp_list_tools": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
                     }
                 }
-            },
-            "OpenAIResponseOutputMessageMCPCall": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Unique identifier for this MCP call"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "mcp_call",
-                        "default": "mcp_call",
-                        "description": "Tool call type identifier, always \"mcp_call\""
-                    },
-                    "arguments": {
-                        "type": "string",
-                        "description": "JSON string containing the MCP call arguments"
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the MCP method being called"
-                    },
-                    "server_label": {
-                        "type": "string",
-                        "description": "Label identifying the MCP server handling the call"
-                    },
-                    "error": {
-                        "type": "string",
-                        "description": "(Optional) Error message if the MCP call failed"
-                    },
-                    "output": {
-                        "type": "string",
-                        "description": "(Optional) Output result from the successful MCP call"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "id",
-                    "type",
-                    "arguments",
-                    "name",
-                    "server_label"
-                ],
-                "title": "OpenAIResponseOutputMessageMCPCall",
-                "description": "Model Context Protocol (MCP) call output message for OpenAI responses."
-            },
-            "OpenAIResponseOutputMessageMCPListTools": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Unique identifier for this MCP list tools operation"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "mcp_list_tools",
-                        "default": "mcp_list_tools",
-                        "description": "Tool call type identifier, always \"mcp_list_tools\""
-                    },
-                    "server_label": {
-                        "type": "string",
-                        "description": "Label identifying the MCP server providing the tools"
-                    },
-                    "tools": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "input_schema": {
-                                    "type": "object",
-                                    "additionalProperties": {
-                                        "oneOf": [
-                                            {
-                                                "type": "null"
-                                            },
-                                            {
-                                                "type": "boolean"
-                                            },
-                                            {
-                                                "type": "number"
-                                            },
-                                            {
-                                                "type": "string"
-                                            },
-                                            {
-                                                "type": "array"
-                                            },
-                                            {
-                                                "type": "object"
-                                            }
-                                        ]
-                                    },
-                                    "description": "JSON schema defining the tool's input parameters"
-                                },
-                                "name": {
-                                    "type": "string",
-                                    "description": "Name of the tool"
-                                },
-                                "description": {
-                                    "type": "string",
-                                    "description": "(Optional) Description of what the tool does"
-                                }
-                            },
-                            "additionalProperties": false,
-                            "required": [
-                                "input_schema",
-                                "name"
-                            ],
-                            "title": "MCPListToolsTool",
-                            "description": "Tool definition returned by MCP list tools operation."
-                        },
-                        "description": "List of available tools provided by the MCP server"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "id",
-                    "type",
-                    "server_label",
-                    "tools"
-                ],
-                "title": "OpenAIResponseOutputMessageMCPListTools",
-                "description": "MCP list tools output message containing available tools from an MCP server."
             },
             "OpenAIResponseContentPart": {
                 "oneOf": [
@@ -11197,7 +11203,7 @@
                             {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartTextParam"
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
                                 }
                             }
                         ],

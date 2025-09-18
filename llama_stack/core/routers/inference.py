@@ -803,7 +803,7 @@ class InferenceRouter(Inference):
                         completion_text += "".join(choice_data["content_parts"])
 
                     # Add metrics to the chunk
-                    if self.telemetry and chunk.usage:
+                    if self.telemetry and hasattr(chunk, "usage") and chunk.usage:
                         metrics = self._construct_metrics(
                             prompt_tokens=chunk.usage.prompt_tokens,
                             completion_tokens=chunk.usage.completion_tokens,
