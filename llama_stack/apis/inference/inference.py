@@ -452,20 +452,6 @@ class ChatCompletionResponseStreamChunk(MetricResponseMixin):
 
 
 @json_schema_type
-class UsageInfo(BaseModel):
-    """Usage information for a model.
-
-    :param completion_tokens: Number of tokens generated
-    :param prompt_tokens: Number of tokens in the prompt
-    :param total_tokens: Total number of tokens processed
-    """
-
-    completion_tokens: int
-    prompt_tokens: int
-    total_tokens: int
-
-
-@json_schema_type
 class ChatCompletionResponse(MetricResponseMixin):
     """Response from a chat completion request.
 
@@ -475,7 +461,6 @@ class ChatCompletionResponse(MetricResponseMixin):
 
     completion_message: CompletionMessage
     logprobs: list[TokenLogProbs] | None = None
-    usage: UsageInfo | None = None
 
 
 @json_schema_type
@@ -833,21 +818,7 @@ class OpenAIChoice(BaseModel):
 
 
 @json_schema_type
-class OpenAIChatCompletionUsage(BaseModel):
-    """Usage information for an OpenAI-compatible chat completion response.
-
-    :param prompt_tokens: The number of tokens in the prompt
-    :param completion_tokens: The number of tokens in the completion
-    :param total_tokens: The total number of tokens used
-    """
-
-    prompt_tokens: int
-    completion_tokens: int
-    total_tokens: int
-
-
-@json_schema_type
-class OpenAIChatCompletion(MetricResponseMixin):
+class OpenAIChatCompletion(BaseModel):
     """Response from an OpenAI-compatible chat completion request.
 
     :param id: The ID of the chat completion
@@ -862,7 +833,6 @@ class OpenAIChatCompletion(MetricResponseMixin):
     object: Literal["chat.completion"] = "chat.completion"
     created: int
     model: str
-    usage: OpenAIChatCompletionUsage | None = None
 
 
 @json_schema_type

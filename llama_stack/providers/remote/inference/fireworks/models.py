@@ -61,6 +61,7 @@ MODEL_ENTRIES = [
     ),
     ProviderModelEntry(
         provider_model_id="nomic-ai/nomic-embed-text-v1.5",
+        aliases=["nomic-ai/nomic-embed-text-v1.5"],
         model_type=ModelType.embedding,
         metadata={
             "embedding_dimension": 768,

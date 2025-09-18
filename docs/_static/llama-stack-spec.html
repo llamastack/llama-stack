@@ -6372,9 +6372,6 @@
                             "$ref": "#/components/schemas/TokenLogProbs"
                         },
                         "description": "Optional log probabilities for generated tokens"
-                    },
-                    "usage": {
-                        "$ref": "#/components/schemas/UsageInfo"
                     }
                 },
                 "additionalProperties": false,
@@ -6432,31 +6429,6 @@
                 ],
                 "title": "TokenLogProbs",
                 "description": "Log probabilities for generated tokens."
-            },
-            "UsageInfo": {
-                "type": "object",
-                "properties": {
-                    "completion_tokens": {
-                        "type": "integer",
-                        "description": "Number of tokens generated"
-                    },
-                    "prompt_tokens": {
-                        "type": "integer",
-                        "description": "Number of tokens in the prompt"
-                    },
-                    "total_tokens": {
-                        "type": "integer",
-                        "description": "Total number of tokens processed"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "completion_tokens",
-                    "prompt_tokens",
-                    "total_tokens"
-                ],
-                "title": "UsageInfo",
-                "description": "Usage information for a model."
             },
             "BatchCompletionRequest": {
                 "type": "object",
@@ -10967,31 +10939,6 @@
                 "title": "OpenAIChatCompletionToolCallFunction",
                 "description": "Function call details for OpenAI-compatible tool calls."
             },
-            "OpenAIChatCompletionUsage": {
-                "type": "object",
-                "properties": {
-                    "prompt_tokens": {
-                        "type": "integer",
-                        "description": "The number of tokens in the prompt"
-                    },
-                    "completion_tokens": {
-                        "type": "integer",
-                        "description": "The number of tokens in the completion"
-                    },
-                    "total_tokens": {
-                        "type": "integer",
-                        "description": "The total number of tokens used"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "prompt_tokens",
-                    "completion_tokens",
-                    "total_tokens"
-                ],
-                "title": "OpenAIChatCompletionUsage",
-                "description": "Usage information for an OpenAI-compatible chat completion response."
-            },
             "OpenAIChoice": {
                 "type": "object",
                 "properties": {
@@ -11329,13 +11276,6 @@
             "OpenAICompletionWithInputMessages": {
                 "type": "object",
                 "properties": {
-                    "metrics": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/MetricInResponse"
-                        },
-                        "description": "(Optional) List of metrics associated with the API response"
-                    },
                     "id": {
                         "type": "string",
                         "description": "The ID of the chat completion"
@@ -11360,9 +11300,6 @@
                     "model": {
                         "type": "string",
                         "description": "The model that was used to generate the chat completion"
-                    },
-                    "usage": {
-                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage"
                     },
                     "input_messages": {
                         "type": "array",
@@ -13125,13 +13062,6 @@
                         "items": {
                             "type": "object",
                             "properties": {
-                                "metrics": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/MetricInResponse"
-                                    },
-                                    "description": "(Optional) List of metrics associated with the API response"
-                                },
                                 "id": {
                                     "type": "string",
                                     "description": "The ID of the chat completion"
@@ -13156,9 +13086,6 @@
                                 "model": {
                                     "type": "string",
                                     "description": "The model that was used to generate the chat completion"
-                                },
-                                "usage": {
-                                    "$ref": "#/components/schemas/OpenAIChatCompletionUsage"
                                 },
                                 "input_messages": {
                                     "type": "array",
@@ -14551,13 +14478,6 @@
             "OpenAIChatCompletion": {
                 "type": "object",
                 "properties": {
-                    "metrics": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/MetricInResponse"
-                        },
-                        "description": "(Optional) List of metrics associated with the API response"
-                    },
                     "id": {
                         "type": "string",
                         "description": "The ID of the chat completion"
@@ -14582,9 +14502,6 @@
                     "model": {
                         "type": "string",
                         "description": "The model that was used to generate the chat completion"
-                    },
-                    "usage": {
-                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage"
                     }
                 },
                 "additionalProperties": false,
