@@ -108,6 +108,13 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "together/togethercomputer/m2-bert-80M-32k-retrieval",
         },
     ),
+    "cerebras": Setup(
+        name="cerebras",
+        description="Cerebras models",
+        defaults={
+            "text_model": "cerebras/llama-3.3-70b",
+        },
+    ),
 }
 
 
