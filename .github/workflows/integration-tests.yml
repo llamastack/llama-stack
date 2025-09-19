@@ -21,7 +21,6 @@ on:
   schedule:
     # If changing the cron schedule, update the provider in the test-matrix job
     - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC
-    - cron: '1 0 * * 0'  # (test vllm) Weekly on Sunday at 1 AM UTC
   workflow_dispatch:
     inputs:
       test-all-client-versions:
@@ -39,7 +38,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   run-replay-mode-tests:
     runs-on: ubuntu-latest
     name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.setup, matrix.python-version, matrix.client-version, matrix.suite) }}
@@ -48,12 +46,19 @@ jobs:
       fail-fast: false
       matrix:
         client-type: [library, server]
-        # Use vllm on weekly schedule, otherwise use test-setup input (defaults to ollama)
-        setup: ${{ (github.event.schedule == '1 0 * * 0') && fromJSON('["vllm"]') || fromJSON(format('["{0}"]', github.event.inputs.test-setup || 'ollama')) }}
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        suite: [base, vision]
+        include:
+          # ollama setup runs both base and vision suites
+          - setup: ollama
+            suite: base
+          - setup: ollama
+            suite: vision
+          # vllm setup runs only base-vllm-subset suite
+          - setup: vllm
+            suite: base-vllm-subset
+
 
     steps:
       - name: Checkout repository
