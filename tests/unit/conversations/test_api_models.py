@@ -8,15 +8,15 @@
 from llama_stack.apis.conversations.conversations import (
     Conversation,
     ConversationCreateRequest,
+    ConversationItem,
     ConversationItemList,
-    ConversationMessage,
 )
 
 
 def test_conversation_create_request_defaults():
     request = ConversationCreateRequest()
     assert request.items == []
-    assert request.metadata is None
+    assert request.metadata == {}
 
 
 def test_conversation_model_defaults():
@@ -33,17 +33,22 @@ def test_conversation_model_defaults():
 
 def test_openai_client_compatibility():
     from openai.types.conversations.message import Message
+    from pydantic import TypeAdapter
 
-    our_message = ConversationMessage(
+    openai_message = Message(
         id="msg_123",
         content=[{"type": "input_text", "text": "Hello"}],
         role="user",
         status="in_progress",
         type="message",
+        object="message",
     )
 
-    openai_message = Message.model_validate(our_message.model_dump())
-    assert openai_message.id == "msg_123"
+    adapter = TypeAdapter(ConversationItem)
+    validated_item = adapter.validate_python(openai_message.model_dump())
+
+    assert validated_item.id == "msg_123"
+    assert validated_item.type == "message"
 
 
 def test_conversation_item_list():

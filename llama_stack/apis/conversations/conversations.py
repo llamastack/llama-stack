@@ -11,76 +11,85 @@ from openai._types import NotGiven
 from openai.types.responses.response_includable import ResponseIncludable
 from pydantic import BaseModel, Field
 
+from llama_stack.apis.agents.openai_responses import (
+    OpenAIResponseMessage,
+    OpenAIResponseOutputMessageFileSearchToolCall,
+    OpenAIResponseOutputMessageFunctionToolCall,
+    OpenAIResponseOutputMessageMCPCall,
+    OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageWebSearchToolCall,
+)
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
-from llama_stack.schema_utils import json_schema_type, webmethod
+from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 Metadata = dict[str, str]
-
-# create our own OpenAI-compatible types to avoid schema generation
-# issues with external types that have ClassVar imports not available in our context
 
 
 @json_schema_type
 class Conversation(BaseModel):
-    """Conversation object - compatible with OpenAI Conversation type."""
+    """OpenAI-compatible conversation object."""
 
-    id: str = Field(..., description="conversation identifier")
-    object: Literal["conversation"] = "conversation"
-    created_at: int = Field(..., description="timestamp when the conversation was created")
-    metadata: Metadata | None = Field(default=None, description="conversation metadata")
+    id: str = Field(..., description="The unique ID of the conversation.")
+    object: Literal["conversation"] = Field(
+        default="conversation", description="The object type, which is always conversation."
+    )
+    created_at: int = Field(
+        ..., description="The time at which the conversation was created, measured in seconds since the Unix epoch."
+    )
+    metadata: Metadata | None = Field(
+        default=None,
+        description="Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.",
+    )
+    items: list[dict] | None = Field(
+        default=None,
+        description="Initial items to include in the conversation context. You may add up to 20 items at a time.",
+    )
 
 
 @json_schema_type
 class ConversationMessage(BaseModel):
-    """Message item for conversations - compatible with OpenAI Message type."""
+    """OpenAI-compatible message item for conversations."""
 
     id: str = Field(..., description="unique identifier for this message")
     content: list[dict] = Field(..., description="message content")
     role: str = Field(..., description="message role")
     status: str = Field(..., description="message status")
     type: Literal["message"] = "message"
+    object: Literal["message"] = "message"
 
 
-@json_schema_type
-class ConversationFunctionCall(BaseModel):
-    """Function tool call item - compatible with OpenAI ResponseFunctionToolCallItem."""
-
-    arguments: str = Field(..., description="arguments for the function call")
-    call_id: str = Field(..., description="unique identifier for the function call")
-    name: str = Field(..., description="name of the function to call")
-    type: Literal["function_call"] = "function_call"
-    id: str = Field(..., description="unique identifier for this item")
-    status: str | None = None
-
-
-@json_schema_type
-class ConversationFunctionCallOutput(BaseModel):
-    """Function call output item - compatible with OpenAI ResponseFunctionToolCallOutputItem."""
-
-    id: str = Field(..., description="unique identifier for this item")
-    call_id: str = Field(..., description="identifier of the function call this responds to")
-    output: str = Field(..., description="output from the function call")
-    type: Literal["function_call_output"] = "function_call_output"
-    status: str | None = None
-
-
-@json_schema_type
-class ConversationReasoning(BaseModel):
-    """Reasoning item - compatible with OpenAI ResponseReasoningItem."""
-
-    id: str = Field(..., description="unique identifier for this item")
-    summary: list[dict] = Field(..., description="summary of the reasoning")
-    type: Literal["reasoning"] = "reasoning"
-    content: list[dict] | None = None
-    encrypted_content: str | None = None
-    status: str | None = None
-
-
-# define ConversationItem union with discriminator for proper validation
 ConversationItem = Annotated[
-    ConversationMessage | ConversationFunctionCall | ConversationFunctionCallOutput | ConversationReasoning,
+    OpenAIResponseMessage
+    | OpenAIResponseOutputMessageFunctionToolCall
+    | OpenAIResponseOutputMessageFileSearchToolCall
+    | OpenAIResponseOutputMessageWebSearchToolCall
+    | OpenAIResponseOutputMessageMCPCall
+    | OpenAIResponseOutputMessageMCPListTools,
     Field(discriminator="type"),
 ]
+register_schema(ConversationItem, name="ConversationItem")
+
+# from openai.types.response import *
+# from openai.types.responses.response_item import *
+# f = [
+# ResponseFunctionToolCallItem,
+# ResponseFunctionToolCallOutputItem,
+# ResponseFileSearchToolCall,
+# ResponseFunctionWebSearch,
+# ImageGenerationCall,
+# ResponseComputerToolCall,
+# ResponseComputerToolCallOutputItem,
+# ResponseReasoningItem,
+# ResponseCodeInterpreterToolCall,
+# LocalShellCall,
+# LocalShellCallOutput,
+# McpListTools,
+# McpApprovalRequest,
+# McpApprovalResponse,
+# McpCall,
+# ResponseCustomToolCall,
+# ResponseCustomToolCallOutput
+# ]
 
 
 @json_schema_type
@@ -93,8 +102,9 @@ class ConversationCreateRequest(BaseModel):
         max_length=20,
     )
     metadata: Metadata | None = Field(
-        default=None,
+        default={},
         description="Set of 16 key-value pairs that can be attached to an object. Useful for storing additional information",
+        max_length=16,
     )
 
 

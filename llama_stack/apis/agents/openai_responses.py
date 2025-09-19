@@ -147,9 +147,10 @@ class OpenAIResponseMessage(BaseModel):
     scenarios.
     """
 
-    content: str | list[OpenAIResponseInputMessageContent] | list[OpenAIResponseOutputMessageContent]
+    content: list[OpenAIResponseInputMessageContent] | list[OpenAIResponseOutputMessageContent] | list[dict]
     role: Literal["system"] | Literal["developer"] | Literal["user"] | Literal["assistant"]
     type: Literal["message"] = "message"
+    object: Literal["message"] = "message"
 
     # The fields below are not used in all scenarios, but are required in others.
     id: str | None = None

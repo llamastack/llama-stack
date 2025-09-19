@@ -124,7 +124,9 @@ class ConversationServiceImpl(Conversations):
         if record is None:
             raise ValueError(f"Conversation {conversation_id} not found")
 
-        return Conversation(id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"))
+        return Conversation(
+            id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"), object="conversation"
+        )
 
     async def update_conversation(self, conversation_id: str, request: ConversationUpdateRequest) -> Conversation:
         """Update a conversation's metadata with the given ID"""
@@ -151,12 +153,7 @@ class ConversationServiceImpl(Conversations):
     async def _get_validated_conversation(self, conversation_id: str) -> Conversation:
         """Validate conversation ID and return the conversation if it exists."""
         self._validate_conversation_id(conversation_id)
-        try:
-            return await self.get_conversation(conversation_id)
-        except ValueError:
-            raise ValueError(
-                f"Invalid 'conversation_id': '{conversation_id}'. Expected an ID that begins with 'conv'."
-            ) from None
+        return await self.get_conversation(conversation_id)
 
     async def create(self, conversation_id: str, request: ConversationItemCreateRequest) -> ConversationItemList:
         """Create items in the conversation."""
