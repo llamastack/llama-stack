@@ -67,7 +67,7 @@ def test_register_dataset(nvidia_adapter, run_async):
     _assert_request(
         mock_make_request,
         "POST",
-        "/v1/datasets",
+        "/v1beta/datasets",
         expected_json={
             "name": "test-dataset",
             "namespace": "default",
@@ -91,7 +91,7 @@ def test_unregister_dataset(nvidia_adapter, run_async):
     run_async(adapter.unregister_dataset(dataset_id))
 
     mock_make_request.assert_called_once()
-    _assert_request(mock_make_request, "DELETE", "/v1/datasets/default/test-dataset")
+    _assert_request(mock_make_request, "DELETE", "/v1beta/datasets/default/test-dataset")
 
 
 def test_register_dataset_with_custom_namespace_project(run_async):
@@ -130,7 +130,7 @@ def test_register_dataset_with_custom_namespace_project(run_async):
         _assert_request(
             mock_make_request,
             "POST",
-            "/v1/datasets",
+            "/v1beta/datasets",
             expected_json={
                 "name": "test-dataset",
                 "namespace": "custom-namespace",

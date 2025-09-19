@@ -83,7 +83,7 @@ class EvaluateResponse(BaseModel):
 class Eval(Protocol):
     """Llama Stack Evaluation API for running evaluations on model and agent candidates."""
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST")
+    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST", level="v1beta")
     async def run_eval(
         self,
         benchmark_id: str,
@@ -97,7 +97,7 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}/evaluations", method="POST")
+    @webmethod(route="/eval/benchmarks/{benchmark_id}/evaluations", method="POST", level="v1beta")
     async def evaluate_rows(
         self,
         benchmark_id: str,
@@ -115,7 +115,7 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="GET")
+    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="GET", level="v1beta")
     async def job_status(self, benchmark_id: str, job_id: str) -> Job:
         """Get the status of a job.
 
@@ -125,7 +125,7 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="DELETE")
+    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="DELETE", level="v1beta")
     async def job_cancel(self, benchmark_id: str, job_id: str) -> None:
         """Cancel a job.
 
@@ -134,7 +134,7 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result", method="GET")
+    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result", method="GET", level="v1beta")
     async def job_result(self, benchmark_id: str, job_id: str) -> EvaluateResponse:
         """Get the result of a job.
 

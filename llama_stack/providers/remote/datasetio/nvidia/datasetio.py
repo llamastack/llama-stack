@@ -78,7 +78,7 @@ class NvidiaDatasetIOAdapter:
             request_body["description"] = dataset_def.metadata.get("description")
         await self._make_request(
             "POST",
-            "/v1/datasets",
+            "/v1beta/datasets",
             json=request_body,
         )
         return dataset_def
@@ -100,7 +100,7 @@ class NvidiaDatasetIOAdapter:
     ) -> None:
         await self._make_request(
             "DELETE",
-            f"/v1/datasets/{self.config.dataset_namespace}/{dataset_id}",
+            f"/v1beta/datasets/{self.config.dataset_namespace}/{dataset_id}",
             headers={"Accept": "application/json", "Content-Type": "application/json"},
         )
 
