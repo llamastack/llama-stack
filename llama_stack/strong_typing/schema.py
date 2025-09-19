@@ -479,12 +479,25 @@ class JsonSchemaGenerator:
                 }
             return ret
         elif origin_type is Literal:
-            if len(typing.get_args(typ)) != 1:
-                raise ValueError(f"Literal type {typ} has {len(typing.get_args(typ))} arguments")
-            (literal_value,) = typing.get_args(typ)  # unpack value of literal type
-            schema = self.type_to_schema(type(literal_value))
-            schema["const"] = literal_value
-            return schema
+            literal_values = typing.get_args(typ)
+            if len(literal_values) == 1:
+                # Single literal value - use const
+                (literal_value,) = literal_values
+                schema = self.type_to_schema(type(literal_value))
+                schema["const"] = literal_value
+                return schema
+            else:
+                # Multiple literal values - use enum
+                # Check that all literal values have the same type
+                literal_types = {type(value) for value in literal_values}
+                if len(literal_types) != 1:
+                    raise ValueError(f"Literal type {typ} has inconsistent value types: {literal_types}")
+
+                # Create schema based on the common type of all literal values
+                common_type = literal_types.pop()
+                schema = self.type_to_schema(common_type)
+                schema["enum"] = list(literal_values)
+                return schema
         elif origin_type is type:
             (concrete_type,) = typing.get_args(typ)  # unpack single tuple element
             return {"const": self.type_to_schema(concrete_type, force_expand=True)}
