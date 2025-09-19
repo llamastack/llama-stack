@@ -90,6 +90,24 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
         },
     ),
+    "tgi": Setup(
+        name="tgi",
+        description="Text Generation Inference (TGI) provider with a text model",
+        env={
+            "TGI_URL": "http://localhost:8080",
+        },
+        defaults={
+            "text_model": "tgi/Qwen/Qwen3-0.6B",
+        },
+    ),
+    "together": Setup(
+        name="together",
+        description="Together computer models",
+        defaults={
+            "text_model": "together/meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            "embedding_model": "together/togethercomputer/m2-bert-80M-32k-retrieval",
+        },
+    ),
 }
 
 

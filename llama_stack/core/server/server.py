@@ -6,6 +6,7 @@
 
 import argparse
 import asyncio
+import concurrent.futures
 import functools
 import inspect
 import json
@@ -50,17 +51,15 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
-from llama_stack.core.resolver import InvalidProviderError
 from llama_stack.core.server.routes import (
     find_matching_route,
     get_all_api_routes,
     initialize_route_impls,
 )
 from llama_stack.core.stack import (
+    Stack,
     cast_image_name_to_string,
-    construct_stack,
     replace_env_vars,
-    shutdown_stack,
     validate_env_pair,
 )
 from llama_stack.core.utils.config import redact_sensitive_fields
@@ -156,21 +155,34 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
         )
 
 
-async def shutdown(app):
-    """Initiate a graceful shutdown of the application.
-
-    Handled by the lifespan context manager. The shutdown process involves
-    shutting down all implementations registered in the application.
+class StackApp(FastAPI):
     """
-    await shutdown_stack(app.__llama_stack_impls__)
+    A wrapper around the FastAPI application to hold a reference to the Stack instance so that we can
+    start background tasks (e.g. refresh model registry periodically) from the lifespan context manager.
+    """
+
+    def __init__(self, config: StackRunConfig, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.stack: Stack = Stack(config)
+
+        # This code is called from a running event loop managed by uvicorn so we cannot simply call
+        # asyncio.run() to initialize the stack. We cannot await either since this is not an async
+        # function.
+        # As a workaround, we use a thread pool executor to run the initialize() method
+        # in a separate thread.
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(asyncio.run, self.stack.initialize())
+            future.result()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: StackApp):
     logger.info("Starting up")
+    assert app.stack is not None
+    app.stack.create_registry_refresh_task()
     yield
     logger.info("Shutting down")
-    await shutdown(app)
+    await app.stack.shutdown()
 
 
 def is_streaming_request(func_name: str, request: Request, **kwargs):
@@ -386,73 +398,61 @@ class ClientVersionMiddleware:
         return await self.app(scope, receive, send)
 
 
-def main(args: argparse.Namespace | None = None):
-    """Start the LlamaStack server."""
-    parser = argparse.ArgumentParser(description="Start the LlamaStack server.")
+def create_app(
+    config_file: str | None = None,
+    env_vars: list[str] | None = None,
+) -> StackApp:
+    """Create and configure the FastAPI application.
 
-    add_config_distro_args(parser)
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=int(os.getenv("LLAMA_STACK_PORT", 8321)),
-        help="Port to listen on",
-    )
-    parser.add_argument(
-        "--env",
-        action="append",
-        help="Environment variables in KEY=value format. Can be specified multiple times.",
-    )
+    Args:
+        config_file: Path to config file. If None, uses LLAMA_STACK_CONFIG env var or default resolution.
+        env_vars: List of environment variables in KEY=value format.
+        disable_version_check: Whether to disable version checking. If None, uses LLAMA_STACK_DISABLE_VERSION_CHECK env var.
 
-    # Determine whether the server args are being passed by the "run" command, if this is the case
-    # the args will be passed as a Namespace object to the main function, otherwise they will be
-    # parsed from the command line
-    if args is None:
-        args = parser.parse_args()
+    Returns:
+        Configured StackApp instance.
+    """
+    config_file = config_file or os.getenv("LLAMA_STACK_CONFIG")
+    if config_file is None:
+        raise ValueError("No config file provided and LLAMA_STACK_CONFIG env var is not set")
 
-    config_or_distro = get_config_from_args(args)
-    config_file = resolve_config_or_distro(config_or_distro, Mode.RUN)
+    config_file = resolve_config_or_distro(config_file, Mode.RUN)
 
+    # Load and process configuration
     logger_config = None
     with open(config_file) as fp:
         config_contents = yaml.safe_load(fp)
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
-        if args.env:
-            for env_pair in args.env:
+
+        if env_vars:
+            for env_pair in env_vars:
                 try:
                     key, value = validate_env_pair(env_pair)
-                    logger.info(f"Setting CLI environment variable {key} => {value}")
+                    logger.info(f"Setting environment variable {key} => {value}")
                     os.environ[key] = value
                 except ValueError as e:
                     logger.error(f"Error: {str(e)}")
-                    sys.exit(1)
+                    raise ValueError(f"Invalid environment variable format: {env_pair}") from e
+
         config = replace_env_vars(config_contents)
         config = StackRunConfig(**cast_image_name_to_string(config))
 
     _log_run_config(run_config=config)
 
-    app = FastAPI(
+    app = StackApp(
         lifespan=lifespan,
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        config=config,
     )
 
     if not os.environ.get("LLAMA_STACK_DISABLE_VERSION_CHECK"):
         app.add_middleware(ClientVersionMiddleware)
 
-    try:
-        # Create and set the event loop that will be used for both construction and server runtime
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        # Construct the stack in the persistent event loop
-        impls = loop.run_until_complete(construct_stack(config))
-
-    except InvalidProviderError as e:
-        logger.error(f"Error: {str(e)}")
-        sys.exit(1)
+    impls = app.stack.impls
 
     if config.server.auth:
         logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
@@ -553,8 +553,53 @@ def main(args: argparse.Namespace | None = None):
     app.exception_handler(RequestValidationError)(global_exception_handler)
     app.exception_handler(Exception)(global_exception_handler)
 
-    app.__llama_stack_impls__ = impls
     app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
+
+    return app
+
+
+def main(args: argparse.Namespace | None = None):
+    """Start the LlamaStack server."""
+    parser = argparse.ArgumentParser(description="Start the LlamaStack server.")
+
+    add_config_distro_args(parser)
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.getenv("LLAMA_STACK_PORT", 8321)),
+        help="Port to listen on",
+    )
+    parser.add_argument(
+        "--env",
+        action="append",
+        help="Environment variables in KEY=value format. Can be specified multiple times.",
+    )
+
+    # Determine whether the server args are being passed by the "run" command, if this is the case
+    # the args will be passed as a Namespace object to the main function, otherwise they will be
+    # parsed from the command line
+    if args is None:
+        args = parser.parse_args()
+
+    config_or_distro = get_config_from_args(args)
+
+    try:
+        app = create_app(
+            config_file=config_or_distro,
+            env_vars=args.env,
+        )
+    except Exception as e:
+        logger.error(f"Error creating app: {str(e)}")
+        sys.exit(1)
+
+    config_file = resolve_config_or_distro(config_or_distro, Mode.RUN)
+    with open(config_file) as fp:
+        config_contents = yaml.safe_load(fp)
+        if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
+            logger_config = LoggingConfig(**cfg)
+        else:
+            logger_config = None
+        config = StackRunConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
 
     import uvicorn
 
@@ -593,7 +638,6 @@ def main(args: argparse.Namespace | None = None):
     if ssl_config:
         uvicorn_config.update(ssl_config)
 
-    # Run uvicorn in the existing event loop to preserve background tasks
     # We need to catch KeyboardInterrupt because uvicorn's signal handling
     # re-raises SIGINT signals using signal.raise_signal(), which Python
     # converts to KeyboardInterrupt. Without this catch, we'd get a confusing
@@ -604,13 +648,9 @@ def main(args: argparse.Namespace | None = None):
     # Another approach would be to ignore SIGINT entirely - let uvicorn handle it through its own
     # signal handling but this is quite intrusive and not worth the effort.
     try:
-        loop.run_until_complete(uvicorn.Server(uvicorn.Config(**uvicorn_config)).serve())
+        asyncio.run(uvicorn.Server(uvicorn.Config(**uvicorn_config)).serve())
     except (KeyboardInterrupt, SystemExit):
         logger.info("Received interrupt signal, shutting down gracefully...")
-    finally:
-        if not loop.is_closed():
-            logger.debug("Closing event loop")
-            loop.close()
 
 
 def _log_run_config(run_config: StackRunConfig):

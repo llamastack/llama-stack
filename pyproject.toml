@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.2.21"
+version = "0.2.22"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
@@ -31,12 +31,12 @@ dependencies = [
     "huggingface-hub>=0.34.0,<1.0",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-client>=0.2.21",
-    "openai>=1.100.0", # for expires_after support
+    "llama-stack-client>=0.2.22",
+    "openai>=1.100.0",                                # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
     "python-jose[cryptography]",
-    "pydantic>=2",
+    "pydantic>=2.11.9",
     "rich",
     "starlette",
     "termcolor",
@@ -55,7 +55,7 @@ dependencies = [
 ui = [
     "streamlit",
     "pandas",
-    "llama-stack-client>=0.2.21",
+    "llama-stack-client>=0.2.22",
     "streamlit-option-menu",
 ]
 
@@ -141,7 +141,7 @@ docs = [
     "sphinxcontrib.openapi",
     "requests",
 ]
-codegen = ["rich", "pydantic", "jinja2>=3.1.6"]
+codegen = ["rich", "pydantic>=2.11.9", "jinja2>=3.1.6"]
 benchmark = [
     "locust>=2.39.1",
 ]
@@ -354,6 +354,7 @@ warn_required_dynamic_aliases = true
 classmethod-decorators = ["classmethod", "pydantic.field_validator"]
 
 [tool.pytest.ini_options]
+addopts = ["--durations=10"]
 asyncio_mode = "auto"
 markers = [
     "allow_network: Allow network access for specific unit tests",
