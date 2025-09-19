@@ -197,7 +197,7 @@ class OpenAIVectorStoreMixin(ABC):
         chunking_strategy: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
         embedding_model: str | None = None,
-        embedding_dimension: int | None = 384,
+        embedding_dimension: int | None = 768,
         provider_id: str | None = None,
         provider_vector_db_id: str | None = None,
     ) -> VectorStoreObject:
@@ -212,7 +212,7 @@ class OpenAIVectorStoreMixin(ABC):
         if embedding_model is None:
             raise ValueError("Embedding model is required")
 
-        # Embedding dimension is required (defaulted to 384 if not provided)
+        # Embedding dimension is required (defaulted to 768 if not provided)
         if embedding_dimension is None:
             raise ValueError("Embedding dimension is required")
 

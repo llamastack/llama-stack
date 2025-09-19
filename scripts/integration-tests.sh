@@ -263,6 +263,8 @@ pytest -s -v $PYTEST_TARGET \
     -k "$PYTEST_PATTERN" \
     $EXTRA_PARAMS \
     --color=yes \
+    --embedding-model=nomic-ai/nomic-embed-text-v1.5 \
+    --color=yes $EXTRA_PARAMS \
     --capture=tee-sys
 exit_code=$?
 set +x

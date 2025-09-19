@@ -87,11 +87,11 @@ def get_distribution_template() -> DistributionTemplate:
         provider_id="tgi1",
     )
     embedding_model = ModelInput(
-        model_id="all-MiniLM-L6-v2",
+        model_id="nomic-embed-text-v1.5",
         provider_id="sentence-transformers",
         model_type=ModelType.embedding,
         metadata={
-            "embedding_dimension": 384,
+            "embedding_dimension": 768,
         },
     )
     default_tool_groups = [
