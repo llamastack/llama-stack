@@ -10,6 +10,7 @@ from importlib.metadata import version
 from llama_stack.cli.stack.list_stacks import StackListBuilds
 from llama_stack.cli.stack.utils import print_subcommand_description
 from llama_stack.cli.subcommand import Subcommand
+from llama_stack.cli.version import VersionCommand
 
 from .build import StackBuild
 from .list_apis import StackListApis
@@ -45,4 +46,5 @@ class StackParser(Subcommand):
         StackRun.create(subparsers)
         StackRemove.create(subparsers)
         StackListBuilds.create(subparsers)
+        VersionCommand.create(subparsers)
         print_subcommand_description(self.parser, subparsers)
