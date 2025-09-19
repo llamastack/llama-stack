@@ -26,7 +26,10 @@ class RedisKVStoreImpl(KVStore):
 
     async def set(self, key: str, value: str, expiration: datetime | None = None) -> None:
         key = self._namespaced_key(key)
-        await self.redis.set(key, value)
+        if self.config.ttl:
+            await self.redis.set(key, value, ex=self.config.ttl)
+        else:
+            await self.redis.set(key, value)
         if expiration:
             await self.redis.expireat(key, expiration)
 
