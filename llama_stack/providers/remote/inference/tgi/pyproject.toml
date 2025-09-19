@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-inference-tgi"
+version = "0.1.0"
+description = "Text Generation Inference (TGI) provider for HuggingFace model serving"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "huggingface_hub",
+    "aiohttp",
+
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]

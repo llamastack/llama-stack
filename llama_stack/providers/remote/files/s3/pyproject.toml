@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-files-s3"
+version = "0.1.0"
+description = "Local filesystem-based file storage provider for managing files and documents locally"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "boto3",
+    "sqlalchemy[asyncio]",
+    "aiosqlite",
+     "asyncpg",
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]

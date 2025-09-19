@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-inference-openai"
+version = "0.1.0"
+description = "OpenAI inference provider for accessing GPT models and other OpenAI services"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "litellm",
+
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]

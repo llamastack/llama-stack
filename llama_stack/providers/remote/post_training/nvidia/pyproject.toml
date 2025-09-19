@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-post-training-nvidia"
+version = "0.1.0"
+description = "NVIDIA's post-training provider for fine-tuning models on NVIDIA's platform"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "requests",
+    "aiohttp",
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]

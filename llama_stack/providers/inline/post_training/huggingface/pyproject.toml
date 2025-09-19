@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-post-training-huggingface"
+version = "0.1.0"
+description = "HuggingFace-based post-training provider for fine-tuning models using the HuggingFace ecosystem"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "trl",
+    "transformers",
+    "peft",
+    "datasets>=4.0.0",
+    "torch",
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]
