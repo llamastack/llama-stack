@@ -633,7 +633,13 @@ To use Milvus in your Llama Stack project, follow these steps:
 
 ## Installation
 
-You can install Milvus using pymilvus:
+If you want to use inline Milvus, you can install:
+
+```bash
+pip install pymilvus[milvus-lite]
+```
+
+If you want to use remote Milvus, you can install:
 
 ```bash
 pip install pymilvus
@@ -807,7 +813,7 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
         InlineProviderSpec(
             api=Api.vector_io,
             provider_type="inline::milvus",
-            pip_packages=["pymilvus>=2.4.10"],
+            pip_packages=["pymilvus[milvus-lite]>=2.4.10"],
             module="llama_stack.providers.inline.vector_io.milvus",
             config_class="llama_stack.providers.inline.vector_io.milvus.MilvusVectorIOConfig",
             api_dependencies=[Api.inference],
