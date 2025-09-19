@@ -129,6 +129,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     tool_groups = "tool_groups"
     files = "files"
     prompts = "prompts"
+    conversations = "conversations"
 
     # built-in API
     inspect = "inspect"
