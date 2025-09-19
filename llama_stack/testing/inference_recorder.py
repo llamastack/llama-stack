@@ -203,7 +203,12 @@ def _model_identifiers_digest(endpoint: str, response: dict[str, Any]) -> str:
         - '/v1/models' (OpenAI): response body is: [ { id: ... }, ... ]
         Returns a list of unique identifiers or None if structure doesn't match.
         """
-        items = response["body"]
+        if "models" in response["body"]:
+            # ollama
+            items = response["body"]["models"]
+        else:
+            # openai
+            items = response["body"]
         idents = [m.model if endpoint == "/api/tags" else m.id for m in items]
         return sorted(set(idents))
 
