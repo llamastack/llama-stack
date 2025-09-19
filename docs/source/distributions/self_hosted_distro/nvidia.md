@@ -56,6 +56,9 @@ The following models are available by default:
 - `nvidia/nv-embedqa-e5-v5 `
 - `nvidia/nv-embedqa-mistral-7b-v2 `
 - `snowflake/arctic-embed-l `
+- `nv-rerank-qa-mistral-4b:1 `
+- `nvidia/nv-rerankqa-mistral-4b-v3 `
+- `nvidia/llama-3.2-nv-rerankqa-1b-v2 `
 
 
 ## Prerequisites
