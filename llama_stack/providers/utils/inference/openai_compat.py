@@ -805,6 +805,10 @@ def convert_tooldef_to_openai_tool(tool: ToolDefinition) -> dict:
                 properties[param_name].update(description=param.description)
             if param.default:
                 properties[param_name].update(default=param.default)
+            if param.items:
+                properties[param_name].update(items=param.items)
+            if param.title:
+                properties[param_name].update(title=param.title)
             if param.required:
                 required.append(param_name)
 
