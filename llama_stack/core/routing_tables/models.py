@@ -12,6 +12,7 @@ from llama_stack.apis.models import ListModelsResponse, Model, Models, ModelType
 from llama_stack.core.datatypes import (
     ModelWithOwner,
     RegistryEntrySource,
+    StackRunConfig,
 )
 from llama_stack.log import get_logger
 
@@ -22,6 +23,7 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 class ModelsRoutingTable(CommonRoutingTableImpl, Models):
     listed_providers: set[str] = set()
+    current_run_config: "StackRunConfig | None" = None
 
     async def refresh(self) -> None:
         for provider_id, provider in self.impls_by_provider_id.items():
@@ -74,6 +76,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         provider_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
+        source: RegistryEntrySource = RegistryEntrySource.via_register_api,
     ) -> Model:
         if provider_id is None:
             # If provider_id not specified, use the only provider if it supports this model
@@ -106,7 +109,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             provider_id=provider_id,
             metadata=metadata,
             model_type=model_type,
-            source=RegistryEntrySource.via_register_api,
+            source=source,
         )
         registered_model = await self.register_object(model)
         return registered_model
@@ -116,6 +119,61 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         if existing_model is None:
             raise ModelNotFoundError(model_id)
         await self.unregister_object(existing_model)
+
+    async def cleanup_disabled_provider_models(self) -> None:
+        """Remove models from providers that are no longer enabled in the current run config."""
+        if not self.current_run_config:
+            return
+
+        # Get enabled provider IDs from the current run config
+        enabled_provider_ids = set()
+        for _api, providers in self.current_run_config.providers.items():
+            for provider in providers:
+                if provider.provider_id and provider.provider_id != "__disabled__":
+                    enabled_provider_ids.add(provider.provider_id)
+
+        # Get all existing models
+        existing_models = await self.get_all_with_type("model")
+
+        # Find models from disabled providers (excluding user-registered models)
+        models_to_remove = []
+        for model in existing_models:
+            if model.provider_id not in enabled_provider_ids and model.source != RegistryEntrySource.via_register_api:
+                models_to_remove.append(model)
+
+        # Remove the models
+        for model in models_to_remove:
+            logger.info(f"Removing model {model.identifier} from disabled provider {model.provider_id}")
+            await self.unregister_object(model)
+
+    async def register_from_config_models(self) -> None:
+        """Register from_config models from the current run configuration."""
+        if not self.current_run_config:
+            return
+
+        # Register new from_config models (old ones automatically disappear since they're not persisted)
+        for model_input in self.current_run_config.models:
+            # Skip models with disabled providers
+            if not model_input.provider_id or model_input.provider_id == "__disabled__":
+                continue
+
+            # Generate identifier
+            if model_input.model_id != (model_input.provider_model_id or model_input.model_id):
+                identifier = model_input.model_id
+            else:
+                identifier = f"{model_input.provider_id}/{model_input.provider_model_id or model_input.model_id}"
+
+            model = ModelWithOwner(
+                identifier=identifier,
+                provider_resource_id=model_input.provider_model_id or model_input.model_id,
+                provider_id=model_input.provider_id,
+                metadata=model_input.metadata,
+                model_type=model_input.model_type or ModelType.llm,
+                source=RegistryEntrySource.from_config,
+            )
+
+            # Register the model (will be cached in memory but not persisted to disk)
+            await self.dist_registry.register(model)
 
     async def update_registered_models(
         self,
