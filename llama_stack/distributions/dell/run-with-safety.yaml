@@ -103,18 +103,21 @@ inference_store:
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/inference_store.db
 models:
 - metadata: {}
-  model_id: ${env.INFERENCE_MODEL}
+  provider_model_id: ${env.INFERENCE_MODEL}
   provider_id: tgi0
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata: {}
-  model_id: ${env.SAFETY_MODEL}
+  provider_model_id: ${env.SAFETY_MODEL}
   provider_id: tgi1
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata:
     embedding_dimension: 384
-  model_id: all-MiniLM-L6-v2
+  provider_model_id: all-MiniLM-L6-v2
   provider_id: sentence-transformers
   model_type: embedding
+  use_provider_model_id_as_id: false
 shields:
 - shield_id: ${env.SAFETY_MODEL}
 vector_dbs: []

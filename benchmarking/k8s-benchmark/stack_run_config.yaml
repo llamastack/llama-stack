@@ -116,7 +116,8 @@ models:
   model_id: all-MiniLM-L6-v2
   provider_id: sentence-transformers
   model_type: embedding
-- model_id: ${env.INFERENCE_MODEL}
+- use_provider_model_id_as_id: true
+  provider_model_id: ${env.INFERENCE_MODEL}
   provider_id: vllm-inference
   model_type: llm
 shields:
