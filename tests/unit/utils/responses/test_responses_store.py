@@ -67,6 +67,9 @@ async def test_responses_store_pagination_basic():
             input_list = [create_test_response_input(f"Input for {response_id}", f"input-{response_id}")]
             await store.store_response_object(response, input_list)
 
+        # Wait for all queued writes to complete
+        await store.flush()
+
         # Test 1: First page with limit=2, descending order (default)
         result = await store.list_responses(limit=2, order=Order.desc)
         assert len(result.data) == 2
@@ -110,6 +113,9 @@ async def test_responses_store_pagination_ascending():
             input_list = [create_test_response_input(f"Input for {response_id}", f"input-{response_id}")]
             await store.store_response_object(response, input_list)
 
+        # Wait for all queued writes to complete
+        await store.flush()
+
         # Test ascending order pagination
         result = await store.list_responses(limit=1, order=Order.asc)
         assert len(result.data) == 1
@@ -144,6 +150,9 @@ async def test_responses_store_pagination_with_model_filter():
             response = create_test_response_object(response_id, timestamp, model)
             input_list = [create_test_response_input(f"Input for {response_id}", f"input-{response_id}")]
             await store.store_response_object(response, input_list)
+
+        # Wait for all queued writes to complete
+        await store.flush()
 
         # Test pagination with model filter
         result = await store.list_responses(limit=1, model="model-a", order=Order.desc)
@@ -192,6 +201,9 @@ async def test_responses_store_pagination_no_limit():
             input_list = [create_test_response_input(f"Input for {response_id}", f"input-{response_id}")]
             await store.store_response_object(response, input_list)
 
+        # Wait for all queued writes to complete
+        await store.flush()
+
         # Test without limit (should use default of 50)
         result = await store.list_responses(order=Order.desc)
         assert len(result.data) == 2
@@ -211,6 +223,9 @@ async def test_responses_store_get_response_object():
         response = create_test_response_object("test-resp", int(time.time()))
         input_list = [create_test_response_input("Test input content", "input-test-resp")]
         await store.store_response_object(response, input_list)
+
+        # Wait for all queued writes to complete
+        await store.flush()
 
         # Retrieve the response
         retrieved = await store.get_response_object("test-resp")
@@ -241,6 +256,9 @@ async def test_responses_store_input_items_pagination():
             create_test_response_input("Fifth input", "input-5"),
         ]
         await store.store_response_object(response, input_list)
+
+        # Wait for all queued writes to complete
+        await store.flush()
 
         # Verify all items are stored correctly with explicit IDs
         all_items = await store.list_response_input_items("test-resp", order=Order.desc)
@@ -318,6 +336,9 @@ async def test_responses_store_input_items_before_pagination():
             create_test_response_input("Fifth input", "before-5"),
         ]
         await store.store_response_object(response, input_list)
+
+        # Wait for all queued writes to complete
+        await store.flush()
 
         # Test before pagination with descending order
         # In desc order: [Fifth, Fourth, Third, Second, First]
