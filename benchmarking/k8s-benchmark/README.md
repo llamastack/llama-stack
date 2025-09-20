@@ -26,6 +26,7 @@ The benchmark suite measures critical performance indicators:
 - **Throughput**: Requests per second under sustained load
 - **Latency Distribution**: P50, P95, P99 response times
 - **Time to First Token (TTFT)**: Critical for streaming applications
+- **Inter-Token Latency (ITL)**: Token generation speed for streaming
 - **Error Rates**: Request failures and timeout analysis
 
 This data enables data-driven architectural decisions and performance optimization efforts.
@@ -49,49 +50,83 @@ kubectl get pods
 # Should see: llama-stack-benchmark-server, vllm-server, etc.
 ```
 
+## Benchmark Results
+
+We use [GuideLLM](https://github.com/neuralmagic/guidellm) against our k8s deployment for comprehensive performance testing.
+
+
+### Performance - 1 vLLM Replica
+
+We vary the number of Llama Stack replicas with 1 vLLM replica and compare performance below.
+
+**Time to First Token (TTFT) vs Concurrency**
+![TTFT vs Concurrency - 1 vLLM Replica](results/vllm_replica1_ttft_vs_concurrency.png)
+
+**Inter-Token Latency (ITL) vs Concurrency**
+![ITL vs Concurrency - 1 vLLM Replica](results/vllm_replica1_itl_vs_concurrency.png)
+
+**Request Latency vs Concurrency**
+![Request Latency vs Concurrency - 1 vLLM Replica](results/vllm_replica1_req_latency_vs_concurrency.png)
+
+We observe that a rough 1:4 ratio of Llama Stack replicas to vLLM replicas is optimal for TTFT while ITL and request latency are similar to direct vLLM. For full results see the `benchmarking/k8s-benchmark/results/` directory.
+
+
 ## Quick Start
+
+Follow the instructions below to run benchmarks similar to the ones above.
 
 ### Basic Benchmarks
 
 **Benchmark Llama Stack (default):**
 ```bash
-./run-benchmark.sh
+./scripts/run-guidellm-benchmark.sh --target stack --stack-replicas 1 --vllm-replicas 1 --max-seconds 60 --prompt-tokens 512 --output-tokens 256
 ```
 
 **Benchmark vLLM direct:**
 ```bash
-./run-benchmark.sh --target vllm
+./scripts/run-guidellm-benchmark.sh --target vllm --vllm-replicas 1 --max-seconds 60 --prompt-tokens 512 --output-tokens 256
 ```
 
 ### Custom Configuration
 
-**Extended benchmark with high concurrency:**
+**Benchmark with replica scaling:**
 ```bash
-./run-benchmark.sh --target vllm --duration 120 --concurrent 20
+./scripts/run-guidellm-benchmark.sh --target stack --stack-replicas 2 --vllm-replicas 2
 ```
 
-**Short test run:**
+### Generating Charts
+
+Once the benchmarks are run, you can generate performance charts from benchmark results:
+
 ```bash
-./run-benchmark.sh --target stack --duration 30 --concurrent 5
+uv run ./scripts/generate_charts.py
 ```
+
+This loads runs in the `results/` directory and creates visualizations comparing different configurations and replica counts.
 
 ## Command Reference
 
-### run-benchmark.sh Options
+### run-guidellm-benchmark.sh Options
 
 ```bash
-./run-benchmark.sh [options]
+./scripts/run-guidellm-benchmark.sh [options]
 
 Options:
   -t, --target <stack|vllm>     Target to benchmark (default: stack)
-  -d, --duration <seconds>      Duration in seconds (default: 60)
-  -c, --concurrent <users>      Number of concurrent users (default: 10)
+  -s, --max-seconds <seconds>   Maximum duration in seconds (default: 30)
+  -p, --prompt-tokens <tokens>  Number of prompt tokens (default: 256)
+  -o, --output-tokens <tokens>  Number of output tokens (default: 128)
+  -r, --rate-type <type>        Rate type (default: sweep)
+  -c, --rate                    Rate
+  --vllm-replicas <count>       Scale vllm-server to this many replicas
+  --stack-replicas <count>      Scale llama-stack-benchmark-server to this many replicas
   -h, --help                    Show help message
 
 Examples:
-  ./run-benchmark.sh --target vllm              # Benchmark vLLM direct
-  ./run-benchmark.sh --target stack             # Benchmark Llama Stack
-  ./run-benchmark.sh -t vllm -d 120 -c 20       # vLLM with 120s, 20 users
+  ./scripts/run-guidellm-benchmark.sh --target vllm                     # Benchmark vLLM direct
+  ./scripts/run-guidellm-benchmark.sh --target stack                    # Benchmark Llama Stack
+  ./scripts/run-guidellm-benchmark.sh -t vllm -s 60 -p 512 -o 256      # vLLM with custom parameters
+  ./scripts/run-guidellm-benchmark.sh --target vllm --vllm-replicas 3   # Scale vLLM to 3 replicas
 ```
 
 ## Local Testing
@@ -100,55 +135,35 @@ Examples:
 
 For local development without Kubernetes:
 
-**1. Start OpenAI mock server:**
-```bash
-uv run python openai-mock-server.py --port 8080
-```
+**1. (Optional) Start Mock OpenAI server:**
 
-**2. Run benchmark against mock server:**
-```bash
-uv run python benchmark.py \
-  --base-url http://localhost:8080/v1 \
-  --model mock-inference \
-  --duration 30 \
-  --concurrent 5
-```
-
-**3. Test against local vLLM server:**
-```bash
-# If you have vLLM running locally on port 8000
-uv run python benchmark.py \
-  --base-url http://localhost:8000/v1 \
-  --model meta-llama/Llama-3.2-3B-Instruct \
-  --duration 30 \
-  --concurrent 5
-```
-
-**4. Profile the running server:**
-```bash
-./profile_running_server.sh
-```
-
-
-
-### OpenAI Mock Server
-
+There is a simple mock OpenAI server if you don't have an inference provider available.
 The `openai-mock-server.py` provides:
 - **OpenAI-compatible API** for testing without real models
 - **Configurable streaming delay** via `STREAM_DELAY_SECONDS` env var
 - **Consistent responses** for reproducible benchmarks
 - **Lightweight testing** without GPU requirements
 
-**Mock server usage:**
 ```bash
 uv run python openai-mock-server.py --port 8080
 ```
 
-The mock server is also deployed in k8s as `openai-mock-service:8080` and can be used by changing the Llama Stack configuration to use the `mock-vllm-inference` provider.
+**2. Start Stack server:**
+```bash
+LLAMA_STACK_CONFIG=benchmarking/k8s-benchmark/stack_run_config.yaml uv run uvicorn llama_stack.core.server.server:create_app --port 8321 --workers 4 --factory
+```
 
-## Files in this Directory
+**3. Run GuideLLM benchmark:**
+```bash
+GUIDELLM__PREFERRED_ROUTE="chat_completions" uv run guidellm benchmark run \
+  --target "http://localhost:8321/v1/openai/v1" \
+  --model "meta-llama/Llama-3.2-3B-Instruct" \
+  --rate-type sweep \
+  --max-seconds 60 \
+  --data "prompt_tokens=256,output_tokens=128" --output-path='output.html'
+```
 
-- `benchmark.py` - Core benchmark script with async streaming support
-- `run-benchmark.sh` - Main script with target selection and configuration
-- `openai-mock-server.py` - Mock OpenAI API server for local testing
-- `README.md` - This documentation file
+**4. Profile the running server:**
+```bash
+./scripts/profile_running_server.sh
+```
