@@ -42,7 +42,7 @@ uv run --env-file .env -- pytest -v tests/integration/inference/test_text_infere
 We use [pre-commit](https://pre-commit.com/) to run linting and formatting checks on your code. You can install the pre-commit hooks by running:
 
 ```bash
-uv run pre-commit install
+uv run pre-commit install -t pre-commit -t commit-msg
 ```
 
 After that, pre-commit hooks will run automatically before each commit.
@@ -56,6 +56,8 @@ uv run pre-commit run --all-files
 ```{caution}
 Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
 ```
+
+A note about API changes: We use a commit-msg hook and OpenAPI spec generation to detect API changes. When changing the API, you must add `[API CHANGE]` to your commit message to pass the check.
 
 ## Discussions -> Issues -> Pull Requests
 
