@@ -11,7 +11,7 @@ import typing
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
-from llama_stack.apis.version import LLAMA_STACK_API_VERSION
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA, LLAMA_STACK_API_V1ALPHA
 
 from termcolor import colored
 
@@ -114,10 +114,14 @@ class EndpointOperation:
     response_examples: Optional[List[Any]] = None
 
     def get_route(self) -> str:
+        # Get the API level from the webmethod decorator
+        webmethod = getattr(self.func_ref, "__webmethod__", None)
+        api_level = webmethod.level if webmethod and hasattr(webmethod, 'level') else LLAMA_STACK_API_V1
+        
         if self.route is not None:
-            return "/".join(["", LLAMA_STACK_API_VERSION, self.route.lstrip("/")])
+            return "/".join(["", api_level, self.route.lstrip("/")])
 
-        route_parts = ["", LLAMA_STACK_API_VERSION, self.name]
+        route_parts = ["", api_level, self.name]
         for param_name, _ in self.path_params:
             route_parts.append("{" + param_name + "}")
         return "/".join(route_parts)
