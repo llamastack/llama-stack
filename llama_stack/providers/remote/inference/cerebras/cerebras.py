@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from collections.abc import AsyncGenerator
+from urllib.parse import urljoin
 
 from cerebras.cloud.sdk import AsyncCerebras
 
@@ -35,14 +36,13 @@ from llama_stack.providers.utils.inference.model_registry import (
     ModelRegistryHelper,
 )
 from llama_stack.providers.utils.inference.openai_compat import (
-    OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompletionToLlamaStackMixin,
     get_sampling_options,
     process_chat_completion_response,
     process_chat_completion_stream_response,
     process_completion_response,
     process_completion_stream_response,
 )
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
     completion_request_to_prompt,
@@ -53,10 +53,9 @@ from .models import MODEL_ENTRIES
 
 
 class CerebrasInferenceAdapter(
+    OpenAIMixin,
     ModelRegistryHelper,
     Inference,
-    OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompletionToLlamaStackMixin,
 ):
     def __init__(self, config: CerebrasImplConfig) -> None:
         ModelRegistryHelper.__init__(
@@ -66,10 +65,16 @@ class CerebrasInferenceAdapter(
         self.config = config
 
         # TODO: make this use provider data, etc. like other providers
-        self.client = AsyncCerebras(
+        self._cerebras_client = AsyncCerebras(
             base_url=self.config.base_url,
             api_key=self.config.api_key.get_secret_value(),
         )
+
+    def get_api_key(self) -> str:
+        return self.config.api_key.get_secret_value()
+
+    def get_base_url(self) -> str:
+        return urljoin(self.config.base_url, "v1")
 
     async def initialize(self) -> None:
         return
@@ -107,14 +112,14 @@ class CerebrasInferenceAdapter(
     async def _nonstream_completion(self, request: CompletionRequest) -> CompletionResponse:
         params = await self._get_params(request)
 
-        r = await self.client.completions.create(**params)
+        r = await self._cerebras_client.completions.create(**params)
 
         return process_completion_response(r)
 
     async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
         params = await self._get_params(request)
 
-        stream = await self.client.completions.create(**params)
+        stream = await self._cerebras_client.completions.create(**params)
 
         async for chunk in process_completion_stream_response(stream):
             yield chunk
@@ -156,14 +161,14 @@ class CerebrasInferenceAdapter(
     async def _nonstream_chat_completion(self, request: CompletionRequest) -> CompletionResponse:
         params = await self._get_params(request)
 
-        r = await self.client.completions.create(**params)
+        r = await self._cerebras_client.completions.create(**params)
 
         return process_chat_completion_response(r, request)
 
     async def _stream_chat_completion(self, request: CompletionRequest) -> AsyncGenerator:
         params = await self._get_params(request)
 
-        stream = await self.client.completions.create(**params)
+        stream = await self._cerebras_client.completions.create(**params)
 
         async for chunk in process_chat_completion_stream_response(stream, request):
             yield chunk

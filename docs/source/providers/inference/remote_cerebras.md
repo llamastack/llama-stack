@@ -9,7 +9,7 @@ Cerebras inference provider for running models on Cerebras Cloud platform.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `base_url` | `<class 'str'>` | No | https://api.cerebras.ai | Base URL for the Cerebras API |
-| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Cerebras API Key |
+| `api_key` | `<class 'pydantic.types.SecretStr'>` | No |  | Cerebras API Key |
 
 ## Sample Configuration
 
