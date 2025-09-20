@@ -66,10 +66,9 @@ def base_config(tmp_path):
 def provider_spec_yaml():
     """Common provider spec YAML for testing."""
     return """
-adapter:
-  adapter_type: test_provider
-  config_class: test_provider.config.TestProviderConfig
-  module: test_provider
+adapter_type: test_provider
+config_class: test_provider.config.TestProviderConfig
+module: test_provider
 api_dependencies:
   - safety
 """
@@ -182,9 +181,9 @@ class TestProviderRegistry:
         assert Api.inference in registry
         assert "remote::test_provider" in registry[Api.inference]
         provider = registry[Api.inference]["remote::test_provider"]
-        assert provider.adapter.adapter_type == "test_provider"
-        assert provider.adapter.module == "test_provider"
-        assert provider.adapter.config_class == "test_provider.config.TestProviderConfig"
+        assert provider.adapter_type == "test_provider"
+        assert provider.module == "test_provider"
+        assert provider.config_class == "test_provider.config.TestProviderConfig"
         assert Api.safety in provider.api_dependencies
 
     def test_external_inline_providers(self, api_directories, mock_providers, base_config, inline_provider_spec_yaml):
@@ -246,8 +245,7 @@ class TestProviderRegistry:
         """Test handling of malformed remote provider spec (missing required fields)."""
         remote_dir, _ = api_directories
         malformed_spec = """
-adapter:
-  adapter_type: test_provider
+adapter_type: test_provider
   # Missing required fields
 api_dependencies:
   - safety
@@ -270,7 +268,7 @@ pip_packages:
         with open(inline_dir / "malformed.yaml", "w") as f:
             f.write(malformed_spec)
 
-        with pytest.raises(KeyError) as exc_info:
+        with pytest.raises(ValidationError) as exc_info:
             get_provider_registry(base_config)
         assert "config_class" in str(exc_info.value)
 

@@ -131,6 +131,15 @@ class ProviderSpec(BaseModel):
  """,
     )
 
+    pip_packages: list[str] = Field(
+        default_factory=list,
+        description="The pip dependencies needed for this implementation",
+    )
+
+    provider_data_validator: str | None = Field(
+        default=None,
+    )
+
     is_external: bool = Field(default=False, description="Notes whether this provider is an external provider.")
 
     # used internally by the resolver; this is a hack for now
@@ -145,55 +154,14 @@ class RoutingTable(Protocol):
     async def get_provider_impl(self, routing_key: str) -> Any: ...
 
 
-# TODO: this can now be inlined into RemoteProviderSpec
-@json_schema_type
-class AdapterSpec(BaseModel):
-    adapter_type: str = Field(
-        ...,
-        description="Unique identifier for this adapter",
-    )
-    module: str = Field(
-        default_factory=str,
-        description="""
-Fully-qualified name of the module to import. The module is expected to have:
-
- - `get_adapter_impl(config, deps)`: returns the adapter implementation
-""",
-    )
-    pip_packages: list[str] = Field(
-        default_factory=list,
-        description="The pip dependencies needed for this implementation",
-    )
-    config_class: str = Field(
-        description="Fully-qualified classname of the config for this provider",
-    )
-    provider_data_validator: str | None = Field(
-        default=None,
-    )
-    description: str | None = Field(
-        default=None,
-        description="""
-A description of the provider. This is used to display in the documentation.
-""",
-    )
-
-
 @json_schema_type
 class InlineProviderSpec(ProviderSpec):
-    pip_packages: list[str] = Field(
-        default_factory=list,
-        description="The pip dependencies needed for this implementation",
-    )
     container_image: str | None = Field(
         default=None,
         description="""
 The container image to use for this implementation. If one is provided, pip_packages will be ignored.
 If a provider depends on other providers, the dependencies MUST NOT specify a container image.
 """,
-    )
-    # module field is inherited from ProviderSpec
-    provider_data_validator: str | None = Field(
-        default=None,
     )
     description: str | None = Field(
         default=None,
@@ -223,43 +191,21 @@ class RemoteProviderConfig(BaseModel):
 
 @json_schema_type
 class RemoteProviderSpec(ProviderSpec):
-    adapter: AdapterSpec = Field(
+    adapter_type: str = Field(
+        ...,
+        description="Unique identifier for this adapter",
+    )
+
+    description: str | None = Field(
+        default=None,
         description="""
-If some code is needed to convert the remote responses into Llama Stack compatible
-API responses, specify the adapter here.
+A description of the provider. This is used to display in the documentation.
 """,
     )
 
     @property
     def container_image(self) -> str | None:
         return None
-
-    # module field is inherited from ProviderSpec
-
-    @property
-    def pip_packages(self) -> list[str]:
-        return self.adapter.pip_packages
-
-    @property
-    def provider_data_validator(self) -> str | None:
-        return self.adapter.provider_data_validator
-
-
-def remote_provider_spec(
-    api: Api,
-    adapter: AdapterSpec,
-    api_dependencies: list[Api] | None = None,
-    optional_api_dependencies: list[Api] | None = None,
-) -> RemoteProviderSpec:
-    return RemoteProviderSpec(
-        api=api,
-        provider_type=f"remote::{adapter.adapter_type}",
-        config_class=adapter.config_class,
-        module=adapter.module,
-        adapter=adapter,
-        api_dependencies=api_dependencies or [],
-        optional_api_dependencies=optional_api_dependencies or [],
-    )
 
 
 class HealthStatus(StrEnum):

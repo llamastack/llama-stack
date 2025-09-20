@@ -460,10 +460,12 @@ client = LlamaStackClient(base_url="http://localhost:8321")
 embed_lm = next(m for m in client.models.list() if m.model_type == "embedding")
 embedding_model = embed_lm.identifier
 vector_db_id = f"v{uuid.uuid4().hex}"
-client.vector_dbs.register(
+# The VectorDB API is deprecated; the server now returns its own authoritative ID.
+# We capture the correct ID from the response's .identifier attribute.
+vector_db_id = client.vector_dbs.register(
     vector_db_id=vector_db_id,
     embedding_model=embedding_model,
-)
+).identifier
 
 # Create Documents
 urls = [

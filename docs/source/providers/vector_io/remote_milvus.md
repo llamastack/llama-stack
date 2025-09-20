@@ -23,7 +23,13 @@ To use Milvus in your Llama Stack project, follow these steps:
 
 ## Installation
 
-You can install Milvus using pymilvus:
+If you want to use inline Milvus, you can install:
+
+```bash
+pip install pymilvus[milvus-lite]
+```
+
+If you want to use remote Milvus, you can install:
 
 ```bash
 pip install pymilvus

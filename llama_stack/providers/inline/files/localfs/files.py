@@ -44,7 +44,7 @@ class LocalfsFilesImpl(Files):
         storage_path.mkdir(parents=True, exist_ok=True)
 
         # Initialize SQL store for metadata
-        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.config.metadata_store))
+        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.config.metadata_store), self.policy)
         await self.sql_store.create_table(
             "openai_files",
             {
@@ -74,7 +74,7 @@ class LocalfsFilesImpl(Files):
         if not self.sql_store:
             raise RuntimeError("Files provider not initialized")
 
-        row = await self.sql_store.fetch_one("openai_files", policy=self.policy, where={"id": file_id})
+        row = await self.sql_store.fetch_one("openai_files", where={"id": file_id})
         if not row:
             raise ResourceNotFoundError(file_id, "File", "client.files.list()")
 
@@ -150,7 +150,6 @@ class LocalfsFilesImpl(Files):
 
         paginated_result = await self.sql_store.fetch_all(
             table="openai_files",
-            policy=self.policy,
             where=where_conditions if where_conditions else None,
             order_by=[("created_at", order.value)],
             cursor=("id", after) if after else None,
