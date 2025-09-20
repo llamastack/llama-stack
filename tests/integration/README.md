@@ -118,9 +118,9 @@ pytest -s -v tests/integration/inference/ \
 Another example: Running Vector IO tests for embedding models:
 
 ```bash
-pytest -s -v tests/integration/vector_io/ \
-   --stack-config=inference=inline::sentence-transformers,vector_io=inline::sqlite-vec \
-   --embedding-model=sentence-transformers/all-MiniLM-L6-v2
+uv run pytest -sv --stack-config="inference=inline::sentence-transformers,vector_io=inline::sqlite-vec,files=localfs" \
+tests/integration/vector_io --embedding-model \
+sentence-transformers/all-MiniLM-L6-v2
 ```
 
 ## Recording Modes
