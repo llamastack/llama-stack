@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "__databricks__/serving-endpoints/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "databricks-meta-llama-3-3-70b-instruct",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hello, world!"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "databricks-meta-llama-3-3-70b-instruct"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl_52eec823-4235-473d-b25a-f0af4ebd4837",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "Hello! It's great to meet you. Is there something I can help you with, or would you like to chat?",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1758326506,
+        "model": "meta-llama-3.3-70b-instruct-121024",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 26,
+          "prompt_tokens": 14,
+          "total_tokens": 40,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.schema_utils import json_schema_type
 
@@ -17,16 +17,16 @@ class DatabricksImplConfig(BaseModel):
         default=None,
         description="The URL for the Databricks model serving endpoint",
     )
-    api_token: str = Field(
-        default=None,
+    api_token: SecretStr = Field(
+        default=SecretStr(None),
         description="The Databricks API token",
     )
 
     @classmethod
     def sample_run_config(
         cls,
-        url: str = "${env.DATABRICKS_URL:=}",
-        api_token: str = "${env.DATABRICKS_API_TOKEN:=}",
+        url: str = "${env.DATABRICKS_HOST:=}",
+        api_token: str = "${env.DATABRICKS_TOKEN:=}",
         **kwargs: Any,
     ) -> dict[str, Any]:
         return {
