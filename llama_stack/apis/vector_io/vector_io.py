@@ -426,6 +426,74 @@ class VectorStoreFileDeleteResponse(BaseModel):
     deleted: bool = True
 
 
+@json_schema_type
+class VectorStoreChunkObject(BaseModel):
+    """OpenAI Vector Store Chunk object.
+
+    :param id: Unique identifier for the chunk
+    :param object: Object type identifier, always "vector_store.file.chunk"
+    :param created_at: Timestamp when the chunk was created
+    :param vector_store_id: ID of the vector store containing this chunk
+    :param file_id: ID of the file containing this chunk
+    :param content: The content of the chunk, using the same format as Chunk class
+    :param metadata: Metadata associated with the chunk
+    :param embedding: The embedding vector for the chunk
+    """
+
+    id: str
+    object: str = "vector_store.file.chunk"
+    created_at: int
+    vector_store_id: str
+    file_id: str
+    content: InterleavedContent
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    embedding: list[float] | None = None
+
+
+@json_schema_type
+class VectorStoreListChunksResponse(BaseModel):
+    """Response from listing chunks in a vector store file.
+
+    :param object: Object type identifier, always "list"
+    :param data: List of vector store chunk objects
+    :param first_id: (Optional) ID of the first chunk in the list for pagination
+    :param last_id: (Optional) ID of the last chunk in the list for pagination
+    :param has_more: Whether there are more chunks available beyond this page
+    """
+
+    object: str = "list"
+    data: list[VectorStoreChunkObject]
+    first_id: str | None = None
+    last_id: str | None = None
+    has_more: bool = False
+
+
+@json_schema_type
+class VectorStoreChunkUpdateRequest(BaseModel):
+    """Request to update a vector store chunk.
+
+    :param content: Updated content for the chunk
+    :param metadata: Updated metadata for the chunk
+    """
+
+    content: InterleavedContent | None = None
+    metadata: dict[str, Any] | None = None
+
+
+@json_schema_type
+class VectorStoreChunkDeleteResponse(BaseModel):
+    """Response from deleting a vector store chunk.
+
+    :param id: Unique identifier of the deleted chunk
+    :param object: Object type identifier for the deletion response
+    :param deleted: Whether the deletion operation was successful
+    """
+
+    id: str
+    object: str = "vector_store.file.chunk.deleted"
+    deleted: bool = True
+
+
 class VectorDBStore(Protocol):
     def get_vector_db(self, vector_db_id: str) -> VectorDB | None: ...
 
@@ -638,6 +706,28 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/chunks", method="GET")
+    async def openai_list_vector_store_chunks(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        limit: int | None = 20,
+        order: str | None = "desc",
+        after: str | None = None,
+        before: str | None = None,
+    ) -> VectorStoreListChunksResponse:
+        """List chunks in a vector store file.
+
+        :param vector_store_id: The ID of the vector store.
+        :param file_id: The ID of the file.
+        :param limit: Max number of chunks to return.
+        :param order: Sort order.
+        :param after: Pagination cursor.
+        :param before: Pagination cursor.
+        :returns: A VectorStoreListChunksResponse with the list of chunks.
+        """
+        ...
+
     @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content", method="GET")
     async def openai_retrieve_vector_store_file_contents(
         self,
@@ -679,5 +769,57 @@ class VectorIO(Protocol):
         :param vector_store_id: The ID of the vector store containing the file to delete.
         :param file_id: The ID of the file to delete.
         :returns: A VectorStoreFileDeleteResponse indicating the deletion status.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/chunks/{chunk_id}", method="GET")
+    async def openai_retrieve_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+    ) -> VectorStoreChunkObject:
+        """Retrieve a specific chunk from a vector store file.
+
+        :param vector_store_id: The ID of the vector store containing the chunk.
+        :param file_id: The ID of the file containing the chunk.
+        :param chunk_id: The ID of the chunk to retrieve.
+        :returns: A VectorStoreChunkObject representing the chunk.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/chunks/{chunk_id}", method="POST")
+    async def openai_update_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+        content: InterleavedContent | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> VectorStoreChunkObject:
+        """Update a specific chunk in a vector store file.
+
+        :param vector_store_id: The ID of the vector store containing the chunk.
+        :param file_id: The ID of the file containing the chunk.
+        :param chunk_id: The ID of the chunk to update.
+        :param content: Updated content for the chunk.
+        :param metadata: Updated metadata for the chunk.
+        :returns: A VectorStoreChunkObject representing the updated chunk.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/chunks/{chunk_id}", method="DELETE")
+    async def openai_delete_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+    ) -> VectorStoreChunkDeleteResponse:
+        """Delete a specific chunk from a vector store file.
+
+        :param vector_store_id: The ID of the vector store containing the chunk.
+        :param file_id: The ID of the file containing the chunk.
+        :param chunk_id: The ID of the chunk to delete.
+        :returns: A VectorStoreChunkDeleteResponse indicating the deletion status.
         """
         ...
