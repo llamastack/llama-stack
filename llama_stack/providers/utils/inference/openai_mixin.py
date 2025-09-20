@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from typing import Any
 
+import openai
 from openai import NOT_GIVEN, AsyncOpenAI
 
 from llama_stack.apis.inference import (
@@ -308,16 +309,23 @@ class OpenAIMixin(ABC):
 
         :return: A list of Model instances representing available models.
         """
-        self._model_cache = {
-            m.id: Model(
-                # __provider_id__ is dynamically added by instantiate_provider in resolver.py
-                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                provider_resource_id=m.id,
-                identifier=m.id,
-                model_type=ModelType.llm,
-            )
-            async for m in self.client.models.list()
-        }
+        try:
+            self._model_cache = {
+                m.id: Model(
+                    # __provider_id__ is dynamically added by instantiate_provider in resolver.py
+                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                    provider_resource_id=m.id,
+                    identifier=m.id,
+                    model_type=ModelType.llm,
+                )
+                async for m in self.client.models.list()
+            }
+        except openai.NotFoundError:
+            logger.warning(f"Failed to list models for {self.__provider_id__}")  # type: ignore[attr-defined]
+            return None
+        except Exception as e:
+            logger.warning(f"Failed to list models for {self.__provider_id__}: {e}")  # type: ignore[attr-defined]
+            return None
 
         return list(self._model_cache.values())
 
@@ -328,6 +336,7 @@ class OpenAIMixin(ABC):
         :param model: The model identifier to check.
         :return: True if the model is available dynamically, False otherwise.
         """
+
         if not self._model_cache:
             await self.list_models()
 
