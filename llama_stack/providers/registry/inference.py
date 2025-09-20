@@ -152,7 +152,7 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter=AdapterSpec(
                 adapter_type="databricks",
-                pip_packages=[],
+                pip_packages=["databricks-sdk"],
                 module="llama_stack.providers.remote.inference.databricks",
                 config_class="llama_stack.providers.remote.inference.databricks.DatabricksImplConfig",
                 description="Databricks inference provider for running models on Databricks' unified analytics platform.",

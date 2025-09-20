@@ -108,6 +108,14 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "together/togethercomputer/m2-bert-80M-32k-retrieval",
         },
     ),
+    "databricks": Setup(
+        name="databricks",
+        description="Databricks models",
+        defaults={
+            "text_model": "databricks/databricks-meta-llama-3-3-70b-instruct",
+            "embedding_model": "databricks/databricks-bge-large-en",
+        },
+    ),
 }
 
 

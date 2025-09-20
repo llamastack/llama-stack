@@ -9,13 +9,13 @@ Databricks inference provider for running models on Databricks' unified analytic
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `url` | `<class 'str'>` | No |  | The URL for the Databricks model serving endpoint |
-| `api_token` | `<class 'str'>` | No |  | The Databricks API token |
+| `api_token` | `<class 'pydantic.types.SecretStr'>` | No |  | The Databricks API token |
 
 ## Sample Configuration
 
 ```yaml
-url: ${env.DATABRICKS_URL:=}
-api_token: ${env.DATABRICKS_API_TOKEN:=}
+url: ${env.DATABRICKS_HOST:=}
+api_token: ${env.DATABRICKS_TOKEN:=}
 
 ```
 

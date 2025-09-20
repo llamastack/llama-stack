@@ -296,7 +296,7 @@ class OpenAIMixin(ABC):
 
         return OpenAIEmbeddingsResponse(
             data=data,
-            model=response.model,
+            model=model,
             usage=usage,
         )
 
