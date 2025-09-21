@@ -58,7 +58,8 @@ async def agents_impl(config, mock_apis):
         mock_apis["safety_api"],
         mock_apis["tool_runtime_api"],
         mock_apis["tool_groups_api"],
-        {},
+        None,  # prompts_api (will be set later via set_prompts_api if needed)
+        [],  # policy (empty list for tests)
     )
     await impl.initialize()
     yield impl

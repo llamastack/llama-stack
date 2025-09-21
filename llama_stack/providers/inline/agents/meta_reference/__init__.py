@@ -21,6 +21,7 @@ async def get_provider_impl(config: MetaReferenceAgentsImplConfig, deps: dict[Ap
         deps[Api.safety],
         deps[Api.tool_runtime],
         deps[Api.tool_groups],
+        None,  # prompts_api will be set later when available
         policy,
     )
     await impl.initialize()

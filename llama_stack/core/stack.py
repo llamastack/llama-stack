@@ -314,6 +314,10 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     )
     impls[Api.prompts] = prompts_impl
 
+    # Set prompts API on agents provider if it exists
+    if Api.agents in impls and hasattr(impls[Api.agents], "set_prompts_api"):
+        impls[Api.agents].set_prompts_api(prompts_impl)
+
 
 # Produces a stack of providers for the given run config. Not all APIs may be
 # asked for in the run config.
