@@ -9296,6 +9296,10 @@
                         "type": "string",
                         "description": "(Optional) ID of the previous response in a conversation"
                     },
+                    "prompt": {
+                        "$ref": "#/components/schemas/Prompt",
+                        "description": "(Optional) Prompt object with ID, version, and variables"
+                    },
                     "status": {
                         "type": "string",
                         "description": "Current status of the response generation"
@@ -9892,6 +9896,44 @@
                 "title": "OpenAIResponseUsage",
                 "description": "Usage information for OpenAI response."
             },
+            "Prompt": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "description": "The system prompt text with variable placeholders. Variables are only supported when using the Responses API."
+                    },
+                    "version": {
+                        "type": "integer",
+                        "description": "Version (integer starting at 1, incremented on save)"
+                    },
+                    "prompt_id": {
+                        "type": "string",
+                        "description": "Unique identifier formatted as 'pmpt_<48-digit-hash>'"
+                    },
+                    "variables": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of prompt variable names that can be used in the prompt template"
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Boolean indicating whether this version is the default version for this prompt"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "version",
+                    "prompt_id",
+                    "variables",
+                    "is_default"
+                ],
+                "title": "Prompt",
+                "description": "A prompt resource representing a stored OpenAI Compatible prompt template in Llama Stack."
+            },
             "ResponseShieldSpec": {
                 "type": "object",
                 "properties": {
@@ -10048,6 +10090,51 @@
                 "title": "OpenAIResponseInputToolMCP",
                 "description": "Model Context Protocol (MCP) tool configuration for OpenAI response inputs."
             },
+            "OpenAIResponsePromptParam": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the prompt template"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "Dictionary of variable names to values for template substitution"
+                    },
+                    "version": {
+                        "type": "string",
+                        "description": "Version number of the prompt to use (defaults to latest if not specified)"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "id"
+                ],
+                "title": "OpenAIResponsePromptParam",
+                "description": "Prompt object that is used for OpenAI responses."
+            },
             "CreateOpenaiResponseRequest": {
                 "type": "object",
                 "properties": {
@@ -10068,6 +10155,10 @@
                     "model": {
                         "type": "string",
                         "description": "The underlying LLM used for completions."
+                    },
+                    "prompt": {
+                        "$ref": "#/components/schemas/OpenAIResponsePromptParam",
+                        "description": "Prompt object with ID, version, and variables."
                     },
                     "instructions": {
                         "type": "string"
@@ -10156,6 +10247,10 @@
                     "previous_response_id": {
                         "type": "string",
                         "description": "(Optional) ID of the previous response in a conversation"
+                    },
+                    "prompt": {
+                        "$ref": "#/components/schemas/Prompt",
+                        "description": "(Optional) Prompt object with ID, version, and variables"
                     },
                     "status": {
                         "type": "string",

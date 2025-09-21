@@ -9,6 +9,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
+from llama_stack.apis.prompts.prompts import Prompt
 from llama_stack.apis.vector_io import SearchRankingOptions as FileSearchRankingOptions
 from llama_stack.schema_utils import json_schema_type, register_schema
 
@@ -337,6 +338,20 @@ class OpenAIResponseTextFormat(TypedDict, total=False):
 
 
 @json_schema_type
+class OpenAIResponsePromptParam(BaseModel):
+    """Prompt object that is used for OpenAI responses.
+
+    :param id: Unique identifier of the prompt template
+    :param variables: Dictionary of variable names to values for template substitution
+    :param version: Version number of the prompt to use (defaults to latest if not specified)
+    """
+
+    id: str
+    variables: dict[str, Any] | None = None
+    version: str | None = None
+
+
+@json_schema_type
 class OpenAIResponseText(BaseModel):
     """Text response configuration for OpenAI responses.
 
@@ -525,6 +540,7 @@ class OpenAIResponseObject(BaseModel):
     :param object: Object type identifier, always "response"
     :param output: List of generated output items (messages, tool calls, etc.)
     :param parallel_tool_calls: Whether tool calls can be executed in parallel
+    :param prompt: (Optional) Prompt object with ID, version, and variables
     :param previous_response_id: (Optional) ID of the previous response in a conversation
     :param status: Current status of the response generation
     :param temperature: (Optional) Sampling temperature used for generation
@@ -543,6 +559,7 @@ class OpenAIResponseObject(BaseModel):
     output: list[OpenAIResponseOutput]
     parallel_tool_calls: bool = False
     previous_response_id: str | None = None
+    prompt: Prompt | None = None
     status: str
     temperature: float | None = None
     # Default to text format to avoid breaking the loading of old responses
