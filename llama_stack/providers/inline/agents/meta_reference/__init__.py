@@ -20,15 +20,17 @@ async def get_provider_impl(
     from .agents import MetaReferenceAgentsImpl
 
     impl = MetaReferenceAgentsImpl(
-        config,
-        deps[Api.inference],
-        deps[Api.vector_io],
-        deps[Api.safety],
-        deps[Api.tool_runtime],
-        deps[Api.tool_groups],
-        deps[Api.conversations],
-        policy,
-        telemetry_enabled,
+        config=config,
+        inference_api=deps[Api.inference],
+        vector_io_api=deps[Api.vector_io],
+        safety_api=deps[Api.safety],
+        tool_runtime_api=deps[Api.tool_runtime],
+        tool_groups_api=deps[Api.tool_groups],
+        conversations_api=deps[Api.conversations],
+        prompts_api=deps[Api.prompts],
+        files_api=deps[Api.files],
+        telemetry_enabled=Api.telemetry in deps,
+        policy=policy,
     )
     await impl.initialize()
     return impl

@@ -86,6 +86,9 @@ inference_store:
 conversations_store:
   type: sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/conversations.db
+prompts_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/prompts.db
 models: []
 shields: []
 vector_dbs: []

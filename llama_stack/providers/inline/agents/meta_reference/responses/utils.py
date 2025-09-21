@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import base64
 import re
 import uuid
 
@@ -14,6 +15,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseInputMessageContent,
+    OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
@@ -27,6 +29,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseText,
 )
+from llama_stack.apis.files import Files
 from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
@@ -36,6 +39,8 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
     OpenAIDeveloperMessageParam,
+    OpenAIFile,
+    OpenAIFileFile,
     OpenAIImageURL,
     OpenAIJSONSchema,
     OpenAIMessageParam,
@@ -48,6 +53,49 @@ from llama_stack.apis.inference import (
     OpenAIUserMessageParam,
 )
 from llama_stack.apis.safety import Safety
+
+
+async def extract_file_content(file_id: str, files_api: Files) -> bytes:
+    """
+    Retrieve file content directly using the Files API.
+
+    :param file_id: The file identifier (e.g., "file-abc123")
+    :param files_api: Files API instance
+    :returns: Raw file content as bytes
+    :raises: ValueError if file cannot be retrieved
+    """
+    try:
+        response = await files_api.openai_retrieve_file_content(file_id)
+        if hasattr(response, "body"):
+            return response.body
+        elif hasattr(response, "content"):
+            return response.content
+        else:
+            raise AttributeError(f"Response object has no 'body' or 'content' attribute. Type: {type(response)}")
+    except Exception as e:
+        raise ValueError(f"Failed to retrieve file content for file_id '{file_id}': {str(e)}") from e
+
+
+def get_mime_type_from_filename(filename: str | None) -> str:
+    """
+    Determine MIME type from filename extension.
+
+    :param filename: The filename to analyze
+    :returns: MIME type string (defaults to "application/octet-stream" if unknown)
+    """
+    if not filename:
+        return "application/octet-stream"
+
+    filename_lower = filename.lower()
+    if filename_lower.endswith(".pdf"):
+        return "application/pdf"
+    elif filename_lower.endswith((".png", ".jpg", ".jpeg")):
+        ext = filename_lower.split(".")[-1]
+        return f"image/{ext.replace('jpg', 'jpeg')}"
+    elif filename_lower.endswith(".txt"):
+        return "text/plain"
+    else:
+        return "application/octet-stream"
 
 
 async def convert_chat_choice_to_response_message(
@@ -79,11 +127,15 @@ async def convert_chat_choice_to_response_message(
 
 async def convert_response_content_to_chat_content(
     content: (str | list[OpenAIResponseInputMessageContent] | list[OpenAIResponseOutputMessageContent]),
+    files_api: Files,
 ) -> str | list[OpenAIChatCompletionContentPartParam]:
     """
     Convert the content parts from an OpenAI Response API request into OpenAI Chat Completion content parts.
 
     The content schemas of each API look similar, but are not exactly the same.
+
+    :param content: The content to convert
+    :param files_api: Files API for resolving file_id to raw file content (required)
     """
     if isinstance(content, str):
         return content
@@ -95,9 +147,69 @@ async def convert_response_content_to_chat_content(
         elif isinstance(content_part, OpenAIResponseOutputMessageContentOutputText):
             converted_parts.append(OpenAIChatCompletionContentPartTextParam(text=content_part.text))
         elif isinstance(content_part, OpenAIResponseInputMessageContentImage):
+            detail = content_part.detail
+
             if content_part.image_url:
-                image_url = OpenAIImageURL(url=content_part.image_url, detail=content_part.detail)
+                image_url = OpenAIImageURL(url=content_part.image_url, detail=detail)
                 converted_parts.append(OpenAIChatCompletionContentPartImageParam(image_url=image_url))
+            elif content_part.file_id:
+                file_content = await extract_file_content(content_part.file_id, files_api)
+                encoded_content = base64.b64encode(file_content).decode("utf-8")
+                data_url = f"data:image/png;base64,{encoded_content}"
+                image_url = OpenAIImageURL(url=data_url, detail=detail)
+                converted_parts.append(OpenAIChatCompletionContentPartImageParam(image_url=image_url))
+            else:
+                raise ValueError(
+                    f"Image content must have either 'image_url' or 'file_id'. "
+                    f"Got image_url={content_part.image_url}, file_id={content_part.file_id}"
+                )
+        elif isinstance(content_part, OpenAIResponseInputMessageContentFile):
+            file_data = getattr(content_part, "file_data", None)
+            file_id = getattr(content_part, "file_id", None)
+            file_url = getattr(content_part, "file_url", None)
+            filename = getattr(content_part, "filename", None)
+
+            if not any([file_id, file_data, file_url]):
+                raise ValueError(
+                    f"File content must have at least one of 'file_id', 'file_data', or 'file_url'. "
+                    f"Got file_id={file_id}, file_data={'<data>' if file_data else None}, file_url={file_url}"
+                )
+
+            resolved_file_data = None
+
+            if file_id:
+                file_content = await extract_file_content(file_id, files_api)
+
+                # If filename is not provided, fetch it from the Files API
+                if not filename:
+                    file_metadata = await files_api.openai_retrieve_file(file_id)
+                    filename = file_metadata.filename
+
+                # Determine MIME type and encode as data URL
+                mime_type = get_mime_type_from_filename(filename)
+                base64_content = base64.b64encode(file_content).decode("utf-8")
+                resolved_file_data = f"data:{mime_type};base64,{base64_content}"
+
+            elif file_data:
+                # If file_data provided directly
+                if file_data.startswith("data:"):
+                    resolved_file_data = file_data
+                else:
+                    # Raw base64 data, wrap in data URL format
+                    mime_type = get_mime_type_from_filename(filename)
+                    resolved_file_data = f"data:{mime_type};base64,{file_data}"
+
+            elif file_url:
+                resolved_file_data = file_url
+
+            converted_parts.append(
+                OpenAIFile(
+                    file=OpenAIFileFile(
+                        file_data=resolved_file_data,
+                        filename=filename,
+                    )
+                )
+            )
         elif isinstance(content_part, str):
             converted_parts.append(OpenAIChatCompletionContentPartTextParam(text=content_part))
         else:
@@ -110,12 +222,14 @@ async def convert_response_content_to_chat_content(
 async def convert_response_input_to_chat_messages(
     input: str | list[OpenAIResponseInput],
     previous_messages: list[OpenAIMessageParam] | None = None,
+    files_api: Files | None = None,
 ) -> list[OpenAIMessageParam]:
     """
     Convert the input from an OpenAI Response API request into OpenAI Chat Completion messages.
 
     :param input: The input to convert
     :param previous_messages: Optional previous messages to check for function_call references
+    :param files_api: Files API for resolving file_id to raw file content (optional, required for file/image content)
     """
     messages: list[OpenAIMessageParam] = []
     if isinstance(input, list):
@@ -173,7 +287,7 @@ async def convert_response_input_to_chat_messages(
                 # these are handled by the responses impl itself and not pass through to chat completions
                 pass
             else:
-                content = await convert_response_content_to_chat_content(input_item.content)
+                content = await convert_response_content_to_chat_content(input_item.content, files_api)
                 message_type = await get_message_type_by_role(input_item.role)
                 if message_type is None:
                     raise ValueError(
