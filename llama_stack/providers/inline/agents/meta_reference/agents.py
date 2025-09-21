@@ -28,7 +28,7 @@ from llama_stack.apis.agents import (
     Session,
     Turn,
 )
-from llama_stack.apis.agents.openai_responses import OpenAIResponseText
+from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam, OpenAIResponseText
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.inference import (
     Inference,
@@ -37,6 +37,7 @@ from llama_stack.apis.inference import (
     ToolResponseMessage,
     UserMessage,
 )
+from llama_stack.apis.prompts import Prompts
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
@@ -63,6 +64,7 @@ class MetaReferenceAgentsImpl(Agents):
         safety_api: Safety,
         tool_runtime_api: ToolRuntime,
         tool_groups_api: ToolGroups,
+        prompts_api: Prompts | None,
         policy: list[AccessRule],
     ):
         self.config = config
@@ -71,6 +73,7 @@ class MetaReferenceAgentsImpl(Agents):
         self.safety_api = safety_api
         self.tool_runtime_api = tool_runtime_api
         self.tool_groups_api = tool_groups_api
+        self.prompts_api = prompts_api
 
         self.in_memory_store = InmemoryKVStoreImpl()
         self.openai_responses_impl: OpenAIResponsesImpl | None = None
@@ -86,7 +89,13 @@ class MetaReferenceAgentsImpl(Agents):
             tool_runtime_api=self.tool_runtime_api,
             responses_store=self.responses_store,
             vector_io_api=self.vector_io_api,
+            prompts_api=self.prompts_api,
         )
+
+    def set_prompts_api(self, prompts_api: Prompts) -> None:
+        self.prompts_api = prompts_api
+        if hasattr(self, "openai_responses_impl") and self.openai_responses_impl:
+            self.openai_responses_impl.prompts_api = prompts_api
 
     async def create_agent(
         self,
@@ -320,6 +329,7 @@ class MetaReferenceAgentsImpl(Agents):
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
+        prompt: OpenAIResponsePromptParam | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
         store: bool | None = True,
@@ -334,6 +344,7 @@ class MetaReferenceAgentsImpl(Agents):
         return await self.openai_responses_impl.create_openai_response(
             input,
             model,
+            prompt,
             instructions,
             previous_response_id,
             store,

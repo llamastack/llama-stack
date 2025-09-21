@@ -38,6 +38,7 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
 )
+from llama_stack.apis.prompts import Prompt
 from llama_stack.apis.tools.tools import ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.datatypes import ResponsesStoreConfig
@@ -83,8 +84,19 @@ def mock_vector_io_api():
 
 
 @pytest.fixture
+def mock_prompts_api():
+    prompts_api = AsyncMock()
+    return prompts_api
+
+
+@pytest.fixture
 def openai_responses_impl(
-    mock_inference_api, mock_tool_groups_api, mock_tool_runtime_api, mock_responses_store, mock_vector_io_api
+    mock_inference_api,
+    mock_tool_groups_api,
+    mock_tool_runtime_api,
+    mock_responses_store,
+    mock_vector_io_api,
+    mock_prompts_api,
 ):
     return OpenAIResponsesImpl(
         inference_api=mock_inference_api,
@@ -92,6 +104,7 @@ def openai_responses_impl(
         tool_runtime_api=mock_tool_runtime_api,
         responses_store=mock_responses_store,
         vector_io_api=mock_vector_io_api,
+        prompts_api=mock_prompts_api,
     )
 
 
@@ -1004,3 +1017,332 @@ async def test_create_openai_response_with_invalid_text_format(openai_responses_
             model=model,
             text=OpenAIResponseText(format={"type": "invalid"}),
         )
+
+
+async def test_create_openai_response_with_prompt(openai_responses_impl, mock_inference_api, mock_prompts_api):
+    """Test creating an OpenAI response with a prompt."""
+    input_text = "What is the capital of Ireland?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a helpful {{ area_name }} assistant at {{ company_name }}. Always provide accurate information.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["area_name", "company_name"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+
+    prompt_params_with_version_1 = OpenAIResponsePromptParam(
+        id=prompt_id, version="1", variables={"area_name": "geography", "company_name": "Dummy Company"}
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt=prompt_params_with_version_1,
+    )
+
+    mock_prompts_api.get_prompt.assert_called_with(prompt_id, 1)
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    sent_messages = call_args.kwargs["messages"]
+    assert len(sent_messages) == 2
+
+    system_messages = [msg for msg in sent_messages if msg.role == "system"]
+    assert len(system_messages) == 1
+    assert (
+        system_messages[0].content
+        == "You are a helpful geography assistant at Dummy Company. Always provide accurate information."
+    )
+
+    user_messages = [msg for msg in sent_messages if msg.role == "user"]
+    assert len(user_messages) == 1
+    assert user_messages[0].content == input_text
+
+    assert result.model == model
+    assert result.status == "completed"
+    assert result.prompt.prompt_id == prompt_id
+    assert result.prompt.variables == ["area_name", "company_name"]
+    assert result.prompt.version == 1
+    assert result.prompt.prompt == prompt.prompt
+
+
+async def test_prepend_prompt_successful_with_variables(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt function with prompt parameters having variables."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a helpful {{ role }} assistant at {{ company }}. Always be {{ tone }}.",
+        prompt_id=prompt_id,
+        version=2,
+        variables=["role", "company", "tone"],
+        is_default=False,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAISystemMessageParam, OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id, version="1", variables={"role": "geography", "company": "Dummy Company", "tone": "professional"}
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="What is the capital of Ireland?")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+    # Check that prompt was returned
+    assert result == prompt
+
+    # Check that now there are 2 messages including prompt message with variables substituted
+    assert len(messages) == 2
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    assert messages[0].role == "system"
+    assert messages[0].content == "You are a helpful geography assistant at Dummy Company. Always be professional."
+
+    # Check that original message is still there
+    assert messages[1].content == "What is the capital of Ireland?"
+
+
+async def test_prepend_prompt_successful_without_variables(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt function without variables."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a helpful assistant. Always provide accurate information.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=[],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAISystemMessageParam, OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(id=prompt_id, version="1")
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Hello")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+    # Check that prompt was returned
+    assert result == prompt
+
+    # Check that system message was prepended
+    assert len(messages) == 2
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    assert messages[0].content == "You are a helpful assistant. Always provide accurate information."
+
+
+async def test_prepend_prompt_no_version_specified(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt function when no version is specified (should use None)."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Default prompt text.",
+        prompt_id=prompt_id,
+        version=3,
+        variables=[],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(id=prompt_id)  # No version specified
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, None)
+    assert result == prompt
+    assert len(messages) == 2
+
+
+async def test_prepend_prompt_invalid_variable(openai_responses_impl, mock_prompts_api):
+    """Test error handling in prepend_prompt function when prompt parameters contain invalid variables."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a {{ role }} assistant.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["role"],  # Only "role" is valid
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={"role": "helpful", "company": "Dummy Company"},  # company is not in prompt.variables
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test prompt")]
+    initial_length = len(messages)
+
+    # Execute - should catch ValueError and return None
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+    # Should return None due to invalid variable
+    assert result is None
+
+    # Messages should not be modified
+    assert len(messages) == initial_length
+
+
+async def test_prepend_prompt_not_found(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt function when prompt is not found."""
+    # Setup
+    prompt_id = "pmpt_nonexistent"
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(id=prompt_id, version="1")
+
+    mock_prompts_api.get_prompt.return_value = None  # Prompt not found
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test prompt")]
+    initial_length = len(messages)
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+    # Should return None when prompt not found
+    assert result is None
+
+    # Messages should not be modified
+    assert len(messages) == initial_length
+    assert messages[0].content == "Test prompt"
+
+
+async def test_prepend_prompt_empty_prompt_text(openai_responses_impl, mock_prompts_api):
+    """Test handling in prepend_prompt function when prompt exists but has empty prompt text."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt=None,  # Empty prompt text
+        prompt_id=prompt_id,
+        version=1,
+        variables=[],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(id=prompt_id, version="1")
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test prompt")]
+    initial_length = len(messages)
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+    # Should return None when prompt text is empty
+    assert result is None
+
+    # Messages should not be modified
+    assert len(messages) == initial_length
+
+
+async def test_prepend_prompt_no_params(openai_responses_impl, mock_prompts_api):
+    """Test handling in prepend_prompt function when prompt_params is None."""
+    # Setup
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test")]
+    initial_length = len(messages)
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, None)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_not_called()
+
+    # Should return None when no prompt params
+    assert result is None
+
+    # Messages should not be modified
+    assert len(messages) == initial_length
+
+
+async def test_prepend_prompt_complex_variable_substitution(openai_responses_impl, mock_prompts_api):
+    """Test complex variable substitution with multiple occurrences and special characters in prepend_prompt function."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Hello {{ name }}! You are working at {{ company }}. Your role is {{ role }} at {{ company }}. Remember, {{ name }}, to be {{ tone }}.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["name", "company", "role", "tone"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAISystemMessageParam, OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={"name": "Alice", "company": "Dummy Company", "role": "AI Assistant", "tone": "professional"},
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    assert result == prompt
+    assert len(messages) == 2
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    expected_content = "Hello Alice! You are working at Dummy Company. Your role is AI Assistant at Dummy Company. Remember, Alice, to be professional."
+    assert messages[0].content == expected_content
