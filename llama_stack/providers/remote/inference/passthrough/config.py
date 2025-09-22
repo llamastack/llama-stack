@@ -18,8 +18,8 @@ class PassthroughImplConfig(BaseModel):
         description="The URL for the passthrough endpoint",
     )
 
-    api_key: SecretStr | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="API Key for the passthrouth endpoint",
     )
 

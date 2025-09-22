@@ -21,7 +21,7 @@ class PGVectorVectorIOConfig(BaseModel):
     port: int | None = Field(default=5432)
     db: str | None = Field(default="postgres")
     user: str | None = Field(default="postgres")
-    password: SecretStr | None = Field(default="mysecretpassword")
+    password: SecretStr = Field(default=SecretStr("mysecretpassword"))
     kvstore: KVStoreConfig | None = Field(description="Config for KV store backend (SQLite only for now)", default=None)
 
     @classmethod

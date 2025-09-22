@@ -12,16 +12,16 @@ from llama_stack.schema_utils import json_schema_type
 
 
 class LlamaProviderDataValidator(BaseModel):
-    llama_api_key: SecretStr | None = Field(
-        default=None,
+    llama_api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="API key for api.llama models",
     )
 
 
 @json_schema_type
 class LlamaCompatConfig(BaseModel):
-    api_key: SecretStr | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="The Llama API key",
     )
 

@@ -21,8 +21,8 @@ class VLLMInferenceAdapterConfig(BaseModel):
         default=4096,
         description="Maximum number of tokens to generate.",
     )
-    api_token: SecretStr | None = Field(
-        default=SecretStr("fake"),
+    api_token: SecretStr = Field(
+        default=SecretStr(""),
         description="The API token",
     )
     tls_verify: bool | str = Field(

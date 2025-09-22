@@ -18,8 +18,8 @@ class FireworksImplConfig(RemoteInferenceProviderConfig):
         default="https://api.fireworks.ai/inference/v1",
         description="The URL for the Fireworks server",
     )
-    api_key: SecretStr | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="The Fireworks.ai API Key",
     )
 

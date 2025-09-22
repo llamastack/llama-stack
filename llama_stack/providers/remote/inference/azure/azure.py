@@ -21,7 +21,7 @@ class AzureInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         LiteLLMOpenAIMixin.__init__(
             self,
             litellm_provider_name="azure",
-            api_key_from_config=config.api_key.get_secret_value(),
+            api_key_from_config=config.api_key,
             provider_data_api_key_field="azure_api_key",
             openai_compat_api_base=str(config.api_base),
         )

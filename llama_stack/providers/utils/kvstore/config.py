@@ -74,7 +74,7 @@ class PostgresKVStoreConfig(CommonConfig):
     port: int = 5432
     db: str = "llamastack"
     user: str
-    password: SecretStr | None = None
+    password: SecretStr = SecretStr("")
     ssl_mode: str | None = None
     ca_cert_path: str | None = None
     table_name: str = "llamastack_kvstore"
@@ -118,7 +118,7 @@ class MongoDBKVStoreConfig(CommonConfig):
     port: int = 27017
     db: str = "llamastack"
     user: str | None = None
-    password: SecretStr | None = None
+    password: SecretStr = SecretStr("")
     collection_name: str = "llamastack_kvstore"
 
     @classmethod

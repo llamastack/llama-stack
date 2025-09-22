@@ -12,16 +12,16 @@ from llama_stack.schema_utils import json_schema_type
 
 
 class OpenAIProviderDataValidator(BaseModel):
-    openai_api_key: SecretStr | None = Field(
-        default=None,
+    openai_api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="API key for OpenAI models",
     )
 
 
 @json_schema_type
 class OpenAIConfig(BaseModel):
-    api_key: SecretStr | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="API key for OpenAI models",
     )
     base_url: str = Field(

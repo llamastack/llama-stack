@@ -17,8 +17,8 @@ class RunpodImplConfig(BaseModel):
         default=None,
         description="The URL for the Runpod model serving endpoint",
     )
-    api_token: SecretStr | None = Field(
-        default=None,
+    api_token: SecretStr = Field(
+        default=SecretStr(""),
         description="The API token",
     )
 

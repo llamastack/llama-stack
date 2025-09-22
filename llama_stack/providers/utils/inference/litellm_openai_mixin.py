@@ -69,7 +69,7 @@ class LiteLLMOpenAIMixin(
     def __init__(
         self,
         litellm_provider_name: str,
-        api_key_from_config: SecretStr | None,
+        api_key_from_config: SecretStr,
         provider_data_api_key_field: str,
         model_entries: list[ProviderModelEntry] | None = None,
         openai_compat_api_base: str | None = None,

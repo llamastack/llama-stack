@@ -24,8 +24,8 @@ class WatsonXConfig(BaseModel):
         default_factory=lambda: os.getenv("WATSONX_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
         description="A base url for accessing the watsonx.ai",
     )
-    api_key: SecretStr | None = Field(
-        default_factory=lambda: os.getenv("WATSONX_API_KEY"),
+    api_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(os.getenv("WATSONX_API_KEY", "")),
         description="The watsonx API key",
     )
     project_id: str | None = Field(

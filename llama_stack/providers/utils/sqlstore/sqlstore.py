@@ -63,11 +63,11 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
     port: int = 5432
     db: str = "llamastack"
     user: str
-    password: SecretStr | None = None
+    password: SecretStr = SecretStr("")
 
     @property
     def engine_str(self) -> str:
-        return f"postgresql+asyncpg://{self.user}:{self.password.get_secret_value() if self.password else ''}@{self.host}:{self.port}/{self.db}"
+        return f"postgresql+asyncpg://{self.user}:{self.password.get_secret_value()}@{self.host}:{self.port}/{self.db}"
 
     @classmethod
     def pip_packages(cls) -> list[str]:

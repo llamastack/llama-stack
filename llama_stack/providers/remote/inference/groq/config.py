@@ -12,17 +12,17 @@ from llama_stack.schema_utils import json_schema_type
 
 
 class GroqProviderDataValidator(BaseModel):
-    groq_api_key: SecretStr | None = Field(
-        default=None,
+    groq_api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="API key for Groq models",
     )
 
 
 @json_schema_type
 class GroqConfig(BaseModel):
-    api_key: SecretStr | None = Field(
+    api_key: SecretStr = Field(
         # The Groq client library loads the GROQ_API_KEY environment variable by default
-        default=None,
+        default=SecretStr(""),
         description="The Groq API key",
     )
 

@@ -9,8 +9,8 @@ from pydantic import BaseModel, Field, SecretStr
 
 
 class BraintrustScoringConfig(BaseModel):
-    openai_api_key: SecretStr | None = Field(
-        default=None,
+    openai_api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="The OpenAI API Key",
     )
 

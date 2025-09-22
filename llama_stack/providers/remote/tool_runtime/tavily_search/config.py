@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field, SecretStr
 
 
 class TavilySearchToolConfig(BaseModel):
-    api_key: SecretStr | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="The Tavily Search API Key",
     )
     max_results: int = Field(
