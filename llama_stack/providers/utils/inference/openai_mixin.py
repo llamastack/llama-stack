@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import base64
 import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
@@ -25,6 +26,7 @@ from llama_stack.apis.inference import (
 from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
+from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 
 logger = get_logger(name=__name__, category="providers::utils")
 
@@ -49,6 +51,10 @@ class OpenAIMixin(ABC):
     #
     # This is useful for providers that do not return a unique id in the response.
     overwrite_completion_id: bool = False
+
+    # Allow subclasses to control whether to download images and convert to base64
+    # for providers that require base64 encoded images instead of URLs.
+    download_images: bool = False
 
     # Cache of available models keyed by model ID
     # This is set in list_models() and used in check_model_availability()
@@ -230,6 +236,24 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI chat completion API call.
         """
+        if self.download_images:
+
+            async def _localize_image_url(m: OpenAIMessageParam) -> OpenAIMessageParam:
+                if isinstance(m.content, list):
+                    for c in m.content:
+                        if c.type == "image_url" and c.image_url and c.image_url.url and "http" in c.image_url.url:
+                            localize_result = await localize_image_content(c.image_url.url)
+                            if localize_result is None:
+                                raise ValueError(
+                                    f"Failed to localize image content from {c.image_url.url[:42]}{'...' if len(c.image_url.url) > 42 else ''}"
+                                )
+                            content, format = localize_result
+                            c.image_url.url = f"data:image/{format};base64,{base64.b64encode(content).decode('utf-8')}"
+                # else it's a string and we don't need to modify it
+                return m
+
+            messages = [await _localize_image_url(m) for m in messages]
+
         resp = await self.client.chat.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
