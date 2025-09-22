@@ -1380,6 +1380,40 @@
                         }
                     }
                 ]
+            },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Benchmarks"
+                ],
+                "description": "Unregister a benchmark.",
+                "parameters": [
+                    {
+                        "name": "benchmark_id",
+                        "in": "path",
+                        "description": "The ID of the benchmark to unregister.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
             }
         },
         "/v1/openai/v1/chat/completions/{completion_id}": {
@@ -1614,6 +1648,40 @@
                         "name": "scoring_fn_id",
                         "in": "path",
                         "description": "The ID of the scoring function to get.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "ScoringFunctions"
+                ],
+                "description": "Unregister a scoring function.",
+                "parameters": [
+                    {
+                        "name": "scoring_fn_id",
+                        "in": "path",
+                        "description": "The ID of the scoring function to unregister.",
                         "required": true,
                         "schema": {
                             "type": "string"

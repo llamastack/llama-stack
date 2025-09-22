@@ -103,7 +103,7 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
                     Model(
                         identifier=id,
                         provider_resource_id=entry.provider_model_id,
-                        model_type=ModelType.llm,
+                        model_type=entry.model_type,
                         metadata=entry.metadata,
                         provider_id=self.__provider_id__,
                     )
