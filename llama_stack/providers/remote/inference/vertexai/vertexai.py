@@ -24,12 +24,12 @@ class VertexAIInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         LiteLLMOpenAIMixin.__init__(
             self,
             litellm_provider_name="vertex_ai",
-            api_key_from_config=None,  # Vertex AI uses ADC, not API keys
+            api_key_from_config=SecretStr(""),  # Vertex AI uses ADC, not API keys
             provider_data_api_key_field="vertex_project",  # Use project for validation
         )
         self.config = config
 
-    def get_api_key(self) -> str:
+    def get_api_key(self) -> SecretStr:
         """
         Get an access token for Vertex AI using Application Default Credentials.
 
@@ -40,7 +40,7 @@ class VertexAIInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
             # Get default credentials - will read from GOOGLE_APPLICATION_CREDENTIALS
             credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
             credentials.refresh(google.auth.transport.requests.Request())
-            return str(credentials.token)
+            return SecretStr(credentials.token)
         except Exception:
             # If we can't get credentials, return empty string to let LiteLLM handle it
             # This allows the LiteLLM mixin to work with ADC directly

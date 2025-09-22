@@ -18,8 +18,8 @@ class TogetherImplConfig(RemoteInferenceProviderConfig):
         default="https://api.together.xyz/v1",
         description="The URL for the Together AI server",
     )
-    api_key: SecretStr | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="The Together AI API Key",
     )
 

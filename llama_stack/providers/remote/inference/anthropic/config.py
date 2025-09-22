@@ -12,16 +12,16 @@ from llama_stack.schema_utils import json_schema_type
 
 
 class AnthropicProviderDataValidator(BaseModel):
-    anthropic_api_key: SecretStr | None = Field(
-        default=None,
+    anthropic_api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="API key for Anthropic models",
     )
 
 
 @json_schema_type
 class AnthropicConfig(BaseModel):
-    api_key: SecretStr | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
+        default=SecretStr(""),
         description="API key for Anthropic models",
     )
 

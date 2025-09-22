@@ -4,13 +4,16 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, SecretStr
 
 from .config import VLLMInferenceAdapterConfig
 
 
 class VLLMProviderDataValidator(BaseModel):
-    vllm_api_token: str | None = None
+    vllm_api_token: SecretStr = Field(
+        default=SecretStr(""),
+        description="API token for vLLM models",
+    )
 
 
 async def get_adapter_impl(config: VLLMInferenceAdapterConfig, _deps):

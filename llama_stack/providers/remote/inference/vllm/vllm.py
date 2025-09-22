@@ -294,7 +294,7 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             self,
             model_entries=build_hf_repo_model_entries(),
             litellm_provider_name="vllm",
-            api_key_from_config=config.api_token.get_secret_value(),
+            api_key_from_config=config.api_token,
             provider_data_api_key_field="vllm_api_token",
             openai_compat_api_base=config.url,
         )

@@ -21,7 +21,11 @@ class CerebrasImplConfig(BaseModel):
         description="Base URL for the Cerebras API",
     )
     api_key: SecretStr = Field(
+<<<<<<< HEAD
         default=SecretStr(os.environ.get("CEREBRAS_API_KEY")),
+=======
+        default=SecretStr(os.environ.get("CEREBRAS_API_KEY", "")),
+>>>>>>> a48f2009 (chore: use empty SecretStr values as default)
         description="Cerebras API Key",
     )
 
