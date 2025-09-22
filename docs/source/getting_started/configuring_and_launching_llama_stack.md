@@ -20,7 +20,7 @@ docker run -it \
   -v ~/.llama:/root/.llama \
   --network=host \
   llamastack/distribution-starter \
-  --env OLLAMA_URL=http://localhost:11434
+  --e OLLAMA_URL=http://localhost:11434
 ```
 
 ### Docker Command Breakdown
@@ -29,7 +29,7 @@ docker run -it \
 - `-v ~/.llama:/root/.llama`: Mount your local Llama Stack configuration directory
 - `--network=host`: Use host networking to access local services like Ollama
 - `llamastack/distribution-starter`: The official Llama Stack Docker image
-- `--env OLLAMA_URL=http://localhost:11434`: Set environment variable for Ollama URL
+- `--e OLLAMA_URL=http://localhost:11434`: Set environment variable for Ollama URL
 
 ### Advanced Docker Configuration
 
@@ -65,19 +65,23 @@ For more control over your Llama Stack deployment, you can configure and run the
 ### Prerequisites
 
 1. **Install Llama Stack**:
-   ```bash
-   pip install llama-stack
-   ```
 
-2. **Install Provider Dependencies** (as needed):
-   ```bash
+    Using pip:
+    ```bash
+    pip install llama-stack
+    ```
 
-   # For vector operations
-   pip install faiss-cpu
+    Using uv (alternative):
+    ```bash
+    # Initialize a new project (if starting fresh)
+    uv init
 
-   # For database operations
-   pip install sqlalchemy aiosqlite asyncpg
-   ```
+    # Add llama-stack as a dependency
+    uv add llama-stack
+
+    # Note: If using uv, prefix subsequent commands with 'uv run'
+    # Example: uv run llama stack build --list-distros
+    ```
 
 ### Step 1: Build a Distribution
 
@@ -94,12 +98,37 @@ llama stack build --distro watsonx --image-type venv --image-name watsonx-stack
 llama stack build --distro  meta-reference-gpu --image-type venv --image-name  meta-reference-gpu-stack
 ```
 
+#### Advanced: Custom Provider Selection (Step 1.a)
+
+If you know the specific providers you want to use, you can supply them directly on the command-line instead of using a pre-built distribution:
+
+```bash
+llama stack build --providers inference=remote::ollama,agents=inline::meta-reference,safety=inline::llama-guard,vector_io=inline::faiss,tool_runtime=inline::rag-runtime --image-type venv --image-name custom-stack
+```
+
+**Discover Available Options:**
+
+```bash
+# List all available APIs
+llama stack list-apis
+
+# List all available providers
+llama stack list-providers
+```
+
+This approach gives you complete control over which providers are included in your stack, allowing for highly customized configurations tailored to your specific needs.
+
 ### Select Available Distributions
 
-- **dell**: Dell's distribution for Llama Stack.
-- **open-benchmark**: Distribution for running open benchmarks.
-- **watsonx**: For IBM Watson integration.
-- **starter**: Basic distribution with essential providers.
+- **ci-tests**: CI tests for Llama Stack
+- **dell**: Dell's distribution of Llama Stack. TGI inference via Dell's custom container
+- **meta-reference-gpu**: Use Meta Reference for running LLM inference
+- **nvidia**: Use NVIDIA NIM for running LLM inference, evaluation and safety
+- **open-benchmark**: Distribution for running open benchmarks
+- **postgres-demo**: Quick start template for running Llama Stack with several popular providers
+- **starter**: Quick start template for running Llama Stack with several popular providers. This distribution is intended for CPU-only environments
+- **starter-gpu**: Quick start template for running Llama Stack with several popular providers. This distribution is intended for GPU-enabled environments
+- **watsonx**: Use watsonx for running LLM inference
 
 ### Step 2: Configure Your Stack
 
@@ -166,20 +195,40 @@ nohup llama stack run starter --port 8321 > llama_stack.log 2>&1 &
 
 Test your Llama Stack server:
 
+#### Basic HTTP Health Checks
 ```bash
 # Check server health
 curl http://localhost:8321/health
 
 # List available models
 curl http://localhost:8321/v1/models
+```
 
-# Test chat completion
+#### Comprehensive Verification (Recommended)
+Use the official Llama Stack client for better verification:
+
+```bash
+# List all configured providers (recommended)
+uv run --with llama-stack-client llama-stack-client providers list
+
+# Alternative if you have llama-stack-client installed
+llama-stack-client providers list
+```
+
+#### Test Chat Completion
+```bash
+# Basic HTTP test
 curl -X POST http://localhost:8321/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "llama3.1:8b",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
+
+# Or using the client (more robust)
+uv run --with llama-stack-client llama-stack-client inference chat-completion \
+  --model llama3.1:8b \
+  --message "Hello!"
 ```
 
 ## Configuration Management
@@ -200,30 +249,6 @@ llama stack build --distro starter --image-type venv --image-name starter-v2
 ```
 
 ### Common Configuration Issues
-
-#### Files Provider Missing
-
-If you encounter "files provider not available" errors:
-
-1. Add files API to your configuration:
-   ```yaml
-   apis:
-   - files  # Add this line
-   - inference
-   - safety
-   ```
-
-2. Add files provider:
-   ```yaml
-   providers:
-     files:
-     - provider_id: localfs
-       provider_type: inline::localfs
-       config:
-         kvstore:
-           type: sqlite
-           db_path: ~/.llama/files_store.db
-   ```
 
 #### Port Conflicts
 
@@ -249,13 +274,7 @@ llama stack run starter --port 8322
      llamastack/distribution-starter
    ```
 
-2. **Module Not Found Errors**:
-   ```bash
-   # Install missing dependencies
-   pip install ibm-watsonx-ai faiss-cpu sqlalchemy aiosqlite
-   ```
-
-3. **Provider Connection Issues**:
+2. **Provider Connection Issues**:
    - Verify external services (Ollama, APIs) are running
    - Check network connectivity and firewall settings
    - Validate API keys and URLs
