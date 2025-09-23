@@ -187,7 +187,7 @@ Note that the provider "description" field will be used to generate the provider
 
 ### Building the Documentation
 
-If you are making changes to the documentation at [https://llama-stack.readthedocs.io/en/latest/](https://llama-stack.readthedocs.io/en/latest/), you can use the following command to build the documentation and preview your changes. You will need [Sphinx](https://www.sphinx-doc.org/en/master/) and the readthedocs theme.
+If you are making changes to the documentation at [https://llamastack.github.io/latest/](https://llamastack.github.io/latest/), you can use the following command to build the documentation and preview your changes. You will need [Sphinx](https://www.sphinx-doc.org/en/master/) and the readthedocs theme.
 
 ```bash
 # This rebuilds the documentation pages.

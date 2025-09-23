@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:11434/v1/v1/chat/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -20,14 +20,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-368",
+        "id": "chatcmpl-161",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Saturn is known for its extensive ring system.",
+              "content": "The answer is Saturn.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -37,15 +37,15 @@
             }
           }
         ],
-        "created": 1754081853,
+        "created": 1756921364,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 11,
+          "completion_tokens": 6,
           "prompt_tokens": 39,
-          "total_tokens": 50,
+          "total_tokens": 45,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

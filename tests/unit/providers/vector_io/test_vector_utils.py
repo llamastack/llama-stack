@@ -26,9 +26,9 @@ def test_generate_chunk_id():
 
     chunk_ids = sorted([chunk.chunk_id for chunk in chunks])
     assert chunk_ids == [
-        "177a1368-f6a8-0c50-6e92-18677f2c3de3",
-        "bc744db3-1b25-0a9c-cdff-b6ba3df73c36",
-        "f68df25d-d9aa-ab4d-5684-64a233add20d",
+        "31d1f9a3-c8d2-66e7-3c37-af2acd329778",
+        "d07dade7-29c0-cda7-df29-0249a1dcbc3e",
+        "d14f75a1-5855-7f72-2c78-d9fc4275a346",
     ]
 
 
@@ -36,14 +36,14 @@ def test_generate_chunk_id_with_window():
     chunk = Chunk(content="test", metadata={"document_id": "doc-1"})
     chunk_id1 = generate_chunk_id("doc-1", chunk, chunk_window="0-1")
     chunk_id2 = generate_chunk_id("doc-1", chunk, chunk_window="1-2")
-    assert chunk_id1 == "149018fe-d0eb-0f8d-5f7f-726bdd2aeedb"
-    assert chunk_id2 == "4562c1ee-9971-1f3b-51a6-7d05e5211154"
+    assert chunk_id1 == "8630321a-d9cb-2bb6-cd28-ebf68dafd866"
+    assert chunk_id2 == "13a1c09a-cbda-b61a-2d1a-7baa90888685"
 
 
 def test_chunk_id():
     # Test with existing chunk ID
     chunk_with_id = Chunk(content="test", metadata={"document_id": "existing-id"})
-    assert chunk_with_id.chunk_id == "84ededcc-b80b-a83e-1a20-ca6515a11350"
+    assert chunk_with_id.chunk_id == "11704f92-42b6-61df-bf85-6473e7708fbd"
 
     # Test with document ID in metadata
     chunk_with_doc_id = Chunk(content="test", metadata={"document_id": "doc-1"})

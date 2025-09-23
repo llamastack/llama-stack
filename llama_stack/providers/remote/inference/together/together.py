@@ -4,11 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator, AsyncIterator
-from typing import Any
+from collections.abc import AsyncGenerator
 
-from openai import AsyncOpenAI
+from openai import NOT_GIVEN, AsyncOpenAI
 from together import AsyncTogether
+from together.constants import BASE_URL
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
@@ -23,12 +23,7 @@ from llama_stack.apis.inference import (
     Inference,
     LogProbConfig,
     Message,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAICompletion,
     OpenAIEmbeddingsResponse,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
@@ -38,18 +33,20 @@ from llama_stack.apis.inference import (
     ToolDefinition,
     ToolPromptFormat,
 )
+from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
+from llama_stack.apis.models import Model, ModelType
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict,
     get_sampling_options,
-    prepare_openai_completion_params,
     process_chat_completion_response,
     process_chat_completion_stream_response,
     process_completion_response,
     process_completion_stream_response,
 )
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
     completion_request_to_prompt,
@@ -59,15 +56,22 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 
 from .config import TogetherImplConfig
-from .models import MODEL_ENTRIES
+from .models import EMBEDDING_MODEL_ENTRIES, MODEL_ENTRIES
 
 logger = get_logger(name=__name__, category="inference::together")
 
 
-class TogetherInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProviderData):
+class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, NeedsRequestProviderData):
     def __init__(self, config: TogetherImplConfig) -> None:
         ModelRegistryHelper.__init__(self, MODEL_ENTRIES, config.allowed_models)
         self.config = config
+        self._model_cache: dict[str, Model] = {}
+
+    def get_api_key(self):
+        return self.config.api_key.get_secret_value()
+
+    def get_base_url(self):
+        return BASE_URL
 
     async def initialize(self) -> None:
         pass
@@ -255,6 +259,37 @@ class TogetherInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProvi
         embeddings = [item.embedding for item in r.data]
         return EmbeddingsResponse(embeddings=embeddings)
 
+    async def list_models(self) -> list[Model] | None:
+        self._model_cache = {}
+        # Together's /v1/models is not compatible with OpenAI's /v1/models. Together support ticket #13355 -> will not fix, use Together's own client
+        for m in await self._get_client().models.list():
+            if m.type == "embedding":
+                if m.id not in EMBEDDING_MODEL_ENTRIES:
+                    logger.warning(f"Unknown embedding dimension for model {m.id}, skipping.")
+                    continue
+                self._model_cache[m.id] = Model(
+                    provider_id=self.__provider_id__,
+                    provider_resource_id=EMBEDDING_MODEL_ENTRIES[m.id].provider_model_id,
+                    identifier=m.id,
+                    model_type=ModelType.embedding,
+                    metadata=EMBEDDING_MODEL_ENTRIES[m.id].metadata,
+                )
+            else:
+                self._model_cache[m.id] = Model(
+                    provider_id=self.__provider_id__,
+                    provider_resource_id=m.id,
+                    identifier=m.id,
+                    model_type=ModelType.llm,
+                )
+
+        return self._model_cache.values()
+
+    async def should_refresh_models(self) -> bool:
+        return True
+
+    async def check_model_availability(self, model):
+        return model in self._model_cache
+
     async def openai_embeddings(
         self,
         model: str,
@@ -263,125 +298,39 @@ class TogetherInferenceAdapter(ModelRegistryHelper, Inference, NeedsRequestProvi
         dimensions: int | None = None,
         user: str | None = None,
     ) -> OpenAIEmbeddingsResponse:
-        raise NotImplementedError()
+        """
+        Together's OpenAI-compatible embeddings endpoint is not compatible with
+        the standard OpenAI embeddings endpoint.
 
-    async def openai_completion(
-        self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
-    ) -> OpenAICompletion:
-        model_obj = await self.model_store.get_model(model)
-        params = await prepare_openai_completion_params(
-            model=model_obj.provider_resource_id,
-            prompt=prompt,
-            best_of=best_of,
-            echo=echo,
-            frequency_penalty=frequency_penalty,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_tokens=max_tokens,
-            n=n,
-            presence_penalty=presence_penalty,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            top_p=top_p,
-            user=user,
+        The endpoint -
+         - does not return usage information
+         - does not support user param, returns 400 Unrecognized request arguments supplied: user
+         - does not support dimensions param, returns 400 Unrecognized request arguments supplied: dimensions
+         - does not support encoding_format param, always returns floats, never base64
+        """
+        # Together support ticket #13332 -> will not fix
+        if user is not None:
+            raise ValueError("Together's embeddings endpoint does not support user param.")
+        # Together support ticket #13333 -> escalated
+        if dimensions is not None:
+            raise ValueError("Together's embeddings endpoint does not support dimensions param.")
+        # Together support ticket #13331 -> will not fix, compute client side
+        if encoding_format not in (None, NOT_GIVEN, "float"):
+            raise ValueError("Together's embeddings endpoint only supports encoding_format='float'.")
+
+        response = await self.client.embeddings.create(
+            model=await self._get_provider_model_id(model),
+            input=input,
         )
-        return await self._get_openai_client().completions.create(**params)  # type: ignore
 
-    async def openai_chat_completion(
-        self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        model_obj = await self.model_store.get_model(model)
-        params = await prepare_openai_completion_params(
-            model=model_obj.provider_resource_id,
-            messages=messages,
-            frequency_penalty=frequency_penalty,
-            function_call=function_call,
-            functions=functions,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_completion_tokens=max_completion_tokens,
-            max_tokens=max_tokens,
-            n=n,
-            parallel_tool_calls=parallel_tool_calls,
-            presence_penalty=presence_penalty,
-            response_format=response_format,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_logprobs=top_logprobs,
-            top_p=top_p,
-            user=user,
-        )
-        if params.get("stream", False):
-            return self._stream_openai_chat_completion(params)
-        return await self._get_openai_client().chat.completions.create(**params)  # type: ignore
+        response.model = model  # return the user the same model id they provided, avoid exposing the provider model id
 
-    async def _stream_openai_chat_completion(self, params: dict) -> AsyncGenerator:
-        # together.ai sometimes adds usage data to the stream, even if include_usage is False
-        # This causes an unexpected final chunk with empty choices array to be sent
-        # to clients that may not handle it gracefully.
-        include_usage = False
-        if params.get("stream_options", None):
-            include_usage = params["stream_options"].get("include_usage", False)
-        stream = await self._get_openai_client().chat.completions.create(**params)
+        # Together support ticket #13330 -> escalated
+        #  - togethercomputer/m2-bert-80M-32k-retrieval *does not* return usage information
+        if not hasattr(response, "usage") or response.usage is None:
+            logger.warning(
+                f"Together's embedding endpoint for {model} did not return usage information, substituting -1s."
+            )
+            response.usage = OpenAIEmbeddingUsage(prompt_tokens=-1, total_tokens=-1)
 
-        seen_finish_reason = False
-        async for chunk in stream:
-            # Final usage chunk with no choices that the user didn't request, so discard
-            if not include_usage and seen_finish_reason and len(chunk.choices) == 0:
-                break
-            yield chunk
-            for choice in chunk.choices:
-                if choice.finish_reason:
-                    seen_finish_reason = True
-                    break
+        return response

@@ -26,11 +26,11 @@ class WatsonXConfig(BaseModel):
     )
     api_key: SecretStr | None = Field(
         default_factory=lambda: os.getenv("WATSONX_API_KEY"),
-        description="The watsonx API key, only needed of using the hosted service",
+        description="The watsonx API key",
     )
     project_id: str | None = Field(
         default_factory=lambda: os.getenv("WATSONX_PROJECT_ID"),
-        description="The Project ID key, only needed of using the hosted service",
+        description="The Project ID key",
     )
     timeout: int = Field(
         default=60,

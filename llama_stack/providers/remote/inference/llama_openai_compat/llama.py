@@ -3,11 +3,6 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-from llama_stack.apis.inference import (
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
-    RerankResponse,
-)
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.llama_openai_compat.config import LlamaCompatConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
@@ -59,12 +54,3 @@ class LlamaCompatInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
 
     async def shutdown(self):
         await super().shutdown()
-
-    async def rerank(
-        self,
-        model: str,
-        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
-        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
-        max_num_results: int | None = None,
-    ) -> RerankResponse:
-        raise NotImplementedError("Reranking is not supported for Llama OpenAI Compat")

@@ -35,6 +35,7 @@ interface ChatPropsBase {
   ) => void;
   setMessages?: (messages: Message[]) => void;
   transcribeAudio?: (blob: Blob) => Promise<string>;
+  onRAGFileUpload?: (file: File) => Promise<void>;
 }
 
 interface ChatPropsWithoutSuggestions extends ChatPropsBase {
@@ -62,6 +63,7 @@ export function Chat({
   onRateResponse,
   setMessages,
   transcribeAudio,
+  onRAGFileUpload,
 }: ChatProps) {
   const lastMessage = messages.at(-1);
   const isEmpty = messages.length === 0;
@@ -226,16 +228,17 @@ export function Chat({
             isPending={isGenerating || isTyping}
             handleSubmit={handleSubmit}
           >
-            {({ files, setFiles }) => (
+            {() => (
               <MessageInput
                 value={input}
                 onChange={handleInputChange}
-                allowAttachments
-                files={files}
-                setFiles={setFiles}
+                allowAttachments={true}
+                files={null}
+                setFiles={() => {}}
                 stop={handleStop}
                 isGenerating={isGenerating}
                 transcribeAudio={transcribeAudio}
+                onRAGFileUpload={onRAGFileUpload}
               />
             )}
           </ChatForm>

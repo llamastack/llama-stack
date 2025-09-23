@@ -28,8 +28,7 @@ class ResponsesStore:
             sql_store_config = SqliteSqlStoreConfig(
                 db_path=(RUNTIME_BASE_DIR / "sqlstore.db").as_posix(),
             )
-        self.sql_store = AuthorizedSqlStore(sqlstore_impl(sql_store_config))
-        self.policy = policy
+        self.sql_store = AuthorizedSqlStore(sqlstore_impl(sql_store_config), policy)
 
     async def initialize(self):
         """Create the necessary tables if they don't exist."""
@@ -87,7 +86,6 @@ class ResponsesStore:
             order_by=[("created_at", order.value)],
             cursor=("id", after) if after else None,
             limit=limit,
-            policy=self.policy,
         )
 
         data = [OpenAIResponseObjectWithInput(**row["response_object"]) for row in paginated_result.data]
@@ -105,7 +103,6 @@ class ResponsesStore:
         row = await self.sql_store.fetch_one(
             "openai_responses",
             where={"id": response_id},
-            policy=self.policy,
         )
 
         if not row:
@@ -116,7 +113,7 @@ class ResponsesStore:
         return OpenAIResponseObjectWithInput(**row["response_object"])
 
     async def delete_response_object(self, response_id: str) -> OpenAIDeleteResponseObject:
-        row = await self.sql_store.fetch_one("openai_responses", where={"id": response_id}, policy=self.policy)
+        row = await self.sql_store.fetch_one("openai_responses", where={"id": response_id})
         if not row:
             raise ValueError(f"Response with id {response_id} not found")
         await self.sql_store.delete("openai_responses", where={"id": response_id})

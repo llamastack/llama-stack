@@ -46,7 +46,8 @@ The tests are categorized and outlined below, keep this updated:
   * test_validate_input_url_mismatch (negative)
   * test_validate_input_multiple_errors_per_request (negative)
   * test_validate_input_invalid_request_format (negative)
-  * test_validate_input_missing_parameters (parametrized negative - custom_id, method, url, body, model, messages missing validation)
+  * test_validate_input_missing_parameters_chat_completions (parametrized negative - custom_id, method, url, body, model, messages missing validation for chat/completions)
+  * test_validate_input_missing_parameters_completions (parametrized negative - custom_id, method, url, body, model, prompt missing validation for completions)
   * test_validate_input_invalid_parameter_types (parametrized negative - custom_id, url, method, body, model, messages type validation)
 
 The tests use temporary SQLite databases for isolation and mock external
@@ -54,59 +55,16 @@ dependencies like inference, files, and models APIs.
 """
 
 import json
-import tempfile
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from llama_stack.apis.batches import BatchObject
 from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
-from llama_stack.providers.inline.batches.reference.batches import ReferenceBatchesImpl
-from llama_stack.providers.inline.batches.reference.config import ReferenceBatchesImplConfig
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 
 class TestReferenceBatchesImpl:
     """Test the reference implementation of the Batches API."""
-
-    @pytest.fixture
-    async def provider(self):
-        """Create a test provider instance with temporary database."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test_batches.db"
-            kvstore_config = SqliteKVStoreConfig(db_path=str(db_path))
-            config = ReferenceBatchesImplConfig(kvstore=kvstore_config)
-
-            # Create kvstore and mock APIs
-            from unittest.mock import AsyncMock
-
-            from llama_stack.providers.utils.kvstore import kvstore_impl
-
-            kvstore = await kvstore_impl(config.kvstore)
-            mock_inference = AsyncMock()
-            mock_files = AsyncMock()
-            mock_models = AsyncMock()
-
-            provider = ReferenceBatchesImpl(config, mock_inference, mock_files, mock_models, kvstore)
-            await provider.initialize()
-
-            # unit tests should not require background processing
-            provider.process_batches = False
-
-            yield provider
-
-            await provider.shutdown()
-
-    @pytest.fixture
-    def sample_batch_data(self):
-        """Sample batch data for testing."""
-        return {
-            "input_file_id": "file_abc123",
-            "endpoint": "/v1/chat/completions",
-            "completion_window": "24h",
-            "metadata": {"test": "true", "priority": "high"},
-        }
 
     def _validate_batch_type(self, batch, expected_metadata=None):
         """
@@ -256,7 +214,6 @@ class TestReferenceBatchesImpl:
         "endpoint",
         [
             "/v1/embeddings",
-            "/v1/completions",
             "/v1/invalid/endpoint",
             "",
         ],
@@ -542,8 +499,10 @@ class TestReferenceBatchesImpl:
             ("messages", "body.messages", "invalid_request", "Messages parameter is required"),
         ],
     )
-    async def test_validate_input_missing_parameters(self, provider, param_name, param_path, error_code, error_message):
-        """Test _validate_input when file contains request with missing required parameters."""
+    async def test_validate_input_missing_parameters_chat_completions(
+        self, provider, param_name, param_path, error_code, error_message
+    ):
+        """Test _validate_input when file contains request with missing required parameters for chat completions."""
         provider.files_api.openai_retrieve_file = AsyncMock()
         mock_response = MagicMock()
 
@@ -568,6 +527,61 @@ class TestReferenceBatchesImpl:
             id="batch_test",
             object="batch",
             endpoint="/v1/chat/completions",
+            input_file_id=f"missing_{param_name}_file",
+            completion_window="24h",
+            status="validating",
+            created_at=1234567890,
+        )
+
+        errors, requests = await provider._validate_input(batch)
+
+        assert len(errors) == 1
+        assert len(requests) == 0
+
+        assert errors[0].code == error_code
+        assert errors[0].line == 1
+        assert errors[0].message == error_message
+        assert errors[0].param == param_path
+
+    @pytest.mark.parametrize(
+        "param_name,param_path,error_code,error_message",
+        [
+            ("custom_id", "custom_id", "missing_required_parameter", "Missing required parameter: custom_id"),
+            ("method", "method", "missing_required_parameter", "Missing required parameter: method"),
+            ("url", "url", "missing_required_parameter", "Missing required parameter: url"),
+            ("body", "body", "missing_required_parameter", "Missing required parameter: body"),
+            ("model", "body.model", "invalid_request", "Model parameter is required"),
+            ("prompt", "body.prompt", "invalid_request", "Prompt parameter is required"),
+        ],
+    )
+    async def test_validate_input_missing_parameters_completions(
+        self, provider, param_name, param_path, error_code, error_message
+    ):
+        """Test _validate_input when file contains request with missing required parameters for text completions."""
+        provider.files_api.openai_retrieve_file = AsyncMock()
+        mock_response = MagicMock()
+
+        base_request = {
+            "custom_id": "req-1",
+            "method": "POST",
+            "url": "/v1/completions",
+            "body": {"model": "test-model", "prompt": "Hello"},
+        }
+
+        # Remove the specific parameter being tested
+        if "." in param_path:
+            top_level, nested_param = param_path.split(".", 1)
+            del base_request[top_level][nested_param]
+        else:
+            del base_request[param_name]
+
+        mock_response.body = json.dumps(base_request).encode()
+        provider.files_api.openai_retrieve_file_content = AsyncMock(return_value=mock_response)
+
+        batch = BatchObject(
+            id="batch_test",
+            object="batch",
+            endpoint="/v1/completions",
             input_file_id=f"missing_{param_name}_file",
             completion_window="24h",
             status="validating",

@@ -75,6 +75,13 @@ class MetaReferenceEvalImpl(
         )
         self.benchmarks[task_def.identifier] = task_def
 
+    async def unregister_benchmark(self, benchmark_id: str) -> None:
+        if benchmark_id in self.benchmarks:
+            del self.benchmarks[benchmark_id]
+
+        key = f"{EVAL_TASKS_PREFIX}{benchmark_id}"
+        await self.kvstore.delete(key)
+
     async def run_eval(
         self,
         benchmark_id: str,

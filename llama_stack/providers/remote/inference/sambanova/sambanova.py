@@ -4,13 +4,26 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import SambaNovaImplConfig
 from .models import MODEL_ENTRIES
 
 
-class SambaNovaInferenceAdapter(LiteLLMOpenAIMixin):
+class SambaNovaInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
+    """
+    SambaNova Inference Adapter for Llama Stack.
+
+    Note: The inheritance order is important here. OpenAIMixin must come before
+    LiteLLMOpenAIMixin to ensure that OpenAIMixin.check_model_availability()
+    is used instead of LiteLLMOpenAIMixin.check_model_availability().
+
+    - OpenAIMixin.check_model_availability() queries the /v1/models to check if a model exists
+    - LiteLLMOpenAIMixin.check_model_availability() checks the static registry within LiteLLM
+    """
+
     def __init__(self, config: SambaNovaImplConfig):
         self.config = config
         self.environment_available_models = []
@@ -24,3 +37,14 @@ class SambaNovaInferenceAdapter(LiteLLMOpenAIMixin):
             download_images=True,  # SambaNova requires base64 image encoding
             json_schema_strict=False,  # SambaNova doesn't support strict=True yet
         )
+
+    # Delegate the client data handling get_api_key method to LiteLLMOpenAIMixin
+    get_api_key = LiteLLMOpenAIMixin.get_api_key
+
+    def get_base_url(self) -> str:
+        """
+        Get the base URL for OpenAI mixin.
+
+        :return: The SambaNova base URL
+        """
+        return self.config.url

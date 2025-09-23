@@ -59,6 +59,7 @@ ENABLED_INFERENCE_PROVIDERS = [
     "cerebras",
     "nvidia",
     "bedrock",
+    "azure",
 ]
 
 INFERENCE_PROVIDER_IDS = {
@@ -68,6 +69,7 @@ INFERENCE_PROVIDER_IDS = {
     "cerebras": "${env.CEREBRAS_API_KEY:+cerebras}",
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
+    "azure": "${env.AZURE_API_KEY:+azure}",
 }
 
 
@@ -76,12 +78,12 @@ def get_remote_inference_providers() -> list[Provider]:
     remote_providers = [
         provider
         for provider in available_providers()
-        if isinstance(provider, RemoteProviderSpec) and provider.adapter.adapter_type in ENABLED_INFERENCE_PROVIDERS
+        if isinstance(provider, RemoteProviderSpec) and provider.adapter_type in ENABLED_INFERENCE_PROVIDERS
     ]
 
     inference_providers = []
     for provider_spec in remote_providers:
-        provider_type = provider_spec.adapter.adapter_type
+        provider_type = provider_spec.adapter_type
 
         if provider_type in INFERENCE_PROVIDER_IDS:
             provider_id = INFERENCE_PROVIDER_IDS[provider_type]
@@ -99,9 +101,8 @@ def get_remote_inference_providers() -> list[Provider]:
     return inference_providers
 
 
-def get_distribution_template() -> DistributionTemplate:
+def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     remote_inference_providers = get_remote_inference_providers()
-    name = "starter"
 
     providers = {
         "inference": [BuildProvider(provider_type=p.provider_type, module=p.module) for p in remote_inference_providers]
@@ -120,7 +121,7 @@ def get_distribution_template() -> DistributionTemplate:
         ],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
         "telemetry": [BuildProvider(provider_type="inline::meta-reference")],
-        "post_training": [BuildProvider(provider_type="inline::huggingface")],
+        "post_training": [BuildProvider(provider_type="inline::torchtune-cpu")],
         "eval": [BuildProvider(provider_type="inline::meta-reference")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
@@ -178,7 +179,7 @@ def get_distribution_template() -> DistributionTemplate:
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
-        description="Quick start template for running Llama Stack with several popular providers",
+        description="Quick start template for running Llama Stack with several popular providers. This distribution is intended for CPU-only environments.",
         container_image=None,
         template_path=None,
         providers=providers,
@@ -277,6 +278,22 @@ def get_distribution_template() -> DistributionTemplate:
             "OLLAMA_URL": (
                 "http://localhost:11434",
                 "Ollama URL",
+            ),
+            "AZURE_API_KEY": (
+                "",
+                "Azure API Key",
+            ),
+            "AZURE_API_BASE": (
+                "",
+                "Azure API Base",
+            ),
+            "AZURE_API_VERSION": (
+                "",
+                "Azure API Version",
+            ),
+            "AZURE_API_TYPE": (
+                "azure",
+                "Azure API Type",
             ),
         },
     )

@@ -45,6 +45,7 @@ from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.exec import formulate_run_args, run_command
 from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.providers.datatypes import Api
+from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
 
 DISTRIBS_PATH = Path(__file__).parent.parent.parent / "distributions"
 
@@ -294,6 +295,12 @@ def _generate_run_config(
         if build_config.external_providers_dir
         else EXTERNAL_PROVIDERS_DIR,
     )
+    if not run_config.inference_store:
+        run_config.inference_store = SqliteSqlStoreConfig(
+            **SqliteSqlStoreConfig.sample_run_config(
+                __distro_dir__=(DISTRIBS_BASE_DIR / image_name).as_posix(), db_name="inference_store.db"
+            )
+        )
     # build providers dict
     provider_registry = get_provider_registry(build_config)
     for api in apis:
