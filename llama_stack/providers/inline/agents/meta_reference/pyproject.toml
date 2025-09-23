@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-agents-meta-reference"
+version = "0.1.0"
+description = "Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "matplotlib",
+    "pillow",
+    "pandas",
+    "scikit-learn",
+    "mcp>=1.8.1",
+    "aiosqlite",
+    "psycopg2-binary",
+    "redis",
+    "pymongo"
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]

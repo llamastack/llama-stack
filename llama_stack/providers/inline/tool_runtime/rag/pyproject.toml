@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-tool-runtime-rag"
+version = "0.1.0"
+description = "RAG (Retrieval-Augmented Generation) tool runtime for document ingestion, chunking, and semantic search"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+dependencies = [
+    "chardet",
+    "pypdf",
+    "tqdm",
+    "numpy",
+    "scikit-learn",
+    "scipy",
+    "nltk",
+    "sentencepiece",
+    "transformers",
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack*"]

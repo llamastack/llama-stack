@@ -2,7 +2,7 @@
 
 ## Description
 
-TorchTune-based post-training provider for fine-tuning and optimizing models using Meta's TorchTune framework.
+TorchTune-based post-training provider for fine-tuning and optimizing models using Meta's TorchTune framework (CPU).
 
 ## Configuration
 

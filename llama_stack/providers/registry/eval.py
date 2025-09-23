@@ -13,7 +13,6 @@ def available_providers() -> list[ProviderSpec]:
         InlineProviderSpec(
             api=Api.eval,
             provider_type="inline::meta-reference",
-            pip_packages=["tree_sitter", "pythainlp", "langdetect", "emoji", "nltk"],
             module="llama_stack.providers.inline.eval.meta_reference",
             config_class="llama_stack.providers.inline.eval.meta_reference.MetaReferenceEvalConfig",
             api_dependencies=[
@@ -28,9 +27,6 @@ def available_providers() -> list[ProviderSpec]:
         RemoteProviderSpec(
             api=Api.eval,
             adapter_type="nvidia",
-            pip_packages=[
-                "requests",
-            ],
             provider_type="remote::nvidia",
             module="llama_stack.providers.remote.eval.nvidia",
             config_class="llama_stack.providers.remote.eval.nvidia.NVIDIAEvalConfig",
