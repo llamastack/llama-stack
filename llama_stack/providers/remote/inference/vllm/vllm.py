@@ -504,7 +504,7 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
         except ValueError:
             pass  # Ignore statically unknown model, will check live listing
         try:
-            res = await self.client.models.list()
+            res = self.client.models.list()
         except APIConnectionError as e:
             raise ValueError(
                 f"Failed to connect to vLLM at {self.config.url}. Please check if vLLM is running and accessible at that URL."
