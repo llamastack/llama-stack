@@ -272,9 +272,9 @@ B64_ENCODED_IMAGE = base64.b64encode(
         "https://raw.githubusercontent.com/meta-llama/llama-stack/refs/heads/main/docs/_static/llama-stack.png"
     ).content
 )
-RAGDocuemnt(
+RAGDocument(
     document_id="num-4",
     content={"type": "image", "image": {"data": B64_ENCODED_IMAGE}},
 )
 ```
-for more strongly typed interaction use the typed dicts found [here](https://github.com/meta-llama/llama-stack-client-python/blob/38cd91c9e396f2be0bec1ee96a19771582ba6f17/src/llama_stack_client/types/shared_params/document.py).
+For more strongly typed interaction use the typed dicts found [here](https://github.com/meta-llama/llama-stack-client-python/blob/38cd91c9e396f2be0bec1ee96a19771582ba6f17/src/llama_stack_client/types/shared_params/document.py).
