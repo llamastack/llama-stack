@@ -3164,7 +3164,7 @@ paths:
         - purpose: The intended purpose of the uploaded file.
 
         - expires_after: Optional form values describing expiration for the file.
-        Expected expires_after[anchor] = "created_at", expires_after[seconds] = <int>.
+        Expected expires_after[anchor] = "created_at", expires_after[seconds] = {integer}.
         Seconds must be between 3600 and 2592000 (1 hour to 30 days).
       parameters: []
       requestBody:
