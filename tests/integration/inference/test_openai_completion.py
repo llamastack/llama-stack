@@ -99,6 +99,7 @@ def skip_if_doesnt_support_n(client_with_models, model_id):
         "remote::together",  # `n` > 1 is not supported when streaming tokens. Please disable `stream`
         # Error code 400 - {'message': '"n" > 1 is not currently supported', 'type': 'invalid_request_error', 'param': 'n', 'code': 'wrong_api_format'}
         "remote::cerebras",
+        "remote::databricks",  # Bad request: parameter "n" must be equal to 1 for streaming mode
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support n param.")
 
@@ -111,6 +112,7 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
         "inline::vllm",
         "remote::bedrock",
         "remote::databricks",
+        "remote::cerebras",
         "remote::runpod",
         "remote::watsonx",  # watsonx returns 404 when hitting the /openai/v1 endpoint
     ):

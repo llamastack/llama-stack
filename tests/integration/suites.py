@@ -87,7 +87,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="OpenAI GPT models for high-quality responses and tool calling",
         defaults={
             "text_model": "openai/gpt-4o",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "openai/text-embedding-3-small",
         },
     ),
     "tgi": Setup(
@@ -113,6 +113,14 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="Cerebras models",
         defaults={
             "text_model": "cerebras/llama-3.3-70b",
+        },
+    ),
+    "databricks": Setup(
+        name="databricks",
+        description="Databricks models",
+        defaults={
+            "text_model": "databricks/databricks-meta-llama-3-3-70b-instruct",
+            "embedding_model": "databricks/databricks-bge-large-en",
         },
     ),
     "fireworks": Setup(

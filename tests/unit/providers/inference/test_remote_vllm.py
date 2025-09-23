@@ -62,7 +62,7 @@ from llama_stack.providers.remote.inference.vllm.vllm import (
 
 @pytest.fixture(scope="module")
 def mock_openai_models_list():
-    with patch("openai.resources.models.AsyncModels.list", new_callable=AsyncMock) as mock_list:
+    with patch("openai.resources.models.AsyncModels.list") as mock_list:
         yield mock_list
 
 

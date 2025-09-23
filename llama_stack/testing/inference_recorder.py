@@ -267,6 +267,10 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
         raise ValueError(f"Unknown client type: {client_type}")
 
     url = base_url.rstrip("/") + endpoint
+    # Special handling for Databricks URLs to avoid leaking workspace info
+    # e.g. https://adb-1234567890123456.7.cloud.databricks.com -> https://...cloud.databricks.com
+    if "cloud.databricks.com" in url:
+        url = "__databricks__" + url.split("cloud.databricks.com")[-1]
     method = "POST"
     headers = {}
     body = kwargs
