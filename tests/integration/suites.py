@@ -116,6 +116,15 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "databricks/databricks-bge-large-en",
         },
     ),
+    "fireworks": Setup(
+        name="fireworks",
+        description="Fireworks provider with a text model",
+        defaults={
+            "text_model": "accounts/fireworks/models/llama-v3p1-8b-instruct",
+            "vision_model": "accounts/fireworks/models/llama-v3p2-90b-vision-instruct",
+            "embedding_model": "nomic-ai/nomic-embed-text-v1.5",
+        },
+    ),
 }
 
 
