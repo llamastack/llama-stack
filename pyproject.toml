@@ -177,6 +177,7 @@ exclude = [
     ".pre-commit-config.yaml",
     "*.md",
     ".flake8",
+    "benchmarking/k8s-benchmark/results",
 ]
 
 [tool.ruff.lint]
