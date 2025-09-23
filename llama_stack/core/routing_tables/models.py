@@ -33,7 +33,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             try:
                 models = await provider.list_models()
             except Exception as e:
-                logger.exception(f"Model refresh failed for provider {provider_id}: {e}")
+                logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
                 continue
 
             self.listed_providers.add(provider_id)

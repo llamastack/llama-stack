@@ -78,12 +78,12 @@ def get_remote_inference_providers() -> list[Provider]:
     remote_providers = [
         provider
         for provider in available_providers()
-        if isinstance(provider, RemoteProviderSpec) and provider.adapter.adapter_type in ENABLED_INFERENCE_PROVIDERS
+        if isinstance(provider, RemoteProviderSpec) and provider.adapter_type in ENABLED_INFERENCE_PROVIDERS
     ]
 
     inference_providers = []
     for provider_spec in remote_providers:
-        provider_type = provider_spec.adapter.adapter_type
+        provider_type = provider_spec.adapter_type
 
         if provider_type in INFERENCE_PROVIDER_IDS:
             provider_id = INFERENCE_PROVIDER_IDS[provider_type]

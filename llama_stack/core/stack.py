@@ -315,78 +315,84 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     impls[Api.prompts] = prompts_impl
 
 
-# Produces a stack of providers for the given run config. Not all APIs may be
-# asked for in the run config.
-async def construct_stack(
-    run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None
-) -> dict[Api, Any]:
-    if "LLAMA_STACK_TEST_INFERENCE_MODE" in os.environ:
-        from llama_stack.testing.inference_recorder import setup_inference_recording
+class Stack:
+    def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
+        self.run_config = run_config
+        self.provider_registry = provider_registry
+        self.impls = None
+
+    # Produces a stack of providers for the given run config. Not all APIs may be
+    # asked for in the run config.
+    async def initialize(self):
+        if "LLAMA_STACK_TEST_INFERENCE_MODE" in os.environ:
+            from llama_stack.testing.inference_recorder import setup_inference_recording
+
+            global TEST_RECORDING_CONTEXT
+            TEST_RECORDING_CONTEXT = setup_inference_recording()
+            if TEST_RECORDING_CONTEXT:
+                TEST_RECORDING_CONTEXT.__enter__()
+                logger.info(f"Inference recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+
+        dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
+        policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
+        impls = await resolve_impls(
+            self.run_config, self.provider_registry or get_provider_registry(self.run_config), dist_registry, policy
+        )
+
+        # Add internal implementations after all other providers are resolved
+        add_internal_implementations(impls, self.run_config)
+
+        if Api.prompts in impls:
+            await impls[Api.prompts].initialize()
+
+        await register_resources(self.run_config, impls)
+
+        await refresh_registry_once(impls)
+        self.impls = impls
+
+    def create_registry_refresh_task(self):
+        assert self.impls is not None, "Must call initialize() before starting"
+
+        global REGISTRY_REFRESH_TASK
+        REGISTRY_REFRESH_TASK = asyncio.create_task(refresh_registry_task(self.impls))
+
+        def cb(task):
+            import traceback
+
+            if task.cancelled():
+                logger.error("Model refresh task cancelled")
+            elif task.exception():
+                logger.error(f"Model refresh task failed: {task.exception()}")
+                traceback.print_exception(task.exception())
+            else:
+                logger.debug("Model refresh task completed")
+
+        REGISTRY_REFRESH_TASK.add_done_callback(cb)
+
+    async def shutdown(self):
+        for impl in self.impls.values():
+            impl_name = impl.__class__.__name__
+            logger.info(f"Shutting down {impl_name}")
+            try:
+                if hasattr(impl, "shutdown"):
+                    await asyncio.wait_for(impl.shutdown(), timeout=5)
+                else:
+                    logger.warning(f"No shutdown method for {impl_name}")
+            except TimeoutError:
+                logger.exception(f"Shutdown timeout for {impl_name}")
+            except (Exception, asyncio.CancelledError) as e:
+                logger.exception(f"Failed to shutdown {impl_name}: {e}")
 
         global TEST_RECORDING_CONTEXT
-        TEST_RECORDING_CONTEXT = setup_inference_recording()
         if TEST_RECORDING_CONTEXT:
-            TEST_RECORDING_CONTEXT.__enter__()
-            logger.info(f"Inference recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+            try:
+                TEST_RECORDING_CONTEXT.__exit__(None, None, None)
+            except Exception as e:
+                logger.error(f"Error during inference recording cleanup: {e}")
 
-    dist_registry, _ = await create_dist_registry(run_config.metadata_store, run_config.image_name)
-    policy = run_config.server.auth.access_policy if run_config.server.auth else []
-    impls = await resolve_impls(
-        run_config, provider_registry or get_provider_registry(run_config), dist_registry, policy
-    )
-
-    # Add internal implementations after all other providers are resolved
-    add_internal_implementations(impls, run_config)
-
-    if Api.prompts in impls:
-        await impls[Api.prompts].initialize()
-
-    await register_resources(run_config, impls)
-
-    await refresh_registry_once(impls)
-
-    global REGISTRY_REFRESH_TASK
-    REGISTRY_REFRESH_TASK = asyncio.create_task(refresh_registry_task(impls))
-
-    def cb(task):
-        import traceback
-
-        if task.cancelled():
-            logger.error("Model refresh task cancelled")
-        elif task.exception():
-            logger.error(f"Model refresh task failed: {task.exception()}")
-            traceback.print_exception(task.exception())
-        else:
-            logger.debug("Model refresh task completed")
-
-    REGISTRY_REFRESH_TASK.add_done_callback(cb)
-    return impls
-
-
-async def shutdown_stack(impls: dict[Api, Any]):
-    for impl in impls.values():
-        impl_name = impl.__class__.__name__
-        logger.info(f"Shutting down {impl_name}")
-        try:
-            if hasattr(impl, "shutdown"):
-                await asyncio.wait_for(impl.shutdown(), timeout=5)
-            else:
-                logger.warning(f"No shutdown method for {impl_name}")
-        except TimeoutError:
-            logger.exception(f"Shutdown timeout for {impl_name}")
-        except (Exception, asyncio.CancelledError) as e:
-            logger.exception(f"Failed to shutdown {impl_name}: {e}")
-
-    global TEST_RECORDING_CONTEXT
-    if TEST_RECORDING_CONTEXT:
-        try:
-            TEST_RECORDING_CONTEXT.__exit__(None, None, None)
-        except Exception as e:
-            logger.error(f"Error during inference recording cleanup: {e}")
-
-    global REGISTRY_REFRESH_TASK
-    if REGISTRY_REFRESH_TASK:
-        REGISTRY_REFRESH_TASK.cancel()
+        global REGISTRY_REFRESH_TASK
+        if REGISTRY_REFRESH_TASK:
+            REGISTRY_REFRESH_TASK.cancel()
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):

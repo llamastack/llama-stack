@@ -8,6 +8,7 @@ from pathlib import Path
 
 from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput, ToolGroupInput
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings, get_model_registry
+from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.remote.datasetio.nvidia import NvidiaDatasetIOConfig
 from llama_stack.providers.remote.eval.nvidia import NVIDIAEvalConfig
 from llama_stack.providers.remote.inference.nvidia import NVIDIAConfig
@@ -15,7 +16,7 @@ from llama_stack.providers.remote.inference.nvidia.models import MODEL_ENTRIES
 from llama_stack.providers.remote.safety.nvidia import NVIDIASafetyConfig
 
 
-def get_distribution_template() -> DistributionTemplate:
+def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
     providers = {
         "inference": [BuildProvider(provider_type="remote::nvidia")],
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
@@ -30,6 +31,7 @@ def get_distribution_template() -> DistributionTemplate:
         ],
         "scoring": [BuildProvider(provider_type="inline::basic")],
         "tool_runtime": [BuildProvider(provider_type="inline::rag-runtime")],
+        "files": [BuildProvider(provider_type="inline::localfs")],
     }
 
     inference_provider = Provider(
@@ -52,6 +54,11 @@ def get_distribution_template() -> DistributionTemplate:
         provider_type="remote::nvidia",
         config=NVIDIAEvalConfig.sample_run_config(),
     )
+    files_provider = Provider(
+        provider_id="meta-reference-files",
+        provider_type="inline::localfs",
+        config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+    )
     inference_model = ModelInput(
         model_id="${env.INFERENCE_MODEL}",
         provider_id="nvidia",
@@ -73,7 +80,7 @@ def get_distribution_template() -> DistributionTemplate:
 
     default_models, _ = get_model_registry(available_models)
     return DistributionTemplate(
-        name="nvidia",
+        name=name,
         distro_type="self_hosted",
         description="Use NVIDIA NIM for running LLM inference, evaluation and safety",
         container_image=None,
@@ -86,6 +93,7 @@ def get_distribution_template() -> DistributionTemplate:
                     "inference": [inference_provider],
                     "datasetio": [datasetio_provider],
                     "eval": [eval_provider],
+                    "files": [files_provider],
                 },
                 default_models=default_models,
                 default_tool_groups=default_tool_groups,
@@ -97,6 +105,7 @@ def get_distribution_template() -> DistributionTemplate:
                         safety_provider,
                     ],
                     "eval": [eval_provider],
+                    "files": [files_provider],
                 },
                 default_models=[inference_model, safety_model],
                 default_shields=[ShieldInput(shield_id="${env.SAFETY_MODEL}", provider_id="nvidia")],

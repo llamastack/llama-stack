@@ -147,7 +147,7 @@ WORKDIR /app
 
 RUN dnf -y update && dnf install -y iputils git net-tools wget \
     vim-minimal python3.12 python3.12-pip python3.12-wheel \
-    python3.12-setuptools python3.12-devel gcc make && \
+    python3.12-setuptools python3.12-devel gcc gcc-c++ make && \
     ln -s /bin/pip3.12 /bin/pip && ln -s /bin/python3.12 /bin/python && dnf clean all
 
 ENV UV_SYSTEM_PYTHON=1
@@ -164,7 +164,7 @@ RUN apt-get update && apt-get install -y \
        procps psmisc lsof \
        traceroute \
        bubblewrap \
-       gcc \
+       gcc g++ \
        && rm -rf /var/lib/apt/lists/*
 
 ENV UV_SYSTEM_PYTHON=1

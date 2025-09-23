@@ -16,11 +16,10 @@ from llama_stack.core.datatypes import BuildConfig, DistributionSpec
 from llama_stack.core.external import load_external_apis
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import (
-    AdapterSpec,
     Api,
     InlineProviderSpec,
     ProviderSpec,
-    remote_provider_spec,
+    RemoteProviderSpec,
 )
 
 logger = get_logger(name=__name__, category="core")
@@ -77,27 +76,12 @@ def providable_apis() -> list[Api]:
 
 
 def _load_remote_provider_spec(spec_data: dict[str, Any], api: Api) -> ProviderSpec:
-    adapter = AdapterSpec(**spec_data["adapter"])
-    spec = remote_provider_spec(
-        api=api,
-        adapter=adapter,
-        api_dependencies=[Api(dep) for dep in spec_data.get("api_dependencies", [])],
-    )
+    spec = RemoteProviderSpec(api=api, provider_type=f"remote::{spec_data['adapter_type']}", **spec_data)
     return spec
 
 
 def _load_inline_provider_spec(spec_data: dict[str, Any], api: Api, provider_name: str) -> ProviderSpec:
-    spec = InlineProviderSpec(
-        api=api,
-        provider_type=f"inline::{provider_name}",
-        pip_packages=spec_data.get("pip_packages", []),
-        module=spec_data["module"],
-        config_class=spec_data["config_class"],
-        api_dependencies=[Api(dep) for dep in spec_data.get("api_dependencies", [])],
-        optional_api_dependencies=[Api(dep) for dep in spec_data.get("optional_api_dependencies", [])],
-        provider_data_validator=spec_data.get("provider_data_validator"),
-        container_image=spec_data.get("container_image"),
-    )
+    spec = InlineProviderSpec(api=api, provider_type=f"inline::{provider_name}", **spec_data)
     return spec
 
 
