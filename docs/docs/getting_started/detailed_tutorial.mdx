@@ -31,23 +31,21 @@ ollama run llama3.2:3b --keepalive 60m
 
 Install [uv](https://docs.astral.sh/uv/) to setup your virtual environment
 
-::::{tab-set}
-
-:::{tab-item} macOS and Linux
+<Tabs>
+<TabItem value="unix" label="macOS and Linux">
 Use `curl` to download the script and execute it with `sh`:
 ```console
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
-:::
-
-:::{tab-item} Windows
+</TabItem>
+<TabItem value="windows" label="Windows">
 Use `irm` to download the script and execute it with `iex`:
 
 ```console
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
-:::
-::::
+</TabItem>
+</Tabs>
 
 Setup your virtual environment.
 
@@ -58,9 +56,8 @@ source .venv/bin/activate
 ### Step 2:  Run Llama Stack
 Llama Stack is a server that exposes multiple APIs, you connect with it using the Llama Stack client SDK.
 
-::::{tab-set}
-
-:::{tab-item} Using `venv`
+<Tabs>
+<TabItem value="venv" label="Using venv">
 You can use Python to build and run the Llama Stack server, which is useful for testing and development.
 
 Llama Stack uses a [YAML configuration file](../distributions/configuration.md) to specify the stack setup,
@@ -71,19 +68,8 @@ We use `starter` as template. By default all providers are disabled, this requir
 ```bash
 llama stack build --distro starter --image-type venv --run
 ```
-:::
-:::{tab-item} Using `venv`
-You can use Python to build and run the Llama Stack server, which is useful for testing and development.
-
-Llama Stack uses a [YAML configuration file](../distributions/configuration.md) to specify the stack setup,
-which defines the providers and their settings.
-Now let's build and run the Llama Stack config for Ollama.
-
-```bash
-llama stack build --distro starter --image-type venv --run
-```
-:::
-:::{tab-item} Using a Container
+</TabItem>
+<TabItem value="container" label="Using a Container">
 You can use a container image to run the Llama Stack server. We provide several container images for the server
 component that works with different inference providers out of the box. For this guide, we will use
 `llamastack/distribution-starter` as the container image. If you'd like to build your own image or customize the
@@ -110,9 +96,8 @@ with `host.containers.internal`.
 
 The configuration YAML for the Ollama distribution is available at `distributions/ollama/run.yaml`.
 
-```{tip}
-
-Docker containers run in their own isolated network namespaces on Linux. To allow the container to communicate with services running on the host via `localhost`, you need `--network=host`. This makes the container use the host’s network directly so it can connect to Ollama running on `localhost:11434`.
+:::tip
+Docker containers run in their own isolated network namespaces on Linux. To allow the container to communicate with services running on the host via `localhost`, you need `--network=host`. This makes the container use the host's network directly so it can connect to Ollama running on `localhost:11434`.
 
 Linux users having issues running the above command should instead try the following:
 ```bash
@@ -126,7 +111,6 @@ docker run -it \
   --env OLLAMA_URL=http://localhost:11434
 ```
 :::
-::::
 You will see output like below:
 ```
 INFO:     Application startup complete.
@@ -137,31 +121,29 @@ Now you can use the Llama Stack client to run inference and build agents!
 
 You can reuse the server setup or use the [Llama Stack Client](https://github.com/meta-llama/llama-stack-client-python/).
 Note that the client package is already included in the `llama-stack` package.
+</TabItem>
+</Tabs>
 
 ### Step 3: Run Client CLI
 
 Open a new terminal and navigate to the same directory you started the server from. Then set up a new or activate your
 existing server virtual environment.
 
-::::{tab-set}
-
-:::{tab-item} Reuse Server `venv`
+<Tabs>
+<TabItem value="reuse" label="Reuse Server venv">
 ```bash
 # The client is included in the llama-stack package so we just activate the server venv
 source .venv/bin/activate
 ```
-:::
-
-:::{tab-item} Install with `venv`
+</TabItem>
+<TabItem value="install" label="Install with venv">
 ```bash
 uv venv client --python 3.12
 source client/bin/activate
 pip install llama-stack-client
 ```
-:::
-
-
-::::
+</TabItem>
+</Tabs>
 
 Now let's use the `llama-stack-client` [CLI](../references/llama_stack_client_cli_reference.md) to check the
 connectivity to the server.
@@ -237,9 +219,8 @@ OpenAIChatCompletion(
 Note that these demos show the [Python Client SDK](../references/python_sdk_reference/index.md).
 Other SDKs are also available, please refer to the [Client SDK](../index.md#client-sdks) list for the complete options.
 
-::::{tab-set}
-
-:::{tab-item} Basic Inference
+<Tabs>
+<TabItem value="inference" label="Basic Inference">
 Now you can run inference using the Llama Stack client SDK.
 
 #### i. Create the Script
@@ -279,9 +260,8 @@ Which will output:
 Model: ollama/llama3.2:3b
 OpenAIChatCompletion(id='chatcmpl-30cd0f28-a2ad-4b6d-934b-13707fc60ebf', choices=[OpenAIChatCompletionChoice(finish_reason='stop', index=0, message=OpenAIChatCompletionChoiceMessageOpenAIAssistantMessageParam(role='assistant', content="Lines of code unfold\nAlgorithms dance with ease\nLogic's gentle kiss", name=None, tool_calls=None, refusal=None, annotations=None, audio=None, function_call=None), logprobs=None)], created=1751732480, model='llama3.2:3b', object='chat.completion', service_tier=None, system_fingerprint='fp_ollama', usage={'completion_tokens': 16, 'prompt_tokens': 37, 'total_tokens': 53, 'completion_tokens_details': None, 'prompt_tokens_details': None})
 ```
-:::
-
-:::{tab-item} Build a Simple Agent
+</TabItem>
+<TabItem value="agent" label="Build a Simple Agent">
 Next we can move beyond simple inference and build an agent that can perform tasks using the Llama Stack server.
 #### i. Create the Script
 Create a file `agent.py` and add the following code:
@@ -449,9 +429,8 @@ uv run python agent.py
 
     So, that's me in a nutshell!
 ```
-:::
-
-:::{tab-item} Build a RAG Agent
+</TabItem>
+<TabItem value="rag" label="Build a RAG Agent">
 
 For our last demo, we can build a RAG agent that can answer questions about the Torchtune project using the documents
 in a vector database.
@@ -554,9 +533,8 @@ uv run python rag_agent.py
     ...
     Overall, DORA is a powerful reinforcement learning algorithm that can learn complex tasks from human demonstrations. However, it requires careful consideration of the challenges and limitations to achieve optimal results.
 ```
-:::
-
-::::
+</TabItem>
+</Tabs>
 
 **You're Ready to Build Your Own Apps!**
 

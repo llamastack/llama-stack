@@ -229,17 +229,33 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
 
             # Handle multiline default values and escape problematic characters for MDX
             if "\n" in default:
-                default = (
-                    default.replace("\n", "<br/>")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
-                    .replace("{", "&#123;")
-                    .replace("}", "&#125;")
-                )
+                # For multiline defaults, escape angle brackets and use <br/> for line breaks
+                lines = default.split("\n")
+                escaped_lines = []
+                for line in lines:
+                    if line.strip():
+                        # Escape angle brackets and wrap template tokens in backticks
+                        escaped_line = line.strip().replace("<", "&lt;").replace(">", "&gt;")
+                        if ("{" in escaped_line and "}" in escaped_line) or (
+                            "&lt;|" in escaped_line and "|&gt;" in escaped_line
+                        ):
+                            escaped_lines.append(f"`{escaped_line}`")
+                        else:
+                            escaped_lines.append(escaped_line)
+                    else:
+                        escaped_lines.append("")
+                default = "<br/>".join(escaped_lines)
             else:
-                default = (
-                    default.replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;")
-                )
+                # For single line defaults, escape angle brackets first
+                escaped_default = default.replace("<", "&lt;").replace(">", "&gt;")
+                # Then wrap template tokens in backticks
+                if ("{" in escaped_default and "}" in escaped_default) or (
+                    "&lt;|" in escaped_default and "|&gt;" in escaped_default
+                ):
+                    default = f"`{escaped_default}`"
+                else:
+                    # Apply additional escaping for curly braces
+                    default = escaped_default.replace("{", "&#123;").replace("}", "&#125;")
 
             description_text = field_info["description"] or ""
             # Escape curly braces in description text for MDX compatibility

@@ -86,8 +86,11 @@ options:
 
 After this step is complete, a file named `<name>-build.yaml` and template file `<name>-run.yaml` will be generated and saved at the output file path specified at the end of the command.
 
-::::{tab-set}
-:::{tab-item} Building from a template
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+<TabItem value="template" label="Building from a template">
 To build from alternative API providers, we provide distribution templates for users to get started building a distribution backed by different providers.
 
 The following command will allow you to see the available templates and their corresponding providers.
@@ -160,8 +163,8 @@ You can now edit ~/.llama/distributions/llamastack-starter/starter-run.yaml and 
 ```{tip}
 The generated `run.yaml` file is a starting point for your configuration. For comprehensive guidance on customizing it for your specific needs, infrastructure, and deployment scenarios, see [Customizing Your run.yaml Configuration](customizing_run_yaml.md).
 ```
-:::
-:::{tab-item} Building from Scratch
+</TabItem>
+<TabItem value="scratch" label="Building from Scratch">
 
 If the provided templates do not fit your use case, you could start off with running `llama stack build` which will allow you to a interactively enter wizard where you will be prompted to enter build configurations.
 
@@ -190,9 +193,8 @@ Tip: use <TAB> to see options for the providers.
 
 You can now edit ~/.llama/distributions/llamastack-my-local-stack/my-local-stack-run.yaml and run `llama stack run ~/.llama/distributions/llamastack-my-local-stack/my-local-stack-run.yaml`
 ```
-:::
-
-:::{tab-item} Building from a pre-existing build config file
+</TabItem>
+<TabItem value="config" label="Building from a pre-existing build config file">
 - In addition to templates, you may customize the build to your liking through editing config files and build from config files with the following command.
 
 - The config file will be of contents like the ones in `llama_stack/distributions/*build.yaml`.
@@ -200,9 +202,8 @@ You can now edit ~/.llama/distributions/llamastack-my-local-stack/my-local-stack
 ```
 llama stack build --config llama_stack/distributions/starter/build.yaml
 ```
-:::
-
-:::{tab-item} Building with External Providers
+</TabItem>
+<TabItem value="external" label="Building with External Providers">
 
 Llama Stack supports external providers that live outside of the main codebase. This allows you to create and maintain your own providers independently or use community-provided providers.
 
@@ -251,15 +252,12 @@ llama stack build --config my-external-stack.yaml
 ```
 
 For more information on external providers, including directory structure, provider types, and implementation requirements, see the [External Providers documentation](../providers/external.md).
-:::
+</TabItem>
+<TabItem value="container" label="Building Container">
 
-:::{tab-item} Building Container
-
-```{admonition} Podman Alternative
-:class: tip
-
+:::tip Podman Alternative
 Podman is supported as an alternative to Docker. Set `CONTAINER_BINARY` to `podman` in your environment to use Podman.
-```
+:::
 
 To build a container image, you may start off from a template and use the `--image-type container` flag to specify `container` as the build image type.
 
@@ -278,7 +276,8 @@ You can now edit ~/meta-llama/llama-stack/tmp/configs/ollama-run.yaml and run `l
 ```
 
 Now set some environment variables for the inference model ID and Llama Stack Port and create a local directory to mount into the container's file system.
-```
+
+```bash
 export INFERENCE_MODEL="llama3.2:3b"
 export LLAMA_STACK_PORT=8321
 mkdir -p ~/.llama
@@ -312,9 +311,8 @@ Here are the docker flags and their uses:
 
 * `--env OLLAMA_URL=http://host.docker.internal:11434`: Configures the URL for the Ollama service
 
-:::
-
-::::
+</TabItem>
+</Tabs>
 
 
 ### Running your Stack server
