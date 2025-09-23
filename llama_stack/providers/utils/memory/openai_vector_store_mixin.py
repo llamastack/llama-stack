@@ -17,6 +17,7 @@ from llama_stack.apis.files import Files, OpenAIFileObject
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
+    ChunkMetadata,
     QueryChunksResponse,
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
@@ -520,31 +521,68 @@ class OpenAIVectorStoreMixin(ABC):
             raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(self, chunk: Chunk) -> list[VectorStoreContent]:
+        created_ts = None
+        if chunk.chunk_metadata is not None:
+            created_ts = getattr(chunk.chunk_metadata, "created_timestamp", None)
+
+        metadata_dict = {}
+        if chunk.chunk_metadata:
+            if hasattr(chunk.chunk_metadata, "model_dump"):
+                metadata_dict = chunk.chunk_metadata.model_dump()
+            else:
+                metadata_dict = vars(chunk.chunk_metadata)
+
+        user_metadata = chunk.metadata or {}
+        base_meta = {**metadata_dict, **user_metadata}
+
         # content is InterleavedContent
         if isinstance(chunk.content, str):
             content = [
                 VectorStoreContent(
                     type="text",
                     text=chunk.content,
+                    embedding=chunk.embedding,
+                    created_timestamp=created_ts,
+                    metadata=user_metadata,
+                    chunk_metadata=ChunkMetadata(**base_meta) if base_meta else None,
                 )
             ]
         elif isinstance(chunk.content, list):
             # TODO: Add support for other types of content
-            content = [
-                VectorStoreContent(
-                    type="text",
-                    text=item.text,
-                )
-                for item in chunk.content
-                if item.type == "text"
-            ]
+            content = []
+            for item in chunk.content:
+                if hasattr(item, "type") and item.type == "text":
+                    item_meta = {**base_meta}
+                    item_user_meta = getattr(item, "metadata", {}) or {}
+                    if item_user_meta:
+                        item_meta.update(item_user_meta)
+
+                    content.append(
+                        VectorStoreContent(
+                            type="text",
+                            text=item.text,
+                            embedding=getattr(item, "embedding", None),
+                            created_timestamp=created_ts,
+                            metadata=item_user_meta,
+                            chunk_metadata=ChunkMetadata(**item_meta) if item_meta else None,
+                        )
+                    )
         else:
-            if chunk.content.type != "text":
-                raise ValueError(f"Unsupported content type: {chunk.content.type}")
+            content_item = chunk.content
+            if content_item.type != "text":
+                raise ValueError(f"Unsupported content type: {content_item.type}")
+
+            item_user_meta = getattr(content_item, "metadata", {}) or {}
+            combined_meta = {**base_meta, **item_user_meta}
+
             content = [
                 VectorStoreContent(
                     type="text",
-                    text=chunk.content.text,
+                    text=content_item.text,
+                    embedding=getattr(content_item, "embedding", None),
+                    created_timestamp=created_ts,
+                    metadata=item_user_meta,
+                    chunk_metadata=ChunkMetadata(**combined_meta) if combined_meta else None,
                 )
             ]
         return content
