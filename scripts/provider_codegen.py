@@ -358,10 +358,6 @@ def generate_index_docs(api_name: str, api_docstring: str | None, provider_entri
         md_lines.append("")
 
     md_lines.append(f"This section contains documentation for all available providers for the **{api_name}** API.")
-    md_lines.append("")
-
-    md_lines.append("## Providers")
-    md_lines.append("")
 
     return "\n".join(md_lines) + "\n"
 
