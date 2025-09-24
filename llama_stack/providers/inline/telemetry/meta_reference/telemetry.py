@@ -5,8 +5,12 @@
 # the root directory of this source tree.
 
 import datetime
+import os
 import threading
+import logging
 from typing import Any
+
+from fastapi import FastAPI
 
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
@@ -16,8 +20,9 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.semconv.resource import ResourceAttributes
+from opentelemetry.semconv.attributes import service_attributes
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from llama_stack.apis.telemetry import (
     Event,
@@ -75,8 +80,8 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         self.meter = None
 
         resource = Resource.create(
-            {
-                ResourceAttributes.SERVICE_NAME: self.config.service_name,
+            attributes={
+                service_attributes.SERVICE_NAME: self.config.service_name,
             }
         )
 
@@ -93,28 +98,36 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
 
             # Use single OTLP endpoint for all telemetry signals
             if TelemetrySink.OTEL_TRACE in self.config.sinks or TelemetrySink.OTEL_METRIC in self.config.sinks:
-                if self.config.otel_exporter_otlp_endpoint is None:
-                    raise ValueError(
-                        "otel_exporter_otlp_endpoint is required when OTEL_TRACE or OTEL_METRIC is enabled"
-                    )
-
                 # Let OpenTelemetry SDK handle endpoint construction automatically
                 # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
                 # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
                 if TelemetrySink.OTEL_TRACE in self.config.sinks:
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") and not os.environ.get(
+                        "OTEL_EXPORTER_OTLP_ENDPOINT"
+                    ):
+                        logger.warning(
+                            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is not set. Traces will not be exported."
+                        )
                     span_exporter = OTLPSpanExporter()
                     span_processor = BatchSpanProcessor(span_exporter)
-                    trace.get_tracer_provider().add_span_processor(span_processor)
+                    provider.add_span_processor(span_processor)
 
                 if TelemetrySink.OTEL_METRIC in self.config.sinks:
-                    metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") and not os.environ.get(
+                        "OTEL_EXPORTER_OTLP_ENDPOINT"
+                    ):
+                        logger.warning(
+                            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is not set. Metrics will not be exported."
+                        )
+                    metric_exporter = OTLPMetricExporter()
+                    metric_reader = PeriodicExportingMetricReader(metric_exporter)
                     metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
                     metrics.set_meter_provider(metric_provider)
 
             if TelemetrySink.SQLITE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
+                provider.add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
             if TelemetrySink.CONSOLE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(ConsoleSpanProcessor(print_attributes=True))
+                provider.add_span_processor(ConsoleSpanProcessor(print_attributes=True))
 
         if TelemetrySink.OTEL_METRIC in self.config.sinks:
             self.meter = metrics.get_meter(__name__)
@@ -127,7 +140,8 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         pass
 
     async def shutdown(self) -> None:
-        trace.get_tracer_provider().force_flush()
+        if isinstance(_TRACER_PROVIDER, TracerProvider):
+            _TRACER_PROVIDER.force_flush()
 
     async def log_event(self, event: Event, ttl_seconds: int = 604800) -> None:
         logger.debug(f"DEBUG: log_event called with event type: {type(event).__name__}")
@@ -368,3 +382,6 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 max_depth=max_depth,
             )
         )
+    
+    def fastapi_middleware(self, app: FastAPI) -> None:
+        FastAPIInstrumentor.instrument_app(app)
