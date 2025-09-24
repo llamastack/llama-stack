@@ -8,10 +8,17 @@
       "messages": [
         {
           "role": "user",
-          "content": "Which planet do humans live on?"
+          "content": [
+            {
+              "type": "text",
+              "text": "Which planet do humans live on?"
+            }
+          ]
         }
       ],
-      "stream": false
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
     },
     "endpoint": "/v1/chat/completions",
     "model": "Qwen/Qwen3-0.6B"
@@ -20,14 +27,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-c3e54dca77f4460c8840f41130508516",
+        "id": "chatcmpl-a74d158fdc9e4aa995bd8ecf66f75586",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "<think>\nOkay, the user is asking which planet humans live on. Let me think about this. I know that humans are on Earth, right? But maybe they're confused. Earth is our home, so the answer should be Earth. But wait, sometimes people might think of other planets, like Mars or Jupiter, but those are not our home. I should confirm that Earth is the correct answer here.\n</think>\n\nHumans live on **Earth**.",
+              "content": "<think>\nOkay, the user is asking which planet humans live on. Let me think. I know that humans are on Earth. But maybe they're confused because sometimes people think of other planets. I should clarify that Earth is the only planet where humans have been found. Also, maybe mention that Earth is the only planet with a stable atmosphere and water, which are necessary for life. I should make sure the answer is straightforward and accurate.\n</think>\n\nHumans live on **Earth**. This planet is the only one where life has been sustained for billions of years, supporting complex ecosystems, water, and breathable air.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -39,15 +46,15 @@
             "stop_reason": null
           }
         ],
-        "created": 1758749070,
+        "created": 1758748612,
         "model": "Qwen/Qwen3-0.6B",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": null,
         "usage": {
-          "completion_tokens": 92,
+          "completion_tokens": 124,
           "prompt_tokens": 15,
-          "total_tokens": 107,
+          "total_tokens": 139,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         },

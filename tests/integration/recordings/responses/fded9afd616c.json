@@ -1,0 +1,86 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "prompt": "Hello, world!",
+      "stream": false,
+      "extra_body": {
+        "prompt_logprobs": 1
+      }
+    },
+    "endpoint": "/v1/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-15d9251fd248417ead0412a7efbc4215",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "text": " Welcome to the world of programming. Welcome to the world of algorithms and data structures",
+            "stop_reason": null,
+            "prompt_logprobs": [
+              null,
+              {
+                "11": {
+                  "logprob": -8.980323791503906,
+                  "rank": 1186,
+                  "decoded_token": ","
+                },
+                "21806": {
+                  "logprob": -4.886573791503906,
+                  "rank": 1,
+                  "decoded_token": " Answer"
+                }
+              },
+              {
+                "1879": {
+                  "logprob": -4.777805328369141,
+                  "rank": 10,
+                  "decoded_token": " world"
+                },
+                "358": {
+                  "logprob": -0.9028050899505615,
+                  "rank": 1,
+                  "decoded_token": " I"
+                }
+              },
+              {
+                "0": {
+                  "logprob": -1.5777862071990967,
+                  "rank": 2,
+                  "decoded_token": "!"
+                },
+                "13": {
+                  "logprob": -1.4527862071990967,
+                  "rank": 1,
+                  "decoded_token": "."
+                }
+              }
+            ]
+          }
+        ],
+        "created": 1758748390,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 4,
+          "total_tokens": 20,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

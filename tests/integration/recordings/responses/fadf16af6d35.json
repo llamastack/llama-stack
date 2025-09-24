@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "prompt": "Respond to this question and explain your answer. Complete the sentence using one word: Roses are red, violets are ",
+      "stream": false,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "cmpl-817171a403cf46b58398c1509d5c6be7",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "text": " __________. __________\nA. blue\nB. green\nC.",
+            "stop_reason": null,
+            "prompt_logprobs": null
+          }
+        ],
+        "created": 1758748377,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "text_completion",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 25,
+          "total_tokens": 41,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

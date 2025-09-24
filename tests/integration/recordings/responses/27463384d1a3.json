@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:8080/v1/v1/chat/completions",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "Qwen/Qwen3-0.6B",
@@ -20,35 +20,39 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "",
+        "id": "chatcmpl-914351244c384eb8912aa6ae46302255",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "<think>\nOkay, the user just said \"Hello, world!\" so I need to respond in a friendly way. My prompt says to respond in the same style, so I should start with \"Hello, world!\" but maybe add some helpful information. Let me think. Since the user is probably testing or just sharing, a simple \"Hello, world!\" with a question would be best for user interaction. I'll make sure to keep it positive and open-ended.\n</think>\n\nHello, world! \ud83d\ude0a What do you need today?",
+              "content": "<think>\nOkay, the user said \"Hello, world!\" and I need to respond. Let me start by acknowledging their input. Since it's a simple message, a friendly reply is appropriate. Maybe add a smiley to keep it positive. I should check if there's any additional context they might need, but since they didn't mention anything else, just respond with a greeting and a smiley. Make sure the response is concise and matches the expected format.\n</think>\n\nHello, world! \ud83d\ude0a",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": null
-            }
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
           }
         ],
-        "created": 1757550395,
+        "created": 1758749302,
         "model": "Qwen/Qwen3-0.6B",
         "object": "chat.completion",
         "service_tier": null,
-        "system_fingerprint": "3.3.5-dev0-sha-1b90c50",
+        "system_fingerprint": null,
         "usage": {
-          "completion_tokens": 108,
+          "completion_tokens": 102,
           "prompt_tokens": 12,
-          "total_tokens": 120,
+          "total_tokens": 114,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
-        }
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
       }
     },
     "is_streaming": false
