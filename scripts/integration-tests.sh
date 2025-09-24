@@ -405,11 +405,6 @@ fi
 echo "=== Running Integration Tests ==="
 EXCLUDE_TESTS="builtin_tool or safety_with_image or code_interpreter or test_rag"
 
-# Additional exclusions for vllm setup
-if [[ "$TEST_SETUP" == "vllm" ]]; then
-    EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls"
-fi
-
 PYTEST_PATTERN="not( $EXCLUDE_TESTS )"
 if [[ -n "$TEST_PATTERN" ]]; then
     PYTEST_PATTERN="${PYTEST_PATTERN} and $TEST_PATTERN"
