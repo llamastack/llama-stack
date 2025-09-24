@@ -187,14 +187,16 @@ Note that the provider "description" field will be used to generate the provider
 
 ### Building the Documentation
 
-If you are making changes to the documentation at [https://llamastack.github.io/latest/](https://llamastack.github.io/latest/), you can use the following command to build the documentation and preview your changes. You will need [Sphinx](https://www.sphinx-doc.org/en/master/) and the readthedocs theme.
+If you are making changes to the documentation at [https://llamastack.github.io/](https://llamastack.github.io/), you can use the following command to build the documentation and preview your changes.
 
 ```bash
-# This rebuilds the documentation pages.
-uv run --group docs make -C docs/ html
+# This rebuilds the documentation pages and the OpenAPI spec.
+npm install
+npm run gen-api-docs all
+npm run build
 
-# This will start a local server (usually at http://127.0.0.1:8000) that automatically rebuilds and refreshes when you make changes to the documentation.
-uv run --group docs sphinx-autobuild docs/source docs/build/html --write-all
+# This will start a local server (usually at http://127.0.0.1:3000).
+npm run serve
 ```
 
 ### Update API Documentation
@@ -205,4 +207,4 @@ If you modify or add new API endpoints, update the API documentation accordingly
 uv run ./docs/openapi_generator/run_openapi_generator.sh
 ```
 
-The generated API documentation will be available in `docs/_static/`. Make sure to review the changes before committing.
+The generated API schema will be available in `docs/static/`. Make sure to review the changes before committing.
