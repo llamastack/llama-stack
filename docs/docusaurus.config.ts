@@ -217,11 +217,6 @@ const config: Config = {
         ignoreFiles: [
           "node_modules/**/*",
         ],
-
-        // Exclude OpenAPI generated docs from search to avoid duplicates
-        searchContextByPaths: [
-          "docs",
-        ],
       },
     ],
   ],
