@@ -94,6 +94,19 @@ def pytest_configure(config):
             if not current:
                 setattr(config.option, dest, value)
 
+    # After processing CLI --env overrides, ensure global default embedding model is set for vector-store operations
+    embedding_model_opt = config.getoption("--embedding-model") or "sentence-transformers/all-MiniLM-L6-v2"
+    if embedding_model_opt and not os.getenv("LLAMA_STACK_DEFAULT_EMBEDDING_MODEL"):
+        # Use first value in comma-separated list (if any)
+        default_model = embedding_model_opt.split(",")[0].strip()
+        os.environ["LLAMA_STACK_DEFAULT_EMBEDDING_MODEL"] = default_model
+        logger.info(f"Setting LLAMA_STACK_DEFAULT_EMBEDDING_MODEL={default_model}")
+
+    embedding_dim_opt = config.getoption("--embedding-dimension") or 384
+    if not os.getenv("LLAMA_STACK_DEFAULT_EMBEDDING_DIMENSION") and embedding_dim_opt:
+        os.environ["LLAMA_STACK_DEFAULT_EMBEDDING_DIMENSION"] = str(embedding_dim_opt)
+        logger.info(f"Setting LLAMA_STACK_DEFAULT_EMBEDDING_DIMENSION={embedding_dim_opt}")
+
 
 def pytest_addoption(parser):
     parser.addoption(

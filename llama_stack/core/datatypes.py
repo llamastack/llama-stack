@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from llama_stack.apis.benchmarks import Benchmark, BenchmarkInput
+from llama_stack.apis.common.vector_store_config import VectorStoreConfig
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Dataset, DatasetInput
 from llama_stack.apis.eval import Eval
@@ -472,6 +473,12 @@ a default SQLite store will be used.""",
 Configuration for the persistence store used by the inference API. Can be either a
 InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
 If not specified, a default SQLite store will be used.""",
+    )
+
+    # Global vector-store defaults (embedding model etc.)
+    vector_store_config: VectorStoreConfig = Field(
+        default_factory=VectorStoreConfig,
+        description="Global defaults for vector-store creation (embedding model, dimension, …)",
     )
 
     # registry of "resources" in the distribution

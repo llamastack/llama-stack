@@ -800,3 +800,51 @@ shields:
   provider_shield_id: null
 ...
 ```
+
+## Global Vector Store Defaults
+
+You can provide a stack-level default embedding model that will be used whenever a new vector store is created and the caller does not specify an `embedding_model` parameter.
+
+Add a top-level `vector_store_config` block at the root of your build/run YAML, alongside other root-level keys such as `models`, `shields`, `server`, and `metadata_store`:
+
+```yaml
+# ... other configuration sections ...
+metadata_store:
+  namespace: null
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/registry.db
+models:
+- metadata: {}
+  model_id: ${env.INFERENCE_MODEL}
+  provider_id: ollama
+  provider_model_id: null
+shields: []
+server:
+  port: 8321
+vector_store_config:
+  default_embedding_model: ${env.LLAMA_STACK_DEFAULT_EMBEDDING_MODEL:=all-MiniLM-L6-v2}
+  # required when default_embedding_model is set
+  default_embedding_dimension: ${env.LLAMA_STACK_DEFAULT_EMBEDDING_DIMENSION:=384}
+```
+
+Precedence rules at runtime:
+
+1. If `embedding_model` is explicitly passed in an API call, that value is used (model must be registered in the stack).
+2. Otherwise the value in `vector_store_config.default_embedding_model` is used (requires `default_embedding_dimension` to be set).
+3. If neither is available, the server will fall back to the first available embedding model in the registry.
+
+#### Environment variables
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `LLAMA_STACK_DEFAULT_EMBEDDING_MODEL` | Global default embedding model id | `all-MiniLM-L6-v2` |
+| `LLAMA_STACK_DEFAULT_EMBEDDING_DIMENSION` | Dimension for embeddings (required when model is set) | `384` |
+
+If you include the `${env.…}` placeholder in `vector_store_config`, deployments can override the default without editing YAML:
+
+```bash
+export LLAMA_STACK_DEFAULT_EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
+llama stack run --config run.yaml
+```
+
+> Tip: If you omit `vector_store_config` entirely and don't set `LLAMA_STACK_DEFAULT_EMBEDDING_MODEL`, the system will fall back to using the first available embedding model in the registry for vector store creation.
