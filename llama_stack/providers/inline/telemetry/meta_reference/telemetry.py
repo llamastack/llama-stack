@@ -7,7 +7,10 @@
 import datetime
 import os
 import threading
+import logging
 from typing import Any
+
+from fastapi import FastAPI
 
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
@@ -17,8 +20,9 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.semconv.resource import ResourceAttributes
+from opentelemetry.semconv.attributes import service_attributes
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from llama_stack.apis.telemetry import (
     Event,
@@ -76,8 +80,8 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         self.meter = None
 
         resource = Resource.create(
-            {
-                ResourceAttributes.SERVICE_NAME: self.config.service_name,
+            attributes={
+                service_attributes.SERVICE_NAME: self.config.service_name,
             }
         )
 
@@ -98,7 +102,7 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
                 # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
                 if TelemetrySink.OTEL_TRACE in self.config.sinks:
-                    if not os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") or not os.environ.get(
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") and not os.environ.get(
                         "OTEL_EXPORTER_OTLP_ENDPOINT"
                     ):
                         logger.warning(
@@ -109,7 +113,7 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                     provider.add_span_processor(span_processor)
 
                 if TelemetrySink.OTEL_METRIC in self.config.sinks:
-                    if not os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") or not os.environ.get(
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") and not os.environ.get(
                         "OTEL_EXPORTER_OTLP_ENDPOINT"
                     ):
                         logger.warning(
@@ -372,3 +376,6 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 max_depth=max_depth,
             )
         )
+    
+    def fastapi_middleware(self, app: FastAPI) -> None:
+        FastAPIInstrumentor.instrument_app(app)
