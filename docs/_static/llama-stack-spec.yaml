@@ -10122,6 +10122,10 @@ components:
           type: string
           description: >-
             The unit of measurement for the metric value
+        metric_type:
+          $ref: '#/components/schemas/MetricType'
+          description: >-
+            The type of metric (optional, inferred if not provided for backwards compatibility)
       additionalProperties: false
       required:
         - trace_id
@@ -10134,6 +10138,15 @@ components:
       title: MetricEvent
       description: >-
         A metric event containing a measured value.
+    MetricType:
+      type: string
+      enum:
+        - counter
+        - up_down_counter
+        - histogram
+        - gauge
+      title: MetricType
+      description: The type of metric being recorded.
     SpanEndPayload:
       type: object
       properties:
