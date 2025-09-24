@@ -29,7 +29,7 @@ You have two ways to install Llama Stack:
 ## `llama` subcommands
 1. `download`: Supports downloading models from Meta or Hugging Face.  [Downloading models](#downloading-models)
 2. `model`: Lists available models and their properties. [Understanding models](#understand-the-models)
-3. `stack`: Allows you to build a stack using the `llama stack` distribution and run a Llama Stack server. You can read more about how to build a Llama Stack distribution in the [Build your own Distribution](../../distributions/building_distro) documentation.
+3. `stack`: Allows you to build a stack using the `llama stack` distribution and run a Llama Stack server. You can read more about how to build a Llama Stack distribution in the [Build your own Distribution](../distributions/building_distro) documentation.
 
 ### Sample Usage
 

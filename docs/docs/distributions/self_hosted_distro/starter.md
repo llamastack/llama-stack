@@ -36,25 +36,25 @@ The starter distribution includes a comprehensive set of inference providers:
 
 ### Hosted Providers
 - **[OpenAI](https://openai.com/api/)**: GPT-4, GPT-3.5, O1, O3, O4 models and text embeddings -
-  provider ID: `openai` - reference documentation: [openai](../../providers/inference/remote_openai.md)
+  provider ID: `openai` - reference documentation: [openai](../../providers/inference/remote_openai)
 - **[Fireworks](https://fireworks.ai/)**: Llama 3.1, 3.2, 3.3, 4 Scout, 4 Maverick models and
-  embeddings - provider ID: `fireworks` - reference documentation: [fireworks](../../providers/inference/remote_fireworks.md)
+  embeddings - provider ID: `fireworks` - reference documentation: [fireworks](../../providers/inference/remote_fireworks)
 - **[Together](https://together.ai/)**: Llama 3.1, 3.2, 3.3, 4 Scout, 4 Maverick models and
-  embeddings - provider ID: `together` - reference documentation: [together](../../providers/inference/remote_together.md)
-- **[Anthropic](https://www.anthropic.com/)**: Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 3.5 Haiku, and Voyage embeddings - provider ID: `anthropic` - reference documentation: [anthropic](../../providers/inference/remote_anthropic.md)
-- **[Gemini](https://gemini.google.com/)**: Gemini 1.5, 2.0, 2.5 models and text embeddings - provider ID: `gemini` - reference documentation: [gemini](../../providers/inference/remote_gemini.md)
-- **[Groq](https://groq.com/)**: Fast Llama models (3.1, 3.2, 3.3, 4 Scout, 4 Maverick) - provider ID: `groq` - reference documentation: [groq](../../providers/inference/remote_groq.md)
-- **[SambaNova](https://www.sambanova.ai/)**: Llama 3.1, 3.2, 3.3, 4 Scout, 4 Maverick models - provider ID: `sambanova` - reference documentation: [sambanova](../../providers/inference/remote_sambanova.md)
-- **[Cerebras](https://www.cerebras.ai/)**: Cerebras AI models - provider ID: `cerebras` - reference documentation: [cerebras](../../providers/inference/remote_cerebras.md)
-- **[NVIDIA](https://www.nvidia.com/)**: NVIDIA NIM - provider ID: `nvidia` - reference documentation: [nvidia](../../providers/inference/remote_nvidia.md)
-- **[HuggingFace](https://huggingface.co/)**: Serverless and endpoint models - provider ID: `hf::serverless` and `hf::endpoint` - reference documentation: [huggingface-serverless](../../providers/inference/remote_hf_serverless.md) and [huggingface-endpoint](../../providers/inference/remote_hf_endpoint.md)
-- **[Bedrock](https://aws.amazon.com/bedrock/)**: AWS Bedrock models - provider ID: `bedrock` - reference documentation: [bedrock](../../providers/inference/remote_bedrock.md)
+  embeddings - provider ID: `together` - reference documentation: [together](../../providers/inference/remote_together)
+- **[Anthropic](https://www.anthropic.com/)**: Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 3.5 Haiku, and Voyage embeddings - provider ID: `anthropic` - reference documentation: [anthropic](../../providers/inference/remote_anthropic)
+- **[Gemini](https://gemini.google.com/)**: Gemini 1.5, 2.0, 2.5 models and text embeddings - provider ID: `gemini` - reference documentation: [gemini](../../providers/inference/remote_gemini)
+- **[Groq](https://groq.com/)**: Fast Llama models (3.1, 3.2, 3.3, 4 Scout, 4 Maverick) - provider ID: `groq` - reference documentation: [groq](../../providers/inference/remote_groq)
+- **[SambaNova](https://www.sambanova.ai/)**: Llama 3.1, 3.2, 3.3, 4 Scout, 4 Maverick models - provider ID: `sambanova` - reference documentation: [sambanova](../../providers/inference/remote_sambanova)
+- **[Cerebras](https://www.cerebras.ai/)**: Cerebras AI models - provider ID: `cerebras` - reference documentation: [cerebras](../../providers/inference/remote_cerebras)
+- **[NVIDIA](https://www.nvidia.com/)**: NVIDIA NIM - provider ID: `nvidia` - reference documentation: [nvidia](../../providers/inference/remote_nvidia)
+- **[HuggingFace](https://huggingface.co/)**: Serverless and endpoint models - provider ID: `hf::serverless` and `hf::endpoint` - reference documentation: [huggingface-serverless](../../providers/inference/remote_hf_serverless) and [huggingface-endpoint](../../providers/inference/remote_hf_endpoint)
+- **[Bedrock](https://aws.amazon.com/bedrock/)**: AWS Bedrock models - provider ID: `bedrock` - reference documentation: [bedrock](../../providers/inference/remote_bedrock)
 
 ### Local/Remote Providers
-- **[Ollama](https://ollama.ai/)**: Local Ollama models - provider ID: `ollama` - reference documentation: [ollama](../../providers/inference/remote_ollama.md)
-- **[vLLM](https://docs.vllm.ai/en/latest/)**: Local or remote vLLM server - provider ID: `vllm` - reference documentation: [vllm](../../providers/inference/remote_vllm.md)
-- **[TGI](https://github.com/huggingface/text-generation-inference)**: Text Generation Inference server - Dell Enterprise Hub's custom TGI container too (use `DEH_URL`) - provider ID: `tgi` - reference documentation: [tgi](../../providers/inference/remote_tgi.md)
-- **[Sentence Transformers](https://www.sbert.net/)**: Local embedding models - provider ID: `sentence-transformers` - reference documentation: [sentence-transformers](../../providers/inference/inline_sentence-transformers.md)
+- **[Ollama](https://ollama.ai/)**: Local Ollama models - provider ID: `ollama` - reference documentation: [ollama](../../providers/inference/remote_ollama)
+- **[vLLM](https://docs.vllm.ai/en/latest/)**: Local or remote vLLM server - provider ID: `vllm` - reference documentation: [vllm](../../providers/inference/remote_vllm)
+- **[TGI](https://github.com/huggingface/text-generation-inference)**: Text Generation Inference server - Dell Enterprise Hub's custom TGI container too (use `DEH_URL`) - provider ID: `tgi` - reference documentation: [tgi](../../providers/inference/remote_tgi)
+- **[Sentence Transformers](https://www.sbert.net/)**: Local embedding models - provider ID: `sentence-transformers` - reference documentation: [sentence-transformers](../../providers/inference/inline_sentence-transformers)
 
 All providers are disabled by default. So you need to enable them by setting the environment variables.
 
