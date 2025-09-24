@@ -78,7 +78,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "VLLM_URL": "http://localhost:8000/v1",
         },
         defaults={
-            "text_model": "vllm/meta-llama/Llama-3.2-1B-Instruct",
+            "text_model": "vllm/Qwen/Qwen3-0.6B",
             "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
         },
     ),
