@@ -40,6 +40,7 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatText,
     OpenAIUserMessageParam,
 )
+from llama_stack.apis.prompts import Prompt
 from llama_stack.apis.tools.tools import Tool, ToolGroups, ToolInvocationResult, ToolParameter, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
@@ -80,8 +81,19 @@ def mock_vector_io_api():
 
 
 @pytest.fixture
+def mock_prompts_api():
+    prompts_api = AsyncMock()
+    return prompts_api
+
+
+@pytest.fixture
 def openai_responses_impl(
-    mock_inference_api, mock_tool_groups_api, mock_tool_runtime_api, mock_responses_store, mock_vector_io_api
+    mock_inference_api,
+    mock_tool_groups_api,
+    mock_tool_runtime_api,
+    mock_responses_store,
+    mock_vector_io_api,
+    mock_prompts_api,
 ):
     return OpenAIResponsesImpl(
         inference_api=mock_inference_api,
@@ -89,6 +101,7 @@ def openai_responses_impl(
         tool_runtime_api=mock_tool_runtime_api,
         responses_store=mock_responses_store,
         vector_io_api=mock_vector_io_api,
+        prompts_api=mock_prompts_api,
     )
 
 
@@ -868,3 +881,56 @@ async def test_create_openai_response_with_invalid_text_format(openai_responses_
             model=model,
             text=OpenAIResponseText(format={"type": "invalid"}),
         )
+
+
+async def test_create_openai_response_with_prompt(openai_responses_impl, mock_inference_api, mock_prompts_api):
+    """Test creating an OpenAI response with a prompt."""
+    input_text = "What is the capital of Ireland?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a helpful {{ area_name }} assistant at {{ company_name }}. Always provide accurate information.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["area_name", "company_name"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+
+    prompt_params_with_version_1 = OpenAIResponsePromptParam(
+        id=prompt_id, version="1", variables={"area_name": "geography", "company_name": "Dummy Company"}
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt=prompt_params_with_version_1,
+    )
+
+    mock_prompts_api.get_prompt.assert_called_with(prompt_id, 1)
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    sent_messages = call_args.kwargs["messages"]
+    assert len(sent_messages) == 2
+
+    system_messages = [msg for msg in sent_messages if msg.role == "system"]
+    assert len(system_messages) == 1
+    assert (
+        system_messages[0].content
+        == "You are a helpful geography assistant at Dummy Company. Always provide accurate information."
+    )
+
+    user_messages = [msg for msg in sent_messages if msg.role == "user"]
+    assert len(user_messages) == 1
+    assert user_messages[0].content == input_text
+
+    assert result.model == model
+    assert result.status == "completed"
+    assert result.prompt.prompt_id == prompt_id
+    assert result.prompt.variables == ["area_name", "company_name"]
+    assert result.prompt.version == 1
+    assert result.prompt.prompt == prompt.prompt

@@ -314,6 +314,10 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     )
     impls[Api.prompts] = prompts_impl
 
+    # Set prompts API on agents provider if it exists
+    if Api.agents in impls and hasattr(impls[Api.agents], "set_prompts_api"):
+        impls[Api.agents].set_prompts_api(prompts_impl)
+
 
 class Stack:
     def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
