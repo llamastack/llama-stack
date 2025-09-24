@@ -55,7 +55,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         },
         defaults={
             "text_model": "ollama/llama3.2:3b-instruct-fp16",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "ollama/all-minilm:l6-v2",
             "safety_model": "ollama/llama-guard3:1b",
             "safety_shield": "llama-guard",
         },
@@ -68,7 +68,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         },
         defaults={
             "vision_model": "ollama/llama3.2-vision:11b",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "ollama/all-minilm:l6-v2",
         },
     ),
     "vllm": Setup(

@@ -44,6 +44,7 @@ def skip_if_model_doesnt_support_encoding_format_base64(client, model_id):
         "remote::together",  # param silently ignored, always returns floats
         "remote::databricks",  # param silently ignored, always returns floats
         "remote::fireworks",  # param silently ignored, always returns list of floats
+        "remote::ollama",  # param silently ignored, always returns list of floats
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} does not support encoding_format='base64'.")
 
