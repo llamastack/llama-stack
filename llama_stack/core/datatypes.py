@@ -433,6 +433,10 @@ class InferenceStoreConfig(BaseModel):
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 
+class ConversationsStoreConfig(BaseModel):
+    sql_store_config: SqlStoreConfig
+
+
 class StackRunConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
@@ -471,6 +475,13 @@ a default SQLite store will be used.""",
         description="""
 Configuration for the persistence store used by the inference API. Can be either a
 InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
+If not specified, a default SQLite store will be used.""",
+    )
+
+    conversations_store: ConversationsStoreConfig | SqlStoreConfig | None = Field(
+        default=None,
+        description="""
+Configuration for the persistence store used by the conversations API.
 If not specified, a default SQLite store will be used.""",
     )
 
