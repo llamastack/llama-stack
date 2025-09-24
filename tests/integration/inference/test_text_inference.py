@@ -388,6 +388,7 @@ def test_text_chat_completion_with_tool_choice_none(client_with_models, text_mod
         tools=tc["tools"],
         tool_config={"tool_choice": "none"},
         stream=True,
+        timeout=120,  # sometimes times out with vllm/Qwen3-0.6B
     )
     tool_invocation_content = extract_tool_invocation_content(response)
     assert tool_invocation_content == ""
