@@ -39,6 +39,7 @@ class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
     db_path: str = Field(
         default=(RUNTIME_BASE_DIR / "sqlstore.db").as_posix(),
         description="Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
+        json_schema_extra={"default": "~/.llama/runtime/sqlstore.db"},
     )
 
     @property

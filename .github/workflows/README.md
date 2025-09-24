@@ -4,6 +4,7 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 
 | Name | File | Purpose |
 | ---- | ---- | ------- |
+| PR Bot Commands | [bot-trigger.yml](bot-trigger.yml) | Bot command for PR |
 | Update Changelog | [changelog.yml](changelog.yml) | Creates PR for updating the CHANGELOG.md |
 | API Conformance Tests | [conformance.yml](conformance.yml) | Run the API Conformance test suite on the changes. |
 | Installer CI | [install-script-ci.yml](install-script-ci.yml) | Test the installation script |
@@ -12,10 +13,11 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | Integration Tests (Replay) | [integration-tests.yml](integration-tests.yml) | Run the integration test suites from tests/integration in replay mode |
 | Vector IO Integration Tests | [integration-vector-io-tests.yml](integration-vector-io-tests.yml) | Run the integration test suite with various VectorIO providers |
 | Pre-commit | [pre-commit.yml](pre-commit.yml) | Run pre-commit checks |
-| Pre-commit Bot | [precommit-trigger.yml](precommit-trigger.yml) | Pre-commit bot for PR |
+| Run Pre-commit | [precommit-trigger.yml](precommit-trigger.yml) | Run Pre-commit via PR comment |
 | Test Llama Stack Build | [providers-build.yml](providers-build.yml) | Test llama stack build |
 | Python Package Build Test | [python-build-test.yml](python-build-test.yml) | Test building the llama-stack PyPI project |
 | Integration Tests (Record) | [record-integration-tests.yml](record-integration-tests.yml) | Run the integration test suite from tests/integration |
+| Run Snapshot Regeneration | [regenerate-snapshot-trigger.yml](regenerate-snapshot-trigger.yml) | Run Snapshot Regeneration via PR comment |
 | Check semantic PR titles | [semantic-pr.yml](semantic-pr.yml) | Ensure that PR titles follow the conventional commit spec |
 | Close stale issues and PRs | [stale_bot.yml](stale_bot.yml) | Run the Stale Bot action |
 | Test External Providers Installed via Module | [test-external-provider-module.yml](test-external-provider-module.yml) | Test External Provider installation via Python module |

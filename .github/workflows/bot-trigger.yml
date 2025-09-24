@@ -1,0 +1,130 @@
+name: PR Bot Commands
+
+run-name: Bot command for PR #${{ github.event.issue.number }}
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  # Shared setup job for both pre-commit and snapshot regeneration
+  setup:
+    if: github.event.issue.pull_request && (contains(github.event.comment.body, '@github-actions run precommit') || contains(github.event.comment.body, '@github-actions regenerate snapshots'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      authorized: ${{ steps.check_author.outputs.authorized }}
+      pr_number: ${{ steps.check_author.outputs.pr_number }}
+      pr_head_ref: ${{ steps.check_author.outputs.pr_head_ref }}
+      pr_head_sha: ${{ steps.check_author.outputs.pr_head_sha }}
+      pr_head_repo: ${{ steps.check_author.outputs.pr_head_repo }}
+      pr_base_ref: ${{ steps.check_author.outputs.pr_base_ref }}
+      is_fork: ${{ steps.check_author.outputs.is_fork }}
+      command: ${{ steps.detect_command.outputs.command }}
+
+    steps:
+      - name: Detect command
+        id: detect_command
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+          if [[ "$COMMENT" == *"@github-actions run precommit"* ]]; then
+            echo "command=precommit" >> $GITHUB_OUTPUT
+          elif [[ "$COMMENT" == *"@github-actions regenerate snapshots"* ]]; then
+            echo "command=regenerate-snapshots" >> $GITHUB_OUTPUT
+          fi
+      - name: Check comment author and get PR details
+        id: check_author
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Get PR details
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Check if commenter has write access or is the PR author
+            const commenter = context.payload.comment.user.login;
+            const prAuthor = pr.data.user.login;
+
+            let hasPermission = false;
+
+            // Check if commenter is PR author
+            if (commenter === prAuthor) {
+              hasPermission = true;
+              console.log(`Comment author ${commenter} is the PR author`);
+            } else {
+              // Check if commenter has write/admin access
+              try {
+                const permission = await github.rest.repos.getCollaboratorPermissionLevel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  username: commenter
+                });
+
+                const level = permission.data.permission;
+                hasPermission = ['write', 'admin', 'maintain'].includes(level);
+                console.log(`Comment author ${commenter} has permission: ${level}`);
+              } catch (error) {
+                console.log(`Could not check permissions for ${commenter}: ${error.message}`);
+              }
+            }
+
+            if (!hasPermission) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `❌ @${commenter} You don't have permission to trigger bot commands. Only PR authors or repository collaborators can run this command.`
+              });
+              core.setFailed(`User ${commenter} does not have permission`);
+              return;
+            }
+
+            // Save PR info for later steps
+            core.setOutput('pr_number', context.issue.number);
+            core.setOutput('pr_head_ref', pr.data.head.ref);
+            core.setOutput('pr_head_sha', pr.data.head.sha);
+            core.setOutput('pr_head_repo', pr.data.head.repo.full_name);
+            core.setOutput('pr_base_ref', pr.data.base.ref);
+            core.setOutput('is_fork', pr.data.head.repo.full_name !== context.payload.repository.full_name);
+            core.setOutput('authorized', 'true');
+
+      - name: React to comment
+        if: steps.check_author.outputs.authorized == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+  pre-commit:
+    needs: setup
+    if: needs.setup.outputs.authorized == 'true' && needs.setup.outputs.command == 'precommit'
+    uses: ./.github/workflows/precommit-trigger.yml
+    with:
+      pr_number: ${{ needs.setup.outputs.pr_number }}
+      pr_head_ref: ${{ needs.setup.outputs.pr_head_ref }}
+      pr_head_sha: ${{ needs.setup.outputs.pr_head_sha }}
+      pr_head_repo: ${{ needs.setup.outputs.pr_head_repo }}
+      is_fork: ${{ needs.setup.outputs.is_fork }}
+
+  regenerate-snapshots:
+    needs: setup
+    if: needs.setup.outputs.authorized == 'true' && needs.setup.outputs.command == 'regenerate-snapshots'
+    uses: ./.github/workflows/regenerate-snapshots-trigger.yml
+    with:
+      pr_number: ${{ needs.setup.outputs.pr_number }}
+      pr_head_ref: ${{ needs.setup.outputs.pr_head_ref }}
+      pr_head_sha: ${{ needs.setup.outputs.pr_head_sha }}
+      pr_head_repo: ${{ needs.setup.outputs.pr_head_repo }}
+      is_fork: ${{ needs.setup.outputs.is_fork }}
