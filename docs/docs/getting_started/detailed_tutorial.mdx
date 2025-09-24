@@ -18,7 +18,7 @@ In Llama Stack, we provide a server exposing multiple APIs. These APIs are backe
 Llama Stack is a stateful service with REST APIs to support seamless transition of AI applications across different environments. The server can be run in a variety of ways, including as a standalone binary, Docker container, or hosted service. You can build and test using a local server first and deploy to a hosted endpoint for production.
 
 In this guide, we'll walk through how to build a RAG agent locally using Llama Stack with [Ollama](https://ollama.com/)
-as the inference [provider](../providers/index.md#inference) for a Llama Model.
+as the inference [provider](/docs/providers/inference/) for a Llama Model.
 
 ### Step 1: Installation and Setup
 
@@ -60,8 +60,8 @@ Llama Stack is a server that exposes multiple APIs, you connect with it using th
 <TabItem value="venv" label="Using venv">
 You can use Python to build and run the Llama Stack server, which is useful for testing and development.
 
-Llama Stack uses a [YAML configuration file](../distributions/configuration.md) to specify the stack setup,
-which defines the providers and their settings. The generated configuration serves as a starting point that you can [customize for your specific needs](../distributions/customizing_run_yaml.md).
+Llama Stack uses a [YAML configuration file](../distributions/configuration) to specify the stack setup,
+which defines the providers and their settings. The generated configuration serves as a starting point that you can [customize for your specific needs](../distributions/customizing_run_yaml).
 Now let's build and run the Llama Stack config for Ollama.
 We use `starter` as template. By default all providers are disabled, this requires enable ollama by passing environment variables.
 
@@ -73,7 +73,7 @@ llama stack build --distro starter --image-type venv --run
 You can use a container image to run the Llama Stack server. We provide several container images for the server
 component that works with different inference providers out of the box. For this guide, we will use
 `llamastack/distribution-starter` as the container image. If you'd like to build your own image or customize the
-configurations, please check out [this guide](../distributions/building_distro.md).
+configurations, please check out [this guide](../distributions/building_distro).
 First lets setup some environment variables and create a local directory to mount into the container’s file system.
 ```bash
 export LLAMA_STACK_PORT=8321
@@ -145,7 +145,7 @@ pip install llama-stack-client
 </TabItem>
 </Tabs>
 
-Now let's use the `llama-stack-client` [CLI](../references/llama_stack_client_cli_reference.md) to check the
+Now let's use the `llama-stack-client` [CLI](../references/llama_stack_client_cli_reference) to check the
 connectivity to the server.
 
 ```bash
@@ -216,8 +216,8 @@ OpenAIChatCompletion(
 
 ### Step 4: Run the Demos
 
-Note that these demos show the [Python Client SDK](../references/python_sdk_reference/index).
-Other SDKs are also available, please refer to the [Client SDK](../index.md#client-sdks) list for the complete options.
+Note that these demos show the [Python Client SDK](../references/python_sdk_reference/).
+Other SDKs are also available, please refer to the [Client SDK](/docs/) list for the complete options.
 
 <Tabs>
 <TabItem value="inference" label="Basic Inference">
@@ -538,4 +538,4 @@ uv run python rag_agent.py
 
 **You're Ready to Build Your Own Apps!**
 
-Congrats! 🥳 Now you're ready to [build your own Llama Stack applications](../building_applications/index)! 🚀
+Congrats! 🥳 Now you're ready to [build your own Llama Stack applications](../building_applications/)! 🚀
