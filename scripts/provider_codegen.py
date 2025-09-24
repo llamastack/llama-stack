@@ -363,12 +363,6 @@ def generate_index_docs(api_name: str, api_docstring: str | None, provider_entri
     md_lines.append("## Providers")
     md_lines.append("")
 
-    # For Docusaurus, create a simple list of links instead of toctree
-    for entry in provider_entries:
-        provider_name = entry["display_name"]
-        filename = entry["filename"]
-        md_lines.append(f"- [{provider_name}](./{filename})")
-
     return "\n".join(md_lines) + "\n"
 
 
