@@ -13,13 +13,17 @@ from llama_stack.apis.models import ModelType
 from llama_stack.apis.resource import ResourceType
 from llama_stack.apis.vector_dbs import ListVectorDBsResponse, VectorDB, VectorDBs
 from llama_stack.apis.vector_io.vector_io import (
+    InterleavedContent,
     SearchRankingOptions,
+    VectorStoreChunkDeleteResponse,
     VectorStoreChunkingStrategy,
+    VectorStoreChunkObject,
     VectorStoreDeleteResponse,
     VectorStoreFileContentsResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
     VectorStoreFileStatus,
+    VectorStoreListChunksResponse,
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
@@ -244,4 +248,70 @@ class VectorDBsRoutingTable(CommonRoutingTableImpl, VectorDBs):
         return await provider.openai_delete_vector_store_file(
             vector_store_id=vector_store_id,
             file_id=file_id,
+        )
+
+    async def openai_retrieve_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+    ) -> VectorStoreChunkObject:
+        await self.assert_action_allowed("read", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_retrieve_vector_store_chunk(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            chunk_id=chunk_id,
+        )
+
+    async def openai_update_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+        content: InterleavedContent | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> VectorStoreChunkObject:
+        await self.assert_action_allowed("update", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_update_vector_store_chunk(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            chunk_id=chunk_id,
+            content=content,
+            metadata=metadata,
+        )
+
+    async def openai_delete_vector_store_chunk(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        chunk_id: str,
+    ) -> VectorStoreChunkDeleteResponse:
+        await self.assert_action_allowed("delete", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_delete_vector_store_chunk(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            chunk_id=chunk_id,
+        )
+
+    async def openai_list_vector_store_chunks(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        limit: int | None = 20,
+        order: str | None = "desc",
+        after: str | None = None,
+        before: str | None = None,
+    ) -> VectorStoreListChunksResponse:
+        await self.assert_action_allowed("read", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_list_vector_store_chunks(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            limit=limit,
+            order=order,
+            after=after,
+            before=before,
         )
