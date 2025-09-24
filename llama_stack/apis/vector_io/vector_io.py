@@ -481,7 +481,7 @@ class VectorIO(Protocol):
         chunking_strategy: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
         embedding_model: str | None = None,
-        embedding_dimension: int | None = 384,
+        embedding_dimension: int | None = 768,
         provider_id: str | None = None,
     ) -> VectorStoreObject:
         """Creates a vector store.
@@ -492,7 +492,7 @@ class VectorIO(Protocol):
         :param chunking_strategy: The chunking strategy used to chunk the file(s). If not set, will use the `auto` strategy.
         :param metadata: Set of 16 key-value pairs that can be attached to an object.
         :param embedding_model: The embedding model to use for this vector store.
-        :param embedding_dimension: The dimension of the embedding vectors (default: 384).
+        :param embedding_dimension: The dimension of the embedding vectors (default: 768).
         :param provider_id: The ID of the provider to use for this vector store.
         :returns: A VectorStoreObject representing the created vector store.
         """

@@ -43,6 +43,12 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=[
                 "torch torchvision torchao>=0.12.0 --extra-index-url https://download.pytorch.org/whl/cpu",
                 "sentence-transformers --no-deps",
+                # required by some SentenceTransformers architectures for tensor rearrange/merge ops
+                "einops",
+                # fast HF tokenization backend used by SentenceTransformers models
+                "tokenizers",
+                # safe and fast file format for storing and loading tensors
+                "safetensors",
             ],
             module="llama_stack.providers.inline.inference.sentence_transformers",
             config_class="llama_stack.providers.inline.inference.sentence_transformers.config.SentenceTransformersInferenceConfig",

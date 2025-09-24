@@ -115,8 +115,8 @@ data:
       password: ${env.POSTGRES_PASSWORD:=llamastack}
     models:
     - metadata:
-        embedding_dimension: 384
-      model_id: all-MiniLM-L6-v2
+        embedding_dimension: 768
+      model_id: nomic-embed-text-v1.5
       provider_id: sentence-transformers
       model_type: embedding
     - model_id: ${env.INFERENCE_MODEL}
