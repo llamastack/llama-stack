@@ -1,0 +1,1991 @@
+{
+  "$defs": {
+    "AccessRule": {
+      "description": "Access rule based loosely on cedar policy language\n\nA rule defines a list of action either to permit or to forbid. It may specify a\nprincipal or a resource that must match for the rule to take effect. The resource\nto match should be specified in the form of a type qualified identifier, e.g.\nmodel::my-model or vector_db::some-db, or a wildcard for all resources of a type,\ne.g. model::*. If the principal or resource are not specified, they will match all\nrequests.\n\nA rule may also specify a condition, either a 'when' or an 'unless', with additional\nconstraints as to where the rule applies. The constraints supported at present are:\n\n- 'user with <attr-value> in <attr-name>'\n- 'user with <attr-value> not in <attr-name>'\n- 'user is owner'\n- 'user is not owner'\n- 'user in owners <attr-name>'\n- 'user not in owners <attr-name>'\n\nRules are tested in order to find a match. If a match is found, the request is\npermitted or forbidden depending on the type of rule. If no match is found, the\nrequest is denied. If no rules are specified, a rule that allows any action as\nlong as the resource attributes match the user attributes is added\n(i.e. the previous behaviour is the default).\n\nSome examples in yaml:\n\n- permit:\n    principal: user-1\n    actions: [create, read, delete]\n    resource: model::*\n  description: user-1 has full access to all models\n- permit:\n    principal: user-2\n    actions: [read]\n    resource: model::model-1\n  description: user-2 has read access to model-1 only\n- permit:\n    actions: [read]\n  when: user in owner teams\n  description: any user has read access to any resource created by a member of their team\n- forbid:\n    actions: [create, read, delete]\n    resource: vector_db::*\n  unless: user with admin in roles\n  description: only user with admin role can use vector_db resources",
+      "properties": {
+        "permit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Scope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "forbid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Scope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "when": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "unless": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unless"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        }
+      },
+      "title": "AccessRule",
+      "type": "object"
+    },
+    "Action": {
+      "enum": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "AgentTurnInputType": {
+      "description": "Parameter type for agent turn input.\n\n:param type: Discriminator type. Always \"agent_turn_input\"",
+      "properties": {
+        "type": {
+          "const": "agent_turn_input",
+          "default": "agent_turn_input",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "AgentTurnInputType",
+      "type": "object"
+    },
+    "AggregationFunctionType": {
+      "description": "Types of aggregation functions for scoring results.\n:cvar average: Calculate the arithmetic mean of scores\n:cvar weighted_average: Calculate a weighted average of scores\n:cvar median: Calculate the median value of scores\n:cvar categorical_count: Count occurrences of categorical values\n:cvar accuracy: Calculate accuracy as the proportion of correct answers",
+      "enum": [
+        "average",
+        "weighted_average",
+        "median",
+        "categorical_count",
+        "accuracy"
+      ],
+      "title": "AggregationFunctionType",
+      "type": "string"
+    },
+    "ArrayType": {
+      "description": "Parameter type for array values.\n\n:param type: Discriminator type. Always \"array\"",
+      "properties": {
+        "type": {
+          "const": "array",
+          "default": "array",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ArrayType",
+      "type": "object"
+    },
+    "AuthenticationConfig": {
+      "description": "Top-level authentication configuration.",
+      "properties": {
+        "provider_config": {
+          "description": "Authentication provider configuration",
+          "discriminator": {
+            "mapping": {
+              "custom": "#/$defs/CustomAuthConfig",
+              "github_token": "#/$defs/GitHubTokenAuthConfig",
+              "kubernetes": "#/$defs/KubernetesAuthProviderConfig",
+              "oauth2_token": "#/$defs/OAuth2TokenAuthConfig"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/OAuth2TokenAuthConfig"
+            },
+            {
+              "$ref": "#/$defs/GitHubTokenAuthConfig"
+            },
+            {
+              "$ref": "#/$defs/CustomAuthConfig"
+            },
+            {
+              "$ref": "#/$defs/KubernetesAuthProviderConfig"
+            }
+          ],
+          "title": "Provider Config"
+        },
+        "access_policy": {
+          "default": [],
+          "description": "Rules for determining access to resources",
+          "items": {
+            "$ref": "#/$defs/AccessRule"
+          },
+          "title": "Access Policy",
+          "type": "array"
+        }
+      },
+      "required": [
+        "provider_config"
+      ],
+      "title": "AuthenticationConfig",
+      "type": "object"
+    },
+    "BasicScoringFnParams": {
+      "description": "Parameters for basic scoring function configuration.\n:param type: The type of scoring function parameters, always basic\n:param aggregation_functions: Aggregation functions to apply to the scores of each row",
+      "properties": {
+        "type": {
+          "const": "basic",
+          "default": "basic",
+          "title": "Type",
+          "type": "string"
+        },
+        "aggregation_functions": {
+          "description": "Aggregation functions to apply to the scores of each row",
+          "items": {
+            "$ref": "#/$defs/AggregationFunctionType"
+          },
+          "title": "Aggregation Functions",
+          "type": "array"
+        }
+      },
+      "title": "BasicScoringFnParams",
+      "type": "object"
+    },
+    "BenchmarkInput": {
+      "properties": {
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "scoring_functions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Scoring Functions",
+          "type": "array"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Metadata for this evaluation task",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "benchmark_id": {
+          "title": "Benchmark Id",
+          "type": "string"
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "provider_benchmark_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Benchmark Id"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "scoring_functions",
+        "benchmark_id"
+      ],
+      "title": "BenchmarkInput",
+      "type": "object"
+    },
+    "BooleanType": {
+      "description": "Parameter type for boolean values.\n\n:param type: Discriminator type. Always \"boolean\"",
+      "properties": {
+        "type": {
+          "const": "boolean",
+          "default": "boolean",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "BooleanType",
+      "type": "object"
+    },
+    "CORSConfig": {
+      "properties": {
+        "allow_origins": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allow Origins",
+          "type": "array"
+        },
+        "allow_origin_regex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Allow Origin Regex"
+        },
+        "allow_methods": {
+          "default": [
+            "OPTIONS"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Allow Methods",
+          "type": "array"
+        },
+        "allow_headers": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allow Headers",
+          "type": "array"
+        },
+        "allow_credentials": {
+          "default": false,
+          "title": "Allow Credentials",
+          "type": "boolean"
+        },
+        "expose_headers": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Expose Headers",
+          "type": "array"
+        },
+        "max_age": {
+          "default": 600,
+          "minimum": 0,
+          "title": "Max Age",
+          "type": "integer"
+        }
+      },
+      "title": "CORSConfig",
+      "type": "object"
+    },
+    "ChatCompletionInputType": {
+      "description": "Parameter type for chat completion input.\n\n:param type: Discriminator type. Always \"chat_completion_input\"",
+      "properties": {
+        "type": {
+          "const": "chat_completion_input",
+          "default": "chat_completion_input",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ChatCompletionInputType",
+      "type": "object"
+    },
+    "CompletionInputType": {
+      "description": "Parameter type for completion input.\n\n:param type: Discriminator type. Always \"completion_input\"",
+      "properties": {
+        "type": {
+          "const": "completion_input",
+          "default": "completion_input",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "CompletionInputType",
+      "type": "object"
+    },
+    "CustomAuthConfig": {
+      "description": "Configuration for custom authentication.",
+      "properties": {
+        "type": {
+          "const": "custom",
+          "default": "custom",
+          "title": "Type",
+          "type": "string"
+        },
+        "endpoint": {
+          "description": "Custom authentication endpoint URL",
+          "title": "Endpoint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "endpoint"
+      ],
+      "title": "CustomAuthConfig",
+      "type": "object"
+    },
+    "DatasetInput": {
+      "description": "Input parameters for dataset operations.\n\n:param dataset_id: Unique identifier for the dataset",
+      "properties": {
+        "purpose": {
+          "$ref": "#/$defs/DatasetPurpose"
+        },
+        "source": {
+          "discriminator": {
+            "mapping": {
+              "rows": "#/$defs/RowsDataSource",
+              "uri": "#/$defs/URIDataSource"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/URIDataSource"
+            },
+            {
+              "$ref": "#/$defs/RowsDataSource"
+            }
+          ],
+          "title": "Source"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Any additional metadata for this dataset",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "purpose",
+        "source",
+        "dataset_id"
+      ],
+      "title": "DatasetInput",
+      "type": "object"
+    },
+    "DatasetPurpose": {
+      "description": "Purpose of the dataset. Each purpose has a required input data schema.\n\n:cvar post-training/messages: The dataset contains messages used for post-training.\n    {\n        \"messages\": [\n            {\"role\": \"user\", \"content\": \"Hello, world!\"},\n            {\"role\": \"assistant\", \"content\": \"Hello, world!\"},\n        ]\n    }\n:cvar eval/question-answer: The dataset contains a question column and an answer column.\n    {\n        \"question\": \"What is the capital of France?\",\n        \"answer\": \"Paris\"\n    }\n:cvar eval/messages-answer: The dataset contains a messages column with list of messages and an answer column.\n    {\n        \"messages\": [\n            {\"role\": \"user\", \"content\": \"Hello, my name is John Doe.\"},\n            {\"role\": \"assistant\", \"content\": \"Hello, John Doe. How can I help you today?\"},\n            {\"role\": \"user\", \"content\": \"What's my name?\"},\n        ],\n        \"answer\": \"John Doe\"\n    }",
+      "enum": [
+        "post-training/messages",
+        "eval/question-answer",
+        "eval/messages-answer"
+      ],
+      "title": "DatasetPurpose",
+      "type": "string"
+    },
+    "GitHubTokenAuthConfig": {
+      "description": "Configuration for GitHub token authentication.",
+      "properties": {
+        "type": {
+          "const": "github_token",
+          "default": "github_token",
+          "title": "Type",
+          "type": "string"
+        },
+        "github_api_base_url": {
+          "default": "https://api.github.com",
+          "description": "Base URL for GitHub API (use https://api.github.com for public GitHub)",
+          "title": "Github Api Base Url",
+          "type": "string"
+        },
+        "claims_mapping": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Mapping from GitHub user fields to access attributes",
+          "title": "Claims Mapping",
+          "type": "object"
+        }
+      },
+      "title": "GitHubTokenAuthConfig",
+      "type": "object"
+    },
+    "InferenceStoreConfig": {
+      "properties": {
+        "sql_store_config": {
+          "default": "sqlite",
+          "discriminator": {
+            "mapping": {
+              "postgres": "#/$defs/PostgresSqlStoreConfig",
+              "sqlite": "#/$defs/SqliteSqlStoreConfig"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SqliteSqlStoreConfig"
+            },
+            {
+              "$ref": "#/$defs/PostgresSqlStoreConfig"
+            }
+          ],
+          "title": "Sql Store Config"
+        },
+        "max_write_queue_size": {
+          "default": 10000,
+          "description": "Max queued writes for inference store",
+          "title": "Max Write Queue Size",
+          "type": "integer"
+        },
+        "num_writers": {
+          "default": 4,
+          "description": "Number of concurrent background writers",
+          "title": "Num Writers",
+          "type": "integer"
+        }
+      },
+      "title": "InferenceStoreConfig",
+      "type": "object"
+    },
+    "JsonType": {
+      "description": "Parameter type for JSON values.\n\n:param type: Discriminator type. Always \"json\"",
+      "properties": {
+        "type": {
+          "const": "json",
+          "default": "json",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "JsonType",
+      "type": "object"
+    },
+    "KubernetesAuthProviderConfig": {
+      "description": "Configuration for Kubernetes authentication provider.",
+      "properties": {
+        "type": {
+          "const": "kubernetes",
+          "default": "kubernetes",
+          "title": "Type",
+          "type": "string"
+        },
+        "api_server_url": {
+          "default": "https://kubernetes.default.svc",
+          "description": "Kubernetes API server URL (e.g., https://api.cluster.domain:6443)",
+          "title": "Api Server Url",
+          "type": "string"
+        },
+        "verify_tls": {
+          "default": true,
+          "description": "Whether to verify TLS certificates",
+          "title": "Verify Tls",
+          "type": "boolean"
+        },
+        "tls_cafile": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to CA certificate file for TLS verification",
+          "title": "Tls Cafile"
+        },
+        "claims_mapping": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Mapping of Kubernetes user claims to access attributes",
+          "title": "Claims Mapping",
+          "type": "object"
+        }
+      },
+      "title": "KubernetesAuthProviderConfig",
+      "type": "object"
+    },
+    "LLMAsJudgeScoringFnParams": {
+      "description": "Parameters for LLM-as-judge scoring function configuration.\n:param type: The type of scoring function parameters, always llm_as_judge\n:param judge_model: Identifier of the LLM model to use as a judge for scoring\n:param prompt_template: (Optional) Custom prompt template for the judge model\n:param judge_score_regexes: Regexes to extract the answer from generated response\n:param aggregation_functions: Aggregation functions to apply to the scores of each row",
+      "properties": {
+        "type": {
+          "const": "llm_as_judge",
+          "default": "llm_as_judge",
+          "title": "Type",
+          "type": "string"
+        },
+        "judge_model": {
+          "title": "Judge Model",
+          "type": "string"
+        },
+        "prompt_template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt Template"
+        },
+        "judge_score_regexes": {
+          "description": "Regexes to extract the answer from generated response",
+          "items": {
+            "type": "string"
+          },
+          "title": "Judge Score Regexes",
+          "type": "array"
+        },
+        "aggregation_functions": {
+          "description": "Aggregation functions to apply to the scores of each row",
+          "items": {
+            "$ref": "#/$defs/AggregationFunctionType"
+          },
+          "title": "Aggregation Functions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "judge_model"
+      ],
+      "title": "LLMAsJudgeScoringFnParams",
+      "type": "object"
+    },
+    "LoggingConfig": {
+      "properties": {
+        "category_levels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "\n Dictionary of different logging configurations for different portions (ex: core, server) of llama stack",
+          "title": "Category Levels",
+          "type": "object"
+        }
+      },
+      "title": "LoggingConfig",
+      "type": "object"
+    },
+    "ModelInput": {
+      "properties": {
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Any additional metadata for this model",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "model_id": {
+          "title": "Model Id",
+          "type": "string"
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "provider_model_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Model Id"
+        },
+        "model_type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "llm"
+        }
+      },
+      "required": [
+        "model_id"
+      ],
+      "title": "ModelInput",
+      "type": "object"
+    },
+    "ModelType": {
+      "description": "Enumeration of supported model types in Llama Stack.\n:cvar llm: Large language model for text generation and completion\n:cvar embedding: Embedding model for converting text to vector representations",
+      "enum": [
+        "llm",
+        "embedding"
+      ],
+      "title": "ModelType",
+      "type": "string"
+    },
+    "MongoDBKVStoreConfig": {
+      "properties": {
+        "namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "All keys will be prefixed with this namespace",
+          "title": "Namespace"
+        },
+        "type": {
+          "const": "mongodb",
+          "default": "mongodb",
+          "title": "Type",
+          "type": "string"
+        },
+        "host": {
+          "default": "localhost",
+          "title": "Host",
+          "type": "string"
+        },
+        "port": {
+          "default": 27017,
+          "title": "Port",
+          "type": "integer"
+        },
+        "db": {
+          "default": "llamastack",
+          "title": "Db",
+          "type": "string"
+        },
+        "user": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "User"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Password"
+        },
+        "collection_name": {
+          "default": "llamastack_kvstore",
+          "title": "Collection Name",
+          "type": "string"
+        }
+      },
+      "title": "MongoDBKVStoreConfig",
+      "type": "object"
+    },
+    "NumberType": {
+      "description": "Parameter type for numeric values.\n\n:param type: Discriminator type. Always \"number\"",
+      "properties": {
+        "type": {
+          "const": "number",
+          "default": "number",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "NumberType",
+      "type": "object"
+    },
+    "OAuth2IntrospectionConfig": {
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "client_id": {
+          "title": "Client Id",
+          "type": "string"
+        },
+        "client_secret": {
+          "title": "Client Secret",
+          "type": "string"
+        },
+        "send_secret_in_body": {
+          "default": false,
+          "title": "Send Secret In Body",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "url",
+        "client_id",
+        "client_secret"
+      ],
+      "title": "OAuth2IntrospectionConfig",
+      "type": "object"
+    },
+    "OAuth2JWKSConfig": {
+      "properties": {
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        },
+        "token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "token to authorise access to jwks",
+          "title": "Token"
+        },
+        "key_recheck_period": {
+          "default": 3600,
+          "description": "The period to recheck the JWKS URI for key updates",
+          "title": "Key Recheck Period",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "uri"
+      ],
+      "title": "OAuth2JWKSConfig",
+      "type": "object"
+    },
+    "OAuth2TokenAuthConfig": {
+      "description": "Configuration for OAuth2 token authentication.",
+      "properties": {
+        "type": {
+          "const": "oauth2_token",
+          "default": "oauth2_token",
+          "title": "Type",
+          "type": "string"
+        },
+        "audience": {
+          "default": "llama-stack",
+          "title": "Audience",
+          "type": "string"
+        },
+        "verify_tls": {
+          "default": true,
+          "title": "Verify Tls",
+          "type": "boolean"
+        },
+        "tls_cafile": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tls Cafile"
+        },
+        "issuer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The OIDC issuer URL.",
+          "title": "Issuer"
+        },
+        "claims_mapping": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Claims Mapping",
+          "type": "object"
+        },
+        "jwks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OAuth2JWKSConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "JWKS configuration"
+        },
+        "introspection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OAuth2IntrospectionConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "OAuth2 introspection configuration"
+        }
+      },
+      "title": "OAuth2TokenAuthConfig",
+      "type": "object"
+    },
+    "ObjectType": {
+      "description": "Parameter type for object values.\n\n:param type: Discriminator type. Always \"object\"",
+      "properties": {
+        "type": {
+          "const": "object",
+          "default": "object",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ObjectType",
+      "type": "object"
+    },
+    "PostgresKVStoreConfig": {
+      "properties": {
+        "namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "All keys will be prefixed with this namespace",
+          "title": "Namespace"
+        },
+        "type": {
+          "const": "postgres",
+          "default": "postgres",
+          "title": "Type",
+          "type": "string"
+        },
+        "host": {
+          "default": "localhost",
+          "title": "Host",
+          "type": "string"
+        },
+        "port": {
+          "default": 5432,
+          "title": "Port",
+          "type": "integer"
+        },
+        "db": {
+          "default": "llamastack",
+          "title": "Db",
+          "type": "string"
+        },
+        "user": {
+          "title": "User",
+          "type": "string"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Password"
+        },
+        "ssl_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ssl Mode"
+        },
+        "ca_cert_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ca Cert Path"
+        },
+        "table_name": {
+          "default": "llamastack_kvstore",
+          "title": "Table Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user"
+      ],
+      "title": "PostgresKVStoreConfig",
+      "type": "object"
+    },
+    "PostgresSqlStoreConfig": {
+      "properties": {
+        "type": {
+          "const": "postgres",
+          "default": "postgres",
+          "title": "Type",
+          "type": "string"
+        },
+        "host": {
+          "default": "localhost",
+          "title": "Host",
+          "type": "string"
+        },
+        "port": {
+          "default": 5432,
+          "title": "Port",
+          "type": "integer"
+        },
+        "db": {
+          "default": "llamastack",
+          "title": "Db",
+          "type": "string"
+        },
+        "user": {
+          "title": "User",
+          "type": "string"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Password"
+        }
+      },
+      "required": [
+        "user"
+      ],
+      "title": "PostgresSqlStoreConfig",
+      "type": "object"
+    },
+    "Provider": {
+      "properties": {
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Id"
+        },
+        "provider_type": {
+          "title": "Provider Type",
+          "type": "string"
+        },
+        "config": {
+          "additionalProperties": true,
+          "default": {},
+          "title": "Config",
+          "type": "object"
+        },
+        "module": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "\n Fully-qualified name of the external provider module to import. The module is expected to have:\n\n  - `get_adapter_impl(config, deps)`: returns the adapter implementation\n\n  Example: `module: ramalama_stack`\n ",
+          "title": "Module"
+        }
+      },
+      "required": [
+        "provider_id",
+        "provider_type"
+      ],
+      "title": "Provider",
+      "type": "object"
+    },
+    "QuotaConfig": {
+      "properties": {
+        "kvstore": {
+          "$ref": "#/$defs/SqliteKVStoreConfig",
+          "description": "Config for KV store backend (SQLite only for now)"
+        },
+        "anonymous_max_requests": {
+          "default": 100,
+          "description": "Max requests for unauthenticated clients per period",
+          "title": "Anonymous Max Requests",
+          "type": "integer"
+        },
+        "authenticated_max_requests": {
+          "default": 1000,
+          "description": "Max requests for authenticated clients per period",
+          "title": "Authenticated Max Requests",
+          "type": "integer"
+        },
+        "period": {
+          "$ref": "#/$defs/QuotaPeriod",
+          "default": "day",
+          "description": "Quota period to set"
+        }
+      },
+      "required": [
+        "kvstore"
+      ],
+      "title": "QuotaConfig",
+      "type": "object"
+    },
+    "QuotaPeriod": {
+      "enum": [
+        "day"
+      ],
+      "title": "QuotaPeriod",
+      "type": "string"
+    },
+    "RedisKVStoreConfig": {
+      "properties": {
+        "namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "All keys will be prefixed with this namespace",
+          "title": "Namespace"
+        },
+        "type": {
+          "const": "redis",
+          "default": "redis",
+          "title": "Type",
+          "type": "string"
+        },
+        "host": {
+          "default": "localhost",
+          "title": "Host",
+          "type": "string"
+        },
+        "port": {
+          "default": 6379,
+          "title": "Port",
+          "type": "integer"
+        }
+      },
+      "title": "RedisKVStoreConfig",
+      "type": "object"
+    },
+    "RegexParserScoringFnParams": {
+      "description": "Parameters for regex parser scoring function configuration.\n:param type: The type of scoring function parameters, always regex_parser\n:param parsing_regexes: Regex to extract the answer from generated response\n:param aggregation_functions: Aggregation functions to apply to the scores of each row",
+      "properties": {
+        "type": {
+          "const": "regex_parser",
+          "default": "regex_parser",
+          "title": "Type",
+          "type": "string"
+        },
+        "parsing_regexes": {
+          "description": "Regex to extract the answer from generated response",
+          "items": {
+            "type": "string"
+          },
+          "title": "Parsing Regexes",
+          "type": "array"
+        },
+        "aggregation_functions": {
+          "description": "Aggregation functions to apply to the scores of each row",
+          "items": {
+            "$ref": "#/$defs/AggregationFunctionType"
+          },
+          "title": "Aggregation Functions",
+          "type": "array"
+        }
+      },
+      "title": "RegexParserScoringFnParams",
+      "type": "object"
+    },
+    "RowsDataSource": {
+      "description": "A dataset stored in rows.\n:param rows: The dataset is stored in rows. E.g.\n    - [\n        {\"messages\": [{\"role\": \"user\", \"content\": \"Hello, world!\"}, {\"role\": \"assistant\", \"content\": \"Hello, world!\"}]}\n    ]",
+      "properties": {
+        "type": {
+          "const": "rows",
+          "default": "rows",
+          "title": "Type",
+          "type": "string"
+        },
+        "rows": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rows"
+      ],
+      "title": "RowsDataSource",
+      "type": "object"
+    },
+    "Scope": {
+      "properties": {
+        "principal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Principal"
+        },
+        "actions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Action"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Action"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Actions"
+        },
+        "resource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resource"
+        }
+      },
+      "required": [
+        "actions"
+      ],
+      "title": "Scope",
+      "type": "object"
+    },
+    "ScoringFnInput": {
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Any additional metadata for this definition",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "return_type": {
+          "description": "The return type of the deterministic function",
+          "discriminator": {
+            "mapping": {
+              "agent_turn_input": "#/$defs/AgentTurnInputType",
+              "array": "#/$defs/ArrayType",
+              "boolean": "#/$defs/BooleanType",
+              "chat_completion_input": "#/$defs/ChatCompletionInputType",
+              "completion_input": "#/$defs/CompletionInputType",
+              "json": "#/$defs/JsonType",
+              "number": "#/$defs/NumberType",
+              "object": "#/$defs/ObjectType",
+              "string": "#/$defs/StringType",
+              "union": "#/$defs/UnionType"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/StringType"
+            },
+            {
+              "$ref": "#/$defs/NumberType"
+            },
+            {
+              "$ref": "#/$defs/BooleanType"
+            },
+            {
+              "$ref": "#/$defs/ArrayType"
+            },
+            {
+              "$ref": "#/$defs/ObjectType"
+            },
+            {
+              "$ref": "#/$defs/JsonType"
+            },
+            {
+              "$ref": "#/$defs/UnionType"
+            },
+            {
+              "$ref": "#/$defs/ChatCompletionInputType"
+            },
+            {
+              "$ref": "#/$defs/CompletionInputType"
+            },
+            {
+              "$ref": "#/$defs/AgentTurnInputType"
+            }
+          ],
+          "title": "Return Type"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "basic": "#/$defs/BasicScoringFnParams",
+                  "llm_as_judge": "#/$defs/LLMAsJudgeScoringFnParams",
+                  "regex_parser": "#/$defs/RegexParserScoringFnParams"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LLMAsJudgeScoringFnParams"
+                },
+                {
+                  "$ref": "#/$defs/RegexParserScoringFnParams"
+                },
+                {
+                  "$ref": "#/$defs/BasicScoringFnParams"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The parameters for the scoring function for benchmark eval, these can be overridden for app eval",
+          "title": "Params"
+        },
+        "scoring_fn_id": {
+          "title": "Scoring Fn Id",
+          "type": "string"
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "provider_scoring_fn_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Scoring Fn Id"
+        }
+      },
+      "required": [
+        "return_type",
+        "scoring_fn_id"
+      ],
+      "title": "ScoringFnInput",
+      "type": "object"
+    },
+    "ServerConfig": {
+      "properties": {
+        "port": {
+          "default": 8321,
+          "description": "Port to listen on",
+          "maximum": 65535,
+          "minimum": 1024,
+          "title": "Port",
+          "type": "integer"
+        },
+        "tls_certfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to TLS certificate file for HTTPS",
+          "title": "Tls Certfile"
+        },
+        "tls_keyfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to TLS key file for HTTPS",
+          "title": "Tls Keyfile"
+        },
+        "tls_cafile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to TLS CA file for HTTPS with mutual TLS authentication",
+          "title": "Tls Cafile"
+        },
+        "auth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AuthenticationConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Authentication configuration for the server"
+        },
+        "host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The host the server should listen on",
+          "title": "Host"
+        },
+        "quota": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuotaConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Per client quota request configuration"
+        },
+        "cors": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/CORSConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CORS configuration for cross-origin requests. Can be:\n- true: Enable localhost CORS for development\n- {allow_origins: [...], allow_methods: [...], ...}: Full configuration",
+          "title": "Cors"
+        }
+      },
+      "title": "ServerConfig",
+      "type": "object"
+    },
+    "ShieldInput": {
+      "properties": {
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Params"
+        },
+        "shield_id": {
+          "title": "Shield Id",
+          "type": "string"
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "provider_shield_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Shield Id"
+        }
+      },
+      "required": [
+        "shield_id"
+      ],
+      "title": "ShieldInput",
+      "type": "object"
+    },
+    "SqliteKVStoreConfig": {
+      "properties": {
+        "namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "All keys will be prefixed with this namespace",
+          "title": "Namespace"
+        },
+        "type": {
+          "const": "sqlite",
+          "default": "sqlite",
+          "title": "Type",
+          "type": "string"
+        },
+        "db_path": {
+          "default": "~/.llama/runtime/kvstore.db",
+          "description": "File path for the sqlite database",
+          "title": "Db Path",
+          "type": "string"
+        }
+      },
+      "title": "SqliteKVStoreConfig",
+      "type": "object"
+    },
+    "SqliteSqlStoreConfig": {
+      "properties": {
+        "type": {
+          "const": "sqlite",
+          "default": "sqlite",
+          "title": "Type",
+          "type": "string"
+        },
+        "db_path": {
+          "default": "~/.llama/runtime/sqlstore.db",
+          "description": "Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
+          "title": "Db Path",
+          "type": "string"
+        }
+      },
+      "title": "SqliteSqlStoreConfig",
+      "type": "object"
+    },
+    "StringType": {
+      "description": "Parameter type for string values.\n\n:param type: Discriminator type. Always \"string\"",
+      "properties": {
+        "type": {
+          "const": "string",
+          "default": "string",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "StringType",
+      "type": "object"
+    },
+    "ToolGroupInput": {
+      "description": "Input data for registering a tool group.\n\n:param toolgroup_id: Unique identifier for the tool group\n:param provider_id: ID of the provider that will handle this tool group\n:param args: (Optional) Additional arguments to pass to the provider\n:param mcp_endpoint: (Optional) Model Context Protocol endpoint for remote tools",
+      "properties": {
+        "toolgroup_id": {
+          "title": "Toolgroup Id",
+          "type": "string"
+        },
+        "provider_id": {
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "args": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Args"
+        },
+        "mcp_endpoint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/URL"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "toolgroup_id",
+        "provider_id"
+      ],
+      "title": "ToolGroupInput",
+      "type": "object"
+    },
+    "URIDataSource": {
+      "description": "A dataset that can be obtained from a URI.\n:param uri: The dataset can be obtained from a URI. E.g.\n    - \"https://mywebsite.com/mydata.jsonl\"\n    - \"lsfs://mydata.jsonl\"\n    - \"data:csv;base64,{base64_content}\"",
+      "properties": {
+        "type": {
+          "const": "uri",
+          "default": "uri",
+          "title": "Type",
+          "type": "string"
+        },
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "uri"
+      ],
+      "title": "URIDataSource",
+      "type": "object"
+    },
+    "URL": {
+      "description": "A URL reference to external content.\n\n:param uri: The URL string pointing to the resource",
+      "properties": {
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "uri"
+      ],
+      "title": "URL",
+      "type": "object"
+    },
+    "UnionType": {
+      "description": "Parameter type for union values.\n\n:param type: Discriminator type. Always \"union\"",
+      "properties": {
+        "type": {
+          "const": "union",
+          "default": "union",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "UnionType",
+      "type": "object"
+    },
+    "VectorDBInput": {
+      "description": "Input parameters for creating or configuring a vector database.\n\n:param vector_db_id: Unique identifier for the vector database\n:param embedding_model: Name of the embedding model to use for vector generation\n:param embedding_dimension: Dimension of the embedding vectors\n:param provider_vector_db_id: (Optional) Provider-specific identifier for the vector database",
+      "properties": {
+        "vector_db_id": {
+          "title": "Vector Db Id",
+          "type": "string"
+        },
+        "embedding_model": {
+          "title": "Embedding Model",
+          "type": "string"
+        },
+        "embedding_dimension": {
+          "title": "Embedding Dimension",
+          "type": "integer"
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "provider_vector_db_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Vector Db Id"
+        }
+      },
+      "required": [
+        "vector_db_id",
+        "embedding_model",
+        "embedding_dimension"
+      ],
+      "title": "VectorDBInput",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "version": {
+      "default": 2,
+      "title": "Version",
+      "type": "integer"
+    },
+    "image_name": {
+      "description": "\nReference to the distribution this package refers to. For unregistered (adhoc) packages,\nthis could be just a hash\n",
+      "title": "Image Name",
+      "type": "string"
+    },
+    "container_image": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Reference to the container image if this package refers to a container",
+      "title": "Container Image"
+    },
+    "apis": {
+      "description": "\nThe list of APIs to serve. If not specified, all APIs specified in the provider_map will be served",
+      "items": {
+        "type": "string"
+      },
+      "title": "Apis",
+      "type": "array"
+    },
+    "providers": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/$defs/Provider"
+        },
+        "type": "array"
+      },
+      "description": "\nOne or more providers to use for each API. The same provider_type (e.g., meta-reference)\ncan be instantiated multiple times (with different configs) if necessary.\n",
+      "title": "Providers",
+      "type": "object"
+    },
+    "metadata_store": {
+      "anyOf": [
+        {
+          "default": "sqlite",
+          "discriminator": {
+            "mapping": {
+              "mongodb": "#/$defs/MongoDBKVStoreConfig",
+              "postgres": "#/$defs/PostgresKVStoreConfig",
+              "redis": "#/$defs/RedisKVStoreConfig",
+              "sqlite": "#/$defs/SqliteKVStoreConfig"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/RedisKVStoreConfig"
+            },
+            {
+              "$ref": "#/$defs/SqliteKVStoreConfig"
+            },
+            {
+              "$ref": "#/$defs/PostgresKVStoreConfig"
+            },
+            {
+              "$ref": "#/$defs/MongoDBKVStoreConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "\nConfiguration for the persistence store used by the distribution registry. If not specified,\na default SQLite store will be used.",
+      "title": "Metadata Store"
+    },
+    "inference_store": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/InferenceStoreConfig"
+        },
+        {
+          "default": "sqlite",
+          "discriminator": {
+            "mapping": {
+              "postgres": "#/$defs/PostgresSqlStoreConfig",
+              "sqlite": "#/$defs/SqliteSqlStoreConfig"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SqliteSqlStoreConfig"
+            },
+            {
+              "$ref": "#/$defs/PostgresSqlStoreConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "\nConfiguration for the persistence store used by the inference API. Can be either a\nInferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).\nIf not specified, a default SQLite store will be used.",
+      "title": "Inference Store"
+    },
+    "conversations_store": {
+      "anyOf": [
+        {
+          "default": "sqlite",
+          "discriminator": {
+            "mapping": {
+              "postgres": "#/$defs/PostgresSqlStoreConfig",
+              "sqlite": "#/$defs/SqliteSqlStoreConfig"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SqliteSqlStoreConfig"
+            },
+            {
+              "$ref": "#/$defs/PostgresSqlStoreConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "\nConfiguration for the persistence store used by the conversations API.\nIf not specified, a default SQLite store will be used.",
+      "title": "Conversations Store"
+    },
+    "models": {
+      "items": {
+        "$ref": "#/$defs/ModelInput"
+      },
+      "title": "Models",
+      "type": "array"
+    },
+    "shields": {
+      "items": {
+        "$ref": "#/$defs/ShieldInput"
+      },
+      "title": "Shields",
+      "type": "array"
+    },
+    "vector_dbs": {
+      "items": {
+        "$ref": "#/$defs/VectorDBInput"
+      },
+      "title": "Vector Dbs",
+      "type": "array"
+    },
+    "datasets": {
+      "items": {
+        "$ref": "#/$defs/DatasetInput"
+      },
+      "title": "Datasets",
+      "type": "array"
+    },
+    "scoring_fns": {
+      "items": {
+        "$ref": "#/$defs/ScoringFnInput"
+      },
+      "title": "Scoring Fns",
+      "type": "array"
+    },
+    "benchmarks": {
+      "items": {
+        "$ref": "#/$defs/BenchmarkInput"
+      },
+      "title": "Benchmarks",
+      "type": "array"
+    },
+    "tool_groups": {
+      "items": {
+        "$ref": "#/$defs/ToolGroupInput"
+      },
+      "title": "Tool Groups",
+      "type": "array"
+    },
+    "logging": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LoggingConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Configuration for Llama Stack Logging"
+    },
+    "server": {
+      "$ref": "#/$defs/ServerConfig",
+      "description": "Configuration for the HTTP(S) server"
+    },
+    "external_providers_dir": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Path to directory containing external provider implementations. The providers code and dependencies must be installed on the system.",
+      "title": "External Providers Dir"
+    },
+    "external_apis_dir": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Path to directory containing external API implementations. The APIs code and dependencies must be installed on the system.",
+      "title": "External Apis Dir"
+    }
+  },
+  "required": [
+    "image_name",
+    "providers"
+  ],
+  "title": "StackRunConfig",
+  "type": "object"
+}
