@@ -145,7 +145,7 @@ class ListDatasetsResponse(BaseModel):
 
 
 class Datasets(Protocol):
-    @webmethod(route="/datasets", method="POST")
+    @webmethod(route="/datasets", method="POST", level="v1beta")
     async def register_dataset(
         self,
         purpose: DatasetPurpose,
@@ -214,7 +214,7 @@ class Datasets(Protocol):
         """
         ...
 
-    @webmethod(route="/datasets/{dataset_id:path}", method="GET")
+    @webmethod(route="/datasets/{dataset_id:path}", method="GET", level="v1beta")
     async def get_dataset(
         self,
         dataset_id: str,
@@ -226,7 +226,7 @@ class Datasets(Protocol):
         """
         ...
 
-    @webmethod(route="/datasets", method="GET")
+    @webmethod(route="/datasets", method="GET", level="v1beta")
     async def list_datasets(self) -> ListDatasetsResponse:
         """List all datasets.
 
@@ -234,7 +234,7 @@ class Datasets(Protocol):
         """
         ...
 
-    @webmethod(route="/datasets/{dataset_id:path}", method="DELETE")
+    @webmethod(route="/datasets/{dataset_id:path}", method="DELETE", level="v1beta")
     async def unregister_dataset(
         self,
         dataset_id: str,
