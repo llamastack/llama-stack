@@ -106,14 +106,16 @@ inference_store:
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/inference_store.db
 models:
 - metadata: {}
-  model_id: ${env.INFERENCE_MODEL}
+  provider_model_id: ${env.INFERENCE_MODEL}
   provider_id: meta-reference-inference
   model_type: llm
+  use_provider_model_id_as_id: false
 - metadata:
     embedding_dimension: 384
-  model_id: all-MiniLM-L6-v2
+  provider_model_id: all-MiniLM-L6-v2
   provider_id: sentence-transformers
   model_type: embedding
+  use_provider_model_id_as_id: false
 shields: []
 vector_dbs: []
 datasets: []

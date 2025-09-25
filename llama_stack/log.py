@@ -9,11 +9,19 @@ import os
 import re
 from logging.config import dictConfig  # allow-direct-logging
 
+from pydantic import BaseModel, Field
 from rich.console import Console
 from rich.errors import MarkupError
 from rich.logging import RichHandler
 
-from llama_stack.core.datatypes import LoggingConfig
+
+class LoggingConfig(BaseModel):
+    category_levels: dict[str, str] = Field(
+        default_factory=dict,
+        description="""
+ Dictionary of different logging configurations for different portions (ex: core, server) of llama stack""",
+    )
+
 
 # Default log level
 DEFAULT_LOG_LEVEL = logging.INFO

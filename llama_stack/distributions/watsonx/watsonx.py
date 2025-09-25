@@ -73,7 +73,7 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
     ]
 
     embedding_model = ModelInput(
-        model_id="all-MiniLM-L6-v2",
+        provider_model_id="all-MiniLM-L6-v2",
         provider_id="sentence-transformers",
         model_type=ModelType.embedding,
         metadata={

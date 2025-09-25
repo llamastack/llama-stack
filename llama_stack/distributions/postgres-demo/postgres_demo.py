@@ -75,7 +75,7 @@ def get_distribution_template() -> DistributionTemplate:
 
     default_models = [
         ModelInput(
-            model_id="${env.INFERENCE_MODEL}",
+            provider_model_id="${env.INFERENCE_MODEL}",
             provider_id="vllm-inference",
         )
     ]
@@ -85,7 +85,7 @@ def get_distribution_template() -> DistributionTemplate:
         config=SentenceTransformersInferenceConfig.sample_run_config(),
     )
     embedding_model = ModelInput(
-        model_id="all-MiniLM-L6-v2",
+        provider_model_id="all-MiniLM-L6-v2",
         provider_id=embedding_provider.provider_id,
         model_type=ModelType.embedding,
         metadata={

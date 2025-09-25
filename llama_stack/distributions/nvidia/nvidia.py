@@ -60,11 +60,11 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
     )
     inference_model = ModelInput(
-        model_id="${env.INFERENCE_MODEL}",
+        provider_model_id="${env.INFERENCE_MODEL}",
         provider_id="nvidia",
     )
     safety_model = ModelInput(
-        model_id="${env.SAFETY_MODEL}",
+        provider_model_id="${env.SAFETY_MODEL}",
         provider_id="nvidia",
     )
 
