@@ -57,7 +57,7 @@ def authorized_store(backend_config):
     config = config_func()
 
     base_sqlstore = sqlstore_impl(config)
-    authorized_store = AuthorizedSqlStore(base_sqlstore)
+    authorized_store = AuthorizedSqlStore(base_sqlstore, default_policy())
 
     yield authorized_store
 
@@ -106,7 +106,7 @@ async def test_authorized_store_attributes(mock_get_authenticated_user, authoriz
         await authorized_store.insert(table_name, {"id": "1", "data": "public_data"})
 
         # Test fetching with no user - should not error on JSON comparison
-        result = await authorized_store.fetch_all(table_name, policy=default_policy())
+        result = await authorized_store.fetch_all(table_name)
         assert len(result.data) == 1
         assert result.data[0]["id"] == "1"
         assert result.data[0]["access_attributes"] is None
@@ -119,7 +119,7 @@ async def test_authorized_store_attributes(mock_get_authenticated_user, authoriz
         await authorized_store.insert(table_name, {"id": "2", "data": "admin_data"})
 
         # Fetch all - admin should see both
-        result = await authorized_store.fetch_all(table_name, policy=default_policy())
+        result = await authorized_store.fetch_all(table_name)
         assert len(result.data) == 2
 
         # Test with non-admin user
@@ -127,7 +127,7 @@ async def test_authorized_store_attributes(mock_get_authenticated_user, authoriz
         mock_get_authenticated_user.return_value = regular_user
 
         # Should only see public record
-        result = await authorized_store.fetch_all(table_name, policy=default_policy())
+        result = await authorized_store.fetch_all(table_name)
         assert len(result.data) == 1
         assert result.data[0]["id"] == "1"
 
@@ -156,7 +156,7 @@ async def test_authorized_store_attributes(mock_get_authenticated_user, authoriz
 
         # Now test with the multi-user who has both roles=admin and teams=dev
         mock_get_authenticated_user.return_value = multi_user
-        result = await authorized_store.fetch_all(table_name, policy=default_policy())
+        result = await authorized_store.fetch_all(table_name)
 
         # Should see:
         # - public record (1) - no access_attributes
@@ -217,21 +217,24 @@ async def test_user_ownership_policy(mock_get_authenticated_user, authorized_sto
             ),
         ]
 
+        # Create a new authorized store with the owner-only policy
+        owner_only_store = AuthorizedSqlStore(authorized_store.sql_store, owner_only_policy)
+
         # Test user1 access - should only see their own record
         mock_get_authenticated_user.return_value = user1
-        result = await authorized_store.fetch_all(table_name, policy=owner_only_policy)
+        result = await owner_only_store.fetch_all(table_name)
         assert len(result.data) == 1, f"Expected user1 to see 1 record, got {len(result.data)}"
         assert result.data[0]["id"] == "1", f"Expected user1's record, got {result.data[0]['id']}"
 
         # Test user2 access - should only see their own record
         mock_get_authenticated_user.return_value = user2
-        result = await authorized_store.fetch_all(table_name, policy=owner_only_policy)
+        result = await owner_only_store.fetch_all(table_name)
         assert len(result.data) == 1, f"Expected user2 to see 1 record, got {len(result.data)}"
         assert result.data[0]["id"] == "2", f"Expected user2's record, got {result.data[0]['id']}"
 
         # Test with anonymous user - should see no records
         mock_get_authenticated_user.return_value = None
-        result = await authorized_store.fetch_all(table_name, policy=owner_only_policy)
+        result = await owner_only_store.fetch_all(table_name)
         assert len(result.data) == 0, f"Expected anonymous user to see 0 records, got {len(result.data)}"
 
     finally:

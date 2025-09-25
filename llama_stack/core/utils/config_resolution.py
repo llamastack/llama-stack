@@ -10,7 +10,7 @@ from pathlib import Path
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.log import get_logger
 
-logger = get_logger(name=__name__, category="config_resolution")
+logger = get_logger(name=__name__, category="core")
 
 
 DISTRO_DIR = Path(__file__).parent.parent.parent.parent / "llama_stack" / "distributions"

@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import importlib.resources
-import logging
 import sys
 
 from pydantic import BaseModel
@@ -17,9 +16,10 @@ from llama_stack.core.external import load_external_apis
 from llama_stack.core.utils.exec import run_command
 from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.distributions.template import DistributionTemplate
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="core")
 
 # These are the dependencies needed by the distribution server.
 # `llama-stack` is automatically installed by the installation script.
@@ -80,7 +80,7 @@ def get_provider_dependencies(
     normal_deps = []
     special_deps = []
     for package in deps:
-        if "--no-deps" in package or "--index-url" in package:
+        if any(f in package for f in ["--no-deps", "--index-url", "--extra-index-url"]):
             special_deps.append(package)
         else:
             normal_deps.append(package)

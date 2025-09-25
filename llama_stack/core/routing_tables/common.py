@@ -23,7 +23,7 @@ from llama_stack.core.store import DistributionRegistry
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api, RoutingTable
 
-logger = get_logger(name=__name__, category="core")
+logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 def get_impl_api(p: Any) -> Api:
@@ -64,6 +64,10 @@ async def unregister_object_from_provider(obj: RoutableObject, p: Any) -> None:
         return await p.unregister_shield(obj.identifier)
     elif api == Api.datasetio:
         return await p.unregister_dataset(obj.identifier)
+    elif api == Api.eval:
+        return await p.unregister_benchmark(obj.identifier)
+    elif api == Api.scoring:
+        return await p.unregister_scoring_function(obj.identifier)
     elif api == Api.tool_runtime:
         return await p.unregister_toolgroup(obj.identifier)
     else:

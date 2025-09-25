@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import hashlib
 import itertools
 import json
 import time
@@ -136,33 +137,50 @@ class ReferenceBatchesImpl(Batches):
         endpoint: str,
         completion_window: Literal["24h"],
         metadata: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> BatchObject:
         """
         Create a new batch for processing multiple API requests.
 
-        Error handling by levels -
-         0. Input param handling, results in 40x errors before processing, e.g.
-           - Wrong completion_window
-           - Invalid metadata types
-           - Unknown endpoint
-          -> no batch created
-         1. Errors preventing processing, result in BatchErrors aggregated in process_batch, e.g.
-           - input_file_id missing
-           - invalid json in file
-           - missing custom_id, method, url, body
-           - invalid model
-           - streaming
-          -> batch created, validation sends to failed status
-         2. Processing errors, result in error_file_id entries, e.g.
-           - Any error returned from inference endpoint
-          -> batch created, goes to completed status
+        This implementation provides optional idempotency: when an idempotency key
+        (idempotency_key) is provided, a deterministic ID is generated based on the input
+        parameters. If a batch with the same parameters already exists, it will be
+        returned instead of creating a duplicate. Without an idempotency key,
+        each request creates a new batch with a unique ID.
+
+        Args:
+            input_file_id: The ID of an uploaded file containing requests for the batch.
+            endpoint: The endpoint to be used for all requests in the batch.
+            completion_window: The time window within which the batch should be processed.
+            metadata: Optional metadata for the batch.
+            idempotency_key: Optional idempotency key for enabling idempotent behavior.
+
+        Returns:
+            The created or existing batch object.
         """
+
+        # Error handling by levels -
+        #  0. Input param handling, results in 40x errors before processing, e.g.
+        #    - Wrong completion_window
+        #    - Invalid metadata types
+        #    - Unknown endpoint
+        #   -> no batch created
+        #  1. Errors preventing processing, result in BatchErrors aggregated in process_batch, e.g.
+        #    - input_file_id missing
+        #    - invalid json in file
+        #    - missing custom_id, method, url, body
+        #    - invalid model
+        #    - streaming
+        #   -> batch created, validation sends to failed status
+        #  2. Processing errors, result in error_file_id entries, e.g.
+        #    - Any error returned from inference endpoint
+        #   -> batch created, goes to completed status
 
         # TODO: set expiration time for garbage collection
 
-        if endpoint not in ["/v1/chat/completions"]:
+        if endpoint not in ["/v1/chat/completions", "/v1/completions"]:
             raise ValueError(
-                f"Invalid endpoint: {endpoint}. Supported values: /v1/chat/completions. Code: invalid_value. Param: endpoint",
+                f"Invalid endpoint: {endpoint}. Supported values: /v1/chat/completions, /v1/completions. Code: invalid_value. Param: endpoint",
             )
 
         if completion_window != "24h":
@@ -171,6 +189,35 @@ class ReferenceBatchesImpl(Batches):
             )
 
         batch_id = f"batch_{uuid.uuid4().hex[:16]}"
+
+        # For idempotent requests, use the idempotency key for the batch ID
+        # This ensures the same key always maps to the same batch ID,
+        # allowing us to detect parameter conflicts
+        if idempotency_key is not None:
+            hash_input = idempotency_key.encode("utf-8")
+            hash_digest = hashlib.sha256(hash_input).hexdigest()[:24]
+            batch_id = f"batch_{hash_digest}"
+
+            try:
+                existing_batch = await self.retrieve_batch(batch_id)
+
+                if (
+                    existing_batch.input_file_id != input_file_id
+                    or existing_batch.endpoint != endpoint
+                    or existing_batch.completion_window != completion_window
+                    or existing_batch.metadata != metadata
+                ):
+                    raise ConflictError(
+                        f"Idempotency key '{idempotency_key}' was previously used with different parameters. "
+                        "Either use a new idempotency key or ensure all parameters match the original request."
+                    )
+
+                logger.info(f"Returning existing batch with ID: {batch_id}")
+                return existing_batch
+            except ResourceNotFoundError:
+                # Batch doesn't exist, continue with creation
+                pass
+
         current_time = int(time.time())
 
         batch = BatchObject(
@@ -185,6 +232,7 @@ class ReferenceBatchesImpl(Batches):
         )
 
         await self.kvstore.set(f"batch:{batch_id}", batch.to_json())
+        logger.info(f"Created new batch with ID: {batch_id}")
 
         if self.process_batches:
             task = asyncio.create_task(self._process_batch(batch_id))
@@ -376,13 +424,21 @@ class ReferenceBatchesImpl(Batches):
                             )
                             valid = False
 
-                        for param, expected_type, type_string in [
-                            ("model", str, "a string"),
-                            # messages is specific to /v1/chat/completions
-                            # we could skip validating messages here and let inference fail. however,
-                            # that would be a very expensive way to find out messages is wrong.
-                            ("messages", list, "an array"),  # TODO: allow messages to be a string?
-                        ]:
+                        if batch.endpoint == "/v1/chat/completions":
+                            required_params = [
+                                ("model", str, "a string"),
+                                # messages is specific to /v1/chat/completions
+                                # we could skip validating messages here and let inference fail. however,
+                                # that would be a very expensive way to find out messages is wrong.
+                                ("messages", list, "an array"),  # TODO: allow messages to be a string?
+                            ]
+                        else:  # /v1/completions
+                            required_params = [
+                                ("model", str, "a string"),
+                                ("prompt", str, "a string"),  # TODO: allow prompt to be a list of strings??
+                            ]
+
+                        for param, expected_type, type_string in required_params:
                             if param not in body:
                                 errors.append(
                                     BatchError(
@@ -543,20 +599,37 @@ class ReferenceBatchesImpl(Batches):
 
         try:
             # TODO(SECURITY): review body for security issues
-            request.body["messages"] = [convert_to_openai_message_param(msg) for msg in request.body["messages"]]
-            chat_response = await self.inference_api.openai_chat_completion(**request.body)
+            if request.url == "/v1/chat/completions":
+                request.body["messages"] = [convert_to_openai_message_param(msg) for msg in request.body["messages"]]
+                chat_response = await self.inference_api.openai_chat_completion(**request.body)
 
-            # this is for mypy, we don't allow streaming so we'll get the right type
-            assert hasattr(chat_response, "model_dump_json"), "Chat response must have model_dump_json method"
-            return {
-                "id": request_id,
-                "custom_id": request.custom_id,
-                "response": {
-                    "status_code": 200,
-                    "request_id": request_id,  # TODO: should this be different?
-                    "body": chat_response.model_dump_json(),
-                },
-            }
+                # this is for mypy, we don't allow streaming so we'll get the right type
+                assert hasattr(chat_response, "model_dump_json"), "Chat response must have model_dump_json method"
+                return {
+                    "id": request_id,
+                    "custom_id": request.custom_id,
+                    "response": {
+                        "status_code": 200,
+                        "request_id": request_id,  # TODO: should this be different?
+                        "body": chat_response.model_dump_json(),
+                    },
+                }
+            else:  # /v1/completions
+                completion_response = await self.inference_api.openai_completion(**request.body)
+
+                # this is for mypy, we don't allow streaming so we'll get the right type
+                assert hasattr(completion_response, "model_dump_json"), (
+                    "Completion response must have model_dump_json method"
+                )
+                return {
+                    "id": request_id,
+                    "custom_id": request.custom_id,
+                    "response": {
+                        "status_code": 200,
+                        "request_id": request_id,
+                        "body": completion_response.model_dump_json(),
+                    },
+                }
         except Exception as e:
             logger.info(f"Error processing request {request.custom_id} in batch {batch_id}: {e}")
             return {

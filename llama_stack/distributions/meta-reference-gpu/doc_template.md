@@ -1,7 +1,7 @@
 ---
 orphan: true
 ---
-# Meta Reference Distribution
+# Meta Reference GPU Distribution
 
 ```{toctree}
 :maxdepth: 2
@@ -29,7 +29,7 @@ The following environment variables can be configured:
 
 ## Prerequisite: Downloading Models
 
-Please use `llama model list --downloaded` to check that you have llama model checkpoints downloaded in `~/.llama` before proceeding. See [installation guide](https://llama-stack.readthedocs.io/en/latest/references/llama_cli_reference/download_models.html) here to download the models. Run `llama model list` to see the available models to download, and `llama model download` to download the checkpoints.
+Please use `llama model list --downloaded` to check that you have llama model checkpoints downloaded in `~/.llama` before proceeding. See [installation guide](../../references/llama_cli_reference/download_models.md) here to download the models. Run `llama model list` to see the available models to download, and `llama model download` to download the checkpoints.
 
 ```
 $ llama model list --downloaded

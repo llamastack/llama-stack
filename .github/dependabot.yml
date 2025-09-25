@@ -9,6 +9,7 @@ updates:
       day: "saturday"
     commit-message:
       prefix: chore(github-deps)
+
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
@@ -19,3 +20,14 @@ updates:
       - python
     commit-message:
       prefix: chore(python-deps)
+
+  - package-ecosystem: npm
+    directory: "/llama_stack/ui"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+    labels:
+      - type/dependencies
+      - javascript
+    commit-message:
+      prefix: chore(ui-deps)

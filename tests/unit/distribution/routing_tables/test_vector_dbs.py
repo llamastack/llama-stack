@@ -7,6 +7,7 @@
 # Unit tests for the routing tables vector_dbs
 
 import time
+import uuid
 from unittest.mock import AsyncMock
 
 import pytest
@@ -34,6 +35,7 @@ from tests.unit.distribution.routers.test_routing_tables import Impl, InferenceI
 class VectorDBImpl(Impl):
     def __init__(self):
         super().__init__(Api.vector_io)
+        self.vector_stores = {}
 
     async def register_vector_db(self, vector_db: VectorDB):
         return vector_db
@@ -114,8 +116,35 @@ class VectorDBImpl(Impl):
     async def openai_delete_vector_store_file(self, vector_store_id, file_id):
         return VectorStoreFileDeleteResponse(id=file_id, deleted=True)
 
+    async def openai_create_vector_store(
+        self,
+        name=None,
+        embedding_model=None,
+        embedding_dimension=None,
+        provider_id=None,
+        provider_vector_db_id=None,
+        **kwargs,
+    ):
+        vector_store_id = provider_vector_db_id or f"vs_{uuid.uuid4()}"
+        vector_store = VectorStoreObject(
+            id=vector_store_id,
+            name=name or vector_store_id,
+            created_at=int(time.time()),
+            file_counts=VectorStoreFileCounts(completed=0, cancelled=0, failed=0, in_progress=0, total=0),
+        )
+        self.vector_stores[vector_store_id] = vector_store
+        return vector_store
+
+    async def openai_list_vector_stores(self, **kwargs):
+        from llama_stack.apis.vector_io.vector_io import VectorStoreListResponse
+
+        return VectorStoreListResponse(
+            data=list(self.vector_stores.values()), has_more=False, first_id=None, last_id=None
+        )
+
 
 async def test_vectordbs_routing_table(cached_disk_dist_registry):
+    n = 10
     table = VectorDBsRoutingTable({"test_provider": VectorDBImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
 
@@ -129,20 +158,96 @@ async def test_vectordbs_routing_table(cached_disk_dist_registry):
     )
 
     # Register multiple vector databases and verify listing
-    await table.register_vector_db(vector_db_id="test-vectordb", embedding_model="test-model")
-    await table.register_vector_db(vector_db_id="test-vectordb-2", embedding_model="test-model")
+    vdb_dict = {}
+    for i in range(n):
+        vdb_dict[i] = await table.register_vector_db(vector_db_id=f"test-vectordb-{i}", embedding_model="test-model")
+
     vector_dbs = await table.list_vector_dbs()
 
-    assert len(vector_dbs.data) == 2
+    assert len(vector_dbs.data) == len(vdb_dict)
     vector_db_ids = {v.identifier for v in vector_dbs.data}
-    assert "test-vectordb" in vector_db_ids
-    assert "test-vectordb-2" in vector_db_ids
-
-    await table.unregister_vector_db(vector_db_id="test-vectordb")
-    await table.unregister_vector_db(vector_db_id="test-vectordb-2")
+    for k in vdb_dict:
+        assert vdb_dict[k].identifier in vector_db_ids
+    for k in vdb_dict:
+        await table.unregister_vector_db(vector_db_id=vdb_dict[k].identifier)
 
     vector_dbs = await table.list_vector_dbs()
     assert len(vector_dbs.data) == 0
+
+
+async def test_vector_db_and_vector_store_id_mapping(cached_disk_dist_registry):
+    n = 10
+    impl = VectorDBImpl()
+    table = VectorDBsRoutingTable({"test_provider": impl}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    m_table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await m_table.initialize()
+    await m_table.register_model(
+        model_id="test-model",
+        provider_id="test_provider",
+        metadata={"embedding_dimension": 128},
+        model_type=ModelType.embedding,
+    )
+
+    vdb_dict = {}
+    for i in range(n):
+        vdb_dict[i] = await table.register_vector_db(vector_db_id=f"test-vectordb-{i}", embedding_model="test-model")
+
+    vector_dbs = await table.list_vector_dbs()
+    vector_db_ids = {v.identifier for v in vector_dbs.data}
+
+    vector_stores = await impl.openai_list_vector_stores()
+    vector_store_ids = {v.id for v in vector_stores.data}
+
+    assert vector_db_ids == vector_store_ids, (
+        f"Vector DB IDs {vector_db_ids} don't match vector store IDs {vector_store_ids}"
+    )
+
+    for vector_store in vector_stores.data:
+        vector_db = await table.get_vector_db(vector_store.id)
+        assert vector_store.name == vector_db.vector_db_name, (
+            f"Vector store name {vector_store.name} doesn't match vector store ID {vector_store.id}"
+        )
+
+    for vector_db_id in vector_db_ids:
+        await table.unregister_vector_db(vector_db_id)
+
+    assert len((await table.list_vector_dbs()).data) == 0
+
+
+async def test_vector_db_id_becomes_vector_store_name(cached_disk_dist_registry):
+    impl = VectorDBImpl()
+    table = VectorDBsRoutingTable({"test_provider": impl}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    m_table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await m_table.initialize()
+    await m_table.register_model(
+        model_id="test-model",
+        provider_id="test_provider",
+        metadata={"embedding_dimension": 128},
+        model_type=ModelType.embedding,
+    )
+
+    user_provided_id = "my-custom-vector-db"
+    await table.register_vector_db(vector_db_id=user_provided_id, embedding_model="test-model")
+
+    vector_stores = await impl.openai_list_vector_stores()
+    assert len(vector_stores.data) == 1
+
+    vector_store = vector_stores.data[0]
+
+    assert vector_store.name == user_provided_id
+
+    assert vector_store.id.startswith("vs_")
+    assert vector_store.id != user_provided_id
+
+    vector_dbs = await table.list_vector_dbs()
+    assert len(vector_dbs.data) == 1
+    assert vector_dbs.data[0].identifier == vector_store.id
+
+    await table.unregister_vector_db(vector_store.id)
 
 
 async def test_openai_vector_stores_routing_table_roles(cached_disk_dist_registry):
@@ -164,7 +269,8 @@ async def test_openai_vector_stores_routing_table_roles(cached_disk_dist_registr
 
     authorized_user = User(principal="alice", attributes={"roles": [authorized_team]})
     with request_provider_data_context({}, authorized_user):
-        _ = await table.register_vector_db(vector_db_id="vs1", embedding_model="test-model")
+        registered_vdb = await table.register_vector_db(vector_db_id="vs1", embedding_model="test-model")
+        authorized_table = registered_vdb.identifier  # Use the actual generated ID
 
     # Authorized reader
     with request_provider_data_context({}, authorized_user):
@@ -227,7 +333,8 @@ async def test_openai_vector_stores_routing_table_actions(cached_disk_dist_regis
     )
 
     with request_provider_data_context({}, admin_user):
-        await table.register_vector_db(vector_db_id=vector_db_id, embedding_model="test-model")
+        registered_vdb = await table.register_vector_db(vector_db_id=vector_db_id, embedding_model="test-model")
+        vector_db_id = registered_vdb.identifier  # Use the actual generated ID
 
     read_methods = [
         (table.openai_retrieve_vector_store, (vector_db_id,), {}),

@@ -13,9 +13,10 @@ set -euo pipefail
 
 # Default values
 BRANCH=""
+PR_HEAD_REPO=""
 TEST_SUBDIRS=""
-TEST_PROVIDER="ollama"
-RUN_VISION_TESTS=false
+TEST_SETUP="ollama"
+TEST_SUITE="base"
 TEST_PATTERN=""
 
 # Help function
@@ -27,24 +28,24 @@ Trigger the integration test recording workflow remotely. This way you do not ne
 
 OPTIONS:
     -b, --branch BRANCH         Branch to run the workflow on (defaults to current branch)
-    -s, --test-subdirs DIRS     Comma-separated list of test subdirectories to run (REQUIRED)
-    -p, --test-provider PROVIDER Test provider to use: vllm or ollama (default: ollama)
-    -v, --run-vision-tests      Include vision tests in the recording
-    -k, --test-pattern PATTERN  Regex pattern to pass to pytest -k
+    -t, --suite SUITE           Test suite to use: base, responses, vision, etc. (default: base)
+    -p, --setup SETUP           Test setup to use: vllm, ollama, gpt, etc. (default: ollama)
+    -s, --subdirs DIRS          Comma-separated list of test subdirectories to run (overrides suite)
+    -k, --pattern PATTERN       Regex pattern to pass to pytest -k
     -h, --help                  Show this help message
 
 EXAMPLES:
     # Record tests for current branch with agents subdirectory
-    $0 --test-subdirs "agents"
+    $0 --subdirs "agents"
 
     # Record tests for specific branch with vision tests
-    $0 -b my-feature-branch --test-subdirs "inference" --run-vision-tests
+    $0 -b my-feature-branch --suite vision
 
-    # Record multiple test subdirectories with specific provider
-    $0 --test-subdirs "agents,inference" --test-provider vllm
+    # Record multiple test subdirectories with specific setup
+    $0 --subdirs "agents,inference" --setup vllm
 
     # Record tests matching a specific pattern
-    $0 --test-subdirs "inference" --test-pattern "test_streaming"
+    $0 --subdirs "inference" --pattern "test_streaming"
 
 EOF
 }
@@ -63,19 +64,19 @@ while [[ $# -gt 0 ]]; do
             BRANCH="$2"
             shift 2
             ;;
-        -s|--test-subdirs)
+        -s|--subdirs)
             TEST_SUBDIRS="$2"
             shift 2
             ;;
-        -p|--test-provider)
-            TEST_PROVIDER="$2"
+        -p|--setup)
+            TEST_SETUP="$2"
             shift 2
             ;;
-        -v|--run-vision-tests)
-            RUN_VISION_TESTS=true
-            shift
+        -t|--suite)
+            TEST_SUITE="$2"
+            shift 2
             ;;
-        -k|--test-pattern)
+        -k|--pattern)
             TEST_PATTERN="$2"
             shift 2
             ;;
@@ -92,22 +93,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate required parameters
-if [[ -z "$TEST_SUBDIRS" ]]; then
-    echo "Error: --test-subdirs is required"
-    echo "Please specify which test subdirectories to run, e.g.:"
-    echo "  $0 --test-subdirs \"agents,inference\""
-    echo "  $0 --test-subdirs \"inference\" --run-vision-tests"
+if [[ -z "$TEST_SUBDIRS" && -z "$TEST_SUITE" ]]; then
+    echo "Error: --subdirs or --suite is required"
+    echo "Please specify which test subdirectories to run or test suite to use, e.g.:"
+    echo "  $0 --subdirs \"agents,inference\""
+    echo "  $0 --suite vision"
     echo ""
     exit 1
 fi
 
-# Validate test provider
-if [[ "$TEST_PROVIDER" != "vllm" && "$TEST_PROVIDER" != "ollama" ]]; then
-    echo "❌ Error: Invalid test provider '$TEST_PROVIDER'"
-    echo "   Supported providers: vllm, ollama"
-    echo "   Example: $0 --test-subdirs \"agents\" --test-provider vllm"
-    exit 1
-fi
+# Validate test setup (optional - setups are validated by the workflow itself)
+# Common setups: ollama, vllm, gpt, etc.
 
 # Check if required tools are installed
 if ! command -v gh &> /dev/null; then
@@ -237,22 +233,25 @@ fi
 # Build the workflow dispatch command
 echo "Triggering integration test recording workflow..."
 echo "Branch: $BRANCH"
-echo "Test provider: $TEST_PROVIDER"
+echo "Test setup: $TEST_SETUP"
 echo "Test subdirs: $TEST_SUBDIRS"
-echo "Run vision tests: $RUN_VISION_TESTS"
+echo "Test suite: $TEST_SUITE"
 echo "Test pattern: ${TEST_PATTERN:-"(none)"}"
 echo ""
 
 # Prepare inputs for gh workflow run
-INPUTS="-f test-subdirs='$TEST_SUBDIRS'"
-if [[ -n "$TEST_PROVIDER" ]]; then
-    INPUTS="$INPUTS -f test-provider='$TEST_PROVIDER'"
+INPUTS=
+if [[ -n "$TEST_SUBDIRS" ]]; then
+    INPUTS="$INPUTS -f subdirs='$TEST_SUBDIRS'"
 fi
-if [[ "$RUN_VISION_TESTS" == "true" ]]; then
-    INPUTS="$INPUTS -f run-vision-tests=true"
+if [[ -n "$TEST_SETUP" ]]; then
+    INPUTS="$INPUTS -f test-setup='$TEST_SETUP'"
+fi
+if [[ -n "$TEST_SUITE" ]]; then
+    INPUTS="$INPUTS -f suite='$TEST_SUITE'"
 fi
 if [[ -n "$TEST_PATTERN" ]]; then
-    INPUTS="$INPUTS -f test-pattern='$TEST_PATTERN'"
+    INPUTS="$INPUTS -f pattern='$TEST_PATTERN'"
 fi
 
 # Run the workflow

@@ -1,0 +1,299 @@
+---
+title: Llama Stack Playground
+description: Interactive interface to explore and experiment with Llama Stack capabilities
+sidebar_label: Playground
+sidebar_position: 10
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Llama Stack Playground
+
+:::note[Experimental Feature]
+The Llama Stack Playground is currently experimental and subject to change. We welcome feedback and contributions to help improve it.
+:::
+
+The Llama Stack Playground is a simple interface that aims to:
+- **Showcase capabilities and concepts** of Llama Stack in an interactive environment
+- **Demo end-to-end application code** to help users get started building their own applications
+- **Provide a UI** to help users inspect and understand Llama Stack API providers and resources
+
+## Key Features
+
+### Interactive Playground Pages
+
+The playground provides interactive pages for users to explore Llama Stack API capabilities:
+
+#### Chatbot Interface
+
+<video
+  controls
+  autoPlay
+  playsInline
+  muted
+  loop
+  style={{width: '100%'}}
+>
+  <source src="https://github.com/user-attachments/assets/8d2ef802-5812-4a28-96e1-316038c84cbf" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+<Tabs>
+<TabItem value="chat" label="Chat">
+
+**Simple Chat Interface**
+- Chat directly with Llama models through an intuitive interface
+- Uses the `/inference/chat-completion` streaming API under the hood
+- Real-time message streaming for responsive interactions
+- Perfect for testing model capabilities and prompt engineering
+
+</TabItem>
+<TabItem value="rag" label="RAG Chat">
+
+**Document-Aware Conversations**
+- Upload documents to create memory banks
+- Chat with a RAG-enabled agent that can query your documents
+- Uses Llama Stack's `/agents` API to create and manage RAG sessions
+- Ideal for exploring knowledge-enhanced AI applications
+
+</TabItem>
+</Tabs>
+
+#### Evaluation Interface
+
+<video
+  controls
+  autoPlay
+  playsInline
+  muted
+  loop
+  style={{width: '100%'}}
+>
+  <source src="https://github.com/user-attachments/assets/6cc1659f-eba4-49ca-a0a5-7c243557b4f5" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+<Tabs>
+<TabItem value="scoring" label="Scoring Evaluations">
+
+**Custom Dataset Evaluation**
+- Upload your own evaluation datasets
+- Run evaluations using available scoring functions
+- Uses Llama Stack's `/scoring` API for flexible evaluation workflows
+- Great for testing application performance on custom metrics
+
+</TabItem>
+<TabItem value="benchmarks" label="Benchmark Evaluations">
+
+<video
+  controls
+  autoPlay
+  playsInline
+  muted
+  loop
+  style={{width: '100%', marginBottom: '1rem'}}
+>
+  <source src="https://github.com/user-attachments/assets/345845c7-2a2b-4095-960a-9ae40f6a93cf" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+**Pre-registered Evaluation Tasks**
+- Evaluate models or agents on pre-defined tasks
+- Uses Llama Stack's `/eval` API for comprehensive evaluation
+- Combines datasets and scoring functions for standardized testing
+
+**Setup Requirements:**
+Register evaluation datasets and benchmarks first:
+
+```bash
+# Register evaluation dataset
+llama-stack-client datasets register \
+  --dataset-id "mmlu" \
+  --provider-id "huggingface" \
+  --url "https://huggingface.co/datasets/llamastack/evals" \
+  --metadata '{"path": "llamastack/evals", "name": "evals__mmlu__details", "split": "train"}' \
+  --schema '{"input_query": {"type": "string"}, "expected_answer": {"type": "string"}, "chat_completion_input": {"type": "string"}}'
+
+# Register benchmark task
+llama-stack-client benchmarks register \
+  --eval-task-id meta-reference-mmlu \
+  --provider-id meta-reference \
+  --dataset-id mmlu \
+  --scoring-functions basic::regex_parser_multiple_choice_answer
+```
+
+</TabItem>
+</Tabs>
+
+#### Inspection Interface
+
+<video
+  controls
+  autoPlay
+  playsInline
+  muted
+  loop
+  style={{width: '100%'}}
+>
+  <source src="https://github.com/user-attachments/assets/01d52b2d-92af-4e3a-b623-a9b8ba22ba99" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+<Tabs>
+<TabItem value="providers" label="API Providers">
+
+**Provider Management**
+- Inspect available Llama Stack API providers
+- View provider configurations and capabilities
+- Uses the `/providers` API for real-time provider information
+- Essential for understanding your deployment's capabilities
+
+</TabItem>
+<TabItem value="resources" label="API Resources">
+
+**Resource Exploration**
+- Inspect Llama Stack API resources including:
+  - **Models**: Available language models
+  - **Datasets**: Registered evaluation datasets
+  - **Memory Banks**: Vector databases and knowledge stores
+  - **Benchmarks**: Evaluation tasks and scoring functions
+  - **Shields**: Safety and content moderation tools
+- Uses `/<resources>/list` APIs for comprehensive resource visibility
+- For detailed information about resources, see [Core Concepts](/docs/concepts)
+
+</TabItem>
+</Tabs>
+
+## Getting Started
+
+### Quick Start Guide
+
+<Tabs>
+<TabItem value="setup" label="Setup">
+
+**1. Start the Llama Stack API Server**
+
+```bash
+# Build and run a distribution (example: together)
+llama stack build --distro together --image-type venv
+llama stack run together
+```
+
+**2. Start the Streamlit UI**
+
+```bash
+# Launch the playground interface
+uv run --with ".[ui]" streamlit run llama_stack.core/ui/app.py
+```
+
+</TabItem>
+<TabItem value="usage" label="Usage Tips">
+
+**Making the Most of the Playground:**
+
+- **Start with Chat**: Test basic model interactions and prompt engineering
+- **Explore RAG**: Upload sample documents to see knowledge-enhanced responses
+- **Try Evaluations**: Use the scoring interface to understand evaluation metrics
+- **Inspect Resources**: Check what providers and resources are available
+- **Experiment with Settings**: Adjust parameters to see how they affect results
+
+</TabItem>
+</Tabs>
+
+### Available Distributions
+
+The playground works with any Llama Stack distribution. Popular options include:
+
+<Tabs>
+<TabItem value="together" label="Together AI">
+
+```bash
+llama stack build --distro together --image-type venv
+llama stack run together
+```
+
+**Features:**
+- Cloud-hosted models
+- Fast inference
+- Multiple model options
+
+</TabItem>
+<TabItem value="ollama" label="Ollama (Local)">
+
+```bash
+llama stack build --distro ollama --image-type venv
+llama stack run ollama
+```
+
+**Features:**
+- Local model execution
+- Privacy-focused
+- No internet required
+
+</TabItem>
+<TabItem value="meta-reference" label="Meta Reference">
+
+```bash
+llama stack build --distro meta-reference --image-type venv
+llama stack run meta-reference
+```
+
+**Features:**
+- Reference implementation
+- All API features available
+- Best for development
+
+</TabItem>
+</Tabs>
+
+## Use Cases & Examples
+
+### Educational Use Cases
+- **Learning Llama Stack**: Hands-on exploration of API capabilities
+- **Prompt Engineering**: Interactive testing of different prompting strategies
+- **RAG Experimentation**: Understanding how document retrieval affects responses
+- **Evaluation Understanding**: See how different metrics evaluate model performance
+
+### Development Use Cases
+- **Prototype Testing**: Quick validation of application concepts
+- **API Exploration**: Understanding available endpoints and parameters
+- **Integration Planning**: Seeing how different components work together
+- **Demo Creation**: Showcasing Llama Stack capabilities to stakeholders
+
+### Research Use Cases
+- **Model Comparison**: Side-by-side testing of different models
+- **Evaluation Design**: Understanding how scoring functions work
+- **Safety Testing**: Exploring shield effectiveness with different inputs
+- **Performance Analysis**: Measuring model behavior across different scenarios
+
+## Best Practices
+
+### 🚀 **Getting Started**
+- Begin with simple chat interactions to understand basic functionality
+- Gradually explore more advanced features like RAG and evaluations
+- Use the inspection tools to understand your deployment's capabilities
+
+### 🔧 **Development Workflow**
+- Use the playground to prototype before writing application code
+- Test different parameter settings interactively
+- Validate evaluation approaches before implementing them programmatically
+
+### 📊 **Evaluation & Testing**
+- Start with simple scoring functions before trying complex evaluations
+- Use the playground to understand evaluation results before automation
+- Test safety features with various input types
+
+### 🎯 **Production Preparation**
+- Use playground insights to inform your production API usage
+- Test edge cases and error conditions interactively
+- Validate resource configurations before deployment
+
+## Related Resources
+
+- **[Getting Started Guide](../getting_started/quickstart)** - Complete setup and introduction
+- **[Core Concepts](/docs/concepts)** - Understanding Llama Stack fundamentals
+- **[Agents](./agent)** - Building intelligent agents
+- **[RAG (Retrieval Augmented Generation)](./rag)** - Knowledge-enhanced applications
+- **[Evaluations](./evals)** - Comprehensive evaluation framework
+- **[API Reference](/docs/api/llama-stack-specification)** - Complete API documentation

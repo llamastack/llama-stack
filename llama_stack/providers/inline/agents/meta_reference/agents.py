@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
@@ -42,6 +41,7 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import InmemoryKVStoreImpl, kvstore_impl
 from llama_stack.providers.utils.pagination import paginate_records
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
@@ -51,7 +51,7 @@ from .config import MetaReferenceAgentsImplConfig
 from .persistence import AgentInfo
 from .responses.openai_responses import OpenAIResponsesImpl
 
-logger = logging.getLogger()
+logger = get_logger(name=__name__, category="agents::meta_reference")
 
 
 class MetaReferenceAgentsImpl(Agents):

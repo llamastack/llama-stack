@@ -15,7 +15,7 @@ from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 from llama_stack.providers.utils.kvstore.kvstore import kvstore_impl
 
-logger = get_logger(name=__name__, category="quota")
+logger = get_logger(name=__name__, category="core::server")
 
 
 class QuotaMiddleware:

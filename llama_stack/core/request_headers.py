@@ -6,15 +6,15 @@
 
 import contextvars
 import json
-import logging
 from contextlib import AbstractContextManager
 from typing import Any
 
 from llama_stack.core.datatypes import User
+from llama_stack.log import get_logger
 
 from .utils.dynamic import instantiate_class_type
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="core")
 
 # Context variable for request provider data and auth attributes
 PROVIDER_DATA_VAR = contextvars.ContextVar("provider_data", default=None)

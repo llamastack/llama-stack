@@ -44,7 +44,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     make_overlapped_chunks,
 )
 
-logger = get_logger(__name__, category="vector_io")
+logger = get_logger(name=__name__, category="providers::utils")
 
 # Constants for OpenAI vector stores
 CHUNK_MULTIPLIER = 5

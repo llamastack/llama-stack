@@ -30,7 +30,7 @@ from llama_stack.apis.vector_io import (
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 
-logger = get_logger(name=__name__, category="core")
+logger = get_logger(name=__name__, category="core::routers")
 
 
 class VectorIORouter(VectorIO):

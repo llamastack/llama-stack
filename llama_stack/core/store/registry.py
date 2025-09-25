@@ -16,7 +16,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
 from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 
-logger = get_logger(__name__, category="core")
+logger = get_logger(__name__, category="core::registry")
 
 
 class DistributionRegistry(Protocol):
@@ -96,9 +96,11 @@ class DiskDistributionRegistry(DistributionRegistry):
 
     async def register(self, obj: RoutableObjectWithProvider) -> bool:
         existing_obj = await self.get(obj.type, obj.identifier)
-        # dont register if the object's providerid already exists
-        if existing_obj and existing_obj.provider_id == obj.provider_id:
-            return False
+        # warn if the object's providerid is different but proceed with registration
+        if existing_obj and existing_obj.provider_id != obj.provider_id:
+            logger.warning(
+                f"Object {existing_obj.type}:{existing_obj.identifier}'s {existing_obj.provider_id} provider is being replaced with {obj.provider_id}"
+            )
 
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),

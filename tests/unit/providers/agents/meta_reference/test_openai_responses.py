@@ -24,6 +24,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseMessage,
     OpenAIResponseObjectWithInput,
     OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
@@ -456,6 +457,53 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
     # Check for previous output web search response
     assert isinstance(input[2], OpenAIResponseMessage)
     assert input[2].content[0].text == "fake_web_search_response"
+    # Check for new input
+    assert isinstance(input[3], OpenAIResponseMessage)
+    assert input[3].content == "fake_input"
+
+
+async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mock_responses_store):
+    """Test prepending a previous response which included an mcp tool call to a new response."""
+    input_item_message = OpenAIResponseMessage(
+        id="123",
+        content=[OpenAIResponseInputMessageContentText(text="fake_previous_input")],
+        role="user",
+    )
+    output_tool_call = OpenAIResponseOutputMessageMCPCall(
+        id="ws_123",
+        name="fake-tool",
+        arguments="fake-arguments",
+        server_label="fake-label",
+    )
+    output_message = OpenAIResponseMessage(
+        id="123",
+        content=[OpenAIResponseOutputMessageContentOutputText(text="fake_tool_call_response")],
+        status="completed",
+        role="assistant",
+    )
+    response = OpenAIResponseObjectWithInput(
+        created_at=1,
+        id="resp_123",
+        model="fake_model",
+        output=[output_tool_call, output_message],
+        status="completed",
+        text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+        input=[input_item_message],
+    )
+    mock_responses_store.get_response_object.return_value = response
+
+    input_messages = [OpenAIResponseMessage(content="fake_input", role="user")]
+    input = await openai_responses_impl._prepend_previous_response(input_messages, "resp_123")
+
+    assert len(input) == 4
+    # Check for previous input
+    assert isinstance(input[0], OpenAIResponseMessage)
+    assert input[0].content[0].text == "fake_previous_input"
+    # Check for previous output MCP tool call
+    assert isinstance(input[1], OpenAIResponseOutputMessageMCPCall)
+    # Check for previous output web search response
+    assert isinstance(input[2], OpenAIResponseMessage)
+    assert input[2].content[0].text == "fake_tool_call_response"
     # Check for new input
     assert isinstance(input[3], OpenAIResponseMessage)
     assert input[3].content == "fake_input"

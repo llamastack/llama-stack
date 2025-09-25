@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import re
 import uuid
 from string import Template
@@ -21,6 +20,7 @@ from llama_stack.apis.safety import (
 from llama_stack.apis.safety.safety import ModerationObject, ModerationObjectResults
 from llama_stack.apis.shields import Shield
 from llama_stack.core.datatypes import Api
+from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import Role
 from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
@@ -131,6 +131,8 @@ Provide your safety assessment for ONLY THE LAST $agent_type message in the abov
 
 
 PROMPT_TEMPLATE = Template(f"{PROMPT_TASK}{SAFETY_CATEGORIES}{PROMPT_CONVERSATION}{PROMPT_INSTRUCTIONS}")
+
+logger = get_logger(name=__name__, category="safety")
 
 
 class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
@@ -407,7 +409,7 @@ class LlamaGuardShield:
             unsafe_code_list = [code.strip() for code in unsafe_code.split(",")]
             invalid_codes = [code for code in unsafe_code_list if code not in SAFETY_CODE_TO_CATEGORIES_MAP]
             if invalid_codes:
-                logging.warning(f"Invalid safety codes returned: {invalid_codes}")
+                logger.warning(f"Invalid safety codes returned: {invalid_codes}")
                 # just returning safe object, as we don't know what the invalid codes can map to
                 return ModerationObject(
                     id=f"modr-{uuid.uuid4()}",

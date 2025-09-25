@@ -23,6 +23,8 @@ distribution_spec:
     - provider_type: inline::basic
     tool_runtime:
     - provider_type: inline::rag-runtime
+    files:
+    - provider_type: inline::localfs
 image_type: venv
 additional_pip_packages:
 - aiosqlite

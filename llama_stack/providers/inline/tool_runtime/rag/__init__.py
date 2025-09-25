@@ -14,6 +14,6 @@ from .config import RagToolRuntimeConfig
 async def get_provider_impl(config: RagToolRuntimeConfig, deps: dict[Api, Any]):
     from .memory import MemoryToolRuntimeImpl
 
-    impl = MemoryToolRuntimeImpl(config, deps[Api.vector_io], deps[Api.inference])
+    impl = MemoryToolRuntimeImpl(config, deps[Api.vector_io], deps[Api.inference], deps[Api.files])
     await impl.initialize()
     return impl

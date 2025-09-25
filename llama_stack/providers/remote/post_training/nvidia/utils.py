@@ -4,18 +4,18 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import warnings
 from typing import Any
 
 from pydantic import BaseModel
 
 from llama_stack.apis.post_training import TrainingConfig
+from llama_stack.log import get_logger
 from llama_stack.providers.remote.post_training.nvidia.config import SFTLoRADefaultConfig
 
 from .config import NvidiaPostTrainingConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="post_training::nvidia")
 
 
 def warn_unsupported_params(config_dict: Any, supported_keys: set[str], config_name: str) -> None:

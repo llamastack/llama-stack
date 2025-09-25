@@ -49,15 +49,12 @@ def setup_openai_telemetry_data(llama_stack_client, text_model_id):
         traces = llama_stack_client.telemetry.query_traces(limit=10)
         if len(traces) >= 5:  # 5 OpenAI completion traces
             break
-        time.sleep(1)
+        time.sleep(0.1)
 
     if len(traces) < 5:
         pytest.fail(
             f"Failed to create sufficient OpenAI completion telemetry data after 30s. Got {len(traces)} traces."
         )
-
-    # Wait for 5 seconds to ensure traces has completed logging
-    time.sleep(5)
 
     yield
 
@@ -185,11 +182,13 @@ def test_openai_completion_creates_telemetry(llama_stack_client, text_model_id):
     assert len(response.choices) > 0, "Response should have at least one choice"
 
     # Wait for telemetry to be recorded
-    time.sleep(3)
-
-    # Check that we have more traces now
-    final_traces = llama_stack_client.telemetry.query_traces(limit=20)
-    final_count = len(final_traces)
+    start_time = time.time()
+    while time.time() - start_time < 30:
+        final_traces = llama_stack_client.telemetry.query_traces(limit=20)
+        final_count = len(final_traces)
+        if final_count > initial_count:
+            break
+        time.sleep(0.1)
 
     # Should have at least as many traces as before (might have more due to other activity)
     assert final_count >= initial_count, "Should have at least as many traces after OpenAI call"

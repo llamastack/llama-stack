@@ -4,10 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
+import logging  # allow-direct-logging
 import os
 import re
-from logging.config import dictConfig
+from logging.config import dictConfig  # allow-direct-logging
 
 from rich.console import Console
 from rich.errors import MarkupError

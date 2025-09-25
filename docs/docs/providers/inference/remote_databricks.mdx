@@ -1,0 +1,25 @@
+---
+description: "Databricks inference provider for running models on Databricks' unified analytics platform."
+sidebar_label: Remote - Databricks
+title: remote::databricks
+---
+
+# remote::databricks
+
+## Description
+
+Databricks inference provider for running models on Databricks' unified analytics platform.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `url` | `<class 'str'>` | No |  | The URL for the Databricks model serving endpoint |
+| `api_token` | `<class 'pydantic.types.SecretStr'>` | No |  | The Databricks API token |
+
+## Sample Configuration
+
+```yaml
+url: ${env.DATABRICKS_HOST:=}
+api_token: ${env.DATABRICKS_TOKEN:=}
+```

@@ -12,7 +12,6 @@
 
 import copy
 import json
-import logging
 import multiprocessing
 import os
 import tempfile
@@ -32,13 +31,14 @@ from fairscale.nn.model_parallel.initialize import (
 from pydantic import BaseModel, Field
 from torch.distributed.launcher.api import LaunchConfig, elastic_launch
 
+from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import GenerationResult
 from llama_stack.providers.utils.inference.prompt_adapter import (
     ChatCompletionRequestWithRawContent,
     CompletionRequestWithRawContent,
 )
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="inference")
 
 
 class ProcessingMessageName(str, Enum):

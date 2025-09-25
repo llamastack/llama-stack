@@ -1,0 +1,171 @@
+Collecting uv
+  Downloading uv-0.8.19-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+Downloading uv-0.8.19-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.9/20.9 MB 149.3 MB/s eta 0:00:00
+Installing collected packages: uv
+Successfully installed uv-0.8.19
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 25.2
+[notice] To update, run: pip install --upgrade pip
+Using Python 3.11.13 environment at: /usr/local
+Resolved 61 packages in 494ms
+Downloading pandas (11.8MiB)
+Downloading tokenizers (3.1MiB)
+Downloading pygments (1.2MiB)
+Downloading aiohttp (1.7MiB)
+Downloading transformers (11.1MiB)
+Downloading numpy (16.2MiB)
+Downloading pillow (6.3MiB)
+Downloading pydantic-core (1.9MiB)
+Downloading hf-xet (3.0MiB)
+Downloading pyarrow (40.8MiB)
+ Downloading pydantic-core
+ Downloading aiohttp
+ Downloading tokenizers
+ Downloading hf-xet
+ Downloading pillow
+ Downloading pygments
+ Downloading numpy
+ Downloading pandas
+ Downloading pyarrow
+ Downloading transformers
+Prepared 61 packages in 1.24s
+Installed 61 packages in 126ms
+ + aiohappyeyeballs==2.6.1
+ + aiohttp==3.12.15
+ + aiosignal==1.4.0
+ + annotated-types==0.7.0
+ + anyio==4.10.0
+ + attrs==25.3.0
+ + certifi==2025.8.3
+ + charset-normalizer==3.4.3
+ + click==8.1.8
+ + datasets==4.1.1
+ + dill==0.4.0
+ + filelock==3.19.1
+ + frozenlist==1.7.0
+ + fsspec==2025.9.0
+ + ftfy==6.3.1
+ + guidellm==0.3.0
+ + h11==0.16.0
+ + h2==4.3.0
+ + hf-xet==1.1.10
+ + hpack==4.1.0
+ + httpcore==1.0.9
+ + httpx==0.28.1
+ + huggingface-hub==0.35.0
+ + hyperframe==6.1.0
+ + idna==3.10
+ + loguru==0.7.3
+ + markdown-it-py==4.0.0
+ + mdurl==0.1.2
+ + multidict==6.6.4
+ + multiprocess==0.70.16
+ + numpy==2.3.3
+ + packaging==25.0
+ + pandas==2.3.2
+ + pillow==11.3.0
+ + propcache==0.3.2
+ + protobuf==6.32.1
+ + pyarrow==21.0.0
+ + pydantic==2.11.9
+ + pydantic-core==2.33.2
+ + pydantic-settings==2.10.1
+ + pygments==2.19.2
+ + python-dateutil==2.9.0.post0
+ + python-dotenv==1.1.1
+ + pytz==2025.2
+ + pyyaml==6.0.2
+ + regex==2025.9.18
+ + requests==2.32.5
+ + rich==14.1.0
+ + safetensors==0.6.2
+ + six==1.17.0
+ + sniffio==1.3.1
+ + tokenizers==0.22.1
+ + tqdm==4.67.1
+ + transformers==4.56.2
+ + typing-extensions==4.15.0
+ + typing-inspection==0.4.1
+ + tzdata==2025.2
+ + urllib3==2.5.0
+ + wcwidth==0.2.14
+ + xxhash==3.5.0
+ + yarl==1.20.1
+Using Python 3.11.13 environment at: /usr/local
+Audited 1 package in 3ms
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
+Creating backend...
+Backend openai_http connected to http://llama-stack-benchmark-service:8323/v1/openai for model meta-llama/Llama-3.2-3B-Instruct.
+Creating request loader...
+Created loader with 1000 unique requests from prompt_tokens=512,output_tokens=256.
+
+
+╭─ Benchmarks ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [17:45:18] ⠋ 100% concurrent@1   (complete)   Req:    0.3 req/s,    3.42s Lat,     1.0 Conc,      17 Comp,        1 Inc,        0 Err                                                                │
+│                                               Tok:   73.9 gen/s,  233.7 tot/s,  50.2ms TTFT,   13.4ms ITL,   547 Prompt,      253 Gen                                                                │
+│ [17:46:23] ⠋ 100% concurrent@2   (complete)   Req:    0.6 req/s,    3.42s Lat,     2.0 Conc,      34 Comp,        2 Inc,        0 Err                                                                │
+│                                               Tok:  134.7 gen/s,  447.4 tot/s,  50.8ms TTFT,   14.3ms ITL,   546 Prompt,      235 Gen                                                                │
+│ [17:47:28] ⠋ 100% concurrent@4   (complete)   Req:    1.1 req/s,    3.55s Lat,     3.9 Conc,      66 Comp,        4 Inc,        0 Err                                                                │
+│                                               Tok:  268.7 gen/s,  873.1 tot/s,  54.9ms TTFT,   14.4ms ITL,   547 Prompt,      243 Gen                                                                │
+│ [17:48:33] ⠋ 100% concurrent@8   (complete)   Req:    2.2 req/s,    3.56s Lat,     7.8 Conc,     130 Comp,        8 Inc,        0 Err                                                                │
+│                                               Tok:  526.1 gen/s, 1728.4 tot/s,  60.6ms TTFT,   14.7ms ITL,   547 Prompt,      239 Gen                                                                │
+│ [17:49:38] ⠋ 100% concurrent@16  (complete)   Req:    4.1 req/s,    3.79s Lat,    15.7 Conc,     246 Comp,       16 Inc,        0 Err                                                                │
+│                                               Tok: 1006.9 gen/s, 3268.6 tot/s,  74.8ms TTFT,   15.3ms ITL,   547 Prompt,      243 Gen                                                                │
+│ [17:50:44] ⠋ 100% concurrent@32  (complete)   Req:    7.8 req/s,    3.95s Lat,    30.9 Conc,     467 Comp,       32 Inc,        0 Err                                                                │
+│                                               Tok: 1912.0 gen/s, 6191.6 tot/s, 119.1ms TTFT,   15.7ms ITL,   547 Prompt,      244 Gen                                                                │
+│ [17:51:50] ⠋ 100% concurrent@64  (complete)   Req:   13.0 req/s,    4.75s Lat,    61.8 Conc,     776 Comp,       64 Inc,        0 Err                                                                │
+│                                               Tok: 3154.3 gen/s, 10273.3 tot/s, 339.1ms TTFT,   18.3ms ITL,   547 Prompt,      242 Gen                                                               │
+│ [17:52:58] ⠋ 100% concurrent@128 (complete)   Req:   15.1 req/s,    7.82s Lat,   117.7 Conc,     898 Comp,      127 Inc,        0 Err                                                                │
+│                                               Tok: 3617.4 gen/s, 11843.9 tot/s, 1393.8ms TTFT,   26.8ms ITL,   547 Prompt,      240 Gen                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+Generating... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ (8/8) [ 0:08:41 < 0:00:00 ]
+
+Benchmarks Metadata:
+    Run id:f73d408e-256a-4c32-aa40-05e8d7098b66
+    Duration:529.2 seconds
+    Profile:type=concurrent, strategies=['concurrent', 'concurrent', 'concurrent', 'concurrent', 'concurrent', 'concurrent', 'concurrent', 'concurrent'], streams=[1, 2, 4, 8, 16, 32, 64, 128]
+    Args:max_number=None, max_duration=60.0, warmup_number=None, warmup_duration=3.0, cooldown_number=None, cooldown_duration=None
+    Worker:type_='generative_requests_worker' backend_type='openai_http' backend_target='http://llama-stack-benchmark-service:8323/v1/openai' backend_model='meta-llama/Llama-3.2-3B-Instruct'
+    backend_info={'max_output_tokens': 16384, 'timeout': 300, 'http2': True, 'follow_redirects': True, 'headers': {}, 'text_completions_path': '/v1/completions', 'chat_completions_path':
+    '/v1/chat/completions'}
+    Request Loader:type_='generative_request_loader' data='prompt_tokens=512,output_tokens=256' data_args=None processor='meta-llama/Llama-3.2-3B-Instruct' processor_args=None
+    Extras:None
+
+
+Benchmarks Info:
+=====================================================================================================================================================
+Metadata                                       |||| Requests Made  ||| Prompt Tok/Req ||| Output Tok/Req ||| Prompt Tok Total||| Output Tok Total  ||
+     Benchmark| Start Time| End Time| Duration (s)|  Comp|  Inc|  Err|  Comp|   Inc| Err|  Comp|   Inc| Err|   Comp|   Inc| Err|    Comp|   Inc|  Err
+--------------|-----------|---------|-------------|------|-----|-----|------|------|----|------|------|----|-------|------|----|--------|------|-----
+  concurrent@1|   17:45:23| 17:46:23|         60.0|    17|    1|    0| 546.6| 512.0| 0.0| 252.8| 136.0| 0.0|   9292|   512|   0|    4298|   136|    0
+  concurrent@2|   17:46:28| 17:47:28|         60.0|    34|    2|    0| 546.4| 512.0| 0.0| 235.4| 130.0| 0.0|  18577|  1024|   0|    8003|   260|    0
+  concurrent@4|   17:47:33| 17:48:33|         60.0|    66|    4|    0| 546.5| 512.0| 0.0| 243.0|  97.5| 0.0|  36072|  2048|   0|   16035|   390|    0
+  concurrent@8|   17:48:38| 17:49:38|         60.0|   130|    8|    0| 546.6| 512.0| 0.0| 239.2| 146.0| 0.0|  71052|  4096|   0|   31090|  1168|    0
+ concurrent@16|   17:49:43| 17:50:43|         60.0|   246|   16|    0| 546.6| 512.0| 0.0| 243.3| 112.3| 0.0| 134456|  8192|   0|   59862|  1797|    0
+ concurrent@32|   17:50:49| 17:51:49|         60.0|   467|   32|    0| 546.6| 512.0| 0.0| 244.2| 147.3| 0.0| 255242| 16384|   0|  114038|  4714|    0
+ concurrent@64|   17:51:55| 17:52:55|         60.0|   776|   64|    0| 546.5| 512.0| 0.0| 242.2| 106.1| 0.0| 424115| 32768|   0|  187916|  6788|    0
+concurrent@128|   17:53:03| 17:54:03|         60.0|   898|  127|    0| 546.5| 512.0| 0.0| 240.3|  69.8| 0.0| 490789| 65024|   0|  215810|  8864|    0
+=====================================================================================================================================================
+
+
+Benchmarks Stats:
+======================================================================================================================================================
+Metadata      | Request Stats         || Out Tok/sec| Tot Tok/sec| Req Latency (sec)||| TTFT (ms)           ||| ITL (ms)        ||| TPOT (ms)       ||
+     Benchmark| Per Second| Concurrency|        mean|        mean| mean| median|   p99|   mean| median|    p99| mean| median|  p99| mean| median|  p99
+--------------|-----------|------------|------------|------------|-----|-------|------|-------|-------|-------|-----|-------|-----|-----|-------|-----
+  concurrent@1|       0.29|        1.00|        73.9|       233.7| 3.42|   3.45|  3.50|   50.2|   50.9|   62.5| 13.4|   13.4| 13.5| 13.3|   13.3| 13.5
+  concurrent@2|       0.57|        1.96|       134.7|       447.4| 3.42|   3.67|  4.12|   50.8|   49.2|   79.8| 14.3|   14.2| 15.9| 14.3|   14.2| 15.9
+  concurrent@4|       1.11|        3.92|       268.7|       873.1| 3.55|   3.72|  3.80|   54.9|   51.7|  101.3| 14.4|   14.4| 14.5| 14.4|   14.4| 14.5
+  concurrent@8|       2.20|        7.82|       526.1|      1728.4| 3.56|   3.78|  3.93|   60.6|   49.8|  189.5| 14.7|   14.7| 14.8| 14.6|   14.6| 14.8
+ concurrent@16|       4.14|       15.66|      1006.9|      3268.6| 3.79|   3.94|  4.25|   74.8|   54.3|  328.4| 15.3|   15.3| 16.1| 15.2|   15.2| 16.0
+ concurrent@32|       7.83|       30.91|      1912.0|      6191.6| 3.95|   4.07|  4.53|  119.1|   80.5|  674.0| 15.7|   15.6| 17.4| 15.7|   15.6| 17.3
+ concurrent@64|      13.03|       61.85|      3154.3|     10273.3| 4.75|   4.93|  5.43|  339.1|  321.1| 1146.6| 18.3|   18.4| 19.3| 18.2|   18.3| 19.2
+concurrent@128|      15.05|      117.71|      3617.4|     11843.9| 7.82|   8.58| 13.35| 1393.8| 1453.0| 5232.2| 26.8|   26.7| 36.0| 26.7|   26.6| 35.9
+======================================================================================================================================================
+
+Saving benchmarks report...
+Benchmarks report saved to /benchmarks.json
+
+Benchmarking complete.

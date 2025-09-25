@@ -3,7 +3,6 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-import logging
 import textwrap
 from typing import Any
 
@@ -21,9 +20,10 @@ from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
 from llama_stack.core.utils.config_dirs import EXTERNAL_PROVIDERS_DIR
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.prompt_for_config import prompt_for_config
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api, ProviderSpec
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="core")
 
 
 def configure_single_provider(registry: dict[str, ProviderSpec], provider: Provider) -> Provider:

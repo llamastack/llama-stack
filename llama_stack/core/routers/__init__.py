@@ -78,7 +78,10 @@ async def get_auto_router_impl(
 
     # TODO: move pass configs to routers instead
     if api == Api.inference and run_config.inference_store:
-        inference_store = InferenceStore(run_config.inference_store, policy)
+        inference_store = InferenceStore(
+            config=run_config.inference_store,
+            policy=policy,
+        )
         await inference_store.initialize()
         api_to_dep_impl["store"] = inference_store
 

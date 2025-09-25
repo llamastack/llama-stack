@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:11434/v1/v1/chat/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -20,14 +20,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-876",
+        "id": "chatcmpl-974",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "I'm afraid I don't have a built-in ability to directly interface with or \"test\" OpenAI models, including the original GPT-1 model. However, I can explain how you might approach this task:\n\nThe OpenAI GPT-1 is a large transformer-based language model that was trained on a massive dataset of text and achieved state-of-the-art results in various natural language processing tasks.\n\nTo test or evaluate the performance of a model like GPT-1, you would typically follow these steps:\n\n1. **Get access to the OpenAI API**: The OpenAI API provides a way for developers to interact with the GPT-1 model programmatically. You can sign up for an API key on the OpenAI website.\n2. **Choose a testing platform or environment**: You'll need a compute platform that supports the necessary algorithms and data structures to run inference on the GPT-1 model. Some popular options include AWS, Google Cloud, or Azure Compute Virtual Machines.\n3. **Prepare your test input data**: This will involve creating text inputs in the format expected by the OpenAI API (i.e., a JSON object containing the text to be processed).\n4. **Use the OpenAI Python library or SDK**: The OpenAI Python library provides an easy-to-use interface for interacting with the GPT-1 model through the API.\n\nHere's some example code that demonstrates how you might use the OpenAI Flask API to test a single input:\n\n```python\nfrom flask import Flask, request, jsonify\nimport json\n\napp = Flask(__name__)\n\n@ app . route ( '/ /gpt-en ', ' Text ', methods = ['POST'])\ndef gpt_en () -> Json :\n    data = request . get_json ()\n    if not data or \"message\" in ( data ):\n        return None , 400 , { ' error' : \"Input must be a text string.\" }\n    response = []\n    while True:\n        message = \"\"\n        for token in data [\"input\"]:\n            response_text = f\"{data['prompt']} {token}\"\n            data[\"input\"] = [response_text]\n            new_response = gpt_en()(data)\n            if all([not item or not isinstance(item, dict) for item in new_response]):\n             break\n\n        message = json . dumps ({}\"text\": response_text})\n        response.append(message)\n\n    return jsonify ({\"output\": response}), 200 , {}\n\nif __name__ == \"__main__\":\n   app.run(debug=True)\n```\n\n5. **Evaluate the output**: Once you have processed your test input data using the GPT-1 model, you can evaluate the accuracy of the generated responses.\n\nKeep in mind that this is just a basic example to illustrate how you might approach testing the OpenAI GPT-1 model.",
+              "content": "I'm happy to help you test the OpenAI API, however I can not access the API.\n\nInstead why don't we follow these steps:\n\n*   Check documentation\n*   Contact support\n*   Reach out to their community forum. \n\nLet me know if I can be of any additional assistance",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -37,15 +37,15 @@
             }
           }
         ],
-        "created": 1754510050,
+        "created": 1756921202,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 567,
+          "completion_tokens": 61,
           "prompt_tokens": 31,
-          "total_tokens": 598,
+          "total_tokens": 92,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

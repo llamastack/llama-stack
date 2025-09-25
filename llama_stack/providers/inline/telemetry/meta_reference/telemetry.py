@@ -4,13 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
+import datetime
 import threading
 from typing import Any
 
 from opentelemetry import metrics, trace
-
-logger = logging.getLogger(__name__)
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.metrics import MeterProvider
@@ -40,6 +38,7 @@ from llama_stack.apis.telemetry import (
     UnstructuredLogEvent,
 )
 from llama_stack.core.datatypes import Api
+from llama_stack.log import get_logger
 from llama_stack.providers.inline.telemetry.meta_reference.console_span_processor import (
     ConsoleSpanProcessor,
 )
@@ -60,6 +59,8 @@ _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
 }
 _global_lock = threading.Lock()
 _TRACER_PROVIDER = None
+
+logger = get_logger(name=__name__, category="telemetry")
 
 
 def is_tracing_enabled(tracer):
@@ -145,11 +146,41 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         metric_name: str,
         start_time: int,
         end_time: int | None = None,
-        granularity: str | None = "1d",
+        granularity: str | None = None,
         query_type: MetricQueryType = MetricQueryType.RANGE,
         label_matchers: list[MetricLabelMatcher] | None = None,
     ) -> QueryMetricsResponse:
-        raise NotImplementedError("Querying metrics is not implemented")
+        """Query metrics from the telemetry store.
+
+        Args:
+            metric_name: The name of the metric to query (e.g., "prompt_tokens")
+            start_time: Start time as Unix timestamp
+            end_time: End time as Unix timestamp (defaults to now if None)
+            granularity: Time granularity for aggregation
+            query_type: Type of query (RANGE or INSTANT)
+            label_matchers: Label filters to apply
+
+        Returns:
+            QueryMetricsResponse with metric time series data
+        """
+        # Convert timestamps to datetime objects
+        start_dt = datetime.datetime.fromtimestamp(start_time, datetime.UTC)
+        end_dt = datetime.datetime.fromtimestamp(end_time, datetime.UTC) if end_time else None
+
+        # Use SQLite trace store if available
+        if hasattr(self, "trace_store") and self.trace_store:
+            return await self.trace_store.query_metrics(
+                metric_name=metric_name,
+                start_time=start_dt,
+                end_time=end_dt,
+                granularity=granularity,
+                query_type=query_type,
+                label_matchers=label_matchers,
+            )
+        else:
+            raise ValueError(
+                f"In order to query_metrics, you must have {TelemetrySink.SQLITE} set in your telemetry sinks"
+            )
 
     def _log_unstructured(self, event: UnstructuredLogEvent, ttl_seconds: int) -> None:
         with self._lock:

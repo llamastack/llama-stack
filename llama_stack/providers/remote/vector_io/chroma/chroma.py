@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 import asyncio
 import json
-import logging
 from typing import Any
 from urllib.parse import urlparse
 
@@ -20,6 +19,7 @@ from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     VectorIO,
 )
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api, VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
 from llama_stack.providers.utils.kvstore import kvstore_impl
@@ -33,7 +33,7 @@ from llama_stack.providers.utils.memory.vector_store import (
 
 from .config import ChromaVectorIOConfig as RemoteChromaVectorIOConfig
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="vector_io::chroma")
 
 ChromaClientType = chromadb.api.AsyncClientAPI | chromadb.api.ClientAPI
 

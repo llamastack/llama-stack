@@ -88,3 +88,10 @@ def test_nested_structures(setup_env_vars):
     }
     expected = {"key1": "test_value", "key2": ["default", "conditional"], "key3": {"nested": None}}
     assert replace_env_vars(data) == expected
+
+
+def test_explicit_strings_preserved(setup_env_vars):
+    # Explicit strings that look like numbers/booleans should remain strings
+    data = {"port": "8080", "enabled": "true", "count": "123", "ratio": "3.14"}
+    expected = {"port": "8080", "enabled": "true", "count": "123", "ratio": "3.14"}
+    assert replace_env_vars(data) == expected

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:11434/v1/v1/chat/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -20,14 +20,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-57",
+        "id": "chatcmpl-957",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Humans live on Earth. It is the third planet from the Sun and is the only known planet in the universe that currently supports human life.",
+              "content": "Humans live on Earth. It's a terrestrial planet in the Solar System, located in the outer reaches of the Sun's gravitational pull.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -37,15 +37,15 @@
             }
           }
         ],
-        "created": 1754081845,
+        "created": 1756921355,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 29,
+          "completion_tokens": 28,
           "prompt_tokens": 32,
-          "total_tokens": 61,
+          "total_tokens": 60,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

@@ -1,0 +1,56 @@
+apiVersion: v1
+data:
+  stack_run_config.yaml: "version: '2'\nimage_name: kubernetes-demo\napis:\n- agents\n-
+    inference\n- files\n- safety\n- telemetry\n- tool_runtime\n- vector_io\nproviders:\n
+    \ inference:\n  - provider_id: vllm-inference\n    provider_type: remote::vllm\n
+    \   config:\n      url: ${env.VLLM_URL:=http://localhost:8000/v1}\n      max_tokens:
+    ${env.VLLM_MAX_TOKENS:=4096}\n      api_token: ${env.VLLM_API_TOKEN:=fake}\n      tls_verify:
+    ${env.VLLM_TLS_VERIFY:=true}\n  - provider_id: vllm-safety\n    provider_type:
+    remote::vllm\n    config:\n      url: ${env.VLLM_SAFETY_URL:=http://localhost:8000/v1}\n
+    \     max_tokens: ${env.VLLM_MAX_TOKENS:=4096}\n      api_token: ${env.VLLM_API_TOKEN:=fake}\n
+    \     tls_verify: ${env.VLLM_TLS_VERIFY:=true}\n  - provider_id: sentence-transformers\n
+    \   provider_type: inline::sentence-transformers\n    config: {}\n  vector_io:\n
+    \ - provider_id: ${env.ENABLE_CHROMADB:+chromadb}\n    provider_type: remote::chromadb\n
+    \   config:\n      url: ${env.CHROMADB_URL:=}\n      kvstore:\n        type: postgres\n
+    \       host: ${env.POSTGRES_HOST:=localhost}\n        port: ${env.POSTGRES_PORT:=5432}\n
+    \       db: ${env.POSTGRES_DB:=llamastack}\n        user: ${env.POSTGRES_USER:=llamastack}\n
+    \       password: ${env.POSTGRES_PASSWORD:=llamastack}\n  files:\n  - provider_id:
+    meta-reference-files\n    provider_type: inline::localfs\n    config:\n      storage_dir:
+    ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}\n      metadata_store:\n
+    \       type: sqlite\n        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/files_metadata.db
+    \ \n  safety:\n  - provider_id: llama-guard\n    provider_type: inline::llama-guard\n
+    \   config:\n      excluded_categories: []\n  agents:\n  - provider_id: meta-reference\n
+    \   provider_type: inline::meta-reference\n    config:\n      persistence_store:\n
+    \       type: postgres\n        host: ${env.POSTGRES_HOST:=localhost}\n        port:
+    ${env.POSTGRES_PORT:=5432}\n        db: ${env.POSTGRES_DB:=llamastack}\n        user:
+    ${env.POSTGRES_USER:=llamastack}\n        password: ${env.POSTGRES_PASSWORD:=llamastack}\n
+    \     responses_store:\n        type: postgres\n        host: ${env.POSTGRES_HOST:=localhost}\n
+    \       port: ${env.POSTGRES_PORT:=5432}\n        db: ${env.POSTGRES_DB:=llamastack}\n
+    \       user: ${env.POSTGRES_USER:=llamastack}\n        password: ${env.POSTGRES_PASSWORD:=llamastack}\n
+    \ telemetry:\n  - provider_id: meta-reference\n    provider_type: inline::meta-reference\n
+    \   config:\n      service_name: \"${env.OTEL_SERVICE_NAME:=\\u200B}\"\n      sinks:
+    ${env.TELEMETRY_SINKS:=console}\n  tool_runtime:\n  - provider_id: brave-search\n
+    \   provider_type: remote::brave-search\n    config:\n      api_key: ${env.BRAVE_SEARCH_API_KEY:+}\n
+    \     max_results: 3\n  - provider_id: tavily-search\n    provider_type: remote::tavily-search\n
+    \   config:\n      api_key: ${env.TAVILY_SEARCH_API_KEY:+}\n      max_results:
+    3\n  - provider_id: rag-runtime\n    provider_type: inline::rag-runtime\n    config:
+    {}\n  - provider_id: model-context-protocol\n    provider_type: remote::model-context-protocol\n
+    \   config: {}\nmetadata_store:\n  type: postgres\n  host: ${env.POSTGRES_HOST:=localhost}\n
+    \ port: ${env.POSTGRES_PORT:=5432}\n  db: ${env.POSTGRES_DB:=llamastack}\n  user:
+    ${env.POSTGRES_USER:=llamastack}\n  password: ${env.POSTGRES_PASSWORD:=llamastack}\n
+    \ table_name: llamastack_kvstore\ninference_store:\n  type: postgres\n  host:
+    ${env.POSTGRES_HOST:=localhost}\n  port: ${env.POSTGRES_PORT:=5432}\n  db: ${env.POSTGRES_DB:=llamastack}\n
+    \ user: ${env.POSTGRES_USER:=llamastack}\n  password: ${env.POSTGRES_PASSWORD:=llamastack}\nmodels:\n-
+    metadata:\n    embedding_dimension: 384\n  model_id: all-MiniLM-L6-v2\n  provider_id:
+    sentence-transformers\n  model_type: embedding\n- metadata: {}\n  model_id: ${env.INFERENCE_MODEL}\n
+    \ provider_id: vllm-inference\n  model_type: llm\n- metadata: {}\n  model_id:
+    ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}\n  provider_id: vllm-safety\n
+    \ model_type: llm\nshields:\n- shield_id: ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}\nvector_dbs:
+    []\ndatasets: []\nscoring_fns: []\nbenchmarks: []\ntool_groups:\n- toolgroup_id:
+    builtin::websearch\n  provider_id: tavily-search\n- toolgroup_id: builtin::rag\n
+    \ provider_id: rag-runtime\nserver:\n  port: 8321\n  auth:\n    provider_config:\n
+    \     type: github_token\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: llama-stack-config

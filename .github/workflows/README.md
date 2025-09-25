@@ -5,10 +5,11 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | Name | File | Purpose |
 | ---- | ---- | ------- |
 | Update Changelog | [changelog.yml](changelog.yml) | Creates PR for updating the CHANGELOG.md |
+| API Conformance Tests | [conformance.yml](conformance.yml) | Run the API Conformance test suite on the changes. |
 | Installer CI | [install-script-ci.yml](install-script-ci.yml) | Test the installation script |
 | Integration Auth Tests | [integration-auth-tests.yml](integration-auth-tests.yml) | Run the integration test suite with Kubernetes authentication |
 | SqlStore Integration Tests | [integration-sql-store-tests.yml](integration-sql-store-tests.yml) | Run the integration test suite with SqlStore |
-| Integration Tests (Replay) | [integration-tests.yml](integration-tests.yml) | Run the integration test suite from tests/integration in replay mode |
+| Integration Tests (Replay) | [integration-tests.yml](integration-tests.yml) | Run the integration test suites from tests/integration in replay mode |
 | Vector IO Integration Tests | [integration-vector-io-tests.yml](integration-vector-io-tests.yml) | Run the integration test suite with various VectorIO providers |
 | Pre-commit | [pre-commit.yml](pre-commit.yml) | Run pre-commit checks |
 | Test Llama Stack Build | [providers-build.yml](providers-build.yml) | Test llama stack build |
@@ -20,4 +21,3 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | Test External API and Providers | [test-external.yml](test-external.yml) | Test the External API and Provider mechanisms |
 | UI Tests | [ui-unit-tests.yml](ui-unit-tests.yml) | Run the UI test suite |
 | Unit Tests | [unit-tests.yml](unit-tests.yml) | Run the unit test suite |
-| Update ReadTheDocs | [update-readthedocs.yml](update-readthedocs.yml) | Update the Llama Stack ReadTheDocs site |

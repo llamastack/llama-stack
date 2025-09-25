@@ -29,11 +29,15 @@ class ListBatchesResponse(BaseModel):
 
 @runtime_checkable
 class Batches(Protocol):
-    """Protocol for batch processing API operations.
-
+    """
     The Batches API enables efficient processing of multiple requests in a single operation,
     particularly useful for processing large datasets, batch evaluation workflows, and
     cost-effective inference at scale.
+
+    The API is designed to allow use of openai client libraries for seamless integration.
+
+    This API provides the following extensions:
+     - idempotent batch creation
 
     Note: This API is currently under active development and may undergo changes.
     """
@@ -45,6 +49,7 @@ class Batches(Protocol):
         endpoint: str,
         completion_window: Literal["24h"],
         metadata: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> BatchObject:
         """Create a new batch for processing multiple API requests.
 
@@ -52,6 +57,7 @@ class Batches(Protocol):
         :param endpoint: The endpoint to be used for all requests in the batch.
         :param completion_window: The time window within which the batch should be processed.
         :param metadata: Optional metadata for the batch.
+        :param idempotency_key: Optional idempotency key. When provided, enables idempotent behavior.
         :returns: The created batch object.
         """
         ...

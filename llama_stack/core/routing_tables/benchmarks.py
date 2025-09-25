@@ -14,7 +14,7 @@ from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl
 
-logger = get_logger(name=__name__, category="core")
+logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 class BenchmarksRoutingTable(CommonRoutingTableImpl, Benchmarks):
@@ -56,3 +56,7 @@ class BenchmarksRoutingTable(CommonRoutingTableImpl, Benchmarks):
             provider_resource_id=provider_benchmark_id,
         )
         await self.register_object(benchmark)
+
+    async def unregister_benchmark(self, benchmark_id: str) -> None:
+        existing_benchmark = await self.get_benchmark(benchmark_id)
+        await self.unregister_object(existing_benchmark)

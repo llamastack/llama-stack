@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import os
 from collections.abc import Callable
 
@@ -13,11 +12,13 @@ from fairscale.nn.model_parallel.initialize import get_model_parallel_rank
 from torch import Tensor, nn
 from torch.nn import functional as F
 
+from llama_stack.log import get_logger
+
 from ...datatypes import QuantizationMode
 from ..model import Transformer, TransformerBlock
 from ..moe import MoE
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="models::llama")
 
 
 def swiglu_wrapper_no_reduce(

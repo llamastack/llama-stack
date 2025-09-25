@@ -161,10 +161,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const isUser = role === "user";
 
-  const formattedTime = createdAt?.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedTime = createdAt
+    ? new Date(createdAt).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : undefined;
 
   if (isUser) {
     return (
@@ -185,7 +187,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
         {showTimeStamp && createdAt ? (
           <time
-            dateTime={createdAt.toISOString()}
+            dateTime={new Date(createdAt).toISOString()}
             className={cn(
               "mt-1 block px-1 text-xs opacity-50",
               animation !== "none" && "duration-500 animate-in fade-in-0"
@@ -220,7 +222,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
             {showTimeStamp && createdAt ? (
               <time
-                dateTime={createdAt.toISOString()}
+                dateTime={new Date(createdAt).toISOString()}
                 className={cn(
                   "mt-1 block px-1 text-xs opacity-50",
                   animation !== "none" && "duration-500 animate-in fade-in-0"
@@ -262,7 +264,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
       {showTimeStamp && createdAt ? (
         <time
-          dateTime={createdAt.toISOString()}
+          dateTime={new Date(createdAt).toISOString()}
           className={cn(
             "mt-1 block px-1 text-xs opacity-50",
             animation !== "none" && "duration-500 animate-in fade-in-0"

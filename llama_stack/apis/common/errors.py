@@ -79,3 +79,10 @@ class ConflictError(ValueError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class TokenValidationError(ValueError):
+    """raised when token validation fails during authentication"""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

@@ -8,7 +8,6 @@ import asyncio
 import base64
 import io
 import json
-import logging
 from typing import Any
 
 import faiss
@@ -24,6 +23,7 @@ from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     VectorIO,
 )
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import (
     HealthResponse,
     HealthStatus,
@@ -40,7 +40,7 @@ from llama_stack.providers.utils.memory.vector_store import (
 
 from .config import FaissVectorIOConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="vector_io")
 
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_dbs:{VERSION}::"

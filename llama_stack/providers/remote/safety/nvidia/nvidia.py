@@ -4,20 +4,20 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 from typing import Any
 
 import requests
 
 from llama_stack.apis.inference import Message
-from llama_stack.apis.safety import RunShieldResponse, Safety, SafetyViolation, ViolationLevel
+from llama_stack.apis.safety import ModerationObject, RunShieldResponse, Safety, SafetyViolation, ViolationLevel
 from llama_stack.apis.shields import Shield
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
 from llama_stack.providers.utils.inference.openai_compat import convert_message_to_openai_dict_new
 
 from .config import NVIDIASafetyConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="safety::nvidia")
 
 
 class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
@@ -66,6 +66,9 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
 
         self.shield = NeMoGuardrails(self.config, shield.shield_id)
         return await self.shield.run(messages)
+
+    async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
+        raise NotImplementedError("NVIDIA safety provider currently does not implement run_moderation")
 
 
 class NeMoGuardrails:

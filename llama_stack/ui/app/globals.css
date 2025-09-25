@@ -120,3 +120,44 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .animate-typing-dot-1 {
+    animation: typing-dot-bounce-1 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-typing-dot-2 {
+    animation: typing-dot-bounce-2 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-typing-dot-3 {
+    animation: typing-dot-bounce-3 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes typing-dot-bounce-1 {
+    0%, 15%, 85%, 100% {
+      transform: translateY(0);
+    }
+    7.5% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes typing-dot-bounce-2 {
+    0%, 15%, 35%, 85%, 100% {
+      transform: translateY(0);
+    }
+    25% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes typing-dot-bounce-3 {
+    0%, 35%, 55%, 85%, 100% {
+      transform: translateY(0);
+    }
+    45% {
+      transform: translateY(-6px);
+    }
+  }
+}

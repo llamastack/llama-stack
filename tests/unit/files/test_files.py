@@ -7,6 +7,7 @@
 
 import pytest
 
+from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.files import OpenAIFilePurpose
 from llama_stack.core.access_control.access_control import default_policy
@@ -190,7 +191,7 @@ class TestOpenAIFilesAPI:
 
     async def test_retrieve_file_not_found(self, files_provider):
         """Test retrieving a non-existent file."""
-        with pytest.raises(ValueError, match="File with id file-nonexistent not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file("file-nonexistent")
 
     async def test_retrieve_file_content_success(self, files_provider, sample_text_file):
@@ -208,7 +209,7 @@ class TestOpenAIFilesAPI:
 
     async def test_retrieve_file_content_not_found(self, files_provider):
         """Test retrieving content of a non-existent file."""
-        with pytest.raises(ValueError, match="File with id file-nonexistent not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file_content("file-nonexistent")
 
     async def test_delete_file_success(self, files_provider, sample_text_file):
@@ -229,12 +230,12 @@ class TestOpenAIFilesAPI:
         assert delete_response.deleted is True
 
         # Verify file no longer exists
-        with pytest.raises(ValueError, match=f"File with id {uploaded_file.id} not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file(uploaded_file.id)
 
     async def test_delete_file_not_found(self, files_provider):
         """Test deleting a non-existent file."""
-        with pytest.raises(ValueError, match="File with id file-nonexistent not found"):
+        with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_delete_file("file-nonexistent")
 
     async def test_file_persistence_across_operations(self, files_provider, sample_text_file):

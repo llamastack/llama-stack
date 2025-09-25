@@ -86,7 +86,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/templates/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
+        files: ^llama_stack/distributions/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
       - id: provider-codegen
         name: Provider Codegen
         additional_dependencies:
@@ -146,20 +146,32 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^.github/workflows/.*$
-      - id: ui-prettier
-        name: Format UI code with Prettier
-        entry: bash -c 'cd llama_stack/ui && npm run format'
+      - id: ui-linter
+        name: Format & Lint UI
+        entry: bash ./scripts/run-ui-linter.sh
         language: system
         files: ^llama_stack/ui/.*\.(ts|tsx)$
         pass_filenames: false
         require_serial: true
-      - id: ui-eslint
-        name: Lint UI code with ESLint
-        entry: bash -c 'cd llama_stack/ui && npm run lint -- --fix --quiet'
+
+      - id: check-log-usage
+        name: Ensure 'llama_stack.log' usage for logging
+        entry: bash
         language: system
-        files: ^llama_stack/ui/.*\.(ts|tsx)$
-        pass_filenames: false
-        require_serial: true
+        types: [python]
+        pass_filenames: true
+        args:
+          - -c
+          - |
+            matches=$(grep -EnH '^[^#]*\b(import\s+logging|from\s+logging\b)' "$@" | grep -v -e '#\s*allow-direct-logging' || true)
+            if [ -n "$matches" ]; then
+              # GitHub Actions annotation format
+              while IFS=: read -r file line_num rest; do
+                echo "::error file=$file,line=$line_num::Do not use 'import logging' or 'from logging import' in $file. Use the custom log instead: from llama_stack.log import get_logger; logger = get_logger(). If direct logging is truly needed, add: # allow-direct-logging"
+              done <<< "$matches"
+              exit 1
+            fi
+            exit 0
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks

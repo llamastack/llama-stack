@@ -17,6 +17,8 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageContent,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFunctionToolCall,
+    OpenAIResponseOutputMessageMCPCall,
+    OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseText,
 )
 from llama_stack.apis.inference import (
@@ -99,14 +101,22 @@ async def convert_response_input_to_chat_messages(
     """
     messages: list[OpenAIMessageParam] = []
     if isinstance(input, list):
+        # extract all OpenAIResponseInputFunctionToolCallOutput items
+        # so their corresponding OpenAIToolMessageParam instances can
+        # be added immediately following the corresponding
+        # OpenAIAssistantMessageParam
+        tool_call_results = {}
         for input_item in input:
             if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
-                messages.append(
-                    OpenAIToolMessageParam(
-                        content=input_item.output,
-                        tool_call_id=input_item.call_id,
-                    )
+                tool_call_results[input_item.call_id] = OpenAIToolMessageParam(
+                    content=input_item.output,
+                    tool_call_id=input_item.call_id,
                 )
+
+        for input_item in input:
+            if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
+                # skip as these have been extracted and inserted in order
+                pass
             elif isinstance(input_item, OpenAIResponseOutputMessageFunctionToolCall):
                 tool_call = OpenAIChatCompletionToolCall(
                     index=0,
@@ -117,6 +127,28 @@ async def convert_response_input_to_chat_messages(
                     ),
                 )
                 messages.append(OpenAIAssistantMessageParam(tool_calls=[tool_call]))
+                if input_item.call_id in tool_call_results:
+                    messages.append(tool_call_results[input_item.call_id])
+                    del tool_call_results[input_item.call_id]
+            elif isinstance(input_item, OpenAIResponseOutputMessageMCPCall):
+                tool_call = OpenAIChatCompletionToolCall(
+                    index=0,
+                    id=input_item.id,
+                    function=OpenAIChatCompletionToolCallFunction(
+                        name=input_item.name,
+                        arguments=input_item.arguments,
+                    ),
+                )
+                messages.append(OpenAIAssistantMessageParam(tool_calls=[tool_call]))
+                messages.append(
+                    OpenAIToolMessageParam(
+                        content=input_item.output,
+                        tool_call_id=input_item.id,
+                    )
+                )
+            elif isinstance(input_item, OpenAIResponseOutputMessageMCPListTools):
+                # the tool list will be handled separately
+                pass
             else:
                 content = await convert_response_content_to_chat_content(input_item.content)
                 message_type = await get_message_type_by_role(input_item.role)
@@ -125,6 +157,10 @@ async def convert_response_input_to_chat_messages(
                         f"Llama Stack OpenAI Responses does not yet support message role '{input_item.role}' in this context"
                     )
                 messages.append(message_type(content=content))
+        if len(tool_call_results):
+            raise ValueError(
+                f"Received function_call_output(s) with call_id(s) {tool_call_results.keys()}, but no corresponding function_call"
+            )
     else:
         messages.append(OpenAIUserMessageParam(content=input))
     return messages

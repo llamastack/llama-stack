@@ -67,6 +67,38 @@ async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerat
                     raise AuthenticationRequiredError(exc) from exc
             if i == len(connection_strategies) - 1:
                 raise
+        except* httpx.ConnectError as eg:
+            # Connection refused, server down, network unreachable
+            if i == len(connection_strategies) - 1:
+                error_msg = f"Failed to connect to MCP server at {endpoint}: Connection refused"
+                logger.error(f"MCP connection error: {error_msg}")
+                raise ConnectionError(error_msg) from eg
+            else:
+                logger.warning(
+                    f"failed to connect to MCP server at {endpoint} via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                )
+        except* httpx.TimeoutException as eg:
+            # Request timeout, server too slow
+            if i == len(connection_strategies) - 1:
+                error_msg = f"MCP server at {endpoint} timed out"
+                logger.error(f"MCP timeout error: {error_msg}")
+                raise TimeoutError(error_msg) from eg
+            else:
+                logger.warning(
+                    f"MCP server at {endpoint} timed out via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                )
+        except* httpx.RequestError as eg:
+            # DNS resolution failures, network errors, invalid URLs
+            if i == len(connection_strategies) - 1:
+                # Get the first exception's message for the error string
+                exc_msg = str(eg.exceptions[0]) if eg.exceptions else "Unknown error"
+                error_msg = f"Network error connecting to MCP server at {endpoint}: {exc_msg}"
+                logger.error(f"MCP network error: {error_msg}")
+                raise ConnectionError(error_msg) from eg
+            else:
+                logger.warning(
+                    f"network error connecting to MCP server at {endpoint} via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                )
         except* McpError:
             if i < len(connection_strategies) - 1:
                 logger.warning(

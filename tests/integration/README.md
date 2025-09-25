@@ -6,9 +6,7 @@ Integration tests verify complete workflows across different providers using Lla
 
 ```bash
 # Run all integration tests with existing recordings
-LLAMA_STACK_TEST_INFERENCE_MODE=replay \
-  LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
-  uv run --group test \
+uv run --group test \
   pytest -sv tests/integration/ --stack-config=starter
 ```
 
@@ -41,6 +39,37 @@ Model parameters can be influenced by the following options:
 
 Each of these are comma-separated lists and can be used to generate multiple parameter combinations. Note that tests will be skipped
 if no model is specified.
+
+### Suites and Setups
+
+- `--suite`: single named suite that narrows which tests are collected.
+- Available suites:
+  - `base`: collects most tests (excludes responses and post_training)
+  - `responses`: collects tests under `tests/integration/responses` (needs strong tool-calling models)
+  - `vision`: collects only `tests/integration/inference/test_vision_inference.py`
+- `--setup`: global configuration that can be used with any suite. Setups prefill model/env defaults; explicit CLI flags always win.
+  - Available setups:
+    - `ollama`: Local Ollama provider with lightweight models (sets OLLAMA_URL, uses llama3.2:3b-instruct-fp16)
+    - `vllm`: VLLM provider for efficient local inference (sets VLLM_URL, uses Llama-3.2-1B-Instruct)
+    - `gpt`: OpenAI GPT models for high-quality responses (uses gpt-4o)
+    - `claude`: Anthropic Claude models for high-quality responses (uses claude-3-5-sonnet)
+
+Examples
+
+```bash
+# Fast responses run with a strong tool-calling model
+pytest -s -v tests/integration --stack-config=server:starter --suite=responses --setup=gpt
+
+# Fast single-file vision run with Ollama defaults
+pytest -s -v tests/integration --stack-config=server:starter --suite=vision --setup=ollama
+
+# Base suite with VLLM for performance
+pytest -s -v tests/integration --stack-config=server:starter --suite=base --setup=vllm
+
+# Override a default from setup
+pytest -s -v tests/integration --stack-config=server:starter \
+  --suite=responses --setup=gpt --embedding-model=text-embedding-3-small
+```
 
 ## Examples
 
@@ -98,29 +127,24 @@ pytest -s -v tests/integration/vector_io/ \
 
 The testing system supports three modes controlled by environment variables:
 
-### LIVE Mode (Default)
-Tests make real API calls:
+### REPLAY Mode (Default)
+Uses cached responses instead of making API calls:
 ```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=live pytest tests/integration/
+pytest tests/integration/
 ```
-
 ### RECORD Mode
 Captures API interactions for later replay:
 ```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=record \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
-pytest tests/integration/inference/test_new_feature.py
+pytest tests/integration/inference/test_new_feature.py --inference-mode=record
 ```
 
-### REPLAY Mode
-Uses cached responses instead of making API calls:
+### LIVE Mode
+Tests make real API calls (but not recorded):
 ```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=replay \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
-pytest tests/integration/
+pytest tests/integration/ --inference-mode=live
 ```
 
-Note that right now you must specify the recording directory. This is because different tests use different recording directories and we don't (yet) have a fool-proof way to map a test to a recording directory. We are working on this.
+By default, the recording directory is `tests/integration/recordings`. You can override this by setting the `LLAMA_STACK_TEST_RECORDING_DIR` environment variable.
 
 ## Managing Recordings
 
@@ -138,16 +162,14 @@ cat recordings/responses/abc123.json | jq '.'
 #### Remote Re-recording (Recommended)
 Use the automated workflow script for easier re-recording:
 ```bash
-./scripts/github/schedule-record-workflow.sh --test-subdirs "inference,agents"
+./scripts/github/schedule-record-workflow.sh --subdirs "inference,agents"
 ```
 See the [main testing guide](../README.md#remote-re-recording-recommended) for full details.
 
 #### Local Re-recording
 ```bash
 # Re-record specific tests
-LLAMA_STACK_TEST_INFERENCE_MODE=record \
-LLAMA_STACK_TEST_RECORDING_DIR=tests/integration/recordings \
-pytest -s -v --stack-config=server:starter tests/integration/inference/test_modified.py
+pytest -s -v --stack-config=server:starter tests/integration/inference/test_modified.py --inference-mode=record
 ```
 
 Note that when re-recording tests, you must use a Stack pointing to a server (i.e., `server:starter`). This subtlety exists because the set of tests run in server are a superset of the set of tests run in the library client.

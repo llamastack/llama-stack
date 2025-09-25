@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 import {
@@ -110,7 +111,16 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/">Llama Stack</Link>
+        <Link href="/" className="flex items-center gap-2 p-2">
+          <Image
+            src="/logo.webp"
+            alt="Llama Stack"
+            width={32}
+            height={32}
+            className="h-8 w-8"
+          />
+          <span className="font-semibold text-lg">Llama Stack</span>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

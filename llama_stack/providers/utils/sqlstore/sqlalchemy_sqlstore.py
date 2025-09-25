@@ -22,6 +22,8 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from sqlalchemy.sql.elements import ColumnElement
 
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.log import get_logger
@@ -29,7 +31,7 @@ from llama_stack.log import get_logger
 from .api import ColumnDefinition, ColumnType, SqlStore
 from .sqlstore import SqlAlchemySqlStoreConfig
 
-logger = get_logger(name=__name__, category="sqlstore")
+logger = get_logger(name=__name__, category="providers::utils")
 
 TYPE_MAPPING: dict[ColumnType, Any] = {
     ColumnType.INTEGER: Integer,
@@ -42,11 +44,38 @@ TYPE_MAPPING: dict[ColumnType, Any] = {
 }
 
 
+def _build_where_expr(column: ColumnElement, value: Any) -> ColumnElement:
+    """Return a SQLAlchemy expression for a where condition.
+
+    `value` may be a simple scalar (equality) or a mapping like {">": 123}.
+    The returned expression is a SQLAlchemy ColumnElement usable in query.where(...).
+    """
+    if isinstance(value, Mapping):
+        if len(value) != 1:
+            raise ValueError(f"Operator mapping must have a single operator, got: {value}")
+        op, operand = next(iter(value.items()))
+        if op == "==" or op == "=":
+            return column == operand
+        if op == ">":
+            return column > operand
+        if op == "<":
+            return column < operand
+        if op == ">=":
+            return column >= operand
+        if op == "<=":
+            return column <= operand
+        raise ValueError(f"Unsupported operator '{op}' in where mapping")
+    return column == value
+
+
 class SqlAlchemySqlStoreImpl(SqlStore):
     def __init__(self, config: SqlAlchemySqlStoreConfig):
         self.config = config
-        self.async_session = async_sessionmaker(create_async_engine(config.engine_str))
+        self.async_session = async_sessionmaker(self.create_engine())
         self.metadata = MetaData()
+
+    def create_engine(self) -> AsyncEngine:
+        return create_async_engine(self.config.engine_str, pool_pre_ping=True)
 
     async def create_table(
         self,
@@ -83,7 +112,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         else:
             sqlalchemy_table = self.metadata.tables[table]
 
-        engine = create_async_engine(self.config.engine_str)
+        engine = self.create_engine()
         async with engine.begin() as conn:
             await conn.run_sync(self.metadata.create_all, tables=[sqlalchemy_table], checkfirst=True)
 
@@ -107,7 +136,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
 
             if where:
                 for key, value in where.items():
-                    query = query.where(table_obj.c[key] == value)
+                    query = query.where(_build_where_expr(table_obj.c[key], value))
 
             if where_sql:
                 query = query.where(text(where_sql))
@@ -218,7 +247,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         async with self.async_session() as session:
             stmt = self.metadata.tables[table].update()
             for key, value in where.items():
-                stmt = stmt.where(self.metadata.tables[table].c[key] == value)
+                stmt = stmt.where(_build_where_expr(self.metadata.tables[table].c[key], value))
             await session.execute(stmt, data)
             await session.commit()
 
@@ -229,7 +258,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         async with self.async_session() as session:
             stmt = self.metadata.tables[table].delete()
             for key, value in where.items():
-                stmt = stmt.where(self.metadata.tables[table].c[key] == value)
+                stmt = stmt.where(_build_where_expr(self.metadata.tables[table].c[key], value))
             await session.execute(stmt)
             await session.commit()
 
@@ -241,7 +270,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         nullable: bool = True,
     ) -> None:
         """Add a column to an existing table if the column doesn't already exist."""
-        engine = create_async_engine(self.config.engine_str)
+        engine = self.create_engine()
 
         try:
             async with engine.begin() as conn:

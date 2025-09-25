@@ -7,6 +7,7 @@
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -120,10 +121,6 @@ class AutoRoutedProviderSpec(ProviderSpec):
         default=None,
     )
 
-    @property
-    def pip_packages(self) -> list[str]:
-        raise AssertionError("Should not be called on AutoRoutedProviderSpec")
-
 
 # Example: /models, /shields
 class RoutingTableProviderSpec(ProviderSpec):
@@ -212,6 +209,7 @@ class AuthProviderType(StrEnum):
     OAUTH2_TOKEN = "oauth2_token"
     GITHUB_TOKEN = "github_token"
     CUSTOM = "custom"
+    KUBERNETES = "kubernetes"
 
 
 class OAuth2TokenAuthConfig(BaseModel):
@@ -282,8 +280,45 @@ class GitHubTokenAuthConfig(BaseModel):
     )
 
 
+class KubernetesAuthProviderConfig(BaseModel):
+    """Configuration for Kubernetes authentication provider."""
+
+    type: Literal[AuthProviderType.KUBERNETES] = AuthProviderType.KUBERNETES
+    api_server_url: str = Field(
+        default="https://kubernetes.default.svc",
+        description="Kubernetes API server URL (e.g., https://api.cluster.domain:6443)",
+    )
+    verify_tls: bool = Field(default=True, description="Whether to verify TLS certificates")
+    tls_cafile: Path | None = Field(default=None, description="Path to CA certificate file for TLS verification")
+    claims_mapping: dict[str, str] = Field(
+        default_factory=lambda: {
+            "username": "roles",
+            "groups": "roles",
+        },
+        description="Mapping of Kubernetes user claims to access attributes",
+    )
+
+    @field_validator("api_server_url")
+    @classmethod
+    def validate_api_server_url(cls, v):
+        parsed = urlparse(v)
+        if not parsed.scheme or not parsed.netloc:
+            raise ValueError(f"api_server_url must be a valid URL with scheme and host: {v}")
+        if parsed.scheme not in ["http", "https"]:
+            raise ValueError(f"api_server_url scheme must be http or https: {v}")
+        return v
+
+    @field_validator("claims_mapping")
+    @classmethod
+    def validate_claims_mapping(cls, v):
+        for key, value in v.items():
+            if not value:
+                raise ValueError(f"claims_mapping value cannot be empty: {key}")
+        return v
+
+
 AuthProviderConfig = Annotated[
-    OAuth2TokenAuthConfig | GitHubTokenAuthConfig | CustomAuthConfig,
+    OAuth2TokenAuthConfig | GitHubTokenAuthConfig | CustomAuthConfig | KubernetesAuthProviderConfig,
     Field(discriminator="type"),
 ]
 
@@ -318,6 +353,41 @@ class QuotaConfig(BaseModel):
     period: QuotaPeriod = Field(default=QuotaPeriod.DAY, description="Quota period to set")
 
 
+class CORSConfig(BaseModel):
+    allow_origins: list[str] = Field(default_factory=list)
+    allow_origin_regex: str | None = Field(default=None)
+    allow_methods: list[str] = Field(default=["OPTIONS"])
+    allow_headers: list[str] = Field(default_factory=list)
+    allow_credentials: bool = Field(default=False)
+    expose_headers: list[str] = Field(default_factory=list)
+    max_age: int = Field(default=600, ge=0)
+
+    @model_validator(mode="after")
+    def validate_credentials_config(self) -> Self:
+        if self.allow_credentials and (self.allow_origins == ["*"] or "*" in self.allow_origins):
+            raise ValueError("Cannot use wildcard origins with credentials enabled")
+        return self
+
+
+def process_cors_config(cors_config: bool | CORSConfig | None) -> CORSConfig | None:
+    if cors_config is False or cors_config is None:
+        return None
+
+    if cors_config is True:
+        # dev mode: allow localhost on any port
+        return CORSConfig(
+            allow_origins=[],
+            allow_origin_regex=r"https?://localhost:\d+",
+            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+        )
+
+    if isinstance(cors_config, CORSConfig):
+        return cors_config
+
+    raise ValueError(f"Expected bool or CORSConfig, got {type(cors_config).__name__}")
+
+
 class ServerConfig(BaseModel):
     port: int = Field(
         default=8321,
@@ -349,6 +419,18 @@ class ServerConfig(BaseModel):
         default=None,
         description="Per client quota request configuration",
     )
+    cors: bool | CORSConfig | None = Field(
+        default=None,
+        description="CORS configuration for cross-origin requests. Can be:\n"
+        "- true: Enable localhost CORS for development\n"
+        "- {allow_origins: [...], allow_methods: [...], ...}: Full configuration",
+    )
+
+
+class InferenceStoreConfig(BaseModel):
+    sql_store_config: SqlStoreConfig
+    max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
+    num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 
 class StackRunConfig(BaseModel):
@@ -384,11 +466,12 @@ Configuration for the persistence store used by the distribution registry. If no
 a default SQLite store will be used.""",
     )
 
-    inference_store: SqlStoreConfig | None = Field(
+    inference_store: InferenceStoreConfig | SqlStoreConfig | None = Field(
         default=None,
         description="""
-Configuration for the persistence store used by the inference API. If not specified,
-a default SQLite store will be used.""",
+Configuration for the persistence store used by the inference API. Can be either a
+InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
+If not specified, a default SQLite store will be used.""",
     )
 
     # registry of "resources" in the distribution

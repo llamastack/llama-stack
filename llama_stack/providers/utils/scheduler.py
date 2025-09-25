@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from llama_stack.log import get_logger
 
-logger = get_logger(name=__name__, category="scheduler")
+logger = get_logger(name=__name__, category="providers::utils")
 
 
 # TODO: revisit the list of possible statuses when defining a more coherent

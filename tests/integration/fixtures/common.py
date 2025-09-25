@@ -256,15 +256,25 @@ def instantiate_llama_stack_client(session):
         provider_data=get_provider_data(),
         skip_logger_removal=True,
     )
-    if not client.initialize():
-        raise RuntimeError("Initialization failed")
-
     return client
 
 
 @pytest.fixture(scope="session")
-def openai_client(client_with_models):
-    base_url = f"{client_with_models.base_url}/v1/openai/v1"
+def require_server(llama_stack_client):
+    """
+    Skip test if no server is running.
+
+    We use the llama_stack_client to tell if a server was started or not.
+
+    We use this with openai_client because it relies on a running server.
+    """
+    if isinstance(llama_stack_client, LlamaStackAsLibraryClient):
+        pytest.skip("No server running")
+
+
+@pytest.fixture(scope="session")
+def openai_client(llama_stack_client, require_server):
+    base_url = f"{llama_stack_client.base_url}/v1/openai/v1"
     return OpenAI(base_url=base_url, api_key="fake")
 
 

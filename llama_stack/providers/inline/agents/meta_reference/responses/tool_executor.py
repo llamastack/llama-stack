@@ -38,7 +38,7 @@ from llama_stack.log import get_logger
 
 from .types import ChatCompletionContext, ToolExecutionResult
 
-logger = get_logger(name=__name__, category="responses")
+logger = get_logger(name=__name__, category="agents::meta_reference")
 
 
 class ToolExecutor:

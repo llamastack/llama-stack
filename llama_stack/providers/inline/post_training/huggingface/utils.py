@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import os
 import signal
 import sys
@@ -19,10 +18,11 @@ from transformers import AutoConfig, AutoModelForCausalLM
 
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.post_training import Checkpoint, TrainingConfig
+from llama_stack.log import get_logger
 
 from .config import HuggingFacePostTrainingConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="post_training")
 
 
 def setup_environment():

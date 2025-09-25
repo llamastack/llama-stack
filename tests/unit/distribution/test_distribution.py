@@ -12,7 +12,7 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError
 
 from llama_stack.core.datatypes import Api, Provider, StackRunConfig
-from llama_stack.core.distribution import get_provider_registry
+from llama_stack.core.distribution import INTERNAL_APIS, get_provider_registry, providable_apis
 from llama_stack.providers.datatypes import ProviderSpec
 
 
@@ -66,10 +66,9 @@ def base_config(tmp_path):
 def provider_spec_yaml():
     """Common provider spec YAML for testing."""
     return """
-adapter:
-  adapter_type: test_provider
-  config_class: test_provider.config.TestProviderConfig
-  module: test_provider
+adapter_type: test_provider
+config_class: test_provider.config.TestProviderConfig
+module: test_provider
 api_dependencies:
   - safety
 """
@@ -152,6 +151,24 @@ class TestProviderRegistry:
         assert registry[Api.inference]["test_provider"].provider_type == "test_provider"
         assert registry[Api.inference]["test_provider"].api == Api.inference
 
+    def test_internal_apis_excluded(self):
+        """Test that internal APIs are excluded and APIs without provider registries are marked as internal."""
+        import importlib
+
+        apis = providable_apis()
+
+        for internal_api in INTERNAL_APIS:
+            assert internal_api not in apis, f"Internal API {internal_api} should not be in providable_apis"
+
+        for api in apis:
+            module_name = f"llama_stack.providers.registry.{api.name.lower()}"
+            try:
+                importlib.import_module(module_name)
+            except ImportError as err:
+                raise AssertionError(
+                    f"API {api} is in providable_apis but has no provider registry module ({module_name})"
+                ) from err
+
     def test_external_remote_providers(self, api_directories, mock_providers, base_config, provider_spec_yaml):
         """Test loading external remote providers from YAML files."""
         remote_dir, _ = api_directories
@@ -164,9 +181,9 @@ class TestProviderRegistry:
         assert Api.inference in registry
         assert "remote::test_provider" in registry[Api.inference]
         provider = registry[Api.inference]["remote::test_provider"]
-        assert provider.adapter.adapter_type == "test_provider"
-        assert provider.adapter.module == "test_provider"
-        assert provider.adapter.config_class == "test_provider.config.TestProviderConfig"
+        assert provider.adapter_type == "test_provider"
+        assert provider.module == "test_provider"
+        assert provider.config_class == "test_provider.config.TestProviderConfig"
         assert Api.safety in provider.api_dependencies
 
     def test_external_inline_providers(self, api_directories, mock_providers, base_config, inline_provider_spec_yaml):
@@ -228,8 +245,7 @@ class TestProviderRegistry:
         """Test handling of malformed remote provider spec (missing required fields)."""
         remote_dir, _ = api_directories
         malformed_spec = """
-adapter:
-  adapter_type: test_provider
+adapter_type: test_provider
   # Missing required fields
 api_dependencies:
   - safety
@@ -252,7 +268,7 @@ pip_packages:
         with open(inline_dir / "malformed.yaml", "w") as f:
             f.write(malformed_spec)
 
-        with pytest.raises(KeyError) as exc_info:
+        with pytest.raises(ValidationError) as exc_info:
             get_provider_registry(base_config)
         assert "config_class" in str(exc_info.value)
 

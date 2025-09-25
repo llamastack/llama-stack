@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
-import logging
+import hashlib
 import uuid
 from typing import Any
 
@@ -24,6 +24,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategy,
     VectorStoreFileObject,
 )
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api, VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
@@ -36,7 +37,7 @@ from llama_stack.providers.utils.memory.vector_store import (
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="vector_io::qdrant")
 CHUNK_ID_KEY = "_chunk_id"
 
 # KV store prefixes for vector databases
@@ -49,10 +50,13 @@ def convert_id(_id: str) -> str:
     Converts any string into a UUID string based on a seed.
 
     Qdrant accepts UUID strings and unsigned integers as point ID.
-    We use a seed to convert each string into a UUID string deterministically.
+    We use a SHA-256 hash to convert each string into a UUID string deterministically.
     This allows us to overwrite the same point with the original ID.
     """
-    return str(uuid.uuid5(uuid.NAMESPACE_DNS, _id))
+    hash_input = f"qdrant_id:{_id}".encode()
+    sha256_hash = hashlib.sha256(hash_input).hexdigest()
+    # Use the first 32 characters to create a valid UUID
+    return str(uuid.UUID(sha256_hash[:32]))
 
 
 class QdrantIndex(EmbeddingIndex):

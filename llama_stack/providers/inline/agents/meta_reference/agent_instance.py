@@ -84,7 +84,7 @@ MEMORY_QUERY_TOOL = "knowledge_search"
 WEB_SEARCH_TOOL = "web_search"
 RAG_TOOL_GROUP = "builtin::rag"
 
-logger = get_logger(name=__name__, category="agents")
+logger = get_logger(name=__name__, category="agents::meta_reference")
 
 
 class ChatAgent(ShieldRunnerMixin):

@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import uuid
 from typing import TYPE_CHECKING, Any
 
@@ -20,13 +19,14 @@ from llama_stack.apis.safety import (
 )
 from llama_stack.apis.safety.safety import ModerationObject, ModerationObjectResults
 from llama_stack.apis.shields import Shield
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
 
 from .config import CodeScannerConfig
 
-log = logging.getLogger(__name__)
+log = get_logger(name=__name__, category="safety")
 
 ALLOWED_CODE_SCANNER_MODEL_IDS = [
     "code-scanner",

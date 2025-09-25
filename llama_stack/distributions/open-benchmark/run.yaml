@@ -136,14 +136,14 @@ inference_store:
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/inference_store.db
 models:
 - metadata: {}
-  model_id: openai/gpt-4o
+  model_id: gpt-4o
   provider_id: openai
-  provider_model_id: openai/gpt-4o
+  provider_model_id: gpt-4o
   model_type: llm
 - metadata: {}
-  model_id: anthropic/claude-3-5-sonnet-latest
+  model_id: claude-3-5-sonnet-latest
   provider_id: anthropic
-  provider_model_id: anthropic/claude-3-5-sonnet-latest
+  provider_model_id: claude-3-5-sonnet-latest
   model_type: llm
 - metadata: {}
   model_id: gemini/gemini-1.5-flash
@@ -191,12 +191,6 @@ datasets:
 - purpose: eval/messages-answer
   source:
     type: uri
-    uri: huggingface://datasets/llamastack/bfcl_v3?split=train
-  metadata: {}
-  dataset_id: bfcl
-- purpose: eval/messages-answer
-  source:
-    type: uri
     uri: huggingface://datasets/llamastack/IfEval?split=train
   metadata: {}
   dataset_id: ifeval
@@ -228,11 +222,6 @@ benchmarks:
   - basic::regex_parser_math_response
   metadata: {}
   benchmark_id: meta-reference-math-500
-- dataset_id: bfcl
-  scoring_functions:
-  - basic::bfcl
-  metadata: {}
-  benchmark_id: meta-reference-bfcl
 - dataset_id: ifeval
   scoring_functions:
   - basic::ifeval

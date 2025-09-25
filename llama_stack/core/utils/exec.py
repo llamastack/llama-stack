@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
+import importlib
 import os
 import signal
 import subprocess
@@ -12,9 +12,9 @@ import sys
 
 from termcolor import cprint
 
-log = logging.getLogger(__name__)
+from llama_stack.log import get_logger
 
-import importlib
+log = get_logger(name=__name__, category="core")
 
 
 def formulate_run_args(image_type: str, image_name: str) -> list:

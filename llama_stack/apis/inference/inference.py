@@ -474,6 +474,28 @@ class EmbeddingsResponse(BaseModel):
 
 
 @json_schema_type
+class RerankData(BaseModel):
+    """A single rerank result from a reranking response.
+
+    :param index: The original index of the document in the input list
+    :param relevance_score: The relevance score from the model output. Values are inverted when applicable so that higher scores indicate greater relevance.
+    """
+
+    index: int
+    relevance_score: float
+
+
+@json_schema_type
+class RerankResponse(BaseModel):
+    """Response from a reranking request.
+
+    :param data: List of rerank result objects, sorted by relevance score (descending)
+    """
+
+    data: list[RerankData]
+
+
+@json_schema_type
 class OpenAIChatCompletionContentPartTextParam(BaseModel):
     """Text content part for OpenAI-compatible chat completion messages.
 
@@ -1046,6 +1068,7 @@ class InferenceProvider(Protocol):
         :returns: A BatchCompletionResponse with the full completions.
         """
         raise NotImplementedError("Batch completion is not implemented")
+        return  # this is so mypy's safe-super rule will consider the method concrete
 
     @webmethod(route="/inference/chat-completion", method="POST")
     async def chat_completion(
@@ -1110,6 +1133,7 @@ class InferenceProvider(Protocol):
         :returns: A BatchChatCompletionResponse with the full completions.
         """
         raise NotImplementedError("Batch chat completion is not implemented")
+        return  # this is so mypy's safe-super rule will consider the method concrete
 
     @webmethod(route="/inference/embeddings", method="POST")
     async def embeddings(
@@ -1130,6 +1154,25 @@ class InferenceProvider(Protocol):
         :returns: An array of embeddings, one for each content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}.
         """
         ...
+
+    @webmethod(route="/inference/rerank", method="POST", experimental=True)
+    async def rerank(
+        self,
+        model: str,
+        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
+        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
+        max_num_results: int | None = None,
+    ) -> RerankResponse:
+        """Rerank a list of documents based on their relevance to a query.
+
+        :param model: The identifier of the reranking model to use.
+        :param query: The search query to rank items against. Can be a string, text content part, or image content part. The input must not exceed the model's max input token length.
+        :param items: List of items to rerank. Each item can be a string, text content part, or image content part. Each input must not exceed the model's max input token length.
+        :param max_num_results: (Optional) Maximum number of results to return. Default: returns all.
+        :returns: RerankResponse with indices sorted by relevance score (descending).
+        """
+        raise NotImplementedError("Reranking is not implemented")
+        return  # this is so mypy's safe-super rule will consider the method concrete
 
     @webmethod(route="/openai/v1/completions", method="POST")
     async def openai_completion(

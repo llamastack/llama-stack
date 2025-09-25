@@ -22,7 +22,7 @@ from llama_stack.log import get_logger
 
 from ..routing_tables.toolgroups import ToolGroupsRoutingTable
 
-logger = get_logger(name=__name__, category="core")
+logger = get_logger(name=__name__, category="core::routers")
 
 
 class ToolRuntimeRouter(ToolRuntime):

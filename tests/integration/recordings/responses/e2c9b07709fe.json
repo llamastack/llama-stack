@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:11434/v1/v1/chat/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -22,14 +22,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-494",
+        "id": "chatcmpl-662",
         "choices": [
           {
             "finish_reason": "length",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "To test the OpenAI API with a temperature of 1, you can use the following Python code:\n\n```python\nimport requests\n\ndef generate_text(model_name, prompt, temperature=1):\n    # Set the API endpoint and parameters\n    url = \"https://api.openai.com/v1/models/\" + model_name + \"/generate\"\n    params = {\n        \"prompt\": prompt,\n        \"temperature\": temperature\n    }\n\n    # Send a GET request to the API\n    response =",
+              "content": "To test the prompt understanding of OpenAI's text generation capabilities, I'll simulate a conversation. \n\nYou mentioned testing the model with a temperature setting of 1. The temperature parameter in OpenAI's text models controls the diversity and coherence of generated text.\n\nA temperature of 1 is considered \"colder\" than usual, meaning the model will generate more coherent but potentially less diverse text compared to higher temperatures (e.g., 0.5 or 0.7).\n\nPlease provide a prompt for",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -39,7 +39,7 @@
             }
           }
         ],
-        "created": 1754510067,
+        "created": 1756921259,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,

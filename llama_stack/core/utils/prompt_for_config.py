@@ -6,7 +6,6 @@
 
 import inspect
 import json
-import logging
 from enum import Enum
 from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
@@ -14,7 +13,9 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefinedType
 
-log = logging.getLogger(__name__)
+from llama_stack.log import get_logger
+
+log = get_logger(name=__name__, category="core")
 
 
 def is_list_of_primitives(field_type):

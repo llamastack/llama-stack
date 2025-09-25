@@ -26,7 +26,7 @@ on:
       - 'pyproject.toml'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -36,7 +36,7 @@ jobs:
       distros: ${{ steps.set-matrix.outputs.distros }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Generate Distribution List
         id: set-matrix
@@ -55,7 +55,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -106,6 +106,10 @@ jobs:
       - name: Inspect the container image entrypoint
         run: |
           IMAGE_ID=$(docker images --format "{{.Repository}}:{{.Tag}}" | head -n 1)
+          if [ -z "$IMAGE_ID" ]; then
+            echo "No image found"
+            exit 1
+          fi
           entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
           echo "Entrypoint: $entrypoint"
           if [ "$entrypoint" != "[python -m llama_stack.core.server.server /app/run.yaml]" ]; then
@@ -117,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -140,6 +144,10 @@ jobs:
       - name: Inspect UBI9 image
         run: |
           IMAGE_ID=$(docker images --format "{{.Repository}}:{{.Tag}}" | head -n 1)
+          if [ -z "$IMAGE_ID" ]; then
+            echo "No image found"
+            exit 1
+          fi
           entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
           echo "Entrypoint: $entrypoint"
           if [ "$entrypoint" != "[python -m llama_stack.core.server.server /app/run.yaml]" ]; then

@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 import time
 from io import BytesIO
 
@@ -14,8 +13,9 @@ from openai import BadRequestError as OpenAIBadRequestError
 
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
+from llama_stack.log import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="vector_io")
 
 
 def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
@@ -56,11 +56,14 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
         "keyword": [
             "inline::sqlite-vec",
             "remote::milvus",
+            "inline::milvus",
+            "remote::pgvector",
         ],
         "hybrid": [
             "inline::sqlite-vec",
             "inline::milvus",
             "remote::milvus",
+            "remote::pgvector",
         ],
     }
     supported_providers = search_mode_support.get(search_mode, [])

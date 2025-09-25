@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Llama Stack",
   description: "Llama Stack UI",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";

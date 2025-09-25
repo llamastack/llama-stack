@@ -15,7 +15,7 @@ from llama_stack.log import get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
-logger = get_logger(name=__name__, category="server")
+logger = get_logger(name=__name__, category="cli")
 
 
 class StackRun(Subcommand):

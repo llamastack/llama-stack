@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import asyncio
-import logging
 import os
 from typing import Any
 
@@ -21,6 +20,7 @@ from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     VectorIO,
 )
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
 from llama_stack.providers.utils.kvstore import kvstore_impl
@@ -36,7 +36,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collecti
 
 from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="vector_io::milvus")
 
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_dbs:milvus:{VERSION}::"
@@ -413,15 +413,6 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         index = await self._get_and_cache_vector_db_index(vector_db_id)
         if not index:
             raise VectorStoreNotFoundError(vector_db_id)
-
-        if params and params.get("mode") == "keyword":
-            # Check if this is inline Milvus (Milvus-Lite)
-            if hasattr(self.config, "db_path"):
-                raise NotImplementedError(
-                    "Keyword search is not supported in Milvus-Lite. "
-                    "Please use a remote Milvus server for keyword search functionality."
-                )
-
         return await index.query_chunks(query, params)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:

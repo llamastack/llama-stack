@@ -47,7 +47,7 @@ from llama_stack.log import get_logger
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import convert_chat_choice_to_response_message, is_function_tool_call
 
-logger = get_logger(name=__name__, category="responses")
+logger = get_logger(name=__name__, category="agents::meta_reference")
 
 
 class StreamingResponseOrchestrator:

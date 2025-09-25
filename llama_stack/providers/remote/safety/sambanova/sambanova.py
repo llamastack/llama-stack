@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import json
-import logging
 from typing import Any
 
 import litellm
@@ -20,12 +19,13 @@ from llama_stack.apis.safety import (
 )
 from llama_stack.apis.shields import Shield
 from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
 from llama_stack.providers.utils.inference.openai_compat import convert_message_to_openai_dict_new
 
 from .config import SambaNovaSafetyConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="safety::sambanova")
 
 CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 

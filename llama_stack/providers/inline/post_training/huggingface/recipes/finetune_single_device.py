@@ -6,7 +6,6 @@
 
 import gc
 import json
-import logging
 import multiprocessing
 from pathlib import Path
 from typing import Any
@@ -28,6 +27,7 @@ from llama_stack.apis.post_training import (
     LoraFinetuningConfig,
     TrainingConfig,
 )
+from llama_stack.log import get_logger
 from llama_stack.providers.inline.post_training.common.utils import evacuate_model_from_device
 
 from ..config import HuggingFacePostTrainingConfig
@@ -44,7 +44,7 @@ from ..utils import (
     split_dataset,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(name=__name__, category="post_training")
 
 
 class HFFinetuningSingleDevice:

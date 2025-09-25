@@ -13,7 +13,6 @@
 
 import math
 from collections import defaultdict
-from logging import getLogger
 from typing import Any
 
 import torch
@@ -21,9 +20,11 @@ import torchvision.transforms as tv
 from PIL import Image
 from torchvision.transforms import functional as F
 
+from llama_stack.log import get_logger
+
 IMAGE_RES = 224
 
-logger = getLogger()
+logger = get_logger(name=__name__, category="models::llama")
 
 
 class VariableSizeImageTransform:

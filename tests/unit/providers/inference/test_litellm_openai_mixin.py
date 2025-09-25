@@ -26,7 +26,6 @@ class TestProviderDataValidator(BaseModel):
 class TestLiteLLMAdapter(LiteLLMOpenAIMixin):
     def __init__(self, config: TestConfig):
         super().__init__(
-            model_entries=[],
             litellm_provider_name="test",
             api_key_from_config=config.api_key,
             provider_data_api_key_field="test_api_key",

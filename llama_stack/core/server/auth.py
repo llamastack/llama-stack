@@ -15,7 +15,7 @@ from llama_stack.core.server.auth_providers import create_auth_provider
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.log import get_logger
 
-logger = get_logger(name=__name__, category="auth")
+logger = get_logger(name=__name__, category="core::auth")
 
 
 class AuthenticationMiddleware:

@@ -40,7 +40,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 from llama_stack.providers.utils.inference.openai_compat import (
     b64_encode_openai_embeddings_response,
     convert_message_to_openai_dict_new,
@@ -54,7 +54,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
 
-logger = get_logger(name=__name__, category="inference")
+logger = get_logger(name=__name__, category="providers::utils")
 
 
 class LiteLLMOpenAIMixin(
@@ -67,10 +67,10 @@ class LiteLLMOpenAIMixin(
     #                         when calling litellm.
     def __init__(
         self,
-        model_entries,
         litellm_provider_name: str,
         api_key_from_config: str | None,
         provider_data_api_key_field: str,
+        model_entries: list[ProviderModelEntry] | None = None,
         openai_compat_api_base: str | None = None,
         download_images: bool = False,
         json_schema_strict: bool = True,
@@ -86,7 +86,7 @@ class LiteLLMOpenAIMixin(
         :param download_images: Whether to download images and convert to base64 for message conversion.
         :param json_schema_strict: Whether to use strict mode for JSON schema validation.
         """
-        ModelRegistryHelper.__init__(self, model_entries)
+        ModelRegistryHelper.__init__(self, model_entries=model_entries)
 
         self.litellm_provider_name = litellm_provider_name
         self.api_key_from_config = api_key_from_config
@@ -428,28 +428,6 @@ class LiteLLMOpenAIMixin(
             api_base=self.api_base,
         )
         return await litellm.acompletion(**params)
-
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ):
-        raise NotImplementedError("Batch completion is not supported for OpenAI Compat")
-
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_config: ToolConfig | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ):
-        raise NotImplementedError("Batch chat completion is not supported for OpenAI Compat")
 
     async def check_model_availability(self, model: str) -> bool:
         """

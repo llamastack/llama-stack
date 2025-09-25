@@ -8,7 +8,7 @@
 from jinja2 import Template
 
 from llama_stack.apis.common.content_types import InterleavedContent
-from llama_stack.apis.inference import UserMessage
+from llama_stack.apis.inference import OpenAIUserMessageParam
 from llama_stack.apis.tools.rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
@@ -61,16 +61,16 @@ async def llm_rag_query_generator(
         messages = [interleaved_content_as_str(content)]
 
     template = Template(config.template)
-    content = template.render({"messages": messages})
+    rendered_content: str = template.render({"messages": messages})
 
     model = config.model
-    message = UserMessage(content=content)
-    response = await inference_api.chat_completion(
-        model_id=model,
+    message = OpenAIUserMessageParam(content=rendered_content)
+    response = await inference_api.openai_chat_completion(
+        model=model,
         messages=[message],
         stream=False,
     )
 
-    query = response.completion_message.content
+    query = response.choices[0].message.content
 
     return query

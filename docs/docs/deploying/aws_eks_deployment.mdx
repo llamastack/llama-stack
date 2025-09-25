@@ -1,0 +1,30 @@
+---
+title: AWS EKS Deployment Guide
+description: Deploy Llama Stack on AWS EKS
+sidebar_label: AWS EKS Deployment
+sidebar_position: 3
+---
+
+## AWS EKS Deployment
+
+### Prerequisites
+
+- Set up an [EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html)
+- Create a [GitHub OAuth app](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
+- Set authorization callback URL to `http://<your-llama-stack-ui-url>/api/auth/callback/`
+
+### Automated Deployment
+
+```bash
+export HF_TOKEN=<your-huggingface-token>
+export GITHUB_CLIENT_ID=<your-github-client-id>
+export GITHUB_CLIENT_SECRET=<your-github-client-secret>
+export LLAMA_STACK_UI_URL=<your-llama-stack-ui-url>
+
+cd docs/source/distributions/eks
+./apply.sh
+```
+
+This script will:
+- Set up default storage class for AWS EKS
+- Deploy Llama Stack server in Kubernetes pods and services
