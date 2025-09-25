@@ -16,7 +16,7 @@ Together AI inference provider for open-source models and collaborative AI devel
 |-------|------|----------|---------|-------------|
 | `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `url` | `<class 'str'>` | No | https://api.together.xyz/v1 | The URL for the Together AI server |
-| `api_key` | `<class 'pydantic.types.SecretStr'>` | No |  | The Together AI API Key |
+| `api_key` | `<class 'llama_stack.core.secret_types.MySecretStr'>` | No |  | The Together AI API Key |
 
 ## Sample Configuration
 

@@ -15,7 +15,7 @@ IBM WatsonX inference provider for accessing AI models on IBM's WatsonX platform
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `url` | `<class 'str'>` | No | https://us-south.ml.cloud.ibm.com | A base url for accessing the watsonx.ai |
-| `api_key` | `<class 'pydantic.types.SecretStr'>` | No |  | The watsonx API key |
+| `api_key` | `<class 'llama_stack.core.secret_types.MySecretStr'>` | No |  | The watsonx API key |
 | `project_id` | `str \| None` | No |  | The Project ID key |
 | `timeout` | `<class 'int'>` | No | 60 | Timeout for the HTTP requests |
 

@@ -17,7 +17,7 @@ from autoevals.ragas import (
     ContextRelevancy,
     Faithfulness,
 )
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
@@ -31,6 +31,7 @@ from llama_stack.apis.scoring import (
 from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnParams
 from llama_stack.core.datatypes import Api
 from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.providers.datatypes import ScoringFunctionsProtocolPrivate
 from llama_stack.providers.utils.common.data_schema_validator import (
     get_valid_schemas,
@@ -152,7 +153,7 @@ class BraintrustScoringImpl(
                 raise ValueError(
                     'Pass OpenAI API Key in the header X-LlamaStack-Provider-Data as { "openai_api_key": <your api key>}'
                 )
-            self.config.openai_api_key = SecretStr(provider_data.openai_api_key)
+            self.config.openai_api_key = MySecretStr(provider_data.openai_api_key)
 
         os.environ["OPENAI_API_KEY"] = self.config.openai_api_key.get_secret_value()
 

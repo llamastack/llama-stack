@@ -10,12 +10,14 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from llama_stack.core.secret_types import MySecretStr
+
 
 class NvidiaDatasetIOConfig(BaseModel):
     """Configuration for NVIDIA DatasetIO implementation."""
 
-    api_key: str | None = Field(
-        default_factory=lambda: os.getenv("NVIDIA_API_KEY"),
+    api_key: MySecretStr = Field(
+        default_factory=lambda: MySecretStr(os.getenv("NVIDIA_API_KEY", "")),
         description="The NVIDIA API key.",
     )
 

@@ -7,13 +7,14 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl, SecretStr
+from pydantic import BaseModel, Field, HttpUrl
 
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
 class AzureProviderDataValidator(BaseModel):
-    azure_api_key: SecretStr = Field(
+    azure_api_key: MySecretStr = Field(
         description="Azure API key for Azure",
     )
     azure_api_base: HttpUrl = Field(
@@ -31,7 +32,7 @@ class AzureProviderDataValidator(BaseModel):
 
 @json_schema_type
 class AzureConfig(BaseModel):
-    api_key: SecretStr = Field(
+    api_key: MySecretStr = Field(
         description="Azure API key for Azure",
     )
     api_base: HttpUrl = Field(

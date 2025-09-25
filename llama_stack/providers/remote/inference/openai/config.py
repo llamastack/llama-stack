@@ -6,22 +6,21 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
 class OpenAIProviderDataValidator(BaseModel):
-    openai_api_key: SecretStr = Field(
-        default=SecretStr(""),
+    openai_api_key: MySecretStr = Field(
         description="API key for OpenAI models",
     )
 
 
 @json_schema_type
 class OpenAIConfig(BaseModel):
-    api_key: SecretStr = Field(
-        default=SecretStr(""),
+    api_key: MySecretStr = Field(
         description="API key for OpenAI models",
     )
     base_url: str = Field(

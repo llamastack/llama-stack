@@ -6,14 +6,15 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
+
+from llama_stack.core.secret_types import MySecretStr
 
 
 class BingSearchToolConfig(BaseModel):
     """Configuration for Bing Search Tool Runtime"""
 
-    api_key: SecretStr = Field(
-        default=SecretStr(""),
+    api_key: MySecretStr = Field(
         description="The Bing API key",
     )
     top_k: int = 3

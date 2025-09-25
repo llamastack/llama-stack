@@ -6,8 +6,9 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig, SqlStoreConfig
 
 
@@ -17,9 +18,7 @@ class S3FilesImplConfig(BaseModel):
     bucket_name: str = Field(description="S3 bucket name to store files")
     region: str = Field(default="us-east-1", description="AWS region where the bucket is located")
     aws_access_key_id: str | None = Field(default=None, description="AWS access key ID (optional if using IAM roles)")
-    aws_secret_access_key: SecretStr = Field(
-        default=SecretStr(""), description="AWS secret access key (optional if using IAM roles)"
-    )
+    aws_secret_access_key: MySecretStr = Field(description="AWS secret access key (optional if using IAM roles)")
     endpoint_url: str | None = Field(default=None, description="Custom S3 endpoint URL (for MinIO, LocalStack, etc.)")
     auto_create_bucket: bool = Field(
         default=False, description="Automatically create the S3 bucket if it doesn't exist"

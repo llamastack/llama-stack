@@ -33,6 +33,7 @@ from termcolor import cprint
 from llama_stack.core.build import print_pip_install_help
 from llama_stack.core.configure import parse_and_maybe_upgrade_config
 from llama_stack.core.datatypes import Api, BuildConfig, BuildProvider, DistributionSpec
+from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.request_headers import (
     PROVIDER_DATA_VAR,
     request_provider_data_context,
@@ -220,7 +221,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             config_path = Path(config_path_or_distro_name)
             if not config_path.exists():
                 raise ValueError(f"Config file {config_path} does not exist")
-            config_dict = replace_env_vars(yaml.safe_load(config_path.read_text()))
+            config_dict = replace_env_vars(
+                yaml.safe_load(config_path.read_text()), provider_registry=get_provider_registry()
+            )
             config = parse_and_maybe_upgrade_config(config_dict)
         else:
             # distribution
