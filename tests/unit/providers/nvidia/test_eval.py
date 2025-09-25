@@ -150,7 +150,7 @@ class TestNVIDIAEvalImpl(unittest.TestCase):
         self._assert_request_body(
             {
                 "config": f"nvidia/{MOCK_BENCHMARK_ID}",
-                "target": {"type": "model", "model": "meta-llama/Llama-3.1-8B-Instruct"},
+                "target": {"type": "model", "model": "Llama3.1-8B-Instruct"},
             }
         )
 
