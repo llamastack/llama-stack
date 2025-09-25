@@ -115,6 +115,9 @@ resources:
       sampling_params: SamplingParams
       scoring_result: ScoringResult
       system_message: SystemMessage
+      query_result: RAGQueryResult
+      document: RAGDocument
+      query_config: RAGQueryConfig
   toolgroups:
     models:
       tool_group: ToolGroup
@@ -140,6 +143,11 @@ resources:
         endpoint: get /v1/tool-runtime/list-tools
         paginated: false
       invoke_tool: post /v1/tool-runtime/invoke
+    subresources:
+      rag_tool:
+        methods:
+          insert: post /v1/tool-runtime/rag-tool/insert
+          query: post /v1/tool-runtime/rag-tool/query
 
   responses:
     models:
@@ -332,20 +340,17 @@ resources:
         endpoint: get /v1/inspect/routes
         paginated: false
 
-
   moderations:
     models:
       create_response: ModerationObject
     methods:
       create: post /v1/moderations
 
-
   safety:
     models:
       run_shield_response: RunShieldResponse
     methods:
       run_shield: post /v1/safety/run-shield
-
 
   shields:
     models:
@@ -455,10 +460,9 @@ resources:
           iterrows: get /v1beta/datasetio/iterrows/{dataset_id}
           appendrows: post /v1beta/datasetio/append-rows/{dataset_id}
 
-
 settings:
   license: MIT
-  unwrap_response_fields: [ data ]
+  unwrap_response_fields: [data]
 
 openapi:
   transformations:
@@ -466,7 +470,7 @@ openapi:
       reason: Better return_type using enum
       args:
         target:
-          - '$.components.schemas'
+          - "$.components.schemas"
         object:
           ReturnType:
             additionalProperties: false
@@ -491,10 +495,10 @@ openapi:
       args:
         filter:
           only:
-            - '$.components.schemas.ScoringFn.properties.return_type'
-            - '$.components.schemas.RegisterScoringFunctionRequest.properties.return_type'
+            - "$.components.schemas.ScoringFn.properties.return_type"
+            - "$.components.schemas.RegisterScoringFunctionRequest.properties.return_type"
         value:
-          $ref: '#/components/schemas/ReturnType'
+          $ref: "#/components/schemas/ReturnType"
     - command: oneOfToAnyOf
       reason: Prism (mock server) doesn't like one of our requests as it technically matches multiple variants
 
