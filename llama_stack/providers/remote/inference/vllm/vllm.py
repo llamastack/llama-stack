@@ -292,7 +292,7 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     def __init__(self, config: VLLMInferenceAdapterConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
-            build_hf_repo_model_entries(),
+            model_entries=build_hf_repo_model_entries(),
             litellm_provider_name="vllm",
             api_key_from_config=config.api_token,
             provider_data_api_key_field="vllm_api_token",

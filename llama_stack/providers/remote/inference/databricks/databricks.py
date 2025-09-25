@@ -31,42 +31,28 @@ from llama_stack.apis.inference import (
     ToolConfig,
     ToolDefinition,
     ToolPromptFormat,
-)
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import (
-    ProviderModelEntry,
+    Model,
+    ModelType,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import DatabricksImplConfig
 
+from llama_stack.log import get_logger
+
 logger = get_logger(name=__name__, category="inference::databricks")
-
-
-# source: https://docs.databricks.com/aws/en/machine-learning/foundation-model-apis/supported-models
-EMBEDDING_MODEL_ENTRIES = {
-    "databricks-gte-large-en": ProviderModelEntry(
-        provider_model_id="databricks-gte-large-en",
-        metadata={
-            "embedding_dimension": 1024,
-            "context_length": 8192,
-        },
-    ),
-    "databricks-bge-large-en": ProviderModelEntry(
-        provider_model_id="databricks-bge-large-en",
-        metadata={
-            "embedding_dimension": 1024,
-            "context_length": 512,
-        },
-    ),
-}
 
 
 class DatabricksInferenceAdapter(
     OpenAIMixin,
     Inference,
 ):
+    # source: https://docs.databricks.com/aws/en/machine-learning/foundation-model-apis/supported-models
+    embedding_model_metadata = {
+        "databricks-gte-large-en": {"embedding_dimension": 1024, "context_length": 8192},
+        "databricks-bge-large-en": {"embedding_dimension": 1024, "context_length": 512},
+    }
+
     def __init__(self, config: DatabricksImplConfig) -> None:
         self.config = config
 
@@ -156,11 +142,11 @@ class DatabricksInferenceAdapter(
             if endpoint.task == "llm/v1/chat":
                 model.model_type = ModelType.llm  # this is redundant, but informative
             elif endpoint.task == "llm/v1/embeddings":
-                if endpoint.name not in EMBEDDING_MODEL_ENTRIES:
+                if endpoint.name not in self.embedding_model_metadata:
                     logger.warning(f"No metadata information available for embedding model {endpoint.name}, skipping.")
                     continue
                 model.model_type = ModelType.embedding
-                model.metadata = EMBEDDING_MODEL_ENTRIES[endpoint.name].metadata
+                model.metadata = self.embedding_model_metadata[endpoint.name]
             else:
                 logger.warning(f"Unknown model type, skipping: {endpoint}")
                 continue
@@ -168,14 +154,6 @@ class DatabricksInferenceAdapter(
             self._model_cache[endpoint.name] = model
 
         return list(self._model_cache.values())
-
-    async def register_model(self, model: Model) -> Model:
-        if not await self.check_model_availability(model.provider_resource_id):
-            raise ValueError(f"Model {model.provider_resource_id} is not available in Databricks workspace.")
-        return model
-
-    async def unregister_model(self, model_id: str) -> None:
-        pass
 
     async def should_refresh_models(self) -> bool:
         return False

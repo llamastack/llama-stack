@@ -9,7 +9,6 @@ from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOp
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import SambaNovaImplConfig
-from .models import MODEL_ENTRIES
 
 
 class SambaNovaInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
@@ -29,7 +28,6 @@ class SambaNovaInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         self.environment_available_models = []
         LiteLLMOpenAIMixin.__init__(
             self,
-            model_entries=MODEL_ENTRIES,
             litellm_provider_name="sambanova",
             api_key_from_config=self.config.api_key.get_secret_value() if self.config.api_key else None,
             provider_data_api_key_field="sambanova_api_key",

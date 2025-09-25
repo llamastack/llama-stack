@@ -49,7 +49,6 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 
 from .config import CerebrasImplConfig
-from .models import MODEL_ENTRIES
 
 
 class CerebrasInferenceAdapter(
@@ -58,10 +57,6 @@ class CerebrasInferenceAdapter(
     Inference,
 ):
     def __init__(self, config: CerebrasImplConfig) -> None:
-        ModelRegistryHelper.__init__(
-            self,
-            model_entries=MODEL_ENTRIES,
-        )
         self.config = config
 
         # TODO: make this use provider data, etc. like other providers

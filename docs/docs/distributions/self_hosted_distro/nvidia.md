@@ -37,25 +37,6 @@ The following environment variables can be configured:
 - `INFERENCE_MODEL`: Inference model (default: `Llama3.1-8B-Instruct`)
 - `SAFETY_MODEL`: Name of the model to use for safety (default: `meta/llama-3.1-8b-instruct`)
 
-### Models
-
-The following models are available by default:
-
-- `meta/llama3-8b-instruct `
-- `meta/llama3-70b-instruct `
-- `meta/llama-3.1-8b-instruct `
-- `meta/llama-3.1-70b-instruct `
-- `meta/llama-3.1-405b-instruct `
-- `meta/llama-3.2-1b-instruct `
-- `meta/llama-3.2-3b-instruct `
-- `meta/llama-3.2-11b-vision-instruct `
-- `meta/llama-3.2-90b-vision-instruct `
-- `meta/llama-3.3-70b-instruct `
-- `nvidia/vila `
-- `nvidia/llama-3.2-nv-embedqa-1b-v2 `
-- `nvidia/nv-embedqa-e5-v5 `
-- `nvidia/nv-embedqa-mistral-7b-v2 `
-- `snowflake/arctic-embed-l `
 
 
 ## Prerequisites

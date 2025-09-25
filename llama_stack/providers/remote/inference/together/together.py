@@ -56,15 +56,22 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 
 from .config import TogetherImplConfig
-from .models import EMBEDDING_MODEL_ENTRIES, MODEL_ENTRIES
 
 logger = get_logger(name=__name__, category="inference::together")
 
 
 class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, NeedsRequestProviderData):
+    embedding_model_metadata = {
+        "togethercomputer/m2-bert-80M-32k-retrieval": {"embedding_dimension": 768, "context_length": 32768},
+        "BAAI/bge-large-en-v1.5": {"embedding_dimension": 1024, "context_length": 512},
+        "BAAI/bge-base-en-v1.5": {"embedding_dimension": 768, "context_length": 512},
+        "Alibaba-NLP/gte-modernbert-base": {"embedding_dimension": 768, "context_length": 8192},
+        "intfloat/multilingual-e5-large-instruct": {"embedding_dimension": 1024, "context_length": 512},
+    }
+
     def __init__(self, config: TogetherImplConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES, config.allowed_models)
         self.config = config
+        self.allowed_models = config.allowed_models
         self._model_cache: dict[str, Model] = {}
 
     def get_api_key(self):
@@ -264,15 +271,16 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
         # Together's /v1/models is not compatible with OpenAI's /v1/models. Together support ticket #13355 -> will not fix, use Together's own client
         for m in await self._get_client().models.list():
             if m.type == "embedding":
-                if m.id not in EMBEDDING_MODEL_ENTRIES:
+                if m.id not in self.embedding_model_metadata:
                     logger.warning(f"Unknown embedding dimension for model {m.id}, skipping.")
                     continue
+                metadata = self.embedding_model_metadata[m.id]
                 self._model_cache[m.id] = Model(
                     provider_id=self.__provider_id__,
-                    provider_resource_id=EMBEDDING_MODEL_ENTRIES[m.id].provider_model_id,
+                    provider_resource_id=m.id,
                     identifier=m.id,
                     model_type=ModelType.embedding,
-                    metadata=EMBEDDING_MODEL_ENTRIES[m.id].metadata,
+                    metadata=metadata,
                 )
             else:
                 self._model_cache[m.id] = Model(

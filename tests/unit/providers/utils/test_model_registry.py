@@ -84,14 +84,14 @@ def unknown_model() -> Model:
 
 @pytest.fixture
 def helper(known_provider_model: ProviderModelEntry, known_provider_model2: ProviderModelEntry) -> ModelRegistryHelper:
-    return ModelRegistryHelper([known_provider_model, known_provider_model2])
+    return ModelRegistryHelper(model_entries=[known_provider_model, known_provider_model2])
 
 
 class MockModelRegistryHelperWithDynamicModels(ModelRegistryHelper):
     """Test helper that simulates a provider with dynamically available models."""
 
     def __init__(self, model_entries: list[ProviderModelEntry], available_models: list[str]):
-        super().__init__(model_entries)
+        super().__init__(model_entries=model_entries)
         self._available_models = available_models
 
     async def check_model_availability(self, model: str) -> bool:

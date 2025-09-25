@@ -9,8 +9,6 @@ from llama_stack.providers.remote.inference.groq.config import GroqConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
-from .models import MODEL_ENTRIES
-
 
 class GroqInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
     _config: GroqConfig
@@ -18,7 +16,6 @@ class GroqInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
     def __init__(self, config: GroqConfig):
         LiteLLMOpenAIMixin.__init__(
             self,
-            model_entries=MODEL_ENTRIES,
             litellm_provider_name="groq",
             api_key_from_config=config.api_key,
             provider_data_api_key_field="groq_api_key",
