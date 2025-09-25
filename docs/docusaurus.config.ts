@@ -9,8 +9,8 @@ import type * as OpenApiPlugin from "docusaurus-plugin-openapi-docs";
 const config: Config = {
   title: 'Llama Stack',
   tagline: 'The open-source framework for building generative AI applications',
-  url: 'https://reluctantfuturist.github.io',
-  baseUrl: '/llama-stack/',
+  url: 'https://llamastack.github.io',
+  baseUrl: '/',
   onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
