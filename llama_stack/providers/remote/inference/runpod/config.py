@@ -6,8 +6,9 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -17,8 +18,7 @@ class RunpodImplConfig(BaseModel):
         default=None,
         description="The URL for the Runpod model serving endpoint",
     )
-    api_token: SecretStr = Field(
-        default=SecretStr(""),
+    api_token: MySecretStr = Field(
         description="The API token",
     )
 

@@ -216,7 +216,7 @@ def run_stack_build_command(args: argparse.Namespace) -> None:
         with open(args.config) as f:
             try:
                 contents = yaml.safe_load(f)
-                contents = replace_env_vars(contents)
+                contents = replace_env_vars(contents, provider_registry=get_provider_registry())
                 build_config = BuildConfig(**contents)
                 if args.image_type:
                     build_config.image_type = args.image_type

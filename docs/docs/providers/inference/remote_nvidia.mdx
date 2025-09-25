@@ -15,7 +15,7 @@ NVIDIA inference provider for accessing NVIDIA NIM models and AI services.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `url` | `<class 'str'>` | No | https://integrate.api.nvidia.com | A base url for accessing the NVIDIA NIM |
-| `api_key` | `<class 'pydantic.types.SecretStr'>` | No |  | The NVIDIA API key, only needed of using the hosted service |
+| `api_key` | `<class 'llama_stack.core.secret_types.MySecretStr'>` | No |  | The NVIDIA API key, only needed of using the hosted service |
 | `timeout` | `<class 'int'>` | No | 60 | Timeout for the HTTP requests |
 | `append_api_version` | `<class 'bool'>` | No | True | When set to false, the API version will not be appended to the base_url. By default, it is true. |
 

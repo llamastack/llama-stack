@@ -8,19 +8,20 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
 from llama_stack.core.request_headers import request_provider_data_context
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 
 
 # Test fixtures and helper classes
 class TestConfig(BaseModel):
-    api_key: SecretStr | None = Field(default=None)
+    api_key: MySecretStr | None = Field(default=None)
 
 
 class TestProviderDataValidator(BaseModel):
-    test_api_key: SecretStr | None = Field(default=None)
+    test_api_key: MySecretStr | None = Field(default=None)
 
 
 class TestLiteLLMAdapter(LiteLLMOpenAIMixin):
@@ -36,7 +37,7 @@ class TestLiteLLMAdapter(LiteLLMOpenAIMixin):
 @pytest.fixture
 def adapter_with_config_key():
     """Fixture to create adapter with API key in config"""
-    config = TestConfig(api_key=SecretStr("config-api-key"))
+    config = TestConfig(api_key=MySecretStr("config-api-key"))
     adapter = TestLiteLLMAdapter(config)
     adapter.__provider_spec__ = MagicMock()
     adapter.__provider_spec__.provider_data_validator = (

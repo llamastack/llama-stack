@@ -6,23 +6,22 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
 class GroqProviderDataValidator(BaseModel):
-    groq_api_key: SecretStr = Field(
-        default=SecretStr(""),
+    groq_api_key: MySecretStr = Field(
         description="API key for Groq models",
     )
 
 
 @json_schema_type
 class GroqConfig(BaseModel):
-    api_key: SecretStr = Field(
+    api_key: MySecretStr = Field(
         # The Groq client library loads the GROQ_API_KEY environment variable by default
-        default=SecretStr(""),
         description="The Groq API key",
     )
 

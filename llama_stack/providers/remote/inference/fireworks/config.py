@@ -6,8 +6,9 @@
 
 from typing import Any
 
-from pydantic import Field, SecretStr
+from pydantic import Field
 
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
@@ -18,8 +19,7 @@ class FireworksImplConfig(RemoteInferenceProviderConfig):
         default="https://api.fireworks.ai/inference/v1",
         description="The URL for the Fireworks server",
     )
-    api_key: SecretStr = Field(
-        default=SecretStr(""),
+    api_key: MySecretStr = Field(
         description="The Fireworks.ai API Key",
     )
 

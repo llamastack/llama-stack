@@ -6,8 +6,9 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.providers.utils.kvstore.config import (
     KVStoreConfig,
     SqliteKVStoreConfig,
@@ -21,7 +22,7 @@ class PGVectorVectorIOConfig(BaseModel):
     port: int | None = Field(default=5432)
     db: str | None = Field(default="postgres")
     user: str | None = Field(default="postgres")
-    password: SecretStr = Field(default=SecretStr("mysecretpassword"))
+    password: MySecretStr = Field(default=MySecretStr("mysecretpassword"))
     kvstore: KVStoreConfig | None = Field(description="Config for KV store backend (SQLite only for now)", default=None)
 
     @classmethod

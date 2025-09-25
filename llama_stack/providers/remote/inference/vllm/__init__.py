@@ -4,14 +4,15 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
+
+from llama_stack.core.secret_types import MySecretStr
 
 from .config import VLLMInferenceAdapterConfig
 
 
 class VLLMProviderDataValidator(BaseModel):
-    vllm_api_token: SecretStr = Field(
-        default=SecretStr(""),
+    vllm_api_token: MySecretStr = Field(
         description="API token for vLLM models",
     )
 

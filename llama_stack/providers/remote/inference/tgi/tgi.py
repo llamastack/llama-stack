@@ -8,7 +8,6 @@
 from collections.abc import AsyncGenerator
 
 from huggingface_hub import AsyncInferenceClient, HfApi
-from pydantic import SecretStr
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
@@ -35,6 +34,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.models import Model
 from llama_stack.apis.models.models import ModelType
+from llama_stack.core.secret_types import MySecretStr
 from llama_stack.log import get_logger
 from llama_stack.models.llama.sku_list import all_registered_models
 from llama_stack.providers.datatypes import ModelsProtocolPrivate
@@ -79,7 +79,7 @@ class _HfAdapter(
     ModelsProtocolPrivate,
 ):
     url: str
-    api_key: SecretStr
+    api_key: MySecretStr
 
     hf_client: AsyncInferenceClient
     max_tokens: int
@@ -337,7 +337,7 @@ class TGIAdapter(_HfAdapter):
         self.max_tokens = endpoint_info["max_total_tokens"]
         self.model_id = endpoint_info["model_id"]
         self.url = f"{config.url.rstrip('/')}/v1"
-        self.api_key = SecretStr("NO_KEY")
+        self.api_key = MySecretStr("NO_KEY")
 
 
 class InferenceAPIAdapter(_HfAdapter):

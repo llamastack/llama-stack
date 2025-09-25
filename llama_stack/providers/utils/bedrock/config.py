@@ -6,7 +6,9 @@
 
 import os
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
+
+from llama_stack.core.secret_types import MySecretStr
 
 
 class BedrockBaseConfig(BaseModel):
@@ -14,12 +16,12 @@ class BedrockBaseConfig(BaseModel):
         default_factory=lambda: os.getenv("AWS_ACCESS_KEY_ID"),
         description="The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID",
     )
-    aws_secret_access_key: SecretStr = Field(
-        default_factory=lambda: SecretStr(os.getenv("AWS_SECRET_ACCESS_KEY", "")),
+    aws_secret_access_key: MySecretStr = Field(
+        default_factory=lambda: MySecretStr(os.getenv("AWS_SECRET_ACCESS_KEY", "")),
         description="The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY",
     )
-    aws_session_token: SecretStr = Field(
-        default_factory=lambda: SecretStr(os.getenv("AWS_SESSION_TOKEN", "")),
+    aws_session_token: MySecretStr = Field(
+        default_factory=lambda: MySecretStr(os.getenv("AWS_SESSION_TOKEN", "")),
         description="The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN",
     )
     region_name: str | None = Field(

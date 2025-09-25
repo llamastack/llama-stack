@@ -6,13 +6,17 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from llama_stack.core.secret_types import MySecretStr
 
 
 class WolframAlphaToolConfig(BaseModel):
     """Configuration for WolframAlpha Tool Runtime"""
 
-    api_key: str | None = None
+    api_key: MySecretStr = Field(
+        description="The WolframAlpha API Key",
+    )
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
