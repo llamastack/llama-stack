@@ -23,6 +23,8 @@ from llama_stack.apis.inference import (
     Inference,
     LogProbConfig,
     Message,
+    Model,
+    ModelType,
     OpenAICompletion,
     ResponseFormat,
     SamplingParams,
@@ -31,14 +33,11 @@ from llama_stack.apis.inference import (
     ToolConfig,
     ToolDefinition,
     ToolPromptFormat,
-    Model,
-    ModelType,
 )
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import DatabricksImplConfig
-
-from llama_stack.log import get_logger
 
 logger = get_logger(name=__name__, category="inference::databricks")
 
