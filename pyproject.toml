@@ -50,6 +50,8 @@ dependencies = [
     "aiosqlite>=0.21.0",                      # server - for metadata store
     "asyncpg",                                # for metadata store
     "sqlalchemy[asyncio]>=2.0.41",           # server - for conversations
+    "chardet",                                # for character encoding detection in file processing
+    "pypdf",                                  # for PDF file processing in vector stores
 ]
 
 [project.optional-dependencies]
