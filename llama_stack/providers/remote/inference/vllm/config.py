@@ -6,9 +6,8 @@
 
 from pathlib import Path
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -22,7 +21,8 @@ class VLLMInferenceAdapterConfig(BaseModel):
         default=4096,
         description="Maximum number of tokens to generate.",
     )
-    api_token: MySecretStr = Field(
+    api_token: SecretStr = Field(
+        default=SecretStr("fake"),
         description="The API token",
     )
     tls_verify: bool | str = Field(

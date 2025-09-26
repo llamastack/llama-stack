@@ -6,9 +6,8 @@
 
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
@@ -19,7 +18,7 @@ class TogetherImplConfig(RemoteInferenceProviderConfig):
         default="https://api.together.xyz/v1",
         description="The URL for the Together AI server",
     )
-    api_key: MySecretStr = Field(
+    api_key: SecretStr = Field(
         description="The Together AI API Key",
     )
 

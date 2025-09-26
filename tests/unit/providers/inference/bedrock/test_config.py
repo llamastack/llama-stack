@@ -17,7 +17,7 @@ class TestBedrockBaseConfig:
 
             # Basic creds should be None
             assert config.aws_access_key_id is None
-            assert config.aws_secret_access_key is None
+            assert not config.aws_secret_access_key
             assert config.region_name is None
 
             # Timeouts get defaults
@@ -39,7 +39,7 @@ class TestBedrockBaseConfig:
             config = BedrockBaseConfig()
 
             assert config.aws_access_key_id == "AKIATEST123"
-            assert config.aws_secret_access_key == "secret123"
+            assert config.aws_secret_access_key.get_secret_value() == "secret123"
             assert config.region_name == "us-west-2"
             assert config.total_max_attempts == 5
             assert config.retry_mode == "adaptive"

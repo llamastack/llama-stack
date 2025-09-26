@@ -9,9 +9,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
 
 from .api import SqlStore
@@ -64,7 +63,7 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
     port: int = 5432
     db: str = "llamastack"
     user: str
-    password: MySecretStr = MySecretStr("")
+    password: SecretStr = SecretStr("")
 
     @property
     def engine_str(self) -> str:

@@ -7,14 +7,9 @@
 import os
 from unittest.mock import MagicMock, patch
 
-from llama_stack.core.secret_types import MySecretStr
+from pydantic import SecretStr
 
-
-# Wrapper for backward compatibility in tests
-def replace_env_vars_compat(config, path=""):
-    return replace_env_vars_compat(config, path, None, None)
-
-
+from llama_stack.core.stack import replace_env_vars
 from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
 from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
 
@@ -42,7 +37,7 @@ class TestOpenAIBaseURLConfig:
         """Test that the adapter uses base URL from OPENAI_BASE_URL environment variable."""
         # Use sample_run_config which has proper environment variable syntax
         config_data = OpenAIConfig.sample_run_config(api_key="test-key")
-        processed_config = replace_env_vars_compat(config_data)
+        processed_config = replace_env_vars(config_data)
         config = OpenAIConfig.model_validate(processed_config)
         adapter = OpenAIInferenceAdapter(config)
 
@@ -66,14 +61,14 @@ class TestOpenAIBaseURLConfig:
         adapter = OpenAIInferenceAdapter(config)
 
         # Mock the get_api_key method since it's delegated to LiteLLMOpenAIMixin
-        adapter.get_api_key = MagicMock(return_value=MySecretStr("test-key"))
+        adapter.get_api_key = MagicMock(return_value=SecretStr("test-key"))
 
         # Access the client property to trigger AsyncOpenAI initialization
         _ = adapter.client
 
         # Verify AsyncOpenAI was called with the correct base_url
         mock_openai_class.assert_called_once_with(
-            api_key=MySecretStr("test-key"),
+            api_key=SecretStr("test-key").get_secret_value(),
             base_url=custom_url,
         )
 
@@ -85,7 +80,7 @@ class TestOpenAIBaseURLConfig:
         adapter = OpenAIInferenceAdapter(config)
 
         # Mock the get_api_key method
-        adapter.get_api_key = MagicMock(return_value=MySecretStr("test-key"))
+        adapter.get_api_key = MagicMock(return_value=SecretStr("test-key"))
 
         # Mock a model object that will be returned by models.list()
         mock_model = MagicMock()
@@ -108,7 +103,7 @@ class TestOpenAIBaseURLConfig:
 
         # Verify the client was created with the custom URL
         mock_openai_class.assert_called_with(
-            api_key=MySecretStr("test-key"),
+            api_key=SecretStr("test-key").get_secret_value(),
             base_url=custom_url,
         )
 
@@ -121,12 +116,12 @@ class TestOpenAIBaseURLConfig:
         """Test that setting OPENAI_BASE_URL environment variable affects where model availability is checked."""
         # Use sample_run_config which has proper environment variable syntax
         config_data = OpenAIConfig.sample_run_config(api_key="test-key")
-        processed_config = replace_env_vars_compat(config_data)
+        processed_config = replace_env_vars(config_data)
         config = OpenAIConfig.model_validate(processed_config)
         adapter = OpenAIInferenceAdapter(config)
 
         # Mock the get_api_key method
-        adapter.get_api_key = MagicMock(return_value=MySecretStr("test-key"))
+        adapter.get_api_key = MagicMock(return_value=SecretStr("test-key"))
 
         # Mock a model object that will be returned by models.list()
         mock_model = MagicMock()
@@ -149,6 +144,6 @@ class TestOpenAIBaseURLConfig:
 
         # Verify the client was created with the environment variable URL
         mock_openai_class.assert_called_with(
-            api_key=MySecretStr("test-key"),
+            api_key=SecretStr("test-key").get_secret_value(),
             base_url="https://proxy.openai.com/v1",
         )

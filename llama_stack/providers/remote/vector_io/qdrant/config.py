@@ -6,9 +6,8 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.providers.utils.kvstore.config import (
     KVStoreConfig,
     SqliteKVStoreConfig,
@@ -24,7 +23,7 @@ class QdrantVectorIOConfig(BaseModel):
     grpc_port: int = 6334
     prefer_grpc: bool = False
     https: bool | None = None
-    api_key: MySecretStr = Field(
+    api_key: SecretStr = Field(
         description="The API key for the Qdrant instance",
     )
     prefix: str | None = None

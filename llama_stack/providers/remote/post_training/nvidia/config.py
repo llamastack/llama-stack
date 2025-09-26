@@ -7,9 +7,7 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field
-
-from llama_stack.core.secret_types import MySecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 # TODO: add default values for all fields
 
@@ -17,8 +15,8 @@ from llama_stack.core.secret_types import MySecretStr
 class NvidiaPostTrainingConfig(BaseModel):
     """Configuration for NVIDIA Post Training implementation."""
 
-    api_key: MySecretStr = Field(
-        default_factory=lambda: MySecretStr(os.getenv("NVIDIA_API_KEY", "")),
+    api_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(os.getenv("NVIDIA_API_KEY", "")),
         description="The NVIDIA API key.",
     )
 
