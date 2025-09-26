@@ -10,19 +10,19 @@ run-name: Run the integration test suite from tests/integration
 on:
   workflow_dispatch:
     inputs:
-      test-subdirs:
-        description: 'Comma-separated list of test subdirectories to run'
-        type: string
-        default: ''
-      test-provider:
-        description: 'Test against a specific provider'
+      test-setup:
+        description: 'Test against a specific setup'
         type: string
         default: 'ollama'
-      run-vision-tests:
-        description: 'Whether to run vision tests'
-        type: boolean
-        default: false
-      test-pattern:
+      suite:
+        description: 'Test suite to use: base, responses, vision, etc.'
+        type: string
+        default: ''
+      subdirs:
+        description: 'Comma-separated list of test subdirectories to run; overrides suite'
+        type: string
+        default: ''
+      pattern:
         description: 'Regex pattern to pass to pytest -k'
         type: string
         default: ''
@@ -38,11 +38,11 @@ jobs:
       - name: Echo workflow inputs
         run: |
           echo "::group::Workflow Inputs"
-          echo "test-subdirs: ${{ inputs.test-subdirs }}"
-          echo "test-provider: ${{ inputs.test-provider }}"
-          echo "run-vision-tests: ${{ inputs.run-vision-tests }}"
-          echo "test-pattern: ${{ inputs.test-pattern }}"
           echo "branch: ${{ github.ref_name }}"
+          echo "test-setup: ${{ inputs.test-setup }}"
+          echo "suite: ${{ inputs.suite }}"
+          echo "subdirs: ${{ inputs.subdirs }}"
+          echo "pattern: ${{ inputs.pattern }}"
           echo "::endgroup::"
 
       - name: Checkout repository
@@ -55,16 +55,16 @@ jobs:
         with:
           python-version: "3.12"  # Use single Python version for recording
           client-version: "latest"
-          provider: ${{ inputs.test-provider || 'ollama' }}
-          run-vision-tests: ${{ inputs.run-vision-tests }}
+          setup: ${{ inputs.test-setup || 'ollama' }}
+          suite: ${{ inputs.suite }}
           inference-mode: 'record'
 
       - name: Run and record tests
         uses: ./.github/actions/run-and-record-tests
         with:
-          test-pattern: ${{ inputs.test-pattern }}
-          test-subdirs: ${{ inputs.test-subdirs }}
           stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
-          provider: ${{ inputs.test-provider || 'ollama' }}
+          setup: ${{ inputs.test-setup || 'ollama' }}
           inference-mode: 'record'
-          run-vision-tests: ${{ inputs.run-vision-tests }}
+          suite: ${{ inputs.suite }}
+          subdirs: ${{ inputs.subdirs }}
+          pattern: ${{ inputs.pattern }}

@@ -1,0 +1,140 @@
+version: '2'
+image_name: kubernetes-demo
+apis:
+- agents
+- inference
+- files
+- safety
+- telemetry
+- tool_runtime
+- vector_io
+providers:
+  inference:
+  - provider_id: vllm-inference
+    provider_type: remote::vllm
+    config:
+      url: ${env.VLLM_URL:=http://localhost:8000/v1}
+      max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
+      api_token: ${env.VLLM_API_TOKEN:=fake}
+      tls_verify: ${env.VLLM_TLS_VERIFY:=true}
+  - provider_id: vllm-safety
+    provider_type: remote::vllm
+    config:
+      url: ${env.VLLM_SAFETY_URL:=http://localhost:8000/v1}
+      max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
+      api_token: ${env.VLLM_API_TOKEN:=fake}
+      tls_verify: ${env.VLLM_TLS_VERIFY:=true}
+  - provider_id: sentence-transformers
+    provider_type: inline::sentence-transformers
+    config: {}
+  vector_io:
+  - provider_id: ${env.ENABLE_CHROMADB:+chromadb}
+    provider_type: remote::chromadb
+    config:
+      url: ${env.CHROMADB_URL:=}
+      kvstore:
+        type: postgres
+        host: ${env.POSTGRES_HOST:=localhost}
+        port: ${env.POSTGRES_PORT:=5432}
+        db: ${env.POSTGRES_DB:=llamastack}
+        user: ${env.POSTGRES_USER:=llamastack}
+        password: ${env.POSTGRES_PASSWORD:=llamastack}
+  files:
+  - provider_id: meta-reference-files
+    provider_type: inline::localfs
+    config:
+      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
+      metadata_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/files_metadata.db
+  safety:
+  - provider_id: llama-guard
+    provider_type: inline::llama-guard
+    config:
+      excluded_categories: []
+  agents:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      persistence_store:
+        type: postgres
+        host: ${env.POSTGRES_HOST:=localhost}
+        port: ${env.POSTGRES_PORT:=5432}
+        db: ${env.POSTGRES_DB:=llamastack}
+        user: ${env.POSTGRES_USER:=llamastack}
+        password: ${env.POSTGRES_PASSWORD:=llamastack}
+      responses_store:
+        type: postgres
+        host: ${env.POSTGRES_HOST:=localhost}
+        port: ${env.POSTGRES_PORT:=5432}
+        db: ${env.POSTGRES_DB:=llamastack}
+        user: ${env.POSTGRES_USER:=llamastack}
+        password: ${env.POSTGRES_PASSWORD:=llamastack}
+  telemetry:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
+      sinks: ${env.TELEMETRY_SINKS:=console}
+  tool_runtime:
+  - provider_id: brave-search
+    provider_type: remote::brave-search
+    config:
+      api_key: ${env.BRAVE_SEARCH_API_KEY:+}
+      max_results: 3
+  - provider_id: tavily-search
+    provider_type: remote::tavily-search
+    config:
+      api_key: ${env.TAVILY_SEARCH_API_KEY:+}
+      max_results: 3
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
+    config: {}
+  - provider_id: model-context-protocol
+    provider_type: remote::model-context-protocol
+    config: {}
+metadata_store:
+  type: postgres
+  host: ${env.POSTGRES_HOST:=localhost}
+  port: ${env.POSTGRES_PORT:=5432}
+  db: ${env.POSTGRES_DB:=llamastack}
+  user: ${env.POSTGRES_USER:=llamastack}
+  password: ${env.POSTGRES_PASSWORD:=llamastack}
+  table_name: llamastack_kvstore
+inference_store:
+  type: postgres
+  host: ${env.POSTGRES_HOST:=localhost}
+  port: ${env.POSTGRES_PORT:=5432}
+  db: ${env.POSTGRES_DB:=llamastack}
+  user: ${env.POSTGRES_USER:=llamastack}
+  password: ${env.POSTGRES_PASSWORD:=llamastack}
+models:
+- metadata:
+    embedding_dimension: 384
+  model_id: all-MiniLM-L6-v2
+  provider_id: sentence-transformers
+  model_type: embedding
+- metadata: {}
+  model_id: ${env.INFERENCE_MODEL}
+  provider_id: vllm-inference
+  model_type: llm
+- metadata: {}
+  model_id: ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}
+  provider_id: vllm-safety
+  model_type: llm
+shields:
+- shield_id: ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}
+vector_dbs: []
+datasets: []
+scoring_fns: []
+benchmarks: []
+tool_groups:
+- toolgroup_id: builtin::websearch
+  provider_id: tavily-search
+- toolgroup_id: builtin::rag
+  provider_id: rag-runtime
+server:
+  port: 8321
+  auth:
+    provider_config:
+      type: github_token

@@ -11,9 +11,7 @@ from ..starter.starter import get_distribution_template as get_starter_distribut
 
 
 def get_distribution_template() -> DistributionTemplate:
-    template = get_starter_distribution_template()
-    name = "starter-gpu"
-    template.name = name
+    template = get_starter_distribution_template(name="starter-gpu")
     template.description = "Quick start template for running Llama Stack with several popular providers. This distribution is intended for GPU-enabled environments."
 
     template.providers["post_training"] = [

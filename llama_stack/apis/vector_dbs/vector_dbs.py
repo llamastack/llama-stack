@@ -9,6 +9,7 @@ from typing import Literal, Protocol, runtime_checkable
 from pydantic import BaseModel
 
 from llama_stack.apis.resource import Resource, ResourceType
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -65,7 +66,7 @@ class ListVectorDBsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class VectorDBs(Protocol):
-    @webmethod(route="/vector-dbs", method="GET")
+    @webmethod(route="/vector-dbs", method="GET", level=LLAMA_STACK_API_V1)
     async def list_vector_dbs(self) -> ListVectorDBsResponse:
         """List all vector databases.
 
@@ -73,7 +74,7 @@ class VectorDBs(Protocol):
         """
         ...
 
-    @webmethod(route="/vector-dbs/{vector_db_id:path}", method="GET")
+    @webmethod(route="/vector-dbs/{vector_db_id:path}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_vector_db(
         self,
         vector_db_id: str,
@@ -85,7 +86,7 @@ class VectorDBs(Protocol):
         """
         ...
 
-    @webmethod(route="/vector-dbs", method="POST")
+    @webmethod(route="/vector-dbs", method="POST", level=LLAMA_STACK_API_V1)
     async def register_vector_db(
         self,
         vector_db_id: str,
@@ -107,7 +108,7 @@ class VectorDBs(Protocol):
         """
         ...
 
-    @webmethod(route="/vector-dbs/{vector_db_id:path}", method="DELETE")
+    @webmethod(route="/vector-dbs/{vector_db_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def unregister_vector_db(self, vector_db_id: str) -> None:
         """Unregister a vector database.
 

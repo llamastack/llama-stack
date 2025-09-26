@@ -10,7 +10,6 @@ import json
 import logging  # allow-direct-logging
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
@@ -41,7 +40,7 @@ from llama_stack.core.request_headers import (
 from llama_stack.core.resolver import ProviderRegistry
 from llama_stack.core.server.routes import RouteImpls, find_matching_route, initialize_route_impls
 from llama_stack.core.stack import (
-    construct_stack,
+    Stack,
     get_stack_run_config_from_distro,
     replace_env_vars,
 )
@@ -148,7 +147,6 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         self.async_client = AsyncLlamaStackAsLibraryClient(
             config_path_or_distro_name, custom_provider_registry, provider_data, skip_logger_removal
         )
-        self.pool_executor = ThreadPoolExecutor(max_workers=4)
         self.provider_data = provider_data
 
         self.loop = asyncio.new_event_loop()
@@ -254,7 +252,10 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         try:
             self.route_impls = None
-            self.impls = await construct_stack(self.config, self.custom_provider_registry)
+
+            stack = Stack(self.config, self.custom_provider_registry)
+            await stack.initialize()
+            self.impls = stack.impls
         except ModuleNotFoundError as _e:
             cprint(_e.msg, color="red", file=sys.stderr)
             cprint(
@@ -291,6 +292,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             )
             raise _e
 
+        assert self.impls is not None
         if Api.telemetry in self.impls:
             setup_logger(self.impls[Api.telemetry])
 

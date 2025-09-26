@@ -33,8 +33,7 @@ def test_groq_provider_openai_client_caching():
         with request_provider_data_context(
             {"x-llamastack-provider-data": json.dumps({inference_adapter.provider_data_api_key_field: api_key})}
         ):
-            openai_client = inference_adapter._get_openai_client()
-            assert openai_client.api_key == api_key
+            assert inference_adapter.client.api_key == api_key
 
 
 def test_openai_provider_openai_client_caching():

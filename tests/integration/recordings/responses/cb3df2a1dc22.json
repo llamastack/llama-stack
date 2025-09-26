@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:11434/v1/v1/chat/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -20,14 +20,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-877",
+        "id": "chatcmpl-271",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "I'm not capable of directly testing the functionality of external systems like Telemetry. However, I can provide you with some general information about creating telemetry data and offer suggestions on how to set up a basic telemetry system.\r\n\r\nTelemetry is the automatic measurement, reporting, and transmission of data from sensors or other devices. In the context of OpenAI, telemetry refers to the collection and analysis of data related to the company's products and services.\r\n\r\nTo create telemetry creation using the OpenAI APIs you would need to follow these steps:\r\n\r\n1. Register for an OpenAI account and get an access token.\r\n2. Choose the OpenAI API that you want to use (e.g., GPT-3).\r\n3. Create a new file or project in your preferred programming language or framework.\r\n4. Import the necessary libraries and modules to interact with the OpenAI API.\r\n5. Use the OpenAI API to create and send telemetry data.\r\n\r\nHere is an example of how you might create a basic telemetry system using Python and the OpenAI GPT-3 API:\r\n\r\n```python\r\nimport os\r\nimport json\r\n\r\n# Set your OpenAI access token\r\naccess_token = \"YOUR_OPENAI_ACCESS_TOKEN\"\r\n\r\n# Define the telemetry data\r\ntelemetry_data = {\r\n    \"name\": \"example-telemetry\",\r\n    \"description\": \"Example telemetry data.\r\n\r\n    # Define the telemetry metrics\r\n    \"metrics\": [\r\n        {\"key\": \"users\", \"value\": 100},\r\n        {\"key\": \" engagement\", \"value\": 20}\r\n    ]\r\n}\r\n\r\n# Convert the telemetry data to JSON\r\ntelemetry_json = json.dumps(telemetry_data)\r\n\r\n# Set the OpenAI API endpoint and headers\r\napi_endpoint = \"https://api.openai.com/v1/telemetry\"\r\nheaders = {\r\n    \"Authorization\": f\"Bearer {access_token}\",\r\n    \"Content-Type\": \"application/json\"\r\n}\r\n\r\n# Send the telemetry data to the OpenAI API\r\nimport requests\r\n\r\nresponse = requests.post(api_endpoint, headers=headers, data=telemetry_json)\r\n\r\n# Check if the request was successful\r\nif response.status_code == 200:\r\n    print(\"Telemetry data sent successfully\")\r\nelse:\r\n    print(\"Error sending telemetry data\")\r\n```\n\nPlease note that this is a basic example and you should adjust it according to your needs. Also, the specific implementation details may vary depending on the OpenAI API you're using and the programming language or framework you're working with.\r\n\r\nI hope this helps! Let me know if you have any further questions.",
+              "content": "# OpenAI Telemetry Creation Testing\n\nThis guide provides a test environment for creating and analyzing telemetries using the OpenAI API.\n\n## Prerequisites\n\n-   Python 3.8 or higher\n-   `requests` library\n-   An OpenAI API key (create an account on the [OpenAI website](https://openai.com/))\n\n## Step 1: Install Required Libraries\n\nFirst, install the required libraries by running the following command in your terminal:\n\n```bash\npip install requests\n```\n\n## Step 2: Create a Telemetry Object\n\nCreate a new Python file (e.g., `telemetry.py`) and import the required library. Define a telemetry object with the relevant data:\n\n```python\n# Import the requests library\nimport requests\n\nclass Telemetry:\n    def __init__(self, api_key):\n        \"\"\"\n        Initialize the telemetry object.\n\n        Args:\n            api_key (str): The OpenAI API key.\n        \"\"\"\n\n        self.api_key = api_key\n\n    def create_telemetry(self, id, data):\n        \"\"\"\n        Create a new telemetry entry using the OpenAI API.\n\n        Args:\n            id (str): The ID of the model or dataset.\n            data (dict): The telemetry data to be created.\n\n        Returns:\n            dict: The response from the OpenAI API.\n\n        Raises:\n            ValueError: If the request fails.\n        \"\"\"\n\n        url = f\"https://api.openai.com/v1/models/{id}/telemetry\"\n\n        headers = {\n            \"Authorization\": self.api_key,\n            \"Content-Type\": \"application/json\",\n        }\n\n        telemetry_data = {\"events\": data}\n\n        response = requests.post(url, json=telemetry_data, headers=headers)\n\n        if not response.ok:\n            raise ValueError(\"Failed to create telemetry\")\n\n        return response.json()\n```\n\n## Step 3: Usage Example\n\nHere's an example usage of the `Telemetry` class:\n\n```python\n# Create a new Telemetry object with your OpenAI API key\ntelemetry = Telemetry(\n    \"YOUR_OPENAI_API_KEY_HERE\"\n)\n\n# Define the telemetry data\ndata = {\"event\": \"example_event\"}\n\n# Create a new telemetry entry\nid = \"my_model_id\"  # Replace with your model or dataset ID\n\ntry:\n    result = telemetry.create_telemetry(id, data)\n    print(result)\nexcept ValueError as e:\n    print(e)\n```\n\nThis code creates a new `Telemetry` object, defines some sample telemetry data, and uses the `create_telemetry` method to create a new telemetry entry. The response from the OpenAI API is printed out.\n\nNote: Replace `\"YOUR_OPENAI_API_KEY_HERE\"` with your actual OpenAI API key.\n\n## Conclusion\n\nThis guide provides a basic example of how to create telemetries using the OpenAI API. You can modify the code and implement additional features as needed for your project.\n\nStay updated on our latest tutorials and guides:\n\n*   [Check out our Discord channel](link): https://discord.gg/openai-exists\n\nHappy coding!",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -37,15 +37,15 @@
             }
           }
         ],
-        "created": 1754510083,
+        "created": 1756921299,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 505,
+          "completion_tokens": 633,
           "prompt_tokens": 30,
-          "total_tokens": 535,
+          "total_tokens": 663,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

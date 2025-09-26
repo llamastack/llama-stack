@@ -6,19 +6,15 @@
 
 import asyncio
 import json
-import logging  # allow-direct-logging
-import threading
 import time
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 from openai.types.chat.chat_completion_chunk import (
     ChatCompletionChunk as OpenAIChatCompletionChunk,
 )
 from openai.types.chat.chat_completion_chunk import (
-    Choice as OpenAIChoice,
+    Choice as OpenAIChoiceChunk,
 )
 from openai.types.chat.chat_completion_chunk import (
     ChoiceDelta as OpenAIChoiceDelta,
@@ -35,6 +31,9 @@ from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponseEventType,
     CompletionMessage,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
+    OpenAIChoice,
     SystemMessage,
     ToolChoice,
     ToolConfig,
@@ -61,52 +60,21 @@ from llama_stack.providers.remote.inference.vllm.vllm import (
 # -v -s --tb=short --disable-warnings
 
 
-class MockInferenceAdapterWithSleep:
-    def __init__(self, sleep_time: int, response: dict[str, Any]):
-        self.httpd = None
-
-        class DelayedRequestHandler(BaseHTTPRequestHandler):
-            # ruff: noqa: N802
-            def do_POST(self):
-                time.sleep(sleep_time)
-                response_body = json.dumps(response).encode("utf-8")
-                self.send_response(code=200)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", len(response_body))
-                self.end_headers()
-                self.wfile.write(response_body)
-
-        self.request_handler = DelayedRequestHandler
-
-    def __enter__(self):
-        httpd = HTTPServer(("", 0), self.request_handler)
-        self.httpd = httpd
-        host, port = httpd.server_address
-        httpd_thread = threading.Thread(target=httpd.serve_forever)
-        httpd_thread.daemon = True  # stop server if this thread terminates
-        httpd_thread.start()
-
-        config = VLLMInferenceAdapterConfig(url=f"http://{host}:{port}")
-        inference_adapter = VLLMInferenceAdapter(config)
-        return inference_adapter
-
-    def __exit__(self, _exc_type, _exc_value, _traceback):
-        if self.httpd:
-            self.httpd.shutdown()
-            self.httpd.server_close()
-
-
 @pytest.fixture(scope="module")
 def mock_openai_models_list():
-    with patch("openai.resources.models.AsyncModels.list", new_callable=AsyncMock) as mock_list:
+    with patch("openai.resources.models.AsyncModels.list") as mock_list:
         yield mock_list
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 async def vllm_inference_adapter():
     config = VLLMInferenceAdapterConfig(url="http://mocked.localhost:12345")
     inference_adapter = VLLMInferenceAdapter(config)
     inference_adapter.model_store = AsyncMock()
+    # Mock the __provider_spec__ attribute that would normally be set by the resolver
+    inference_adapter.__provider_spec__ = MagicMock()
+    inference_adapter.__provider_spec__.provider_type = "vllm-inference"
+    inference_adapter.__provider_spec__.provider_data_validator = MagicMock()
     await inference_adapter.initialize()
     return inference_adapter
 
@@ -150,10 +118,16 @@ async def test_tool_call_response(vllm_inference_adapter):
     """Verify that tool call arguments from a CompletionMessage are correctly converted
     into the expected JSON format."""
 
-    # Patch the call to vllm so we can inspect the arguments sent were correct
-    with patch.object(
-        vllm_inference_adapter.client.chat.completions, "create", new_callable=AsyncMock
-    ) as mock_nonstream_completion:
+    # Patch the client property to avoid instantiating a real AsyncOpenAI client
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock()
+        mock_create_client.return_value = mock_client
+
+        # Mock the model to return a proper provider_resource_id
+        mock_model = Model(identifier="mock-model", provider_resource_id="mock-model", provider_id="vllm-inference")
+        vllm_inference_adapter.model_store.get_model.return_value = mock_model
+
         messages = [
             SystemMessage(content="You are a helpful assistant"),
             UserMessage(content="How many?"),
@@ -179,7 +153,7 @@ async def test_tool_call_response(vllm_inference_adapter):
             tool_config=ToolConfig(tool_choice=ToolChoice.auto),
         )
 
-        assert mock_nonstream_completion.call_args.kwargs["messages"][2]["tool_calls"] == [
+        assert mock_client.chat.completions.create.call_args.kwargs["messages"][2]["tool_calls"] == [
             {
                 "id": "foo",
                 "type": "function",
@@ -199,7 +173,7 @@ async def test_tool_call_delta_empty_tool_call_buf():
 
     async def mock_stream():
         delta = OpenAIChoiceDelta(content="", tool_calls=None)
-        choices = [OpenAIChoice(delta=delta, finish_reason="stop", index=0)]
+        choices = [OpenAIChoiceChunk(delta=delta, finish_reason="stop", index=0)]
         mock_chunk = OpenAIChatCompletionChunk(
             id="chunk-1",
             created=1,
@@ -225,7 +199,7 @@ async def test_tool_call_delta_streaming_arguments_dict():
             model="foo",
             object="chat.completion.chunk",
             choices=[
-                OpenAIChoice(
+                OpenAIChoiceChunk(
                     delta=OpenAIChoiceDelta(
                         content="",
                         tool_calls=[
@@ -250,7 +224,7 @@ async def test_tool_call_delta_streaming_arguments_dict():
             model="foo",
             object="chat.completion.chunk",
             choices=[
-                OpenAIChoice(
+                OpenAIChoiceChunk(
                     delta=OpenAIChoiceDelta(
                         content="",
                         tool_calls=[
@@ -275,7 +249,9 @@ async def test_tool_call_delta_streaming_arguments_dict():
             model="foo",
             object="chat.completion.chunk",
             choices=[
-                OpenAIChoice(delta=OpenAIChoiceDelta(content="", tool_calls=None), finish_reason="tool_calls", index=0)
+                OpenAIChoiceChunk(
+                    delta=OpenAIChoiceDelta(content="", tool_calls=None), finish_reason="tool_calls", index=0
+                )
             ],
         )
         for chunk in [mock_chunk_1, mock_chunk_2, mock_chunk_3]:
@@ -299,7 +275,7 @@ async def test_multiple_tool_calls():
             model="foo",
             object="chat.completion.chunk",
             choices=[
-                OpenAIChoice(
+                OpenAIChoiceChunk(
                     delta=OpenAIChoiceDelta(
                         content="",
                         tool_calls=[
@@ -324,7 +300,7 @@ async def test_multiple_tool_calls():
             model="foo",
             object="chat.completion.chunk",
             choices=[
-                OpenAIChoice(
+                OpenAIChoiceChunk(
                     delta=OpenAIChoiceDelta(
                         content="",
                         tool_calls=[
@@ -349,7 +325,9 @@ async def test_multiple_tool_calls():
             model="foo",
             object="chat.completion.chunk",
             choices=[
-                OpenAIChoice(delta=OpenAIChoiceDelta(content="", tool_calls=None), finish_reason="tool_calls", index=0)
+                OpenAIChoiceChunk(
+                    delta=OpenAIChoiceDelta(content="", tool_calls=None), finish_reason="tool_calls", index=0
+                )
             ],
         )
         for chunk in [mock_chunk_1, mock_chunk_2, mock_chunk_3]:
@@ -391,59 +369,6 @@ async def test_process_vllm_chat_completion_stream_response_no_choices():
     chunks = [chunk async for chunk in _process_vllm_chat_completion_stream_response(mock_stream())]
     assert len(chunks) == 1
     assert chunks[0].event.event_type.value == "start"
-
-
-@pytest.mark.allow_network
-def test_chat_completion_doesnt_block_event_loop(caplog):
-    loop = asyncio.new_event_loop()
-    loop.set_debug(True)
-    caplog.set_level(logging.WARNING)
-
-    # Log when event loop is blocked for more than 200ms
-    loop.slow_callback_duration = 0.5
-    # Sleep for 500ms in our delayed http response
-    sleep_time = 0.5
-
-    mock_model = Model(identifier="mock-model", provider_resource_id="mock-model", provider_id="vllm-inference")
-    mock_response = {
-        "id": "chatcmpl-abc123",
-        "object": "chat.completion",
-        "created": 1,
-        "modle": "mock-model",
-        "choices": [
-            {
-                "message": {"content": ""},
-                "logprobs": None,
-                "finish_reason": "stop",
-                "index": 0,
-            }
-        ],
-    }
-
-    async def do_chat_completion():
-        await inference_adapter.chat_completion(
-            "mock-model",
-            [],
-            stream=False,
-            tools=None,
-            tool_config=ToolConfig(tool_choice=ToolChoice.auto),
-        )
-
-    with MockInferenceAdapterWithSleep(sleep_time, mock_response) as inference_adapter:
-        inference_adapter.model_store = AsyncMock()
-        inference_adapter.model_store.get_model.return_value = mock_model
-        loop.run_until_complete(inference_adapter.initialize())
-
-        # Clear the logs so far and run the actual chat completion we care about
-        caplog.clear()
-        loop.run_until_complete(do_chat_completion())
-
-    # Ensure we don't have any asyncio warnings in the captured log
-    # records from our chat completion call. A message gets logged
-    # here any time we exceed the slow_callback_duration configured
-    # above.
-    asyncio_warnings = [record.message for record in caplog.records if record.name == "asyncio"]
-    assert not asyncio_warnings
 
 
 async def test_get_params_empty_tools(vllm_inference_adapter):
@@ -638,33 +563,29 @@ async def test_health_status_success(vllm_inference_adapter):
     """
     Test the health method of VLLM InferenceAdapter when the connection is successful.
 
-    This test verifies that the health method returns a HealthResponse with status OK, only
-    when the connection to the vLLM server is successful.
+    This test verifies that the health method returns a HealthResponse with status OK
+    when the /health endpoint responds successfully.
     """
-    # Set vllm_inference_adapter.client to None to ensure _create_client is called
-    vllm_inference_adapter.client = None
-    with patch.object(vllm_inference_adapter, "_create_client") as mock_create_client:
-        # Create mock client and models
-        mock_client = MagicMock()
-        mock_models = MagicMock()
+    with patch("httpx.AsyncClient") as mock_client_class:
+        # Create mock response
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
 
-        # Create a mock async iterator that yields a model when iterated
-        async def mock_list():
-            for model in [MagicMock()]:
-                yield model
-
-        # Set up the models.list to return our mock async iterator
-        mock_models.list.return_value = mock_list()
-        mock_client.models = mock_models
-        mock_create_client.return_value = mock_client
+        # Create mock client instance
+        mock_client_instance = MagicMock()
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
+        mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
         # Call the health method
         health_response = await vllm_inference_adapter.health()
+
         # Verify the response
         assert health_response["status"] == HealthStatus.OK
 
-        # Verify that models.list was called
-        mock_models.list.assert_called_once()
+        # Verify that the health endpoint was called
+        mock_client_instance.get.assert_called_once()
+        call_args = mock_client_instance.get.call_args[0]
+        assert call_args[0].endswith("/health")
 
 
 async def test_health_status_failure(vllm_inference_adapter):
@@ -674,26 +595,190 @@ async def test_health_status_failure(vllm_inference_adapter):
     This test verifies that the health method returns a HealthResponse with status ERROR
     and an appropriate error message when the connection to the vLLM server fails.
     """
-    vllm_inference_adapter.client = None
-    with patch.object(vllm_inference_adapter, "_create_client") as mock_create_client:
-        # Create mock client and models
-        mock_client = MagicMock()
-        mock_models = MagicMock()
-
-        # Create a mock async iterator that raises an exception when iterated
-        async def mock_list():
-            raise Exception("Connection failed")
-            yield  # Unreachable code
-
-        # Set up the models.list to return our mock async iterator
-        mock_models.list.return_value = mock_list()
-        mock_client.models = mock_models
-        mock_create_client.return_value = mock_client
+    with patch("httpx.AsyncClient") as mock_client_class:
+        # Create mock client instance that raises an exception
+        mock_client_instance = MagicMock()
+        mock_client_instance.get.side_effect = Exception("Connection failed")
+        mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
         # Call the health method
         health_response = await vllm_inference_adapter.health()
+
         # Verify the response
         assert health_response["status"] == HealthStatus.ERROR
         assert "Health check failed: Connection failed" in health_response["message"]
 
-        mock_models.list.assert_called_once()
+
+async def test_health_status_no_static_api_key(vllm_inference_adapter):
+    """
+    Test the health method of VLLM InferenceAdapter when no static API key is provided.
+
+    This test verifies that the health method returns a HealthResponse with status OK
+    when the /health endpoint responds successfully, regardless of API token configuration.
+    """
+    with patch("httpx.AsyncClient") as mock_client_class:
+        # Create mock response
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+
+        # Create mock client instance
+        mock_client_instance = MagicMock()
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
+        mock_client_class.return_value.__aenter__.return_value = mock_client_instance
+
+        # Call the health method
+        health_response = await vllm_inference_adapter.health()
+
+        # Verify the response
+        assert health_response["status"] == HealthStatus.OK
+
+
+async def test_openai_chat_completion_is_async(vllm_inference_adapter):
+    """
+    Verify that openai_chat_completion is async and doesn't block the event loop.
+
+    To do this we mock the underlying inference with a sleep, start multiple
+    inference calls in parallel, and ensure the total time taken is less
+    than the sum of the individual sleep times.
+    """
+    sleep_time = 0.5
+
+    async def mock_create(*args, **kwargs):
+        await asyncio.sleep(sleep_time)
+        return OpenAIChatCompletion(
+            id="chatcmpl-abc123",
+            created=1,
+            model="mock-model",
+            choices=[
+                OpenAIChoice(
+                    message=OpenAIAssistantMessageParam(
+                        content="nothing interesting",
+                    ),
+                    finish_reason="stop",
+                    index=0,
+                )
+            ],
+        )
+
+    async def do_inference():
+        await vllm_inference_adapter.openai_chat_completion(
+            "mock-model", messages=["one fish", "two fish"], stream=False
+        )
+
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(side_effect=mock_create)
+        mock_create_client.return_value = mock_client
+
+        start_time = time.time()
+        await asyncio.gather(do_inference(), do_inference(), do_inference(), do_inference())
+        total_time = time.time() - start_time
+
+        assert mock_create_client.call_count == 4  # no cheating
+        assert total_time < (sleep_time * 2), f"Total time taken: {total_time}s exceeded expected max"
+
+
+async def test_should_refresh_models():
+    """
+    Test the should_refresh_models method with different refresh_models configurations.
+
+    This test verifies that:
+    1. When refresh_models is True, should_refresh_models returns True regardless of api_token
+    2. When refresh_models is False, should_refresh_models returns False regardless of api_token
+    """
+
+    # Test case 1: refresh_models is True, api_token is None
+    config1 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token=None, refresh_models=True)
+    adapter1 = VLLMInferenceAdapter(config1)
+    result1 = await adapter1.should_refresh_models()
+    assert result1 is True, "should_refresh_models should return True when refresh_models is True"
+
+    # Test case 2: refresh_models is True, api_token is empty string
+    config2 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="", refresh_models=True)
+    adapter2 = VLLMInferenceAdapter(config2)
+    result2 = await adapter2.should_refresh_models()
+    assert result2 is True, "should_refresh_models should return True when refresh_models is True"
+
+    # Test case 3: refresh_models is True, api_token is "fake" (default)
+    config3 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="fake", refresh_models=True)
+    adapter3 = VLLMInferenceAdapter(config3)
+    result3 = await adapter3.should_refresh_models()
+    assert result3 is True, "should_refresh_models should return True when refresh_models is True"
+
+    # Test case 4: refresh_models is True, api_token is real token
+    config4 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="real-token-123", refresh_models=True)
+    adapter4 = VLLMInferenceAdapter(config4)
+    result4 = await adapter4.should_refresh_models()
+    assert result4 is True, "should_refresh_models should return True when refresh_models is True"
+
+    # Test case 5: refresh_models is False, api_token is real token
+    config5 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="real-token-456", refresh_models=False)
+    adapter5 = VLLMInferenceAdapter(config5)
+    result5 = await adapter5.should_refresh_models()
+    assert result5 is False, "should_refresh_models should return False when refresh_models is False"
+
+
+async def test_provider_data_var_context_propagation(vllm_inference_adapter):
+    """
+    Test that PROVIDER_DATA_VAR context is properly propagated through the vLLM inference adapter.
+    This ensures that dynamic provider data (like API tokens) can be passed through context.
+    Note: The base URL is always taken from config.url, not from provider data.
+    """
+    # Mock the AsyncOpenAI class to capture provider data
+    with (
+        patch("llama_stack.providers.utils.inference.openai_mixin.AsyncOpenAI") as mock_openai_class,
+        patch.object(vllm_inference_adapter, "get_request_provider_data") as mock_get_provider_data,
+    ):
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock()
+        mock_openai_class.return_value = mock_client
+
+        # Mock provider data to return test data
+        mock_provider_data = MagicMock()
+        mock_provider_data.vllm_api_token = "test-token-123"
+        mock_provider_data.vllm_url = "http://test-server:8000/v1"
+        mock_get_provider_data.return_value = mock_provider_data
+
+        # Mock the model
+        mock_model = Model(identifier="test-model", provider_resource_id="test-model", provider_id="vllm-inference")
+        vllm_inference_adapter.model_store.get_model.return_value = mock_model
+
+        try:
+            # Execute chat completion
+            await vllm_inference_adapter.chat_completion(
+                "test-model",
+                [UserMessage(content="Hello")],
+                stream=False,
+                tools=None,
+                tool_config=ToolConfig(tool_choice=ToolChoice.auto),
+            )
+
+            # Verify that ALL client calls were made with the correct parameters
+            calls = mock_openai_class.call_args_list
+            incorrect_calls = []
+
+            for i, call in enumerate(calls):
+                api_key = call[1]["api_key"]
+                base_url = call[1]["base_url"]
+
+                if api_key != "test-token-123" or base_url != "http://mocked.localhost:12345":
+                    incorrect_calls.append({"call_index": i, "api_key": api_key, "base_url": base_url})
+
+            if incorrect_calls:
+                error_msg = (
+                    f"Found {len(incorrect_calls)} calls with incorrect parameters out of {len(calls)} total calls:\n"
+                )
+                for incorrect_call in incorrect_calls:
+                    error_msg += f"  Call {incorrect_call['call_index']}: api_key='{incorrect_call['api_key']}', base_url='{incorrect_call['base_url']}'\n"
+                error_msg += "Expected: api_key='test-token-123', base_url='http://mocked.localhost:12345'"
+                raise AssertionError(error_msg)
+
+            # Ensure at least one call was made
+            assert len(calls) >= 1, "No AsyncOpenAI client calls were made"
+
+            # Verify that chat completion was called
+            mock_client.chat.completions.create.assert_called_once()
+
+        finally:
+            # Clean up context
+            pass
