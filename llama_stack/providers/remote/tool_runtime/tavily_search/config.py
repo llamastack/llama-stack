@@ -6,13 +6,11 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
-
-from llama_stack.core.secret_types import MySecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 
 class TavilySearchToolConfig(BaseModel):
-    api_key: MySecretStr = Field(
+    api_key: SecretStr = Field(
         description="The Tavily Search API Key",
     )
     max_results: int = Field(

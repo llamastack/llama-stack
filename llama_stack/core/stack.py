@@ -288,6 +288,12 @@ def _convert_string_to_proper_type_with_config(value: str, path: str, provider_c
         field_name = path.split(".")[-1] if "." in path else path
 
         config_class = provider_context["config_class"]
+        # Only instantiate if the class hasn't been instantiated already
+        # This handles the case we entered replace_env_vars() with a dict, which
+        # could happen if we use a sample_run_config() method that returns a dict. Our unit tests do
+        # this on the adhoc config spec creation.
+        if isinstance(config_class, str):
+            config_class = instantiate_class_type(config_class)
 
         if hasattr(config_class, "model_fields") and field_name in config_class.model_fields:
             field_info = config_class.model_fields[field_name]
@@ -563,7 +569,9 @@ def run_config_from_adhoc_config_spec(
         # call method "sample_run_config" on the provider spec config class
         provider_config_type = instantiate_class_type(provider_spec.config_class)
         provider_config = replace_env_vars(
-            provider_config_type.sample_run_config(__distro_dir__=distro_dir), provider_registry=provider_registry
+            provider_config_type.sample_run_config(__distro_dir__=distro_dir),
+            provider_registry=provider_registry,
+            current_provider_context=provider_spec.model_dump(),
         )
 
         provider_configs_by_api[api_str] = [

@@ -6,9 +6,8 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -18,7 +17,7 @@ class DatabricksImplConfig(BaseModel):
         default=None,
         description="The URL for the Databricks model serving endpoint",
     )
-    api_token: MySecretStr = Field(
+    api_token: SecretStr = Field(
         description="The Databricks API token",
     )
 

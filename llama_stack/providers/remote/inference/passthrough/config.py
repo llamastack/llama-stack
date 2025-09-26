@@ -6,9 +6,8 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -19,7 +18,7 @@ class PassthroughImplConfig(BaseModel):
         description="The URL for the passthrough endpoint",
     )
 
-    api_key: MySecretStr = Field(
+    api_key: SecretStr = Field(
         description="API Key for the passthrouth endpoint",
     )
 

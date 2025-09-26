@@ -7,9 +7,8 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -25,8 +24,8 @@ class WatsonXConfig(BaseModel):
         default_factory=lambda: os.getenv("WATSONX_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
         description="A base url for accessing the watsonx.ai",
     )
-    api_key: MySecretStr = Field(
-        default_factory=lambda: MySecretStr(os.getenv("WATSONX_API_KEY", "")),
+    api_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(os.getenv("WATSONX_API_KEY", "")),
         description="The watsonx API key",
     )
     project_id: str | None = Field(

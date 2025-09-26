@@ -8,10 +8,7 @@ import os
 
 import pytest
 
-
-# Wrapper for backward compatibility in tests
-def replace_env_vars_compat(config, path=""):
-    return replace_env_vars_compat(config, path, None, None)
+from llama_stack.core.stack import replace_env_vars
 
 
 @pytest.fixture
@@ -35,54 +32,52 @@ def setup_env_vars():
 
 
 def test_simple_replacement(setup_env_vars):
-    assert replace_env_vars_compat("${env.TEST_VAR}") == "test_value"
+    assert replace_env_vars("${env.TEST_VAR}") == "test_value"
 
 
 def test_default_value_when_not_set(setup_env_vars):
-    assert replace_env_vars_compat("${env.NOT_SET:=default}") == "default"
+    assert replace_env_vars("${env.NOT_SET:=default}") == "default"
 
 
 def test_default_value_when_set(setup_env_vars):
-    assert replace_env_vars_compat("${env.TEST_VAR:=default}") == "test_value"
+    assert replace_env_vars("${env.TEST_VAR:=default}") == "test_value"
 
 
 def test_default_value_when_empty(setup_env_vars):
-    assert replace_env_vars_compat("${env.EMPTY_VAR:=default}") == "default"
+    assert replace_env_vars("${env.EMPTY_VAR:=default}") == "default"
 
 
 def test_none_value_when_empty(setup_env_vars):
-    assert replace_env_vars_compat("${env.EMPTY_VAR:=}") is None
+    assert replace_env_vars("${env.EMPTY_VAR:=}") is None
 
 
 def test_value_when_set(setup_env_vars):
-    assert replace_env_vars_compat("${env.TEST_VAR:=}") == "test_value"
+    assert replace_env_vars("${env.TEST_VAR:=}") == "test_value"
 
 
 def test_empty_var_no_default(setup_env_vars):
-    assert replace_env_vars_compat("${env.EMPTY_VAR_NO_DEFAULT:+}") is None
+    assert replace_env_vars("${env.EMPTY_VAR_NO_DEFAULT:+}") is None
 
 
 def test_conditional_value_when_set(setup_env_vars):
-    assert replace_env_vars_compat("${env.TEST_VAR:+conditional}") == "conditional"
+    assert replace_env_vars("${env.TEST_VAR:+conditional}") == "conditional"
 
 
 def test_conditional_value_when_not_set(setup_env_vars):
-    assert replace_env_vars_compat("${env.NOT_SET:+conditional}") is None
+    assert replace_env_vars("${env.NOT_SET:+conditional}") is None
 
 
 def test_conditional_value_when_empty(setup_env_vars):
-    assert replace_env_vars_compat("${env.EMPTY_VAR:+conditional}") is None
+    assert replace_env_vars("${env.EMPTY_VAR:+conditional}") is None
 
 
 def test_conditional_value_with_zero(setup_env_vars):
-    assert replace_env_vars_compat("${env.ZERO_VAR:+conditional}") == "conditional"
+    assert replace_env_vars("${env.ZERO_VAR:+conditional}") == "conditional"
 
 
 def test_mixed_syntax(setup_env_vars):
-    assert replace_env_vars_compat("${env.TEST_VAR:=default} and ${env.NOT_SET:+conditional}") == "test_value and "
-    assert (
-        replace_env_vars_compat("${env.NOT_SET:=default} and ${env.TEST_VAR:+conditional}") == "default and conditional"
-    )
+    assert replace_env_vars("${env.TEST_VAR:=default} and ${env.NOT_SET:+conditional}") == "test_value and "
+    assert replace_env_vars("${env.NOT_SET:=default} and ${env.TEST_VAR:+conditional}") == "default and conditional"
 
 
 def test_nested_structures(setup_env_vars):
@@ -92,11 +87,11 @@ def test_nested_structures(setup_env_vars):
         "key3": {"nested": "${env.NOT_SET:+conditional}"},
     }
     expected = {"key1": "test_value", "key2": ["default", "conditional"], "key3": {"nested": None}}
-    assert replace_env_vars_compat(data) == expected
+    assert replace_env_vars(data) == expected
 
 
 def test_explicit_strings_preserved(setup_env_vars):
     # Explicit strings that look like numbers/booleans should remain strings
     data = {"port": "8080", "enabled": "true", "count": "123", "ratio": "3.14"}
     expected = {"port": "8080", "enabled": "true", "count": "123", "ratio": "3.14"}
-    assert replace_env_vars_compat(data) == expected
+    assert replace_env_vars(data) == expected

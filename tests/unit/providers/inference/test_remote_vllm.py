@@ -26,6 +26,7 @@ from openai.types.chat.chat_completion_chunk import (
     ChoiceDeltaToolCallFunction as OpenAIChoiceDeltaToolCallFunction,
 )
 from openai.types.model import Model as OpenAIModel
+from pydantic import SecretStr
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
@@ -688,31 +689,35 @@ async def test_should_refresh_models():
     """
 
     # Test case 1: refresh_models is True, api_token is None
-    config1 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token=None, refresh_models=True)
+    config1 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token=SecretStr(""), refresh_models=True)
     adapter1 = VLLMInferenceAdapter(config1)
     result1 = await adapter1.should_refresh_models()
     assert result1 is True, "should_refresh_models should return True when refresh_models is True"
 
     # Test case 2: refresh_models is True, api_token is empty string
-    config2 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="", refresh_models=True)
+    config2 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token=SecretStr(""), refresh_models=True)
     adapter2 = VLLMInferenceAdapter(config2)
     result2 = await adapter2.should_refresh_models()
     assert result2 is True, "should_refresh_models should return True when refresh_models is True"
 
     # Test case 3: refresh_models is True, api_token is "fake" (default)
-    config3 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="fake", refresh_models=True)
+    config3 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token=SecretStr("fake"), refresh_models=True)
     adapter3 = VLLMInferenceAdapter(config3)
     result3 = await adapter3.should_refresh_models()
     assert result3 is True, "should_refresh_models should return True when refresh_models is True"
 
     # Test case 4: refresh_models is True, api_token is real token
-    config4 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="real-token-123", refresh_models=True)
+    config4 = VLLMInferenceAdapterConfig(
+        url="http://test.localhost", api_token=SecretStr("real-token-123"), refresh_models=True
+    )
     adapter4 = VLLMInferenceAdapter(config4)
     result4 = await adapter4.should_refresh_models()
     assert result4 is True, "should_refresh_models should return True when refresh_models is True"
 
     # Test case 5: refresh_models is False, api_token is real token
-    config5 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="real-token-456", refresh_models=False)
+    config5 = VLLMInferenceAdapterConfig(
+        url="http://test.localhost", api_token=SecretStr("real-token-456"), refresh_models=False
+    )
     adapter5 = VLLMInferenceAdapter(config5)
     result5 = await adapter5.should_refresh_models()
     assert result5 is False, "should_refresh_models should return False when refresh_models is False"
@@ -735,7 +740,7 @@ async def test_provider_data_var_context_propagation(vllm_inference_adapter):
 
         # Mock provider data to return test data
         mock_provider_data = MagicMock()
-        mock_provider_data.vllm_api_token = "test-token-123"
+        mock_provider_data.vllm_api_token = SecretStr("test-token-123")
         mock_provider_data.vllm_url = "http://test-server:8000/v1"
         mock_get_provider_data.return_value = mock_provider_data
 

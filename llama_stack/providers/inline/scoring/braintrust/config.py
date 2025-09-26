@@ -5,13 +5,11 @@
 # the root directory of this source tree.
 from typing import Any
 
-from pydantic import BaseModel, Field
-
-from llama_stack.core.secret_types import MySecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 
 class BraintrustScoringConfig(BaseModel):
-    openai_api_key: MySecretStr = Field(
+    openai_api_key: SecretStr = Field(
         description="The OpenAI API Key",
     )
 

@@ -6,21 +6,20 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
 class GeminiProviderDataValidator(BaseModel):
-    gemini_api_key: MySecretStr = Field(
+    gemini_api_key: SecretStr = Field(
         description="API key for Gemini models",
     )
 
 
 @json_schema_type
 class GeminiConfig(BaseModel):
-    api_key: MySecretStr = Field(
+    api_key: SecretStr = Field(
         description="API key for Gemini models",
     )
 

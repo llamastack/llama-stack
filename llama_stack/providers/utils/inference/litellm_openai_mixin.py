@@ -8,6 +8,7 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 import litellm
+from pydantic import SecretStr
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
@@ -39,7 +40,6 @@ from llama_stack.apis.inference import (
     ToolPromptFormat,
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 from llama_stack.providers.utils.inference.openai_compat import (
@@ -69,7 +69,7 @@ class LiteLLMOpenAIMixin(
     def __init__(
         self,
         litellm_provider_name: str,
-        api_key_from_config: MySecretStr,
+        api_key_from_config: SecretStr,
         provider_data_api_key_field: str,
         model_entries: list[ProviderModelEntry] | None = None,
         openai_compat_api_base: str | None = None,
@@ -255,7 +255,7 @@ class LiteLLMOpenAIMixin(
             **get_sampling_options(request.sampling_params),
         }
 
-    def get_api_key(self) -> MySecretStr:
+    def get_api_key(self) -> SecretStr:
         provider_data = self.get_request_provider_data()
         key_field = self.provider_data_api_key_field
         if provider_data and getattr(provider_data, key_field, None):

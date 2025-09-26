@@ -5,9 +5,8 @@
 # the root directory of this source tree.
 
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
-from llama_stack.core.secret_types import MySecretStr
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -33,7 +32,7 @@ class InferenceEndpointImplConfig(BaseModel):
     endpoint_name: str = Field(
         description="The name of the Hugging Face Inference Endpoint in the format of '{namespace}/{endpoint_name}' (e.g. 'my-cool-org/meta-llama-3-1-8b-instruct-rce'). Namespace is optional and will default to the user account if not provided.",
     )
-    api_token: MySecretStr = Field(
+    api_token: SecretStr = Field(
         description="Your Hugging Face user access token (will default to locally saved token if not provided)",
     )
 
@@ -55,7 +54,7 @@ class InferenceAPIImplConfig(BaseModel):
     huggingface_repo: str = Field(
         description="The model ID of the model on the Hugging Face Hub (e.g. 'meta-llama/Meta-Llama-3.1-70B-Instruct')",
     )
-    api_token: MySecretStr = Field(
+    api_token: SecretStr = Field(
         description="Your Hugging Face user access token (will default to locally saved token if not provided)",
     )
 

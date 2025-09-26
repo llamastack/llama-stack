@@ -7,6 +7,8 @@
 import json
 from unittest.mock import MagicMock
 
+from pydantic import SecretStr
+
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.remote.inference.groq.config import GroqConfig
 from llama_stack.providers.remote.inference.groq.groq import GroqInferenceAdapter
@@ -21,7 +23,7 @@ from llama_stack.providers.remote.inference.together.together import TogetherInf
 def test_groq_provider_openai_client_caching():
     """Ensure the Groq provider does not cache api keys across client requests"""
 
-    config = GroqConfig()
+    config = GroqConfig(api_key=SecretStr(""))
     inference_adapter = GroqInferenceAdapter(config)
 
     inference_adapter.__provider_spec__ = MagicMock()
@@ -33,13 +35,13 @@ def test_groq_provider_openai_client_caching():
         with request_provider_data_context(
             {"x-llamastack-provider-data": json.dumps({inference_adapter.provider_data_api_key_field: api_key})}
         ):
-            assert inference_adapter.client.api_key.get_secret_value() == api_key
+            assert inference_adapter.client.api_key == api_key
 
 
 def test_openai_provider_openai_client_caching():
     """Ensure the OpenAI provider does not cache api keys across client requests"""
 
-    config = OpenAIConfig()
+    config = OpenAIConfig(api_key=SecretStr(""))
     inference_adapter = OpenAIInferenceAdapter(config)
 
     inference_adapter.__provider_spec__ = MagicMock()
@@ -52,13 +54,13 @@ def test_openai_provider_openai_client_caching():
             {"x-llamastack-provider-data": json.dumps({inference_adapter.provider_data_api_key_field: api_key})}
         ):
             openai_client = inference_adapter.client
-            assert openai_client.api_key.get_secret_value() == api_key
+            assert openai_client.api_key == api_key
 
 
 def test_together_provider_openai_client_caching():
     """Ensure the Together provider does not cache api keys across client requests"""
 
-    config = TogetherImplConfig()
+    config = TogetherImplConfig(api_key=SecretStr(""))
     inference_adapter = TogetherInferenceAdapter(config)
 
     inference_adapter.__provider_spec__ = MagicMock()
@@ -76,7 +78,7 @@ def test_together_provider_openai_client_caching():
 
 def test_llama_compat_provider_openai_client_caching():
     """Ensure the LlamaCompat provider does not cache api keys across client requests"""
-    config = LlamaCompatConfig()
+    config = LlamaCompatConfig(api_key=SecretStr(""))
     inference_adapter = LlamaCompatInferenceAdapter(config)
 
     inference_adapter.__provider_spec__ = MagicMock()
@@ -86,4 +88,4 @@ def test_llama_compat_provider_openai_client_caching():
 
     for api_key in ["test1", "test2"]:
         with request_provider_data_context({"x-llamastack-provider-data": json.dumps({"llama_api_key": api_key})}):
-            assert inference_adapter.client.api_key.get_secret_value() == api_key
+            assert inference_adapter.client.api_key == api_key
