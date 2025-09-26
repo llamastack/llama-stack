@@ -21,8 +21,6 @@ logger = get_logger(name=__name__, category="inference::openai")
 # | completion                 | LiteLLMOpenAIMixin       |
 # | chat_completion            | LiteLLMOpenAIMixin       |
 # | embedding                  | LiteLLMOpenAIMixin       |
-# | batch_completion           | LiteLLMOpenAIMixin       |
-# | batch_chat_completion      | LiteLLMOpenAIMixin       |
 # | openai_completion          | OpenAIMixin              |
 # | openai_chat_completion     | OpenAIMixin              |
 # | openai_embeddings          | OpenAIMixin              |

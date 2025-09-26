@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.2.22"
+version = "0.2.23"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
@@ -31,7 +31,7 @@ dependencies = [
     "huggingface-hub>=0.34.0,<1.0",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-client>=0.2.22",
+    "llama-stack-client>=0.2.23",
     "openai>=1.100.0",                                # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
@@ -55,7 +55,7 @@ dependencies = [
 ui = [
     "streamlit",
     "pandas",
-    "llama-stack-client>=0.2.22",
+    "llama-stack-client>=0.2.23",
     "streamlit-option-menu",
 ]
 
@@ -259,15 +259,12 @@ exclude = [
     "^llama_stack/models/llama/llama3/tokenizer\\.py$",
     "^llama_stack/models/llama/llama3/tool_utils\\.py$",
     "^llama_stack/providers/inline/agents/meta_reference/",
-    "^llama_stack/providers/inline/agents/meta_reference/agent_instance\\.py$",
-    "^llama_stack/providers/inline/agents/meta_reference/agents\\.py$",
     "^llama_stack/providers/inline/datasetio/localfs/",
     "^llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
     "^llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
     "^llama_stack/models/llama/llama3/generation\\.py$",
     "^llama_stack/models/llama/llama3/multimodal/model\\.py$",
     "^llama_stack/models/llama/llama4/",
-    "^llama_stack/providers/inline/inference/meta_reference/quantization/fp8_impls\\.py$",
     "^llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
     "^llama_stack/providers/inline/post_training/common/validator\\.py$",
     "^llama_stack/providers/inline/safety/code_scanner/",
@@ -278,19 +275,13 @@ exclude = [
     "^llama_stack/providers/remote/agents/sample/",
     "^llama_stack/providers/remote/datasetio/huggingface/",
     "^llama_stack/providers/remote/datasetio/nvidia/",
-    "^llama_stack/providers/remote/inference/anthropic/",
     "^llama_stack/providers/remote/inference/bedrock/",
     "^llama_stack/providers/remote/inference/cerebras/",
     "^llama_stack/providers/remote/inference/databricks/",
     "^llama_stack/providers/remote/inference/fireworks/",
-    "^llama_stack/providers/remote/inference/gemini/",
-    "^llama_stack/providers/remote/inference/groq/",
     "^llama_stack/providers/remote/inference/nvidia/",
-    "^llama_stack/providers/remote/inference/openai/",
     "^llama_stack/providers/remote/inference/passthrough/",
     "^llama_stack/providers/remote/inference/runpod/",
-    "^llama_stack/providers/remote/inference/sambanova/",
-    "^llama_stack/providers/remote/inference/sample/",
     "^llama_stack/providers/remote/inference/tgi/",
     "^llama_stack/providers/remote/inference/together/",
     "^llama_stack/providers/remote/inference/watsonx/",
@@ -310,7 +301,6 @@ exclude = [
     "^llama_stack/providers/remote/vector_io/qdrant/",
     "^llama_stack/providers/remote/vector_io/sample/",
     "^llama_stack/providers/remote/vector_io/weaviate/",
-    "^llama_stack/providers/tests/conftest\\.py$",
     "^llama_stack/providers/utils/bedrock/client\\.py$",
     "^llama_stack/providers/utils/bedrock/refreshable_boto_session\\.py$",
     "^llama_stack/providers/utils/inference/embedding_mixin\\.py$",
@@ -318,12 +308,9 @@ exclude = [
     "^llama_stack/providers/utils/inference/model_registry\\.py$",
     "^llama_stack/providers/utils/inference/openai_compat\\.py$",
     "^llama_stack/providers/utils/inference/prompt_adapter\\.py$",
-    "^llama_stack/providers/utils/kvstore/config\\.py$",
     "^llama_stack/providers/utils/kvstore/kvstore\\.py$",
-    "^llama_stack/providers/utils/kvstore/mongodb/mongodb\\.py$",
     "^llama_stack/providers/utils/kvstore/postgres/postgres\\.py$",
     "^llama_stack/providers/utils/kvstore/redis/redis\\.py$",
-    "^llama_stack/providers/utils/kvstore/sqlite/sqlite\\.py$",
     "^llama_stack/providers/utils/memory/vector_store\\.py$",
     "^llama_stack/providers/utils/scoring/aggregation_utils\\.py$",
     "^llama_stack/providers/utils/scoring/base_scoring_fn\\.py$",
@@ -331,13 +318,6 @@ exclude = [
     "^llama_stack/providers/utils/telemetry/trace_protocol\\.py$",
     "^llama_stack/providers/utils/telemetry/tracing\\.py$",
     "^llama_stack/strong_typing/auxiliary\\.py$",
-    "^llama_stack/strong_typing/deserializer\\.py$",
-    "^llama_stack/strong_typing/inspection\\.py$",
-    "^llama_stack/strong_typing/schema\\.py$",
-    "^llama_stack/strong_typing/serializer\\.py$",
-    "^llama_stack/distributions/groq/groq\\.py$",
-    "^llama_stack/distributions/llama_api/llama_api\\.py$",
-    "^llama_stack/distributions/sambanova/sambanova\\.py$",
     "^llama_stack/distributions/template\\.py$",
 ]
 

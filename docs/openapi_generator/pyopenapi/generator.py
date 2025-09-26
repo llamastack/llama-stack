@@ -548,7 +548,6 @@ class Generator:
         if op.defining_class.__name__ in [
             "SyntheticDataGeneration",
             "PostTraining",
-            "BatchInference",
         ]:
             op.defining_class.__name__ = f"{op.defining_class.__name__} (Coming Soon)"
             print(op.defining_class.__name__)
