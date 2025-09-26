@@ -41,7 +41,6 @@ def skip_if_model_doesnt_support_user_param(client, model_id):
 def skip_if_model_doesnt_support_encoding_format_base64(client, model_id):
     provider = provider_from_model(client, model_id)
     if provider.provider_type in (
-        "remote::together",  # param silently ignored, always returns floats
         "remote::databricks",  # param silently ignored, always returns floats
         "remote::fireworks",  # param silently ignored, always returns list of floats
         "remote::ollama",  # param silently ignored, always returns list of floats

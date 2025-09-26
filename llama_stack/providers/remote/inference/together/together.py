@@ -6,7 +6,7 @@
 
 from collections.abc import AsyncGenerator
 
-from openai import NOT_GIVEN, AsyncOpenAI
+from openai import AsyncOpenAI
 from together import AsyncTogether
 from together.constants import BASE_URL
 
@@ -311,10 +311,9 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
         the standard OpenAI embeddings endpoint.
 
         The endpoint -
-         - does not return usage information
+         - not all models return usage information
          - does not support user param, returns 400 Unrecognized request arguments supplied: user
          - does not support dimensions param, returns 400 Unrecognized request arguments supplied: dimensions
-         - does not support encoding_format param, always returns floats, never base64
         """
         # Together support ticket #13332 -> will not fix
         if user is not None:
@@ -322,13 +321,11 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
         # Together support ticket #13333 -> escalated
         if dimensions is not None:
             raise ValueError("Together's embeddings endpoint does not support dimensions param.")
-        # Together support ticket #13331 -> will not fix, compute client side
-        if encoding_format not in (None, NOT_GIVEN, "float"):
-            raise ValueError("Together's embeddings endpoint only supports encoding_format='float'.")
 
         response = await self.client.embeddings.create(
             model=await self._get_provider_model_id(model),
             input=input,
+            encoding_format=encoding_format,
         )
 
         response.model = model  # return the user the same model id they provided, avoid exposing the provider model id
