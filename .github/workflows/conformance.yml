@@ -40,6 +40,15 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
           path: 'base'
 
+
+      # Cache openai spec
+      - name: Cache openai openapi spec
+        id: cache-openapi
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ~/openai-openapi
+          key: openai-openapi.yml
+
       # Cache oasdiff to avoid checksum failures and speed up builds
       - name: Cache oasdiff
         id: cache-oasdiff
@@ -55,6 +64,12 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
           cp /usr/local/bin/oasdiff ~/oasdiff
 
+      - name: Get openai openapi spec
+        if: steps.cache-openapi.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/openai-openapi
+          curl -L https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml -o ~/openai-openapi/openai-openapi.yml
+
       # Setup cached oasdiff
       - name: Setup cached oasdiff
         if: steps.cache-oasdiff.outputs.cache-hit == 'true'
@@ -69,3 +84,17 @@ jobs:
           oasdiff breaking --fail-on ERR base/docs/static/llama-stack-spec.yaml docs/static/llama-stack-spec.yaml --match-path '^/v1/openai/v1' \
           --match-path '^/v1/vector-io' \
           --match-path '^/v1/vector-dbs'
+
+      # Run oasdiff to detect breaking changes in the API specification when compared to the OpenAI openAPI spec
+      - name: Run OpenAPI Breaking Change Diff Against OpenAI API
+        continue-on-error: true
+        shell: bash
+        run: |
+          OPENAI_SPEC=~/openai-openapi/openai-openapi.yml
+          LOCAL_SPEC=docs/_static/llama-stack-spec.yaml
+
+          oasdiff breaking --fail-on ERR \
+            "$OPENAI_SPEC" \
+            "$LOCAL_SPEC" \
+            --strip-prefix-revision "/v1/openai/v1" \
+            --match-path "(^/v1/openai/v1)?/(chat/completions|completions|embeddings|files|models|moderations|vector_stores|responses)(/.*)?$"
