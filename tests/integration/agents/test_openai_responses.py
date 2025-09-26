@@ -264,3 +264,36 @@ def test_function_call_output_response(openai_client, client_with_models, text_m
     assert (
         "sunny" in response2.output[0].content[0].text.lower() or "warm" in response2.output[0].content[0].text.lower()
     )
+
+
+def test_function_call_output_response_with_none_arguments(openai_client, client_with_models, text_model_id):
+    """Test handling of function call outputs in responses when function does not accept arguments."""
+    if isinstance(client_with_models, LlamaStackAsLibraryClient):
+        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
+
+    client = openai_client
+
+    # First create a response that triggers a function call
+    response = client.responses.create(
+        model=text_model_id,
+        input=[
+            {
+                "role": "user",
+                "content": "what's the current time? You MUST call the `get_current_time` function to find out.",
+            }
+        ],
+        tools=[
+            {
+                "type": "function",
+                "name": "get_current_time",
+                "description": "Get the current time",
+                "parameters": {},
+            }
+        ],
+        stream=False,
+    )
+
+    # Verify we got a function call
+    assert response.output[0].type == "function_call"
+    assert response.output[0].arguments == "{}"
+    _ = response.output[0].call_id
