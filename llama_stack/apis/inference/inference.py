@@ -1101,7 +1101,7 @@ class InferenceProvider(Protocol):
     ) -> RerankResponse:
         """Rerank a list of documents based on their relevance to a query.
 
-        :param model: The identifier of the reranking model to use.
+        :param model: The identifier of the reranking model to use. The model must be a reranking model registered with Llama Stack and available via the /models endpoint.
         :param query: The search query to rank items against. Can be a string, text content part, or image content part. The input must not exceed the model's max input token length.
         :param items: List of items to rerank. Each item can be a string, text content part, or image content part. Each input must not exceed the model's max input token length.
         :param max_num_results: (Optional) Maximum number of results to return. Default: returns all.
@@ -1241,9 +1241,10 @@ class InferenceProvider(Protocol):
 class Inference(InferenceProvider):
     """Llama Stack Inference API for generating completions, chat completions, and embeddings.
 
-    This API provides the raw interface to the underlying models. Two kinds of models are supported:
+    This API provides the raw interface to the underlying models. Three kinds of models are supported:
     - LLM models: these models generate "raw" and "chat" (conversational) completions.
     - Embedding models: these models generate embeddings to be used for semantic search.
+    - Rerank models: these models reorder the documents based on their relevance to a query.
     """
 
     @webmethod(route="/openai/v1/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
