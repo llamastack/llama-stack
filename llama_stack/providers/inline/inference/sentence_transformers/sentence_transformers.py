@@ -9,6 +9,7 @@ from collections.abc import AsyncGenerator
 from llama_stack.apis.inference import (
     CompletionResponse,
     InferenceProvider,
+    InterleavedContent,
     LogProbConfig,
     Message,
     ResponseFormat,
@@ -34,7 +35,7 @@ from .config import SentenceTransformersInferenceConfig
 log = get_logger(name=__name__, category="inference")
 
 
-class SentenceTransformersInferenceImpl(
+class SentenceTransformersInferenceImpl(  # type: ignore[misc]
     OpenAIChatCompletionToLlamaStackMixin,
     OpenAICompletionToLlamaStackMixin,
     SentenceTransformerEmbeddingMixin,
@@ -77,7 +78,7 @@ class SentenceTransformersInferenceImpl(
     async def completion(
         self,
         model_id: str,
-        content: str,
+        content: InterleavedContent,
         sampling_params: SamplingParams | None = None,
         response_format: ResponseFormat | None = None,
         stream: bool | None = False,
@@ -90,10 +91,10 @@ class SentenceTransformersInferenceImpl(
         model_id: str,
         messages: list[Message],
         sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
         tools: list[ToolDefinition] | None = None,
         tool_choice: ToolChoice | None = ToolChoice.auto,
         tool_prompt_format: ToolPromptFormat | None = None,
+        response_format: ResponseFormat | None = None,
         stream: bool | None = False,
         logprobs: LogProbConfig | None = None,
         tool_config: ToolConfig | None = None,
