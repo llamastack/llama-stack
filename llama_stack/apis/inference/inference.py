@@ -21,7 +21,7 @@ from llama_stack.apis.common.content_types import ContentDelta, InterleavedConte
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.models import Model
 from llama_stack.apis.telemetry import MetricResponseMixin
-from llama_stack.apis.version import LLAMA_STACK_API_V1
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     StopReason,
@@ -1070,7 +1070,7 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/inference/rerank", method="POST", experimental=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/inference/rerank", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def rerank(
         self,
         model: str,

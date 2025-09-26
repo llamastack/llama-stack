@@ -3895,7 +3895,7 @@ paths:
             schema:
               $ref: '#/components/schemas/QueryTracesRequest'
         required: true
-  /v1/inference/rerank:
+  /v1alpha/inference/rerank:
     post:
       responses:
         '200':
