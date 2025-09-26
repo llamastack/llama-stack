@@ -61,6 +61,7 @@ logger = get_logger(name=__name__, category="inference::fireworks")
 class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, NeedsRequestProviderData):
     embedding_model_metadata = {
         "nomic-ai/nomic-embed-text-v1.5": {"embedding_dimension": 768, "context_length": 8192},
+        "accounts/fireworks/models/qwen3-embedding-8b": {"embedding_dimension": 4096, "context_length": 40960},
     }
 
     def __init__(self, config: FireworksImplConfig) -> None:
