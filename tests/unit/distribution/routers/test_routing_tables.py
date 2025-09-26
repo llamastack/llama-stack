@@ -648,7 +648,6 @@ async def test_models_source_interaction_cleanup_provider_models(cached_disk_dis
     await table.shutdown()
 
 
-@pytest.mark.asyncio
 async def test_tool_groups_routing_table_exception_handling(cached_disk_dist_registry):
     """Test that the tool group routing table handles exceptions when listing tools, like if an MCP server is unreachable."""
 
