@@ -7,7 +7,7 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 # TODO: add default values for all fields
 
@@ -15,8 +15,8 @@ from pydantic import BaseModel, Field
 class NvidiaPostTrainingConfig(BaseModel):
     """Configuration for NVIDIA Post Training implementation."""
 
-    api_key: str | None = Field(
-        default_factory=lambda: os.getenv("NVIDIA_API_KEY"),
+    api_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(os.getenv("NVIDIA_API_KEY", "")),
         description="The NVIDIA API key.",
     )
 

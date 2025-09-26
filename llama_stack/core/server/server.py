@@ -43,7 +43,7 @@ from llama_stack.core.datatypes import (
     StackRunConfig,
     process_cors_config,
 )
-from llama_stack.core.distribution import builtin_automatically_routed_apis
+from llama_stack.core.distribution import builtin_automatically_routed_apis, get_provider_registry
 from llama_stack.core.external import load_external_apis
 from llama_stack.core.request_headers import (
     PROVIDER_DATA_VAR,
@@ -371,7 +371,7 @@ def create_app(
                     logger.error(f"Error: {str(e)}")
                     raise ValueError(f"Invalid environment variable format: {env_pair}") from e
 
-        config = replace_env_vars(config_contents)
+        config = replace_env_vars(config_contents, provider_registry=get_provider_registry())
         config = StackRunConfig(**cast_image_name_to_string(config))
 
     _log_run_config(run_config=config)
@@ -524,7 +524,10 @@ def main(args: argparse.Namespace | None = None):
             env_vars=args.env,
         )
     except Exception as e:
+        import traceback
+
         logger.error(f"Error creating app: {str(e)}")
+        logger.error(f"Stack trace:\n{traceback.format_exc()}")
         sys.exit(1)
 
     config_file = resolve_config_or_distro(config_or_distro, Mode.RUN)
@@ -534,7 +537,9 @@ def main(args: argparse.Namespace | None = None):
             logger_config = LoggingConfig(**cfg)
         else:
             logger_config = None
-        config = StackRunConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
+        config = StackRunConfig(
+            **cast_image_name_to_string(replace_env_vars(config_contents, provider_registry=get_provider_registry()))
+        )
 
     import uvicorn
 

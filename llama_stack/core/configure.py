@@ -165,7 +165,7 @@ def upgrade_from_routing_table(
 def parse_and_maybe_upgrade_config(config_dict: dict[str, Any]) -> StackRunConfig:
     version = config_dict.get("version", None)
     if version == LLAMA_STACK_RUN_CONFIG_VERSION:
-        processed_config_dict = replace_env_vars(config_dict)
+        processed_config_dict = replace_env_vars(config_dict, provider_registry=get_provider_registry())
         return StackRunConfig(**cast_image_name_to_string(processed_config_dict))
 
     if "routing_table" in config_dict:
@@ -177,5 +177,5 @@ def parse_and_maybe_upgrade_config(config_dict: dict[str, Any]) -> StackRunConfi
     if not config_dict.get("external_providers_dir", None):
         config_dict["external_providers_dir"] = EXTERNAL_PROVIDERS_DIR
 
-    processed_config_dict = replace_env_vars(config_dict)
+    processed_config_dict = replace_env_vars(config_dict, provider_registry=get_provider_registry())
     return StackRunConfig(**cast_image_name_to_string(processed_config_dict))

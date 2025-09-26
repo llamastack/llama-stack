@@ -18,7 +18,6 @@ class DatabricksImplConfig(BaseModel):
         description="The URL for the Databricks model serving endpoint",
     )
     api_token: SecretStr = Field(
-        default=SecretStr(None),
         description="The Databricks API token",
     )
 

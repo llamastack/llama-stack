@@ -6,12 +6,11 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 
 class TavilySearchToolConfig(BaseModel):
-    api_key: str | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
         description="The Tavily Search API Key",
     )
     max_results: int = Field(

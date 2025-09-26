@@ -173,7 +173,7 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self._qdrant_lock = asyncio.Lock()
 
     async def initialize(self) -> None:
-        client_config = self.config.model_dump(exclude_none=True, exclude={"kvstore"})
+        client_config = self.config.model_dump(exclude_none=True, exclude={"kvstore"}, mode="json")
         self.client = AsyncQdrantClient(**client_config)
         self.kvstore = await kvstore_impl(self.config.kvstore)
 

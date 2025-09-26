@@ -9,6 +9,7 @@ import warnings
 from unittest.mock import patch
 
 import pytest
+from pydantic import SecretStr
 
 from llama_stack.apis.post_training.post_training import (
     DataConfig,
@@ -34,7 +35,7 @@ def nvidia_post_training_adapter():
     """Fixture to create and configure the NVIDIA post training adapter."""
     os.environ["NVIDIA_CUSTOMIZER_URL"] = "http://nemo.test"  # needed for nemo customizer
 
-    config = NvidiaPostTrainingConfig(customizer_url=os.environ["NVIDIA_CUSTOMIZER_URL"], api_key=None)
+    config = NvidiaPostTrainingConfig(customizer_url=os.environ["NVIDIA_CUSTOMIZER_URL"], api_key=SecretStr(""))
     adapter = NvidiaPostTrainingAdapter(config)
 
     with patch.object(adapter, "_make_request") as mock_make_request:

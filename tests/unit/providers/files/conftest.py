@@ -7,6 +7,7 @@
 import boto3
 import pytest
 from moto import mock_aws
+from pydantic import SecretStr
 
 from llama_stack.providers.remote.files.s3 import S3FilesImplConfig, get_adapter_impl
 from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
@@ -43,6 +44,7 @@ def s3_config(tmp_path):
         region="not-a-region",
         auto_create_bucket=True,
         metadata_store=SqliteSqlStoreConfig(db_path=db_path.as_posix()),
+        aws_secret_access_key=SecretStr("fake"),
     )
 
 

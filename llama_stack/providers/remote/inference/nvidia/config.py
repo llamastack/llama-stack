@@ -39,8 +39,8 @@ class NVIDIAConfig(BaseModel):
         default_factory=lambda: os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com"),
         description="A base url for accessing the NVIDIA NIM",
     )
-    api_key: SecretStr | None = Field(
-        default_factory=lambda: SecretStr(os.getenv("NVIDIA_API_KEY")),
+    api_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(os.getenv("NVIDIA_API_KEY", "")),
         description="The NVIDIA API key, only needed of using the hosted service",
     )
     timeout: int = Field(

@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 from llama_stack.schema_utils import json_schema_type
@@ -15,7 +15,7 @@ from llama_stack.schema_utils import json_schema_type
 @json_schema_type
 class MilvusVectorIOConfig(BaseModel):
     uri: str = Field(description="The URI of the Milvus server")
-    token: str | None = Field(description="The token of the Milvus server")
+    token: SecretStr = Field(description="The token of the Milvus server")
     consistency_level: str = Field(description="The consistency level of the Milvus server", default="Strong")
     kvstore: KVStoreConfig = Field(description="Config for KV store backend")
 
