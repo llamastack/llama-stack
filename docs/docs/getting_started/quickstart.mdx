@@ -27,7 +27,7 @@ ollama run llama3.2:3b --keepalive 60m
 We will use `uv` to run the Llama Stack server.
 ```bash
 OLLAMA_URL=http://localhost:11434 \
-  uv run --with llama-stack llama stack build --distro starter --image-type venv --run
+  uv run --with llama-stack llama stack build --template starter --image-type venv --run
 ```
 #### Step 3: Run the demo
 Now open up a new terminal and copy the following script into a file named `demo_script.py`.
