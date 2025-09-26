@@ -105,6 +105,27 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^llama_stack/apis/|^docs/openapi_generator/
+      - id: openapi-spec-check
+        name: OpenAPI spec change validator
+        entry: bash
+        args:
+          - -c
+          - |
+            SPEC_PATH="docs/_static/llama-stack-spec.yaml"
+
+            # if the generated spec is part of the staged commit (cached), require [API CHANGE]
+            if git diff --name-only --cached -- "$SPEC_PATH" | grep -q .; then
+              if ! grep -q "\[API CHANGE\]" "$(git rev-parse --git-dir)/COMMIT_EDITMSG"; then
+                echo "ERROR: $SPEC_PATH changed but commit message does not include '[API CHANGE]'."
+                echo "Please include '[API CHANGE]' in the commit message when modifying the public API spec."
+                exit 1
+              fi
+            fi
+          - --
+        language: system
+        pass_filenames: false
+        require_serial: true
+        stages: [commit-msg]
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh
