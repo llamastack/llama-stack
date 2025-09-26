@@ -23,6 +23,7 @@ class WebMethod:
     descriptive_name: str | None = None
     experimental: bool | None = False
     required_scope: str | None = None
+    add_version: bool = True
 
 
 T = TypeVar("T", bound=Callable[..., Any])
@@ -38,6 +39,7 @@ def webmethod(
     descriptive_name: str | None = None,
     experimental: bool | None = False,
     required_scope: str | None = None,
+    add_version: bool = True,
 ) -> Callable[[T], T]:
     """
     Decorator that supplies additional metadata to an endpoint operation function.
@@ -61,6 +63,7 @@ def webmethod(
             descriptive_name=descriptive_name,
             experimental=experimental,
             required_scope=required_scope,
+            add_version=add_version,
         )
         return func
 
