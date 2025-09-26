@@ -8,6 +8,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.datasets import Dataset
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import webmethod
 
 
@@ -20,7 +21,7 @@ class DatasetIO(Protocol):
     # keeping for aligning with inference/safety, but this is not used
     dataset_store: DatasetStore
 
-    @webmethod(route="/datasetio/iterrows/{dataset_id:path}", method="GET")
+    @webmethod(route="/datasetio/iterrows/{dataset_id:path}", method="GET", level=LLAMA_STACK_API_V1)
     async def iterrows(
         self,
         dataset_id: str,
@@ -44,7 +45,7 @@ class DatasetIO(Protocol):
         """
         ...
 
-    @webmethod(route="/datasetio/append-rows/{dataset_id:path}", method="POST")
+    @webmethod(route="/datasetio/append-rows/{dataset_id:path}", method="POST", level=LLAMA_STACK_API_V1)
     async def append_rows(self, dataset_id: str, rows: list[dict[str, Any]]) -> None:
         """Append rows to a dataset.
 

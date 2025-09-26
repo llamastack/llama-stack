@@ -48,15 +48,12 @@ def setup_verify_download_parser(parser: argparse.ArgumentParser) -> None:
     parser.set_defaults(func=partial(run_verify_cmd, parser=parser))
 
 
-def calculate_md5(filepath: Path, chunk_size: int = 8192) -> str:
-    # NOTE: MD5 is used here only for download integrity verification,
-    # not for security purposes
-    # TODO: switch to SHA256
-    md5_hash = hashlib.md5(usedforsecurity=False)
+def calculate_sha256(filepath: Path, chunk_size: int = 8192) -> str:
+    sha256_hash = hashlib.sha256()
     with open(filepath, "rb") as f:
         for chunk in iter(lambda: f.read(chunk_size), b""):
-            md5_hash.update(chunk)
-    return md5_hash.hexdigest()
+            sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
 
 
 def load_checksums(checklist_path: Path) -> dict[str, str]:
@@ -64,10 +61,10 @@ def load_checksums(checklist_path: Path) -> dict[str, str]:
     with open(checklist_path) as f:
         for line in f:
             if line.strip():
-                md5sum, filepath = line.strip().split("  ", 1)
+                sha256sum, filepath = line.strip().split("  ", 1)
                 # Remove leading './' if present
                 filepath = filepath.lstrip("./")
-                checksums[filepath] = md5sum
+                checksums[filepath] = sha256sum
     return checksums
 
 
@@ -88,7 +85,7 @@ def verify_files(model_dir: Path, checksums: dict[str, str], console: Console) -
             matches = False
 
             if exists:
-                actual_hash = calculate_md5(full_path)
+                actual_hash = calculate_sha256(full_path)
                 matches = actual_hash == expected_hash
 
             results.append(

@@ -4,11 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from typing import Any
 
-import openai
 from openai import NOT_GIVEN, AsyncOpenAI
 
 from llama_stack.apis.inference import (
@@ -22,13 +22,15 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
 )
+from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-class OpenAIMixin(ABC):
+class OpenAIMixin(ModelRegistryHelper, ABC):
     """
     Mixin class that provides OpenAI-specific functionality for inference providers.
     This class handles direct OpenAI API calls using the AsyncOpenAI client.
@@ -42,6 +44,24 @@ class OpenAIMixin(ABC):
       This provides model registry functionality for looking up registered models.
       The model_store is set in routing_tables/common.py during provider initialization.
     """
+
+    # Allow subclasses to control whether to overwrite the 'id' field in OpenAI responses
+    # is overwritten with a client-side generated id.
+    #
+    # This is useful for providers that do not return a unique id in the response.
+    overwrite_completion_id: bool = False
+
+    # Embedding model metadata for this provider
+    # Can be set by subclasses or instances to provide embedding models
+    # Format: {"model_id": {"embedding_dimension": 1536, "context_length": 8192}}
+    embedding_model_metadata: dict[str, dict[str, int]] = {}
+
+    # Cache of available models keyed by model ID
+    # This is set in list_models() and used in check_model_availability()
+    _model_cache: dict[str, Model] = {}
+
+    # List of allowed models for this provider, if empty all models allowed
+    allowed_models: list[str] = []
 
     @abstractmethod
     def get_api_key(self) -> str:
@@ -67,6 +87,17 @@ class OpenAIMixin(ABC):
         """
         pass
 
+    def get_extra_client_params(self) -> dict[str, Any]:
+        """
+        Get any extra parameters to pass to the AsyncOpenAI client.
+
+        Child classes can override this method to provide additional parameters
+        such as timeout settings, proxies, etc.
+
+        :return: A dictionary of extra parameters
+        """
+        return {}
+
     @property
     def client(self) -> AsyncOpenAI:
         """
@@ -78,6 +109,7 @@ class OpenAIMixin(ABC):
         return AsyncOpenAI(
             api_key=self.get_api_key(),
             base_url=self.get_base_url(),
+            **self.get_extra_client_params(),
         )
 
     async def _get_provider_model_id(self, model: str) -> str:
@@ -97,6 +129,23 @@ class OpenAIMixin(ABC):
         if model_obj.provider_resource_id is None:
             raise ValueError(f"Model {model} has no provider_resource_id")
         return model_obj.provider_resource_id
+
+    async def _maybe_overwrite_id(self, resp: Any, stream: bool | None) -> Any:
+        if not self.overwrite_completion_id:
+            return resp
+
+        new_id = f"cltsd-{uuid.uuid4()}"
+        if stream:
+
+            async def _gen():
+                async for chunk in resp:
+                    chunk.id = new_id
+                    yield chunk
+
+            return _gen()
+        else:
+            resp.id = new_id
+            return resp
 
     async def openai_completion(
         self,
@@ -124,13 +173,18 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI completion API call.
         """
-        if guided_choice is not None:
-            logger.warning("guided_choice is not supported by the OpenAI API. Ignoring.")
-        if prompt_logprobs is not None:
-            logger.warning("prompt_logprobs is not supported by the OpenAI API. Ignoring.")
+        # Handle parameters that are not supported by OpenAI API, but may be by the provider
+        #  prompt_logprobs is supported by vLLM
+        #  guided_choice is supported by vLLM
+        # TODO: test coverage
+        extra_body: dict[str, Any] = {}
+        if prompt_logprobs is not None and prompt_logprobs >= 0:
+            extra_body["prompt_logprobs"] = prompt_logprobs
+        if guided_choice:
+            extra_body["guided_choice"] = guided_choice
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
-        return await self.client.completions.create(  # type: ignore[no-any-return]
+        resp = await self.client.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
                 prompt=prompt,
@@ -150,8 +204,11 @@ class OpenAIMixin(ABC):
                 top_p=top_p,
                 user=user,
                 suffix=suffix,
-            )
+            ),
+            extra_body=extra_body,
         )
+
+        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
     async def openai_chat_completion(
         self,
@@ -182,8 +239,7 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI chat completion API call.
         """
-        # Type ignore because return types are compatible
-        return await self.client.chat.completions.create(  # type: ignore[no-any-return]
+        resp = await self.client.chat.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
                 messages=messages,
@@ -210,6 +266,8 @@ class OpenAIMixin(ABC):
                 user=user,
             )
         )
+
+        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
     async def openai_embeddings(
         self,
@@ -247,26 +305,53 @@ class OpenAIMixin(ABC):
 
         return OpenAIEmbeddingsResponse(
             data=data,
-            model=response.model,
+            model=model,
             usage=usage,
         )
 
+    async def list_models(self) -> list[Model] | None:
+        """
+        List available models from the provider's /v1/models endpoint augmented with static embedding model metadata.
+
+        Also, caches the models in self._model_cache for use in check_model_availability().
+
+        :return: A list of Model instances representing available models.
+        """
+        self._model_cache = {}
+
+        async for m in self.client.models.list():
+            if self.allowed_models and m.id not in self.allowed_models:
+                logger.info(f"Skipping model {m.id} as it is not in the allowed models list")
+                continue
+            if metadata := self.embedding_model_metadata.get(m.id):
+                # This is an embedding model - augment with metadata
+                model = Model(
+                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                    provider_resource_id=m.id,
+                    identifier=m.id,
+                    model_type=ModelType.embedding,
+                    metadata=metadata,
+                )
+            else:
+                # This is an LLM
+                model = Model(
+                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                    provider_resource_id=m.id,
+                    identifier=m.id,
+                    model_type=ModelType.llm,
+                )
+            self._model_cache[m.id] = model
+
+        return list(self._model_cache.values())
+
     async def check_model_availability(self, model: str) -> bool:
         """
-        Check if a specific model is available from OpenAI.
+        Check if a specific model is available from the provider's /v1/models.
 
         :param model: The model identifier to check.
         :return: True if the model is available dynamically, False otherwise.
         """
-        try:
-            # Direct model lookup - returns model or raises NotFoundError
-            await self.client.models.retrieve(model)
-            return True
-        except openai.NotFoundError:
-            # Model doesn't exist - this is expected for unavailable models
-            pass
-        except Exception as e:
-            # All other errors (auth, rate limit, network, etc.)
-            logger.warning(f"Failed to check model availability for {model}: {e}")
+        if not self._model_cache:
+            await self.list_models()
 
-        return False
+        return model in self._model_cache

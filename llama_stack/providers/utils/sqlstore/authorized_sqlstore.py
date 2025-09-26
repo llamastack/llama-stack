@@ -53,13 +53,15 @@ class AuthorizedSqlStore:
     access control policies, user attribute capture, and SQL filtering optimization.
     """
 
-    def __init__(self, sql_store: SqlStore):
+    def __init__(self, sql_store: SqlStore, policy: list[AccessRule]):
         """
         Initialize the authorization layer.
 
         :param sql_store: Base SqlStore implementation to wrap
+        :param policy: Access control policy to use for authorization
         """
         self.sql_store = sql_store
+        self.policy = policy
         self._detect_database_type()
         self._validate_sql_optimized_policy()
 
@@ -117,14 +119,13 @@ class AuthorizedSqlStore:
     async def fetch_all(
         self,
         table: str,
-        policy: list[AccessRule],
         where: Mapping[str, Any] | None = None,
         limit: int | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
     ) -> PaginatedResponse:
         """Fetch all rows with automatic access control filtering."""
-        access_where = self._build_access_control_where_clause(policy)
+        access_where = self._build_access_control_where_clause(self.policy)
         rows = await self.sql_store.fetch_all(
             table=table,
             where=where,
@@ -146,7 +147,7 @@ class AuthorizedSqlStore:
                 str(record_id), table, User(principal=stored_owner_principal, attributes=stored_access_attrs)
             )
 
-            if is_action_allowed(policy, Action.READ, sql_record, current_user):
+            if is_action_allowed(self.policy, Action.READ, sql_record, current_user):
                 filtered_rows.append(row)
 
         return PaginatedResponse(
@@ -157,20 +158,32 @@ class AuthorizedSqlStore:
     async def fetch_one(
         self,
         table: str,
-        policy: list[AccessRule],
         where: Mapping[str, Any] | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
     ) -> dict[str, Any] | None:
         """Fetch one row with automatic access control checking."""
         results = await self.fetch_all(
             table=table,
-            policy=policy,
             where=where,
             limit=1,
             order_by=order_by,
         )
 
         return results.data[0] if results.data else None
+
+    async def update(self, table: str, data: Mapping[str, Any], where: Mapping[str, Any]) -> None:
+        """Update rows with automatic access control attribute capture."""
+        enhanced_data = dict(data)
+
+        current_user = get_authenticated_user()
+        if current_user:
+            enhanced_data["owner_principal"] = current_user.principal
+            enhanced_data["access_attributes"] = current_user.attributes
+        else:
+            enhanced_data["owner_principal"] = None
+            enhanced_data["access_attributes"] = None
+
+        await self.sql_store.update(table, enhanced_data, where)
 
     async def delete(self, table: str, where: Mapping[str, Any]) -> None:
         """Delete rows with automatic access control filtering."""

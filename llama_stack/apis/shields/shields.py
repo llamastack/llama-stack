@@ -9,6 +9,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 from pydantic import BaseModel
 
 from llama_stack.apis.resource import Resource, ResourceType
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -49,7 +50,7 @@ class ListShieldsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Shields(Protocol):
-    @webmethod(route="/shields", method="GET")
+    @webmethod(route="/shields", method="GET", level=LLAMA_STACK_API_V1)
     async def list_shields(self) -> ListShieldsResponse:
         """List all shields.
 
@@ -57,7 +58,7 @@ class Shields(Protocol):
         """
         ...
 
-    @webmethod(route="/shields/{identifier:path}", method="GET")
+    @webmethod(route="/shields/{identifier:path}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_shield(self, identifier: str) -> Shield:
         """Get a shield by its identifier.
 
@@ -66,7 +67,7 @@ class Shields(Protocol):
         """
         ...
 
-    @webmethod(route="/shields", method="POST")
+    @webmethod(route="/shields", method="POST", level=LLAMA_STACK_API_V1)
     async def register_shield(
         self,
         shield_id: str,
@@ -84,7 +85,7 @@ class Shields(Protocol):
         """
         ...
 
-    @webmethod(route="/shields/{identifier:path}", method="DELETE")
+    @webmethod(route="/shields/{identifier:path}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def unregister_shield(self, identifier: str) -> None:
         """Unregister a shield.
 

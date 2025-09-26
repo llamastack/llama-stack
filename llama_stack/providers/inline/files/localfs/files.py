@@ -44,7 +44,7 @@ class LocalfsFilesImpl(Files):
         storage_path.mkdir(parents=True, exist_ok=True)
 
         # Initialize SQL store for metadata
-        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.config.metadata_store))
+        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.config.metadata_store), self.policy)
         await self.sql_store.create_table(
             "openai_files",
             {
@@ -74,7 +74,7 @@ class LocalfsFilesImpl(Files):
         if not self.sql_store:
             raise RuntimeError("Files provider not initialized")
 
-        row = await self.sql_store.fetch_one("openai_files", policy=self.policy, where={"id": file_id})
+        row = await self.sql_store.fetch_one("openai_files", where={"id": file_id})
         if not row:
             raise ResourceNotFoundError(file_id, "File", "client.files.list()")
 
@@ -86,10 +86,15 @@ class LocalfsFilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
+        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
+        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
     ) -> OpenAIFileObject:
         """Upload a file that can be used across various endpoints."""
         if not self.sql_store:
             raise RuntimeError("Files provider not initialized")
+
+        if expires_after_anchor is not None or expires_after_seconds is not None:
+            raise NotImplementedError("File expiration is not supported by this provider")
 
         file_id = self._generate_file_id()
         file_path = self._get_file_path(file_id)
@@ -145,7 +150,6 @@ class LocalfsFilesImpl(Files):
 
         paginated_result = await self.sql_store.fetch_all(
             table="openai_files",
-            policy=self.policy,
             where=where_conditions if where_conditions else None,
             order_by=[("created_at", order.value)],
             cursor=("id", after) if after else None,

@@ -43,7 +43,7 @@ from .config import PassthroughImplConfig
 
 class PassthroughInferenceAdapter(Inference):
     def __init__(self, config: PassthroughImplConfig) -> None:
-        ModelRegistryHelper.__init__(self, [])
+        ModelRegistryHelper.__init__(self)
         self.config = config
 
     async def initialize(self) -> None:

@@ -8,8 +8,6 @@ from llama_stack.providers.remote.inference.llama_openai_compat.config import Ll
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
-from .models import MODEL_ENTRIES
-
 logger = get_logger(name=__name__, category="inference::llama_openai_compat")
 
 
@@ -30,7 +28,6 @@ class LlamaCompatInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
     def __init__(self, config: LlamaCompatConfig):
         LiteLLMOpenAIMixin.__init__(
             self,
-            model_entries=MODEL_ENTRIES,
             litellm_provider_name="meta_llama",
             api_key_from_config=config.api_key,
             provider_data_api_key_field="llama_api_key",
