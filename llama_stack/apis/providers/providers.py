@@ -8,6 +8,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.datatypes import HealthResponse
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -45,7 +46,7 @@ class Providers(Protocol):
     Providers API for inspecting, listing, and modifying providers and their configurations.
     """
 
-    @webmethod(route="/providers", method="GET")
+    @webmethod(route="/providers", method="GET", level=LLAMA_STACK_API_V1)
     async def list_providers(self) -> ListProvidersResponse:
         """List all available providers.
 
@@ -53,7 +54,7 @@ class Providers(Protocol):
         """
         ...
 
-    @webmethod(route="/providers/{provider_id}", method="GET")
+    @webmethod(route="/providers/{provider_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def inspect_provider(self, provider_id: str) -> ProviderInfo:
         """Get detailed information about a specific provider.
 

@@ -37,9 +37,6 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import ToolDefinition, ToolPromptFormat
-from llama_stack.providers.utils.inference.model_registry import (
-    ModelRegistryHelper,
-)
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_openai_chat_completion_choice,
     convert_openai_chat_completion_stream,
@@ -48,7 +45,6 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import content_has_media
 
 from . import NVIDIAConfig
-from .models import MODEL_ENTRIES
 from .openai_utils import (
     convert_chat_completion_request,
     convert_completion_request,
@@ -60,7 +56,7 @@ from .utils import _is_nvidia_hosted
 logger = get_logger(name=__name__, category="inference::nvidia")
 
 
-class NVIDIAInferenceAdapter(OpenAIMixin, Inference, ModelRegistryHelper):
+class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
     """
     NVIDIA Inference Adapter for Llama Stack.
 
@@ -74,10 +70,15 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference, ModelRegistryHelper):
     - ModelRegistryHelper.check_model_availability() just returns False and shows a warning
     """
 
-    def __init__(self, config: NVIDIAConfig) -> None:
-        # TODO(mf): filter by available models
-        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
+    # source: https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/support-matrix.html
+    embedding_model_metadata = {
+        "nvidia/llama-3.2-nv-embedqa-1b-v2": {"embedding_dimension": 2048, "context_length": 8192},
+        "nvidia/nv-embedqa-e5-v5": {"embedding_dimension": 512, "context_length": 1024},
+        "nvidia/nv-embedqa-mistral-7b-v2": {"embedding_dimension": 512, "context_length": 4096},
+        "snowflake/arctic-embed-l": {"embedding_dimension": 512, "context_length": 1024},
+    }
 
+    def __init__(self, config: NVIDIAConfig) -> None:
         logger.info(f"Initializing NVIDIAInferenceAdapter({config.url})...")
 
         if _is_nvidia_hosted(config):

@@ -40,7 +40,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 from llama_stack.providers.utils.inference.openai_compat import (
     b64_encode_openai_embeddings_response,
     convert_message_to_openai_dict_new,
@@ -67,10 +67,10 @@ class LiteLLMOpenAIMixin(
     #                         when calling litellm.
     def __init__(
         self,
-        model_entries,
         litellm_provider_name: str,
         api_key_from_config: str | None,
         provider_data_api_key_field: str,
+        model_entries: list[ProviderModelEntry] | None = None,
         openai_compat_api_base: str | None = None,
         download_images: bool = False,
         json_schema_strict: bool = True,
@@ -86,7 +86,7 @@ class LiteLLMOpenAIMixin(
         :param download_images: Whether to download images and convert to base64 for message conversion.
         :param json_schema_strict: Whether to use strict mode for JSON schema validation.
         """
-        ModelRegistryHelper.__init__(self, model_entries)
+        ModelRegistryHelper.__init__(self, model_entries=model_entries)
 
         self.litellm_provider_name = litellm_provider_name
         self.api_key_from_config = api_key_from_config

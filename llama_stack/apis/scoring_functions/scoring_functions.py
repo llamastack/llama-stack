@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.type_system import ParamType
 from llama_stack.apis.resource import Resource, ResourceType
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 
@@ -160,7 +161,7 @@ class ListScoringFunctionsResponse(BaseModel):
 
 @runtime_checkable
 class ScoringFunctions(Protocol):
-    @webmethod(route="/scoring-functions", method="GET")
+    @webmethod(route="/scoring-functions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_scoring_functions(self) -> ListScoringFunctionsResponse:
         """List all scoring functions.
 
@@ -168,7 +169,7 @@ class ScoringFunctions(Protocol):
         """
         ...
 
-    @webmethod(route="/scoring-functions/{scoring_fn_id:path}", method="GET")
+    @webmethod(route="/scoring-functions/{scoring_fn_id:path}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_scoring_function(self, scoring_fn_id: str, /) -> ScoringFn:
         """Get a scoring function by its ID.
 
@@ -177,7 +178,7 @@ class ScoringFunctions(Protocol):
         """
         ...
 
-    @webmethod(route="/scoring-functions", method="POST")
+    @webmethod(route="/scoring-functions", method="POST", level=LLAMA_STACK_API_V1)
     async def register_scoring_function(
         self,
         scoring_fn_id: str,
@@ -198,7 +199,7 @@ class ScoringFunctions(Protocol):
         """
         ...
 
-    @webmethod(route="/scoring-functions/{scoring_fn_id:path}", method="DELETE")
+    @webmethod(route="/scoring-functions/{scoring_fn_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def unregister_scoring_function(self, scoring_fn_id: str) -> None:
         """Unregister a scoring function.
 

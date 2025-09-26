@@ -41,8 +41,9 @@ def skip_if_model_doesnt_support_user_param(client, model_id):
 def skip_if_model_doesnt_support_encoding_format_base64(client, model_id):
     provider = provider_from_model(client, model_id)
     if provider.provider_type in (
-        "remote::together",  # param silently ignored, always returns floats
+        "remote::databricks",  # param silently ignored, always returns floats
         "remote::fireworks",  # param silently ignored, always returns list of floats
+        "remote::ollama",  # param silently ignored, always returns list of floats
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} does not support encoding_format='base64'.")
 
@@ -52,6 +53,8 @@ def skip_if_model_doesnt_support_variable_dimensions(client_with_models, model_i
     if provider.provider_type in (
         "remote::together",  # returns 400
         "inline::sentence-transformers",
+        # Error code: 400 - {'error_code': 'BAD_REQUEST', 'message': 'Bad request: json: unknown field "dimensions"\n'}
+        "remote::databricks",
     ):
         pytest.skip(
             f"Model {model_id} hosted by {provider.provider_type} does not support variable output embedding dimensions."
@@ -75,7 +78,6 @@ def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
         "inline::meta-reference",
         "remote::bedrock",
         "remote::cerebras",
-        "remote::databricks",
         "remote::runpod",
         "remote::sambanova",
         "remote::tgi",

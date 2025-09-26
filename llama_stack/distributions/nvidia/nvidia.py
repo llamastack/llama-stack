@@ -7,12 +7,11 @@
 from pathlib import Path
 
 from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput, ToolGroupInput
-from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings, get_model_registry
+from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.remote.datasetio.nvidia import NvidiaDatasetIOConfig
 from llama_stack.providers.remote.eval.nvidia import NVIDIAEvalConfig
 from llama_stack.providers.remote.inference.nvidia import NVIDIAConfig
-from llama_stack.providers.remote.inference.nvidia.models import MODEL_ENTRIES
 from llama_stack.providers.remote.safety.nvidia import NVIDIASafetyConfig
 
 
@@ -68,9 +67,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         provider_id="nvidia",
     )
 
-    available_models = {
-        "nvidia": MODEL_ENTRIES,
-    }
     default_tool_groups = [
         ToolGroupInput(
             toolgroup_id="builtin::rag",
@@ -78,7 +74,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         ),
     ]
 
-    default_models, _ = get_model_registry(available_models)
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -86,7 +81,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         container_image=None,
         template_path=Path(__file__).parent / "doc_template.md",
         providers=providers,
-        available_models_by_provider=available_models,
         run_configs={
             "run.yaml": RunConfigSettings(
                 provider_overrides={
@@ -95,7 +89,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
                     "eval": [eval_provider],
                     "files": [files_provider],
                 },
-                default_models=default_models,
                 default_tool_groups=default_tool_groups,
             ),
             "run-with-safety.yaml": RunConfigSettings(

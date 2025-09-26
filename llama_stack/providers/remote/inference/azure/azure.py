@@ -14,14 +14,12 @@ from llama_stack.providers.utils.inference.litellm_openai_mixin import (
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import AzureConfig
-from .models import MODEL_ENTRIES
 
 
 class AzureInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
     def __init__(self, config: AzureConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
-            MODEL_ENTRIES,
             litellm_provider_name="azure",
             api_key_from_config=config.api_key.get_secret_value(),
             provider_data_api_key_field="azure_api_key",

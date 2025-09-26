@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 from llama_stack.apis.common.errors import UnsupportedModelError
 from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
-from llama_stack.models.llama.sku_list import all_registered_models
 from llama_stack.providers.datatypes import Model, ModelsProtocolPrivate
 from llama_stack.providers.utils.inference import (
     ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR,
@@ -21,7 +20,7 @@ logger = get_logger(name=__name__, category="providers::utils")
 
 
 class RemoteInferenceProviderConfig(BaseModel):
-    allowed_models: list[str] | None = Field(
+    allowed_models: list[str] | None = Field(  # TODO: make this non-optional and give a list() default
         default=None,
         description="List of models that should be registered with the model registry. If None, all models are allowed.",
     )
@@ -35,13 +34,6 @@ class ProviderModelEntry(BaseModel):
     llama_model: str | None = None
     model_type: ModelType = ModelType.llm
     metadata: dict[str, Any] = Field(default_factory=dict)
-
-
-def get_huggingface_repo(model_descriptor: str) -> str | None:
-    for model in all_registered_models():
-        if model.descriptor() == model_descriptor:
-            return model.huggingface_repo
-    return None
 
 
 def build_hf_repo_model_entry(
@@ -63,25 +55,20 @@ def build_hf_repo_model_entry(
     )
 
 
-def build_model_entry(provider_model_id: str, model_descriptor: str) -> ProviderModelEntry:
-    return ProviderModelEntry(
-        provider_model_id=provider_model_id,
-        aliases=[],
-        llama_model=model_descriptor,
-        model_type=ModelType.llm,
-    )
-
-
 class ModelRegistryHelper(ModelsProtocolPrivate):
     __provider_id__: str
 
-    def __init__(self, model_entries: list[ProviderModelEntry], allowed_models: list[str] | None = None):
-        self.model_entries = model_entries
+    def __init__(
+        self,
+        model_entries: list[ProviderModelEntry] | None = None,
+        allowed_models: list[str] | None = None,
+    ):
         self.allowed_models = allowed_models
 
         self.alias_to_provider_id_map = {}
         self.provider_id_to_llama_model_map = {}
-        for entry in model_entries:
+        self.model_entries = model_entries or []
+        for entry in self.model_entries:
             for alias in entry.aliases:
                 self.alias_to_provider_id_map[alias] = entry.provider_model_id
 

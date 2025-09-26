@@ -13,10 +13,26 @@ from llama_stack.apis.models import ModelType
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 
-# Test implementation of OpenAIMixin for testing purposes
 class OpenAIMixinImpl(OpenAIMixin):
     def __init__(self):
         self.__provider_id__ = "test-provider"
+
+    def get_api_key(self) -> str:
+        raise NotImplementedError("This method should be mocked in tests")
+
+    def get_base_url(self) -> str:
+        raise NotImplementedError("This method should be mocked in tests")
+
+
+class OpenAIMixinWithEmbeddingsImpl(OpenAIMixin):
+    """Test implementation with embedding model metadata"""
+
+    embedding_model_metadata = {
+        "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
+        "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
+    }
+
+    __provider_id__ = "test-provider"
 
     def get_api_key(self) -> str:
         raise NotImplementedError("This method should be mocked in tests")
@@ -29,6 +45,12 @@ class OpenAIMixinImpl(OpenAIMixin):
 def mixin():
     """Create a test instance of OpenAIMixin"""
     return OpenAIMixinImpl()
+
+
+@pytest.fixture
+def mixin_with_embeddings():
+    """Create a test instance of OpenAIMixin with embedding model metadata"""
+    return OpenAIMixinWithEmbeddingsImpl()
 
 
 @pytest.fixture
@@ -181,3 +203,89 @@ class TestOpenAIMixinCacheBehavior:
             assert "some-mock-model-id" in mixin._model_cache
             assert "another-mock-model-id" in mixin._model_cache
             assert "final-mock-model-id" in mixin._model_cache
+
+
+class TestOpenAIMixinEmbeddingModelMetadata:
+    """Test cases for embedding_model_metadata attribute functionality"""
+
+    async def test_embedding_model_identified_and_augmented(self, mixin_with_embeddings, mock_client_context):
+        """Test that models in embedding_model_metadata are correctly identified as embeddings with metadata"""
+        # Create mock models: 1 embedding model and 1 LLM, while there are 2 known embedding models
+        mock_embedding_model = MagicMock(id="text-embedding-3-small")
+        mock_llm_model = MagicMock(id="gpt-4")
+        mock_models = [mock_embedding_model, mock_llm_model]
+
+        mock_client = MagicMock()
+
+        async def mock_models_list():
+            for model in mock_models:
+                yield model
+
+        mock_client.models.list.return_value = mock_models_list()
+
+        with mock_client_context(mixin_with_embeddings, mock_client):
+            result = await mixin_with_embeddings.list_models()
+
+            assert result is not None
+            assert len(result) == 2
+
+            # Find the models in the result
+            embedding_model = next(m for m in result if m.identifier == "text-embedding-3-small")
+            llm_model = next(m for m in result if m.identifier == "gpt-4")
+
+            # Check embedding model
+            assert embedding_model.model_type == ModelType.embedding
+            assert embedding_model.metadata == {"embedding_dimension": 1536, "context_length": 8192}
+            assert embedding_model.provider_id == "test-provider"
+            assert embedding_model.provider_resource_id == "text-embedding-3-small"
+
+            # Check LLM model
+            assert llm_model.model_type == ModelType.llm
+            assert llm_model.metadata == {}  # No metadata for LLMs
+            assert llm_model.provider_id == "test-provider"
+            assert llm_model.provider_resource_id == "gpt-4"
+
+
+class TestOpenAIMixinAllowedModels:
+    """Test cases for allowed_models filtering functionality"""
+
+    async def test_list_models_with_allowed_models_filter(self, mixin, mock_client_with_models, mock_client_context):
+        """Test that list_models filters models based on allowed_models set"""
+        mixin.allowed_models = {"some-mock-model-id", "another-mock-model-id"}
+
+        with mock_client_context(mixin, mock_client_with_models):
+            result = await mixin.list_models()
+
+            assert result is not None
+            assert len(result) == 2
+
+            model_ids = [model.identifier for model in result]
+            assert "some-mock-model-id" in model_ids
+            assert "another-mock-model-id" in model_ids
+            assert "final-mock-model-id" not in model_ids
+
+    async def test_list_models_with_empty_allowed_models(self, mixin, mock_client_with_models, mock_client_context):
+        """Test that empty allowed_models set allows all models"""
+        assert len(mixin.allowed_models) == 0
+
+        with mock_client_context(mixin, mock_client_with_models):
+            result = await mixin.list_models()
+
+            assert result is not None
+            assert len(result) == 3  # All models should be included
+
+            model_ids = [model.identifier for model in result]
+            assert "some-mock-model-id" in model_ids
+            assert "another-mock-model-id" in model_ids
+            assert "final-mock-model-id" in model_ids
+
+    async def test_check_model_availability_with_allowed_models(
+        self, mixin, mock_client_with_models, mock_client_context
+    ):
+        """Test that check_model_availability respects allowed_models"""
+        mixin.allowed_models = {"final-mock-model-id"}
+
+        with mock_client_context(mixin, mock_client_with_models):
+            assert await mixin.check_model_availability("final-mock-model-id")
+            assert not await mixin.check_model_availability("some-mock-model-id")
+            assert not await mixin.check_model_availability("another-mock-model-id")

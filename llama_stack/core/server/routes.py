@@ -14,7 +14,6 @@ from starlette.routing import Route
 
 from llama_stack.apis.datatypes import Api, ExternalApiSpec
 from llama_stack.apis.tools import RAGToolRuntime, SpecialToolGroup
-from llama_stack.apis.version import LLAMA_STACK_API_VERSION
 from llama_stack.core.resolver import api_protocol_map
 from llama_stack.schema_utils import WebMethod
 
@@ -54,22 +53,23 @@ def get_all_api_routes(
                     protocol_methods.append((f"{tool_group.value}.{name}", method))
 
         for name, method in protocol_methods:
-            if not hasattr(method, "__webmethod__"):
+            # Get all webmethods for this method (supports multiple decorators)
+            webmethods = getattr(method, "__webmethods__", [])
+            if not webmethods:
                 continue
 
-            # The __webmethod__ attribute is dynamically added by the @webmethod decorator
-            # mypy doesn't know about this dynamic attribute, so we ignore the attr-defined error
-            webmethod = method.__webmethod__  # type: ignore[attr-defined]
-            path = f"/{LLAMA_STACK_API_VERSION}/{webmethod.route.lstrip('/')}"
-            if webmethod.method == hdrs.METH_GET:
-                http_method = hdrs.METH_GET
-            elif webmethod.method == hdrs.METH_DELETE:
-                http_method = hdrs.METH_DELETE
-            else:
-                http_method = hdrs.METH_POST
-            routes.append(
-                (Route(path=path, methods=[http_method], name=name, endpoint=None), webmethod)
-            )  # setting endpoint to None since don't use a Router object
+            # Create routes for each webmethod decorator
+            for webmethod in webmethods:
+                path = f"/{webmethod.level}/{webmethod.route.lstrip('/')}"
+                if webmethod.method == hdrs.METH_GET:
+                    http_method = hdrs.METH_GET
+                elif webmethod.method == hdrs.METH_DELETE:
+                    http_method = hdrs.METH_DELETE
+                else:
+                    http_method = hdrs.METH_POST
+                routes.append(
+                    (Route(path=path, methods=[http_method], name=name, endpoint=None), webmethod)
+                )  # setting endpoint to None since don't use a Router object
 
         apis[api] = routes
 
