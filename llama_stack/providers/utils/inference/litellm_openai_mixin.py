@@ -399,6 +399,14 @@ class LiteLLMOpenAIMixin(
         top_p: float | None = None,
         user: str | None = None,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        # Add usage tracking for streaming when telemetry is active
+        from llama_stack.providers.utils.telemetry.tracing import get_current_span
+
+        if stream and get_current_span() is not None:
+            if stream_options is None:
+                stream_options = {"include_usage": True}
+            elif "include_usage" not in stream_options:
+                stream_options = {**stream_options, "include_usage": True}
         model_obj = await self.model_store.get_model(model)
         params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(model_obj.provider_resource_id),
