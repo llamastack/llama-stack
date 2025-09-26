@@ -24,7 +24,6 @@ from llama_stack.apis.inference import (
     LogProbConfig,
     Message,
     Model,
-    ModelType,
     OpenAICompletion,
     ResponseFormat,
     SamplingParams,
@@ -34,6 +33,7 @@ from llama_stack.apis.inference import (
     ToolDefinition,
     ToolPromptFormat,
 )
+from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 

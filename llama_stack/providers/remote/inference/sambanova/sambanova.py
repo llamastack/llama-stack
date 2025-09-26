@@ -25,7 +25,7 @@ class SambaNovaInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
 
     def __init__(self, config: SambaNovaImplConfig):
         self.config = config
-        self.environment_available_models = []
+        self.environment_available_models: list[str] = []
         LiteLLMOpenAIMixin.__init__(
             self,
             litellm_provider_name="sambanova",

@@ -913,6 +913,7 @@ class OpenAIEmbeddingData(BaseModel):
     """
 
     object: Literal["embedding"] = "embedding"
+    # TODO: consider dropping str and using openai.types.embeddings.Embedding instead of OpenAIEmbeddingData
     embedding: list[float] | str
     index: int
 
