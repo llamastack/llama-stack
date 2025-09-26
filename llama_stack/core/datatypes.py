@@ -433,6 +433,12 @@ class InferenceStoreConfig(BaseModel):
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 
+class ResponsesStoreConfig(BaseModel):
+    sql_store_config: SqlStoreConfig
+    max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
+    num_writers: int = Field(default=4, description="Number of concurrent background writers")
+
+
 class StackRunConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
