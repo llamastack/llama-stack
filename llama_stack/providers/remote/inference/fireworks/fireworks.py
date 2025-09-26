@@ -64,6 +64,7 @@ class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Nee
     }
 
     def __init__(self, config: FireworksImplConfig) -> None:
+        ModelRegistryHelper.__init__(self)
         self.config = config
         self.allowed_models = config.allowed_models
 

@@ -129,7 +129,7 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
 
     result = await cached_disk_dist_registry.get("vector_db", "test_vector_db_2")
     assert result is not None
-    assert result.embedding_model == duplicate_vector_db.embedding_model  # Original values preserved
+    assert result.embedding_model == original_vector_db.embedding_model  # Original values preserved
 
 
 async def test_get_all_objects(cached_disk_dist_registry):
@@ -174,14 +174,10 @@ async def test_parse_registry_values_error_handling(sqlite_kvstore):
     )
 
     await sqlite_kvstore.set(
-        KEY_FORMAT.format(type="vector_db", identifier="valid_vector_db"),
-        valid_db.model_dump_json(),
+        KEY_FORMAT.format(type="vector_db", identifier="valid_vector_db"), valid_db.model_dump_json()
     )
 
-    await sqlite_kvstore.set(
-        KEY_FORMAT.format(type="vector_db", identifier="corrupted_json"),
-        "{not valid json",
-    )
+    await sqlite_kvstore.set(KEY_FORMAT.format(type="vector_db", identifier="corrupted_json"), "{not valid json")
 
     await sqlite_kvstore.set(
         KEY_FORMAT.format(type="vector_db", identifier="missing_fields"),
@@ -216,8 +212,7 @@ async def test_cached_registry_error_handling(sqlite_kvstore):
     )
 
     await sqlite_kvstore.set(
-        KEY_FORMAT.format(type="vector_db", identifier="valid_cached_db"),
-        valid_db.model_dump_json(),
+        KEY_FORMAT.format(type="vector_db", identifier="valid_cached_db"), valid_db.model_dump_json()
     )
 
     await sqlite_kvstore.set(

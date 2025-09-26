@@ -70,6 +70,7 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
     }
 
     def __init__(self, config: TogetherImplConfig) -> None:
+        ModelRegistryHelper.__init__(self)
         self.config = config
         self.allowed_models = config.allowed_models
         self._model_cache: dict[str, Model] = {}
