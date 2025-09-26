@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from llama_stack.apis.common.content_types import URL
 from llama_stack.apis.common.type_system import NumberType
 from llama_stack.apis.datasets.datasets import Dataset, DatasetPurpose, URIDataSource
 from llama_stack.apis.datatypes import Api
@@ -645,3 +646,25 @@ async def test_models_source_interaction_cleanup_provider_models(cached_disk_dis
 
     # Cleanup
     await table.shutdown()
+
+
+async def test_tool_groups_routing_table_exception_handling(cached_disk_dist_registry):
+    """Test that the tool group routing table handles exceptions when listing tools, like if an MCP server is unreachable."""
+
+    exception_throwing_tool_groups_impl = ToolGroupsImpl()
+    exception_throwing_tool_groups_impl.list_runtime_tools = AsyncMock(side_effect=Exception("Test exception"))
+
+    table = ToolGroupsRoutingTable(
+        {"test_provider": exception_throwing_tool_groups_impl}, cached_disk_dist_registry, {}
+    )
+    await table.initialize()
+
+    await table.register_tool_group(
+        toolgroup_id="test-toolgroup-exceptions",
+        provider_id="test_provider",
+        mcp_endpoint=URL(uri="http://localhost:8479/foo/bar"),
+    )
+
+    tools = await table.list_tools(toolgroup_id="test-toolgroup-exceptions")
+
+    assert len(tools.data) == 0

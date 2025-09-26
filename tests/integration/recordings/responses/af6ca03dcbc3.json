@@ -1,0 +1,1025 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.cerebras.ai/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "llama-3.3-70b",
+      "prompt": "Respond to this question and explain your answer. Complete the sentence using one word: Roses are red, violets are ",
+      "max_tokens": 50,
+      "stream": true,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/completions",
+    "model": "llama-3.3-70b"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ""
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " __"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "____________"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "_."
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n\n\n"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "##"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " Step"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " "
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "1"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ":"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " Identify"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " the"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " context"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " of"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " the"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " sentence"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "The"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " sentence"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " is"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " completing"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " a"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " well"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "-known"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " rhyme"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " that"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " describes"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " the"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " colors"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " associated"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " with"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " flowers"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ".\n\n"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "##"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " Step"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " "
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "2"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ":"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " Recall"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " the"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " traditional"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " completion"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " of"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " the"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " rhyme"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\n"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "The"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " traditional"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " rhyme"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " states"
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": ","
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "chatcmpl-d0c1e731-c48b-4ee7-823c-76c2df419ab2",
+          "choices": [
+            {
+              "finish_reason": "length",
+              "index": 0,
+              "logprobs": null,
+              "text": ""
+            }
+          ],
+          "created": 1758191353,
+          "model": "llama-3.3-70b",
+          "object": "text_completion",
+          "system_fingerprint": "fp_c5ec625e72d41732d8fd",
+          "usage": {
+            "completion_tokens": 50,
+            "prompt_tokens": 26,
+            "total_tokens": 76,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": null,
+              "cached_tokens": 0
+            }
+          },
+          "time_info": {
+            "queue_time": 0.000103421,
+            "prompt_time": 0.001700221,
+            "completion_time": 0.050781803,
+            "total_time": 0.05472397804260254,
+            "created": 1758191353
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  }
+}

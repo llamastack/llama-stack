@@ -410,7 +410,7 @@ There are three implementations of search for PGVectoIndex available:
 - How it works:
   - Uses PostgreSQL's vector extension (pgvector) to perform similarity search
   - Compares query embeddings against stored embeddings using Cosine distance or other distance metrics
-  - Eg. SQL query: SELECT document, embedding <=> %s::vector AS distance FROM table ORDER BY distance
+  - Eg. SQL query: SELECT document, embedding &lt;=&gt; %s::vector AS distance FROM table ORDER BY distance
 
 -Characteristics:
   - Semantic understanding - finds documents similar in meaning even if they don't share keywords

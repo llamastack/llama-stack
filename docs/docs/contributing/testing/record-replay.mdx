@@ -1,0 +1,241 @@
+---
+title: Record-Replay Testing System
+description: Understanding how Llama Stack captures and replays API interactions for testing
+sidebar_label: Record-Replay System
+sidebar_position: 4
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Record-Replay System
+
+Understanding how Llama Stack captures and replays API interactions for testing.
+
+## Overview
+
+The record-replay system solves a fundamental challenge in AI testing: how do you test against expensive, non-deterministic APIs without breaking the bank or dealing with flaky tests?
+
+The solution: intercept API calls, store real responses, and replay them later. This gives you real API behavior without the cost or variability.
+
+## How It Works
+
+### Request Hashing
+
+Every API request gets converted to a deterministic hash for lookup:
+
+```python
+def normalize_request(method: str, url: str, headers: dict, body: dict) -> str:
+    normalized = {
+        "method": method.upper(),
+        "endpoint": urlparse(url).path,  # Just the path, not full URL
+        "body": body,  # Request parameters
+    }
+    return hashlib.sha256(json.dumps(normalized, sort_keys=True).encode()).hexdigest()
+```
+
+**Key insight:** The hashing is intentionally precise. Different whitespace, float precision, or parameter order produces different hashes. This prevents subtle bugs from false cache hits.
+
+```python
+# These produce DIFFERENT hashes:
+{"content": "Hello world"}
+{"content": "Hello   world\n"}
+{"temperature": 0.7}
+{"temperature": 0.7000001}
+```
+
+### Client Interception
+
+The system patches OpenAI and Ollama client methods to intercept calls before they leave your application. This happens transparently - your test code doesn't change.
+
+### Storage Architecture
+
+Recordings are stored as JSON files in the recording directory. They are looked up by their request hash.
+
+```
+recordings/
+└── responses/
+    ├── abc123def456.json  # Individual response files
+    └── def789ghi012.json
+```
+
+**JSON files** store complete request/response pairs in human-readable format for debugging.
+
+## Recording Modes
+
+### LIVE Mode
+
+Direct API calls with no recording or replay:
+
+```python
+with inference_recording(mode=InferenceMode.LIVE):
+    response = await client.chat.completions.create(...)
+```
+
+Use for initial development and debugging against real APIs.
+
+### RECORD Mode
+
+Captures API interactions while passing through real responses:
+
+```python
+with inference_recording(mode=InferenceMode.RECORD, storage_dir="./recordings"):
+    response = await client.chat.completions.create(...)
+    # Real API call made, response captured AND returned
+```
+
+The recording process:
+1. Request intercepted and hashed
+2. Real API call executed
+3. Response captured and serialized
+4. Recording stored to disk
+5. Original response returned to caller
+
+### REPLAY Mode
+
+Returns stored responses instead of making API calls:
+
+```python
+with inference_recording(mode=InferenceMode.REPLAY, storage_dir="./recordings"):
+    response = await client.chat.completions.create(...)
+    # No API call made, cached response returned instantly
+```
+
+The replay process:
+1. Request intercepted and hashed
+2. Hash looked up in SQLite index
+3. Response loaded from JSON file
+4. Response deserialized and returned
+5. Error if no recording found
+
+## Streaming Support
+
+Streaming APIs present a unique challenge: how do you capture an async generator?
+
+### The Problem
+
+```python
+# How do you record this?
+async for chunk in client.chat.completions.create(stream=True):
+    process(chunk)
+```
+
+### The Solution
+
+The system captures all chunks immediately before yielding any:
+
+```python
+async def handle_streaming_record(response):
+    # Capture complete stream first
+    chunks = []
+    async for chunk in response:
+        chunks.append(chunk)
+
+    # Store complete recording
+    storage.store_recording(
+        request_hash, request_data, {"body": chunks, "is_streaming": True}
+    )
+
+    # Return generator that replays captured chunks
+    async def replay_stream():
+        for chunk in chunks:
+            yield chunk
+
+    return replay_stream()
+```
+
+This ensures:
+- **Complete capture** - The entire stream is saved atomically
+- **Interface preservation** - The returned object behaves like the original API
+- **Deterministic replay** - Same chunks in the same order every time
+
+## Serialization
+
+API responses contain complex Pydantic objects that need careful serialization:
+
+```python
+def _serialize_response(response):
+    if hasattr(response, "model_dump"):
+        # Preserve type information for proper deserialization
+        return {
+            "__type__": f"{response.__class__.__module__}.{response.__class__.__qualname__}",
+            "__data__": response.model_dump(mode="json"),
+        }
+    return response
+```
+
+This preserves type safety - when replayed, you get the same Pydantic objects with all their validation and methods.
+
+## Environment Integration
+
+### Environment Variables
+
+Control recording behavior globally:
+
+```bash
+export LLAMA_STACK_TEST_INFERENCE_MODE=replay   # this is the default
+export LLAMA_STACK_TEST_RECORDING_DIR=/path/to/recordings   # default is tests/integration/recordings
+pytest tests/integration/
+```
+
+### Pytest Integration
+
+The system integrates automatically based on environment variables, requiring no changes to test code.
+
+## Debugging Recordings
+
+### Inspecting Storage
+
+```bash
+# See what's recorded
+sqlite3 recordings/index.sqlite "SELECT endpoint, model, timestamp FROM recordings LIMIT 10;"
+
+# View specific response
+cat recordings/responses/abc123def456.json | jq '.response.body'
+
+# Find recordings by endpoint
+sqlite3 recordings/index.sqlite "SELECT * FROM recordings WHERE endpoint='/v1/chat/completions';"
+```
+
+### Common Issues
+
+**Hash mismatches:** Request parameters changed slightly between record and replay
+```bash
+# Compare request details
+cat recordings/responses/abc123.json | jq '.request'
+```
+
+**Serialization errors:** Response types changed between versions
+```bash
+# Re-record with updated types
+rm recordings/responses/failing_hash.json
+LLAMA_STACK_TEST_INFERENCE_MODE=record pytest test_failing.py
+```
+
+**Missing recordings:** New test or changed parameters
+```bash
+# Record the missing interaction
+LLAMA_STACK_TEST_INFERENCE_MODE=record pytest test_new.py
+```
+
+## Design Decisions
+
+### Why Not Mocks?
+
+Traditional mocking breaks down with AI APIs because:
+- Response structures are complex and evolve frequently
+- Streaming behavior is hard to mock correctly
+- Edge cases in real APIs get missed
+- Mocks become brittle maintenance burdens
+
+### Why Precise Hashing?
+
+Loose hashing (normalizing whitespace, rounding floats) seems convenient but hides bugs. If a test changes slightly, you want to know about it rather than accidentally getting the wrong cached response.
+
+### Why JSON + SQLite?
+
+- **JSON** - Human readable, diff-friendly, easy to inspect and modify
+- **SQLite** - Fast indexed lookups without loading response bodies
+- **Hybrid** - Best of both worlds for different use cases
+
+This system provides reliable, fast testing against real AI APIs while maintaining the ability to debug issues when they arise.
