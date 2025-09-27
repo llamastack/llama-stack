@@ -156,7 +156,6 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     :param required_auth_token: Optional auth token required for access
     :param tools: Dictionary of tool_name -> tool_function. If None, uses default tools.
     """
-    import logging
     import threading
     import time
 
@@ -167,6 +166,8 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     from starlette.applications import Starlette
     from starlette.responses import Response
     from starlette.routing import Mount, Route
+
+    from llama_stack.log import get_logger
 
     server = FastMCP("FastMCP Test Server", log_level="WARNING")
 
@@ -212,7 +213,7 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
             return sock.getsockname()[1]
 
     port = get_open_port()
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__, category="tests::mcp")
 
     # make uvicorn logs be less verbose
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="warning")
