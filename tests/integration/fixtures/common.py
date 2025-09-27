@@ -274,7 +274,7 @@ def require_server(llama_stack_client):
 
 @pytest.fixture(scope="session")
 def openai_client(llama_stack_client, require_server):
-    base_url = f"{llama_stack_client.base_url}/v1/openai/v1"
+    base_url = f"{llama_stack_client.base_url}/v1"
     return OpenAI(base_url=base_url, api_key="fake")
 
 

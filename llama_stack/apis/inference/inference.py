@@ -1109,7 +1109,7 @@ class InferenceProvider(Protocol):
         raise NotImplementedError("Reranking is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
 
-    @webmethod(route="/openai/v1/completions", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_completion(
         self,
         # Standard OpenAI completion parameters
@@ -1160,7 +1160,7 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_chat_completion(
         self,
         model: str,
@@ -1216,7 +1216,7 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/embeddings", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/embeddings", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_embeddings(
         self,
         model: str,
@@ -1245,7 +1245,7 @@ class Inference(InferenceProvider):
     - Embedding models: these models generate embeddings to be used for semantic search.
     """
 
-    @webmethod(route="/openai/v1/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_chat_completions(
         self,
         after: str | None = None,
@@ -1263,7 +1263,7 @@ class Inference(InferenceProvider):
         """
         raise NotImplementedError("List chat completions is not implemented")
 
-    @webmethod(route="/openai/v1/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_chat_completion(self, completion_id: str) -> OpenAICompletionWithInputMessages:
         """Describe a chat completion by its ID.
 

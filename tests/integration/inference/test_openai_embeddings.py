@@ -87,7 +87,7 @@ def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
 
 @pytest.fixture
 def openai_client(client_with_models):
-    base_url = f"{client_with_models.base_url}/v1/openai/v1"
+    base_url = f"{client_with_models.base_url}/v1"
     return OpenAI(base_url=base_url, api_key="fake")
 
 
