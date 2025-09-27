@@ -7,8 +7,8 @@
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
-from ibm_watson_machine_learning.foundation_models import Model
-from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
+from ibm_watsonx_ai.foundation_models import Model
+from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from openai import AsyncOpenAI
 
 from llama_stack.apis.common.content_types import InterleavedContent
@@ -35,6 +35,7 @@ from llama_stack.apis.inference import (
     TopKSamplingStrategy,
     TopPSamplingStrategy,
 )
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import (
     OpenAICompatCompletionChoice,
@@ -54,14 +55,29 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 from . import WatsonXConfig
 from .models import MODEL_ENTRIES
 
+logger = get_logger(name=__name__, category="inference::watsonx")
+
+
+# Note on structured output
+# WatsonX returns responses with a json embedded into a string.
+# Examples:
+
+# ChatCompletionResponse(completion_message=CompletionMessage(content='```json\n{\n
+# "first_name": "Michael",\n  "last_name": "Jordan",\n'...)
+# Not even a valid JSON, but we can still extract the JSON from the content
+
+# CompletionResponse(content=' \nThe best answer is $\\boxed{\\{"name": "Michael Jordan",
+# "year_born": "1963", "year_retired": "2003"\\}}$')
+# Find the start of the boxed content
+
 
 class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
     def __init__(self, config: WatsonXConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES)
+        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
 
-        print(f"Initializing watsonx InferenceAdapter({config.url})...")
-
+        logger.info(f"Initializing watsonx InferenceAdapter({config.url})...")
         self._config = config
+        self._openai_client: AsyncOpenAI | None = None
 
         self._project_id = self._config.project_id
 

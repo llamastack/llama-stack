@@ -8,6 +8,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.resource import Resource, ResourceType
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
@@ -53,7 +54,8 @@ class ListBenchmarksResponse(BaseModel):
 
 @runtime_checkable
 class Benchmarks(Protocol):
-    @webmethod(route="/eval/benchmarks", method="GET")
+    @webmethod(route="/eval/benchmarks", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/eval/benchmarks", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_benchmarks(self) -> ListBenchmarksResponse:
         """List all benchmarks.
 
@@ -61,7 +63,8 @@ class Benchmarks(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="GET")
+    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_benchmark(
         self,
         benchmark_id: str,
@@ -73,7 +76,8 @@ class Benchmarks(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks", method="POST")
+    @webmethod(route="/eval/benchmarks", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/eval/benchmarks", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def register_benchmark(
         self,
         benchmark_id: str,
@@ -91,5 +95,14 @@ class Benchmarks(Protocol):
         :param provider_benchmark_id: The ID of the provider benchmark to use for the benchmark.
         :param provider_id: The ID of the provider to use for the benchmark.
         :param metadata: The metadata to use for the benchmark.
+        """
+        ...
+
+    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
+    async def unregister_benchmark(self, benchmark_id: str) -> None:
+        """Unregister a benchmark.
+
+        :param benchmark_id: The ID of the benchmark to unregister.
         """
         ...

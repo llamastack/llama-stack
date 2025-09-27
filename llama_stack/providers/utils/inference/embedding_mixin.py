@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import base64
 import struct
 from typing import TYPE_CHECKING
@@ -44,8 +45,8 @@ class SentenceTransformerEmbeddingMixin:
 
         # Get the model and generate embeddings
         model_obj = await self.model_store.get_model(model)
-        embedding_model = self._load_sentence_transformer_model(model_obj.provider_resource_id)
-        embeddings = embedding_model.encode(input_list, show_progress_bar=False)
+        embedding_model = await self._load_sentence_transformer_model(model_obj.provider_resource_id)
+        embeddings = await asyncio.to_thread(embedding_model.encode, input_list, show_progress_bar=False)
 
         # Convert embeddings to the requested format
         data = []
@@ -73,7 +74,7 @@ class SentenceTransformerEmbeddingMixin:
             usage=usage,
         )
 
-    def _load_sentence_transformer_model(self, model: str) -> "SentenceTransformer":
+    async def _load_sentence_transformer_model(self, model: str) -> "SentenceTransformer":
         global EMBEDDING_MODELS
 
         loaded_model = EMBEDDING_MODELS.get(model)
@@ -81,8 +82,12 @@ class SentenceTransformerEmbeddingMixin:
             return loaded_model
 
         log.info(f"Loading sentence transformer for {model}...")
-        from sentence_transformers import SentenceTransformer
 
-        loaded_model = SentenceTransformer(model)
+        def _load_model():
+            from sentence_transformers import SentenceTransformer
+
+            return SentenceTransformer(model)
+
+        loaded_model = await asyncio.to_thread(_load_model)
         EMBEDDING_MODELS[model] = loaded_model
         return loaded_model

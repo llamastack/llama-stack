@@ -32,8 +32,8 @@ def setup_telemetry_data(llama_stack_client, text_model_id):
         )
 
     for i in range(2):
-        llama_stack_client.inference.chat_completion(
-            model_id=text_model_id, messages=[{"role": "user", "content": f"Test trace {i}"}]
+        llama_stack_client.chat.completions.create(
+            model=text_model_id, messages=[{"role": "user", "content": f"Test trace {i}"}]
         )
 
     start_time = time.time()
@@ -42,13 +42,10 @@ def setup_telemetry_data(llama_stack_client, text_model_id):
         traces = llama_stack_client.telemetry.query_traces(limit=10)
         if len(traces) >= 4:
             break
-        time.sleep(1)
+        time.sleep(0.1)
 
     if len(traces) < 4:
         pytest.fail(f"Failed to create sufficient telemetry data after 30s. Got {len(traces)} traces.")
-
-    # Wait for 5 seconds to ensure traces has completed logging
-    time.sleep(5)
 
     yield
 

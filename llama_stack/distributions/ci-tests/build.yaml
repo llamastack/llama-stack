@@ -17,6 +17,7 @@ distribution_spec:
     - provider_type: remote::vertexai
     - provider_type: remote::groq
     - provider_type: remote::sambanova
+    - provider_type: remote::azure
     - provider_type: inline::sentence-transformers
     vector_io:
     - provider_type: inline::faiss

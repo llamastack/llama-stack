@@ -15,6 +15,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, cast
 
+from openai import NOT_GIVEN
+
 from llama_stack.log import get_logger
 
 logger = get_logger(__name__, category="testing")
@@ -29,6 +31,9 @@ from openai.types.completion_choice import CompletionChoice
 # update the "finish_reason" field, since its type definition is wrong (no None is accepted)
 CompletionChoice.model_fields["finish_reason"].annotation = Literal["stop", "length", "content_filter"] | None
 CompletionChoice.model_rebuild()
+
+REPO_ROOT = Path(__file__).parent.parent.parent
+DEFAULT_STORAGE_DIR = REPO_ROOT / "tests/integration/recordings"
 
 
 class InferenceMode(StrEnum):
@@ -51,7 +56,7 @@ def normalize_request(method: str, url: str, headers: dict[str, Any], body: dict
 
 
 def get_inference_mode() -> InferenceMode:
-    return InferenceMode(os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE", "live").lower())
+    return InferenceMode(os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE", "replay").lower())
 
 
 def setup_inference_recording():
@@ -60,28 +65,18 @@ def setup_inference_recording():
     to increase their reliability and reduce reliance on expensive, external services.
 
     Currently, this is only supported for OpenAI and Ollama clients. These should cover the vast majority of use cases.
-    Calls to the /models endpoint are not currently trapped. We probably need to add support for this.
 
-    Two environment variables are required:
-    - LLAMA_STACK_TEST_INFERENCE_MODE: The mode to run in. Must be 'live', 'record', or 'replay'.
-    - LLAMA_STACK_TEST_RECORDING_DIR: The directory to store the recordings in.
+    Two environment variables are supported:
+    - LLAMA_STACK_TEST_INFERENCE_MODE: The mode to run in. Must be 'live', 'record', or 'replay'. Default is 'replay'.
+    - LLAMA_STACK_TEST_RECORDING_DIR: The directory to store the recordings in. Default is 'tests/integration/recordings'.
 
-    The recordings are stored in a SQLite database and a JSON file for each request. The SQLite database is used to
-    quickly find the correct recording for a given request. The JSON files are used to store the request and response
-    bodies.
+    The recordings are stored as JSON files.
     """
     mode = get_inference_mode()
-
-    if mode not in InferenceMode:
-        raise ValueError(f"Invalid LLAMA_STACK_TEST_INFERENCE_MODE: {mode}. Must be 'live', 'record', or 'replay'")
-
     if mode == InferenceMode.LIVE:
         return None
 
-    if "LLAMA_STACK_TEST_RECORDING_DIR" not in os.environ:
-        raise ValueError("LLAMA_STACK_TEST_RECORDING_DIR must be set for recording or replaying")
-    storage_dir = os.environ["LLAMA_STACK_TEST_RECORDING_DIR"]
-
+    storage_dir = os.environ.get("LLAMA_STACK_TEST_RECORDING_DIR", DEFAULT_STORAGE_DIR)
     return inference_recording(mode=mode, storage_dir=storage_dir)
 
 
@@ -112,8 +107,12 @@ def _deserialize_response(data: dict[str, Any]) -> Any:
 
             return cls.model_validate(data["__data__"])
         except (ImportError, AttributeError, TypeError, ValueError) as e:
-            logger.warning(f"Failed to deserialize object of type {data['__type__']}: {e}")
-            return data["__data__"]
+            logger.warning(f"Failed to deserialize object of type {data['__type__']} with model_validate: {e}")
+            try:
+                return cls.model_construct(**data["__data__"])
+            except Exception as e:
+                logger.warning(f"Failed to deserialize object of type {data['__type__']} with model_construct: {e}")
+                return data["__data__"]
 
     return data
 
@@ -134,8 +133,8 @@ class ResponseStorage:
     def store_recording(self, request_hash: str, request: dict[str, Any], response: dict[str, Any]):
         """Store a request/response pair."""
         # Generate unique response filename
-        response_file = f"{request_hash[:12]}.json"
-        response_path = self.responses_dir / response_file
+        short_hash = request_hash[:12]
+        response_file = f"{short_hash}.json"
 
         # Serialize response body if needed
         serialized_response = dict(response)
@@ -146,6 +145,14 @@ class ResponseStorage:
             else:
                 # Handle single response
                 serialized_response["body"] = _serialize_response(serialized_response["body"])
+
+        # If this is an Ollama /api/tags recording, include models digest in filename to distinguish variants
+        endpoint = request.get("endpoint")
+        if endpoint in ("/api/tags", "/v1/models"):
+            digest = _model_identifiers_digest(endpoint, response)
+            response_file = f"models-{short_hash}-{digest}.json"
+
+        response_path = self.responses_dir / response_file
 
         # Save response to JSON file
         with open(response_path, "w") as f:
@@ -161,31 +168,96 @@ class ResponseStorage:
         if not response_path.exists():
             return None
 
-        with open(response_path) as f:
-            data = json.load(f)
+        return _recording_from_file(response_path)
 
-        # Deserialize response body if needed
-        if "response" in data and "body" in data["response"]:
-            if isinstance(data["response"]["body"], list):
-                # Handle streaming responses
-                data["response"]["body"] = [_deserialize_response(chunk) for chunk in data["response"]["body"]]
-            else:
-                # Handle single response
-                data["response"]["body"] = _deserialize_response(data["response"]["body"])
+    def _model_list_responses(self, short_hash: str) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        for path in self.responses_dir.glob(f"models-{short_hash}-*.json"):
+            data = _recording_from_file(path)
+            results.append(data)
+        return results
 
-        return cast(dict[str, Any], data)
+
+def _recording_from_file(response_path) -> dict[str, Any]:
+    with open(response_path) as f:
+        data = json.load(f)
+
+    # Deserialize response body if needed
+    if "response" in data and "body" in data["response"]:
+        if isinstance(data["response"]["body"], list):
+            # Handle streaming responses
+            data["response"]["body"] = [_deserialize_response(chunk) for chunk in data["response"]["body"]]
+        else:
+            # Handle single response
+            data["response"]["body"] = _deserialize_response(data["response"]["body"])
+
+    return cast(dict[str, Any], data)
+
+
+def _model_identifiers_digest(endpoint: str, response: dict[str, Any]) -> str:
+    def _extract_model_identifiers():
+        """Extract a stable set of identifiers for model-list endpoints.
+
+        Supported endpoints:
+        - '/api/tags' (Ollama): response body has 'models': [ { name/model/digest/id/... }, ... ]
+        - '/v1/models' (OpenAI): response body is: [ { id: ... }, ... ]
+        Returns a list of unique identifiers or None if structure doesn't match.
+        """
+        if "models" in response["body"]:
+            # ollama
+            items = response["body"]["models"]
+        else:
+            # openai
+            items = response["body"]
+        idents = [m.model if endpoint == "/api/tags" else m.id for m in items]
+        return sorted(set(idents))
+
+    identifiers = _extract_model_identifiers()
+    return hashlib.sha256(("|".join(identifiers)).encode("utf-8")).hexdigest()[:8]
+
+
+def _combine_model_list_responses(endpoint: str, records: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return a single, unioned recording for supported model-list endpoints."""
+    seen: dict[str, dict[str, Any]] = {}
+    for rec in records:
+        body = rec["response"]["body"]
+        if endpoint == "/v1/models":
+            for m in body:
+                key = m.id
+                seen[key] = m
+        elif endpoint == "/api/tags":
+            for m in body.models:
+                key = m.model
+                seen[key] = m
+
+    ordered = [seen[k] for k in sorted(seen.keys())]
+    canonical = records[0]
+    canonical_req = canonical.get("request", {})
+    if isinstance(canonical_req, dict):
+        canonical_req["endpoint"] = endpoint
+    body = ordered
+    if endpoint == "/api/tags":
+        from ollama import ListResponse
+
+        body = ListResponse(models=ordered)
+    return {"request": canonical_req, "response": {"body": body, "is_streaming": False}}
 
 
 async def _patched_inference_method(original_method, self, client_type, endpoint, *args, **kwargs):
     global _current_mode, _current_storage
 
     if _current_mode == InferenceMode.LIVE or _current_storage is None:
-        # Normal operation
-        return await original_method(self, *args, **kwargs)
+        if endpoint == "/v1/models":
+            return original_method(self, *args, **kwargs)
+        else:
+            return await original_method(self, *args, **kwargs)
 
     # Get base URL based on client type
     if client_type == "openai":
         base_url = str(self._client.base_url)
+
+        # the OpenAI client methods may pass NOT_GIVEN for unset parameters; filter these out
+        kwargs = {k: v for k, v in kwargs.items() if v is not NOT_GIVEN}
     elif client_type == "ollama":
         # Get base URL from the client (Ollama client uses host attribute)
         base_url = getattr(self, "host", "http://localhost:11434")
@@ -195,8 +267,10 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
         raise ValueError(f"Unknown client type: {client_type}")
 
     url = base_url.rstrip("/") + endpoint
-
-    # Normalize request for matching
+    # Special handling for Databricks URLs to avoid leaking workspace info
+    # e.g. https://adb-1234567890123456.7.cloud.databricks.com -> https://...cloud.databricks.com
+    if "cloud.databricks.com" in url:
+        url = "__databricks__" + url.split("cloud.databricks.com")[-1]
     method = "POST"
     headers = {}
     body = kwargs
@@ -204,7 +278,12 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
     request_hash = normalize_request(method, url, headers, body)
 
     if _current_mode == InferenceMode.REPLAY:
-        recording = _current_storage.find_recording(request_hash)
+        # Special handling for model-list endpoints: return union of all responses
+        if endpoint in ("/api/tags", "/v1/models"):
+            records = _current_storage._model_list_responses(request_hash[:12])
+            recording = _combine_model_list_responses(endpoint, records)
+        else:
+            recording = _current_storage.find_recording(request_hash)
         if recording:
             response_body = recording["response"]["body"]
 
@@ -222,11 +301,18 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
                 f"No recorded response found for request hash: {request_hash}\n"
                 f"Request: {method} {url} {body}\n"
                 f"Model: {body.get('model', 'unknown')}\n"
-                f"To record this response, run with LLAMA_STACK_INFERENCE_MODE=record"
+                f"To record this response, run with LLAMA_STACK_TEST_INFERENCE_MODE=record"
             )
 
     elif _current_mode == InferenceMode.RECORD:
-        response = await original_method(self, *args, **kwargs)
+        if endpoint == "/v1/models":
+            response = original_method(self, *args, **kwargs)
+        else:
+            response = await original_method(self, *args, **kwargs)
+
+        # we want to store the result of the iterator, not the iterator itself
+        if endpoint == "/v1/models":
+            response = [m async for m in response]
 
         request_data = {
             "method": method,
@@ -274,12 +360,14 @@ def patch_inference_clients():
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
+    from openai.resources.models import AsyncModels
 
     # Store original methods for both OpenAI and Ollama clients
     _original_methods = {
         "chat_completions_create": AsyncChatCompletions.create,
         "completions_create": AsyncCompletions.create,
         "embeddings_create": AsyncEmbeddings.create,
+        "models_list": AsyncModels.list,
         "ollama_generate": OllamaAsyncClient.generate,
         "ollama_chat": OllamaAsyncClient.chat,
         "ollama_embed": OllamaAsyncClient.embed,
@@ -304,10 +392,20 @@ def patch_inference_clients():
             _original_methods["embeddings_create"], self, "openai", "/v1/embeddings", *args, **kwargs
         )
 
+    def patched_models_list(self, *args, **kwargs):
+        async def _iter():
+            for item in await _patched_inference_method(
+                _original_methods["models_list"], self, "openai", "/v1/models", *args, **kwargs
+            ):
+                yield item
+
+        return _iter()
+
     # Apply OpenAI patches
     AsyncChatCompletions.create = patched_chat_completions_create
     AsyncCompletions.create = patched_completions_create
     AsyncEmbeddings.create = patched_embeddings_create
+    AsyncModels.list = patched_models_list
 
     # Create patched methods for Ollama client
     async def patched_ollama_generate(self, *args, **kwargs):
@@ -361,11 +459,13 @@ def unpatch_inference_clients():
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
+    from openai.resources.models import AsyncModels
 
     # Restore OpenAI client methods
     AsyncChatCompletions.create = _original_methods["chat_completions_create"]
     AsyncCompletions.create = _original_methods["completions_create"]
     AsyncEmbeddings.create = _original_methods["embeddings_create"]
+    AsyncModels.list = _original_methods["models_list"]
 
     # Restore Ollama client methods if they were patched
     OllamaAsyncClient.generate = _original_methods["ollama_generate"]
@@ -379,15 +479,9 @@ def unpatch_inference_clients():
 
 
 @contextmanager
-def inference_recording(mode: str = "live", storage_dir: str | Path | None = None) -> Generator[None, None, None]:
+def inference_recording(mode: str, storage_dir: str | Path | None = None) -> Generator[None, None, None]:
     """Context manager for inference recording/replaying."""
     global _current_mode, _current_storage
-
-    # Set defaults
-    if storage_dir is None:
-        storage_dir_path = Path.home() / ".llama" / "recordings"
-    else:
-        storage_dir_path = Path(storage_dir)
 
     # Store previous state
     prev_mode = _current_mode
@@ -397,7 +491,9 @@ def inference_recording(mode: str = "live", storage_dir: str | Path | None = Non
         _current_mode = mode
 
         if mode in ["record", "replay"]:
-            _current_storage = ResponseStorage(storage_dir_path)
+            if storage_dir is None:
+                raise ValueError("storage_dir is required for record and replay modes")
+            _current_storage = ResponseStorage(Path(storage_dir))
             patch_inference_clients()
 
         yield

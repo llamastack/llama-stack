@@ -65,6 +65,9 @@ async def test_inference_store_pagination_basic():
             input_messages = [OpenAIUserMessageParam(role="user", content=f"Test message for {completion_id}")]
             await store.store_chat_completion(completion, input_messages)
 
+        # Wait for all queued writes to complete
+        await store.flush()
+
         # Test 1: First page with limit=2, descending order (default)
         result = await store.list_chat_completions(limit=2, order=Order.desc)
         assert len(result.data) == 2
@@ -108,6 +111,9 @@ async def test_inference_store_pagination_ascending():
             input_messages = [OpenAIUserMessageParam(role="user", content=f"Test message for {completion_id}")]
             await store.store_chat_completion(completion, input_messages)
 
+        # Wait for all queued writes to complete
+        await store.flush()
+
         # Test ascending order pagination
         result = await store.list_chat_completions(limit=1, order=Order.asc)
         assert len(result.data) == 1
@@ -142,6 +148,9 @@ async def test_inference_store_pagination_with_model_filter():
             completion = create_test_chat_completion(completion_id, timestamp, model)
             input_messages = [OpenAIUserMessageParam(role="user", content=f"Test message for {completion_id}")]
             await store.store_chat_completion(completion, input_messages)
+
+        # Wait for all queued writes to complete
+        await store.flush()
 
         # Test pagination with model filter
         result = await store.list_chat_completions(limit=1, model="model-a", order=Order.desc)
@@ -189,6 +198,9 @@ async def test_inference_store_pagination_no_limit():
             completion = create_test_chat_completion(completion_id, timestamp)
             input_messages = [OpenAIUserMessageParam(role="user", content=f"Test message for {completion_id}")]
             await store.store_chat_completion(completion, input_messages)
+
+        # Wait for all queued writes to complete
+        await store.flush()
 
         # Test without limit
         result = await store.list_chat_completions(order=Order.desc)

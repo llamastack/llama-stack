@@ -19,8 +19,6 @@ from llama_stack.apis.common.content_types import (
 )
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.inference import (
-    BatchChatCompletionResponse,
-    BatchCompletionResponse,
     ChatCompletionResponse,
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
@@ -59,7 +57,7 @@ from llama_stack.models.llama.llama3.chat_format import ChatFormat
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
-from llama_stack.providers.utils.telemetry.tracing import get_current_span
+from llama_stack.providers.utils.telemetry.tracing import enqueue_event, get_current_span
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -86,6 +84,11 @@ class InferenceRouter(Inference):
 
     async def shutdown(self) -> None:
         logger.debug("InferenceRouter.shutdown")
+        if self.store:
+            try:
+                await self.store.shutdown()
+            except Exception as e:
+                logger.warning(f"Error during InferenceStore shutdown: {e}")
 
     async def register_model(
         self,
@@ -156,7 +159,7 @@ class InferenceRouter(Inference):
         metrics = self._construct_metrics(prompt_tokens, completion_tokens, total_tokens, model)
         if self.telemetry:
             for metric in metrics:
-                await self.telemetry.log_event(metric)
+                enqueue_event(metric)
         return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in metrics]
 
     async def _count_tokens(
@@ -264,30 +267,6 @@ class InferenceRouter(Inference):
         )
         return response
 
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        tools: list[ToolDefinition] | None = None,
-        tool_config: ToolConfig | None = None,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchChatCompletionResponse:
-        logger.debug(
-            f"InferenceRouter.batch_chat_completion: {model_id=}, {len(messages_batch)=}, {sampling_params=}, {response_format=}, {logprobs=}",
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.batch_chat_completion(
-            model_id=model_id,
-            messages_batch=messages_batch,
-            tools=tools,
-            tool_config=tool_config,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            logprobs=logprobs,
-        )
-
     async def completion(
         self,
         model_id: str,
@@ -328,20 +307,6 @@ class InferenceRouter(Inference):
         response.metrics = metrics if response.metrics is None else response.metrics + metrics
 
         return response
-
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchCompletionResponse:
-        logger.debug(
-            f"InferenceRouter.batch_completion: {model_id=}, {len(content_batch)=}, {sampling_params=}, {response_format=}, {logprobs=}",
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.batch_completion(model_id, content_batch, sampling_params, response_format, logprobs)
 
     async def openai_completion(
         self,
@@ -408,7 +373,7 @@ class InferenceRouter(Inference):
                 model=model_obj,
             )
             for metric in metrics:
-                await self.telemetry.log_event(metric)
+                enqueue_event(metric)
 
             # these metrics will show up in the client response.
             response.metrics = (
@@ -504,7 +469,7 @@ class InferenceRouter(Inference):
 
         # Store the response with the ID that will be returned to the client
         if self.store:
-            await self.store.store_chat_completion(response, messages)
+            asyncio.create_task(self.store.store_chat_completion(response, messages))
 
         if self.telemetry:
             metrics = self._construct_metrics(
@@ -514,7 +479,7 @@ class InferenceRouter(Inference):
                 model=model_obj,
             )
             for metric in metrics:
-                await self.telemetry.log_event(metric)
+                enqueue_event(metric)
             # these metrics will show up in the client response.
             response.metrics = (
                 metrics if not hasattr(response, "metrics") or response.metrics is None else response.metrics + metrics
@@ -641,7 +606,7 @@ class InferenceRouter(Inference):
                             "completion_tokens",
                             "total_tokens",
                         ]:  # Only log completion and total tokens
-                            await self.telemetry.log_event(metric)
+                            enqueue_event(metric)
 
                         # Return metrics in response
                         async_metrics = [
@@ -687,7 +652,7 @@ class InferenceRouter(Inference):
             )
             for metric in completion_metrics:
                 if metric.metric in ["completion_tokens", "total_tokens"]:  # Only log completion and total tokens
-                    await self.telemetry.log_event(metric)
+                    enqueue_event(metric)
 
             # Return metrics in response
             return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in completion_metrics]
@@ -732,7 +697,7 @@ class InferenceRouter(Inference):
                             choices_data[idx] = {
                                 "content_parts": [],
                                 "tool_calls_builder": {},
-                                "finish_reason": None,
+                                "finish_reason": "stop",
                                 "logprobs_content_parts": [],
                             }
                         current_choice_data = choices_data[idx]
@@ -783,7 +748,7 @@ class InferenceRouter(Inference):
                             model=model,
                         )
                         for metric in metrics:
-                            await self.telemetry.log_event(metric)
+                            enqueue_event(metric)
 
                 yield chunk
         finally:
@@ -832,4 +797,4 @@ class InferenceRouter(Inference):
                     object="chat.completion",
                 )
                 logger.debug(f"InferenceRouter.completion_response: {final_response}")
-                await self.store.store_chat_completion(final_response, messages)
+                asyncio.create_task(self.store.store_chat_completion(final_response, messages))

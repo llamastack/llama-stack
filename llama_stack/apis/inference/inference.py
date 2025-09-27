@@ -21,6 +21,7 @@ from llama_stack.apis.common.content_types import ContentDelta, InterleavedConte
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.models import Model
 from llama_stack.apis.telemetry import MetricResponseMixin
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     StopReason,
@@ -913,6 +914,7 @@ class OpenAIEmbeddingData(BaseModel):
     """
 
     object: Literal["embedding"] = "embedding"
+    # TODO: consider dropping str and using openai.types.embeddings.Embedding instead of OpenAIEmbeddingData
     embedding: list[float] | str
     index: int
 
@@ -973,26 +975,6 @@ class EmbeddingTaskType(Enum):
     document = "document"
 
 
-@json_schema_type
-class BatchCompletionResponse(BaseModel):
-    """Response from a batch completion request.
-
-    :param batch: List of completion responses, one for each input in the batch
-    """
-
-    batch: list[CompletionResponse]
-
-
-@json_schema_type
-class BatchChatCompletionResponse(BaseModel):
-    """Response from a batch chat completion request.
-
-    :param batch: List of chat completion responses, one for each conversation in the batch
-    """
-
-    batch: list[ChatCompletionResponse]
-
-
 class OpenAICompletionWithInputMessages(OpenAIChatCompletion):
     input_messages: list[OpenAIMessageParam]
 
@@ -1026,7 +1008,6 @@ class InferenceProvider(Protocol):
 
     model_store: ModelStore | None = None
 
-    @webmethod(route="/inference/completion", method="POST")
     async def completion(
         self,
         model_id: str,
@@ -1049,28 +1030,7 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/inference/batch-completion", method="POST", experimental=True)
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchCompletionResponse:
-        """Generate completions for a batch of content using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param content_batch: The content to generate completions for.
-        :param sampling_params: (Optional) Parameters to control the sampling strategy.
-        :param response_format: (Optional) Grammar specification for guided (structured) decoding.
-        :param logprobs: (Optional) If specified, log probabilities for each token position will be returned.
-        :returns: A BatchCompletionResponse with the full completions.
-        """
-        raise NotImplementedError("Batch completion is not implemented")
-        return  # this is so mypy's safe-super rule will consider the method concrete
-
-    @webmethod(route="/inference/chat-completion", method="POST")
+    @webmethod(route="/inference/chat-completion", method="POST", level=LLAMA_STACK_API_V1)
     async def chat_completion(
         self,
         model_id: str,
@@ -1110,32 +1070,7 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/inference/batch-chat-completion", method="POST", experimental=True)
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_config: ToolConfig | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchChatCompletionResponse:
-        """Generate chat completions for a batch of messages using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param messages_batch: The messages to generate completions for.
-        :param sampling_params: (Optional) Parameters to control the sampling strategy.
-        :param tools: (Optional) List of tool definitions available to the model.
-        :param tool_config: (Optional) Configuration for tool use.
-        :param response_format: (Optional) Grammar specification for guided (structured) decoding.
-        :param logprobs: (Optional) If specified, log probabilities for each token position will be returned.
-        :returns: A BatchChatCompletionResponse with the full completions.
-        """
-        raise NotImplementedError("Batch chat completion is not implemented")
-        return  # this is so mypy's safe-super rule will consider the method concrete
-
-    @webmethod(route="/inference/rerank", method="POST", experimental=True)
+    @webmethod(route="/inference/rerank", method="POST", experimental=True, level=LLAMA_STACK_API_V1)
     async def rerank(
         self,
         model: str,
@@ -1154,7 +1089,7 @@ class InferenceProvider(Protocol):
         raise NotImplementedError("Reranking is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
 
-    @webmethod(route="/openai/v1/completions", method="POST")
+    @webmethod(route="/openai/v1/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_completion(
         self,
         # Standard OpenAI completion parameters
@@ -1205,7 +1140,7 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/chat/completions", method="POST")
+    @webmethod(route="/openai/v1/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_chat_completion(
         self,
         model: str,
@@ -1261,7 +1196,7 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/embeddings", method="POST")
+    @webmethod(route="/openai/v1/embeddings", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_embeddings(
         self,
         model: str,
@@ -1290,7 +1225,7 @@ class Inference(InferenceProvider):
     - Embedding models: these models generate embeddings to be used for semantic search.
     """
 
-    @webmethod(route="/openai/v1/chat/completions", method="GET")
+    @webmethod(route="/openai/v1/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_chat_completions(
         self,
         after: str | None = None,
@@ -1308,7 +1243,7 @@ class Inference(InferenceProvider):
         """
         raise NotImplementedError("List chat completions is not implemented")
 
-    @webmethod(route="/openai/v1/chat/completions/{completion_id}", method="GET")
+    @webmethod(route="/openai/v1/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_chat_completion(self, completion_id: str) -> OpenAICompletionWithInputMessages:
         """Describe a chat completion by its ID.
 

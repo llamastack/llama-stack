@@ -137,7 +137,7 @@ class S3FilesImpl(Files):
         where: dict[str, str | dict] = {"id": file_id}
         if not return_expired:
             where["expires_at"] = {">": self._now()}
-        if not (row := await self.sql_store.fetch_one("openai_files", policy=self.policy, where=where)):
+        if not (row := await self.sql_store.fetch_one("openai_files", where=where)):
             raise ResourceNotFoundError(file_id, "File", "files.list()")
         return row
 
@@ -164,7 +164,7 @@ class S3FilesImpl(Files):
         self._client = _create_s3_client(self._config)
         await _create_bucket_if_not_exists(self._client, self._config)
 
-        self._sql_store = AuthorizedSqlStore(sqlstore_impl(self._config.metadata_store))
+        self._sql_store = AuthorizedSqlStore(sqlstore_impl(self._config.metadata_store), self.policy)
         await self._sql_store.create_table(
             "openai_files",
             {
@@ -268,7 +268,6 @@ class S3FilesImpl(Files):
 
         paginated_result = await self.sql_store.fetch_all(
             table="openai_files",
-            policy=self.policy,
             where=where_conditions,
             order_by=[("created_at", order.value)],
             cursor=("id", after) if after else None,

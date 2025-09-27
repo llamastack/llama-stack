@@ -14,7 +14,6 @@ from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.inference import Inference
 from llama_stack.apis.scoring import Scoring, ScoringResult
 from llama_stack.providers.datatypes import BenchmarksProtocolPrivate
-from llama_stack.providers.remote.inference.nvidia.models import MODEL_ENTRIES
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 
 from .....apis.common.job_types import Job, JobStatus
@@ -45,23 +44,28 @@ class NVIDIAEvalImpl(
         self.inference_api = inference_api
         self.agents_api = agents_api
 
-        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
+        ModelRegistryHelper.__init__(self)
 
     async def initialize(self) -> None: ...
 
     async def shutdown(self) -> None: ...
 
-    async def _evaluator_get(self, path):
+    async def _evaluator_get(self, path: str):
         """Helper for making GET requests to the evaluator service."""
         response = requests.get(url=f"{self.config.evaluator_url}{path}")
         response.raise_for_status()
         return response.json()
 
-    async def _evaluator_post(self, path, data):
+    async def _evaluator_post(self, path: str, data: dict[str, Any]):
         """Helper for making POST requests to the evaluator service."""
         response = requests.post(url=f"{self.config.evaluator_url}{path}", json=data)
         response.raise_for_status()
         return response.json()
+
+    async def _evaluator_delete(self, path: str) -> None:
+        """Helper for making DELETE requests to the evaluator service."""
+        response = requests.delete(url=f"{self.config.evaluator_url}{path}")
+        response.raise_for_status()
 
     async def register_benchmark(self, task_def: Benchmark) -> None:
         """Register a benchmark as an evaluation configuration."""
@@ -74,6 +78,10 @@ class NVIDIAEvalImpl(
                 **task_def.metadata,
             },
         )
+
+    async def unregister_benchmark(self, benchmark_id: str) -> None:
+        """Unregister a benchmark evaluation configuration from NeMo Evaluator."""
+        await self._evaluator_delete(f"/v1/evaluation/configs/{DEFAULT_NAMESPACE}/{benchmark_id}")
 
     async def run_eval(
         self,

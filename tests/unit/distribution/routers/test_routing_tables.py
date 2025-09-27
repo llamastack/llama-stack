@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from llama_stack.apis.common.content_types import URL
 from llama_stack.apis.common.type_system import NumberType
 from llama_stack.apis.datasets.datasets import Dataset, DatasetPurpose, URIDataSource
 from llama_stack.apis.datatypes import Api
@@ -105,6 +106,9 @@ class ScoringFunctionsImpl(Impl):
     async def register_scoring_function(self, scoring_fn):
         return scoring_fn
 
+    async def unregister_scoring_function(self, scoring_fn_id: str):
+        return scoring_fn_id
+
 
 class BenchmarksImpl(Impl):
     def __init__(self):
@@ -112,6 +116,9 @@ class BenchmarksImpl(Impl):
 
     async def register_benchmark(self, benchmark):
         return benchmark
+
+    async def unregister_benchmark(self, benchmark_id: str):
+        return benchmark_id
 
 
 class ToolGroupsImpl(Impl):
@@ -145,6 +152,20 @@ class VectorDBImpl(Impl):
 
     async def unregister_vector_db(self, vector_db_id: str):
         return vector_db_id
+
+    async def openai_create_vector_store(self, **kwargs):
+        import time
+        import uuid
+
+        from llama_stack.apis.vector_io.vector_io import VectorStoreFileCounts, VectorStoreObject
+
+        vector_store_id = kwargs.get("provider_vector_db_id") or f"vs_{uuid.uuid4()}"
+        return VectorStoreObject(
+            id=vector_store_id,
+            name=kwargs.get("name", vector_store_id),
+            created_at=int(time.time()),
+            file_counts=VectorStoreFileCounts(completed=0, cancelled=0, failed=0, in_progress=0, total=0),
+        )
 
 
 async def test_models_routing_table(cached_disk_dist_registry):
@@ -247,17 +268,21 @@ async def test_vectordbs_routing_table(cached_disk_dist_registry):
     )
 
     # Register multiple vector databases and verify listing
-    await table.register_vector_db(vector_db_id="test-vectordb", embedding_model="test_provider/test-model")
-    await table.register_vector_db(vector_db_id="test-vectordb-2", embedding_model="test_provider/test-model")
+    vdb1 = await table.register_vector_db(vector_db_id="test-vectordb", embedding_model="test_provider/test-model")
+    vdb2 = await table.register_vector_db(vector_db_id="test-vectordb-2", embedding_model="test_provider/test-model")
     vector_dbs = await table.list_vector_dbs()
 
     assert len(vector_dbs.data) == 2
     vector_db_ids = {v.identifier for v in vector_dbs.data}
-    assert "test-vectordb" in vector_db_ids
-    assert "test-vectordb-2" in vector_db_ids
+    assert vdb1.identifier in vector_db_ids
+    assert vdb2.identifier in vector_db_ids
 
-    await table.unregister_vector_db(vector_db_id="test-vectordb")
-    await table.unregister_vector_db(vector_db_id="test-vectordb-2")
+    # Verify they have UUID-based identifiers
+    assert vdb1.identifier.startswith("vs_")
+    assert vdb2.identifier.startswith("vs_")
+
+    await table.unregister_vector_db(vector_db_id=vdb1.identifier)
+    await table.unregister_vector_db(vector_db_id=vdb2.identifier)
 
     vector_dbs = await table.list_vector_dbs()
     assert len(vector_dbs.data) == 0
@@ -312,6 +337,13 @@ async def test_scoring_functions_routing_table(cached_disk_dist_registry):
     assert "test-scoring-fn" in scoring_fn_ids
     assert "test-scoring-fn-2" in scoring_fn_ids
 
+    # Unregister scoring functions and verify listing
+    for i in range(len(scoring_functions.data)):
+        await table.unregister_scoring_function(scoring_functions.data[i].scoring_fn_id)
+
+    scoring_functions_list_after_deletion = await table.list_scoring_functions()
+    assert len(scoring_functions_list_after_deletion.data) == 0
+
 
 async def test_benchmarks_routing_table(cached_disk_dist_registry):
     table = BenchmarksRoutingTable({"test_provider": BenchmarksImpl()}, cached_disk_dist_registry, {})
@@ -328,6 +360,15 @@ async def test_benchmarks_routing_table(cached_disk_dist_registry):
     assert len(benchmarks.data) == 1
     benchmark_ids = {b.identifier for b in benchmarks.data}
     assert "test-benchmark" in benchmark_ids
+
+    # Unregister the benchmark and verify removal
+    await table.unregister_benchmark(benchmark_id="test-benchmark")
+    benchmarks_after = await table.list_benchmarks()
+    assert len(benchmarks_after.data) == 0
+
+    # Unregistering a non-existent benchmark should raise a clear error
+    with pytest.raises(ValueError, match="Benchmark 'dummy_benchmark' not found"):
+        await table.unregister_benchmark(benchmark_id="dummy_benchmark")
 
 
 async def test_tool_groups_routing_table(cached_disk_dist_registry):
@@ -605,3 +646,25 @@ async def test_models_source_interaction_cleanup_provider_models(cached_disk_dis
 
     # Cleanup
     await table.shutdown()
+
+
+async def test_tool_groups_routing_table_exception_handling(cached_disk_dist_registry):
+    """Test that the tool group routing table handles exceptions when listing tools, like if an MCP server is unreachable."""
+
+    exception_throwing_tool_groups_impl = ToolGroupsImpl()
+    exception_throwing_tool_groups_impl.list_runtime_tools = AsyncMock(side_effect=Exception("Test exception"))
+
+    table = ToolGroupsRoutingTable(
+        {"test_provider": exception_throwing_tool_groups_impl}, cached_disk_dist_registry, {}
+    )
+    await table.initialize()
+
+    await table.register_tool_group(
+        toolgroup_id="test-toolgroup-exceptions",
+        provider_id="test_provider",
+        mcp_endpoint=URL(uri="http://localhost:8479/foo/bar"),
+    )
+
+    tools = await table.list_tools(toolgroup_id="test-toolgroup-exceptions")
+
+    assert len(tools.data) == 0
