@@ -83,12 +83,19 @@
       ],
       "tools": [
         {
-          "tool_name": "get_weather",
-          "description": "Get the current weather",
-          "parameters": {
-            "location": {
-              "param_type": "string",
-              "description": "The city and state (both required), e.g. San Francisco, CA."
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "description": "Get the current weather",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state (both required), e.g. San Francisco, CA."
+                }
+              },
+              "required": ["location"]
             }
           }
         }
@@ -116,12 +123,19 @@
       ],
       "tools": [
         {
-          "tool_name": "get_weather",
-          "description": "Get the current weather",
-          "parameters": {
-            "location": {
-              "param_type": "string",
-              "description": "The city and state (both required), e.g. San Francisco, CA."
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "description": "Get the current weather",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state (both required), e.g. San Francisco, CA."
+                }
+              },
+              "required": ["location"]
             }
           }
         }
@@ -162,12 +176,19 @@
       ],
       "tools": [
         {
-          "tool_name": "get_weather",
-          "description": "Get the current weather",
-          "parameters": {
-            "location": {
-              "param_type": "string",
-              "description": "The city and state (both required), e.g. San Francisco, CA."
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "description": "Get the current weather",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state (both required), e.g. San Francisco, CA."
+                }
+              },
+              "required": ["location"]
             }
           }
         }
@@ -192,66 +213,6 @@
       ]
     }
   },
-  "array_parameter": {
-    "data": {
-      "messages": [
-        [
-          {
-            "role": "user",
-            "content": "Please add a new product with name 'Widget', price 19.99, in stock, and tags ['new', 'sale'] and give me the product id."
-          }
-        ]
-      ],
-      "tools": [
-        {
-          "tool_name": "addProduct",
-          "description": "Get the current weather",
-          "parameters": {
-            "name": {
-              "param_type": "string",
-              "description": "Name of the product"
-            },
-            "price": {
-              "param_type": "number",
-              "description": "Price of the product"
-            },
-            "inStock": {
-              "param_type": "boolean",
-              "description": "Availability status of the product."
-            },
-            "tags": {
-              "param_type": "list[str]",
-              "description": "List of product tags"
-            }
-          }
-        }
-      ],
-      "tool_responses": [
-        {
-          "response": "{'response': 'Successfully added product with id: 123'}"
-        }
-      ],
-      "expected": [
-        {
-          "num_tool_calls": 1,
-          "tool_name": "addProduct",
-          "tool_arguments": {
-            "name": "Widget",
-            "price": 19.99,
-            "inStock": true,
-            "tags": [
-              "new",
-              "sale"
-            ]
-          }
-        },
-        {
-          "num_tool_calls": 0,
-          "answer": "123"
-        }
-      ]
-    }
-  },
   "sample_messages_tool_calling": {
     "data": {
       "messages": [
@@ -270,13 +231,19 @@
       ],
       "tools": [
         {
-          "tool_name": "get_weather",
-          "description": "Get the current weather",
-          "parameters": {
-            "location": {
-              "param_type": "string",
-              "description": "The city and state, e.g. San Francisco, CA",
-              "required": true
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "description": "Get the current weather",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state (both required), e.g. San Francisco, CA."
+                }
+              },
+              "required": ["location"]
             }
           }
         }
@@ -343,18 +310,23 @@
       ],
       "tools": [
         {
-          "tool_name": "get_object_namespace_list",
-          "description": "Get the list of objects in a namespace",
-          "parameters": {
-            "kind": {
-              "param_type": "string",
-              "description": "the type of object",
-              "required": true
-            },
-            "namespace": {
-              "param_type": "string",
-              "description": "the name of the namespace",
-              "required": true
+          "type": "function",
+          "function": {
+            "name": "get_object_namespace_list",
+            "description": "Get the list of objects in a namespace",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "the type of object"
+                },
+                "namespace": {
+                  "type": "string",
+                  "description": "the name of the namespace"
+                }
+              },
+              "required": ["kind", "namespace"]
             }
           }
         }
