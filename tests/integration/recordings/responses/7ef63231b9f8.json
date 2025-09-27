@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:8080/v1/v1/chat/completions",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "Qwen/Qwen3-0.6B",
@@ -20,35 +20,39 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "",
+        "id": "chatcmpl-872f14aa7d5d4d7d922ae081b8939f91",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "<think>\nOkay, so the user is asking which planet has rings around it and its name starts with the letter S. Let me think... I know that the Sun is a star, not a planet. So the Moon is a natural satellite, which has the Moon's name and rings. But the Moon's name starts with M, not S. The Earth has the name Earth, but the rings aren't really around the Earth in any real sense. Mars has a thin ring of dust. Venus and Mercury don't have rings in the sense of planetary rings as we know. Wait, maybe the answer is the Moon, even though it's not the same as the name starting with S. But the question says a planet, so if there's a planet named S, that would be it. But actually, the only planet with rings is Jupiter. Wait, Jupiter has a famous system of rings. But why does the question mention a planet with a name starting with S? Maybe there's a trick. Let me double-check. Jupiter's name starts with J, so maybe the answer is Venus? But Venus doesn't have rings. Mercury, too, doesn't. The Moon, as a planet, a dwarf planet, and has rings. Despite the name, the rings are around it. So the answer would be the Moon. Therefore, the planet with rings and name starting with S is the Moon.\n</think>\n\nThe planet with rings around it and a name starting with the letter **S** is the **Moon**. Though its name doesn't start with an **S**, it is technically a dwarf planet and has the rings in its orbit. Oops Saturn!",
+              "content": "<think>\nOkay, so the user is asking which planet has rings around it and the name starts with 'S'. Let me think. First, I remember that some planets have rings, like Saturn. Wait, Saturn is actually a gas giant with rings. But the user mentioned a planet with rings starting with 'S'. Saturn does have rings, and the name starts with 'S'. So that's a match. But wait, are there other planets with rings? Like maybe Neptune? Neptune does have a ring system. But Neptune's rings are not as prominent as Saturn's. So the answer should be Saturn. Let me double-check. Yes, Saturn is the planet with rings and the name starts with 'S'. I don't think there's another planet with rings that starts with 'S'. Neptune is a gas giant with rings, but the name starts with 'N', so that's not it. So the answer is Saturn.\n</think>\n\nThe planet with rings around it and a name starting with the letter **S** is **Saturn**.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": null
-            }
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
           }
         ],
-        "created": 1757550394,
+        "created": 1758749210,
         "model": "Qwen/Qwen3-0.6B",
         "object": "chat.completion",
         "service_tier": null,
-        "system_fingerprint": "3.3.5-dev0-sha-1b90c50",
+        "system_fingerprint": null,
         "usage": {
-          "completion_tokens": 336,
+          "completion_tokens": 213,
           "prompt_tokens": 22,
-          "total_tokens": 358,
+          "total_tokens": 235,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
-        }
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
       }
     },
     "is_streaming": false

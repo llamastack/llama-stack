@@ -1,0 +1,67 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Which planet has rings around it with a name starting with letter S?"
+            }
+          ]
+        }
+      ],
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-3f07285dd3ed4fb29fa26754a40891bf",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, so the user is asking which planet has rings around it and the name starts with the letter S. Let me think. I know that there are many planets in our solar system, and some of them have rings. The question is about the planet that has rings and the name starts with S.\n\nFirst, I should recall the planets in order of their distance from the Sun. The order is Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune. Now, Saturn is the next one after Neptune. Wait, but the user is asking for a planet with rings. I remember that Saturn is known for having rings, which are made up of ice and dust. So Saturn is the one with rings. But the name starts with S. Let me check the planet's name. Saturn is spelled S-A-T-U-R-N. Yes, the first letter is S. So the answer should be Saturn. But wait, are there any other planets with rings that start with S? For example, maybe something like Suyu? No, that's not a planet. The only one I can think of is Saturn. So the answer is Saturn.\n</think>\n\nThe planet with rings around it and a name starting with the letter S is **Saturn**. Its name is **Saturn**.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 1758748986,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 269,
+          "prompt_tokens": 22,
+          "total_tokens": 291,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  }
+}

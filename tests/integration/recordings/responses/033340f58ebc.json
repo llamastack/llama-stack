@@ -5,31 +5,50 @@
     "headers": {},
     "body": {
       "model": "Qwen/Qwen3-0.6B",
-      "messages": [
-        {
-          "role": "user",
-          "content": "What's the weather in Tokyo? Use the get_weather function to get the weather."
-        }
-      ],
-      "stream": false,
       "tools": [
         {
           "type": "function",
           "function": {
             "name": "get_weather",
-            "description": "Get the weather in a given city",
+            "description": "Get the current weather",
             "parameters": {
               "type": "object",
               "properties": {
-                "city": {
+                "location": {
                   "type": "string",
-                  "description": "The city to get the weather for"
+                  "description": "The city and state (both required), e.g. San Francisco, CA."
                 }
-              }
+              },
+              "required": [
+                "location"
+              ]
             }
           }
         }
-      ]
+      ],
+      "messages": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "Pretend you are a weather assistant."
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What's the weather like in San Francisco, CA?"
+            }
+          ]
+        }
+      ],
+      "stream": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
     },
     "endpoint": "/v1/chat/completions",
     "model": "Qwen/Qwen3-0.6B"
@@ -38,14 +57,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-dcef874c2bb142eabf5a994718013418",
+        "id": "chatcmpl-4c0bbd72d35d407799462f1d03610cae",
         "choices": [
           {
             "finish_reason": "tool_calls",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "<think>\nOkay, the user is asking for the weather in Tokyo. I need to use the get_weather function. Let me check the function's parameters. The function requires a city name, so I'll input \"Tokyo\" as the argument. I should make sure the city name is correctly spelled. Once I call the function, it should return the weather data for Tokyo.\n</think>\n\n",
+              "content": "<think>\nOkay, the user is asking about the weather in San Francisco, CA. I need to use the get_weather function. The function requires the location parameter, which in this case is \"San Francisco, CA\". I should make sure to format the arguments correctly as a JSON object. Let me check the required parameters again to confirm. The location is required, so I'll include that. No other parameters are needed. Alright, I'll structure the tool call accordingly.\n</think>\n\n",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -53,9 +72,9 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "chatcmpl-tool-71013e76a59b4fb2891713ee442b6799",
+                  "id": "chatcmpl-tool-93d5381c4e934ffb8ee7940ea7949ea1",
                   "function": {
-                    "arguments": "{\"city\": \"Tokyo\"}",
+                    "arguments": "{\"location\": \"San Francisco, CA\"}",
                     "name": "get_weather"
                   },
                   "type": "function"
@@ -66,15 +85,15 @@
             "stop_reason": null
           }
         ],
-        "created": 1758749317,
+        "created": 1758748648,
         "model": "Qwen/Qwen3-0.6B",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": null,
         "usage": {
-          "completion_tokens": 99,
-          "prompt_tokens": 170,
-          "total_tokens": 269,
+          "completion_tokens": 120,
+          "prompt_tokens": 185,
+          "total_tokens": 305,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         },
