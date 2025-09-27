@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
@@ -1755,6 +1755,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "aiosqlite" },
     { name = "asyncpg" },
+    { name = "chardet" },
     { name = "fastapi" },
     { name = "fire" },
     { name = "h11" },
@@ -1769,6 +1770,7 @@ dependencies = [
     { name = "pillow" },
     { name = "prompt-toolkit" },
     { name = "pydantic" },
+    { name = "pypdf" },
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
     { name = "python-multipart" },
@@ -1878,6 +1880,7 @@ requires-dist = [
     { name = "aiohttp" },
     { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "asyncpg" },
+    { name = "chardet" },
     { name = "fastapi", specifier = ">=0.115.0,<1.0" },
     { name = "fire" },
     { name = "h11", specifier = ">=0.16.0" },
@@ -1894,6 +1897,7 @@ requires-dist = [
     { name = "pillow" },
     { name = "prompt-toolkit" },
     { name = "pydantic", specifier = ">=2.11.9" },
+    { name = "pypdf" },
     { name = "python-dotenv" },
     { name = "python-jose", extras = ["cryptography"] },
     { name = "python-multipart", specifier = ">=0.0.20" },
