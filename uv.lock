@@ -3486,20 +3486,19 @@ wheels = [
 
 [[package]]
 name = "pymilvus"
-version = "2.6.1"
+version = "2.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grpcio" },
-    { name = "milvus-lite", marker = "sys_platform != 'win32'" },
     { name = "pandas" },
     { name = "protobuf" },
     { name = "python-dotenv" },
     { name = "setuptools" },
     { name = "ujson" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/70/a9/b25af985972082d1bb0b26739fece8cea3f56370733b4b1de690c42a77cc/pymilvus-2.6.1.tar.gz", hash = "sha256:ef1d7f5039719398d131ca80c19e55bc2bccc7ab6609f2cca9a04217dcb0a7fb", size = 1322169, upload-time = "2025-08-29T10:03:50.523Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/42/03/f002dbe86c7d6e762850cd52d0851cdfa30ac4c3718c39d1ad80af550d8c/pymilvus-2.6.2.tar.gz", hash = "sha256:b4802cc954de8f2d47bf8d6230e92196514dcb8a3726ba6098dc27909d4bc8e3", size = 1327019, upload-time = "2025-09-18T12:27:41.954Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/1a/8b677e0f4ef683bbfb00d495960573fff0844ed509b3cf0abede79a48e90/pymilvus-2.6.1-py3-none-any.whl", hash = "sha256:e3d76d45ce04d3555a6849645a18a1e2992706e248d5b6dc58a00504d0b60165", size = 254252, upload-time = "2025-08-29T10:03:48.539Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/78/ab628de53ae36c2a4519e8d56e09604b2ff6e8084538cb058cdbff42a564/pymilvus-2.6.2-py3-none-any.whl", hash = "sha256:933e447e09424d490dcf595053b01a7277dadea7ae3235cd704363bd6792509d", size = 258838, upload-time = "2025-09-18T12:27:39.847Z" },
 ]
 
 [[package]]
