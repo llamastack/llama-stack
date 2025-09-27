@@ -1,0 +1,86 @@
+name: Stainless SDK Builds
+
+run-name: Build Stainless SDKs
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Stainless organization name.
+  STAINLESS_ORG: llamastack
+
+  # Stainless project name.
+  STAINLESS_PROJECT: llama-stack-client
+
+  # Path to your OpenAPI spec.
+  OAS_PATH: ./docs/static/llama-stack-spec.yaml
+
+  # Path to your Stainless config. Optional; only provide this if you prefer
+  # to maintain the ground truth Stainless config in your own repo.
+  CONFIG_PATH: ./docs/static/stainless-config.yaml
+
+  # When to fail the job based on build conclusion.
+  # Options: "never" | "note" | "warning" | "error" | "fatal".
+  FAIL_ON: error
+
+jobs:
+  preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 2
+
+      - name: Run preview builds
+        uses: stainless-api/upload-openapi-spec-action/preview@b741c27bc604e5c130b92ed4056b07aee783aa04 # v1.5.4
+        with:
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
+          make_comment: true
+          commit_message: "feat(api): preview build for PR #${{ inputs.pr_number }}"
+
+  merge:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 2
+
+      # Note that this only merges in changes that happened on the last build on
+      # preview/${{ github.head_ref }}. It's possible that there are OAS/config
+      # changes that haven't been built, if the preview-sdk job didn't finish
+      # before this step starts. In theory we want to wait for all builds
+      # against preview/${{ github.head_ref }} to complete, but assuming that
+      # the preview-sdk job happens before the PR merge, it should be fine.
+      - name: Run merge build
+        uses: stainless-api/upload-openapi-spec-action/merge@b741c27bc604e5c130b92ed4056b07aee783aa04 # v1.5.4
+        with:
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
