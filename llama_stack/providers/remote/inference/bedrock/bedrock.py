@@ -98,7 +98,7 @@ class BedrockInferenceAdapter(
     OpenAICompletionToLlamaStackMixin,
 ):
     def __init__(self, config: BedrockConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES)
+        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
         self._config = config
         self._client = None
 

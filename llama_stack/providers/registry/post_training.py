@@ -7,7 +7,7 @@
 
 from typing import cast
 
-from llama_stack.providers.datatypes import AdapterSpec, Api, InlineProviderSpec, ProviderSpec, remote_provider_spec
+from llama_stack.providers.datatypes import Api, InlineProviderSpec, ProviderSpec, RemoteProviderSpec
 
 # We provide two versions of these providers so that distributions can package the appropriate version of torch.
 # The CPU version is used for distributions that don't have GPU support -- they result in smaller container images.
@@ -57,14 +57,13 @@ def available_providers() -> list[ProviderSpec]:
             ],
             description="HuggingFace-based post-training provider for fine-tuning models using the HuggingFace ecosystem.",
         ),
-        remote_provider_spec(
+        RemoteProviderSpec(
             api=Api.post_training,
-            adapter=AdapterSpec(
-                adapter_type="nvidia",
-                pip_packages=["requests", "aiohttp"],
-                module="llama_stack.providers.remote.post_training.nvidia",
-                config_class="llama_stack.providers.remote.post_training.nvidia.NvidiaPostTrainingConfig",
-                description="NVIDIA's post-training provider for fine-tuning models on NVIDIA's platform.",
-            ),
+            adapter_type="nvidia",
+            provider_type="remote::nvidia",
+            pip_packages=["requests", "aiohttp"],
+            module="llama_stack.providers.remote.post_training.nvidia",
+            config_class="llama_stack.providers.remote.post_training.nvidia.NvidiaPostTrainingConfig",
+            description="NVIDIA's post-training provider for fine-tuning models on NVIDIA's platform.",
         ),
     ]

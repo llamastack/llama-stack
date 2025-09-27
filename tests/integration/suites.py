@@ -55,7 +55,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         },
         defaults={
             "text_model": "ollama/llama3.2:3b-instruct-fp16",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "ollama/all-minilm:l6-v2",
             "safety_model": "ollama/llama-guard3:1b",
             "safety_shield": "llama-guard",
         },
@@ -68,7 +68,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         },
         defaults={
             "vision_model": "ollama/llama3.2-vision:11b",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "ollama/all-minilm:l6-v2",
         },
     ),
     "vllm": Setup(
@@ -87,7 +87,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="OpenAI GPT models for high-quality responses and tool calling",
         defaults={
             "text_model": "openai/gpt-4o",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "openai/text-embedding-3-small",
         },
     ),
     "tgi": Setup(
@@ -106,6 +106,30 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "together/meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
             "embedding_model": "together/togethercomputer/m2-bert-80M-32k-retrieval",
+        },
+    ),
+    "cerebras": Setup(
+        name="cerebras",
+        description="Cerebras models",
+        defaults={
+            "text_model": "cerebras/llama-3.3-70b",
+        },
+    ),
+    "databricks": Setup(
+        name="databricks",
+        description="Databricks models",
+        defaults={
+            "text_model": "databricks/databricks-meta-llama-3-3-70b-instruct",
+            "embedding_model": "databricks/databricks-bge-large-en",
+        },
+    ),
+    "fireworks": Setup(
+        name="fireworks",
+        description="Fireworks provider with a text model",
+        defaults={
+            "text_model": "accounts/fireworks/models/llama-v3p1-8b-instruct",
+            "vision_model": "accounts/fireworks/models/llama-v3p2-90b-vision-instruct",
+            "embedding_model": "nomic-ai/nomic-embed-text-v1.5",
         },
     ),
 }

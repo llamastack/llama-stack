@@ -203,7 +203,12 @@ def _model_identifiers_digest(endpoint: str, response: dict[str, Any]) -> str:
         - '/v1/models' (OpenAI): response body is: [ { id: ... }, ... ]
         Returns a list of unique identifiers or None if structure doesn't match.
         """
-        items = response["body"]
+        if "models" in response["body"]:
+            # ollama
+            items = response["body"]["models"]
+        else:
+            # openai
+            items = response["body"]
         idents = [m.model if endpoint == "/api/tags" else m.id for m in items]
         return sorted(set(idents))
 
@@ -262,6 +267,10 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
         raise ValueError(f"Unknown client type: {client_type}")
 
     url = base_url.rstrip("/") + endpoint
+    # Special handling for Databricks URLs to avoid leaking workspace info
+    # e.g. https://adb-1234567890123456.7.cloud.databricks.com -> https://...cloud.databricks.com
+    if "cloud.databricks.com" in url:
+        url = "__databricks__" + url.split("cloud.databricks.com")[-1]
     method = "POST"
     headers = {}
     body = kwargs

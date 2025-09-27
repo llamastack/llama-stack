@@ -9,7 +9,7 @@ from typing import Any
 from llama_stack.apis.common.content_types import URL
 from llama_stack.apis.common.errors import ToolGroupNotFoundError
 from llama_stack.apis.tools import ListToolGroupsResponse, ListToolsResponse, Tool, ToolGroup, ToolGroups
-from llama_stack.core.datatypes import ToolGroupWithOwner
+from llama_stack.core.datatypes import AuthenticationRequiredError, ToolGroupWithOwner
 from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl
@@ -54,7 +54,18 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
         all_tools = []
         for toolgroup in toolgroups:
             if toolgroup.identifier not in self.toolgroups_to_tools:
-                await self._index_tools(toolgroup)
+                try:
+                    await self._index_tools(toolgroup)
+                except AuthenticationRequiredError:
+                    # Send authentication errors back to the client so it knows
+                    # that it needs to supply credentials for remote MCP servers.
+                    raise
+                except Exception as e:
+                    # Other errors that the client cannot fix are logged and
+                    # those specific toolgroups are skipped.
+                    logger.warning(f"Error listing tools for toolgroup {toolgroup.identifier}: {e}")
+                    logger.debug(e, exc_info=True)
+                    continue
             all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])
 
         return ListToolsResponse(data=all_tools)

@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import hashlib
 import uuid
 from typing import Any
 
@@ -49,10 +50,13 @@ def convert_id(_id: str) -> str:
     Converts any string into a UUID string based on a seed.
 
     Qdrant accepts UUID strings and unsigned integers as point ID.
-    We use a seed to convert each string into a UUID string deterministically.
+    We use a SHA-256 hash to convert each string into a UUID string deterministically.
     This allows us to overwrite the same point with the original ID.
     """
-    return str(uuid.uuid5(uuid.NAMESPACE_DNS, _id))
+    hash_input = f"qdrant_id:{_id}".encode()
+    sha256_hash = hashlib.sha256(hash_input).hexdigest()
+    # Use the first 32 characters to create a valid UUID
+    return str(uuid.UUID(sha256_hash[:32]))
 
 
 class QdrantIndex(EmbeddingIndex):
