@@ -112,14 +112,16 @@ async def faiss_adapter(faiss_config, mock_inference_api, mock_files_api) -> Fai
         yield adapter
 
 
-async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_identical(
+async def test_faiss_query_vector_returns_perfect_score_when_query_and_embedding_are_identical(
     faiss_index, sample_chunks, sample_embeddings, embedding_dimension
 ):
     await faiss_index.add_chunks(sample_chunks, sample_embeddings)
     query_embedding = np.random.rand(embedding_dimension).astype(np.float32)
 
     with patch.object(faiss_index.index, "search") as mock_search:
-        mock_search.return_value = (np.array([[0.0, 0.1]]), np.array([[0, 1]]))
+        # IndexFlatIP with normalized vectors returns cosine similarity scores [-1,1]
+        # These will be normalized to [0,1] using (score + 1.0) / 2.0
+        mock_search.return_value = (np.array([[1.0, 0.6]]), np.array([[0, 1]]))
 
         response = await faiss_index.query_vector(embedding=query_embedding, k=2, score_threshold=0.0)
 
@@ -127,8 +129,8 @@ async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_
         assert len(response.chunks) == 2
         assert len(response.scores) == 2
 
-        assert response.scores[0] == float("inf")  # infinity (1.0 / 0.0)
-        assert response.scores[1] == 10.0  # (1.0 / 0.1 = 10.0)
+        assert response.scores[0] == 1.0  # (1.0 + 1.0) / 2.0 = 1.0 (perfect similarity)
+        assert response.scores[1] == 0.8  # (0.6 + 1.0) / 2.0 = 0.8 (high similarity)
 
         assert response.chunks[0] == sample_chunks[0]
         assert response.chunks[1] == sample_chunks[1]
@@ -141,7 +143,7 @@ async def test_health_success():
     inference_api = MagicMock()
     files_api = MagicMock()
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
+    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatIP") as mock_index_flat:
         mock_index_flat.return_value = MagicMock()
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
@@ -153,7 +155,7 @@ async def test_health_success():
         assert response["status"] == HealthStatus.OK
         assert "message" not in response
 
-        # Verifying that IndexFlatL2 was called with the correct dimension
+        # Verifying that IndexFlatIP was called with the correct dimension
         mock_index_flat.assert_called_once_with(128)  # VECTOR_DIMENSION is 128
 
 
@@ -164,7 +166,7 @@ async def test_health_failure():
     inference_api = MagicMock()
     files_api = MagicMock()
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
+    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatIP") as mock_index_flat:
         mock_index_flat.side_effect = Exception("Test error")
 
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)

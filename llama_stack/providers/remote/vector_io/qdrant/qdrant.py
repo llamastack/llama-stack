@@ -37,7 +37,7 @@ from llama_stack.providers.utils.memory.vector_store import (
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
 
-log = get_logger(name=__name__, category="vector_io::qdrant")
+logger = get_logger(name=__name__, category="vector_io::qdrant")
 CHUNK_ID_KEY = "_chunk_id"
 
 # KV store prefixes for vector databases
@@ -102,10 +102,13 @@ class QdrantIndex(EmbeddingIndex):
                 points_selector=models.PointIdsList(points=chunk_ids),
             )
         except Exception as e:
-            log.error(f"Error deleting chunks from Qdrant collection {self.collection_name}: {e}")
+            logger.error(f"Error deleting chunks from Qdrant collection {self.collection_name}: {e}")
             raise
 
     async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+        logger.info(
+            f"QDRANT VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
+        )
         results = (
             await self.client.query_points(
                 collection_name=self.collection_name,
@@ -124,12 +127,15 @@ class QdrantIndex(EmbeddingIndex):
             try:
                 chunk = Chunk(**point.payload["chunk_content"])
             except Exception:
-                log.exception("Failed to parse chunk")
+                logger.exception("Failed to parse chunk")
                 continue
 
             chunks.append(chunk)
-            scores.append(point.score)
+            # Cosine similarity range [-1,1] -> normalized to [0,1]
+            scores.append((point.score + 1.0) / 2.0)
+            logger.info(f"Computed score {point.score} for chunk id {point.id}")
 
+        logger.info(f"QDRANT VECTOR SEARCH RESULTS: Found {len(chunks)} chunks with scores {scores}")
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_keyword(
