@@ -170,6 +170,7 @@ class WeaviateVectorIOAdapter(
         self.kvstore: KVStore | None = None
         self.vector_db_store = None
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
+        self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     def _get_client(self) -> weaviate.Client:

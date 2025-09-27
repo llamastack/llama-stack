@@ -24,11 +24,13 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategyStatic,
     VectorStoreContent,
     VectorStoreDeleteResponse,
+    VectorStoreFileBatchObject,
     VectorStoreFileContentsResponse,
     VectorStoreFileCounts,
     VectorStoreFileDeleteResponse,
     VectorStoreFileLastError,
     VectorStoreFileObject,
+    VectorStoreFilesListInBatchResponse,
     VectorStoreFileStatus,
     VectorStoreListFilesResponse,
     VectorStoreListResponse,
@@ -65,6 +67,7 @@ class OpenAIVectorStoreMixin(ABC):
 
     # These should be provided by the implementing class
     openai_vector_stores: dict[str, dict[str, Any]]
+    openai_file_batches: dict[str, dict[str, Any]]
     files_api: Files | None
     # KV store for persisting OpenAI vector store metadata
     kvstore: KVStore | None
@@ -805,3 +808,221 @@ class OpenAIVectorStoreMixin(ABC):
             id=file_id,
             deleted=True,
         )
+
+    async def openai_create_vector_store_file_batch(
+        self,
+        vector_store_id: str,
+        file_ids: list[str],
+        attributes: dict[str, Any] | None = None,
+        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+    ) -> VectorStoreFileBatchObject:
+        """Create a vector store file batch."""
+        if vector_store_id not in self.openai_vector_stores:
+            raise VectorStoreNotFoundError(vector_store_id)
+
+        chunking_strategy = chunking_strategy or VectorStoreChunkingStrategyAuto()
+
+        created_at = int(time.time())
+        batch_id = f"batch_{uuid.uuid4()}"
+
+        # Initialize batch file counts - all files start as in_progress
+        file_counts = VectorStoreFileCounts(
+            completed=0,
+            cancelled=0,
+            failed=0,
+            in_progress=len(file_ids),
+            total=len(file_ids),
+        )
+
+        # Create batch object immediately with in_progress status
+        batch_object = VectorStoreFileBatchObject(
+            id=batch_id,
+            created_at=created_at,
+            vector_store_id=vector_store_id,
+            status="in_progress",
+            file_counts=file_counts,
+        )
+
+        # Store batch object and file_ids in memory
+        self.openai_file_batches[batch_id] = {
+            "batch_object": batch_object,
+            "file_ids": file_ids,
+        }
+
+        # Start background processing of files
+        asyncio.create_task(self._process_file_batch_async(batch_id, file_ids, attributes, chunking_strategy))
+
+        return batch_object
+
+    async def _process_file_batch_async(
+        self,
+        batch_id: str,
+        file_ids: list[str],
+        attributes: dict[str, Any] | None,
+        chunking_strategy: VectorStoreChunkingStrategy | None,
+    ) -> None:
+        """Process files in a batch asynchronously in the background."""
+        batch_info = self.openai_file_batches[batch_id]
+        batch_object = batch_info["batch_object"]
+        vector_store_id = batch_object.vector_store_id
+
+        for file_id in file_ids:
+            try:
+                # Process each file
+                await self.openai_attach_file_to_vector_store(
+                    vector_store_id=vector_store_id,
+                    file_id=file_id,
+                    attributes=attributes,
+                    chunking_strategy=chunking_strategy,
+                )
+
+                # Update counts atomically
+                batch_object.file_counts.completed += 1
+                batch_object.file_counts.in_progress -= 1
+
+            except Exception as e:
+                logger.error(f"Failed to process file {file_id} in batch {batch_id}: {e}")
+                batch_object.file_counts.failed += 1
+                batch_object.file_counts.in_progress -= 1
+
+        # Update final status when all files are processed
+        if batch_object.file_counts.failed == 0:
+            batch_object.status = "completed"
+        elif batch_object.file_counts.completed == 0:
+            batch_object.status = "failed"
+        else:
+            batch_object.status = "completed"  # Partial success counts as completed
+
+        logger.info(f"File batch {batch_id} processing completed with status: {batch_object.status}")
+
+    def _get_and_validate_batch(
+        self, batch_id: str, vector_store_id: str
+    ) -> tuple[dict[str, Any], VectorStoreFileBatchObject]:
+        """Get and validate batch exists and belongs to vector store."""
+        if vector_store_id not in self.openai_vector_stores:
+            raise VectorStoreNotFoundError(vector_store_id)
+
+        if batch_id not in self.openai_file_batches:
+            raise ValueError(f"File batch {batch_id} not found")
+
+        batch_info = self.openai_file_batches[batch_id]
+        batch_object = batch_info["batch_object"]
+
+        if batch_object.vector_store_id != vector_store_id:
+            raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
+
+        return batch_info, batch_object
+
+    def _paginate_objects(
+        self, objects: list[Any], limit: int | None = 20, after: str | None = None, before: str | None = None
+    ) -> tuple[list[Any], bool, str | None, str | None]:
+        """Apply pagination to a list of objects with id fields."""
+        limit = min(limit or 20, 100)  # Cap at 100 as per OpenAI
+
+        # Find start index
+        start_idx = 0
+        if after:
+            for i, obj in enumerate(objects):
+                if obj.id == after:
+                    start_idx = i + 1
+                    break
+
+        # Find end index
+        end_idx = start_idx + limit
+        if before:
+            for i, obj in enumerate(objects[start_idx:], start_idx):
+                if obj.id == before:
+                    end_idx = i
+                    break
+
+        # Apply pagination
+        paginated_objects = objects[start_idx:end_idx]
+
+        # Determine pagination info
+        has_more = end_idx < len(objects)
+        first_id = paginated_objects[0].id if paginated_objects else None
+        last_id = paginated_objects[-1].id if paginated_objects else None
+
+        return paginated_objects, has_more, first_id, last_id
+
+    async def openai_retrieve_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Retrieve a vector store file batch."""
+        _, batch_object = self._get_and_validate_batch(batch_id, vector_store_id)
+        return batch_object
+
+    async def openai_list_files_in_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+        after: str | None = None,
+        before: str | None = None,
+        filter: str | None = None,
+        limit: int | None = 20,
+        order: str | None = "desc",
+    ) -> VectorStoreFilesListInBatchResponse:
+        """Returns a list of vector store files in a batch."""
+        batch_info, _ = self._get_and_validate_batch(batch_id, vector_store_id)
+        batch_file_ids = batch_info["file_ids"]
+
+        # Load file objects for files in this batch
+        batch_file_objects = []
+
+        for file_id in batch_file_ids:
+            try:
+                file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
+                file_object = VectorStoreFileObject(**file_info)
+
+                # Apply status filter if provided
+                if filter and file_object.status != filter:
+                    continue
+
+                batch_file_objects.append(file_object)
+            except Exception as e:
+                logger.warning(f"Could not load file {file_id} from batch {batch_id}: {e}")
+                continue
+
+        # Sort by created_at
+        reverse_order = order == "desc"
+        batch_file_objects.sort(key=lambda x: x.created_at, reverse=reverse_order)
+
+        # Apply pagination using helper
+        paginated_files, has_more, first_id, last_id = self._paginate_objects(batch_file_objects, limit, after, before)
+
+        return VectorStoreFilesListInBatchResponse(
+            data=paginated_files,
+            first_id=first_id,
+            last_id=last_id,
+            has_more=has_more,
+        )
+
+    async def openai_cancel_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Cancel a vector store file batch."""
+        batch_info, batch_object = self._get_and_validate_batch(batch_id, vector_store_id)
+
+        # Only allow cancellation if batch is in progress
+        if batch_object.status not in ["in_progress"]:
+            raise ValueError(f"Cannot cancel batch {batch_id} with status {batch_object.status}")
+
+        # Create updated batch object with cancelled status
+        updated_batch = VectorStoreFileBatchObject(
+            id=batch_object.id,
+            object=batch_object.object,
+            created_at=batch_object.created_at,
+            vector_store_id=batch_object.vector_store_id,
+            status="cancelled",
+            file_counts=batch_object.file_counts,
+        )
+
+        # Update the stored batch info
+        batch_info["batch_object"] = updated_batch
+        self.openai_file_batches[batch_id] = batch_info
+
+        return updated_batch

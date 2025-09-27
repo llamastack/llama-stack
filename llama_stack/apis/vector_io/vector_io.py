@@ -427,6 +427,44 @@ class VectorStoreFileDeleteResponse(BaseModel):
     deleted: bool = True
 
 
+@json_schema_type
+class VectorStoreFileBatchObject(BaseModel):
+    """OpenAI Vector Store File Batch object.
+
+    :param id: Unique identifier for the file batch
+    :param object: Object type identifier, always "vector_store.file_batch"
+    :param created_at: Timestamp when the file batch was created
+    :param vector_store_id: ID of the vector store containing the file batch
+    :param status: Current processing status of the file batch
+    :param file_counts: File processing status counts for the batch
+    """
+
+    id: str
+    object: str = "vector_store.file_batch"
+    created_at: int
+    vector_store_id: str
+    status: VectorStoreFileStatus
+    file_counts: VectorStoreFileCounts
+
+
+@json_schema_type
+class VectorStoreFilesListInBatchResponse(BaseModel):
+    """Response from listing files in a vector store file batch.
+
+    :param object: Object type identifier, always "list"
+    :param data: List of vector store file objects in the batch
+    :param first_id: (Optional) ID of the first file in the list for pagination
+    :param last_id: (Optional) ID of the last file in the list for pagination
+    :param has_more: Whether there are more files available beyond this page
+    """
+
+    object: str = "list"
+    data: list[VectorStoreFileObject]
+    first_id: str | None = None
+    last_id: str | None = None
+    has_more: bool = False
+
+
 class VectorDBStore(Protocol):
     def get_vector_db(self, vector_db_id: str) -> VectorDB | None: ...
 
@@ -690,5 +728,75 @@ class VectorIO(Protocol):
         :param vector_store_id: The ID of the vector store containing the file to delete.
         :param file_id: The ID of the file to delete.
         :returns: A VectorStoreFileDeleteResponse indicating the deletion status.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/file_batches", method="POST")
+    async def openai_create_vector_store_file_batch(
+        self,
+        vector_store_id: str,
+        file_ids: list[str],
+        attributes: dict[str, Any] | None = None,
+        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+    ) -> VectorStoreFileBatchObject:
+        """Create a vector store file batch.
+
+        :param vector_store_id: The ID of the vector store to create the file batch for.
+        :param file_ids: A list of File IDs that the vector store should use.
+        :param attributes: (Optional) Key-value attributes to store with the files.
+        :param chunking_strategy: (Optional) The chunking strategy used to chunk the file(s). Defaults to auto.
+        :returns: A VectorStoreFileBatchObject representing the created file batch.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}", method="GET")
+    async def openai_retrieve_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Retrieve a vector store file batch.
+
+        :param batch_id: The ID of the file batch to retrieve.
+        :param vector_store_id: The ID of the vector store containing the file batch.
+        :returns: A VectorStoreFileBatchObject representing the file batch.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files", method="GET")
+    async def openai_list_files_in_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+        after: str | None = None,
+        before: str | None = None,
+        filter: str | None = None,
+        limit: int | None = 20,
+        order: str | None = "desc",
+    ) -> VectorStoreFilesListInBatchResponse:
+        """Returns a list of vector store files in a batch.
+
+        :param batch_id: The ID of the file batch to list files from.
+        :param vector_store_id: The ID of the vector store containing the file batch.
+        :param after: A cursor for use in pagination. `after` is an object ID that defines your place in the list.
+        :param before: A cursor for use in pagination. `before` is an object ID that defines your place in the list.
+        :param filter: Filter by file status. One of in_progress, completed, failed, cancelled.
+        :param limit: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.
+        :param order: Sort order by the `created_at` timestamp of the objects. `asc` for ascending order and `desc` for descending order.
+        :returns: A VectorStoreFilesListInBatchResponse containing the list of files in the batch.
+        """
+        ...
+
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel", method="POST")
+    async def openai_cancel_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Cancels a vector store file batch.
+
+        :param batch_id: The ID of the file batch to cancel.
+        :param vector_store_id: The ID of the vector store containing the file batch.
+        :returns: A VectorStoreFileBatchObject representing the cancelled file batch.
         """
         ...

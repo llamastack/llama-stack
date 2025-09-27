@@ -11,11 +11,17 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
+from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
+from llama_stack.apis.vector_io import (
+    Chunk,
+    QueryChunksResponse,
+    VectorStoreChunkingStrategyAuto,
+    VectorStoreFileObject,
+)
 from llama_stack.providers.remote.vector_io.milvus.milvus import VECTOR_DBS_PREFIX
 
-# This test is a unit test for the inline VectoerIO providers. This should only contain
+# This test is a unit test for the inline VectorIO providers. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
 # tests/integration/vector_io/
 #
@@ -294,3 +300,344 @@ async def test_delete_openai_vector_store_file_from_storage(vector_io_adapter, t
     assert loaded_file_info == {}
     loaded_contents = await vector_io_adapter._load_openai_vector_store_file_contents(store_id, file_id)
     assert loaded_contents == []
+
+
+async def test_create_vector_store_file_batch(vector_io_adapter):
+    """Test creating a file batch."""
+    store_id = "vs_1234"
+    file_ids = ["file_1", "file_2", "file_3"]
+
+    # Setup vector store
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": {},
+        "file_ids": [],
+    }
+
+    # Mock attach method to avoid actual processing
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    assert batch.vector_store_id == store_id
+    assert batch.status == "in_progress"
+    assert batch.file_counts.total == len(file_ids)
+    assert batch.file_counts.in_progress == len(file_ids)
+    assert batch.id in vector_io_adapter.openai_file_batches
+
+
+async def test_retrieve_vector_store_file_batch(vector_io_adapter):
+    """Test retrieving a file batch."""
+    store_id = "vs_1234"
+    file_ids = ["file_1", "file_2"]
+
+    # Setup vector store
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": {},
+        "file_ids": [],
+    }
+
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+
+    # Create batch first
+    created_batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    # Retrieve batch
+    retrieved_batch = await vector_io_adapter.openai_retrieve_vector_store_file_batch(
+        batch_id=created_batch.id,
+        vector_store_id=store_id,
+    )
+
+    assert retrieved_batch.id == created_batch.id
+    assert retrieved_batch.vector_store_id == store_id
+    assert retrieved_batch.status == "in_progress"
+
+
+async def test_cancel_vector_store_file_batch(vector_io_adapter):
+    """Test cancelling a file batch."""
+    store_id = "vs_1234"
+    file_ids = ["file_1"]
+
+    # Setup vector store
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": {},
+        "file_ids": [],
+    }
+
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+
+    # Create batch
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    # Cancel batch
+    cancelled_batch = await vector_io_adapter.openai_cancel_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+    )
+
+    assert cancelled_batch.status == "cancelled"
+
+
+async def test_list_files_in_vector_store_file_batch(vector_io_adapter):
+    """Test listing files in a batch."""
+    store_id = "vs_1234"
+    file_ids = ["file_1", "file_2"]
+
+    # Setup vector store with files
+    files = {}
+    for i, file_id in enumerate(file_ids):
+        files[file_id] = VectorStoreFileObject(
+            id=file_id,
+            object="vector_store.file",
+            usage_bytes=1000,
+            created_at=int(time.time()) + i,
+            vector_store_id=store_id,
+            status="completed",
+            chunking_strategy=VectorStoreChunkingStrategyAuto(),
+        )
+
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": files,
+        "file_ids": file_ids,
+    }
+
+    # Mock file loading
+    vector_io_adapter._load_openai_vector_store_file = AsyncMock(
+        side_effect=lambda vs_id, f_id: files[f_id].model_dump()
+    )
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+
+    # Create batch
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    # List files
+    response = await vector_io_adapter.openai_list_files_in_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+    )
+
+    assert len(response.data) == len(file_ids)
+    assert response.first_id is not None
+    assert response.last_id is not None
+
+
+async def test_file_batch_validation_errors(vector_io_adapter):
+    """Test file batch validation errors."""
+    # Test nonexistent vector store
+    with pytest.raises(VectorStoreNotFoundError):
+        await vector_io_adapter.openai_create_vector_store_file_batch(
+            vector_store_id="nonexistent",
+            file_ids=["file_1"],
+        )
+
+    # Setup store for remaining tests
+    store_id = "vs_test"
+    vector_io_adapter.openai_vector_stores[store_id] = {"id": store_id, "files": {}, "file_ids": []}
+
+    # Test nonexistent batch
+    with pytest.raises(ValueError, match="File batch .* not found"):
+        await vector_io_adapter.openai_retrieve_vector_store_file_batch(
+            batch_id="nonexistent_batch",
+            vector_store_id=store_id,
+        )
+
+    # Test wrong vector store for batch
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=["file_1"],
+    )
+
+    # Create wrong_store so it exists but the batch doesn't belong to it
+    wrong_store_id = "wrong_store"
+    vector_io_adapter.openai_vector_stores[wrong_store_id] = {"id": wrong_store_id, "files": {}, "file_ids": []}
+
+    with pytest.raises(ValueError, match="does not belong to vector store"):
+        await vector_io_adapter.openai_retrieve_vector_store_file_batch(
+            batch_id=batch.id,
+            vector_store_id=wrong_store_id,
+        )
+
+
+async def test_file_batch_pagination(vector_io_adapter):
+    """Test file batch pagination."""
+    store_id = "vs_1234"
+    file_ids = ["file_1", "file_2", "file_3", "file_4", "file_5"]
+
+    # Setup vector store with multiple files
+    files = {}
+    for i, file_id in enumerate(file_ids):
+        files[file_id] = VectorStoreFileObject(
+            id=file_id,
+            object="vector_store.file",
+            usage_bytes=1000,
+            created_at=int(time.time()) + i,
+            vector_store_id=store_id,
+            status="completed",
+            chunking_strategy=VectorStoreChunkingStrategyAuto(),
+        )
+
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": files,
+        "file_ids": file_ids,
+    }
+
+    # Mock file loading
+    vector_io_adapter._load_openai_vector_store_file = AsyncMock(
+        side_effect=lambda vs_id, f_id: files[f_id].model_dump()
+    )
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+
+    # Create batch
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    # Test pagination with limit
+    response = await vector_io_adapter.openai_list_files_in_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+        limit=3,
+    )
+
+    assert len(response.data) == 3
+    assert response.has_more is True
+
+    # Test pagination with after cursor
+    first_page = await vector_io_adapter.openai_list_files_in_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+        limit=2,
+    )
+
+    second_page = await vector_io_adapter.openai_list_files_in_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+        limit=2,
+        after=first_page.last_id,
+    )
+
+    assert len(first_page.data) == 2
+    assert len(second_page.data) == 2
+    # Ensure no overlap between pages
+    first_page_ids = {file_obj.id for file_obj in first_page.data}
+    second_page_ids = {file_obj.id for file_obj in second_page.data}
+    assert first_page_ids.isdisjoint(second_page_ids)
+    # Verify we got all expected files across both pages (in desc order: file_5, file_4, file_3, file_2, file_1)
+    all_returned_ids = first_page_ids | second_page_ids
+    assert all_returned_ids == {"file_2", "file_3", "file_4", "file_5"}
+
+
+async def test_file_batch_status_filtering(vector_io_adapter):
+    """Test file batch status filtering."""
+    store_id = "vs_1234"
+    file_ids = ["file_1", "file_2", "file_3"]
+
+    # Setup vector store with files having different statuses
+    files = {}
+    statuses = ["completed", "in_progress", "completed"]
+    for i, (file_id, status) in enumerate(zip(file_ids, statuses, strict=False)):
+        files[file_id] = VectorStoreFileObject(
+            id=file_id,
+            object="vector_store.file",
+            usage_bytes=1000,
+            created_at=int(time.time()) + i,
+            vector_store_id=store_id,
+            status=status,
+            chunking_strategy=VectorStoreChunkingStrategyAuto(),
+        )
+
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": files,
+        "file_ids": file_ids,
+    }
+
+    # Mock file loading
+    vector_io_adapter._load_openai_vector_store_file = AsyncMock(
+        side_effect=lambda vs_id, f_id: files[f_id].model_dump()
+    )
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+
+    # Create batch
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    # Test filtering by completed status
+    response = await vector_io_adapter.openai_list_files_in_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+        filter="completed",
+    )
+
+    assert len(response.data) == 2  # Only 2 completed files
+    for file_obj in response.data:
+        assert file_obj.status == "completed"
+
+    # Test filtering by in_progress status
+    response = await vector_io_adapter.openai_list_files_in_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+        filter="in_progress",
+    )
+
+    assert len(response.data) == 1  # Only 1 in_progress file
+    assert response.data[0].status == "in_progress"
+
+
+async def test_cancel_completed_batch_fails(vector_io_adapter):
+    """Test that cancelling completed batch fails."""
+    store_id = "vs_1234"
+    file_ids = ["file_1"]
+
+    # Setup vector store
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": {},
+        "file_ids": [],
+    }
+
+    vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
+
+    # Create batch
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    # Manually update status to completed
+    batch_info = vector_io_adapter.openai_file_batches[batch.id]
+    batch_info["batch_object"].status = "completed"
+
+    # Try to cancel - should fail
+    with pytest.raises(ValueError, match="Cannot cancel batch .* with status completed"):
+        await vector_io_adapter.openai_cancel_vector_store_file_batch(
+            batch_id=batch.id,
+            vector_store_id=store_id,
+        )
