@@ -427,7 +427,7 @@
                 }
             }
         },
-        "/v1/openai/v1/responses": {
+        "/v1/responses": {
             "get": {
                 "responses": {
                     "200": {
@@ -809,7 +809,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/responses/{response_id}": {
+        "/v1/responses/{response_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -1478,7 +1478,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/chat/completions/{completion_id}": {
+        "/v1/chat/completions/{completion_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -3193,7 +3193,7 @@
                 }
             }
         },
-        "/v1/openai/v1/chat/completions": {
+        "/v1/chat/completions": {
             "get": {
                 "responses": {
                     "200": {
@@ -3393,11 +3393,11 @@
             "get": {
                 "responses": {
                     "200": {
-                        "description": "A ListModelsResponse.",
+                        "description": "A OpenAIListModelsResponse.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ListModelsResponse"
+                                    "$ref": "#/components/schemas/OpenAIListModelsResponse"
                                 }
                             }
                         }
@@ -3418,8 +3418,8 @@
                 "tags": [
                     "Models"
                 ],
-                "summary": "List all models.",
-                "description": "List all models.",
+                "summary": "List models using the OpenAI API.",
+                "description": "List models using the OpenAI API.",
                 "parameters": []
             },
             "post": {
@@ -3465,7 +3465,7 @@
                 }
             }
         },
-        "/v1/openai/v1/responses/{response_id}/input_items": {
+        "/v1/responses/{response_id}/input_items": {
             "get": {
                 "responses": {
                     "200": {
@@ -4093,7 +4093,7 @@
                 }
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/files": {
+        "/v1/vector_stores/{vector_store_id}/files": {
             "get": {
                 "responses": {
                     "200": {
@@ -4234,7 +4234,7 @@
                 }
             }
         },
-        "/v1/openai/v1/completions": {
+        "/v1/completions": {
             "post": {
                 "responses": {
                     "200": {
@@ -4278,7 +4278,7 @@
                 }
             }
         },
-        "/v1/openai/v1/vector_stores": {
+        "/v1/vector_stores": {
             "get": {
                 "responses": {
                     "200": {
@@ -4391,7 +4391,7 @@
                 }
             }
         },
-        "/v1/openai/v1/files/{file_id}": {
+        "/v1/files/{file_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -4477,7 +4477,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}": {
+        "/v1/vector_stores/{vector_store_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -4615,7 +4615,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}": {
+        "/v1/vector_stores/{vector_store_id}/files/{file_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -4780,7 +4780,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/embeddings": {
+        "/v1/embeddings": {
             "post": {
                 "responses": {
                     "200": {
@@ -4824,7 +4824,7 @@
                 }
             }
         },
-        "/v1/openai/v1/files": {
+        "/v1/files": {
             "get": {
                 "responses": {
                     "200": {
@@ -4972,41 +4972,7 @@
                 }
             }
         },
-        "/v1/openai/v1/models": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "A OpenAIListModelsResponse.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OpenAIListModelsResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Models"
-                ],
-                "summary": "List models using the OpenAI API.",
-                "description": "List models using the OpenAI API.",
-                "parameters": []
-            }
-        },
-        "/v1/openai/v1/files/{file_id}/content": {
+        "/v1/files/{file_id}/content": {
             "get": {
                 "responses": {
                     "200": {
@@ -5050,7 +5016,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content": {
+        "/v1/vector_stores/{vector_store_id}/files/{file_id}/content": {
             "get": {
                 "responses": {
                     "200": {
@@ -5103,7 +5069,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/search": {
+        "/v1/vector_stores/{vector_store_id}/search": {
             "post": {
                 "responses": {
                     "200": {
@@ -5704,7 +5670,7 @@
                 }
             }
         },
-        "/v1/openai/v1/moderations": {
+        "/v1/moderations": {
             "post": {
                 "responses": {
                     "200": {

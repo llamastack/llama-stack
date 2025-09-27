@@ -625,9 +625,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/vector_stores/{vector_store_id}/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1
-    )
+    @webmethod(route="/vector_stores/{vector_store_id}/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_vector_store_file(
         self,
         vector_store_id: str,
@@ -659,9 +657,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/vector_stores/{vector_store_id}/files/{file_id}", method="POST", level=LLAMA_STACK_API_V1
-    )
+    @webmethod(route="/vector_stores/{vector_store_id}/files/{file_id}", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_update_vector_store_file(
         self,
         vector_store_id: str,
@@ -677,9 +673,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/vector_stores/{vector_store_id}/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1
-    )
+    @webmethod(route="/vector_stores/{vector_store_id}/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_vector_store_file(
         self,
         vector_store_id: str,
