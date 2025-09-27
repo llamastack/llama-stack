@@ -25,16 +25,19 @@ def base64_image_data(image_path):
     return base64.b64encode(image_path.read_bytes()).decode("utf-8")
 
 
+@pytest.fixture
+def base64_image_url(base64_image_data):
+    return f"data:image/png;base64,{base64_image_data}"
+
+
 def test_image_chat_completion_non_streaming(client_with_models, vision_model_id):
     message = {
         "role": "user",
         "content": [
             {
-                "type": "image",
-                "image": {
-                    "url": {
-                        "uri": "https://raw.githubusercontent.com/meta-llama/llama-stack/main/tests/integration/inference/dog.png"
-                    },
+                "type": "image_url",
+                "image_url": {
+                    "url": "https://raw.githubusercontent.com/meta-llama/llama-stack/main/tests/integration/inference/dog.png"
                 },
             },
             {
@@ -43,12 +46,12 @@ def test_image_chat_completion_non_streaming(client_with_models, vision_model_id
             },
         ],
     }
-    response = client_with_models.inference.chat_completion(
-        model_id=vision_model_id,
+    response = client_with_models.chat.completions.create(
+        model=vision_model_id,
         messages=[message],
         stream=False,
     )
-    message_content = response.completion_message.content.lower().strip()
+    message_content = response.choices[0].message.content.lower().strip()
     assert len(message_content) > 0
     assert any(expected in message_content for expected in {"dog", "puppy", "pup"})
 
@@ -68,8 +71,13 @@ def multi_image_data():
     return encoded_files
 
 
+@pytest.fixture
+def multi_image_url(multi_image_data):
+    return [f"data:image/jpeg;base64,{data}" for data in multi_image_data]
+
+
 @pytest.mark.parametrize("stream", [True, False])
-def test_image_chat_completion_multiple_images(client_with_models, vision_model_id, multi_image_data, stream):
+def test_image_chat_completion_multiple_images(client_with_models, vision_model_id, multi_image_url, stream):
     supported_models = ["llama-4", "gpt-4o", "llama4"]
     if not any(model in vision_model_id.lower() for model in supported_models):
         pytest.skip(
@@ -81,15 +89,15 @@ def test_image_chat_completion_multiple_images(client_with_models, vision_model_
             "role": "user",
             "content": [
                 {
-                    "type": "image",
-                    "image": {
-                        "data": multi_image_data[0],
+                    "type": "image_url",
+                    "image_url": {
+                        "url": multi_image_url[0],
                     },
                 },
                 {
-                    "type": "image",
-                    "image": {
-                        "data": multi_image_data[1],
+                    "type": "image_url",
+                    "image_url": {
+                        "url": multi_image_url[1],
                     },
                 },
                 {
@@ -99,17 +107,17 @@ def test_image_chat_completion_multiple_images(client_with_models, vision_model_
             ],
         },
     ]
-    response = client_with_models.inference.chat_completion(
-        model_id=vision_model_id,
+    response = client_with_models.chat.completions.create(
+        model=vision_model_id,
         messages=messages,
         stream=stream,
     )
     if stream:
         message_content = ""
         for chunk in response:
-            message_content += chunk.event.delta.text
+            message_content += chunk.choices[0].delta.content
     else:
-        message_content = response.completion_message.content
+        message_content = response.choices[0].message.content
     assert len(message_content) > 0
     assert any(expected in message_content.lower().strip() for expected in {"bedroom"}), message_content
 
@@ -125,17 +133,17 @@ def test_image_chat_completion_multiple_images(client_with_models, vision_model_
             "role": "user",
             "content": [
                 {
-                    "type": "image",
-                    "image": {
-                        "data": multi_image_data[2],
+                    "type": "image_url",
+                    "image_url": {
+                        "url": multi_image_data[2],
                     },
                 },
                 {"type": "text", "text": "How about this one?"},
             ],
         },
     )
-    response = client_with_models.inference.chat_completion(
-        model_id=vision_model_id,
+    response = client_with_models.chat.completions.create(
+        model=vision_model_id,
         messages=messages,
         stream=stream,
     )
@@ -144,7 +152,7 @@ def test_image_chat_completion_multiple_images(client_with_models, vision_model_
         for chunk in response:
             message_content += chunk.event.delta.text
     else:
-        message_content = response.completion_message.content
+        message_content = response.choices[0].message.content
     assert len(message_content) > 0
     assert any(expected in message_content.lower().strip() for expected in {"sword", "shield"}), message_content
 
@@ -154,11 +162,9 @@ def test_image_chat_completion_streaming(client_with_models, vision_model_id):
         "role": "user",
         "content": [
             {
-                "type": "image",
-                "image": {
-                    "url": {
-                        "uri": "https://raw.githubusercontent.com/meta-llama/llama-stack/main/tests/integration/inference/dog.png"
-                    },
+                "type": "image_url",
+                "image_url": {
+                    "url": "https://raw.githubusercontent.com/meta-llama/llama-stack/main/tests/integration/inference/dog.png"
                 },
             },
             {
@@ -167,23 +173,23 @@ def test_image_chat_completion_streaming(client_with_models, vision_model_id):
             },
         ],
     }
-    response = client_with_models.inference.chat_completion(
-        model_id=vision_model_id,
+    response = client_with_models.chat.completions.create(
+        model=vision_model_id,
         messages=[message],
         stream=True,
     )
     streamed_content = ""
     for chunk in response:
-        streamed_content += chunk.event.delta.text.lower()
+        streamed_content += chunk.choices[0].delta.content.lower()
     assert len(streamed_content) > 0
     assert any(expected in streamed_content for expected in {"dog", "puppy", "pup"})
 
 
-def test_image_chat_completion_base64(client_with_models, vision_model_id, base64_image_data):
+def test_image_chat_completion_base64(client_with_models, vision_model_id, base64_image_url):
     image_spec = {
-        "type": "image",
-        "image": {
-            "data": base64_image_data,
+        "type": "image_url",
+        "image_url": {
+            "url": base64_image_url,
         },
     }
 
@@ -197,10 +203,10 @@ def test_image_chat_completion_base64(client_with_models, vision_model_id, base6
             },
         ],
     }
-    response = client_with_models.inference.chat_completion(
-        model_id=vision_model_id,
+    response = client_with_models.chat.completions.create(
+        model=vision_model_id,
         messages=[message],
         stream=False,
     )
-    message_content = response.completion_message.content.lower().strip()
+    message_content = response.choices[0].message.content.lower().strip()
     assert len(message_content) > 0

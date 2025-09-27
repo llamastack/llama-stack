@@ -1008,7 +1008,6 @@ class InferenceProvider(Protocol):
 
     model_store: ModelStore | None = None
 
-    @webmethod(route="/inference/completion", method="POST", level=LLAMA_STACK_API_V1)
     async def completion(
         self,
         model_id: str,
