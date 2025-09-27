@@ -97,13 +97,22 @@ class StreamingResponseOrchestrator:
         messages = self.ctx.messages.copy()
 
         while True:
+            # Only forward response_format when it's a JSON schema; omit "text"/"json_object" to prevent
+            # OpenAI-compatible providers (e.g., vLLM) from enabling structured output without a schema.
+            safe_response_format = self.ctx.response_format
+            try:
+                if safe_response_format is not None and getattr(safe_response_format, "type", None) != "json_schema":
+                    safe_response_format = None
+            except Exception:
+                safe_response_format = None
+
             completion_result = await self.inference_api.openai_chat_completion(
                 model=self.ctx.model,
                 messages=messages,
                 tools=self.ctx.chat_tools,
                 stream=True,
                 temperature=self.ctx.temperature,
-                response_format=self.ctx.response_format,
+                response_format=safe_response_format,
             )
 
             # Process streaming chunks and build complete response

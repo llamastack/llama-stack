@@ -371,7 +371,8 @@ class ToolExecutor:
                     content.append(part)
             else:
                 raise ValueError(f"Unknown result content type: {type(result.content)}")
-            input_message = OpenAIToolMessageParam(content=content, tool_call_id=tool_call_id)
+            # OpenAI tool messages must have simple string content, not complex content structures
+            input_message = OpenAIToolMessageParam(content=str(content), tool_call_id=tool_call_id)
         else:
             text = str(error_exc) if error_exc else "Tool execution failed"
             input_message = OpenAIToolMessageParam(content=text, tool_call_id=tool_call_id)

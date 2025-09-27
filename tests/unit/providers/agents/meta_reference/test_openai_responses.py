@@ -35,9 +35,7 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletionContentPartTextParam,
     OpenAIDeveloperMessageParam,
     OpenAIJSONSchema,
-    OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
-    OpenAIResponseFormatText,
     OpenAIUserMessageParam,
 )
 from llama_stack.apis.tools.tools import Tool, ToolGroups, ToolInvocationResult, ToolParameter, ToolRuntime
@@ -146,7 +144,7 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     mock_inference_api.openai_chat_completion.assert_called_once_with(
         model=model,
         messages=[OpenAIUserMessageParam(role="user", content="What is the capital of Ireland?", name=None)],
-        response_format=OpenAIResponseFormatText(),
+        response_format=None,
         tools=None,
         stream=True,
         temperature=0.1,
@@ -819,16 +817,16 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
 @pytest.mark.parametrize(
     "text_format, response_format",
     [
-        (OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")), OpenAIResponseFormatText()),
+        # For text and json_object, we no longer forward response_format; expect None
+        (OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")), None),
         (
             OpenAIResponseText(format=OpenAIResponseTextFormat(name="Test", schema={"foo": "bar"}, type="json_schema")),
             OpenAIResponseFormatJSONSchema(json_schema=OpenAIJSONSchema(name="Test", schema={"foo": "bar"})),
         ),
-        (OpenAIResponseText(format=OpenAIResponseTextFormat(type="json_object")), OpenAIResponseFormatJSONObject()),
-        # ensure text param with no format specified defaults to text
-        (OpenAIResponseText(format=None), OpenAIResponseFormatText()),
-        # ensure text param of None defaults to text
-        (None, OpenAIResponseFormatText()),
+        (OpenAIResponseText(format=OpenAIResponseTextFormat(type="json_object")), None),
+        # Default/no format now results in no response_format forwarded
+        (OpenAIResponseText(format=None), None),
+        (None, None),
     ],
 )
 async def test_create_openai_response_with_text_format(
@@ -851,8 +849,10 @@ async def test_create_openai_response_with_text_format(
     # Verify
     first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
     assert first_call.kwargs["messages"][0].content == input_text
-    assert first_call.kwargs["response_format"] is not None
-    assert first_call.kwargs["response_format"] == response_format
+    if response_format is None:
+        assert first_call.kwargs["response_format"] is None
+    else:
+        assert first_call.kwargs["response_format"] == response_format
 
 
 async def test_create_openai_response_with_invalid_text_format(openai_responses_impl, mock_inference_api):

@@ -36,7 +36,6 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIResponseFormatParam,
-    OpenAIResponseFormatText,
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
@@ -168,12 +167,15 @@ async def convert_response_input_to_chat_messages(
 
 async def convert_response_text_to_chat_response_format(
     text: OpenAIResponseText,
-) -> OpenAIResponseFormatParam:
+) -> OpenAIResponseFormatParam | None:
     """
     Convert an OpenAI Response text parameter into an OpenAI Chat Completion response format.
     """
     if not text.format or text.format["type"] == "text":
-        return OpenAIResponseFormatText(type="text")
+        # Do not forward a plain text response_format to OpenAI-compatible providers
+        # to avoid triggering structured output paths without a schema
+        return None
+
     if text.format["type"] == "json_object":
         return OpenAIResponseFormatJSONObject()
     if text.format["type"] == "json_schema":

@@ -57,4 +57,4 @@ class ChatCompletionContext(BaseModel):
     response_tools: list[OpenAIResponseInputTool] | None = None
     chat_tools: list[ChatCompletionToolParam] | None = None
     temperature: float | None
-    response_format: OpenAIResponseFormatParam
+    response_format: OpenAIResponseFormatParam | None = None

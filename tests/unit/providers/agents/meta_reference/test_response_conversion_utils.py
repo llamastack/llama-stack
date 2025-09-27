@@ -29,7 +29,6 @@ from llama_stack.apis.inference import (
     OpenAIDeveloperMessageParam,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
-    OpenAIResponseFormatText,
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
@@ -217,9 +216,9 @@ class TestConvertResponseTextToChatResponseFormat:
     async def test_convert_text_format(self):
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
         result = await convert_response_text_to_chat_response_format(text)
-
-        assert isinstance(result, OpenAIResponseFormatText)
-        assert result.type == "text"
+        # For plain text format we now return None to avoid triggering
+        # structured output in OpenAI-compatible providers.
+        assert result is None
 
     async def test_convert_json_object_format(self):
         text = OpenAIResponseText(format={"type": "json_object"})
@@ -245,9 +244,8 @@ class TestConvertResponseTextToChatResponseFormat:
     async def test_default_text_format(self):
         text = OpenAIResponseText()
         result = await convert_response_text_to_chat_response_format(text)
-
-        assert isinstance(result, OpenAIResponseFormatText)
-        assert result.type == "text"
+        # Default (text) returns None to avoid structured-output pathways
+        assert result is None
 
 
 class TestGetMessageTypeByRole:
