@@ -92,6 +92,22 @@ class Chunk(BaseModel):
 
         return generate_chunk_id(str(uuid.uuid4()), str(self.content))
 
+    @property
+    def document_id(self) -> str | None:
+        """Returns the document_id from either metadata or chunk_metadata, with metadata taking precedence."""
+        # Check metadata first (takes precedence)
+        doc_id = self.metadata.get("document_id")
+        if isinstance(doc_id, str):
+            return doc_id
+
+        # Fall back to chunk_metadata if available
+        if self.chunk_metadata is not None:
+            chunk_doc_id = getattr(self.chunk_metadata, "document_id", None)
+            if isinstance(chunk_doc_id, str):
+                return chunk_doc_id
+
+        return None
+
 
 @json_schema_type
 class QueryChunksResponse(BaseModel):
