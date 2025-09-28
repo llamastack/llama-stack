@@ -108,8 +108,10 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
         1. Dynamic models from https://integrate.api.nvidia.com/v1/models
         2. Static rerank models (which use different API endpoints)
         """
-        models = await super().list_models() or []
+        self._model_cache = {}
+        models = await super().list_models()
 
+        # Add rerank models
         existing_ids = {m.identifier for m in models}
         for model_id, _ in self._rerank_model_endpoints.items():
             if self.allowed_models and model_id not in self.allowed_models:
