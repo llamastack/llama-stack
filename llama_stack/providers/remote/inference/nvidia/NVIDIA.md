@@ -204,6 +204,6 @@ rerank_response = client.inference.rerank(
     ],
 )
 
-for i, result in enumerate(rerank_response.data):
-    print(f"{i+1}. [Index: {result.index}, Score: {result.relevance_score:.3f}]")
+for i, result in enumerate(rerank_response):
+    print(f"{i+1}. [Index: {result.index}, " f"Score: {(result.relevance_score):.3f}]")
 ```
