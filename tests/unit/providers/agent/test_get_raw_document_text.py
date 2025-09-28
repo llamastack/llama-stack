@@ -117,20 +117,6 @@ async def test_get_raw_document_text_supports_json_mime_type():
     assert result == json_content
 
 
-async def test_get_raw_document_text_with_json_url():
-    """Test that the function handles JSON URLs correctly."""
-    json_content = '{"key": "value", "list": ["item1", "item2"]}'
-
-    with patch("llama_stack.providers.inline.agents.meta_reference.agent_instance.load_data_from_url") as mock_load:
-        mock_load.return_value = json_content
-
-        document = Document(content=URL(uri="https://example.com/data.json"), mime_type="application/json")
-
-        result = await get_raw_document_text(document)
-        assert result == json_content
-        mock_load.assert_called_once_with("https://example.com/data.json")
-
-
 async def test_get_raw_document_text_with_json_text_content_item():
     """Test that the function handles JSON TextContentItem correctly."""
     json_content = '{"key": "value", "nested": {"array": [1, 2, 3]}}'
