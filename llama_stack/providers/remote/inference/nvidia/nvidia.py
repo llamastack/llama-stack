@@ -146,7 +146,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
         # Convert query to text format
         if isinstance(query, str):
             query_text = query
-        elif hasattr(query, "text"):
+        elif isinstance(query, OpenAIChatCompletionContentPartTextParam):
             query_text = query.text
         else:
             raise ValueError("Query must be a string or text content part")
@@ -156,7 +156,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
         for item in items:
             if isinstance(item, str):
                 passages.append({"text": item})
-            elif hasattr(item, "text"):
+            elif isinstance(item, OpenAIChatCompletionContentPartTextParam):
                 passages.append({"text": item.text})
             else:
                 raise ValueError("Items must be strings or text content parts")
