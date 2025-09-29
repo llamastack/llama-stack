@@ -29,8 +29,8 @@ runs:
 
         # Install llama-stack-client-python based on the client-version input
         if [ "${{ inputs.client-version }}" = "latest" ]; then
-          echo "Installing latest llama-stack-client-python from next branch"
-          uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@next
+          echo "Installing latest llama-stack-client-python from main branch"
+          uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@main
         elif [ "${{ inputs.client-version }}" = "published" ]; then
           echo "Installing published llama-stack-client-python from PyPI"
           uv pip install llama-stack-client
