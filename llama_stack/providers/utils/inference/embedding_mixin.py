@@ -15,16 +15,11 @@ if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
 
 from llama_stack.apis.inference import (
-    EmbeddingsResponse,
-    EmbeddingTaskType,
-    InterleavedContentItem,
     ModelStore,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-    TextTruncation,
 )
-from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
 EMBEDDING_MODELS = {}
 
@@ -34,23 +29,6 @@ log = get_logger(name=__name__, category="providers::utils")
 
 class SentenceTransformerEmbeddingMixin:
     model_store: ModelStore
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-        embedding_model = await self._load_sentence_transformer_model(model.provider_resource_id)
-        embeddings = await asyncio.to_thread(
-            embedding_model.encode,
-            [interleaved_content_as_str(content) for content in contents],
-            show_progress_bar=False,
-        )
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,
