@@ -112,7 +112,6 @@ class Models(Protocol):
         ...
 
     @webmethod(route="/openai/v1/models", method="GET", level=LLAMA_STACK_API_V1)
-    @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_models(self) -> OpenAIListModelsResponse:
         """List models using the OpenAI API.
 
