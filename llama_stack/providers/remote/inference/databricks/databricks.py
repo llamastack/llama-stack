@@ -11,15 +11,12 @@ from databricks.sdk import WorkspaceClient
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
@@ -27,7 +24,6 @@ from llama_stack.apis.inference import (
     OpenAICompletion,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -116,16 +112,6 @@ class DatabricksInferenceAdapter(
         logprobs: LogProbConfig | None = None,
         tool_config: ToolConfig | None = None,
     ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        raise NotImplementedError()
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
         raise NotImplementedError()
 
     async def list_models(self) -> list[Model] | None:
