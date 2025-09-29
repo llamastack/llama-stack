@@ -11,14 +11,11 @@ import litellm
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     InferenceProvider,
     JsonSchemaResponseFormat,
     LogProbConfig,
@@ -32,7 +29,6 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -40,7 +36,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 from llama_stack.providers.utils.inference.openai_compat import (
     b64_encode_openai_embeddings_response,
     convert_message_to_openai_dict_new,
@@ -49,9 +45,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
     convert_tooldef_to_openai_tool,
     get_sampling_options,
     prepare_openai_completion_params,
-)
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -67,10 +60,10 @@ class LiteLLMOpenAIMixin(
     #                         when calling litellm.
     def __init__(
         self,
-        model_entries,
         litellm_provider_name: str,
         api_key_from_config: str | None,
         provider_data_api_key_field: str,
+        model_entries: list[ProviderModelEntry] | None = None,
         openai_compat_api_base: str | None = None,
         download_images: bool = False,
         json_schema_strict: bool = True,
@@ -86,7 +79,7 @@ class LiteLLMOpenAIMixin(
         :param download_images: Whether to download images and convert to base64 for message conversion.
         :param json_schema_strict: Whether to use strict mode for JSON schema validation.
         """
-        ModelRegistryHelper.__init__(self, model_entries)
+        ModelRegistryHelper.__init__(self, model_entries=model_entries)
 
         self.litellm_provider_name = litellm_provider_name
         self.api_key_from_config = api_key_from_config
@@ -268,24 +261,6 @@ class LiteLLMOpenAIMixin(
                 f'{{"{key_field}": "<API_KEY>"}}, or in the provider config.'
             )
         return api_key
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-
-        response = litellm.embedding(
-            model=self.get_litellm_model_name(model.provider_resource_id),
-            input=[interleaved_content_as_str(content) for content in contents],
-        )
-
-        embeddings = [data["embedding"] for data in response["data"]]
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,

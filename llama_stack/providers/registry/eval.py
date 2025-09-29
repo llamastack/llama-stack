@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.datatypes import AdapterSpec, Api, InlineProviderSpec, ProviderSpec, remote_provider_spec
+from llama_stack.providers.datatypes import Api, InlineProviderSpec, ProviderSpec, RemoteProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
@@ -25,17 +25,16 @@ def available_providers() -> list[ProviderSpec]:
             ],
             description="Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics.",
         ),
-        remote_provider_spec(
+        RemoteProviderSpec(
             api=Api.eval,
-            adapter=AdapterSpec(
-                adapter_type="nvidia",
-                pip_packages=[
-                    "requests",
-                ],
-                module="llama_stack.providers.remote.eval.nvidia",
-                config_class="llama_stack.providers.remote.eval.nvidia.NVIDIAEvalConfig",
-                description="NVIDIA's evaluation provider for running evaluation tasks on NVIDIA's platform.",
-            ),
+            adapter_type="nvidia",
+            pip_packages=[
+                "requests",
+            ],
+            provider_type="remote::nvidia",
+            module="llama_stack.providers.remote.eval.nvidia",
+            config_class="llama_stack.providers.remote.eval.nvidia.NVIDIAEvalConfig",
+            description="NVIDIA's evaluation provider for running evaluation tasks on NVIDIA's platform.",
             api_dependencies=[
                 Api.datasetio,
                 Api.datasets,

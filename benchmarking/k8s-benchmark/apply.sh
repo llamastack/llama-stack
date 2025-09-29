@@ -17,11 +17,8 @@ export POSTGRES_PASSWORD=llamastack
 export INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct
 export SAFETY_MODEL=meta-llama/Llama-Guard-3-1B
 
-export MOCK_INFERENCE_MODEL=mock-inference
-
-export MOCK_INFERENCE_URL=openai-mock-service:8080
-
 export BENCHMARK_INFERENCE_MODEL=$INFERENCE_MODEL
+export LLAMA_STACK_WORKERS=4
 
 set -euo pipefail
 set -x

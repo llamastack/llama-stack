@@ -13,6 +13,7 @@ set -euo pipefail
 
 # Default values
 BRANCH=""
+PR_HEAD_REPO=""
 TEST_SUBDIRS=""
 TEST_SETUP="ollama"
 TEST_SUITE="base"

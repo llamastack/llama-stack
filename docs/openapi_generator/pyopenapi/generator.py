@@ -9,7 +9,9 @@ import ipaddress
 import types
 import typing
 from dataclasses import make_dataclass
-from typing import Any, Dict, Set, Union
+from typing import Annotated, Any, Dict, get_args, get_origin, Set, Union
+
+from fastapi import UploadFile
 
 from llama_stack.apis.datatypes import Error
 from llama_stack.strong_typing.core import JsonType
@@ -30,9 +32,6 @@ from llama_stack.strong_typing.schema import (
     Schema,
     SchemaOptions,
 )
-from typing import get_origin, get_args
-from typing import Annotated
-from fastapi import UploadFile
 from llama_stack.strong_typing.serialization import json_dump_string, object_to_json
 
 from .operations import (
@@ -549,7 +548,6 @@ class Generator:
         if op.defining_class.__name__ in [
             "SyntheticDataGeneration",
             "PostTraining",
-            "BatchInference",
         ]:
             op.defining_class.__name__ = f"{op.defining_class.__name__} (Coming Soon)"
             print(op.defining_class.__name__)
@@ -624,11 +622,11 @@ class Generator:
         # data passed in request body as multipart/form-data
         elif op.multipart_params:
             builder = ContentBuilder(self.schema_builder)
-            
+
             # Create schema properties for multipart form fields
             properties = {}
             required_fields = []
-            
+
             for name, param_type in op.multipart_params:
                 if get_origin(param_type) is Annotated:
                     base_type = get_args(param_type)[0]
@@ -636,28 +634,21 @@ class Generator:
                     base_type = param_type
                 if base_type is UploadFile:
                     # File upload
-                    properties[name] = {
-                        "type": "string",
-                        "format": "binary"
-                    }
+                    properties[name] = {"type": "string", "format": "binary"}
                 else:
                     # Form field
                     properties[name] = self.schema_builder.classdef_to_ref(base_type)
-                
+
                 required_fields.append(name)
-            
+
             multipart_schema = {
                 "type": "object",
                 "properties": properties,
-                "required": required_fields
+                "required": required_fields,
             }
-            
+
             requestBody = RequestBody(
-                content={
-                    "multipart/form-data": {
-                        "schema": multipart_schema
-                    }
-                },
+                content={"multipart/form-data": {"schema": multipart_schema}},
                 required=True,
             )
         # data passed in payload as JSON and mapped to request parameters
@@ -801,9 +792,10 @@ class Generator:
         )
 
         return Operation(
-            tags=[getattr(op.defining_class, "API_NAMESPACE", op.defining_class.__name__)],
-            summary=None,
-            # summary=doc_string.short_description,
+            tags=[
+                getattr(op.defining_class, "API_NAMESPACE", op.defining_class.__name__)
+            ],
+            summary=doc_string.short_description,
             description=description,
             parameters=parameters,
             requestBody=requestBody,
@@ -836,7 +828,7 @@ class Generator:
             else:
                 raise NotImplementedError(f"unknown HTTP method: {op.http_method}")
 
-            route = op.get_route()
+            route = op.get_route(op.webmethod)
             route = route.replace(":path", "")
             print(f"route: {route}")
             if route in paths:

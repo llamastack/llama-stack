@@ -11,21 +11,17 @@ from botocore.client import BaseClient
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
     OpenAIEmbeddingsResponse,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -47,8 +43,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
 )
 
 from .models import MODEL_ENTRIES
@@ -98,7 +92,7 @@ class BedrockInferenceAdapter(
     OpenAICompletionToLlamaStackMixin,
 ):
     def __init__(self, config: BedrockConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES)
+        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
         self._config = config
         self._client = None
 
@@ -217,36 +211,6 @@ class BedrockInferenceAdapter(
                 }
             ),
         }
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-
-        # Convert foundation model ID to inference profile ID
-        region_name = self.client.meta.region_name
-        inference_profile_id = _to_inference_profile_id(model.provider_resource_id, region_name)
-
-        embeddings = []
-        for content in contents:
-            assert not content_has_media(content), "Bedrock does not support media for embeddings"
-            input_text = interleaved_content_as_str(content)
-            input_body = {"inputText": input_text}
-            body = json.dumps(input_body)
-            response = self.client.invoke_model(
-                body=body,
-                modelId=inference_profile_id,
-                accept="application/json",
-                contentType="application/json",
-            )
-            response_body = json.loads(response.get("body").read())
-            embeddings.append(response_body.get("embedding"))
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,

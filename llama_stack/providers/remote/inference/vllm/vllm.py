@@ -4,8 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import json
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
+from urllib.parse import urljoin
 
 import httpx
 from openai import APIConnectionError, AsyncOpenAI
@@ -15,7 +16,6 @@ from openai.types.chat.chat_completion_chunk import (
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
     TextDelta,
     ToolCallDelta,
     ToolCallParseStatus,
@@ -30,8 +30,6 @@ from llama_stack.apis.inference import (
     CompletionRequest,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     GrammarResponseFormat,
     Inference,
     JsonSchemaResponseFormat,
@@ -40,7 +38,6 @@ from llama_stack.apis.inference import (
     ModelStore,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -55,6 +52,7 @@ from llama_stack.providers.datatypes import (
     HealthStatus,
     ModelsProtocolPrivate,
 )
+from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.inference.model_registry import (
     ModelRegistryHelper,
     build_hf_repo_model_entry,
@@ -62,6 +60,7 @@ from llama_stack.providers.utils.inference.model_registry import (
 from llama_stack.providers.utils.inference.openai_compat import (
     UnparseableToolCall,
     convert_message_to_openai_dict,
+    convert_openai_chat_completion_stream,
     convert_tool_call,
     get_sampling_options,
     process_chat_completion_stream_response,
@@ -71,8 +70,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
     request_has_media,
 )
 
@@ -281,14 +278,30 @@ async def _process_vllm_chat_completion_stream_response(
         yield c
 
 
-class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
+class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsProtocolPrivate):
     # automatically set by the resolver when instantiating the provider
     __provider_id__: str
     model_store: ModelStore | None = None
 
     def __init__(self, config: VLLMInferenceAdapterConfig) -> None:
+        LiteLLMOpenAIMixin.__init__(
+            self,
+            model_entries=build_hf_repo_model_entries(),
+            litellm_provider_name="vllm",
+            api_key_from_config=config.api_token,
+            provider_data_api_key_field="vllm_api_token",
+            openai_compat_api_base=config.url,
+        )
         self.register_helper = ModelRegistryHelper(build_hf_repo_model_entries())
         self.config = config
+
+    get_api_key = LiteLLMOpenAIMixin.get_api_key
+
+    def get_base_url(self) -> str:
+        """Get the base URL from config."""
+        if not self.config.url:
+            raise ValueError("No base URL configured")
+        return self.config.url
 
     async def initialize(self) -> None:
         if not self.config.url:
@@ -297,6 +310,7 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
             )
 
     async def should_refresh_models(self) -> bool:
+        # Strictly respecting the refresh_models directive
         return self.config.refresh_models
 
     async def list_models(self) -> list[Model] | None:
@@ -325,13 +339,19 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
         Performs a health check by verifying connectivity to the remote vLLM server.
         This method is used by the Provider API to verify
         that the service is running correctly.
+        Uses the unauthenticated /health endpoint.
         Returns:
 
             HealthResponse: A dictionary containing the health status.
         """
         try:
-            _ = [m async for m in self.client.models.list()]  # Ensure the client is initialized
-            return HealthResponse(status=HealthStatus.OK)
+            base_url = self.get_base_url()
+            health_url = urljoin(base_url, "health")
+
+            async with httpx.AsyncClient() as client:
+                response = await client.get(health_url)
+                response.raise_for_status()
+                return HealthResponse(status=HealthStatus.OK)
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")
 
@@ -340,16 +360,10 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
             raise ValueError("Model store not set")
         return await self.model_store.get_model(model_id)
 
-    def get_api_key(self):
-        return self.config.api_token
-
-    def get_base_url(self):
-        return self.config.url
-
     def get_extra_client_params(self):
         return {"http_client": httpx.AsyncClient(verify=self.config.tls_verify)}
 
-    async def completion(
+    async def completion(  # type: ignore[override]  # Return type more specific than base class  which is allows for both streaming and non-streaming responses.
         self,
         model_id: str,
         content: InterleavedContent,
@@ -411,13 +425,14 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
             tool_config=tool_config,
         )
         if stream:
-            return self._stream_chat_completion(request, self.client)
+            return self._stream_chat_completion_with_client(request, self.client)
         else:
             return await self._nonstream_chat_completion(request, self.client)
 
     async def _nonstream_chat_completion(
         self, request: ChatCompletionRequest, client: AsyncOpenAI
     ) -> ChatCompletionResponse:
+        assert self.client is not None
         params = await self._get_params(request)
         r = await client.chat.completions.create(**params)
         choice = r.choices[0]
@@ -431,9 +446,24 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
         )
         return result
 
-    async def _stream_chat_completion(
+    async def _stream_chat_completion(self, response: Any) -> AsyncIterator[ChatCompletionResponseStreamChunk]:
+        # This method is called from LiteLLMOpenAIMixin.chat_completion
+        # The response parameter contains the litellm response
+        # We need to convert it to our format
+        async def _stream_generator():
+            async for chunk in response:
+                yield chunk
+
+        async for chunk in convert_openai_chat_completion_stream(
+            _stream_generator(), enable_incremental_tool_calls=True
+        ):
+            yield chunk
+
+    async def _stream_chat_completion_with_client(
         self, request: ChatCompletionRequest, client: AsyncOpenAI
     ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
+        """Helper method for streaming with explicit client parameter."""
+        assert self.client is not None
         params = await self._get_params(request)
 
         stream = await client.chat.completions.create(**params)
@@ -445,7 +475,8 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
             yield chunk
 
     async def _nonstream_completion(self, request: CompletionRequest) -> CompletionResponse:
-        assert self.client is not None
+        if self.client is None:
+            raise RuntimeError("Client is not initialized")
         params = await self._get_params(request)
         r = await self.client.completions.create(**params)
         return process_completion_response(r)
@@ -453,7 +484,8 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
     async def _stream_completion(
         self, request: CompletionRequest
     ) -> AsyncGenerator[CompletionResponseStreamChunk, None]:
-        assert self.client is not None
+        if self.client is None:
+            raise RuntimeError("Client is not initialized")
         params = await self._get_params(request)
 
         stream = await self.client.completions.create(**params)
@@ -466,7 +498,7 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
         except ValueError:
             pass  # Ignore statically unknown model, will check live listing
         try:
-            res = await self.client.models.list()
+            res = self.client.models.list()
         except APIConnectionError as e:
             raise ValueError(
                 f"Failed to connect to vLLM at {self.config.url}. Please check if vLLM is running and accessible at that URL."
@@ -512,27 +544,3 @@ class VLLMInferenceAdapter(OpenAIMixin, Inference, ModelsProtocolPrivate):
             "stream": request.stream,
             **options,
         }
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self._get_model(model_id)
-
-        kwargs = {}
-        assert model.model_type == ModelType.embedding
-        assert model.metadata.get("embedding_dimension")
-        kwargs["dimensions"] = model.metadata.get("embedding_dimension")
-        assert all(not content_has_media(content) for content in contents), "VLLM does not support media for embeddings"
-        response = await self.client.embeddings.create(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-            **kwargs,
-        )
-
-        embeddings = [data.embedding for data in response.data]
-        return EmbeddingsResponse(embeddings=embeddings)

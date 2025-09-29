@@ -1,0 +1,224 @@
+---
+title: Kubernetes Deployment Guide
+description: Deploy Llama Stack on Kubernetes clusters with vLLM inference service
+sidebar_label: Kubernetes
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Kubernetes Deployment Guide
+
+Deploy Llama Stack and vLLM servers in a Kubernetes cluster instead of running them locally. This guide covers both local development with Kind and production deployment on AWS EKS.
+
+## Prerequisites
+
+### Local Kubernetes Setup
+
+Create a local Kubernetes cluster via Kind:
+
+```bash
+kind create cluster --image kindest/node:v1.32.0 --name llama-stack-test
+```
+
+Set your Hugging Face token:
+
+```bash
+export HF_TOKEN=$(echo -n "your-hf-token" | base64)
+```
+
+## Quick Deployment
+
+### Step 1: Create Storage and Secrets
+
+```yaml
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vllm-models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hf-token-secret
+type: Opaque
+data:
+  token: $HF_TOKEN
+EOF
+```
+
+### Step 2: Deploy vLLM Server
+
+```yaml
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vllm
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vllm
+    spec:
+      containers:
+      - name: vllm
+        image: vllm/vllm-openai:latest
+        command: ["/bin/sh", "-c"]
+        args: ["vllm serve meta-llama/Llama-3.2-1B-Instruct"]
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token-secret
+              key: token
+        ports:
+          - containerPort: 8000
+        volumeMounts:
+          - name: llama-storage
+            mountPath: /root/.cache/huggingface
+      volumes:
+      - name: llama-storage
+        persistentVolumeClaim:
+          claimName: vllm-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-server
+spec:
+  selector:
+    app.kubernetes.io/name: vllm
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP
+EOF
+```
+
+### Step 3: Configure Llama Stack
+
+Update your run configuration:
+
+```yaml
+providers:
+  inference:
+  - provider_id: vllm
+    provider_type: remote::vllm
+    config:
+      url: http://vllm-server.default.svc.cluster.local:8000/v1
+      max_tokens: 4096
+      api_token: fake
+```
+
+Build container image:
+
+```bash
+tmp_dir=$(mktemp -d) && cat >$tmp_dir/Containerfile.llama-stack-run-k8s <<EOF
+FROM distribution-myenv:dev
+RUN apt-get update && apt-get install -y git
+RUN git clone https://github.com/meta-llama/llama-stack.git /app/llama-stack-source
+ADD ./vllm-llama-stack-run-k8s.yaml /app/config.yaml
+EOF
+podman build -f $tmp_dir/Containerfile.llama-stack-run-k8s -t llama-stack-run-k8s $tmp_dir
+```
+
+### Step 4: Deploy Llama Stack Server
+
+```yaml
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-stack-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llama-stack
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llama-stack
+    spec:
+      containers:
+      - name: llama-stack
+        image: localhost/llama-stack-run-k8s:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "-m", "llama_stack.core.server.server", "--config", "/app/config.yaml"]
+        ports:
+          - containerPort: 5000
+        volumeMounts:
+          - name: llama-storage
+            mountPath: /root/.llama
+      volumes:
+      - name: llama-storage
+        persistentVolumeClaim:
+          claimName: llama-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-stack-service
+spec:
+  selector:
+    app.kubernetes.io/name: llama-stack
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+  type: ClusterIP
+EOF
+```
+
+### Step 5: Test Deployment
+
+```bash
+# Port forward and test
+kubectl port-forward service/llama-stack-service 5000:5000
+llama-stack-client --endpoint http://localhost:5000 inference chat-completion --message "hello, what model are you?"
+```
+
+## Troubleshooting
+
+**Check pod status:**
+```bash
+kubectl get pods -l app.kubernetes.io/name=vllm
+kubectl logs -l app.kubernetes.io/name=vllm
+```
+
+**Test service connectivity:**
+```bash
+kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- curl http://vllm-server:8000/v1/models
+```
+
+## Related Resources
+
+- **[Deployment Overview](/docs/deploying/)** - Overview of deployment options
+- **[Distributions](/docs/distributions)** - Understanding Llama Stack distributions
+- **[Configuration](/docs/distributions/configuration)** - Detailed configuration options

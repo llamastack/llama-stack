@@ -92,11 +92,11 @@ Options:
     -h, --help                 Show this help message
 
 For more information:
-    Documentation: https://llama-stack.readthedocs.io/
-    GitHub: https://github.com/meta-llama/llama-stack
+    Documentation: https://llamastack.github.io/latest/
+    GitHub: https://github.com/llamastack/llama-stack
 
 Report issues:
-    https://github.com/meta-llama/llama-stack/issues
+    https://github.com/llamastack/llama-stack/issues
 EOF
 }
 
@@ -241,8 +241,8 @@ fi
 log ""
 log "🎉 Llama Stack is ready!"
 log "👉  API endpoint: http://localhost:${PORT}"
-log "📖 Documentation: https://llama-stack.readthedocs.io/en/latest/references/index.html"
+log "📖 Documentation: https://llamastack.github.io/latest/references/api_reference/index.html"
 log "💻 To access the llama stack CLI, exec into the container:"
 log "   $ENGINE exec -ti llama-stack bash"
-log "🐛 Report an issue @ https://github.com/meta-llama/llama-stack/issues if you think it's a bug"
+log "🐛 Report an issue @ https://github.com/llamastack/llama-stack/issues if you think it's a bug"
 log ""

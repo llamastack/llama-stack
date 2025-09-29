@@ -8,14 +8,16 @@ from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOp
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import GeminiConfig
-from .models import MODEL_ENTRIES
 
 
 class GeminiInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
+    embedding_model_metadata = {
+        "text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
+    }
+
     def __init__(self, config: GeminiConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
-            MODEL_ENTRIES,
             litellm_provider_name="gemini",
             api_key_from_config=config.api_key,
             provider_data_api_key_field="gemini_api_key",

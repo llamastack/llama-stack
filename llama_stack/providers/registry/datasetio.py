@@ -6,11 +6,10 @@
 
 
 from llama_stack.providers.datatypes import (
-    AdapterSpec,
     Api,
     InlineProviderSpec,
     ProviderSpec,
-    remote_provider_spec,
+    RemoteProviderSpec,
 )
 
 
@@ -25,28 +24,26 @@ def available_providers() -> list[ProviderSpec]:
             api_dependencies=[],
             description="Local filesystem-based dataset I/O provider for reading and writing datasets to local storage.",
         ),
-        remote_provider_spec(
+        RemoteProviderSpec(
             api=Api.datasetio,
-            adapter=AdapterSpec(
-                adapter_type="huggingface",
-                pip_packages=[
-                    "datasets>=4.0.0",
-                ],
-                module="llama_stack.providers.remote.datasetio.huggingface",
-                config_class="llama_stack.providers.remote.datasetio.huggingface.HuggingfaceDatasetIOConfig",
-                description="HuggingFace datasets provider for accessing and managing datasets from the HuggingFace Hub.",
-            ),
+            adapter_type="huggingface",
+            provider_type="remote::huggingface",
+            pip_packages=[
+                "datasets>=4.0.0",
+            ],
+            module="llama_stack.providers.remote.datasetio.huggingface",
+            config_class="llama_stack.providers.remote.datasetio.huggingface.HuggingfaceDatasetIOConfig",
+            description="HuggingFace datasets provider for accessing and managing datasets from the HuggingFace Hub.",
         ),
-        remote_provider_spec(
+        RemoteProviderSpec(
             api=Api.datasetio,
-            adapter=AdapterSpec(
-                adapter_type="nvidia",
-                pip_packages=[
-                    "datasets>=4.0.0",
-                ],
-                module="llama_stack.providers.remote.datasetio.nvidia",
-                config_class="llama_stack.providers.remote.datasetio.nvidia.NvidiaDatasetIOConfig",
-                description="NVIDIA's dataset I/O provider for accessing datasets from NVIDIA's data platform.",
-            ),
+            adapter_type="nvidia",
+            provider_type="remote::nvidia",
+            module="llama_stack.providers.remote.datasetio.nvidia",
+            config_class="llama_stack.providers.remote.datasetio.nvidia.NvidiaDatasetIOConfig",
+            pip_packages=[
+                "datasets>=4.0.0",
+            ],
+            description="NVIDIA's dataset I/O provider for accessing datasets from NVIDIA's data platform.",
         ),
     ]

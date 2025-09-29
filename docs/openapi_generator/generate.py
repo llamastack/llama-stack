@@ -16,7 +16,7 @@ import sys
 import fire
 import ruamel.yaml as yaml
 
-from llama_stack.apis.version import LLAMA_STACK_API_VERSION  # noqa: E402
+from llama_stack.apis.version import LLAMA_STACK_API_V1 # noqa: E402
 from llama_stack.core.stack import LlamaStack  # noqa: E402
 
 from .pyopenapi.options import Options  # noqa: E402
@@ -25,7 +25,7 @@ from .pyopenapi.utility import Specification, validate_api  # noqa: E402
 
 
 def str_presenter(dumper, data):
-    if data.startswith(f"/{LLAMA_STACK_API_VERSION}") or data.startswith(
+    if data.startswith(f"/{LLAMA_STACK_API_V1}") or data.startswith(
         "#/components/schemas/"
     ):
         style = None
@@ -58,7 +58,7 @@ def main(output_dir: str):
             server=Server(url="http://any-hosted-llama-stack.com"),
             info=Info(
                 title="Llama Stack Specification",
-                version=LLAMA_STACK_API_VERSION,
+                version=LLAMA_STACK_API_V1,
                 description="""This is the specification of the Llama Stack that provides
                 a set of endpoints and their corresponding interfaces that are tailored to
                 best leverage Llama Models.""",

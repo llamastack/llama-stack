@@ -1,0 +1,101 @@
+---
+sidebar_position: 1
+title: Welcome to Llama Stack
+description: Llama Stack is the open-source framework for building generative AI applications
+sidebar_label: Intro
+tags:
+  - getting-started
+  - overview
+---
+
+# Welcome to Llama Stack
+
+Llama Stack is the open-source framework for building generative AI applications.
+
+:::tip Llama 4 is here!
+
+Check out [Getting Started with Llama 4](https://colab.research.google.com/github/meta-llama/llama-stack/blob/main/docs/getting_started_llama4.ipynb)
+
+:::
+
+:::tip News
+
+Llama Stack is now available! See the [release notes](https://github.com/meta-llama/llama-stack/releases) for more details.
+
+:::
+
+
+## What is Llama Stack?
+
+Llama Stack defines and standardizes the core building blocks needed to bring generative AI applications to market. It provides a unified set of APIs with implementations from leading service providers, enabling seamless transitions between development and production environments. More specifically, it provides:
+
+- **Unified API layer** for Inference, RAG, Agents, Tools, Safety, Evals, and Telemetry.
+- **Plugin architecture** to support the rich ecosystem of implementations of the different APIs in different environments like local development, on-premises, cloud, and mobile.
+- **Prepackaged verified distributions** which offer a one-stop solution for developers to get started quickly and reliably in any environment
+- **Multiple developer interfaces** like CLI and SDKs for Python, Node, iOS, and Android
+- **Standalone applications** as examples for how to build production-grade AI applications with Llama Stack
+
+<img src="/img/llama-stack.png" alt="Llama Stack" width="400px" />
+
+Our goal is to provide pre-packaged implementations (aka "distributions") which can be run in a variety of deployment environments. LlamaStack can assist you in your entire app development lifecycle - start iterating on local, mobile or desktop and seamlessly transition to on-prem or public cloud deployments. At every point in this transition, the same set of APIs and the same developer experience is available.
+
+## How does Llama Stack work?
+
+Llama Stack consists of a server (with multiple pluggable API providers) and Client SDKs meant to be used in your applications. The server can be run in a variety of environments, including local (inline) development, on-premises, and cloud. The client SDKs are available for Python, Swift, Node, and Kotlin.
+
+## Quick Links
+
+- Ready to build? Check out the [Getting Started Guide](https://llama-stack.github.io/getting_started/quickstart) to get started.
+- Want to contribute? See the [Contributing Guide](https://github.com/llamastack/llama-stack/blob/main/CONTRIBUTING.md).
+- Explore [Example Applications](https://github.com/llamastack/llama-stack-apps) built with Llama Stack.
+
+## Rich Ecosystem Support
+
+Llama Stack provides adapters for popular providers across all API categories:
+
+- **Inference**: Meta Reference, Ollama, Fireworks, Together, NVIDIA, vLLM, AWS Bedrock, OpenAI, Anthropic, and more
+- **Vector Databases**: FAISS, Chroma, Milvus, Postgres, Weaviate, Qdrant, and others
+- **Safety**: Llama Guard, Prompt Guard, Code Scanner, AWS Bedrock
+- **Training & Evaluation**: HuggingFace, TorchTune, NVIDIA NEMO
+
+:::info Provider Details
+For complete provider compatibility and setup instructions, see our [Providers Documentation](https://llamastack.github.io/providers/).
+:::
+
+## Get Started Today
+
+<div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap', margin: '2rem 0'}}>
+  <a href="https://llama-stack.github.io/getting_started/quickstart"
+     style={{
+       background: 'var(--ifm-color-primary)',
+       color: 'white',
+       padding: '0.75rem 1.5rem',
+       borderRadius: '0.5rem',
+       textDecoration: 'none',
+       fontWeight: 'bold'
+     }}>
+    🚀 Quick Start Guide
+  </a>
+  <a href="https://github.com/llamastack/llama-stack-apps"
+     style={{
+       border: '2px solid var(--ifm-color-primary)',
+       color: 'var(--ifm-color-primary)',
+       padding: '0.75rem 1.5rem',
+       borderRadius: '0.5rem',
+       textDecoration: 'none',
+       fontWeight: 'bold'
+     }}>
+    📚 Example Apps
+  </a>
+  <a href="https://github.com/llamastack/llama-stack"
+     style={{
+       border: '2px solid #666',
+       color: '#666',
+       padding: '0.75rem 1.5rem',
+       borderRadius: '0.5rem',
+       textDecoration: 'none',
+       fontWeight: 'bold'
+     }}>
+    ⭐ Star on GitHub
+  </a>
+</div>

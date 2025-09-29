@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import InterleavedContent
 from llama_stack.apis.vector_dbs import VectorDB
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack.schema_utils import json_schema_type, webmethod
@@ -437,7 +438,7 @@ class VectorIO(Protocol):
 
     # this will just block now until chunks are inserted, but it should
     # probably return a Job instance which can be polled for completion
-    @webmethod(route="/vector-io/insert", method="POST")
+    @webmethod(route="/vector-io/insert", method="POST", level=LLAMA_STACK_API_V1)
     async def insert_chunks(
         self,
         vector_db_id: str,
@@ -455,7 +456,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/vector-io/query", method="POST")
+    @webmethod(route="/vector-io/query", method="POST", level=LLAMA_STACK_API_V1)
     async def query_chunks(
         self,
         vector_db_id: str,
@@ -472,7 +473,7 @@ class VectorIO(Protocol):
         ...
 
     # OpenAI Vector Stores API endpoints
-    @webmethod(route="/openai/v1/vector_stores", method="POST")
+    @webmethod(route="/openai/v1/vector_stores", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_create_vector_store(
         self,
         name: str | None = None,
@@ -498,7 +499,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores", method="GET")
+    @webmethod(route="/openai/v1/vector_stores", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_vector_stores(
         self,
         limit: int | None = 20,
@@ -516,7 +517,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="GET")
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_vector_store(
         self,
         vector_store_id: str,
@@ -528,7 +529,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="POST")
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_update_vector_store(
         self,
         vector_store_id: str,
@@ -546,7 +547,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="DELETE")
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_vector_store(
         self,
         vector_store_id: str,
@@ -558,7 +559,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/search", method="POST")
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/search", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_search_vector_store(
         self,
         vector_store_id: str,
@@ -584,7 +585,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="POST")
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
@@ -602,7 +603,7 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="GET")
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_files_in_vector_store(
         self,
         vector_store_id: str,
@@ -624,7 +625,9 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="GET")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1
+    )
     async def openai_retrieve_vector_store_file(
         self,
         vector_store_id: str,
@@ -638,7 +641,11 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content", method="GET")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_retrieve_vector_store_file_contents(
         self,
         vector_store_id: str,
@@ -652,7 +659,9 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="POST")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="POST", level=LLAMA_STACK_API_V1
+    )
     async def openai_update_vector_store_file(
         self,
         vector_store_id: str,
@@ -668,7 +677,9 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="DELETE")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1
+    )
     async def openai_delete_vector_store_file(
         self,
         vector_store_id: str,

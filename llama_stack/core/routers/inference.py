@@ -16,20 +16,15 @@ from pydantic import Field, TypeAdapter
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.inference import (
-    BatchChatCompletionResponse,
-    BatchCompletionResponse,
     ChatCompletionResponse,
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
     CompletionMessage,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     ListOpenAIChatCompletionResponse,
     LogProbConfig,
@@ -50,7 +45,6 @@ from llama_stack.apis.inference import (
     ResponseFormat,
     SamplingParams,
     StopReason,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -273,30 +267,6 @@ class InferenceRouter(Inference):
         )
         return response
 
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        tools: list[ToolDefinition] | None = None,
-        tool_config: ToolConfig | None = None,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchChatCompletionResponse:
-        logger.debug(
-            f"InferenceRouter.batch_chat_completion: {model_id=}, {len(messages_batch)=}, {sampling_params=}, {response_format=}, {logprobs=}",
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.batch_chat_completion(
-            model_id=model_id,
-            messages_batch=messages_batch,
-            tools=tools,
-            tool_config=tool_config,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            logprobs=logprobs,
-        )
-
     async def completion(
         self,
         model_id: str,
@@ -337,39 +307,6 @@ class InferenceRouter(Inference):
         response.metrics = metrics if response.metrics is None else response.metrics + metrics
 
         return response
-
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchCompletionResponse:
-        logger.debug(
-            f"InferenceRouter.batch_completion: {model_id=}, {len(content_batch)=}, {sampling_params=}, {response_format=}, {logprobs=}",
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.batch_completion(model_id, content_batch, sampling_params, response_format, logprobs)
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        logger.debug(f"InferenceRouter.embeddings: {model_id}")
-        await self._get_model(model_id, ModelType.embedding)
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.embeddings(
-            model_id=model_id,
-            contents=contents,
-            text_truncation=text_truncation,
-            output_dimension=output_dimension,
-            task_type=task_type,
-        )
 
     async def openai_completion(
         self,

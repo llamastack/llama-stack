@@ -8,7 +8,7 @@ import asyncio
 import contextvars
 import logging  # allow-direct-logging
 import queue
-import random
+import secrets
 import sys
 import threading
 import time
@@ -76,16 +76,16 @@ def span_id_to_str(span_id: int) -> str:
 
 
 def generate_span_id() -> str:
-    span_id = random.getrandbits(64)
+    span_id = secrets.randbits(64)
     while span_id == INVALID_SPAN_ID:
-        span_id = random.getrandbits(64)
+        span_id = secrets.randbits(64)
     return span_id_to_str(span_id)
 
 
 def generate_trace_id() -> str:
-    trace_id = random.getrandbits(128)
+    trace_id = secrets.randbits(128)
     while trace_id == INVALID_TRACE_ID:
-        trace_id = random.getrandbits(128)
+        trace_id = secrets.randbits(128)
     return trace_id_to_str(trace_id)
 
 
