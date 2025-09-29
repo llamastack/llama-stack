@@ -18,8 +18,6 @@ from llama_stack.apis.common.content_types import (
     ToolCallParseStatus,
 )
 from llama_stack.apis.inference import (
-    BatchChatCompletionResponse,
-    BatchCompletionResponse,
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatCompletionResponseEvent,
@@ -219,41 +217,6 @@ class MetaReferenceInferenceImpl(
             results = await self._nonstream_completion([request])
             return results[0]
 
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchCompletionResponse:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        if logprobs:
-            assert logprobs.top_k == 1, f"Unexpected top_k={logprobs.top_k}"
-
-        content_batch = [
-            augment_content_with_response_format_prompt(response_format, content) for content in content_batch
-        ]
-
-        request_batch = []
-        for content in content_batch:
-            request = CompletionRequest(
-                model=model_id,
-                content=content,
-                sampling_params=sampling_params,
-                response_format=response_format,
-                stream=stream,
-                logprobs=logprobs,
-            )
-            self.check_model(request)
-            request = await convert_request_to_raw(request)
-            request_batch.append(request)
-
-        results = await self._nonstream_completion(request_batch)
-        return BatchCompletionResponse(batch=results)
-
     async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
         tokenizer = self.generator.formatter.tokenizer
 
@@ -398,49 +361,6 @@ class MetaReferenceInferenceImpl(
         else:
             results = await self._nonstream_chat_completion([request])
             return results[0]
-
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        tools: list[ToolDefinition] | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> BatchChatCompletionResponse:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        if logprobs:
-            assert logprobs.top_k == 1, f"Unexpected top_k={logprobs.top_k}"
-
-        # wrapper request to make it easier to pass around (internal only, not exposed to API)
-        request_batch = []
-        for messages in messages_batch:
-            request = ChatCompletionRequest(
-                model=model_id,
-                messages=messages,
-                sampling_params=sampling_params,
-                tools=tools or [],
-                response_format=response_format,
-                logprobs=logprobs,
-                tool_config=tool_config or ToolConfig(),
-            )
-            self.check_model(request)
-
-            # augment and rewrite messages depending on the model
-            request.messages = chat_completion_request_to_messages(request, self.llama_model.core_model_id.value)
-            # download media and convert to raw content so we can send it to the model
-            request = await convert_request_to_raw(request)
-            request_batch.append(request)
-
-        if self.config.create_distributed_process_group:
-            if SEMAPHORE.locked():
-                raise RuntimeError("Only one concurrent request is supported")
-
-        results = await self._nonstream_chat_completion(request_batch)
-        return BatchChatCompletionResponse(batch=results)
 
     async def _nonstream_chat_completion(
         self, request_batch: list[ChatCompletionRequest]

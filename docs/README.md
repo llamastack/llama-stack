@@ -1,14 +1,17 @@
 # Llama Stack Documentation
 
-Here's a collection of comprehensive guides, examples, and resources for building AI applications with Llama Stack. For the complete documentation, visit our [Github page](https://llamastack.github.io/latest/getting_started/index.html).
+Here's a collection of comprehensive guides, examples, and resources for building AI applications with Llama Stack. For the complete documentation, visit our [Github page](https://llamastack.github.io/getting_started/quickstart).
 
 ## Render locally
 
-From the llama-stack root directory, run the following command to render the docs locally:
+From the llama-stack `docs/` directory, run the following commands to render the docs locally:
 ```bash
-uv run --group docs sphinx-autobuild docs/source docs/build/html --write-all
+npm install
+npm run gen-api-docs all
+npm run build
+npm run serve
 ```
-You can open up the docs in your browser at http://localhost:8000
+You can open up the docs in your browser at http://localhost:3000
 
 ## Content
 

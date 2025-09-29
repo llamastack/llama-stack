@@ -13,8 +13,8 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened]
     paths:
-      - 'docs/_static/llama-stack-spec.yaml'
-      - 'docs/_static/llama-stack-spec.html'
+      - 'docs/static/llama-stack-spec.yaml'
+      - 'docs/static/llama-stack-spec.html'
       - '.github/workflows/conformance.yml' # This workflow itself
 
 concurrency:
@@ -43,7 +43,7 @@ jobs:
       # Cache oasdiff to avoid checksum failures and speed up builds
       - name: Cache oasdiff
         id: cache-oasdiff
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ~/oasdiff
           key: oasdiff-${{ runner.os }}
@@ -66,6 +66,6 @@ jobs:
       # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
       - name: Run OpenAPI Breaking Change Diff
         run: |
-          oasdiff breaking --fail-on ERR base/docs/_static/llama-stack-spec.yaml docs/_static/llama-stack-spec.yaml --match-path '^/v1/openai/v1' \
+          oasdiff breaking --fail-on ERR base/docs/static/llama-stack-spec.yaml docs/static/llama-stack-spec.yaml --match-path '^/v1/openai/v1' \
           --match-path '^/v1/vector-io' \
           --match-path '^/v1/vector-dbs'

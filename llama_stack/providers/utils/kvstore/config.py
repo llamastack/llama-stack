@@ -28,7 +28,7 @@ class CommonConfig(BaseModel):
 
 
 class RedisKVStoreConfig(CommonConfig):
-    type: Literal[KVStoreType.redis.value] = KVStoreType.redis.value
+    type: Literal["redis"] = KVStoreType.redis.value
     host: str = "localhost"
     port: int = 6379
 
@@ -50,7 +50,7 @@ class RedisKVStoreConfig(CommonConfig):
 
 
 class SqliteKVStoreConfig(CommonConfig):
-    type: Literal[KVStoreType.sqlite.value] = KVStoreType.sqlite.value
+    type: Literal["sqlite"] = KVStoreType.sqlite.value
     db_path: str = Field(
         default=(RUNTIME_BASE_DIR / "kvstore.db").as_posix(),
         description="File path for the sqlite database",
@@ -69,7 +69,7 @@ class SqliteKVStoreConfig(CommonConfig):
 
 
 class PostgresKVStoreConfig(CommonConfig):
-    type: Literal[KVStoreType.postgres.value] = KVStoreType.postgres.value
+    type: Literal["postgres"] = KVStoreType.postgres.value
     host: str = "localhost"
     port: int = 5432
     db: str = "llamastack"
@@ -113,11 +113,11 @@ class PostgresKVStoreConfig(CommonConfig):
 
 
 class MongoDBKVStoreConfig(CommonConfig):
-    type: Literal[KVStoreType.mongodb.value] = KVStoreType.mongodb.value
+    type: Literal["mongodb"] = KVStoreType.mongodb.value
     host: str = "localhost"
     port: int = 27017
     db: str = "llamastack"
-    user: str = None
+    user: str | None = None
     password: str | None = None
     collection_name: str = "llamastack_kvstore"
 

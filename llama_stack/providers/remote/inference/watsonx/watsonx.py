@@ -76,7 +76,7 @@ logger = get_logger(name=__name__, category="inference::watsonx")
 
 class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
     def __init__(self, config: WatsonXConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES)
+        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
 
         logger.info(f"Initializing watsonx InferenceAdapter({config.url})...")
         self._config = config

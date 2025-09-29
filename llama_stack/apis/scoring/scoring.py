@@ -9,6 +9,7 @@ from typing import Any, Protocol, runtime_checkable
 from pydantic import BaseModel
 
 from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnParams
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 # mapping of metric to value
@@ -61,7 +62,7 @@ class ScoringFunctionStore(Protocol):
 class Scoring(Protocol):
     scoring_function_store: ScoringFunctionStore
 
-    @webmethod(route="/scoring/score-batch", method="POST")
+    @webmethod(route="/scoring/score-batch", method="POST", level=LLAMA_STACK_API_V1)
     async def score_batch(
         self,
         dataset_id: str,
@@ -77,7 +78,7 @@ class Scoring(Protocol):
         """
         ...
 
-    @webmethod(route="/scoring/score", method="POST")
+    @webmethod(route="/scoring/score", method="POST", level=LLAMA_STACK_API_V1)
     async def score(
         self,
         input_rows: list[dict[str, Any]],

@@ -158,7 +158,7 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
 
 
 def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
-    """Generate markdown documentation for a provider."""
+    """Generate MDX documentation for a provider."""
     provider_type = provider_spec.provider_type
     config_class = provider_spec.config_class
 
@@ -166,10 +166,7 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
     if "error" in config_info:
         progress.print(config_info["error"])
 
-    md_lines = []
-    md_lines.append(f"# {provider_type}")
-    md_lines.append("")
-
+    # Extract description for frontmatter
     description = ""
     if hasattr(provider_spec, "description") and provider_spec.description:
         description = provider_spec.description
@@ -181,6 +178,37 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
         description = provider_spec.adapter.description
     elif config_info.get("docstring"):
         description = config_info["docstring"]
+
+    # Create sidebar label (clean up provider_type for display)
+    sidebar_label = provider_type.replace("::", " - ").replace("_", " ")
+    if sidebar_label.startswith("inline - "):
+        sidebar_label = sidebar_label[9:].title()  # Remove "inline - " prefix and title case
+    else:
+        sidebar_label = sidebar_label.title()
+
+    md_lines = []
+
+    # Add YAML frontmatter
+    md_lines.append("---")
+    if description:
+        # Handle multi-line descriptions in YAML - keep it simple for single line
+        if "\n" in description.strip():
+            md_lines.append("description: |")
+            for line in description.strip().split("\n"):
+                # Avoid trailing whitespace by only adding spaces to non-empty lines
+                md_lines.append(f"  {line}" if line.strip() else "")
+        else:
+            # For single line descriptions, format properly for YAML
+            clean_desc = description.strip().replace('"', '\\"')
+            md_lines.append(f'description: "{clean_desc}"')
+    md_lines.append(f"sidebar_label: {sidebar_label}")
+    md_lines.append(f"title: {provider_type}")
+    md_lines.append("---")
+    md_lines.append("")
+
+    # Add main title
+    md_lines.append(f"# {provider_type}")
+    md_lines.append("")
 
     if description:
         md_lines.append("## Description")
@@ -198,16 +226,51 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
             field_type = field_info["type"].replace("|", "\\|")
             required = "Yes" if field_info["required"] else "No"
             default = str(field_info["default"]) if field_info["default"] is not None else ""
-            description = field_info["description"] or ""
 
-            md_lines.append(f"| `{field_name}` | `{field_type}` | {required} | {default} | {description} |")
+            # Handle multiline default values and escape problematic characters for MDX
+            if "\n" in default:
+                # For multiline defaults, escape angle brackets and use <br/> for line breaks
+                lines = default.split("\n")
+                escaped_lines = []
+                for line in lines:
+                    if line.strip():
+                        # Escape angle brackets and wrap template tokens in backticks
+                        escaped_line = line.strip().replace("<", "&lt;").replace(">", "&gt;")
+                        if ("{" in escaped_line and "}" in escaped_line) or (
+                            "&lt;|" in escaped_line and "|&gt;" in escaped_line
+                        ):
+                            escaped_lines.append(f"`{escaped_line}`")
+                        else:
+                            escaped_lines.append(escaped_line)
+                    else:
+                        escaped_lines.append("")
+                default = "<br/>".join(escaped_lines)
+            else:
+                # For single line defaults, escape angle brackets first
+                escaped_default = default.replace("<", "&lt;").replace(">", "&gt;")
+                # Then wrap template tokens in backticks
+                if ("{" in escaped_default and "}" in escaped_default) or (
+                    "&lt;|" in escaped_default and "|&gt;" in escaped_default
+                ):
+                    default = f"`{escaped_default}`"
+                else:
+                    # Apply additional escaping for curly braces
+                    default = escaped_default.replace("{", "&#123;").replace("}", "&#125;")
+
+            description_text = field_info["description"] or ""
+            # Escape curly braces in description text for MDX compatibility
+            description_text = description_text.replace("{", "&#123;").replace("}", "&#125;")
+
+            md_lines.append(f"| `{field_name}` | `{field_type}` | {required} | {default} | {description_text} |")
 
         md_lines.append("")
 
         if config_info.get("accepts_extra_config"):
+            md_lines.append(":::note")
             md_lines.append(
-                "```{note}\n This configuration class accepts additional fields beyond those listed above. You can pass any additional configuration options that will be forwarded to the underlying provider.\n ```\n"
+                "This configuration class accepts additional fields beyond those listed above. You can pass any additional configuration options that will be forwarded to the underlying provider."
             )
+            md_lines.append(":::")
             md_lines.append("")
 
     if config_info.get("sample_config"):
@@ -240,24 +303,61 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
                         return obj
 
                 sample_config_dict = convert_pydantic_to_dict(sample_config)
-                md_lines.append(yaml.dump(sample_config_dict, default_flow_style=False, sort_keys=False))
+                # Strip trailing newlines from yaml.dump to prevent extra blank lines
+                yaml_output = yaml.dump(sample_config_dict, default_flow_style=False, sort_keys=False).rstrip()
+                md_lines.append(yaml_output)
             else:
                 md_lines.append("# No sample configuration available.")
         except Exception as e:
             md_lines.append(f"# Error generating sample config: {str(e)}")
         md_lines.append("```")
-        md_lines.append("")
 
     if hasattr(provider_spec, "deprecation_warning") and provider_spec.deprecation_warning:
         md_lines.append("## Deprecation Notice")
         md_lines.append("")
-        md_lines.append(f"```{{warning}}\n{provider_spec.deprecation_warning}\n```")
-        md_lines.append("")
+        md_lines.append(":::warning")
+        md_lines.append(provider_spec.deprecation_warning)
+        md_lines.append(":::")
 
     if hasattr(provider_spec, "deprecation_error") and provider_spec.deprecation_error:
         md_lines.append("## Deprecation Error")
         md_lines.append("")
-        md_lines.append(f"❌ **Error**: {provider_spec.deprecation_error}")
+        md_lines.append(":::danger")
+        md_lines.append(f"**Error**: {provider_spec.deprecation_error}")
+        md_lines.append(":::")
+
+    return "\n".join(md_lines) + "\n"
+
+
+def generate_index_docs(api_name: str, api_docstring: str | None, provider_entries: list) -> str:
+    """Generate MDX documentation for the index file."""
+    # Create sidebar label for the API
+    sidebar_label = api_name.replace("_", " ").title()
+
+    md_lines = []
+
+    # Add YAML frontmatter for index
+    md_lines.append("---")
+    if api_docstring:
+        clean_desc = api_docstring.strip().replace('"', '\\"')
+        md_lines.append(f'description: "{clean_desc}"')
+    md_lines.append(f"sidebar_label: {sidebar_label}")
+    md_lines.append(f"title: {api_name.title()}")
+    md_lines.append("---")
+    md_lines.append("")
+
+    # Add main content
+    md_lines.append(f"# {api_name.title()}")
+    md_lines.append("")
+    md_lines.append("## Overview")
+    md_lines.append("")
+
+    if api_docstring:
+        cleaned_docstring = api_docstring.strip()
+        md_lines.append(f"{cleaned_docstring}")
+        md_lines.append("")
+
+    md_lines.append(f"This section contains documentation for all available providers for the **{api_name}** API.")
 
     return "\n".join(md_lines) + "\n"
 
@@ -272,41 +372,35 @@ def process_provider_registry(progress, change_tracker: ChangedPathTracker) -> N
         for api, providers in provider_registry.items():
             api_name = api.value
 
-            doc_output_dir = REPO_ROOT / "docs" / "source" / "providers" / api_name
+            doc_output_dir = REPO_ROOT / "docs" / "docs" / "providers" / api_name
             doc_output_dir.mkdir(parents=True, exist_ok=True)
             change_tracker.add_paths(doc_output_dir)
 
-            index_content = []
-            index_content.append(f"# {api_name.title()}\n")
-            index_content.append("## Overview\n")
-
             api_docstring = get_api_docstring(api_name)
-            if api_docstring:
-                cleaned_docstring = api_docstring.strip()
-                index_content.append(f"{cleaned_docstring}\n")
-
-            index_content.append(
-                f"This section contains documentation for all available providers for the **{api_name}** API.\n"
-            )
-
-            index_content.append("## Providers\n")
-
-            toctree_entries = []
+            provider_entries = []
 
             for provider_type, provider in sorted(providers.items()):
                 filename = provider_type.replace("::", "_").replace(":", "_")
-                provider_doc_file = doc_output_dir / f"{filename}.md"
+                provider_doc_file = doc_output_dir / f"{filename}.mdx"
 
                 provider_docs = generate_provider_docs(progress, provider, api_name)
 
                 provider_doc_file.write_text(provider_docs)
                 change_tracker.add_paths(provider_doc_file)
-                toctree_entries.append(f"{filename}")
 
-            index_content.append(f"```{{toctree}}\n:maxdepth: 1\n\n{'\n'.join(toctree_entries)}\n```\n")
+                # Create display name for the index
+                display_name = provider_type.replace("::", " - ").replace("_", " ")
+                if display_name.startswith("inline - "):
+                    display_name = display_name[9:].title()
+                else:
+                    display_name = display_name.title()
 
-            index_file = doc_output_dir / "index.md"
-            index_file.write_text("\n".join(index_content))
+                provider_entries.append({"filename": filename, "display_name": display_name})
+
+            # Generate index file with frontmatter
+            index_content = generate_index_docs(api_name, api_docstring, provider_entries)
+            index_file = doc_output_dir / "index.mdx"
+            index_file.write_text(index_content)
             change_tracker.add_paths(index_file)
 
     except Exception as e:

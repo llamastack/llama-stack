@@ -8,14 +8,24 @@ from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOp
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import AnthropicConfig
-from .models import MODEL_ENTRIES
 
 
 class AnthropicInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
+    # source: https://docs.claude.com/en/docs/build-with-claude/embeddings
+    # TODO: add support for voyageai, which is where these models are hosted
+    # embedding_model_metadata = {
+    #     "voyage-3-large": {"embedding_dimension": 1024, "context_length": 32000},  # supports dimensions 256, 512, 1024, 2048
+    #     "voyage-3.5": {"embedding_dimension": 1024, "context_length": 32000},  # supports dimensions 256, 512, 1024, 2048
+    #     "voyage-3.5-lite": {"embedding_dimension": 1024, "context_length": 32000},  # supports dimensions 256, 512, 1024, 2048
+    #     "voyage-code-3": {"embedding_dimension": 1024, "context_length": 32000},  # supports dimensions 256, 512, 1024, 2048
+    #     "voyage-finance-2": {"embedding_dimension": 1024, "context_length": 32000},
+    #     "voyage-law-2": {"embedding_dimension": 1024, "context_length": 16000},
+    #     "voyage-multimodal-3": {"embedding_dimension": 1024, "context_length": 32000},
+    # }
+
     def __init__(self, config: AnthropicConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
-            MODEL_ENTRIES,
             litellm_provider_name="anthropic",
             api_key_from_config=config.api_key,
             provider_data_api_key_field="anthropic_api_key",

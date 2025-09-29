@@ -8,6 +8,7 @@ from typing import Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 try:
@@ -42,7 +43,7 @@ class Batches(Protocol):
     Note: This API is currently under active development and may undergo changes.
     """
 
-    @webmethod(route="/openai/v1/batches", method="POST")
+    @webmethod(route="/openai/v1/batches", method="POST", level=LLAMA_STACK_API_V1)
     async def create_batch(
         self,
         input_file_id: str,
@@ -62,7 +63,7 @@ class Batches(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/batches/{batch_id}", method="GET")
+    @webmethod(route="/openai/v1/batches/{batch_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def retrieve_batch(self, batch_id: str) -> BatchObject:
         """Retrieve information about a specific batch.
 
@@ -71,7 +72,7 @@ class Batches(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/batches/{batch_id}/cancel", method="POST")
+    @webmethod(route="/openai/v1/batches/{batch_id}/cancel", method="POST", level=LLAMA_STACK_API_V1)
     async def cancel_batch(self, batch_id: str) -> BatchObject:
         """Cancel a batch that is in progress.
 
@@ -80,7 +81,7 @@ class Batches(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/batches", method="GET")
+    @webmethod(route="/openai/v1/batches", method="GET", level=LLAMA_STACK_API_V1)
     async def list_batches(
         self,
         after: str | None = None,

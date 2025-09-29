@@ -10,6 +10,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel
 
 from llama_stack.apis.inference import Message
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
@@ -59,7 +60,7 @@ class SyntheticDataGenerationResponse(BaseModel):
 
 
 class SyntheticDataGeneration(Protocol):
-    @webmethod(route="/synthetic-data-generation/generate")
+    @webmethod(route="/synthetic-data-generation/generate", level=LLAMA_STACK_API_V1)
     def synthetic_data_generate(
         self,
         dialogs: list[Message],
