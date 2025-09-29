@@ -568,6 +568,7 @@ class StreamingResponseOrchestrator:
                                 description=param.description,
                                 required=param.required,
                                 default=param.default,
+                                items=param.items,
                             )
                             for param in t.parameters
                         },
