@@ -12,356 +12,371 @@ import TabItem from '@theme/TabItem';
 
 RAG enables your applications to reference and recall information from previous interactions or external documents.
 
-## Architecture Overview
+Llama Stack now uses a modern, OpenAI-compatible API pattern for RAG:
+1. **Files API**: Upload documents using `client.files.create()`
+2. **Vector Stores API**: Create and manage vector stores with `client.vector_stores.create()`
+3. **Responses API**: Query documents using `client.responses.create()` with the `file_search` tool
 
-Llama Stack organizes the APIs that enable RAG into three layers:
+This new approach provides better compatibility with OpenAI's ecosystem and is the recommended way to implement RAG in Llama Stack.
 
-1. **Lower-Level APIs**: Deal with raw storage and retrieval. These include Vector IO, KeyValue IO (coming soon) and Relational IO (also coming soon)
-2. **RAG Tool**: A first-class tool as part of the [Tools API](./tools) that allows you to ingest documents (from URLs, files, etc) with various chunking strategies and query them smartly
-3. **Agents API**: The top-level [Agents API](./agent) that allows you to create agents that can use the tools to answer questions, perform tasks, and more
+<img src="/img/rag_llama_stack.png" alt="RAG System" width="50%" />
 
-![RAG System Architecture](/img/rag.png)
+## Prerequisites
 
-The RAG system uses lower-level storage for different types of data:
-- **Vector IO**: For semantic search and retrieval
-- **Key-Value and Relational IO**: For structured data storage
-
-:::info[Future Storage Types]
-We may add more storage types like Graph IO in the future.
-:::
-
-## Setting up Vector Databases
-
-For this guide, we will use [Ollama](https://ollama.com/) as the inference provider. Ollama is an LLM runtime that allows you to run Llama models locally.
-
-Here's how to set up a vector database for RAG:
+For this guide, we will use [Ollama](https://ollama.com/) as the inference provider.
+Ollama is an LLM runtime that allows you to run Llama models locally.
 
 ```python
-# Create HTTP client
 import os
 from llama_stack_client import LlamaStackClient
+from io import BytesIO
 
 client = LlamaStackClient(base_url=f"http://localhost:{os.environ['LLAMA_STACK_PORT']}")
-
-# Register a vector database
-vector_db_id = "my_documents"
-response = client.vector_dbs.register(
-    vector_db_id=vector_db_id,
-    embedding_model="all-MiniLM-L6-v2",
-    embedding_dimension=384,
-    provider_id="faiss",
-)
 ```
 
-## Document Ingestion
+## Step 1: Upload Documents Using Files API
 
-You can ingest documents into the vector database using two methods: directly inserting pre-chunked documents or using the RAG Tool.
-
-### Direct Document Insertion
+The first step is to upload your documents using the Files API. Documents can be plain text, PDFs, or other file types.
 
 <Tabs>
-<TabItem value="basic" label="Basic Insertion">
+<TabItem value="text" label="Upload Text Documents">
 
 ```python
-# You can insert a pre-chunked document directly into the vector db
-chunks = [
-    {
-        "content": "Your document text here",
-        "mime_type": "text/plain",
-        "metadata": {
-            "document_id": "doc1",
-            "author": "Jane Doe",
-        },
-    },
+# Example documents with metadata
+docs = [
+    ("Acme ships globally in 3-5 business days.", {"title": "Shipping Policy"}),
+    ("Returns are accepted within 30 days of purchase.", {"title": "Returns Policy"}),
+    ("Support is available 24/7 via chat and email.", {"title": "Support"}),
 ]
-client.vector_io.insert(vector_db_id=vector_db_id, chunks=chunks)
+
+# Upload each document and collect file IDs
+file_ids = []
+for content, metadata in docs:
+    with BytesIO(content.encode()) as file_buffer:
+        # Set a descriptive filename
+        file_buffer.name = f"{metadata['title'].replace(' ', '_').lower()}.txt"
+
+        # Upload the file
+        create_file_response = client.files.create(
+            file=file_buffer,
+            purpose="assistants"
+        )
+        print(f"Uploaded: {create_file_response.id}")
+        file_ids.append(create_file_response.id)
 ```
 
 </TabItem>
-<TabItem value="embeddings" label="With Precomputed Embeddings">
-
-If you decide to precompute embeddings for your documents, you can insert them directly into the vector database by including the embedding vectors in the chunk data. This is useful if you have a separate embedding service or if you want to customize the ingestion process.
+<TabItem value="files" label="Upload Files from Disk">
 
 ```python
-chunks_with_embeddings = [
-    {
-        "content": "First chunk of text",
-        "mime_type": "text/plain",
-        "embedding": [0.1, 0.2, 0.3, ...],  # Your precomputed embedding vector
-        "metadata": {"document_id": "doc1", "section": "introduction"},
-    },
-    {
-        "content": "Second chunk of text",
-        "mime_type": "text/plain",
-        "embedding": [0.2, 0.3, 0.4, ...],  # Your precomputed embedding vector
-        "metadata": {"document_id": "doc1", "section": "methodology"},
-    },
-]
-client.vector_io.insert(vector_db_id=vector_db_id, chunks=chunks_with_embeddings)
+# Upload a file from your local filesystem
+with open("policy_document.pdf", "rb") as f:
+    file_response = client.files.create(
+        file=f,
+        purpose="assistants"
+    )
+    file_ids.append(file_response.id)
 ```
 
-:::warning[Embedding Dimensions]
-When providing precomputed embeddings, ensure the embedding dimension matches the `embedding_dimension` specified when registering the vector database.
-:::
+</TabItem>
+<TabItem value="batch" label="Upload Multiple Documents">
+
+```python
+# Batch upload multiple documents
+document_paths = [
+    "docs/shipping.txt",
+    "docs/returns.txt",
+    "docs/support.txt"
+]
+
+file_ids = []
+for path in document_paths:
+    with open(path, "rb") as f:
+        response = client.files.create(file=f, purpose="assistants")
+        file_ids.append(response.id)
+        print(f"Uploaded {path}: {response.id}")
+```
 
 </TabItem>
 </Tabs>
 
-### Document Retrieval
+## Step 2: Create a Vector Store
 
-You can query the vector database to retrieve documents based on their embeddings.
+Once you have uploaded your documents, create a vector store that will index them for semantic search.
 
 ```python
-# You can then query for these chunks
-chunks_response = client.vector_io.query(
-    vector_db_id=vector_db_id,
-    query="What do you know about..."
+# Create vector store with uploaded files
+vector_store = client.vector_stores.create(
+    name="acme_docs",
+    file_ids=file_ids,
+    embedding_model="sentence-transformers/all-MiniLM-L6-v2",
+    embedding_dimension=384,
+    provider_id="faiss"
 )
+
+print(f"Created vector store: {vector_store.name} (ID: {vector_store.id})")
 ```
 
-## Using the RAG Tool
+### Configuration Options
 
-:::danger[Deprecation Notice]
-The RAG Tool is being deprecated in favor of directly using the OpenAI-compatible Search API. We recommend migrating to the OpenAI APIs for better compatibility and future support.
-:::
+- **name**: A descriptive name for your vector store
+- **file_ids**: List of file IDs to include in the vector store
+- **embedding_model**: The model to use for generating embeddings (e.g., "sentence-transformers/all-MiniLM-L6-v2", "all-MiniLM-L6-v2")
+- **embedding_dimension**: Dimension of the embedding vectors (e.g., 384 for MiniLM, 768 for BERT)
+- **provider_id**: The vector database backend (e.g., "faiss", "chroma")
 
-A better way to ingest documents is to use the RAG Tool. This tool allows you to ingest documents from URLs, files, etc. and automatically chunks them into smaller pieces. More examples for how to format a RAGDocument can be found in the [appendix](#more-ragdocument-examples).
+## Step 3: Query the Vector Store
 
-### OpenAI API Integration & Migration
+Use the Responses API with the `file_search` tool to query your documents.
 
-The RAG tool has been updated to use OpenAI-compatible APIs. This provides several benefits:
-
-- **Files API Integration**: Documents are now uploaded using OpenAI's file upload endpoints
-- **Vector Stores API**: Vector storage operations use OpenAI's vector store format with configurable chunking strategies
-- **Error Resilience**: When processing multiple documents, individual failures are logged but don't crash the operation. Failed documents are skipped while successful ones continue processing.
-
-### Migration Path
-
-We recommend migrating to the OpenAI-compatible Search API for:
-
-1. **Better OpenAI Ecosystem Integration**: Direct compatibility with OpenAI tools and workflows including the Responses API
-2. **Future-Proof**: Continued support and feature development
-3. **Full OpenAI Compatibility**: Vector Stores, Files, and Search APIs are fully compatible with OpenAI's Responses API
-
-The OpenAI APIs are used under the hood, so you can continue to use your existing RAG Tool code with minimal changes. However, we recommend updating your code to use the new OpenAI-compatible APIs for better long-term support. If any documents fail to process, they will be logged in the response but will not cause the entire operation to fail.
-
-### RAG Tool Example
+<Tabs>
+<TabItem value="single" label="Single Vector Store">
 
 ```python
-from llama_stack_client import RAGDocument
+query = "How long does shipping take?"
 
-urls = ["memory_optimizations.rst", "chat.rst", "llama3.rst"]
-documents = [
-    RAGDocument(
-        document_id=f"num-{i}",
-        content=f"https://raw.githubusercontent.com/pytorch/torchtune/main/docs/source/tutorials/{url}",
-        mime_type="text/plain",
-        metadata={},
-    )
-    for i, url in enumerate(urls)
-]
-
-client.tool_runtime.rag_tool.insert(
-    documents=documents,
-    vector_db_id=vector_db_id,
-    chunk_size_in_tokens=512,
-)
-
-# Query documents
-results = client.tool_runtime.rag_tool.query(
-    vector_db_ids=[vector_db_id],
-    content="What do you know about...",
-)
-```
-
-### Custom Context Configuration
-
-You can configure how the RAG tool adds metadata to the context if you find it useful for your application:
-
-```python
-# Query documents with custom template
-results = client.tool_runtime.rag_tool.query(
-    vector_db_ids=[vector_db_id],
-    content="What do you know about...",
-    query_config={
-        "chunk_template": "Result {index}\nContent: {chunk.content}\nMetadata: {metadata}\n",
-    },
-)
-```
-
-## Building RAG-Enhanced Agents
-
-One of the most powerful patterns is combining agents with RAG capabilities. Here's a complete example:
-
-### Agent with Knowledge Search
-
-```python
-from llama_stack_client import Agent
-
-# Create agent with memory
-agent = Agent(
-    client,
+# Search the vector store
+file_search_response = client.responses.create(
     model="meta-llama/Llama-3.3-70B-Instruct",
-    instructions="You are a helpful assistant",
+    input=query,
     tools=[
         {
-            "name": "builtin::rag/knowledge_search",
-            "args": {
-                "vector_db_ids": [vector_db_id],
-                # Defaults
-                "query_config": {
-                    "chunk_size_in_tokens": 512,
-                    "chunk_overlap_in_tokens": 0,
-                    "chunk_template": "Result {index}\nContent: {chunk.content}\nMetadata: {metadata}\n",
-                },
-            },
-        }
+            "type": "file_search",
+            "vector_store_ids": [vector_store.id],
+        },
     ],
 )
-session_id = agent.create_session("rag_session")
 
-# Ask questions about documents in the vector db, and the agent will query the db to answer the question.
-response = agent.create_turn(
-    messages=[{"role": "user", "content": "How to optimize memory in PyTorch?"}],
-    session_id=session_id,
-)
-```
-
-:::tip[Agent Instructions]
-The `instructions` field in the `AgentConfig` can be used to guide the agent's behavior. It is important to experiment with different instructions to see what works best for your use case.
-:::
-
-### Document-Aware Conversations
-
-You can also pass documents along with the user's message and ask questions about them:
-
-```python
-# Initial document ingestion
-response = agent.create_turn(
-    messages=[
-        {"role": "user", "content": "I am providing some documents for reference."}
-    ],
-    documents=[
-        {
-            "content": "https://raw.githubusercontent.com/pytorch/torchtune/main/docs/source/tutorials/memory_optimizations.rst",
-            "mime_type": "text/plain",
-        }
-    ],
-    session_id=session_id,
-)
-
-# Query with RAG
-response = agent.create_turn(
-    messages=[{"role": "user", "content": "What are the key topics in the documents?"}],
-    session_id=session_id,
-)
-```
-
-### Viewing Agent Responses
-
-You can print the response with the following:
-
-```python
-from llama_stack_client import AgentEventLogger
-
-for log in AgentEventLogger().log(response):
-    log.print()
-```
-
-## Vector Database Management
-
-### Unregistering Vector DBs
-
-If you need to clean up and unregister vector databases, you can do so as follows:
-
-<Tabs>
-<TabItem value="single" label="Single Database">
-
-```python
-# Unregister a specified vector database
-vector_db_id = "my_vector_db_id"
-print(f"Unregistering vector database: {vector_db_id}")
-client.vector_dbs.unregister(vector_db_id=vector_db_id)
+print(file_search_response)
 ```
 
 </TabItem>
-<TabItem value="all" label="All Databases">
+<TabItem value="multiple" label="Multiple Vector Stores">
+
+You can search across multiple vector stores simultaneously:
 
 ```python
-# Unregister all vector databases
-for vector_db_id in client.vector_dbs.list():
-    print(f"Unregistering vector database: {vector_db_id.identifier}")
-    client.vector_dbs.unregister(vector_db_id=vector_db_id.identifier)
+file_search_response = client.responses.create(
+    model="meta-llama/Llama-3.3-70B-Instruct",
+    input="What are your policies?",
+    tools=[
+        {
+            "type": "file_search",
+            "vector_store_ids": [
+                vector_store_1.id,
+                vector_store_2.id,
+                vector_store_3.id
+            ],
+        },
+    ],
+)
 ```
 
 </TabItem>
 </Tabs>
+
+## Managing Vector Stores
+
+### List All Vector Stores
+
+```python
+print("Listing available vector stores:")
+vector_stores = client.vector_stores.list()
+
+for vs in vector_stores:
+    print(f"- {vs.name} (ID: {vs.id})")
+
+    # List files in each vector store
+    files_in_store = client.vector_stores.files.list(vector_store_id=vs.id)
+    if files_in_store:
+        print(f"  Files in '{vs.name}':")
+        for file in files_in_store:
+            print(f"    - {file.id}")
+```
+
+### Clean Up Vector Stores
+
+<Tabs>
+<TabItem value="single" label="Delete Single Store">
+
+```python
+# Delete a specific vector store
+client.vector_stores.delete(vector_store_id=vector_store.id)
+print(f"Deleted vector store: {vector_store.id}")
+```
+
+</TabItem>
+<TabItem value="all" label="Delete All Stores">
+
+```python
+# Delete all existing vector stores
+vector_stores_to_delete = [v.id for v in client.vector_stores.list()]
+for del_vs_id in vector_stores_to_delete:
+    client.vector_stores.delete(vector_store_id=del_vs_id)
+    print(f"Deleted: {del_vs_id}")
+```
+
+</TabItem>
+</Tabs>
+
+## Complete Example: Building a RAG System
+
+Here's a complete example that puts it all together:
+
+```python
+from io import BytesIO
+from llama_stack_client import LlamaStackClient
+
+# Initialize client
+client = LlamaStackClient(base_url="http://localhost:5001")
+
+# Step 1: Prepare and upload documents
+knowledge_base = [
+    ("Python is a high-level programming language.", {"category": "Programming"}),
+    ("Machine learning is a subset of artificial intelligence.", {"category": "AI"}),
+    ("Neural networks are inspired by the human brain.", {"category": "AI"}),
+]
+
+file_ids = []
+for content, metadata in knowledge_base:
+    with BytesIO(content.encode()) as file_buffer:
+        file_buffer.name = f"{metadata['category'].lower()}_{len(file_ids)}.txt"
+        response = client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(response.id)
+
+# Step 2: Create vector store
+vector_store = client.vector_stores.create(
+    name="tech_knowledge_base",
+    file_ids=file_ids,
+    embedding_model="all-MiniLM-L6-v2",
+    embedding_dimension=384,
+    provider_id="faiss"
+)
+
+# Step 3: Query the knowledge base
+queries = [
+    "What is Python?",
+    "Tell me about neural networks",
+    "What is machine learning?"
+]
+
+for query in queries:
+    print(f"\nQuery: {query}")
+    response = client.responses.create(
+        model="meta-llama/Llama-3.3-70B-Instruct",
+        input=query,
+        tools=[
+            {
+                "type": "file_search",
+                "vector_store_ids": [vector_store.id],
+            },
+        ],
+    )
+    print(f"Response: {response}")
+```
+
+## Advanced Usage: Dynamic Document Management
+
+You can dynamically add or remove files from existing vector stores:
+
+```python
+# Add new files to an existing vector store
+new_file_ids = []
+new_docs = [
+    "Deep learning requires large amounts of training data.",
+    "Transformers revolutionized natural language processing."
+]
+
+for doc in new_docs:
+    with BytesIO(doc.encode()) as f:
+        f.name = f"doc_{len(new_file_ids)}.txt"
+        response = client.files.create(file=f, purpose="assistants")
+        new_file_ids.append(response.id)
+
+# Update vector store with new files
+# Note: Implementation may vary depending on your Llama Stack version
+# Check documentation for vector_stores.update() or recreate the store
+```
 
 ## Best Practices
 
-### 🎯 **Document Chunking**
-- Use appropriate chunk sizes (512 tokens is often a good starting point)
-- Consider overlap between chunks for better context preservation
-- Experiment with different chunking strategies for your content type
+### 🎯 **Descriptive Filenames**
+Use meaningful filenames that describe the content when uploading documents.
 
-### 🔍 **Embedding Strategy**
-- Choose embedding models that match your domain
-- Consider the trade-off between embedding dimension and performance
-- Test different embedding models for your specific use case
+### 📊 **Metadata Organization**
+Structure metadata consistently across documents for better organization and retrieval.
 
-### 📊 **Query Optimization**
-- Use specific, well-formed queries for better retrieval
-- Experiment with different search strategies
-- Consider hybrid approaches (keyword + semantic search)
+### 🔍 **Vector Store Naming**
+Use clear, descriptive names for vector stores to make management easier.
+
+### 🧹 **Resource Cleanup**
+Regularly delete unused vector stores to free up resources and maintain system performance.
+
+### ⚡ **Batch Processing**
+Upload multiple files before creating the vector store for better efficiency.
 
 ### 🛡️ **Error Handling**
-- Implement proper error handling for failed document processing
-- Monitor ingestion success rates
-- Have fallback strategies for retrieval failures
-
-## Appendix
-
-### More RAGDocument Examples
-
-Here are various ways to create RAGDocument objects for different content types:
+Always wrap API calls in try-except blocks for production code:
 
 ```python
-from llama_stack_client import RAGDocument
-import base64
+# Example with error handling
+try:
+    with BytesIO(content.encode()) as f:
+        f.name = "document.txt"
+        file_response = client.files.create(file=f, purpose="assistants")
+except Exception as e:
+    print(f"Error uploading file: {e}")
+```
 
-# File URI
-RAGDocument(document_id="num-0", content={"uri": "file://path/to/file"})
+## Migration from Legacy API
 
-# Plain text
-RAGDocument(document_id="num-1", content="plain text")
+:::danger[Deprecation Notice]
+The legacy `vector_io` and `vector_dbs` API is deprecated. Migrate to the OpenAI-compatible APIs for better compatibility and future support.
+:::
 
-# Explicit text input
-RAGDocument(
-    document_id="num-2",
-    content={
-        "type": "text",
-        "text": "plain text input",
-    },  # for inputs that should be treated as text explicitly
+If you're migrating from the deprecated `vector_io` and `vector_dbs` API:
+
+<Tabs>
+<TabItem value="old" label="Old API (Deprecated)">
+
+```python
+# OLD - Don't use
+client.vector_dbs.register(vector_db_id="my_db", ...)
+client.vector_io.insert(vector_db_id="my_db", chunks=chunks)
+client.vector_io.query(vector_db_id="my_db", query="...")
+```
+
+</TabItem>
+<TabItem value="new" label="New API (Recommended)">
+
+```python
+# NEW - Recommended approach
+# 1. Upload files
+file_response = client.files.create(file=file_buffer, purpose="assistants")
+
+# 2. Create vector store
+vector_store = client.vector_stores.create(
+    name="my_store",
+    file_ids=[file_response.id],
+    embedding_model="all-MiniLM-L6-v2",
+    embedding_dimension=384,
+    provider_id="faiss"
 )
 
-# Image from URL
-RAGDocument(
-    document_id="num-3",
-    content={
-        "type": "image",
-        "image": {"url": {"uri": "https://mywebsite.com/image.jpg"}},
-    },
-)
-
-# Base64 encoded image
-B64_ENCODED_IMAGE = base64.b64encode(
-    requests.get(
-        "https://raw.githubusercontent.com/meta-llama/llama-stack/refs/heads/main/docs/_static/llama-stack.png"
-    ).content
-)
-RAGDocument(
-    document_id="num-4",
-    content={"type": "image", "image": {"data": B64_ENCODED_IMAGE}},
+# 3. Query using Responses API
+response = client.responses.create(
+    model="meta-llama/Llama-3.3-70B-Instruct",
+    input=query,
+    tools=[{"type": "file_search", "vector_store_ids": [vector_store.id]}],
 )
 ```
-For more strongly typed interaction use the typed dicts found [here](https://github.com/meta-llama/llama-stack-client-python/blob/38cd91c9e396f2be0bec1ee96a19771582ba6f17/src/llama_stack_client/types/shared_params/document.py).
+
+</TabItem>
+</Tabs>
+
+### Migration Benefits
+
+1. **Better OpenAI Ecosystem Integration**: Direct compatibility with OpenAI tools and workflows
+2. **Future-Proof**: Continued support and feature development
+3. **Full OpenAI Compatibility**: Vector Stores, Files, and Search APIs work with OpenAI's Responses API
+4. **Enhanced Error Handling**: Individual document failures don't crash entire operations
