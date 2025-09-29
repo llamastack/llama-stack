@@ -473,6 +473,7 @@ class VectorIO(Protocol):
         ...
 
     # OpenAI Vector Stores API endpoints
+    @webmethod(route="/openai/v1/vector_stores", method="POST", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_create_vector_store(
         self,
@@ -499,6 +500,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores", method="GET", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_vector_stores(
         self,
@@ -517,6 +519,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="GET", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores/{vector_store_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_vector_store(
         self,
@@ -529,6 +532,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="POST", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores/{vector_store_id}", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_update_vector_store(
         self,
@@ -547,6 +551,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores/{vector_store_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_vector_store(
         self,
@@ -559,6 +564,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/search", method="POST", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores/{vector_store_id}/search", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_search_vector_store(
         self,
@@ -585,6 +591,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="POST", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores/{vector_store_id}/files", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_attach_file_to_vector_store(
         self,
@@ -603,6 +610,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="GET", level=LLAMA_STACK_API_V1)
     @webmethod(route="/vector_stores/{vector_store_id}/files", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_files_in_vector_store(
         self,
@@ -625,6 +633,9 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1
+    )
     @webmethod(route="/vector_stores/{vector_store_id}/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_vector_store_file(
         self,
@@ -639,6 +650,11 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
     @webmethod(
         route="/vector_stores/{vector_store_id}/files/{file_id}/content",
         method="GET",
@@ -657,6 +673,9 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="POST", level=LLAMA_STACK_API_V1
+    )
     @webmethod(route="/vector_stores/{vector_store_id}/files/{file_id}", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_update_vector_store_file(
         self,
@@ -673,6 +692,9 @@ class VectorIO(Protocol):
         """
         ...
 
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1
+    )
     @webmethod(route="/vector_stores/{vector_store_id}/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_vector_store_file(
         self,
