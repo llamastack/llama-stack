@@ -153,6 +153,19 @@ def mock_client_context():
     return _mock_client_context
 
 
+def _assert_models_match_expected(actual_models, expected_models):
+    """Verify the models match expected attributes.
+
+    Args:
+        actual_models: List of models to verify
+        expected_models: Mapping of model identifier to expected attribute values
+    """
+    for identifier, expected_attrs in expected_models.items():
+        model = next(m for m in actual_models if m.identifier == identifier)
+        for attr_name, expected_value in expected_attrs.items():
+            assert getattr(model, attr_name) == expected_value
+
+
 class TestOpenAIMixinListModels:
     """Test cases for the list_models method"""
 
@@ -346,21 +359,22 @@ class TestOpenAIMixinEmbeddingModelMetadata:
             assert result is not None
             assert len(result) == 2
 
-            # Find the models in the result
-            embedding_model = next(m for m in result if m.identifier == "text-embedding-3-small")
-            llm_model = next(m for m in result if m.identifier == "gpt-4")
+            expected_models = {
+                "text-embedding-3-small": {
+                    "model_type": ModelType.embedding,
+                    "metadata": {"embedding_dimension": 1536, "context_length": 8192},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "text-embedding-3-small",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
 
-            # Check embedding model
-            assert embedding_model.model_type == ModelType.embedding
-            assert embedding_model.metadata == {"embedding_dimension": 1536, "context_length": 8192}
-            assert embedding_model.provider_id == "test-provider"
-            assert embedding_model.provider_resource_id == "text-embedding-3-small"
-
-            # Check LLM model
-            assert llm_model.model_type == ModelType.llm
-            assert llm_model.metadata == {}  # No metadata for LLMs
-            assert llm_model.provider_id == "test-provider"
-            assert llm_model.provider_resource_id == "gpt-4"
+            _assert_models_match_expected(result, expected_models)
 
 
 class TestOpenAIMixinRerankModelList:
@@ -387,21 +401,22 @@ class TestOpenAIMixinRerankModelList:
             assert result is not None
             assert len(result) == 2
 
-            # Find the models in the result
-            rerank_model = next(m for m in result if m.identifier == "rerank-model-1")
-            llm_model = next(m for m in result if m.identifier == "gpt-4")
+            expected_models = {
+                "rerank-model-1": {
+                    "model_type": ModelType.rerank,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "rerank-model-1",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
 
-            # Check rerank model
-            assert rerank_model.model_type == ModelType.rerank
-            assert rerank_model.metadata == {}  # No metadata for rerank models
-            assert rerank_model.provider_id == "test-provider"
-            assert rerank_model.provider_resource_id == "rerank-model-1"
-
-            # Check LLM model
-            assert llm_model.model_type == ModelType.llm
-            assert llm_model.metadata == {}  # No metadata for LLMs
-            assert llm_model.provider_id == "test-provider"
-            assert llm_model.provider_resource_id == "gpt-4"
+            _assert_models_match_expected(result, expected_models)
 
 
 class TestOpenAIMixinMixedModelTypes:
@@ -429,28 +444,28 @@ class TestOpenAIMixinMixedModelTypes:
             assert result is not None
             assert len(result) == 3
 
-            # Find the models in the result
-            embedding_model = next(m for m in result if m.identifier == "text-embedding-3-small")
-            rerank_model = next(m for m in result if m.identifier == "rerank-model-1")
-            llm_model = next(m for m in result if m.identifier == "gpt-4")
+            expected_models = {
+                "text-embedding-3-small": {
+                    "model_type": ModelType.embedding,
+                    "metadata": {"embedding_dimension": 1536, "context_length": 8192},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "text-embedding-3-small",
+                },
+                "rerank-model-1": {
+                    "model_type": ModelType.rerank,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "rerank-model-1",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
 
-            # Check embedding model
-            assert embedding_model.model_type == ModelType.embedding
-            assert embedding_model.metadata == {"embedding_dimension": 1536, "context_length": 8192}
-            assert embedding_model.provider_id == "test-provider"
-            assert embedding_model.provider_resource_id == "text-embedding-3-small"
-
-            # Check rerank model
-            assert rerank_model.model_type == ModelType.rerank
-            assert rerank_model.metadata == {}  # No metadata for rerank models
-            assert rerank_model.provider_id == "test-provider"
-            assert rerank_model.provider_resource_id == "rerank-model-1"
-
-            # Check LLM model
-            assert llm_model.model_type == ModelType.llm
-            assert llm_model.metadata == {}  # No metadata for LLMs
-            assert llm_model.provider_id == "test-provider"
-            assert llm_model.provider_resource_id == "gpt-4"
+            _assert_models_match_expected(result, expected_models)
 
 
 class TestOpenAIMixinAllowedModels:
