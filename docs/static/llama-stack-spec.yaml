@@ -2626,11 +2626,11 @@ paths:
     get:
       responses:
         '200':
-          description: A OpenAIListModelsResponse.
+          description: A ListModelsResponse.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpenAIListModelsResponse'
+                $ref: '#/components/schemas/ListModelsResponse'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -2643,8 +2643,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Models
-      summary: List models using the OpenAI API.
-      description: List models using the OpenAI API.
+      summary: List all models.
+      description: List all models.
       parameters: []
     post:
       responses:
