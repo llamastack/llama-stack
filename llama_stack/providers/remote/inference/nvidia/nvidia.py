@@ -138,10 +138,9 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
         provider_model_id = await self._get_provider_model_id(model)
 
         ranking_url = self.get_base_url()
-        model_obj = await self.model_store.get_model(model)
 
-        if _is_nvidia_hosted(self._config) and "endpoint" in model_obj.metadata:
-            ranking_url = model_obj.metadata["endpoint"]
+        if _is_nvidia_hosted(self._config) and provider_model_id in self._rerank_model_endpoints:
+            ranking_url = self._rerank_model_endpoints[provider_model_id]
 
         logger.debug(f"Using rerank endpoint: {ranking_url} for model: {provider_model_id}")
 
