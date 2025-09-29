@@ -49,8 +49,6 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
     "aiosqlite>=0.21.0",                      # server - for metadata store
     "asyncpg",                                # for metadata store
-    "chardet",                                # for character encoding detection in file processing
-    "pypdf",                                  # for PDF file processing in vector stores
 ]
 
 [project.optional-dependencies]
