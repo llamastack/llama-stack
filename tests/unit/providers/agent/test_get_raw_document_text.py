@@ -107,14 +107,34 @@ async def test_get_raw_document_text_deprecated_text_yaml_with_text_content_item
         assert "text/yaml" in str(w[0].message)
 
 
+async def test_get_raw_document_text_supports_json_mime_type():
+    """Test that the function accepts application/json mime type."""
+    json_content = '{"name": "test", "version": "1.0", "items": ["item1", "item2"]}'
+
+    document = Document(content=json_content, mime_type="application/json")
+
+    result = await get_raw_document_text(document)
+    assert result == json_content
+
+
+async def test_get_raw_document_text_with_json_text_content_item():
+    """Test that the function handles JSON TextContentItem correctly."""
+    json_content = '{"key": "value", "nested": {"array": [1, 2, 3]}}'
+
+    document = Document(content=TextContentItem(text=json_content), mime_type="application/json")
+
+    result = await get_raw_document_text(document)
+    assert result == json_content
+
+
 async def test_get_raw_document_text_rejects_unsupported_mime_types():
     """Test that the function rejects unsupported mime types."""
     document = Document(
         content="Some content",
-        mime_type="application/json",  # Not supported
+        mime_type="application/pdf",  # Not supported
     )
 
-    with pytest.raises(ValueError, match="Unexpected document mime type: application/json"):
+    with pytest.raises(ValueError, match="Unexpected document mime type: application/pdf"):
         await get_raw_document_text(document)
 
 
