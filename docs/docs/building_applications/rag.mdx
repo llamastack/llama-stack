@@ -19,7 +19,7 @@ Llama Stack now uses a modern, OpenAI-compatible API pattern for RAG:
 
 This new approach provides better compatibility with OpenAI's ecosystem and is the recommended way to implement RAG in Llama Stack.
 
-<img src="/img/rag_llama_stack.png" alt="RAG System" width="50%" />
+<img src="docs/static/img/rag_llama_stack.png" alt="RAG System" width="50%" />
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ Before you begin, make sure you have the following:
 2. **Llama Stack**: Follow the [installation guide](/docs/installation) to set up Llama Stack on your
 machine.
 3. **Documents**: Prepare a set of documents that you want to search. These can be plain text, PDFs, or other file types.
-4. Set the `LLAMA_STACK_PORT` environment variable to the port where Llama Stack is running. For example, if you are using the default port of 8321, set `export LLAMA_STACK_PORT=8321`. Also set 'OLLAMA_URL' environment variable to be 'http://localhost:11434'
+4. **environment variable**: Set the `LLAMA_STACK_PORT` environment variable to the port where Llama Stack is running. For example, if you are using the default port of 8321, set `export LLAMA_STACK_PORT=8321`. Also set 'OLLAMA_URL' environment variable to be 'http://localhost:11434'
 
 ## Step 0: Initialize Client
 
@@ -285,59 +285,6 @@ for query in queries:
         ],
     )
     print(f"Response: {response}")
-```
-
-## Advanced Usage: Dynamic Document Management
-
-You can dynamically add or remove files from existing vector stores:
-
-```python
-# Add new files to an existing vector store
-new_file_ids = []
-new_docs = [
-    "Deep learning requires large amounts of training data.",
-    "Transformers revolutionized natural language processing."
-]
-
-for doc in new_docs:
-    with BytesIO(doc.encode()) as f:
-        f.name = f"doc_{len(new_file_ids)}.txt"
-        response = client.files.create(file=f, purpose="assistants")
-        new_file_ids.append(response.id)
-
-# Update vector store with new files
-# Note: Implementation may vary depending on your Llama Stack version
-# Check documentation for vector_stores.update() or recreate the store
-```
-
-## Best Practices
-
-### 🎯 **Descriptive Filenames**
-Use meaningful filenames that describe the content when uploading documents.
-
-### 📊 **Metadata Organization**
-Structure metadata consistently across documents for better organization and retrieval.
-
-### 🔍 **Vector Store Naming**
-Use clear, descriptive names for vector stores to make management easier.
-
-### 🧹 **Resource Cleanup**
-Regularly delete unused vector stores to free up resources and maintain system performance.
-
-### ⚡ **Batch Processing**
-Upload multiple files before creating the vector store for better efficiency.
-
-### 🛡️ **Error Handling**
-Always wrap API calls in try-except blocks for production code:
-
-```python
-# Example with error handling
-try:
-    with BytesIO(content.encode()) as f:
-        f.name = "document.txt"
-        file_response = client.files.create(file=f, purpose="assistants")
-except Exception as e:
-    print(f"Error uploading file: {e}")
 ```
 
 ## Migration from Legacy API
