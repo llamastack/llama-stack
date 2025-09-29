@@ -22,7 +22,6 @@ class WebMethod:
     raw_bytes_request_body: bool | None = False
     # A descriptive name of the corresponding span created by tracing
     descriptive_name: str | None = None
-    experimental: bool | None = False
     required_scope: str | None = None
     deprecated: bool | None = False
 
@@ -39,7 +38,6 @@ def webmethod(
     response_examples: list[Any] | None = None,
     raw_bytes_request_body: bool | None = False,
     descriptive_name: str | None = None,
-    experimental: bool | None = False,
     required_scope: str | None = None,
     deprecated: bool | None = False,
 ) -> Callable[[T], T]:
@@ -50,7 +48,6 @@ def webmethod(
     :param public: True if the operation can be invoked without prior authentication.
     :param request_examples: Sample requests that the operation might take. Pass a list of objects, not JSON.
     :param response_examples: Sample responses that the operation might produce. Pass a list of objects, not JSON.
-    :param experimental: True if the operation is experimental and subject to change.
     :param required_scope: Required scope for this endpoint (e.g., 'monitoring.viewer').
     """
 
@@ -64,7 +61,6 @@ def webmethod(
             response_examples=response_examples,
             raw_bytes_request_body=raw_bytes_request_body,
             descriptive_name=descriptive_name,
-            experimental=experimental,
             required_scope=required_scope,
             deprecated=deprecated,
         )

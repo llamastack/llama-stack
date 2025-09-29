@@ -166,7 +166,7 @@ def model_providers(llama_stack_client):
 
 @pytest.fixture(autouse=True)
 def skip_if_no_model(request):
-    model_fixtures = ["text_model_id", "vision_model_id", "embedding_model_id", "judge_model_id"]
+    model_fixtures = ["text_model_id", "vision_model_id", "embedding_model_id", "judge_model_id", "shield_id"]
     test_func = request.node.function
 
     actual_params = inspect.signature(test_func).parameters.keys()
