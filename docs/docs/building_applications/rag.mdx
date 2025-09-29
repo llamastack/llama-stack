@@ -24,7 +24,19 @@ This new approach provides better compatibility with OpenAI's ecosystem and is t
 ## Prerequisites
 
 For this guide, we will use [Ollama](https://ollama.com/) as the inference provider.
-Ollama is an LLM runtime that allows you to run Llama models locally.
+Ollama is an LLM runtime that allows you to run Llama models locally. It's a great choice for development and testing, but you can also use any other inference provider that supports the OpenAI API.
+
+Before you begin, make sure you have the following:
+1. **Ollama**: Follow the [installation guide](https://ollama.com/docs/ollama/getting-started/install
+) to set up Ollama on your machine.
+2. **Llama Stack**: Follow the [installation guide](/docs/installation) to set up Llama Stack on your
+machine.
+3. **Documents**: Prepare a set of documents that you want to search. These can be plain text, PDFs, or other file types.
+4. Set the `LLAMA_STACK_PORT` environment variable to the port where Llama Stack is running. For example, if you are using the default port of 8321, set `export LLAMA_STACK_PORT=8321`. Also set 'OLLAMA_URL' environment variable to be 'http://localhost:11434'
+
+## Step 0: Initialize Client
+
+After lauched Llama Stack server by `llama stack build --distro starter --image-type venv --run`, initialize the client with the base URL of your Llama Stack instance.
 
 ```python
 import os
