@@ -27,6 +27,8 @@ class ToolParameter(BaseModel):
     :param parameter_type: Type of the parameter (e.g., string, integer)
     :param description: Human-readable description of what the parameter does
     :param required: Whether this parameter is required for tool invocation
+    :param items: Type of the elements when parameter_type is array
+    :param title: (Optional) Title of the parameter
     :param default: (Optional) Default value for the parameter if not provided
     """
 
@@ -34,6 +36,8 @@ class ToolParameter(BaseModel):
     parameter_type: str
     description: str
     required: bool = Field(default=True)
+    items: dict | None = None
+    title: str | None = None
     default: Any | None = None
 
 

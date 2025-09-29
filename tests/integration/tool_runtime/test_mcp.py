@@ -31,6 +31,11 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     uri = mcp_server["server_url"]
 
     # registering should not raise an error anymore even if you don't specify the auth token
+    try:
+        llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
+    except Exception:
+        pass
+
     llama_stack_client.toolgroups.register(
         toolgroup_id=test_toolgroup_id,
         provider_id="model-context-protocol",
