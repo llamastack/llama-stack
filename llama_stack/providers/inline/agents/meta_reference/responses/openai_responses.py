@@ -237,8 +237,8 @@ class OpenAIResponsesImpl:
             response_tools=tools,
             temperature=temperature,
             response_format=response_format,
+            inputs=input,
         )
-        ctx.extract_approvals(input)
 
         # Create orchestrator and delegate streaming logic
         response_id = f"resp-{uuid.uuid4()}"
