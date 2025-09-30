@@ -11,7 +11,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
     paths:
       - 'docs/static/llama-stack-spec.yaml'
       - 'docs/static/llama-stack-spec.html'
@@ -27,14 +27,31 @@ jobs:
   check-schema-compatibility:
     runs-on: ubuntu-latest
     steps:
-      # Using specific version 4.1.7 because 5.0.0 fails when trying to run this locally using `act`
-      # This ensures consistent behavior between local testing and CI
       - name: Checkout PR Code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
 
+      # Check if we should skip conformance testing due to breaking changes
+      - name: Check if conformance test should be skipped
+        id: skip-check
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          # Skip if title contains "!:" indicating breaking change (like "feat!:")
+          if [[ "$PR_TITLE" == *"!:"* ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Get all commits in this PR and check for BREAKING CHANGE footer
+          git log --format="%B" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | \
+            grep -q "BREAKING CHANGE:" && echo "skip=true" >> $GITHUB_OUTPUT || echo "skip=false" >> $GITHUB_OUTPUT
+        shell: bash
       # Checkout the base branch to compare against (usually main)
       # This allows us to diff the current changes against the previous state
       - name: Checkout Base Branch
+        if: steps.skip-check.outputs.skip != 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: ${{ github.event.pull_request.base.ref }}
@@ -42,6 +59,7 @@ jobs:
 
       # Cache oasdiff to avoid checksum failures and speed up builds
       - name: Cache oasdiff
+        if: steps.skip-check.outputs.skip != 'true'
         id: cache-oasdiff
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
@@ -50,14 +68,14 @@ jobs:
 
       # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
       - name: Install oasdiff
-        if: steps.cache-oasdiff.outputs.cache-hit != 'true'
+        if: steps.skip-check.outputs.skip != 'true' && steps.cache-oasdiff.outputs.cache-hit != 'true'
         run: |
           curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
           cp /usr/local/bin/oasdiff ~/oasdiff
 
       # Setup cached oasdiff
       - name: Setup cached oasdiff
-        if: steps.cache-oasdiff.outputs.cache-hit == 'true'
+        if: steps.skip-check.outputs.skip != 'true' && steps.cache-oasdiff.outputs.cache-hit == 'true'
         run: |
           sudo cp ~/oasdiff /usr/local/bin/oasdiff
           sudo chmod +x /usr/local/bin/oasdiff
@@ -65,5 +83,12 @@ jobs:
       # Run oasdiff to detect breaking changes in the API specification
       # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
       - name: Run OpenAPI Breaking Change Diff
+        if: steps.skip-check.outputs.skip != 'true'
         run: |
           oasdiff breaking --fail-on ERR base/docs/static/llama-stack-spec.yaml docs/static/llama-stack-spec.yaml --match-path '^/v1/'
+
+      # Report when test is skipped
+      - name: Report skip reason
+        if: steps.skip-check.outputs.skip == 'true'
+        run: |
+          echo "Conformance test skipped due to breaking change indicator"
