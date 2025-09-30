@@ -13,6 +13,8 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
+    OpenAIResponseMCPApprovalRequest,
+    OpenAIResponseMCPApprovalResponse,
     OpenAIResponseMessage,
     OpenAIResponseOutputMessageContent,
     OpenAIResponseOutputMessageContentOutputText,
@@ -148,6 +150,11 @@ async def convert_response_input_to_chat_messages(
                 )
             elif isinstance(input_item, OpenAIResponseOutputMessageMCPListTools):
                 # the tool list will be handled separately
+                pass
+            elif isinstance(input_item, OpenAIResponseMCPApprovalRequest) or isinstance(
+                input_item, OpenAIResponseMCPApprovalResponse
+            ):
+                # these are handled by the responses impl itself and not pass through to chat completions
                 pass
             else:
                 content = await convert_response_content_to_chat_content(input_item.content)
