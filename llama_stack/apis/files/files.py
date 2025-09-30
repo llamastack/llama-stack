@@ -7,7 +7,7 @@
 from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, Protocol, runtime_checkable
 
-from fastapi import File, Form, Response, UploadFile
+from fastapi import File, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.responses import Order
