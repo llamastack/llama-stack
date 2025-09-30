@@ -127,13 +127,16 @@ class StreamingResponseOrchestrator:
         messages = self.ctx.messages.copy()
 
         while True:
+            # Text is the default response format for chat completion so don't need to pass it
+            # (some providers don't support non-empty response_format when tools are present)
+            response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
             completion_result = await self.inference_api.openai_chat_completion(
                 model=self.ctx.model,
                 messages=messages,
                 tools=self.ctx.chat_tools,
                 stream=True,
                 temperature=self.ctx.temperature,
-                response_format=self.ctx.response_format,
+                response_format=response_format,
             )
 
             # Process streaming chunks and build complete response
