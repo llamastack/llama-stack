@@ -148,7 +148,7 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     mock_inference_api.openai_chat_completion.assert_called_once_with(
         model=model,
         messages=[OpenAIUserMessageParam(role="user", content="What is the capital of Ireland?", name=None)],
-        response_format=OpenAIResponseFormatText(),
+        response_format=None,
         tools=None,
         stream=True,
         temperature=0.1,
@@ -831,8 +831,8 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
         (OpenAIResponseText(format=OpenAIResponseTextFormat(type="json_object")), OpenAIResponseFormatJSONObject()),
         # ensure text param with no format specified defaults to text
         (OpenAIResponseText(format=None), OpenAIResponseFormatText()),
-        # ensure text param of None defaults to text
-        (None, OpenAIResponseFormatText()),
+        # ensure text param of None defaults to None
+        (None, None),
     ],
 )
 async def test_create_openai_response_with_text_format(
@@ -855,7 +855,6 @@ async def test_create_openai_response_with_text_format(
     # Verify
     first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
     assert first_call.kwargs["messages"][0].content == input_text
-    assert first_call.kwargs["response_format"] is not None
     assert first_call.kwargs["response_format"] == response_format
 
 
