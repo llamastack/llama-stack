@@ -24,11 +24,13 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategyStatic,
     VectorStoreContent,
     VectorStoreDeleteResponse,
+    VectorStoreFileBatchObject,
     VectorStoreFileContentsResponse,
     VectorStoreFileCounts,
     VectorStoreFileDeleteResponse,
     VectorStoreFileLastError,
     VectorStoreFileObject,
+    VectorStoreFilesListInBatchResponse,
     VectorStoreFileStatus,
     VectorStoreListFilesResponse,
     VectorStoreListResponse,
@@ -107,7 +109,11 @@ class OpenAIVectorStoreMixin(ABC):
         self.openai_vector_stores.pop(store_id, None)
 
     async def _save_openai_vector_store_file(
-        self, store_id: str, file_id: str, file_info: dict[str, Any], file_contents: list[dict[str, Any]]
+        self,
+        store_id: str,
+        file_id: str,
+        file_info: dict[str, Any],
+        file_contents: list[dict[str, Any]],
     ) -> None:
         """Save vector store file metadata to persistent storage."""
         assert self.kvstore
@@ -301,7 +307,10 @@ class OpenAIVectorStoreMixin(ABC):
                 all_stores = all_stores[after_index + 1 :]
 
         if before:
-            before_index = next((i for i, store in enumerate(all_stores) if store["id"] == before), len(all_stores))
+            before_index = next(
+                (i for i, store in enumerate(all_stores) if store["id"] == before),
+                len(all_stores),
+            )
             all_stores = all_stores[:before_index]
 
         # Apply limit
@@ -397,7 +406,9 @@ class OpenAIVectorStoreMixin(ABC):
         max_num_results: int | None = 10,
         ranking_options: SearchRankingOptions | None = None,
         rewrite_query: bool | None = False,
-        search_mode: str | None = "vector",  # Using str instead of Literal due to OpenAPI schema generator limitations
+        search_mode: (
+            str | None
+        ) = "vector",  # Using str instead of Literal due to OpenAPI schema generator limitations
     ) -> VectorStoreSearchResponsePage:
         """Search for chunks in a vector store."""
         max_num_results = max_num_results or 10
@@ -685,7 +696,10 @@ class OpenAIVectorStoreMixin(ABC):
                 file_objects = file_objects[after_index + 1 :]
 
         if before:
-            before_index = next((i for i, file in enumerate(file_objects) if file.id == before), len(file_objects))
+            before_index = next(
+                (i for i, file in enumerate(file_objects) if file.id == before),
+                len(file_objects),
+            )
             file_objects = file_objects[:before_index]
 
         # Apply limit
@@ -805,3 +819,42 @@ class OpenAIVectorStoreMixin(ABC):
             id=file_id,
             deleted=True,
         )
+
+    async def openai_create_vector_store_file_batch(
+        self,
+        vector_store_id: str,
+        file_ids: list[str],
+        attributes: dict[str, Any] | None = None,
+        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+    ) -> VectorStoreFileBatchObject:
+        """Create a vector store file batch."""
+        raise NotImplementedError("openai_create_vector_store_file_batch is not implemented yet")
+
+    async def openai_list_files_in_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+        after: str | None = None,
+        before: str | None = None,
+        filter: str | None = None,
+        limit: int | None = 20,
+        order: str | None = "desc",
+    ) -> VectorStoreFilesListInBatchResponse:
+        """Returns a list of vector store files in a batch."""
+        raise NotImplementedError("openai_list_files_in_vector_store_file_batch is not implemented yet")
+
+    async def openai_retrieve_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Retrieve a vector store file batch."""
+        raise NotImplementedError("openai_retrieve_vector_store_file_batch is not implemented yet")
+
+    async def openai_cancel_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Cancel a vector store file batch."""
+        raise NotImplementedError("openai_cancel_vector_store_file_batch is not implemented yet")

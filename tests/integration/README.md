@@ -179,15 +179,15 @@ Note that when re-recording tests, you must use a Stack pointing to a server (i.
 ### Basic Test Pattern
 ```python
 def test_basic_chat_completion(llama_stack_client, text_model_id):
-    response = llama_stack_client.inference.chat_completion(
-        model_id=text_model_id,
+    response = llama_stack_client.chat.completions.create(
+        model=text_model_id,
         messages=[{"role": "user", "content": "Hello"}],
     )
 
     # Test structure, not AI output quality
-    assert response.completion_message is not None
-    assert isinstance(response.completion_message.content, str)
-    assert len(response.completion_message.content) > 0
+    assert response.choices[0].message is not None
+    assert isinstance(response.choices[0].message.content, str)
+    assert len(response.choices[0].message.content) > 0
 ```
 
 ### Provider-Specific Tests

@@ -276,13 +276,40 @@ class OpenAIResponseOutputMessageMCPListTools(BaseModel):
     tools: list[MCPListToolsTool]
 
 
+@json_schema_type
+class OpenAIResponseMCPApprovalRequest(BaseModel):
+    """
+    A request for human approval of a tool invocation.
+    """
+
+    arguments: str
+    id: str
+    name: str
+    server_label: str
+    type: Literal["mcp_approval_request"] = "mcp_approval_request"
+
+
+@json_schema_type
+class OpenAIResponseMCPApprovalResponse(BaseModel):
+    """
+    A response to an MCP approval request.
+    """
+
+    approval_request_id: str
+    approve: bool
+    type: Literal["mcp_approval_response"] = "mcp_approval_response"
+    id: str | None = None
+    reason: str | None = None
+
+
 OpenAIResponseOutput = Annotated[
     OpenAIResponseMessage
     | OpenAIResponseOutputMessageWebSearchToolCall
     | OpenAIResponseOutputMessageFileSearchToolCall
     | OpenAIResponseOutputMessageFunctionToolCall
     | OpenAIResponseOutputMessageMCPCall
-    | OpenAIResponseOutputMessageMCPListTools,
+    | OpenAIResponseOutputMessageMCPListTools
+    | OpenAIResponseMCPApprovalRequest,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseOutput, name="OpenAIResponseOutput")
@@ -723,6 +750,8 @@ OpenAIResponseInput = Annotated[
     | OpenAIResponseOutputMessageFileSearchToolCall
     | OpenAIResponseOutputMessageFunctionToolCall
     | OpenAIResponseInputFunctionToolCallOutput
+    | OpenAIResponseMCPApprovalRequest
+    | OpenAIResponseMCPApprovalResponse
     |
     # Fallback to the generic message type as a last resort
     OpenAIResponseMessage,
