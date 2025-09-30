@@ -336,7 +336,6 @@ class OpenAIResponseObject(BaseModel):
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
     :param truncation: (Optional) Truncation strategy applied to the response
-    :param user: (Optional) User identifier associated with the request
     """
 
     created_at: int
@@ -354,7 +353,6 @@ class OpenAIResponseObject(BaseModel):
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
     truncation: str | None = None
-    user: str | None = None
 
 
 @json_schema_type

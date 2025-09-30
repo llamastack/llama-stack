@@ -66,6 +66,4 @@ jobs:
       # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
       - name: Run OpenAPI Breaking Change Diff
         run: |
-          oasdiff breaking --fail-on ERR base/docs/static/llama-stack-spec.yaml docs/static/llama-stack-spec.yaml --match-path '^/v1/openai/v1' \
-          --match-path '^/v1/vector-io' \
-          --match-path '^/v1/vector-dbs'
+          oasdiff breaking --fail-on ERR base/docs/static/llama-stack-spec.yaml docs/static/llama-stack-spec.yaml --match-path '^/v1/'

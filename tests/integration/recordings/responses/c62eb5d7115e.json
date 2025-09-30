@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the smallest country in the world?"
+        }
+      ],
+      "max_tokens": 0
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "chatcmpl-842",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "The smallest country in the world is the Vatican City, an independent city-state located within Rome, Italy. It has a total area of approximately 0.44 km\u00b2 (0.17 sq mi) and a population of around 800 people.\n\nDespite its tiny size, the Vatican City is a sovereign state with its own government, currency, postal system, and even a small army (the Gendarmeria Romana). It's also home to numerous iconic landmarks, including St. Peter's Basilica, the Sistine Chapel, and the Vatican Museums.\n\nThe Vatican City is so small that it can fit entirely within an average American city park!",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1759012145,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 133,
+          "prompt_tokens": 34,
+          "total_tokens": 167,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

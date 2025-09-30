@@ -195,22 +195,13 @@ class S3FilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
-        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
+        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
     ) -> OpenAIFileObject:
         file_id = f"file-{uuid.uuid4().hex}"
 
         filename = getattr(file, "filename", None) or "uploaded_file"
 
         created_at = self._now()
-
-        expires_after = None
-        if expires_after_anchor is not None or expires_after_seconds is not None:
-            # we use ExpiresAfter to validate input
-            expires_after = ExpiresAfter(
-                anchor=expires_after_anchor,  # type: ignore[arg-type]
-                seconds=expires_after_seconds,  # type: ignore[arg-type]
-            )
 
         # the default is no expiration.
         # to implement no expiration we set an expiration beyond the max.
