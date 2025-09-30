@@ -290,12 +290,11 @@ class LlamaGuardShield:
         else:
             shield_input_message = self.build_text_shield_input(messages)
 
-        # TODO: llama-stack inference protocol has issues with non-streaming inference code
         response = await self.inference_api.openai_chat_completion(
             model=self.model,
             messages=[shield_input_message],
             stream=False,
-            temperature=0.0001,  # TODO: find a better way
+            temperature=0.0,  # default is 1, which is too high for safety
         )
         content = response.choices[0].message.content
         content = content.strip()
