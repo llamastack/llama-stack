@@ -14,6 +14,13 @@ from . import skip_in_github_actions
 # LLAMA_STACK_CONFIG="nvidia" pytest -v tests/integration/providers/nvidia/test_datastore.py
 
 
+@pytest.fixture(autouse=True)
+def skip_if_no_nvidia_provider(llama_stack_client):
+    provider_types = {p.provider_type for p in llama_stack_client.providers.list() if p.api == "datasetio"}
+    if "remote::nvidia" not in provider_types:
+        pytest.skip("datasetio=remote::nvidia provider not configured, skipping")
+
+
 # nvidia provider only
 @skip_in_github_actions
 @pytest.mark.parametrize(
