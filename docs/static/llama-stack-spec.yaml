@@ -7483,6 +7483,7 @@ components:
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
           discriminator:
             propertyName: type
             mapping:
@@ -7492,6 +7493,7 @@ components:
               function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
           description: >-
             The output item that was added (message, tool call, etc.)
         output_index:
@@ -7534,6 +7536,7 @@ components:
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
           discriminator:
             propertyName: type
             mapping:
@@ -7543,6 +7546,7 @@ components:
               function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
           description: >-
             The completed output item (message, tool call, etc.)
         output_index:
