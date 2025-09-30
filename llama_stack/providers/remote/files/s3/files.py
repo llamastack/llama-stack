@@ -194,8 +194,8 @@ class S3FilesImpl(Files):
     async def openai_upload_file(
         self,
         file: Annotated[UploadFile, File()],
-        purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
+        purpose: OpenAIFilePurpose,
+        expires_after: ExpiresAfter | None = None,
     ) -> OpenAIFileObject:
         file_id = f"file-{uuid.uuid4().hex}"
 
