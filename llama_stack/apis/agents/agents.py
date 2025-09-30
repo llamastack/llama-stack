@@ -694,7 +694,7 @@ class Agents(Protocol):
     #
     # Both of these APIs are inherently stateful.
 
-    @webmethod(route="/openai/v1/responses/{response_id}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/responses/{response_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_openai_response(
         self,
         response_id: str,
@@ -706,7 +706,7 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/responses", method="POST", level=LLAMA_STACK_API_V1)
     async def create_openai_response(
         self,
         input: str | list[OpenAIResponseInput],
@@ -731,7 +731,7 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/responses", method="GET", level=LLAMA_STACK_API_V1)
     async def list_openai_responses(
         self,
         after: str | None = None,
@@ -749,7 +749,7 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses/{response_id}/input_items", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/responses/{response_id}/input_items", method="GET", level=LLAMA_STACK_API_V1)
     async def list_openai_response_input_items(
         self,
         response_id: str,
@@ -771,7 +771,7 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         """Delete an OpenAI response by its ID.
 

@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import hashlib
+import inspect
 import ipaddress
 import types
 import typing
@@ -12,6 +13,7 @@ from dataclasses import make_dataclass
 from typing import Annotated, Any, Dict, get_args, get_origin, Set, Union
 
 from fastapi import UploadFile
+from pydantic import BaseModel
 
 from llama_stack.apis.datatypes import Error
 from llama_stack.strong_typing.core import JsonType
@@ -632,14 +634,22 @@ class Generator:
                     base_type = get_args(param_type)[0]
                 else:
                     base_type = param_type
+
+                # Check if the type is optional
+                is_optional = is_type_optional(base_type)
+                if is_optional:
+                    base_type = unwrap_optional_type(base_type)
+
                 if base_type is UploadFile:
                     # File upload
                     properties[name] = {"type": "string", "format": "binary"}
                 else:
-                    # Form field
+                    # All other types - generate schema reference
+                    # This includes enums, BaseModels, and simple types
                     properties[name] = self.schema_builder.classdef_to_ref(base_type)
 
-                required_fields.append(name)
+                if not is_optional:
+                    required_fields.append(name)
 
             multipart_schema = {
                 "type": "object",

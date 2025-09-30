@@ -166,7 +166,7 @@ def model_providers(llama_stack_client):
 
 @pytest.fixture(autouse=True)
 def skip_if_no_model(request):
-    model_fixtures = ["text_model_id", "vision_model_id", "embedding_model_id", "judge_model_id"]
+    model_fixtures = ["text_model_id", "vision_model_id", "embedding_model_id", "judge_model_id", "shield_id"]
     test_func = request.node.function
 
     actual_params = inspect.signature(test_func).parameters.keys()
@@ -274,7 +274,7 @@ def require_server(llama_stack_client):
 
 @pytest.fixture(scope="session")
 def openai_client(llama_stack_client, require_server):
-    base_url = f"{llama_stack_client.base_url}/v1/openai/v1"
+    base_url = f"{llama_stack_client.base_url}/v1"
     return OpenAI(base_url=base_url, api_key="fake")
 
 

@@ -14,6 +14,7 @@ from fastapi import File, Form, Response, UploadFile
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.files import (
+    ExpiresAfter,
     Files,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
@@ -86,14 +87,13 @@ class LocalfsFilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
-        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
+        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
     ) -> OpenAIFileObject:
         """Upload a file that can be used across various endpoints."""
         if not self.sql_store:
             raise RuntimeError("Files provider not initialized")
 
-        if expires_after_anchor is not None or expires_after_seconds is not None:
+        if expires_after is not None:
             raise NotImplementedError("File expiration is not supported by this provider")
 
         file_id = self._generate_file_id()

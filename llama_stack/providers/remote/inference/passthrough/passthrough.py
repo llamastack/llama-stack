@@ -14,8 +14,6 @@ from llama_stack.apis.inference import (
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
     CompletionMessage,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
@@ -27,7 +25,6 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -189,25 +186,6 @@ class PassthroughInferenceAdapter(Inference):
             chunk["metrics"] = []
             chunk = convert_to_pydantic(ChatCompletionResponseStreamChunk, chunk)
             yield chunk
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[InterleavedContent],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        client = self._get_client()
-        model = await self.model_store.get_model(model_id)
-
-        return await client.inference.embeddings(
-            model_id=model.provider_resource_id,
-            contents=contents,
-            text_truncation=text_truncation,
-            output_dimension=output_dimension,
-            task_type=task_type,
-        )
 
     async def openai_embeddings(
         self,

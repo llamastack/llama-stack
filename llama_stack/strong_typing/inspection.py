@@ -567,6 +567,22 @@ def get_class_properties(typ: type) -> Iterable[Tuple[str, type | str]]:
 
     if is_dataclass_type(typ):
         return ((field.name, field.type) for field in dataclasses.fields(typ))
+    elif hasattr(typ, "model_fields"):
+        # Pydantic BaseModel - use model_fields to exclude ClassVar and other non-field attributes
+        # Reconstruct Annotated type if discriminator exists to preserve metadata
+        from typing import Annotated, Any, cast
+        from pydantic.fields import FieldInfo
+
+        def get_field_type(name: str, field: Any) -> type | str:
+            # If field has discriminator, wrap in Annotated to preserve it for schema generation
+            if field.discriminator:
+                field_info = FieldInfo(annotation=None, discriminator=field.discriminator)
+                # Annotated returns _AnnotatedAlias which isn't a type but is valid here
+                return Annotated[field.annotation, field_info]  # type: ignore[return-value]
+            # field.annotation can be Union types, Annotated, etc. which aren't type but are valid
+            return field.annotation  # type: ignore[return-value,no-any-return]
+
+        return ((name, get_field_type(name, field)) for name, field in typ.model_fields.items())
     else:
         resolved_hints = get_resolved_hints(typ)
         return resolved_hints.items()

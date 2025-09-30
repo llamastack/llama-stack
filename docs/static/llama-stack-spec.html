@@ -427,7 +427,7 @@
                 }
             }
         },
-        "/v1/openai/v1/responses": {
+        "/v1/responses": {
             "get": {
                 "responses": {
                     "200": {
@@ -809,7 +809,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/responses/{response_id}": {
+        "/v1/responses/{response_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -1033,50 +1033,6 @@
                         }
                     }
                 ]
-            }
-        },
-        "/v1/inference/embeddings": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "An array of embeddings, one for each content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/EmbeddingsResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Inference"
-                ],
-                "summary": "Generate embeddings for content pieces using the specified model.",
-                "description": "Generate embeddings for content pieces using the specified model.",
-                "parameters": [],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/EmbeddingsRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                }
             }
         },
         "/v1alpha/eval/benchmarks/{benchmark_id}/evaluations": {
@@ -1478,7 +1434,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/chat/completions/{completion_id}": {
+        "/v1/chat/completions/{completion_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -3193,7 +3149,7 @@
                 }
             }
         },
-        "/v1/openai/v1/chat/completions": {
+        "/v1/chat/completions": {
             "get": {
                 "responses": {
                     "200": {
@@ -3465,7 +3421,7 @@
                 }
             }
         },
-        "/v1/openai/v1/responses/{response_id}/input_items": {
+        "/v1/responses/{response_id}/input_items": {
             "get": {
                 "responses": {
                     "200": {
@@ -4093,7 +4049,7 @@
                 }
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/files": {
+        "/v1/vector_stores/{vector_store_id}/files": {
             "get": {
                 "responses": {
                     "200": {
@@ -4234,7 +4190,7 @@
                 }
             }
         },
-        "/v1/openai/v1/completions": {
+        "/v1/completions": {
             "post": {
                 "responses": {
                     "200": {
@@ -4278,7 +4234,7 @@
                 }
             }
         },
-        "/v1/openai/v1/vector_stores": {
+        "/v1/vector_stores": {
             "get": {
                 "responses": {
                     "200": {
@@ -4391,7 +4347,7 @@
                 }
             }
         },
-        "/v1/openai/v1/files/{file_id}": {
+        "/v1/files/{file_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -4477,7 +4433,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}": {
+        "/v1/vector_stores/{vector_store_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -4615,7 +4571,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}": {
+        "/v1/vector_stores/{vector_store_id}/files/{file_id}": {
             "get": {
                 "responses": {
                     "200": {
@@ -4780,7 +4736,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/embeddings": {
+        "/v1/embeddings": {
             "post": {
                 "responses": {
                     "200": {
@@ -4824,7 +4780,7 @@
                 }
             }
         },
-        "/v1/openai/v1/files": {
+        "/v1/files": {
             "get": {
                 "responses": {
                     "200": {
@@ -4923,7 +4879,7 @@
                     "Files"
                 ],
                 "summary": "Upload a file that can be used across various endpoints.",
-                "description": "Upload a file that can be used across various endpoints.\nThe file upload should be a multipart form request with:\n- file: The File object (not file name) to be uploaded.\n- purpose: The intended purpose of the uploaded file.\n- expires_after: Optional form values describing expiration for the file. Expected expires_after[anchor] = \"created_at\", expires_after[seconds] = {integer}. Seconds must be between 3600 and 2592000 (1 hour to 30 days).",
+                "description": "Upload a file that can be used across various endpoints.\nThe file upload should be a multipart form request with:\n- file: The File object (not file name) to be uploaded.\n- purpose: The intended purpose of the uploaded file.\n- expires_after: Optional form values describing expiration for the file.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -4938,32 +4894,13 @@
                                     "purpose": {
                                         "$ref": "#/components/schemas/OpenAIFilePurpose"
                                     },
-                                    "expires_after_anchor": {
-                                        "oneOf": [
-                                            {
-                                                "type": "string"
-                                            },
-                                            {
-                                                "type": "null"
-                                            }
-                                        ]
-                                    },
-                                    "expires_after_seconds": {
-                                        "oneOf": [
-                                            {
-                                                "type": "integer"
-                                            },
-                                            {
-                                                "type": "null"
-                                            }
-                                        ]
+                                    "expires_after": {
+                                        "$ref": "#/components/schemas/ExpiresAfter"
                                     }
                                 },
                                 "required": [
                                     "file",
-                                    "purpose",
-                                    "expires_after_anchor",
-                                    "expires_after_seconds"
+                                    "purpose"
                                 ]
                             }
                         }
@@ -4972,41 +4909,7 @@
                 }
             }
         },
-        "/v1/openai/v1/models": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "A OpenAIListModelsResponse.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OpenAIListModelsResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Models"
-                ],
-                "summary": "List models using the OpenAI API.",
-                "description": "List models using the OpenAI API.",
-                "parameters": []
-            }
-        },
-        "/v1/openai/v1/files/{file_id}/content": {
+        "/v1/files/{file_id}/content": {
             "get": {
                 "responses": {
                     "200": {
@@ -5050,7 +4953,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content": {
+        "/v1/vector_stores/{vector_store_id}/files/{file_id}/content": {
             "get": {
                 "responses": {
                     "200": {
@@ -5103,7 +5006,7 @@
                 ]
             }
         },
-        "/v1/openai/v1/vector_stores/{vector_store_id}/search": {
+        "/v1/vector_stores/{vector_store_id}/search": {
             "post": {
                 "responses": {
                     "200": {
@@ -5475,7 +5378,7 @@
                 }
             }
         },
-        "/v1/inference/rerank": {
+        "/v1alpha/inference/rerank": {
             "post": {
                 "responses": {
                     "200": {
@@ -5704,7 +5607,7 @@
                 }
             }
         },
-        "/v1/openai/v1/moderations": {
+        "/v1/moderations": {
             "post": {
                 "responses": {
                     "200": {
@@ -6488,7 +6391,25 @@
                 "type": "object",
                 "properties": {
                     "strategy": {
-                        "$ref": "#/components/schemas/SamplingStrategy",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/GreedySamplingStrategy"
+                            },
+                            {
+                                "$ref": "#/components/schemas/TopPSamplingStrategy"
+                            },
+                            {
+                                "$ref": "#/components/schemas/TopKSamplingStrategy"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "greedy": "#/components/schemas/GreedySamplingStrategy",
+                                "top_p": "#/components/schemas/TopPSamplingStrategy",
+                                "top_k": "#/components/schemas/TopKSamplingStrategy"
+                            }
+                        },
                         "description": "The sampling strategy."
                     },
                     "max_tokens": {
@@ -6515,27 +6436,6 @@
                 ],
                 "title": "SamplingParams",
                 "description": "Sampling parameters."
-            },
-            "SamplingStrategy": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/GreedySamplingStrategy"
-                    },
-                    {
-                        "$ref": "#/components/schemas/TopPSamplingStrategy"
-                    },
-                    {
-                        "$ref": "#/components/schemas/TopKSamplingStrategy"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "greedy": "#/components/schemas/GreedySamplingStrategy",
-                        "top_p": "#/components/schemas/TopPSamplingStrategy",
-                        "top_k": "#/components/schemas/TopKSamplingStrategy"
-                    }
-                }
             },
             "SystemMessage": {
                 "type": "object",
@@ -7119,7 +7019,25 @@
                         "description": "Type of the event"
                     },
                     "delta": {
-                        "$ref": "#/components/schemas/ContentDelta",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/TextDelta"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ImageDelta"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ToolCallDelta"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "text": "#/components/schemas/TextDelta",
+                                "image": "#/components/schemas/ImageDelta",
+                                "tool_call": "#/components/schemas/ToolCallDelta"
+                            }
+                        },
                         "description": "Content generated since last event. This can be one or more tokens, or a tool call."
                     },
                     "logprobs": {
@@ -7168,27 +7086,6 @@
                 ],
                 "title": "ChatCompletionResponseStreamChunk",
                 "description": "A chunk of a streamed chat completion response."
-            },
-            "ContentDelta": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/TextDelta"
-                    },
-                    {
-                        "$ref": "#/components/schemas/ImageDelta"
-                    },
-                    {
-                        "$ref": "#/components/schemas/ToolCallDelta"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "text": "#/components/schemas/TextDelta",
-                        "image": "#/components/schemas/ImageDelta",
-                        "tool_call": "#/components/schemas/ToolCallDelta"
-                    }
-                }
             },
             "ImageDelta": {
                 "type": "object",
@@ -8118,7 +8015,37 @@
                 "type": "object",
                 "properties": {
                     "payload": {
-                        "$ref": "#/components/schemas/AgentTurnResponseEventPayload",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/AgentTurnResponseStepStartPayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AgentTurnResponseStepProgressPayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AgentTurnResponseStepCompletePayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AgentTurnResponseTurnStartPayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AgentTurnResponseTurnCompletePayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AgentTurnResponseTurnAwaitingInputPayload"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "event_type",
+                            "mapping": {
+                                "step_start": "#/components/schemas/AgentTurnResponseStepStartPayload",
+                                "step_progress": "#/components/schemas/AgentTurnResponseStepProgressPayload",
+                                "step_complete": "#/components/schemas/AgentTurnResponseStepCompletePayload",
+                                "turn_start": "#/components/schemas/AgentTurnResponseTurnStartPayload",
+                                "turn_complete": "#/components/schemas/AgentTurnResponseTurnCompletePayload",
+                                "turn_awaiting_input": "#/components/schemas/AgentTurnResponseTurnAwaitingInputPayload"
+                            }
+                        },
                         "description": "Event-specific payload containing event data"
                     }
                 },
@@ -8128,39 +8055,6 @@
                 ],
                 "title": "AgentTurnResponseEvent",
                 "description": "An event in an agent turn response stream."
-            },
-            "AgentTurnResponseEventPayload": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/AgentTurnResponseStepStartPayload"
-                    },
-                    {
-                        "$ref": "#/components/schemas/AgentTurnResponseStepProgressPayload"
-                    },
-                    {
-                        "$ref": "#/components/schemas/AgentTurnResponseStepCompletePayload"
-                    },
-                    {
-                        "$ref": "#/components/schemas/AgentTurnResponseTurnStartPayload"
-                    },
-                    {
-                        "$ref": "#/components/schemas/AgentTurnResponseTurnCompletePayload"
-                    },
-                    {
-                        "$ref": "#/components/schemas/AgentTurnResponseTurnAwaitingInputPayload"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "event_type",
-                    "mapping": {
-                        "step_start": "#/components/schemas/AgentTurnResponseStepStartPayload",
-                        "step_progress": "#/components/schemas/AgentTurnResponseStepProgressPayload",
-                        "step_complete": "#/components/schemas/AgentTurnResponseStepCompletePayload",
-                        "turn_start": "#/components/schemas/AgentTurnResponseTurnStartPayload",
-                        "turn_complete": "#/components/schemas/AgentTurnResponseTurnCompletePayload",
-                        "turn_awaiting_input": "#/components/schemas/AgentTurnResponseTurnAwaitingInputPayload"
-                    }
-                }
             },
             "AgentTurnResponseStepCompletePayload": {
                 "type": "object",
@@ -8262,7 +8156,25 @@
                         "description": "Unique identifier for the step within a turn"
                     },
                     "delta": {
-                        "$ref": "#/components/schemas/ContentDelta",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/TextDelta"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ImageDelta"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ToolCallDelta"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "text": "#/components/schemas/TextDelta",
+                                "image": "#/components/schemas/ImageDelta",
+                                "tool_call": "#/components/schemas/ToolCallDelta"
+                            }
+                        },
                         "description": "Incremental content changes during step execution"
                     }
                 },
@@ -9568,10 +9480,6 @@
                     "truncation": {
                         "type": "string",
                         "description": "(Optional) Truncation strategy applied to the response"
-                    },
-                    "user": {
-                        "type": "string",
-                        "description": "(Optional) User identifier associated with the request"
                     }
                 },
                 "additionalProperties": false,
@@ -9748,23 +9656,6 @@
                 "title": "OpenAIResponseOutputMessageMCPListTools",
                 "description": "MCP list tools output message containing available tools from an MCP server."
             },
-            "OpenAIResponseContentPart": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseContentPartOutputText"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
-                        "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
-                    }
-                }
-            },
             "OpenAIResponseContentPartOutputText": {
                 "type": "object",
                 "properties": {
@@ -9930,7 +9821,21 @@
                         "description": "Unique identifier of the output item containing this content part"
                     },
                     "part": {
-                        "$ref": "#/components/schemas/OpenAIResponseContentPart",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartOutputText"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            }
+                        },
                         "description": "The content part that was added"
                     },
                     "sequence_number": {
@@ -9967,7 +9872,21 @@
                         "description": "Unique identifier of the output item containing this content part"
                     },
                     "part": {
-                        "$ref": "#/components/schemas/OpenAIResponseContentPart",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartOutputText"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            }
+                        },
                         "description": "The completed content part"
                     },
                     "sequence_number": {
@@ -10291,7 +10210,37 @@
                         "description": "Unique identifier of the response containing this output"
                     },
                     "item": {
-                        "$ref": "#/components/schemas/OpenAIResponseOutput",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseMessage"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "message": "#/components/schemas/OpenAIResponseMessage",
+                                "web_search_call": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall",
+                                "file_search_call": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall",
+                                "function_call": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall",
+                                "mcp_call": "#/components/schemas/OpenAIResponseOutputMessageMCPCall",
+                                "mcp_list_tools": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
+                            }
+                        },
                         "description": "The output item that was added (message, tool call, etc.)"
                     },
                     "output_index": {
@@ -10328,7 +10277,37 @@
                         "description": "Unique identifier of the response containing this output"
                     },
                     "item": {
-                        "$ref": "#/components/schemas/OpenAIResponseOutput",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseMessage"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPCall"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "message": "#/components/schemas/OpenAIResponseMessage",
+                                "web_search_call": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall",
+                                "file_search_call": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall",
+                                "function_call": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall",
+                                "mcp_call": "#/components/schemas/OpenAIResponseOutputMessageMCPCall",
+                                "mcp_list_tools": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
+                            }
+                        },
                         "description": "The completed output item (message, tool call, etc.)"
                     },
                     "output_index": {
@@ -10619,80 +10598,6 @@
                 "title": "OpenAIDeleteResponseObject",
                 "description": "Response object confirming deletion of an OpenAI response."
             },
-            "EmbeddingsRequest": {
-                "type": "object",
-                "properties": {
-                    "model_id": {
-                        "type": "string",
-                        "description": "The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint."
-                    },
-                    "contents": {
-                        "oneOf": [
-                            {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/components/schemas/InterleavedContentItem"
-                                }
-                            }
-                        ],
-                        "description": "List of contents to generate embeddings for. Each content can be a string or an InterleavedContentItem (and hence can be multimodal). The behavior depends on the model and provider. Some models may only support text."
-                    },
-                    "text_truncation": {
-                        "type": "string",
-                        "enum": [
-                            "none",
-                            "start",
-                            "end"
-                        ],
-                        "description": "(Optional) Config for how to truncate text for embedding when text is longer than the model's max sequence length."
-                    },
-                    "output_dimension": {
-                        "type": "integer",
-                        "description": "(Optional) Output dimensionality for the embeddings. Only supported by Matryoshka models."
-                    },
-                    "task_type": {
-                        "type": "string",
-                        "enum": [
-                            "query",
-                            "document"
-                        ],
-                        "description": "(Optional) How is the embedding being used? This is only supported by asymmetric embedding models."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "model_id",
-                    "contents"
-                ],
-                "title": "EmbeddingsRequest"
-            },
-            "EmbeddingsResponse": {
-                "type": "object",
-                "properties": {
-                    "embeddings": {
-                        "type": "array",
-                        "items": {
-                            "type": "array",
-                            "items": {
-                                "type": "number"
-                            }
-                        },
-                        "description": "List of embedding vectors, one per input content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "embeddings"
-                ],
-                "title": "EmbeddingsResponse",
-                "description": "Response containing generated embeddings."
-            },
             "AgentCandidate": {
                 "type": "object",
                 "properties": {
@@ -10755,7 +10660,21 @@
                 "type": "object",
                 "properties": {
                     "eval_candidate": {
-                        "$ref": "#/components/schemas/EvalCandidate",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ModelCandidate"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AgentCandidate"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "model": "#/components/schemas/ModelCandidate",
+                                "agent": "#/components/schemas/AgentCandidate"
+                            }
+                        },
                         "description": "The candidate to evaluate."
                     },
                     "scoring_params": {
@@ -10777,23 +10696,6 @@
                 ],
                 "title": "BenchmarkConfig",
                 "description": "A benchmark configuration for evaluation."
-            },
-            "EvalCandidate": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/ModelCandidate"
-                    },
-                    {
-                        "$ref": "#/components/schemas/AgentCandidate"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "model": "#/components/schemas/ModelCandidate",
-                        "agent": "#/components/schemas/AgentCandidate"
-                    }
-                }
             },
             "LLMAsJudgeScoringFnParams": {
                 "type": "object",
@@ -11430,7 +11332,33 @@
                 "type": "object",
                 "properties": {
                     "message": {
-                        "$ref": "#/components/schemas/OpenAIMessageParam",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIUserMessageParam"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAISystemMessageParam"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIAssistantMessageParam"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIToolMessageParam"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIDeveloperMessageParam"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "role",
+                            "mapping": {
+                                "user": "#/components/schemas/OpenAIUserMessageParam",
+                                "system": "#/components/schemas/OpenAISystemMessageParam",
+                                "assistant": "#/components/schemas/OpenAIAssistantMessageParam",
+                                "tool": "#/components/schemas/OpenAIToolMessageParam",
+                                "developer": "#/components/schemas/OpenAIDeveloperMessageParam"
+                            }
+                        },
                         "description": "The message from the model"
                     },
                     "finish_reason": {
@@ -11806,23 +11734,6 @@
                 ],
                 "title": "OpenAICompletionWithInputMessages"
             },
-            "DataSource": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/URIDataSource"
-                    },
-                    {
-                        "$ref": "#/components/schemas/RowsDataSource"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "uri": "#/components/schemas/URIDataSource",
-                        "rows": "#/components/schemas/RowsDataSource"
-                    }
-                }
-            },
             "Dataset": {
                 "type": "object",
                 "properties": {
@@ -11862,7 +11773,21 @@
                         "description": "Purpose of the dataset indicating its intended use"
                     },
                     "source": {
-                        "$ref": "#/components/schemas/DataSource",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/URIDataSource"
+                            },
+                            {
+                                "$ref": "#/components/schemas/RowsDataSource"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "uri": "#/components/schemas/URIDataSource",
+                                "rows": "#/components/schemas/RowsDataSource"
+                            }
+                        },
                         "description": "Data source configuration for the dataset"
                     },
                     "metadata": {
@@ -12191,55 +12116,6 @@
                 "title": "ObjectType",
                 "description": "Parameter type for object values."
             },
-            "ParamType": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/StringType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/NumberType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/BooleanType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/ArrayType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/ObjectType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/JsonType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/UnionType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/ChatCompletionInputType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/CompletionInputType"
-                    },
-                    {
-                        "$ref": "#/components/schemas/AgentTurnInputType"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "string": "#/components/schemas/StringType",
-                        "number": "#/components/schemas/NumberType",
-                        "boolean": "#/components/schemas/BooleanType",
-                        "array": "#/components/schemas/ArrayType",
-                        "object": "#/components/schemas/ObjectType",
-                        "json": "#/components/schemas/JsonType",
-                        "union": "#/components/schemas/UnionType",
-                        "chat_completion_input": "#/components/schemas/ChatCompletionInputType",
-                        "completion_input": "#/components/schemas/CompletionInputType",
-                        "agent_turn_input": "#/components/schemas/AgentTurnInputType"
-                    }
-                }
-            },
             "ScoringFn": {
                 "type": "object",
                 "properties": {
@@ -12298,7 +12174,53 @@
                         }
                     },
                     "return_type": {
-                        "$ref": "#/components/schemas/ParamType"
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/StringType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NumberType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BooleanType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ArrayType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ObjectType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/JsonType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/UnionType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ChatCompletionInputType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/CompletionInputType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AgentTurnInputType"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "string": "#/components/schemas/StringType",
+                                "number": "#/components/schemas/NumberType",
+                                "boolean": "#/components/schemas/BooleanType",
+                                "array": "#/components/schemas/ArrayType",
+                                "object": "#/components/schemas/ObjectType",
+                                "json": "#/components/schemas/JsonType",
+                                "union": "#/components/schemas/UnionType",
+                                "chat_completion_input": "#/components/schemas/ChatCompletionInputType",
+                                "completion_input": "#/components/schemas/CompletionInputType",
+                                "agent_turn_input": "#/components/schemas/AgentTurnInputType"
+                            }
+                        }
                     },
                     "params": {
                         "$ref": "#/components/schemas/ScoringFnParams"
@@ -13784,10 +13706,6 @@
                         "type": "string",
                         "description": "(Optional) Truncation strategy applied to the response"
                     },
-                    "user": {
-                        "type": "string",
-                        "description": "(Optional) User identifier associated with the request"
-                    },
                     "input": {
                         "type": "array",
                         "items": {
@@ -14212,7 +14130,21 @@
                         "description": "Event type identifier set to STRUCTURED_LOG"
                     },
                     "payload": {
-                        "$ref": "#/components/schemas/StructuredLogPayload",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SpanStartPayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SpanEndPayload"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "span_start": "#/components/schemas/SpanStartPayload",
+                                "span_end": "#/components/schemas/SpanEndPayload"
+                            }
+                        },
                         "description": "The structured payload data for the log event"
                     }
                 },
@@ -14226,23 +14158,6 @@
                 ],
                 "title": "StructuredLogEvent",
                 "description": "A structured log event containing typed payload data."
-            },
-            "StructuredLogPayload": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/SpanStartPayload"
-                    },
-                    {
-                        "$ref": "#/components/schemas/SpanEndPayload"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "span_start": "#/components/schemas/SpanStartPayload",
-                        "span_end": "#/components/schemas/SpanEndPayload"
-                    }
-                }
             },
             "StructuredLogType": {
                 "type": "string",
@@ -14528,7 +14443,21 @@
                         "description": "Key-value attributes associated with the file"
                     },
                     "chunking_strategy": {
-                        "$ref": "#/components/schemas/VectorStoreChunkingStrategy",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/VectorStoreChunkingStrategyAuto"
+                            },
+                            {
+                                "$ref": "#/components/schemas/VectorStoreChunkingStrategyStatic"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "auto": "#/components/schemas/VectorStoreChunkingStrategyAuto",
+                                "static": "#/components/schemas/VectorStoreChunkingStrategyStatic"
+                            }
+                        },
                         "description": "Strategy used for splitting the file into chunks"
                     },
                     "created_at": {
@@ -15913,50 +15842,6 @@
                 "title": "VectorStoreListFilesResponse",
                 "description": "Response from listing files in a vector store."
             },
-            "OpenAIModel": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "object": {
-                        "type": "string",
-                        "const": "model",
-                        "default": "model"
-                    },
-                    "created": {
-                        "type": "integer"
-                    },
-                    "owned_by": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "id",
-                    "object",
-                    "created",
-                    "owned_by"
-                ],
-                "title": "OpenAIModel",
-                "description": "A model from OpenAI."
-            },
-            "OpenAIListModelsResponse": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/OpenAIModel"
-                        }
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "data"
-                ],
-                "title": "OpenAIListModelsResponse"
-            },
             "VectorStoreListResponse": {
                 "type": "object",
                 "properties": {
@@ -16341,6 +16226,25 @@
                 ],
                 "title": "OpenaiUpdateVectorStoreFileRequest"
             },
+            "ExpiresAfter": {
+                "type": "object",
+                "properties": {
+                    "anchor": {
+                        "type": "string",
+                        "const": "created_at"
+                    },
+                    "seconds": {
+                        "type": "integer"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "anchor",
+                    "seconds"
+                ],
+                "title": "ExpiresAfter",
+                "description": "Control expiration of uploaded files.\nParams:\n - anchor, must be \"created_at\"\n - seconds, must be int between 3600 and 2592000 (1 hour to 30 days)"
+            },
             "DPOAlignmentConfig": {
                 "type": "object",
                 "properties": {
@@ -16692,7 +16596,21 @@
                 "type": "object",
                 "properties": {
                     "query_generator_config": {
-                        "$ref": "#/components/schemas/RAGQueryGeneratorConfig",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/DefaultRAGQueryGeneratorConfig"
+                            },
+                            {
+                                "$ref": "#/components/schemas/LLMRAGQueryGeneratorConfig"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "default": "#/components/schemas/DefaultRAGQueryGeneratorConfig",
+                                "llm": "#/components/schemas/LLMRAGQueryGeneratorConfig"
+                            }
+                        },
                         "description": "Configuration for the query generator."
                     },
                     "max_tokens_in_context": {
@@ -16729,23 +16647,6 @@
                 ],
                 "title": "RAGQueryConfig",
                 "description": "Configuration for the RAG query generation."
-            },
-            "RAGQueryGeneratorConfig": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/DefaultRAGQueryGeneratorConfig"
-                    },
-                    {
-                        "$ref": "#/components/schemas/LLMRAGQueryGeneratorConfig"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "default": "#/components/schemas/DefaultRAGQueryGeneratorConfig",
-                        "llm": "#/components/schemas/LLMRAGQueryGeneratorConfig"
-                    }
-                }
             },
             "RAGSearchMode": {
                 "type": "string",
@@ -17328,6 +17229,23 @@
                 ],
                 "title": "RegisterBenchmarkRequest"
             },
+            "DataSource": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/URIDataSource"
+                    },
+                    {
+                        "$ref": "#/components/schemas/RowsDataSource"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "uri": "#/components/schemas/URIDataSource",
+                        "rows": "#/components/schemas/RowsDataSource"
+                    }
+                }
+            },
             "RegisterDatasetRequest": {
                 "type": "object",
                 "properties": {
@@ -17433,6 +17351,55 @@
                     "model_id"
                 ],
                 "title": "RegisterModelRequest"
+            },
+            "ParamType": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/StringType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/NumberType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/BooleanType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ArrayType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ObjectType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/JsonType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/UnionType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ChatCompletionInputType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/CompletionInputType"
+                    },
+                    {
+                        "$ref": "#/components/schemas/AgentTurnInputType"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "string": "#/components/schemas/StringType",
+                        "number": "#/components/schemas/NumberType",
+                        "boolean": "#/components/schemas/BooleanType",
+                        "array": "#/components/schemas/ArrayType",
+                        "object": "#/components/schemas/ObjectType",
+                        "json": "#/components/schemas/JsonType",
+                        "union": "#/components/schemas/UnionType",
+                        "chat_completion_input": "#/components/schemas/ChatCompletionInputType",
+                        "completion_input": "#/components/schemas/CompletionInputType",
+                        "agent_turn_input": "#/components/schemas/AgentTurnInputType"
+                    }
+                }
             },
             "RegisterScoringFunctionRequest": {
                 "type": "object",
