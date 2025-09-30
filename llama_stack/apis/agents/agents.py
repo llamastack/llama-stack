@@ -27,7 +27,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.safety import SafetyViolation
 from llama_stack.apis.tools import ToolDef
-from llama_stack.apis.version import LLAMA_STACK_API_V1
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 from .openai_responses import (
@@ -482,7 +482,10 @@ class Agents(Protocol):
     - Agents can also use Memory to retrieve information from knowledge bases. See the RAG Tool and Vector IO APIs for more details.
     """
 
-    @webmethod(route="/agents", method="POST", descriptive_name="create_agent", level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents", method="POST", descriptive_name="create_agent", deprecated=True, level=LLAMA_STACK_API_V1
+    )
+    @webmethod(route="/agents", method="POST", descriptive_name="create_agent", level=LLAMA_STACK_API_V1ALPHA)
     async def create_agent(
         self,
         agent_config: AgentConfig,
@@ -498,7 +501,14 @@ class Agents(Protocol):
         route="/agents/{agent_id}/session/{session_id}/turn",
         method="POST",
         descriptive_name="create_agent_turn",
+        deprecated=True,
         level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}/turn",
+        method="POST",
+        descriptive_name="create_agent_turn",
+        level=LLAMA_STACK_API_V1ALPHA,
     )
     async def create_agent_turn(
         self,
@@ -528,7 +538,14 @@ class Agents(Protocol):
         route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/resume",
         method="POST",
         descriptive_name="resume_agent_turn",
+        deprecated=True,
         level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/resume",
+        method="POST",
+        descriptive_name="resume_agent_turn",
+        level=LLAMA_STACK_API_V1ALPHA,
     )
     async def resume_agent_turn(
         self,
@@ -554,7 +571,13 @@ class Agents(Protocol):
     @webmethod(
         route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}",
         method="GET",
+        deprecated=True,
         level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1ALPHA,
     )
     async def get_agents_turn(
         self,
@@ -574,7 +597,13 @@ class Agents(Protocol):
     @webmethod(
         route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}",
         method="GET",
+        deprecated=True,
         level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1ALPHA,
     )
     async def get_agents_step(
         self,
@@ -597,7 +626,14 @@ class Agents(Protocol):
         route="/agents/{agent_id}/session",
         method="POST",
         descriptive_name="create_agent_session",
+        deprecated=True,
         level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/agents/{agent_id}/session",
+        method="POST",
+        descriptive_name="create_agent_session",
+        level=LLAMA_STACK_API_V1ALPHA,
     )
     async def create_agent_session(
         self,
@@ -612,7 +648,8 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_agents_session(
         self,
         session_id: str,
@@ -628,7 +665,10 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}", method="DELETE", deprecated=True, level=LLAMA_STACK_API_V1
+    )
+    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def delete_agents_session(
         self,
         session_id: str,
@@ -641,7 +681,8 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}", method="DELETE", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def delete_agent(
         self,
         agent_id: str,
@@ -652,7 +693,8 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_agents(self, start_index: int | None = None, limit: int | None = None) -> PaginatedResponse:
         """List all agents.
 
@@ -662,7 +704,8 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_agent(self, agent_id: str) -> Agent:
         """Describe an agent by its ID.
 
@@ -671,7 +714,8 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}/sessions", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}/sessions", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/agents/{agent_id}/sessions", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_agent_sessions(
         self,
         agent_id: str,
