@@ -7,7 +7,7 @@
 from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, Protocol, runtime_checkable
 
-from fastapi import File, Response, UploadFile
+from fastapi import File, Form, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.responses import Order
@@ -110,9 +110,8 @@ class Files(Protocol):
     async def openai_upload_file(
         self,
         file: Annotated[UploadFile, File()],
-        purpose: OpenAIFilePurpose,
-        expires_after: ExpiresAfter | None = None,
-        # TODO: expires_after is producing strange openapi spec, params are showing up as a required w/ oneOf being null
+        purpose: Annotated[OpenAIFilePurpose, Form()],
+        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
     ) -> OpenAIFileObject:
         """
         Upload a file that can be used across various endpoints.

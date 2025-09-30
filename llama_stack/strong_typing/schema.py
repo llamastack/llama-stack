@@ -93,6 +93,11 @@ def get_class_property_docstrings(
     """
 
     result = {}
+    # Only try to get MRO if data_type is actually a class
+    # Special types like Literal, Union, etc. don't have MRO
+    if not inspect.isclass(data_type):
+        return result
+
     for base in inspect.getmro(data_type):
         docstr = docstring.parse_type(base)
         for param in docstr.params.values():

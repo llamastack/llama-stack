@@ -10,7 +10,7 @@ from typing import Annotated, Any
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
-from fastapi import File, Response, UploadFile
+from fastapi import File, Form, Response, UploadFile
 
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
@@ -194,8 +194,8 @@ class S3FilesImpl(Files):
     async def openai_upload_file(
         self,
         file: Annotated[UploadFile, File()],
-        purpose: OpenAIFilePurpose,
-        expires_after: ExpiresAfter | None = None,
+        purpose: Annotated[OpenAIFilePurpose, Form()],
+        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
     ) -> OpenAIFileObject:
         file_id = f"file-{uuid.uuid4().hex}"
 
