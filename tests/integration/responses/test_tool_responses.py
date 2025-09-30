@@ -127,6 +127,60 @@ def test_response_non_streaming_file_search_empty_vector_store(compat_client, te
     assert response.output_text
 
 
+def test_response_file_search_with_previous_response_id(compat_client, text_model_id, tmp_path):
+    """Test that file_search works with previous_response_id without throwing AttributeError."""
+    if isinstance(compat_client, LlamaStackAsLibraryClient):
+        pytest.skip("Responses API file search is not yet supported in library client.")
+
+    vector_store = new_vector_store(compat_client, "test_vector_store")
+
+    # Create a test file with some content
+    file_name = "test_file_search_with_previous_response.txt"
+    file_path = tmp_path / file_name
+    file_content = "The Llama 4 Maverick model has 128 experts."
+    file_path.write_text(file_content)
+
+    # Upload the file and attach to vector store
+    file_response = upload_file(compat_client, file_name, file_path)
+    compat_client.vector_stores.files.create(
+        vector_store_id=vector_store.id,
+        file_id=file_response.id,
+    )
+    wait_for_file_attachment(compat_client, vector_store.id, file_response.id)
+
+    # First response with file_search
+    tools = [{"type": "file_search", "vector_store_ids": [vector_store.id]}]
+    response1 = compat_client.responses.create(
+        model=text_model_id,
+        input="How many experts does the Llama 4 Maverick model have?",
+        tools=tools,
+        stream=False,
+        include=["file_search_call.results"],
+    )
+
+    # Verify first response succeeded
+    assert len(response1.output) > 1
+    assert response1.output[0].type == "file_search_call"
+    assert response1.output[0].status == "completed"
+    assert response1.output_text
+
+    # Second response with previous_response_id - this is the key test for the fix
+    # This should NOT throw AttributeError about 'content'
+    response2 = compat_client.responses.create(
+        model=text_model_id,
+        input="What else can you tell me about this model?",
+        tools=tools,
+        stream=False,
+        previous_response_id=response1.id,
+    )
+
+    # Verify second response succeeded
+    assert response2.output
+    assert response2.output_text
+    # Verify the previous_response_id was captured
+    assert response2.previous_response_id == response1.id
+
+
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
 def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case):
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
