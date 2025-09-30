@@ -11,6 +11,7 @@ from fastapi import File, Form, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.responses import Order
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -104,14 +105,12 @@ class OpenAIFileDeleteResponse(BaseModel):
 @trace_protocol
 class Files(Protocol):
     # OpenAI Files API Endpoints
-    @webmethod(route="/openai/v1/files", method="POST")
+    @webmethod(route="/files", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_upload_file(
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
-        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
-        # TODO: expires_after is producing strange openapi spec, params are showing up as a required w/ oneOf being null
+        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
     ) -> OpenAIFileObject:
         """
         Upload a file that can be used across various endpoints.
@@ -119,15 +118,16 @@ class Files(Protocol):
         The file upload should be a multipart form request with:
         - file: The File object (not file name) to be uploaded.
         - purpose: The intended purpose of the uploaded file.
-        - expires_after: Optional form values describing expiration for the file. Expected expires_after[anchor] = "created_at", expires_after[seconds] = <int>. Seconds must be between 3600 and 2592000 (1 hour to 30 days).
+        - expires_after: Optional form values describing expiration for the file.
 
         :param file: The uploaded file object containing content and metadata (filename, content_type, etc.).
         :param purpose: The intended purpose of the uploaded file (e.g., "assistants", "fine-tune").
+        :param expires_after: Optional form values describing expiration for the file.
         :returns: An OpenAIFileObject representing the uploaded file.
         """
         ...
 
-    @webmethod(route="/openai/v1/files", method="GET")
+    @webmethod(route="/files", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_files(
         self,
         after: str | None = None,
@@ -146,7 +146,7 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}", method="GET")
+    @webmethod(route="/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_file(
         self,
         file_id: str,
@@ -159,7 +159,7 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}", method="DELETE")
+    @webmethod(route="/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_file(
         self,
         file_id: str,
@@ -172,7 +172,7 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}/content", method="GET")
+    @webmethod(route="/files/{file_id}/content", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_file_content(
         self,
         file_id: str,

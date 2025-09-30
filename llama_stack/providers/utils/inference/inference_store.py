@@ -6,6 +6,8 @@
 import asyncio
 from typing import Any
 
+from sqlalchemy.exc import IntegrityError
+
 from llama_stack.apis.inference import (
     ListOpenAIChatCompletionResponse,
     OpenAIChatCompletion,
@@ -52,7 +54,7 @@ class InferenceStore:
 
     async def initialize(self):
         """Create the necessary tables if they don't exist."""
-        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.sql_store_config))
+        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.sql_store_config), self.policy)
         await self.sql_store.create_table(
             "chat_completions",
             {
@@ -129,16 +131,44 @@ class InferenceStore:
             raise ValueError("Inference store is not initialized")
 
         data = chat_completion.model_dump()
+        record_data = {
+            "id": data["id"],
+            "created": data["created"],
+            "model": data["model"],
+            "choices": data["choices"],
+            "input_messages": [message.model_dump() for message in input_messages],
+        }
 
-        await self.sql_store.insert(
-            table="chat_completions",
-            data={
-                "id": data["id"],
-                "created": data["created"],
-                "model": data["model"],
-                "choices": data["choices"],
-                "input_messages": [message.model_dump() for message in input_messages],
-            },
+        try:
+            await self.sql_store.insert(
+                table="chat_completions",
+                data=record_data,
+            )
+        except IntegrityError as e:
+            # Duplicate chat completion IDs can be generated during tests especially if they are replaying
+            # recorded responses across different tests. No need to warn or error under those circumstances.
+            # In the wild, this is not likely to happen at all (no evidence) so we aren't really hiding any problem.
+
+            # Check if it's a unique constraint violation
+            error_message = str(e.orig) if e.orig else str(e)
+            if self._is_unique_constraint_error(error_message):
+                # Update the existing record instead
+                await self.sql_store.update(table="chat_completions", data=record_data, where={"id": data["id"]})
+            else:
+                # Re-raise if it's not a unique constraint error
+                raise
+
+    def _is_unique_constraint_error(self, error_message: str) -> bool:
+        """Check if the error is specifically a unique constraint violation."""
+        error_lower = error_message.lower()
+        return any(
+            indicator in error_lower
+            for indicator in [
+                "unique constraint failed",  # SQLite
+                "duplicate key",  # PostgreSQL
+                "unique violation",  # PostgreSQL alternative
+                "duplicate entry",  # MySQL
+            ]
         )
 
     async def list_chat_completions(
@@ -172,7 +202,6 @@ class InferenceStore:
             order_by=[("created", order.value)],
             cursor=("id", after) if after else None,
             limit=limit,
-            policy=self.policy,
         )
 
         data = [
@@ -199,7 +228,6 @@ class InferenceStore:
         row = await self.sql_store.fetch_one(
             table="chat_completions",
             where={"id": completion_id},
-            policy=self.policy,
         )
 
         if not row:

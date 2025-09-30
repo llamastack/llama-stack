@@ -6,10 +6,24 @@
 
 
 import time
+import unicodedata
 
 import pytest
+from pydantic import BaseModel
 
 from ..test_cases.test_case import TestCase
+
+
+def _normalize_text(text: str) -> str:
+    """
+    Normalize Unicode text by removing diacritical marks for comparison.
+
+    The test case streaming_01 expects the answer "Sol" for the question "What's the name of the Sun
+    in latin?", but the model is returning "sōl" (with a macron over the 'o'), which is the correct
+    Latin spelling. The test is failing because it's doing a simple case-insensitive string search
+    for "sol" but the actual response contains the diacritical mark.
+    """
+    return unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("ascii").lower()
 
 
 def provider_from_model(client_with_models, model_id):
@@ -27,7 +41,6 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         "inline::sentence-transformers",
         "inline::vllm",
         "remote::bedrock",
-        "remote::cerebras",
         "remote::databricks",
         # Technically Nvidia does support OpenAI completions, but none of their hosted models
         # support both completions and chat completions endpoint and all the Llama models are
@@ -35,15 +48,27 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         "remote::nvidia",
         "remote::runpod",
         "remote::sambanova",
-        "remote::tgi",
         "remote::vertexai",
         # {"error":{"message":"Unknown request URL: GET /openai/v1/completions. Please check the URL for typos,
         # or see the docs at https://console.groq.com/docs/","type":"invalid_request_error","code":"unknown_url"}}
         "remote::groq",
         "remote::gemini",  # https://generativelanguage.googleapis.com/v1beta/openai/completions -> 404
         "remote::anthropic",  # at least claude-3-{5,7}-{haiku,sonnet}-* / claude-{sonnet,opus}-4-* are not supported
+        "remote::azure",  # {'error': {'code': 'OperationNotSupported', 'message': 'The completion operation
+        #  does not work with the specified model, gpt-5-mini. Please choose different model and try
+        #  again. You can learn more about which models can be used with each operation here:
+        #  https://go.microsoft.com/fwlink/?linkid=2197993.'}}"}
+        "remote::watsonx",  # return 404 when hitting the /openai/v1 endpoint
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI completions.")
+
+
+def skip_if_doesnt_support_completions_logprobs(client_with_models, model_id):
+    provider_type = provider_from_model(client_with_models, model_id).provider_type
+    if provider_type in (
+        "remote::ollama",  # logprobs is ignored
+    ):
+        pytest.skip(f"Model {model_id} hosted by {provider_type} doesn't support /v1/completions logprobs.")
 
 
 def skip_if_model_doesnt_support_suffix(client_with_models, model_id):
@@ -79,6 +104,11 @@ def skip_if_doesnt_support_n(client_with_models, model_id):
         "remote::vertexai",
         #  Error code: 400 - [{'error': {'code': 400, 'message': 'Unable to submit request because candidateCount must be 1 but
         #  the entered value was 2. Update the candidateCount value and try again.', 'status': 'INVALID_ARGUMENT'}
+        "remote::tgi",  # TGI ignores n param silently
+        "remote::together",  # `n` > 1 is not supported when streaming tokens. Please disable `stream`
+        # Error code 400 - {'message': '"n" > 1 is not currently supported', 'type': 'invalid_request_error', 'param': 'n', 'code': 'wrong_api_format'}
+        "remote::cerebras",
+        "remote::databricks",  # Bad request: parameter "n" must be equal to 1 for streaming mode
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support n param.")
 
@@ -90,10 +120,10 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
         "inline::sentence-transformers",
         "inline::vllm",
         "remote::bedrock",
-        "remote::cerebras",
         "remote::databricks",
+        "remote::cerebras",
         "remote::runpod",
-        "remote::tgi",
+        "remote::watsonx",  # watsonx returns 404 when hitting the /openai/v1 endpoint
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI chat completions.")
 
@@ -157,7 +187,8 @@ def test_openai_completion_non_streaming_suffix(llama_stack_client, client_with_
     assert len(response.choices) > 0
     choice = response.choices[0]
     assert len(choice.text) > 5
-    assert "france" in choice.text.lower()
+    normalized_text = _normalize_text(choice.text)
+    assert "france" in normalized_text
 
 
 @pytest.mark.parametrize(
@@ -181,28 +212,6 @@ def test_openai_completion_streaming(llama_stack_client, client_with_models, tex
     streamed_content = [chunk.choices[0].text or "" for chunk in response]
     content_str = "".join(streamed_content).lower().strip()
     assert len(content_str) > 10
-
-
-@pytest.mark.parametrize(
-    "prompt_logprobs",
-    [
-        1,
-        0,
-    ],
-)
-def test_openai_completion_prompt_logprobs(llama_stack_client, client_with_models, text_model_id, prompt_logprobs):
-    skip_if_provider_isnt_vllm(client_with_models, text_model_id)
-
-    prompt = "Hello, world!"
-    response = llama_stack_client.completions.create(
-        model=text_model_id,
-        prompt=prompt,
-        stream=False,
-        prompt_logprobs=prompt_logprobs,
-    )
-    assert len(response.choices) > 0
-    choice = response.choices[0]
-    assert len(choice.prompt_logprobs) > 0
 
 
 def test_openai_completion_guided_choice(llama_stack_client, client_with_models, text_model_id):
@@ -248,7 +257,9 @@ def test_openai_chat_completion_non_streaming(compat_client, client_with_models,
     )
     message_content = response.choices[0].message.content.lower().strip()
     assert len(message_content) > 0
-    assert expected.lower() in message_content
+    normalized_expected = _normalize_text(expected)
+    normalized_content = _normalize_text(message_content)
+    assert normalized_expected in normalized_content
 
 
 @pytest.mark.parametrize(
@@ -272,10 +283,13 @@ def test_openai_chat_completion_streaming(compat_client, client_with_models, tex
     )
     streamed_content = []
     for chunk in response:
-        if chunk.choices[0].delta.content:
+        # On some providers like Azure, the choices are empty on the first chunk, so we need to check for that
+        if chunk.choices and len(chunk.choices) > 0 and chunk.choices[0].delta.content:
             streamed_content.append(chunk.choices[0].delta.content.lower().strip())
     assert len(streamed_content) > 0
-    assert expected.lower() in "".join(streamed_content)
+    normalized_expected = _normalize_text(expected)
+    normalized_content = _normalize_text("".join(streamed_content))
+    assert normalized_expected in normalized_content
 
 
 @pytest.mark.parametrize(
@@ -308,8 +322,12 @@ def test_openai_chat_completion_streaming_with_n(compat_client, client_with_mode
                     streamed_content.get(choice.index, "") + choice.delta.content.lower().strip()
                 )
     assert len(streamed_content) == 2
+    normalized_expected = _normalize_text(expected)
     for i, content in streamed_content.items():
-        assert expected.lower() in content, f"Choice {i}: Expected {expected.lower()} in {content}"
+        normalized_content = _normalize_text(content)
+        assert normalized_expected in normalized_content, (
+            f"Choice {i}: Expected {normalized_expected} in {normalized_content}"
+        )
 
 
 @pytest.mark.parametrize(
@@ -339,9 +357,9 @@ def test_inference_store(compat_client, client_with_models, text_model_id, strea
         content = ""
         response_id = None
         for chunk in response:
-            if response_id is None:
+            if response_id is None and chunk.id:
                 response_id = chunk.id
-            if chunk.choices[0].delta.content:
+            if chunk.choices and len(chunk.choices) > 0 and chunk.choices[0].delta.content:
                 content += chunk.choices[0].delta.content
     else:
         response_id = response.id
@@ -410,11 +428,12 @@ def test_inference_store_tool_calls(compat_client, client_with_models, text_mode
         content = ""
         response_id = None
         for chunk in response:
-            if response_id is None:
+            if response_id is None and chunk.id:
                 response_id = chunk.id
-            if delta := chunk.choices[0].delta:
-                if delta.content:
-                    content += delta.content
+            if chunk.choices and len(chunk.choices) > 0:
+                if delta := chunk.choices[0].delta:
+                    if delta.content:
+                        content += delta.content
     else:
         response_id = response.id
         content = response.choices[0].message.content
@@ -484,4 +503,216 @@ def test_openai_chat_completion_non_streaming_with_file(openai_client, client_wi
         stream=False,
     )
     message_content = response.choices[0].message.content.lower().strip()
-    assert "hello world" in message_content
+    normalized_content = _normalize_text(message_content)
+    assert "hello world" in normalized_content
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:completion:stop_sequence",
+    ],
+)
+def test_openai_completion_stop_sequence(client_with_models, openai_client, text_model_id, test_case):
+    skip_if_model_doesnt_support_openai_completion(client_with_models, text_model_id)
+
+    tc = TestCase(test_case)
+
+    response = openai_client.completions.create(
+        model=text_model_id,
+        prompt=tc["content"],
+        stop="1963",
+        stream=False,
+    )
+    assert len(response.choices) > 0
+    choice = response.choices[0]
+    assert "1963" not in choice.text
+
+    response = openai_client.completions.create(
+        model=text_model_id,
+        prompt=tc["content"],
+        stop=["blathering", "1963"],
+        stream=False,
+    )
+    assert len(response.choices) > 0
+    choice = response.choices[0]
+    assert "1963" not in choice.text
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:completion:log_probs",
+    ],
+)
+def test_openai_completion_logprobs(client_with_models, openai_client, text_model_id, test_case):
+    skip_if_model_doesnt_support_openai_completion(client_with_models, text_model_id)
+    skip_if_doesnt_support_completions_logprobs(client_with_models, text_model_id)
+
+    tc = TestCase(test_case)
+
+    response = openai_client.completions.create(
+        model=text_model_id,
+        prompt=tc["content"],
+        logprobs=5,
+    )
+    assert len(response.choices) > 0
+    choice = response.choices[0]
+    assert choice.text, "Response text should not be empty"
+    assert choice.logprobs, "Logprobs should not be empty"
+    logprobs = choice.logprobs
+    assert logprobs.token_logprobs, "Response tokens should not be empty"
+    assert len(logprobs.tokens) == len(logprobs.token_logprobs)
+    assert len(logprobs.token_logprobs) == len(logprobs.top_logprobs)
+    for i, (token, prob) in enumerate(zip(logprobs.tokens, logprobs.token_logprobs, strict=True)):
+        assert logprobs.top_logprobs[i][token] == prob
+        assert len(logprobs.top_logprobs[i]) == 5
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:completion:log_probs",
+    ],
+)
+def test_openai_completion_logprobs_streaming(client_with_models, openai_client, text_model_id, test_case):
+    skip_if_model_doesnt_support_openai_completion(client_with_models, text_model_id)
+    skip_if_doesnt_support_completions_logprobs(client_with_models, text_model_id)
+
+    tc = TestCase(test_case)
+
+    response = openai_client.completions.create(
+        model=text_model_id,
+        prompt=tc["content"],
+        logprobs=3,
+        stream=True,
+        max_tokens=5,
+    )
+    for chunk in response:
+        choice = chunk.choices[0]
+        choice = response.choices[0]
+        if choice.text:  # if there's a token, we expect logprobs
+            assert choice.logprobs, "Logprobs should not be empty"
+            logprobs = choice.logprobs
+            assert logprobs.token_logprobs, "Response tokens should not be empty"
+            assert len(logprobs.tokens) == len(logprobs.token_logprobs)
+            assert len(logprobs.token_logprobs) == len(logprobs.top_logprobs)
+            for i, (token, prob) in enumerate(zip(logprobs.tokens, logprobs.token_logprobs, strict=True)):
+                assert logprobs.top_logprobs[i][token] == prob
+                assert len(logprobs.top_logprobs[i]) == 3
+        else:  # no token, no logprobs
+            assert not choice.logprobs, "Logprobs should be empty"
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:chat_completion:tool_calling",
+    ],
+)
+def test_openai_chat_completion_with_tools(openai_client, text_model_id, test_case):
+    tc = TestCase(test_case)
+
+    response = openai_client.chat.completions.create(
+        model=text_model_id,
+        messages=tc["messages"],
+        tools=tc["tools"],
+        tool_choice="auto",
+        stream=False,
+    )
+    assert len(response.choices) == 1
+    assert len(response.choices[0].message.tool_calls) == 1
+    tool_call = response.choices[0].message.tool_calls[0]
+    assert tool_call.function.name == tc["tools"][0]["function"]["name"]
+    assert "location" in tool_call.function.arguments
+    assert tc["expected"]["location"] in tool_call.function.arguments
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:chat_completion:tool_calling",
+    ],
+)
+def test_openai_chat_completion_with_tools_and_streaming(openai_client, text_model_id, test_case):
+    tc = TestCase(test_case)
+
+    response = openai_client.chat.completions.create(
+        model=text_model_id,
+        messages=tc["messages"],
+        tools=tc["tools"],
+        tool_choice="auto",
+        stream=True,
+    )
+    # Accumulate tool calls from streaming chunks
+    tool_calls = []
+    for chunk in response:
+        if chunk.choices and chunk.choices[0].delta.tool_calls:
+            for i, tc_delta in enumerate(chunk.choices[0].delta.tool_calls):
+                while len(tool_calls) <= i:
+                    tool_calls.append({"function": {"name": "", "arguments": ""}})
+                if tc_delta.function and tc_delta.function.name:
+                    tool_calls[i]["function"]["name"] = tc_delta.function.name
+                if tc_delta.function and tc_delta.function.arguments:
+                    tool_calls[i]["function"]["arguments"] += tc_delta.function.arguments
+    assert len(tool_calls) == 1
+    tool_call = tool_calls[0]
+    assert tool_call["function"]["name"] == tc["tools"][0]["function"]["name"]
+    assert "location" in tool_call["function"]["arguments"]
+    assert tc["expected"]["location"] in tool_call["function"]["arguments"]
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:chat_completion:tool_calling",
+    ],
+)
+def test_openai_chat_completion_with_tool_choice_none(openai_client, text_model_id, test_case):
+    tc = TestCase(test_case)
+
+    response = openai_client.chat.completions.create(
+        model=text_model_id,
+        messages=tc["messages"],
+        tools=tc["tools"],
+        tool_choice="none",
+        stream=False,
+    )
+    assert len(response.choices) == 1
+    tool_calls = response.choices[0].message.tool_calls
+    assert tool_calls is None or len(tool_calls) == 0
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        "inference:chat_completion:structured_output",
+    ],
+)
+def test_openai_chat_completion_structured_output(openai_client, text_model_id, test_case):
+    # Note: Skip condition may need adjustment for OpenAI client
+    class AnswerFormat(BaseModel):
+        first_name: str
+        last_name: str
+        year_of_birth: int
+
+    tc = TestCase(test_case)
+
+    response = openai_client.chat.completions.create(
+        model=text_model_id,
+        messages=tc["messages"],
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "AnswerFormat",
+                "schema": AnswerFormat.model_json_schema(),
+            },
+        },
+        stream=False,
+    )
+    print(response.choices[0].message.content)
+    answer = AnswerFormat.model_validate_json(response.choices[0].message.content)
+    expected = tc["expected"]
+    assert answer.first_name == expected["first_name"]
+    assert answer.last_name == expected["last_name"]
+    assert answer.year_of_birth == expected["year_of_birth"]

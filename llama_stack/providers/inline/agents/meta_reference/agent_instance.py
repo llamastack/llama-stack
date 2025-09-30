@@ -830,6 +830,8 @@ class ChatAgent(ShieldRunnerMixin):
                         param_type=param.parameter_type,
                         description=param.description,
                         required=param.required,
+                        items=param.items,
+                        title=param.title,
                         default=param.default,
                     )
                     for param in tool_def.parameters
@@ -873,6 +875,8 @@ class ChatAgent(ShieldRunnerMixin):
                                 param_type=param.parameter_type,
                                 description=param.description,
                                 required=param.required,
+                                items=param.items,
+                                title=param.title,
                                 default=param.default,
                             )
                             for param in tool_def.parameters
@@ -952,7 +956,7 @@ async def get_raw_document_text(document: Document) -> str:
             DeprecationWarning,
             stacklevel=2,
         )
-    elif not (document.mime_type.startswith("text/") or document.mime_type == "application/yaml"):
+    elif not (document.mime_type.startswith("text/") or document.mime_type in ("application/yaml", "application/json")):
         raise ValueError(f"Unexpected document mime type: {document.mime_type}")
 
     if isinstance(document.content, URL):

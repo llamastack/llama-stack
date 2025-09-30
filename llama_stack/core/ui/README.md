@@ -6,7 +6,7 @@
 
 ## Developer Setup
 
-1. Start up Llama Stack API server. More details [here](https://llama-stack.readthedocs.io/en/latest/getting_started/index.html).
+1. Start up Llama Stack API server. More details [here](https://llamastack.github.io/latest/getting_started/index.htmll).
 
 ```
 llama stack build --distro together --image-type venv

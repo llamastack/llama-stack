@@ -121,10 +121,6 @@ class AutoRoutedProviderSpec(ProviderSpec):
         default=None,
     )
 
-    @property
-    def pip_packages(self) -> list[str]:
-        raise AssertionError("Should not be called on AutoRoutedProviderSpec")
-
 
 # Example: /models, /shields
 class RoutingTableProviderSpec(ProviderSpec):
@@ -434,6 +430,12 @@ class ServerConfig(BaseModel):
 class InferenceStoreConfig(BaseModel):
     sql_store_config: SqlStoreConfig
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
+    num_writers: int = Field(default=4, description="Number of concurrent background writers")
+
+
+class ResponsesStoreConfig(BaseModel):
+    sql_store_config: SqlStoreConfig
+    max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 

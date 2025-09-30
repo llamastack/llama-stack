@@ -29,9 +29,40 @@ def provider_from_model(client_with_models, model_id):
     return providers[provider_id]
 
 
-def skip_if_model_doesnt_support_variable_dimensions(model_id):
-    if "text-embedding-3" not in model_id:
-        pytest.skip("{model_id} does not support variable output embedding dimensions")
+def skip_if_model_doesnt_support_user_param(client, model_id):
+    provider = provider_from_model(client, model_id)
+    if provider.provider_type in (
+        "remote::together",  # service returns 400
+        "remote::fireworks",  # service returns 400 malformed input
+    ):
+        pytest.skip(f"Model {model_id} hosted by {provider.provider_type} does not support user param.")
+
+
+def skip_if_model_doesnt_support_encoding_format_base64(client, model_id):
+    provider = provider_from_model(client, model_id)
+    if provider.provider_type in (
+        "remote::databricks",  # param silently ignored, always returns floats
+        "remote::fireworks",  # param silently ignored, always returns list of floats
+        "remote::ollama",  # param silently ignored, always returns list of floats
+    ):
+        pytest.skip(f"Model {model_id} hosted by {provider.provider_type} does not support encoding_format='base64'.")
+
+
+def skip_if_model_doesnt_support_variable_dimensions(client_with_models, model_id):
+    provider = provider_from_model(client_with_models, model_id)
+    if provider.provider_type in (
+        "remote::together",  # returns 400
+        "inline::sentence-transformers",
+        # Error code: 400 - {'error_code': 'BAD_REQUEST', 'message': 'Bad request: json: unknown field "dimensions"\n'}
+        "remote::databricks",
+    ):
+        pytest.skip(
+            f"Model {model_id} hosted by {provider.provider_type} does not support variable output embedding dimensions."
+        )
+    if provider.provider_type == "remote::openai" and "text-embedding-3" not in model_id:
+        pytest.skip(
+            f"Model {model_id} hosted by {provider.provider_type} does not support variable output embedding dimensions."
+        )
 
 
 @pytest.fixture(params=["openai_client", "llama_stack_client"])
@@ -47,7 +78,6 @@ def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
         "inline::meta-reference",
         "remote::bedrock",
         "remote::cerebras",
-        "remote::databricks",
         "remote::runpod",
         "remote::sambanova",
         "remote::tgi",
@@ -57,7 +87,7 @@ def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
 
 @pytest.fixture
 def openai_client(client_with_models):
-    base_url = f"{client_with_models.base_url}/v1/openai/v1"
+    base_url = f"{client_with_models.base_url}/v1"
     return OpenAI(base_url=base_url, api_key="fake")
 
 
@@ -92,6 +122,7 @@ def test_openai_embeddings_multiple_strings(compat_client, client_with_models, e
     response = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_texts,
+        encoding_format="float",
     )
 
     assert response.object == "list"
@@ -127,7 +158,7 @@ def test_openai_embeddings_with_encoding_format_float(compat_client, client_with
 def test_openai_embeddings_with_dimensions(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with custom dimensions parameter."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
-    skip_if_model_doesnt_support_variable_dimensions(embedding_model_id)
+    skip_if_model_doesnt_support_variable_dimensions(client_with_models, embedding_model_id)
 
     input_text = "Test dimensions parameter"
     dimensions = 16
@@ -148,6 +179,7 @@ def test_openai_embeddings_with_dimensions(compat_client, client_with_models, em
 def test_openai_embeddings_with_user_parameter(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with user parameter."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
+    skip_if_model_doesnt_support_user_param(client_with_models, embedding_model_id)
 
     input_text = "Test user parameter"
     user_id = "test-user-123"
@@ -196,11 +228,13 @@ def test_openai_embeddings_different_inputs_different_outputs(compat_client, cli
     response1 = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text1,
+        encoding_format="float",
     )
 
     response2 = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text2,
+        encoding_format="float",
     )
 
     embedding1 = response1.data[0].embedding
@@ -214,7 +248,8 @@ def test_openai_embeddings_different_inputs_different_outputs(compat_client, cli
 def test_openai_embeddings_with_encoding_format_base64(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with base64 encoding format."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
-    skip_if_model_doesnt_support_variable_dimensions(embedding_model_id)
+    skip_if_model_doesnt_support_encoding_format_base64(client_with_models, embedding_model_id)
+    skip_if_model_doesnt_support_variable_dimensions(client_with_models, embedding_model_id)
 
     input_text = "Test base64 encoding format"
     dimensions = 12
@@ -247,6 +282,7 @@ def test_openai_embeddings_with_encoding_format_base64(compat_client, client_wit
 def test_openai_embeddings_base64_batch_processing(compat_client, client_with_models, embedding_model_id):
     """Test OpenAI embeddings endpoint with base64 encoding for batch processing."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
+    skip_if_model_doesnt_support_encoding_format_base64(client_with_models, embedding_model_id)
 
     input_texts = ["First text for base64", "Second text for base64", "Third text for base64"]
 
@@ -255,7 +291,6 @@ def test_openai_embeddings_base64_batch_processing(compat_client, client_with_mo
         input=input_texts,
         encoding_format="base64",
     )
-
     # Validate response structure
     assert response.object == "list"
     assert response.model == embedding_model_id

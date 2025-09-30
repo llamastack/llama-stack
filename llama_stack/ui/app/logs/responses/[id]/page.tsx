@@ -41,7 +41,6 @@ export default function ResponseDetailPage() {
       temperature: responseData.temperature,
       top_p: responseData.top_p,
       truncation: responseData.truncation,
-      user: responseData.user,
     };
   };
 
