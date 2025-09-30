@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import File, Form, Response, UploadFile
+from fastapi import File, Response, UploadFile
 
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
