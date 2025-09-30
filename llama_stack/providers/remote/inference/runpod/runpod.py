@@ -14,7 +14,6 @@ from llama_stack.apis.inference import OpenAIEmbeddingsResponse
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, build_hf_repo_model_entry
 from llama_stack.providers.utils.inference.openai_compat import (
     OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompletionToLlamaStackMixin,
     get_sampling_options,
     process_chat_completion_response,
     process_chat_completion_stream_response,
@@ -55,7 +54,6 @@ class RunpodInferenceAdapter(
     ModelRegistryHelper,
     Inference,
     OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompletionToLlamaStackMixin,
 ):
     def __init__(self, config: RunpodImplConfig) -> None:
         ModelRegistryHelper.__init__(self, stack_to_provider_models_map=RUNPOD_SUPPORTED_MODELS)
@@ -66,17 +64,6 @@ class RunpodInferenceAdapter(
 
     async def shutdown(self) -> None:
         pass
-
-    async def completion(
-        self,
-        model: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        raise NotImplementedError()
 
     async def chat_completion(
         self,

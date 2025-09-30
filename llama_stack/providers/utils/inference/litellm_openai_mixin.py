@@ -4,14 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncIterator
 from typing import Any
 
 import litellm
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -107,17 +104,6 @@ class LiteLLMOpenAIMixin(
             if self.is_openai_compat and not model_id.startswith(self.litellm_provider_name)
             else model_id
         )
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        raise NotImplementedError("LiteLLM does not support completion requests")
 
     async def chat_completion(
         self,

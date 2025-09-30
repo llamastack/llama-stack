@@ -9,9 +9,6 @@ from urllib.parse import urljoin
 
 from cerebras.cloud.sdk import AsyncCerebras
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     CompletionRequest,
@@ -35,8 +32,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
     get_sampling_options,
     process_chat_completion_response,
     process_chat_completion_stream_response,
-    process_completion_response,
-    process_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -72,48 +67,6 @@ class CerebrasInferenceAdapter(
 
     async def shutdown(self) -> None:
         pass
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = CompletionRequest(
-            model=model.provider_resource_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-        if stream:
-            return self._stream_completion(
-                request,
-            )
-        else:
-            return await self._nonstream_completion(request)
-
-    async def _nonstream_completion(self, request: CompletionRequest) -> CompletionResponse:
-        params = await self._get_params(request)
-
-        r = await self._cerebras_client.completions.create(**params)
-
-        return process_completion_response(r)
-
-    async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-
-        stream = await self._cerebras_client.completions.create(**params)
-
-        async for chunk in process_completion_stream_response(stream):
-            yield chunk
 
     async def chat_completion(
         self,

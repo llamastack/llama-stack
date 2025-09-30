@@ -103,8 +103,6 @@ from llama_stack.apis.inference import (
     JsonSchemaResponseFormat,
     Message,
     OpenAIChatCompletion,
-    OpenAICompletion,
-    OpenAICompletionChoice,
     OpenAIEmbeddingData,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
@@ -1279,76 +1277,6 @@ async def prepare_openai_completion_params(**params):
         if v is not None:
             completion_params[k] = await _prepare_value(v)
     return completion_params
-
-
-class OpenAICompletionToLlamaStackMixin:
-    async def openai_completion(
-        self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
-    ) -> OpenAICompletion:
-        if stream:
-            raise ValueError(f"{self.__class__.__name__} doesn't support streaming openai completions")
-
-        # This is a pretty hacky way to do emulate completions -
-        # basically just de-batches them...
-        prompts = [prompt] if not isinstance(prompt, list) else prompt
-
-        sampling_params = _convert_openai_sampling_params(
-            max_tokens=max_tokens,
-            temperature=temperature,
-            top_p=top_p,
-        )
-
-        choices = []
-        # "n" is the number of completions to generate per prompt
-        n = n or 1
-        for _i in range(0, n):
-            # and we may have multiple prompts, if batching was used
-
-            for prompt in prompts:
-                result = self.completion(
-                    model_id=model,
-                    content=prompt,
-                    sampling_params=sampling_params,
-                )
-
-                index = len(choices)
-                text = result.content
-                finish_reason = _convert_stop_reason_to_openai_finish_reason(result.stop_reason)
-
-                choice = OpenAICompletionChoice(
-                    index=index,
-                    text=text,
-                    finish_reason=finish_reason,
-                )
-                choices.append(choice)
-
-        return OpenAICompletion(
-            id=f"cmpl-{uuid.uuid4()}",
-            choices=choices,
-            created=int(time.time()),
-            model=model,
-            object="text_completion",
-        )
 
 
 class OpenAIChatCompletionToLlamaStackMixin:
