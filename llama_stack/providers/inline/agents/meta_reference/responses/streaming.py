@@ -50,6 +50,36 @@ from .utils import convert_chat_choice_to_response_message, is_function_tool_cal
 logger = get_logger(name=__name__, category="agents::meta_reference")
 
 
+def convert_tooldef_to_chat_tool(tool_def):
+    """Convert a ToolDef to OpenAI ChatCompletionToolParam format.
+
+    Args:
+        tool_def: ToolDef from the tools API
+
+    Returns:
+        ChatCompletionToolParam suitable for OpenAI chat completion
+    """
+
+    from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
+    from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
+
+    internal_tool_def = ToolDefinition(
+        tool_name=tool_def.name,
+        description=tool_def.description,
+        parameters={
+            param.name: ToolParamDefinition(
+                param_type=param.parameter_type,
+                description=param.description,
+                required=param.required,
+                default=param.default,
+                items=param.items,
+            )
+            for param in tool_def.parameters
+        },
+    )
+    return convert_tooldef_to_openai_tool(internal_tool_def)
+
+
 class StreamingResponseOrchestrator:
     def __init__(
         self,
@@ -556,23 +586,7 @@ class StreamingResponseOrchestrator:
                     continue
                 if not always_allowed or t.name in always_allowed:
                     # Add to chat tools for inference
-                    from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
-                    from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
-
-                    tool_def = ToolDefinition(
-                        tool_name=t.name,
-                        description=t.description,
-                        parameters={
-                            param.name: ToolParamDefinition(
-                                param_type=param.parameter_type,
-                                description=param.description,
-                                required=param.required,
-                                default=param.default,
-                            )
-                            for param in t.parameters
-                        },
-                    )
-                    openai_tool = convert_tooldef_to_openai_tool(tool_def)
+                    openai_tool = convert_tooldef_to_chat_tool(t)
                     if self.ctx.chat_tools is None:
                         self.ctx.chat_tools = []
                     self.ctx.chat_tools.append(openai_tool)
