@@ -201,7 +201,6 @@ class InferenceRouter(Inference):
             max_num_results=max_num_results,
         )
 
-
     async def openai_completion(
         self,
         model: str,
