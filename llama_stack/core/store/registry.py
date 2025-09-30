@@ -98,7 +98,10 @@ class DiskDistributionRegistry(DistributionRegistry):
         existing_obj = await self.get(obj.type, obj.identifier)
         # dont register if the object's providerid already exists
         if existing_obj and existing_obj.provider_id == obj.provider_id:
-            return False
+            raise ValueError(
+                f"Model '{obj.identifier}' is already registered with provider '{obj.provider_id}'. "
+                f"Please unregister the existing model first before registering a new one."
+            )
 
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),
