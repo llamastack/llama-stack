@@ -10,7 +10,7 @@ from typing import Annotated, Any
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
-from fastapi import File, Form, Response, UploadFile
+from fastapi import Depends, File, Form, Response, UploadFile
 
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
@@ -23,6 +23,7 @@ from llama_stack.apis.files import (
     OpenAIFilePurpose,
 )
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.providers.utils.files.form_data import parse_expires_after
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.providers.utils.sqlstore.sqlstore import sqlstore_impl
@@ -195,7 +196,7 @@ class S3FilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
+        expires_after: Annotated[ExpiresAfter | None, Depends(parse_expires_after)] = None,
     ) -> OpenAIFileObject:
         file_id = f"file-{uuid.uuid4().hex}"
 

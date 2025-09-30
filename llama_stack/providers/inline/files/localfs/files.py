@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import File, Form, Response, UploadFile
+from fastapi import Depends, File, Form, Response, UploadFile
 
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
@@ -23,6 +23,7 @@ from llama_stack.apis.files import (
 )
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.files.form_data import parse_expires_after
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.providers.utils.sqlstore.sqlstore import sqlstore_impl
@@ -87,7 +88,7 @@ class LocalfsFilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after: Annotated[ExpiresAfter | None, Form()] = None,
+        expires_after: Annotated[ExpiresAfter | None, Depends(parse_expires_after)] = None,
     ) -> OpenAIFileObject:
         """Upload a file that can be used across various endpoints."""
         if not self.sql_store:
