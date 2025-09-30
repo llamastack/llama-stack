@@ -60,7 +60,7 @@ client = LlamaStackClient(
   base_url="http://localhost:8321"
 )
 
-response = client.inference.chat_completion(
+response = client.chat.completions.create(
   model="Llama3.2-3B-Instruct",
   messages=[{
     "role": "user",

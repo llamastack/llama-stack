@@ -1030,7 +1030,6 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/inference/chat-completion", method="POST", level=LLAMA_STACK_API_V1)
     async def chat_completion(
         self,
         model_id: str,

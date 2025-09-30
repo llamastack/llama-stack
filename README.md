@@ -43,10 +43,21 @@ inference chat-completion \
 --model-id meta-llama/$MODEL \
 --message "write a haiku for meta's llama 4 models"
 
-ChatCompletionResponse(
-    completion_message=CompletionMessage(content="Whispers in code born\nLlama's gentle, wise heartbeat\nFuture's soft unfold", role='assistant', stop_reason='end_of_turn', tool_calls=[]),
-    logprobs=None,
-    metrics=[Metric(metric='prompt_tokens', value=21.0, unit=None), Metric(metric='completion_tokens', value=28.0, unit=None), Metric(metric='total_tokens', value=49.0, unit=None)]
+OpenAIChatCompletion(
+    ...
+    choices=[
+        OpenAIChatCompletionChoice(
+            finish_reason='stop',
+            index=0,
+            message=OpenAIChatCompletionChoiceMessageOpenAIAssistantMessageParam(
+                role='assistant',
+                content='...**Silent minds awaken,**  \n**Whispers of billions of words,**  \n**Reasoning breaks the night.**  \n\n—  \n*This haiku blends the essence of LLaMA 4\'s capabilities with nature-inspired metaphor, evoking its vast training data and transformative potential.*',
+                ...
+            ),
+            ...
+        )
+    ],
+    ...
 )
 ```
 ### Python SDK
@@ -59,14 +70,14 @@ model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 prompt = "Write a haiku about coding"
 
 print(f"User> {prompt}")
-response = client.inference.chat_completion(
-    model_id=model_id,
+response = client.chat.completions.create(
+    model=model_id,
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": prompt},
     ],
 )
-print(f"Assistant> {response.completion_message.content}")
+print(f"Assistant> {response.choices[0].message.content}")
 ```
 As more providers start supporting Llama 4, you can use them in Llama Stack as well. We are adding to the list. Stay tuned!
 

@@ -44,8 +44,8 @@ client.initialize()
 The following example shows how to create a chat completion for an NVIDIA NIM.
 
 ```python
-response = client.inference.chat_completion(
-    model_id="meta-llama/Llama-3.1-8B-Instruct",
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3.1-8B-Instruct",
     messages=[
         {
             "role": "system",
@@ -57,11 +57,9 @@ response = client.inference.chat_completion(
         },
     ],
     stream=False,
-    sampling_params={
-        "max_tokens": 50,
-    },
+    max_tokens=50,
 )
-print(f"Response: {response.completion_message.content}")
+print(f"Response: {response.choices[0].message.content}")
 ```
 
 ### Tool Calling Example ###
@@ -89,15 +87,15 @@ tool_definition = ToolDefinition(
     },
 )
 
-tool_response = client.inference.chat_completion(
-    model_id="meta-llama/Llama-3.1-8B-Instruct",
+tool_response = client.chat.completions.create(
+    model="meta-llama/Llama-3.1-8B-Instruct",
     messages=[{"role": "user", "content": "What's the weather like in San Francisco?"}],
     tools=[tool_definition],
 )
 
-print(f"Tool Response: {tool_response.completion_message.content}")
-if tool_response.completion_message.tool_calls:
-    for tool_call in tool_response.completion_message.tool_calls:
+print(f"Tool Response: {tool_response.choices[0].message.content}")
+if tool_response.choices[0].message.tool_calls:
+    for tool_call in tool_response.choices[0].message.tool_calls:
         print(f"Tool Called: {tool_call.tool_name}")
         print(f"Arguments: {tool_call.arguments}")
 ```
@@ -123,8 +121,8 @@ response_format = JsonSchemaResponseFormat(
     type=ResponseFormatType.json_schema, json_schema=person_schema
 )
 
-structured_response = client.inference.chat_completion(
-    model_id="meta-llama/Llama-3.1-8B-Instruct",
+structured_response = client.chat.completions.create(
+    model="meta-llama/Llama-3.1-8B-Instruct",
     messages=[
         {
             "role": "user",
@@ -134,7 +132,7 @@ structured_response = client.inference.chat_completion(
     response_format=response_format,
 )
 
-print(f"Structured Response: {structured_response.completion_message.content}")
+print(f"Structured Response: {structured_response.choices[0].message.content}")
 ```
 
 ### Create Embeddings
@@ -167,8 +165,8 @@ def load_image_as_base64(image_path):
 image_path = {path_to_the_image}
 demo_image_b64 = load_image_as_base64(image_path)
 
-vlm_response = client.inference.chat_completion(
-    model_id="nvidia/vila",
+vlm_response = client.chat.completions.create(
+    model="nvidia/vila",
     messages=[
         {
             "role": "user",
@@ -188,5 +186,5 @@ vlm_response = client.inference.chat_completion(
     ],
 )
 
-print(f"VLM Response: {vlm_response.completion_message.content}")
+print(f"VLM Response: {vlm_response.choices[0].message.content}")
 ```
