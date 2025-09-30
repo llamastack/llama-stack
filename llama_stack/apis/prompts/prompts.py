@@ -10,6 +10,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -95,7 +96,7 @@ class ListPromptsResponse(BaseModel):
 class Prompts(Protocol):
     """Protocol for prompt management operations."""
 
-    @webmethod(route="/prompts", method="GET")
+    @webmethod(route="/prompts", method="GET", level=LLAMA_STACK_API_V1)
     async def list_prompts(self) -> ListPromptsResponse:
         """List all prompts.
 
@@ -103,7 +104,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}/versions", method="GET")
+    @webmethod(route="/prompts/{prompt_id}/versions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_prompt_versions(
         self,
         prompt_id: str,
@@ -115,7 +116,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}", method="GET")
+    @webmethod(route="/prompts/{prompt_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_prompt(
         self,
         prompt_id: str,
@@ -129,7 +130,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts", method="POST")
+    @webmethod(route="/prompts", method="POST", level=LLAMA_STACK_API_V1)
     async def create_prompt(
         self,
         prompt: str,
@@ -143,7 +144,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}", method="PUT")
+    @webmethod(route="/prompts/{prompt_id}", method="PUT", level=LLAMA_STACK_API_V1)
     async def update_prompt(
         self,
         prompt_id: str,
@@ -163,7 +164,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}", method="DELETE")
+    @webmethod(route="/prompts/{prompt_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def delete_prompt(
         self,
         prompt_id: str,
@@ -174,7 +175,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}/set-default-version", method="PUT")
+    @webmethod(route="/prompts/{prompt_id}/set-default-version", method="PUT", level=LLAMA_STACK_API_V1)
     async def set_default_version(
         self,
         prompt_id: str,

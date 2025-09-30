@@ -42,10 +42,12 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.tools.tools import Tool, ToolGroups, ToolInvocationResult, ToolParameter, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
+from llama_stack.core.datatypes import ResponsesStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
+from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
 
@@ -677,7 +679,9 @@ async def test_responses_store_list_input_items_logic():
 
     # Create mock store and response store
     mock_sql_store = AsyncMock()
-    responses_store = ResponsesStore(sql_store_config=None, policy=default_policy())
+    responses_store = ResponsesStore(
+        ResponsesStoreConfig(sql_store_config=SqliteSqlStoreConfig(db_path="mock_db_path")), policy=default_policy()
+    )
     responses_store.sql_store = mock_sql_store
 
     # Setup test data - multiple input items

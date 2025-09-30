@@ -6,20 +6,17 @@
 
 from collections.abc import AsyncGenerator
 
-from openai import NOT_GIVEN, AsyncOpenAI
+from openai import AsyncOpenAI
 from together import AsyncTogether
 from together.constants import BASE_URL
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     CompletionRequest,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
@@ -27,7 +24,6 @@ from llama_stack.apis.inference import (
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -50,21 +46,27 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
     completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
     request_has_media,
 )
 
 from .config import TogetherImplConfig
-from .models import EMBEDDING_MODEL_ENTRIES, MODEL_ENTRIES
 
 logger = get_logger(name=__name__, category="inference::together")
 
 
 class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, NeedsRequestProviderData):
+    embedding_model_metadata = {
+        "togethercomputer/m2-bert-80M-32k-retrieval": {"embedding_dimension": 768, "context_length": 32768},
+        "BAAI/bge-large-en-v1.5": {"embedding_dimension": 1024, "context_length": 512},
+        "BAAI/bge-base-en-v1.5": {"embedding_dimension": 768, "context_length": 512},
+        "Alibaba-NLP/gte-modernbert-base": {"embedding_dimension": 768, "context_length": 8192},
+        "intfloat/multilingual-e5-large-instruct": {"embedding_dimension": 1024, "context_length": 512},
+    }
+
     def __init__(self, config: TogetherImplConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES, config.allowed_models)
+        ModelRegistryHelper.__init__(self)
         self.config = config
+        self.allowed_models = config.allowed_models
         self._model_cache: dict[str, Model] = {}
 
     def get_api_key(self):
@@ -239,40 +241,21 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
         logger.debug(f"params to together: {params}")
         return params
 
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-        assert all(not content_has_media(content) for content in contents), (
-            "Together does not support media for embeddings"
-        )
-        client = self._get_client()
-        r = await client.embeddings.create(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-        )
-        embeddings = [item.embedding for item in r.data]
-        return EmbeddingsResponse(embeddings=embeddings)
-
     async def list_models(self) -> list[Model] | None:
         self._model_cache = {}
         # Together's /v1/models is not compatible with OpenAI's /v1/models. Together support ticket #13355 -> will not fix, use Together's own client
         for m in await self._get_client().models.list():
             if m.type == "embedding":
-                if m.id not in EMBEDDING_MODEL_ENTRIES:
+                if m.id not in self.embedding_model_metadata:
                     logger.warning(f"Unknown embedding dimension for model {m.id}, skipping.")
                     continue
+                metadata = self.embedding_model_metadata[m.id]
                 self._model_cache[m.id] = Model(
                     provider_id=self.__provider_id__,
-                    provider_resource_id=EMBEDDING_MODEL_ENTRIES[m.id].provider_model_id,
+                    provider_resource_id=m.id,
                     identifier=m.id,
                     model_type=ModelType.embedding,
-                    metadata=EMBEDDING_MODEL_ENTRIES[m.id].metadata,
+                    metadata=metadata,
                 )
             else:
                 self._model_cache[m.id] = Model(
@@ -303,10 +286,9 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
         the standard OpenAI embeddings endpoint.
 
         The endpoint -
-         - does not return usage information
+         - not all models return usage information
          - does not support user param, returns 400 Unrecognized request arguments supplied: user
          - does not support dimensions param, returns 400 Unrecognized request arguments supplied: dimensions
-         - does not support encoding_format param, always returns floats, never base64
         """
         # Together support ticket #13332 -> will not fix
         if user is not None:
@@ -314,13 +296,11 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
         # Together support ticket #13333 -> escalated
         if dimensions is not None:
             raise ValueError("Together's embeddings endpoint does not support dimensions param.")
-        # Together support ticket #13331 -> will not fix, compute client side
-        if encoding_format not in (None, NOT_GIVEN, "float"):
-            raise ValueError("Together's embeddings endpoint only supports encoding_format='float'.")
 
         response = await self.client.embeddings.create(
             model=await self._get_provider_model_id(model),
             input=input,
+            encoding_format=encoding_format,
         )
 
         response.model = model  # return the user the same model id they provided, avoid exposing the provider model id

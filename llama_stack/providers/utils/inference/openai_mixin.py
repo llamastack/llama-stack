@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import base64
 import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
@@ -24,12 +25,14 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
+from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-class OpenAIMixin(ABC):
+class OpenAIMixin(ModelRegistryHelper, ABC):
     """
     Mixin class that provides OpenAI-specific functionality for inference providers.
     This class handles direct OpenAI API calls using the AsyncOpenAI client.
@@ -50,9 +53,21 @@ class OpenAIMixin(ABC):
     # This is useful for providers that do not return a unique id in the response.
     overwrite_completion_id: bool = False
 
+    # Allow subclasses to control whether to download images and convert to base64
+    # for providers that require base64 encoded images instead of URLs.
+    download_images: bool = False
+
+    # Embedding model metadata for this provider
+    # Can be set by subclasses or instances to provide embedding models
+    # Format: {"model_id": {"embedding_dimension": 1536, "context_length": 8192}}
+    embedding_model_metadata: dict[str, dict[str, int]] = {}
+
     # Cache of available models keyed by model ID
     # This is set in list_models() and used in check_model_availability()
     _model_cache: dict[str, Model] = {}
+
+    # List of allowed models for this provider, if empty all models allowed
+    allowed_models: list[str] = []
 
     @abstractmethod
     def get_api_key(self) -> str:
@@ -230,6 +245,24 @@ class OpenAIMixin(ABC):
         """
         Direct OpenAI chat completion API call.
         """
+        if self.download_images:
+
+            async def _localize_image_url(m: OpenAIMessageParam) -> OpenAIMessageParam:
+                if isinstance(m.content, list):
+                    for c in m.content:
+                        if c.type == "image_url" and c.image_url and c.image_url.url and "http" in c.image_url.url:
+                            localize_result = await localize_image_content(c.image_url.url)
+                            if localize_result is None:
+                                raise ValueError(
+                                    f"Failed to localize image content from {c.image_url.url[:42]}{'...' if len(c.image_url.url) > 42 else ''}"
+                                )
+                            content, format = localize_result
+                            c.image_url.url = f"data:image/{format};base64,{base64.b64encode(content).decode('utf-8')}"
+                # else it's a string and we don't need to modify it
+                return m
+
+            messages = [await _localize_image_url(m) for m in messages]
+
         resp = await self.client.chat.completions.create(
             **await prepare_openai_completion_params(
                 model=await self._get_provider_model_id(model),
@@ -296,28 +329,42 @@ class OpenAIMixin(ABC):
 
         return OpenAIEmbeddingsResponse(
             data=data,
-            model=response.model,
+            model=model,
             usage=usage,
         )
 
     async def list_models(self) -> list[Model] | None:
         """
-        List available models from the provider's /v1/models endpoint.
+        List available models from the provider's /v1/models endpoint augmented with static embedding model metadata.
 
         Also, caches the models in self._model_cache for use in check_model_availability().
 
         :return: A list of Model instances representing available models.
         """
-        self._model_cache = {
-            m.id: Model(
-                # __provider_id__ is dynamically added by instantiate_provider in resolver.py
-                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                provider_resource_id=m.id,
-                identifier=m.id,
-                model_type=ModelType.llm,
-            )
-            async for m in self.client.models.list()
-        }
+        self._model_cache = {}
+
+        async for m in self.client.models.list():
+            if self.allowed_models and m.id not in self.allowed_models:
+                logger.info(f"Skipping model {m.id} as it is not in the allowed models list")
+                continue
+            if metadata := self.embedding_model_metadata.get(m.id):
+                # This is an embedding model - augment with metadata
+                model = Model(
+                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                    provider_resource_id=m.id,
+                    identifier=m.id,
+                    model_type=ModelType.embedding,
+                    metadata=metadata,
+                )
+            else:
+                # This is an LLM
+                model = Model(
+                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                    provider_resource_id=m.id,
+                    identifier=m.id,
+                    model_type=ModelType.llm,
+                )
+            self._model_cache[m.id] = model
 
         return list(self._model_cache.values())
 

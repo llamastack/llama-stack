@@ -10,22 +10,18 @@ from fireworks.client import Fireworks
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     CompletionRequest,
     CompletionResponse,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
     Message,
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -48,21 +44,24 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
     completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
     request_has_media,
 )
 
 from .config import FireworksImplConfig
-from .models import MODEL_ENTRIES
 
 logger = get_logger(name=__name__, category="inference::fireworks")
 
 
 class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, NeedsRequestProviderData):
+    embedding_model_metadata = {
+        "nomic-ai/nomic-embed-text-v1.5": {"embedding_dimension": 768, "context_length": 8192},
+        "accounts/fireworks/models/qwen3-embedding-8b": {"embedding_dimension": 4096, "context_length": 40960},
+    }
+
     def __init__(self, config: FireworksImplConfig) -> None:
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES, config.allowed_models)
+        ModelRegistryHelper.__init__(self)
         self.config = config
+        self.allowed_models = config.allowed_models
 
     async def initialize(self) -> None:
         pass
@@ -254,28 +253,3 @@ class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Nee
         logger.debug(f"params to fireworks: {params}")
 
         return params
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-
-        kwargs = {}
-        if model.metadata.get("embedding_dimension"):
-            kwargs["dimensions"] = model.metadata.get("embedding_dimension")
-        assert all(not content_has_media(content) for content in contents), (
-            "Fireworks does not support media for embeddings"
-        )
-        response = self._get_client().embeddings.create(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-            **kwargs,
-        )
-
-        embeddings = [data.embedding for data in response.data]
-        return EmbeddingsResponse(embeddings=embeddings)

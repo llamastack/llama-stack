@@ -39,25 +39,6 @@ client = LlamaStackAsLibraryClient("nvidia")
 client.initialize()
 ```
 
-### Create Completion
-
-The following example shows how to create a completion for an NVIDIA NIM.
-
-> [!NOTE]
-> The hosted NVIDIA Llama NIMs (for example ```meta-llama/Llama-3.1-8B-Instruct```) that have ```NVIDIA_BASE_URL="https://integrate.api.nvidia.com"``` do not support the ```completion``` method, while locally deployed NIMs do.
-
-```python
-response = client.inference.completion(
-    model_id="meta-llama/Llama-3.1-8B-Instruct",
-    content="Complete the sentence using one word: Roses are red, violets are :",
-    stream=False,
-    sampling_params={
-        "max_tokens": 50,
-    },
-)
-print(f"Response: {response.content}")
-```
-
 ### Create Chat Completion
 
 The following example shows how to create a chat completion for an NVIDIA NIM.

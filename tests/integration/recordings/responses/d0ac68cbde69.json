@@ -13,22 +13,23 @@
       "__data__": {
         "models": [
           {
-            "model": "llama3.2-vision:11b",
-            "name": "llama3.2-vision:11b",
-            "digest": "6f2f9757ae97e8a3f8ea33d6adb2b11d93d9a35bef277cd2c0b1b5af8e8d0b1e",
-            "expires_at": "2025-09-03T11:51:35.966409-07:00",
-            "size": 12401209008,
-            "size_vram": 12401209008,
+            "model": "llama3.2:3b",
+            "name": "llama3.2:3b",
+            "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+            "expires_at": "2025-09-27T11:54:56.718552-07:00",
+            "size": 3367856128,
+            "size_vram": 3367856128,
             "details": {
               "parent_model": "",
               "format": "gguf",
-              "family": "mllama",
+              "family": "llama",
               "families": [
-                "mllama"
+                "llama"
               ],
-              "parameter_size": "10.7B",
+              "parameter_size": "3.2B",
               "quantization_level": "Q4_K_M"
-            }
+            },
+            "context_length": 4096
           }
         ]
       }

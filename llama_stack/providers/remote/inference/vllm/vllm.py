@@ -16,7 +16,6 @@ from openai.types.chat.chat_completion_chunk import (
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
     TextDelta,
     ToolCallDelta,
     ToolCallParseStatus,
@@ -31,8 +30,6 @@ from llama_stack.apis.inference import (
     CompletionRequest,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     GrammarResponseFormat,
     Inference,
     JsonSchemaResponseFormat,
@@ -41,7 +38,6 @@ from llama_stack.apis.inference import (
     ModelStore,
     ResponseFormat,
     SamplingParams,
-    TextTruncation,
     ToolChoice,
     ToolConfig,
     ToolDefinition,
@@ -74,8 +70,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
     request_has_media,
 )
 
@@ -292,7 +286,7 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     def __init__(self, config: VLLMInferenceAdapterConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
-            build_hf_repo_model_entries(),
+            model_entries=build_hf_repo_model_entries(),
             litellm_provider_name="vllm",
             api_key_from_config=config.api_token,
             provider_data_api_key_field="vllm_api_token",
@@ -504,7 +498,7 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
         except ValueError:
             pass  # Ignore statically unknown model, will check live listing
         try:
-            res = await self.client.models.list()
+            res = self.client.models.list()
         except APIConnectionError as e:
             raise ValueError(
                 f"Failed to connect to vLLM at {self.config.url}. Please check if vLLM is running and accessible at that URL."
@@ -550,27 +544,3 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             "stream": request.stream,
             **options,
         }
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self._get_model(model_id)
-
-        kwargs = {}
-        assert model.model_type == ModelType.embedding
-        assert model.metadata.get("embedding_dimension")
-        kwargs["dimensions"] = model.metadata.get("embedding_dimension")
-        assert all(not content_has_media(content) for content in contents), "VLLM does not support media for embeddings"
-        response = await self.client.embeddings.create(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-            **kwargs,
-        )
-
-        embeddings = [data.embedding for data in response.data]
-        return EmbeddingsResponse(embeddings=embeddings)

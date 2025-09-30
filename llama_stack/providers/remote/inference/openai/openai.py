@@ -9,7 +9,6 @@ from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOp
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import OpenAIConfig
-from .models import MODEL_ENTRIES
 
 logger = get_logger(name=__name__, category="inference::openai")
 
@@ -22,8 +21,6 @@ logger = get_logger(name=__name__, category="inference::openai")
 # | completion                 | LiteLLMOpenAIMixin       |
 # | chat_completion            | LiteLLMOpenAIMixin       |
 # | embedding                  | LiteLLMOpenAIMixin       |
-# | batch_completion           | LiteLLMOpenAIMixin       |
-# | batch_chat_completion      | LiteLLMOpenAIMixin       |
 # | openai_completion          | OpenAIMixin              |
 # | openai_chat_completion     | OpenAIMixin              |
 # | openai_embeddings          | OpenAIMixin              |
@@ -40,10 +37,14 @@ class OpenAIInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
     - ModelRegistryHelper.check_model_availability() (inherited by LiteLLMOpenAIMixin) just returns False and shows a warning
     """
 
+    embedding_model_metadata = {
+        "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
+        "text-embedding-3-large": {"embedding_dimension": 3072, "context_length": 8192},
+    }
+
     def __init__(self, config: OpenAIConfig) -> None:
         LiteLLMOpenAIMixin.__init__(
             self,
-            MODEL_ENTRIES,
             litellm_provider_name="openai",
             api_key_from_config=config.api_key,
             provider_data_api_key_field="openai_api_key",

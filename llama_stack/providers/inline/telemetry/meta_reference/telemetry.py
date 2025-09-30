@@ -224,10 +224,6 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         return _GLOBAL_STORAGE["gauges"][name]
 
     def _log_metric(self, event: MetricEvent) -> None:
-        # Always log to console if console sink is enabled (debug)
-        if TelemetrySink.CONSOLE in self.config.sinks:
-            logger.debug(f"METRIC: {event.metric}={event.value} {event.unit} {event.attributes}")
-
         # Add metric as an event to the current span
         try:
             with self._lock:

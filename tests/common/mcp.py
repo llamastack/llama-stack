@@ -167,6 +167,8 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     from starlette.responses import Response
     from starlette.routing import Mount, Route
 
+    from llama_stack.log import get_logger
+
     server = FastMCP("FastMCP Test Server", log_level="WARNING")
 
     tools = tools or default_tools()
@@ -211,6 +213,7 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
             return sock.getsockname()[1]
 
     port = get_open_port()
+    logger = get_logger(__name__, category="tests::mcp")
 
     # make uvicorn logs be less verbose
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="warning")
@@ -218,10 +221,17 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     app.state.uvicorn_server = server_instance
 
     def run_server():
-        server_instance.run()
+        try:
+            logger.info(f"Starting MCP server on port {port}")
+            server_instance.run()
+            logger.info(f"MCP server on port {port} has stopped")
+        except Exception as e:
+            logger.error(f"MCP server failed to start on port {port}: {e}")
+            raise
 
     # Start the server in a new thread
     server_thread = threading.Thread(target=run_server, daemon=True)
+    logger.info(f"Starting MCP server thread on port {port}")
     server_thread.start()
 
     # Polling until the server is ready
@@ -229,24 +239,36 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     start_time = time.time()
 
     server_url = f"http://localhost:{port}/sse"
+    logger.info(f"Waiting for MCP server to be ready at {server_url}")
+
     while time.time() - start_time < timeout:
         try:
             response = httpx.get(server_url)
             if response.status_code in [200, 401]:
+                logger.info(f"MCP server is ready on port {port} (status: {response.status_code})")
                 break
-        except httpx.RequestError:
+        except httpx.RequestError as e:
+            logger.debug(f"Server not ready yet, retrying... ({e})")
             pass
         time.sleep(0.1)
+    else:
+        # If we exit the loop due to timeout
+        logger.error(f"MCP server failed to start within {timeout} seconds on port {port}")
+        logger.error(f"Thread alive: {server_thread.is_alive()}")
+        if server_thread.is_alive():
+            logger.error("Server thread is still running but not responding to HTTP requests")
 
     try:
         yield {"server_url": server_url}
     finally:
+        logger.info(f"Shutting down MCP server on port {port}")
         server_instance.should_exit = True
         time.sleep(0.5)
 
         # Force shutdown if still running
         if server_thread.is_alive():
             try:
+                logger.info("Force shutting down server thread")
                 if hasattr(server_instance, "servers") and server_instance.servers:
                     for srv in server_instance.servers:
                         srv.close()
@@ -254,9 +276,9 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
                 # Wait for graceful shutdown
                 server_thread.join(timeout=3)
                 if server_thread.is_alive():
-                    print("Warning: Server thread still alive after shutdown attempt")
+                    logger.warning("Server thread still alive after shutdown attempt")
             except Exception as e:
-                print(f"Error during server shutdown: {e}")
+                logger.error(f"Error during server shutdown: {e}")
 
         # CRITICAL: Reset SSE global state to prevent event loop contamination
         # Reset the SSE AppStatus singleton that stores anyio.Event objects

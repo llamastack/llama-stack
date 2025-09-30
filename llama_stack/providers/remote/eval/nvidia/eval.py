@@ -14,7 +14,6 @@ from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.inference import Inference
 from llama_stack.apis.scoring import Scoring, ScoringResult
 from llama_stack.providers.datatypes import BenchmarksProtocolPrivate
-from llama_stack.providers.remote.inference.nvidia.models import MODEL_ENTRIES
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 
 from .....apis.common.job_types import Job, JobStatus
@@ -45,7 +44,7 @@ class NVIDIAEvalImpl(
         self.inference_api = inference_api
         self.agents_api = agents_api
 
-        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
+        ModelRegistryHelper.__init__(self)
 
     async def initialize(self) -> None: ...
 

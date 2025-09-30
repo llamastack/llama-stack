@@ -58,14 +58,14 @@ spec:
           value: "/etc/config/stack_run_config.yaml"
         - name: LLAMA_STACK_WORKERS
           value: "${LLAMA_STACK_WORKERS}"
-        command: ["uvicorn", "llama_stack.core.server.server:create_app", "--host", "0.0.0.0", "--port", "8323", "--workers", "$LLAMA_STACK_WORKERS", "--factory"]
+        command: ["uvicorn", "llama_stack.core.server.server:create_app", "--host", "0.0.0.0", "--port", "8323", "--workers", "$(LLAMA_STACK_WORKERS)", "--factory"]
         ports:
           - containerPort: 8323
         resources:
           requests:
-            cpu: "${LLAMA_STACK_WORKERS}"
+            cpu: "4"
           limits:
-            cpu: "${LLAMA_STACK_WORKERS}"
+            cpu: "4"
         volumeMounts:
           - name: llama-storage
             mountPath: /root/.llama

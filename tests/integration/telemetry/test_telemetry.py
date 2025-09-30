@@ -32,8 +32,8 @@ def setup_telemetry_data(llama_stack_client, text_model_id):
         )
 
     for i in range(2):
-        llama_stack_client.inference.chat_completion(
-            model_id=text_model_id, messages=[{"role": "user", "content": f"Test trace {i}"}]
+        llama_stack_client.chat.completions.create(
+            model=text_model_id, messages=[{"role": "user", "content": f"Test trace {i}"}]
         )
 
     start_time = time.time()
