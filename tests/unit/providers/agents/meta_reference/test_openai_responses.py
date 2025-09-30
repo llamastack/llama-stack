@@ -37,7 +37,6 @@ from llama_stack.apis.inference import (
     OpenAIJSONSchema,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
-    OpenAIResponseFormatText,
     OpenAIUserMessageParam,
 )
 from llama_stack.apis.tools.tools import Tool, ToolGroups, ToolInvocationResult, ToolParameter, ToolRuntime
