@@ -25,19 +25,6 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "accounts/tvergho-87e44d/models/debatecards-70b-ft-3epoch-dpo-v2",
-          "created": 1743381121,
-          "object": "model",
-          "owned_by": "tvergho-87e44d",
-          "kind": "HF_PEFT_ADDON",
-          "supports_chat": true,
-          "supports_image_input": false,
-          "supports_tools": false
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
           "id": "accounts/fireworks/models/flux-kontext-max",
           "created": 1750714611,
           "object": "model",
@@ -72,20 +59,6 @@
           "supports_chat": true,
           "supports_image_input": false,
           "supports_tools": false,
-          "context_length": 131072
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "accounts/fireworks/models/deepseek-v3",
-          "created": 1735576668,
-          "object": "model",
-          "owned_by": "fireworks",
-          "kind": "HF_BASE_MODEL",
-          "supports_chat": true,
-          "supports_image_input": false,
-          "supports_tools": true,
           "context_length": 131072
         }
       },
@@ -259,15 +232,43 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "accounts/fireworks/models/qwen3-coder-30b-a3b-instruct",
-          "created": 1754063588,
+          "id": "accounts/fireworks/models/kimi-k2-instruct-0905",
+          "created": 1757018994,
           "object": "model",
           "owned_by": "fireworks",
           "kind": "HF_BASE_MODEL",
           "supports_chat": true,
           "supports_image_input": false,
-          "supports_tools": false,
+          "supports_tools": true,
           "context_length": 262144
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "accounts/fireworks/models/glm-4p5",
+          "created": 1753809636,
+          "object": "model",
+          "owned_by": "fireworks",
+          "kind": "HF_BASE_MODEL",
+          "supports_chat": true,
+          "supports_image_input": false,
+          "supports_tools": true,
+          "context_length": 131072
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "accounts/fireworks/models/deepseek-v3",
+          "created": 1735576668,
+          "object": "model",
+          "owned_by": "fireworks",
+          "kind": "HF_BASE_MODEL",
+          "supports_chat": true,
+          "supports_image_input": false,
+          "supports_tools": true,
+          "context_length": 131072
         }
       },
       {
@@ -282,20 +283,6 @@
           "supports_image_input": false,
           "supports_tools": false,
           "context_length": 131072
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "accounts/fireworks/models/qwen2p5-vl-32b-instruct",
-          "created": 1743392739,
-          "object": "model",
-          "owned_by": "fireworks",
-          "kind": "HF_BASE_MODEL",
-          "supports_chat": true,
-          "supports_image_input": true,
-          "supports_tools": false,
-          "context_length": 128000
         }
       },
       {
@@ -398,34 +385,6 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "accounts/fireworks/models/glm-4p5",
-          "created": 1753809636,
-          "object": "model",
-          "owned_by": "fireworks",
-          "kind": "HF_BASE_MODEL",
-          "supports_chat": true,
-          "supports_image_input": false,
-          "supports_tools": true,
-          "context_length": 131072
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "accounts/fireworks/models/kimi-k2-instruct-0905",
-          "created": 1757018994,
-          "object": "model",
-          "owned_by": "fireworks",
-          "kind": "HF_BASE_MODEL",
-          "supports_chat": true,
-          "supports_image_input": false,
-          "supports_tools": true,
-          "context_length": 262144
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
           "id": "accounts/fireworks/models/llama-v3p1-405b-instruct",
           "created": 1721428386,
           "object": "model",
@@ -519,6 +478,47 @@
           "supports_image_input": false,
           "supports_tools": false,
           "context_length": 262144
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "accounts/fireworks/models/qwen2p5-vl-32b-instruct",
+          "created": 1743392739,
+          "object": "model",
+          "owned_by": "fireworks",
+          "kind": "HF_BASE_MODEL",
+          "supports_chat": true,
+          "supports_image_input": true,
+          "supports_tools": false,
+          "context_length": 128000
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "accounts/fireworks/models/qwen3-coder-30b-a3b-instruct",
+          "created": 1754063588,
+          "object": "model",
+          "owned_by": "fireworks",
+          "kind": "HF_BASE_MODEL",
+          "supports_chat": true,
+          "supports_image_input": false,
+          "supports_tools": false,
+          "context_length": 262144
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "accounts/tvergho-87e44d/models/debatecards-70b-ft-3epoch-dpo-v2",
+          "created": 1743381121,
+          "object": "model",
+          "owned_by": "tvergho-87e44d",
+          "kind": "HF_PEFT_ADDON",
+          "supports_chat": true,
+          "supports_image_input": false,
+          "supports_tools": false
         }
       }
     ],
