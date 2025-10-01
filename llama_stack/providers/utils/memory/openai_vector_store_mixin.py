@@ -220,7 +220,6 @@ class OpenAIVectorStoreMixin(ABC):
         current_time = int(time.time())
         cleanup_interval = 24 * 60 * 60  # 1 day in seconds
 
-        # Check if enough time has passed since last cleanup
         if current_time - self._last_cleanup_time >= cleanup_interval:
             logger.info("Running throttled cleanup of expired file batches")
             await self._cleanup_expired_file_batches()
@@ -238,9 +237,7 @@ class OpenAIVectorStoreMixin(ABC):
         """Load existing OpenAI vector stores and file batches into the in-memory cache."""
         self.openai_vector_stores = await self._load_openai_vector_stores()
         self.openai_file_batches = await self._load_openai_vector_store_file_batches()
-        # Resume any incomplete file batches
         await self._resume_incomplete_batches()
-        # Initialize last cleanup time
         self._last_cleanup_time = 0
 
     @abstractmethod
@@ -947,7 +944,7 @@ class OpenAIVectorStoreMixin(ABC):
         # Start background processing of files
         asyncio.create_task(self._process_file_batch_async(batch_id, batch_info))
 
-        # Run cleanup if needed (throttled to once every 7 days)
+        # Run cleanup if needed (throttled to once every 1 day)
         asyncio.create_task(self._cleanup_expired_file_batches_if_needed())
 
         return batch_object
@@ -994,7 +991,6 @@ class OpenAIVectorStoreMixin(ABC):
         else:
             batch_info["status"] = "completed"  # Partial success counts as completed
 
-        # Save final batch status to persistent storage (keep completed batches like vector stores)
         await self._save_openai_vector_store_file_batch(batch_id, batch_info)
 
         logger.info(f"File batch {batch_id} processing completed with status: {batch_info['status']}")
@@ -1064,7 +1060,6 @@ class OpenAIVectorStoreMixin(ABC):
     ) -> VectorStoreFileBatchObject:
         """Retrieve a vector store file batch."""
         batch_info = self._get_and_validate_batch(batch_id, vector_store_id)
-        # Convert dict back to Pydantic model for API response
         return VectorStoreFileBatchObject(**batch_info)
 
     async def openai_list_files_in_vector_store_file_batch(
@@ -1120,17 +1115,13 @@ class OpenAIVectorStoreMixin(ABC):
         """Cancel a vector store file batch."""
         batch_info = self._get_and_validate_batch(batch_id, vector_store_id)
 
-        # Only allow cancellation if batch is in progress
         if batch_info["status"] not in ["in_progress"]:
             raise ValueError(f"Cannot cancel batch {batch_id} with status {batch_info['status']}")
 
-        # Update batch with cancelled status
         batch_info["status"] = "cancelled"
 
-        # Save cancelled batch status to persistent storage (keep cancelled batches like vector stores)
         await self._save_openai_vector_store_file_batch(batch_id, batch_info)
 
-        # Create updated batch object for API response
         updated_batch = VectorStoreFileBatchObject(**batch_info)
 
         return updated_batch
