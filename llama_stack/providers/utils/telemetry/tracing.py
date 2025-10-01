@@ -317,7 +317,6 @@ class SpanContextManager:
         global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if not context:
-            logger.debug("No trace context to pop span")
             return
 
         context.pop_span()
@@ -332,7 +331,6 @@ class SpanContextManager:
         global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if not context:
-            logger.debug("No trace context to push span")
             return self
 
         self.span = context.push_span(self.name, self.attributes)
@@ -342,7 +340,6 @@ class SpanContextManager:
         global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if not context:
-            logger.debug("No trace context to pop span")
             return
 
         context.pop_span()
