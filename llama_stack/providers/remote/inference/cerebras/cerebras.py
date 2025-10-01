@@ -25,9 +25,6 @@ from llama_stack.apis.inference import (
     ToolPromptFormat,
     TopKSamplingStrategy,
 )
-from llama_stack.providers.utils.inference.model_registry import (
-    ModelRegistryHelper,
-)
 from llama_stack.providers.utils.inference.openai_compat import (
     get_sampling_options,
     process_chat_completion_response,
@@ -44,7 +41,6 @@ from .config import CerebrasImplConfig
 
 class CerebrasInferenceAdapter(
     OpenAIMixin,
-    ModelRegistryHelper,
     Inference,
 ):
     def __init__(self, config: CerebrasImplConfig) -> None:

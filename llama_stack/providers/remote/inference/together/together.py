@@ -47,7 +47,7 @@ from .config import TogetherImplConfig
 logger = get_logger(name=__name__, category="inference::together")
 
 
-class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, NeedsRequestProviderData):
+class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData):
     embedding_model_metadata = {
         "togethercomputer/m2-bert-80M-32k-retrieval": {"embedding_dimension": 768, "context_length": 32768},
         "BAAI/bge-large-en-v1.5": {"embedding_dimension": 1024, "context_length": 512},

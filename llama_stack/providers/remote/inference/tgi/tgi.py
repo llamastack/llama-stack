@@ -29,7 +29,6 @@ from llama_stack.apis.models import Model
 from llama_stack.apis.models.models import ModelType
 from llama_stack.log import get_logger
 from llama_stack.models.llama.sku_list import all_registered_models
-from llama_stack.providers.datatypes import ModelsProtocolPrivate
 from llama_stack.providers.utils.inference.model_registry import (
     ModelRegistryHelper,
     build_hf_repo_model_entry,
@@ -65,7 +64,6 @@ def build_hf_repo_model_entries():
 class _HfAdapter(
     OpenAIMixin,
     Inference,
-    ModelsProtocolPrivate,
 ):
     url: str
     api_key: SecretStr
