@@ -31,9 +31,7 @@ class DistributionRegistry(Protocol):
 
     def get_cached(self, identifier: str) -> RoutableObjectWithProvider | None: ...
 
-    async def update(
-        self, obj: RoutableObjectWithProvider
-    ) -> RoutableObjectWithProvider: ...
+    async def update(self, obj: RoutableObjectWithProvider) -> RoutableObjectWithProvider: ...
 
     async def register(self, obj: RoutableObjectWithProvider) -> bool: ...
 
@@ -59,9 +57,7 @@ def _parse_registry_values(values: list[str]) -> list[RoutableObjectWithProvider
             obj = pydantic.TypeAdapter(RoutableObjectWithProvider).validate_json(value)
             all_objects.append(obj)
         except pydantic.ValidationError as e:
-            logger.error(
-                f"Error parsing registry value, raw value: {value}. Error: {e}"
-            )
+            logger.error(f"Error parsing registry value, raw value: {value}. Error: {e}")
             continue
 
     return all_objects
@@ -74,9 +70,7 @@ class DiskDistributionRegistry(DistributionRegistry):
     async def initialize(self) -> None:
         pass
 
-    def get_cached(
-        self, type: str, identifier: str
-    ) -> RoutableObjectWithProvider | None:
+    def get_cached(self, type: str, identifier: str) -> RoutableObjectWithProvider | None:
         # Disk registry does not have a cache
         raise NotImplementedError("Disk registry does not have a cache")
 
@@ -85,23 +79,15 @@ class DiskDistributionRegistry(DistributionRegistry):
         values = await self.kvstore.values_in_range(start_key, end_key)
         return _parse_registry_values(values)
 
-    async def get(
-        self, type: str, identifier: str
-    ) -> RoutableObjectWithProvider | None:
-        json_str = await self.kvstore.get(
-            KEY_FORMAT.format(type=type, identifier=identifier)
-        )
+    async def get(self, type: str, identifier: str) -> RoutableObjectWithProvider | None:
+        json_str = await self.kvstore.get(KEY_FORMAT.format(type=type, identifier=identifier))
         if not json_str:
             return None
 
         try:
-            return pydantic.TypeAdapter(RoutableObjectWithProvider).validate_json(
-                json_str
-            )
+            return pydantic.TypeAdapter(RoutableObjectWithProvider).validate_json(json_str)
         except pydantic.ValidationError as e:
-            logger.error(
-                f"Error parsing registry value for {type}:{identifier}, raw value: {json_str}. Error: {e}"
-            )
+            logger.error(f"Error parsing registry value for {type}:{identifier}, raw value: {json_str}. Error: {e}")
             return None
 
     async def update(self, obj: RoutableObjectWithProvider) -> None:
@@ -116,8 +102,8 @@ class DiskDistributionRegistry(DistributionRegistry):
         # dont register if the object's providerid already exists
         if existing_obj and existing_obj.provider_id == obj.provider_id:
             raise ValueError(
-                f"{obj.type.title()} '{obj.identifier}' is already registered with provider '{obj.provider_id}'. "
-                f"Unregister the existing object first before registering a new one."
+                f"Provider '{obj.provider_id}' is already registered."
+                f"Unregister the existing provider first before registering it again."
             )
 
         await self.kvstore.set(
@@ -167,9 +153,7 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
     async def initialize(self) -> None:
         await self._ensure_initialized()
 
-    def get_cached(
-        self, type: str, identifier: str
-    ) -> RoutableObjectWithProvider | None:
+    def get_cached(self, type: str, identifier: str) -> RoutableObjectWithProvider | None:
         return self.cache.get((type, identifier), None)
 
     async def get_all(self) -> list[RoutableObjectWithProvider]:
@@ -177,9 +161,7 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
         async with self._locked_cache() as cache:
             return list(cache.values())
 
-    async def get(
-        self, type: str, identifier: str
-    ) -> RoutableObjectWithProvider | None:
+    async def get(self, type: str, identifier: str) -> RoutableObjectWithProvider | None:
         await self._ensure_initialized()
         cache_key = (type, identifier)
 
@@ -221,9 +203,7 @@ async def create_dist_registry(
         dist_kvstore = await kvstore_impl(metadata_store)
     else:
         dist_kvstore = await kvstore_impl(
-            SqliteKVStoreConfig(
-                db_path=(DISTRIBS_BASE_DIR / image_name / "kvstore.db").as_posix()
-            )
+            SqliteKVStoreConfig(db_path=(DISTRIBS_BASE_DIR / image_name / "kvstore.db").as_posix())
         )
     dist_registry = CachedDiskDistributionRegistry(dist_kvstore)
     await dist_registry.initialize()
