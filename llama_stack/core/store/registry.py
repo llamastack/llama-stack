@@ -117,7 +117,7 @@ class DiskDistributionRegistry(DistributionRegistry):
         if existing_obj and existing_obj.provider_id == obj.provider_id:
             raise ValueError(
                 f"{obj.type.title()} '{obj.identifier}' is already registered with provider '{obj.provider_id}'. "
-                f"Please unregister the existing {obj.type} first before registering a new one."
+                f"Unregister the existing object first before registering a new one."
             )
 
         await self.kvstore.set(

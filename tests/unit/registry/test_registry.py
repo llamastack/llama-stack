@@ -136,7 +136,8 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
 
     # Now we expect a ValueError to be raised for duplicate registration
     with pytest.raises(
-        ValueError, match=r"Vector_db.*already registered.*provider.*baz.*"
+        ValueError,
+        match=r"Vector_Db.*already registered.*provider.*baz.*Unregister the existing",
     ):
         await cached_disk_dist_registry.register(duplicate_vector_db)
 
