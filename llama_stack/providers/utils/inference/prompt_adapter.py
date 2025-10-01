@@ -229,28 +229,6 @@ async def convert_image_content_to_url(
         return base64.b64encode(content).decode("utf-8")
 
 
-async def completion_request_to_prompt(request: CompletionRequest) -> str:
-    content = augment_content_with_response_format_prompt(request.response_format, request.content)
-    request.content = content
-    request = await convert_request_to_raw(request)
-
-    formatter = ChatFormat(tokenizer=Tokenizer.get_instance())
-    model_input = formatter.encode_content(request.content)
-    return formatter.tokenizer.decode(model_input.tokens)
-
-
-async def completion_request_to_prompt_model_input_info(
-    request: CompletionRequest,
-) -> tuple[str, int]:
-    content = augment_content_with_response_format_prompt(request.response_format, request.content)
-    request.content = content
-    request = await convert_request_to_raw(request)
-
-    formatter = ChatFormat(tokenizer=Tokenizer.get_instance())
-    model_input = formatter.encode_content(request.content)
-    return (formatter.tokenizer.decode(model_input.tokens), len(model_input.tokens))
-
-
 def augment_content_with_response_format_prompt(response_format, content):
     if fmt_prompt := response_format_prompt(response_format):
         if isinstance(content, list):

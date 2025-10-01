@@ -267,47 +267,6 @@ class InferenceRouter(Inference):
         )
         return response
 
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        logger.debug(
-            f"InferenceRouter.completion: {model_id=}, {stream=}, {content=}, {sampling_params=}, {response_format=}",
-        )
-        model = await self._get_model(model_id, ModelType.llm)
-        provider = await self.routing_table.get_provider_impl(model_id)
-        params = dict(
-            model_id=model_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-
-        prompt_tokens = await self._count_tokens(content)
-        response = await provider.completion(**params)
-        if stream:
-            return self.stream_tokens_and_compute_metrics(
-                response=response,
-                prompt_tokens=prompt_tokens,
-                model=model,
-            )
-
-        metrics = await self.count_tokens_and_compute_metrics(
-            response=response, prompt_tokens=prompt_tokens, model=model
-        )
-        response.metrics = metrics if response.metrics is None else response.metrics + metrics
-
-        return response
-
     async def openai_completion(
         self,
         model: str,

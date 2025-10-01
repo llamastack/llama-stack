@@ -10,13 +10,9 @@ from collections.abc import AsyncGenerator
 from huggingface_hub import AsyncInferenceClient, HfApi
 from pydantic import SecretStr
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
-    CompletionRequest,
     Inference,
     LogProbConfig,
     Message,
@@ -44,13 +40,10 @@ from llama_stack.providers.utils.inference.openai_compat import (
     get_sampling_options,
     process_chat_completion_response,
     process_chat_completion_stream_response,
-    process_completion_response,
-    process_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_model_input_info,
-    completion_request_to_prompt_model_input_info,
 )
 
 from .config import InferenceAPIImplConfig, InferenceEndpointImplConfig, TGIImplConfig
@@ -122,31 +115,6 @@ class _HfAdapter(
     async def unregister_model(self, model_id: str) -> None:
         pass
 
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = CompletionRequest(
-            model=model.provider_resource_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-        if stream:
-            return self._stream_completion(request)
-        else:
-            return await self._nonstream_completion(request)
-
     def _get_max_new_tokens(self, sampling_params, input_tokens):
         return min(
             sampling_params.max_tokens or (self.max_tokens - input_tokens),
@@ -179,53 +147,6 @@ class _HfAdapter(
                 raise ValueError(f"Unexpected response format: {fmt.type}")
 
         return options
-
-    async def _get_params_for_completion(self, request: CompletionRequest) -> dict:
-        prompt, input_tokens = await completion_request_to_prompt_model_input_info(request)
-
-        return dict(
-            prompt=prompt,
-            stream=request.stream,
-            details=True,
-            max_new_tokens=self._get_max_new_tokens(request.sampling_params, input_tokens),
-            stop_sequences=["<|eom_id|>", "<|eot_id|>"],
-            **self._build_options(request.sampling_params, request.response_format),
-        )
-
-    async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
-        params = await self._get_params_for_completion(request)
-
-        async def _generate_and_convert_to_openai_compat():
-            s = await self.hf_client.text_generation(**params)
-            async for chunk in s:
-                token_result = chunk.token
-                finish_reason = None
-                if chunk.details:
-                    finish_reason = chunk.details.finish_reason
-
-                choice = OpenAICompatCompletionChoice(text=token_result.text, finish_reason=finish_reason)
-                yield OpenAICompatCompletionResponse(
-                    choices=[choice],
-                )
-
-        stream = _generate_and_convert_to_openai_compat()
-        async for chunk in process_completion_stream_response(stream):
-            yield chunk
-
-    async def _nonstream_completion(self, request: CompletionRequest) -> AsyncGenerator:
-        params = await self._get_params_for_completion(request)
-        r = await self.hf_client.text_generation(**params)
-
-        choice = OpenAICompatCompletionChoice(
-            finish_reason=r.details.finish_reason,
-            text="".join(t.text for t in r.details.tokens),
-        )
-
-        response = OpenAICompatCompletionResponse(
-            choices=[choice],
-        )
-
-        return process_completion_response(response)
 
     async def chat_completion(
         self,
