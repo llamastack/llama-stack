@@ -362,6 +362,7 @@ class TestAgentWithMCPTools:
             model=text_model_id,
             instructions="You are a helpful assistant that can process orders and book flights.",
             tools=[test_toolgroup_id],
+            extra_headers=auth_headers,
         )
 
         session_id = agent.create_session("test-session-complex")

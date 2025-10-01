@@ -99,8 +99,7 @@ def _convert_to_vllm_tool_calls_in_response(
         ToolCall(
             call_id=call.id,
             tool_name=call.function.name,
-            arguments=json.loads(call.function.arguments),
-            arguments_json=call.function.arguments,
+            arguments=call.function.arguments,
         )
         for call in tool_calls
     ]
@@ -160,7 +159,6 @@ def _process_vllm_chat_completion_end_of_stream(
     for _index, tool_call_buf in sorted(tool_call_bufs.items()):
         args_str = tool_call_buf.arguments or "{}"
         try:
-            args = json.loads(args_str)
             chunks.append(
                 ChatCompletionResponseStreamChunk(
                     event=ChatCompletionResponseEvent(
@@ -169,8 +167,7 @@ def _process_vllm_chat_completion_end_of_stream(
                             tool_call=ToolCall(
                                 call_id=tool_call_buf.call_id,
                                 tool_name=tool_call_buf.tool_name,
-                                arguments=args,
-                                arguments_json=args_str,
+                                arguments=args_str,
                             ),
                             parse_status=ToolCallParseStatus.succeeded,
                         ),

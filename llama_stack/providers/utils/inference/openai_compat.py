@@ -538,18 +538,13 @@ async def convert_message_to_openai_dict(message: Message, download: bool = Fals
             if isinstance(tool_name, BuiltinTool):
                 tool_name = tool_name.value
 
-            # arguments_json can be None, so attempt it first and fall back to arguments
-            if hasattr(tc, "arguments_json") and tc.arguments_json:
-                arguments = tc.arguments_json
-            else:
-                arguments = json.dumps(tc.arguments)
             result["tool_calls"].append(
                 {
                     "id": tc.call_id,
                     "type": "function",
                     "function": {
                         "name": tool_name,
-                        "arguments": arguments,
+                        "arguments": tc.arguments,
                     },
                 }
             )
@@ -685,8 +680,7 @@ def convert_tool_call(
         valid_tool_call = ToolCall(
             call_id=tool_call.id,
             tool_name=tool_call.function.name,
-            arguments=json.loads(tool_call.function.arguments),
-            arguments_json=tool_call.function.arguments,
+            arguments=tool_call.function.arguments,
         )
     except Exception:
         return UnparseableToolCall(
@@ -897,8 +891,7 @@ def _convert_openai_tool_calls(
         ToolCall(
             call_id=call.id,
             tool_name=call.function.name,
-            arguments=json.loads(call.function.arguments),
-            arguments_json=call.function.arguments,
+            arguments=call.function.arguments,
         )
         for call in tool_calls
     ]
@@ -1184,8 +1177,7 @@ async def convert_openai_chat_completion_stream(
                 tool_call = ToolCall(
                     call_id=buffer["call_id"],
                     tool_name=buffer["name"],
-                    arguments=arguments,
-                    arguments_json=buffer["arguments"],
+                    arguments=buffer["arguments"],
                 )
                 yield ChatCompletionResponseStreamChunk(
                     event=ChatCompletionResponseEvent(
@@ -1418,7 +1410,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
                         openai_tool_call = OpenAIChoiceDeltaToolCall(
                             index=0,
                             function=OpenAIChoiceDeltaToolCallFunction(
-                                arguments=tool_call.arguments_json,
+                                arguments=tool_call.arguments,
                             ),
                         )
                         delta = OpenAIChoiceDelta(tool_calls=[openai_tool_call])

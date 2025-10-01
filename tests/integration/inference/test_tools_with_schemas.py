@@ -213,7 +213,7 @@ class TestMCPToolsInChatCompletion:
                     "function": {
                         "name": tool.name,
                         "description": tool.description,
-                        "parameters": tool.input_schema if hasattr(tool, "input_schema") else {},
+                        "parameters": tool.input_schema or {},
                     },
                 }
             )

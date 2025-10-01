@@ -22,7 +22,7 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnInput
 from llama_stack.apis.shields import Shield, ShieldInput
-from llama_stack.apis.tools import Tool, ToolGroup, ToolGroupInput, ToolRuntime
+from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
@@ -84,15 +84,11 @@ class BenchmarkWithOwner(Benchmark, ResourceWithOwner):
     pass
 
 
-class ToolWithOwner(Tool, ResourceWithOwner):
-    pass
-
-
 class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
     pass
 
 
-RoutableObject = Model | Shield | VectorDB | Dataset | ScoringFn | Benchmark | Tool | ToolGroup
+RoutableObject = Model | Shield | VectorDB | Dataset | ScoringFn | Benchmark | ToolGroup
 
 RoutableObjectWithProvider = Annotated[
     ModelWithOwner
@@ -101,7 +97,6 @@ RoutableObjectWithProvider = Annotated[
     | DatasetWithOwner
     | ScoringFnWithOwner
     | BenchmarkWithOwner
-    | ToolWithOwner
     | ToolGroupWithOwner,
     Field(discriminator="type"),
 ]

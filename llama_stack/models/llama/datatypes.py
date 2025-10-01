@@ -37,14 +37,7 @@ RecursiveType = Primitive | list[Primitive] | dict[str, Primitive]
 class ToolCall(BaseModel):
     call_id: str
     tool_name: BuiltinTool | str
-    # Plan is to deprecate the Dict in favor of a JSON string
-    # that is parsed on the client side instead of trying to manage
-    # the recursive type here.
-    # Making this a union so that client side can start prepping for this change.
-    # Eventually, we will remove both the Dict and arguments_json field,
-    # and arguments will just be a str
-    arguments: str | dict[str, RecursiveType]
-    arguments_json: str | None = None
+    arguments: str
 
     @field_validator("tool_name", mode="before")
     @classmethod

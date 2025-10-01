@@ -2394,11 +2394,11 @@
             "get": {
                 "responses": {
                     "200": {
-                        "description": "A Tool.",
+                        "description": "A ToolDef.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Tool"
+                                    "$ref": "#/components/schemas/ToolDef"
                                 }
                             }
                         }
@@ -4447,11 +4447,11 @@
             "get": {
                 "responses": {
                     "200": {
-                        "description": "A ListToolsResponse.",
+                        "description": "A ListToolDefsResponse.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ListToolsResponse"
+                                    "$ref": "#/components/schemas/ListToolDefsResponse"
                                 }
                             }
                         }
@@ -7375,6 +7375,10 @@
             "ToolDef": {
                 "type": "object",
                 "properties": {
+                    "toolgroup_id": {
+                        "type": "string",
+                        "description": "(Optional) ID of the tool group this tool belongs to"
+                    },
                     "name": {
                         "type": "string",
                         "description": "Name of the tool"
@@ -8071,79 +8075,6 @@
                         ]
                     },
                     "arguments": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "oneOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "integer"
-                                        },
-                                        {
-                                            "type": "number"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "type": "null"
-                                        },
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "oneOf": [
-                                                    {
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "type": "integer"
-                                                    },
-                                                    {
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "type": "boolean"
-                                                    },
-                                                    {
-                                                        "type": "null"
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "oneOf": [
-                                                    {
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "type": "integer"
-                                                    },
-                                                    {
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "type": "boolean"
-                                                    },
-                                                    {
-                                                        "type": "null"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    "arguments_json": {
                         "type": "string"
                     }
                 },
@@ -13032,133 +12963,6 @@
                 "title": "QuerySpanTreeResponse",
                 "description": "Response containing a tree structure of spans."
             },
-            "Tool": {
-                "type": "object",
-                "properties": {
-                    "identifier": {
-                        "type": "string"
-                    },
-                    "provider_resource_id": {
-                        "type": "string"
-                    },
-                    "provider_id": {
-                        "type": "string"
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "model",
-                            "shield",
-                            "vector_db",
-                            "dataset",
-                            "scoring_function",
-                            "benchmark",
-                            "tool",
-                            "tool_group",
-                            "prompt"
-                        ],
-                        "const": "tool",
-                        "default": "tool",
-                        "description": "Type of resource, always 'tool'"
-                    },
-                    "toolgroup_id": {
-                        "type": "string",
-                        "description": "ID of the tool group this tool belongs to"
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "Human-readable description of what the tool does"
-                    },
-                    "input_schema": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "JSON Schema for the tool's input parameters"
-                    },
-                    "output_schema": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "JSON Schema for the tool's output"
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) Additional metadata about the tool"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "identifier",
-                    "provider_id",
-                    "type",
-                    "toolgroup_id",
-                    "description"
-                ],
-                "title": "Tool",
-                "description": "A tool that can be invoked by agents."
-            },
             "ToolGroup": {
                 "type": "object",
                 "properties": {
@@ -14436,24 +14240,6 @@
                 ],
                 "title": "ListToolGroupsResponse",
                 "description": "Response containing a list of tool groups."
-            },
-            "ListToolsResponse": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Tool"
-                        },
-                        "description": "List of tools"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "data"
-                ],
-                "title": "ListToolsResponse",
-                "description": "Response containing a list of tools."
             },
             "ListVectorDBsResponse": {
                 "type": "object",

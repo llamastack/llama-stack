@@ -804,61 +804,34 @@ class ChatAgent(ShieldRunnerMixin):
                     [t.identifier for t in (await self.tool_groups_api.list_tool_groups()).data]
                 )
                 raise ValueError(f"Toolgroup {toolgroup_name} not found, available toolgroups: {available_tool_groups}")
-            if input_tool_name is not None and not any(tool.identifier == input_tool_name for tool in tools.data):
+            if input_tool_name is not None and not any(tool.name == input_tool_name for tool in tools.data):
                 raise ValueError(
-                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.identifier for tool in tools.data])}"
+                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.name for tool in tools.data])}"
                 )
 
             for tool_def in tools.data:
                 if toolgroup_name.startswith("builtin") and toolgroup_name != RAG_TOOL_GROUP:
-                    identifier: str | BuiltinTool | None = tool_def.identifier
+                    identifier: str | BuiltinTool | None = tool_def.name
                     if identifier == "web_search":
                         identifier = BuiltinTool.brave_search
                     else:
                         identifier = BuiltinTool(identifier)
                 else:
                     # add if tool_name is unspecified or the tool_def identifier is the same as the tool_name
-                    if input_tool_name in (None, tool_def.identifier):
-                        identifier = tool_def.identifier
+                    if input_tool_name in (None, tool_def.name):
+                        identifier = tool_def.name
                     else:
                         identifier = None
 
                 if tool_name_to_def.get(identifier, None):
                     raise ValueError(f"Tool {identifier} already exists")
                 if identifier:
-                    # Build JSON Schema from tool parameters
-                    properties = {}
-                    required = []
-
-                    for param in tool_def.parameters:
-                        param_schema = {
-                            "type": param.parameter_type,
-                            "description": param.description,
-                        }
-                        if param.default is not None:
-                            param_schema["default"] = param.default
-                        if param.items is not None:
-                            param_schema["items"] = param.items
-                        if param.title is not None:
-                            param_schema["title"] = param.title
-
-                        properties[param.name] = param_schema
-
-                        if param.required:
-                            required.append(param.name)
-
-                    input_schema = {
-                        "type": "object",
-                        "properties": properties,
-                        "required": required,
-                    }
-
-                    tool_name_to_def[tool_def.identifier] = ToolDefinition(
+                    tool_name_to_def[identifier] = ToolDefinition(
                         tool_name=identifier,
                         description=tool_def.description,
-                        input_schema=input_schema,
+                        input_schema=tool_def.input_schema,
                     )
-                    tool_name_to_args[tool_def.identifier] = toolgroup_to_args.get(toolgroup_name, {})
+                    tool_name_to_args[identifier] = toolgroup_to_args.get(toolgroup_name, {})
 
         self.tool_defs, self.tool_name_to_args = (
             list(tool_name_to_def.values()),

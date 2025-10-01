@@ -138,8 +138,7 @@ async def test_tool_call_response(vllm_inference_adapter):
                     ToolCall(
                         call_id="foo",
                         tool_name="knowledge_search",
-                        arguments={"query": "How many?"},
-                        arguments_json='{"query": "How many?"}',
+                        arguments='{"query": "How many?"}',
                     )
                 ],
             ),
@@ -263,7 +262,7 @@ async def test_tool_call_delta_streaming_arguments_dict():
     assert chunks[1].event.event_type.value == "progress"
     assert chunks[1].event.delta.type == "tool_call"
     assert chunks[1].event.delta.parse_status.value == "succeeded"
-    assert chunks[1].event.delta.tool_call.arguments_json == '{"number": 28, "power": 3}'
+    assert chunks[1].event.delta.tool_call.arguments == '{"number": 28, "power": 3}'
     assert chunks[2].event.event_type.value == "complete"
 
 
@@ -339,11 +338,11 @@ async def test_multiple_tool_calls():
     assert chunks[1].event.event_type.value == "progress"
     assert chunks[1].event.delta.type == "tool_call"
     assert chunks[1].event.delta.parse_status.value == "succeeded"
-    assert chunks[1].event.delta.tool_call.arguments_json == '{"number": 28, "power": 3}'
+    assert chunks[1].event.delta.tool_call.arguments == '{"number": 28, "power": 3}'
     assert chunks[2].event.event_type.value == "progress"
     assert chunks[2].event.delta.type == "tool_call"
     assert chunks[2].event.delta.parse_status.value == "succeeded"
-    assert chunks[2].event.delta.tool_call.arguments_json == '{"first_number": 4, "second_number": 7}'
+    assert chunks[2].event.delta.tool_call.arguments == '{"first_number": 4, "second_number": 7}'
     assert chunks[3].event.event_type.value == "complete"
 
 
