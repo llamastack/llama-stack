@@ -139,8 +139,7 @@ def test_openai_create_vector_store(compat_client_with_empty_stores, client_with
 
     # Create a vector store
     vector_store = client.vector_stores.create(
-        name="Vs_test_vector_store",
-        metadata={"purpose": "testing", "environment": "integration"},
+        name="Vs_test_vector_store", metadata={"purpose": "testing", "environment": "integration"}
     )
 
     assert vector_store is not None
@@ -210,9 +209,7 @@ def test_openai_update_vector_store(compat_client_with_empty_stores, client_with
     time.sleep(1)
     # Modify the store
     modified_store = client.vector_stores.update(
-        vector_store_id=created_store.id,
-        name="modified_name",
-        metadata={"version": "1.1", "updated": "true"},
+        vector_store_id=created_store.id, name="modified_name", metadata={"version": "1.1", "updated": "true"}
     )
 
     assert modified_store is not None
@@ -285,9 +282,7 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
 
     # Search using OpenAI API
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id,
-        query="What is Python programming language?",
-        max_num_results=3,
+        vector_store_id=vector_store.id, query="What is Python programming language?", max_num_results=3
     )
     assert search_response is not None
     assert len(search_response.data) > 0
@@ -300,10 +295,7 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
 
     # Test filtering by metadata
     filtered_search = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id,
-        query="artificial intelligence",
-        filters={"topic": "ai"},
-        max_num_results=5,
+        vector_store_id=vector_store.id, query="artificial intelligence", filters={"topic": "ai"}, max_num_results=5
     )
 
     assert filtered_search is not None
@@ -334,8 +326,7 @@ def test_openai_vector_store_search_relevance(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name=f"relevance_test_{expected_doc_id}",
-        metadata={"purpose": "relevance_testing"},
+        name=f"relevance_test_{expected_doc_id}", metadata={"purpose": "relevance_testing"}
     )
 
     # Insert chunks using native API
@@ -466,8 +457,7 @@ def test_openai_vector_store_search_with_max_num_results(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name="max_num_results_test_store",
-        metadata={"purpose": "max_num_results_testing"},
+        name="max_num_results_test_store", metadata={"purpose": "max_num_results_testing"}
     )
 
     # Insert chunks
@@ -526,9 +516,7 @@ def test_openai_vector_store_attach_file(compat_client_with_empty_stores, client
 
     # Search using OpenAI API to confirm our file attached
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id,
-        query="What is the secret string?",
-        max_num_results=1,
+        vector_store_id=vector_store.id, query="What is the secret string?", max_num_results=1
     )
     assert search_response is not None
     assert len(search_response.data) > 0
@@ -785,9 +773,7 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
 
     # Search using OpenAI API to confirm our file attached
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id,
-        query="What is the secret string?",
-        max_num_results=1,
+        vector_store_id=vector_store.id, query="What is the secret string?", max_num_results=1
     )
     assert "foobazbar" in search_response.data[0].content[0].text.lower()
 
@@ -796,9 +782,7 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
 
     # Search using OpenAI API to confirm our file deleted
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id,
-        query="What is the secret string?",
-        max_num_results=1,
+        vector_store_id=vector_store.id, query="What is the secret string?", max_num_results=1
     )
     assert not search_response.data
 
