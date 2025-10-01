@@ -548,6 +548,84 @@ class Generator:
 
         return extra_tags
 
+    def _get_api_group_for_operation(self, op) -> str | None:
+        """
+        Determine the API group for an operation based on its route path.
+
+        Args:
+            op: The endpoint operation
+
+        Returns:
+            The API group name derived from the route, or None if unable to determine
+        """
+        if not hasattr(op, 'webmethod') or not op.webmethod or not hasattr(op.webmethod, 'route'):
+            return None
+
+        route = op.webmethod.route
+        if not route or not route.startswith('/'):
+            return None
+
+        # Extract API group from route path
+        # Examples: /v1/agents/list -> agents-api
+        #          /v1/responses -> responses-api
+        #          /v1/models -> models-api
+        path_parts = route.strip('/').split('/')
+
+        if len(path_parts) < 2:
+            return None
+
+        # Skip version prefix (v1, v1alpha, v1beta, etc.)
+        if path_parts[0].startswith('v1'):
+            if len(path_parts) < 2:
+                return None
+            api_segment = path_parts[1]
+        else:
+            api_segment = path_parts[0]
+
+        # Convert to supplementary file naming convention
+        # agents -> agents-api, responses -> responses-api, etc.
+        return f"{api_segment}-api"
+
+    def _load_supplemental_content(self, api_group: str | None) -> str:
+        """
+        Load supplemental content for an API group based on stability level.
+
+        Follows this resolution order:
+        1. docs/supplementary/{stability}/{api_group}.md
+        2. docs/supplementary/shared/{api_group}.md (fallback)
+        3. Empty string if no files found
+
+        Args:
+            api_group: The API group name (e.g., "agents-responses-api"), or None if no mapping exists
+
+        Returns:
+            The supplemental content as markdown string, or empty string if not found
+        """
+        if not api_group:
+            return ""
+
+        base_path = Path(__file__).parent.parent.parent / "supplementary"
+
+        # Try stability-specific content first if stability filter is set
+        if self.options.stability_filter:
+            stability_path = base_path / self.options.stability_filter / f"{api_group}.md"
+            if stability_path.exists():
+                try:
+                    return stability_path.read_text(encoding="utf-8")
+                except Exception as e:
+                    print(f"Warning: Could not read stability-specific supplemental content from {stability_path}: {e}")
+
+        # Fall back to shared content
+        shared_path = base_path / "shared" / f"{api_group}.md"
+        if shared_path.exists():
+            try:
+                return shared_path.read_text(encoding="utf-8")
+            except Exception as e:
+                print(f"Warning: Could not read shared supplemental content from {shared_path}: {e}")
+
+        # No supplemental content found
+        return ""
+
     def _build_operation(self, op: EndpointOperation) -> Operation:
         if op.defining_class.__name__ in [
             "SyntheticDataGeneration",
@@ -799,9 +877,13 @@ class Generator:
         else:
             callbacks = None
 
-        description = "\n".join(
+        # Build base description from docstring
+        base_description = "\n".join(
             filter(None, [doc_string.short_description, doc_string.long_description])
         )
+
+        # Individual endpoints get clean descriptions only
+        description = base_description
 
         return Operation(
             tags=[
@@ -959,10 +1041,21 @@ class Generator:
             if hasattr(cls, "API_NAMESPACE") and cls.API_NAMESPACE != cls.__name__:
                 continue
 
+            # Add supplemental content to tag pages
+            api_group = f"{cls.__name__.lower()}-api"
+            supplemental_content = self._load_supplemental_content(api_group)
+
+            tag_description = doc_string.long_description or ""
+            if supplemental_content:
+                if tag_description:
+                    tag_description = f"{tag_description}\n\n{supplemental_content}"
+                else:
+                    tag_description = supplemental_content
+
             operation_tags.append(
                 Tag(
                     name=cls.__name__,
-                    description=doc_string.long_description,
+                    description=tag_description,
                     displayName=doc_string.short_description,
                 )
             )
