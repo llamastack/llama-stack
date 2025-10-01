@@ -62,18 +62,10 @@ from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_dis
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
-from llama_stack.providers.inline.telemetry.meta_reference.config import TelemetryConfig
-from llama_stack.providers.inline.telemetry.meta_reference.telemetry import (
-    TelemetryAdapter,
-)
-from llama_stack.providers.utils.telemetry.tracing import (
-    CURRENT_TRACE_CONTEXT,
-    setup_logger,
-)
+
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
-from .tracing import TracingMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
@@ -243,7 +235,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
             try:
                 if is_streaming:
                     gen = preserve_contexts_async_generator(
-                        sse_generator(func(**kwargs)), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
+                        sse_generator(func(**kwargs)), [PROVIDER_DATA_VAR]
                     )
                     return StreamingResponse(gen, media_type="text/event-stream")
                 else:
@@ -288,8 +280,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
             ]
         )
 
-    route_handler.__signature__ = sig.replace(parameters=new_params)
-
+    setattr(route_handler, "__signature__", sig.replace(parameters=new_params))
     return route_handler
 
 
@@ -351,11 +342,12 @@ def create_app(
     if config_file is None:
         raise ValueError("No config file provided and LLAMA_STACK_CONFIG env var is not set")
 
-    config_file = resolve_config_or_distro(config_file, Mode.RUN)
+    config_path = resolve_config_or_distro(config_file, Mode.RUN)
 
     # Load and process configuration
     logger_config = None
-    with open(config_file) as fp:
+
+    with open(config_path) as fp:
         config_contents = yaml.safe_load(fp)
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)
@@ -387,7 +379,7 @@ def create_app(
     if not os.environ.get("LLAMA_STACK_DISABLE_VERSION_CHECK"):
         app.add_middleware(ClientVersionMiddleware)
 
-    impls = app.stack.impls
+    impls = app.stack.get_impls()
 
     if config.server.auth:
         logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
@@ -429,11 +421,7 @@ def create_app(
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
     if Api.telemetry in impls:
-        setup_logger(impls[Api.telemetry])
-        if impls[Api.telemetry].fastapi_middleware:
-            impls[Api.telemetry].fastapi_middleware(app)
-    else:
-        setup_logger(TelemetryAdapter(TelemetryConfig(), {}))
+        impls[Api.telemetry].fastapi_middleware(app)
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)
@@ -442,7 +430,7 @@ def create_app(
     if config.apis:
         apis_to_serve = set(config.apis)
     else:
-        apis_to_serve = set(impls.keys())
+        apis_to_serve = {api.value for api in impls.keys()}
 
     for inf in builtin_automatically_routed_apis():
         # if we do not serve the corresponding router API, we should not serve the routing table API
@@ -470,7 +458,8 @@ def create_app(
 
             impl_method = getattr(impl, route.name)
             # Filter out HEAD method since it's automatically handled by FastAPI for GET routes
-            available_methods = [m for m in route.methods if m != "HEAD"]
+            route_methods = route.methods or []
+            available_methods = [m for m in route_methods if m != "HEAD"]
             if not available_methods:
                 raise ValueError(f"No methods found for {route.name} on {impl}")
             method = available_methods[0]
@@ -490,8 +479,6 @@ def create_app(
 
     app.exception_handler(RequestValidationError)(global_exception_handler)
     app.exception_handler(Exception)(global_exception_handler)
-
-    app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 
@@ -530,8 +517,8 @@ def main(args: argparse.Namespace | None = None):
         logger.error(f"Error creating app: {str(e)}")
         sys.exit(1)
 
-    config_file = resolve_config_or_distro(config_or_distro, Mode.RUN)
-    with open(config_file) as fp:
+    config_path = resolve_config_or_distro(config_or_distro, Mode.RUN)
+    with open(config_path) as fp:
         config_contents = yaml.safe_load(fp)
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)

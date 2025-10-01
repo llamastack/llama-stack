@@ -1,20 +1,22 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the terms described in the LICENSE file in
-# the root directory of this source tree.
 from aiohttp import hdrs
+from typing import Any
 
+from llama_stack.apis.datatypes import Api
 from llama_stack.core.external import ExternalApiSpec
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.telemetry.tracing import end_trace, start_trace
 
-logger = get_logger(name=__name__, category="core::server")
 
+logger = get_logger(name=__name__, category="telemetry::meta_reference")
 
 class TracingMiddleware:
-    def __init__(self, app, impls, external_apis: dict[str, ExternalApiSpec]):
+    def __init__(
+        self,
+        app,
+        impls: dict[Api, Any],
+        external_apis: dict[str, ExternalApiSpec],
+    ):
         self.app = app
         self.impls = impls
         self.external_apis = external_apis
@@ -34,7 +36,8 @@ class TracingMiddleware:
             return await self.app(scope, receive, send)
 
         if not hasattr(self, "route_impls"):
-            self.route_impls = initialize_route_impls(self.impls, self.external_apis)
+            external_api_map = {Api(api_name): spec for api_name, spec in self.external_apis.items()}
+            self.route_impls = initialize_route_impls(self.impls, external_api_map)
 
         try:
             _, _, route_path, webmethod = find_matching_route(
