@@ -1,4 +1,7 @@
-# Files API
+---
+sidebar_label: Files
+title: Files
+---
 
 ## Overview
 
@@ -48,7 +51,7 @@ with open("data.jsonl", "rb") as f:
     data = {"purpose": "batch"}
     response = requests.post(
         "http://localhost:8000/v1/openai/v1/files", files=files, data=data
-    )
+      )
     file_info = response.json()
 ```
 
@@ -92,21 +95,21 @@ files = response.json()
 
 # List files with pagination
 response = requests.get(
-    "http://localhost:8000/v1/openai/v1/files",
+    "http://localhost:8000/v1/openAi/v1/files",
     params={"limit": 10, "after": "file-abc123"},
 )
 files = response.json()
 
 # Filter by purpose
 response = requests.get(
-    "http://localhost:8000/v1/openai/v1/files", params={"purpose": "fine-tune"}
+    "http://localhost:8000/v1/openAi/v1/files", params={"purpose": "fine-tune"}
 )
 files = response.json()
 ```
 
 ### Retrieve File
 
-**GET** `/v1/openai/v1/files/{file_id}`
+**GET** `/v1/openAi/v1/files/{file_id}`
 
 Returns information about a specific file.
 
@@ -130,13 +133,13 @@ Returns information about a specific file.
 import requests
 
 file_id = "file-abc123"
-response = requests.get(f"http://localhost:8000/v1/openai/v1/files/{file_id}")
+response = requests.get(f"http://localhost:8000/v1/openAi/v1/files/{file_id}")
 file_info = response.json()
 ```
 
 ### Delete File
 
-**DELETE** `/v1/openai/v1/files/{file_id}`
+**DELETE** `/v1/openAi/v1/files/{file_id}`
 
 Delete a file.
 
@@ -157,13 +160,13 @@ Delete a file.
 import requests
 
 file_id = "file-abc123"
-response = requests.delete(f"http://localhost:8000/v1/openai/v1/files/{file_id}")
+response = requests.delete(f"http://localhost:8000/v1/openAi/v1/files/{file_id}")
 result = response.json()
 ```
 
 ### Retrieve File Content
 
-**GET** `/v1/openai/v1/files/{file_id}/content`
+**GET** `/v1/openAi/v1/files/{file_id}/content`
 
 Returns the raw file content as a binary response.
 
@@ -180,7 +183,7 @@ Binary file content with appropriate headers:
 import requests
 
 file_id = "file-abc123"
-response = requests.get(f"http://localhost:8000/v1/openai/v1/files/{file_id}/content")
+response = requests.get(f"http://localhost:8000/v1/openAi/v1/files/{file_id}/content")
 
 # Save content to file
 with open("downloaded_file.jsonl", "wb") as f:
@@ -197,13 +200,13 @@ The Files API integrates with Vector Stores to enable document processing and se
 ### Vector Store File Operations
 
 **List Vector Store Files:**
-- **GET** `/v1/openai/v1/vector_stores/{vector_store_id}/files`
+- **GET** `/v1/openAi/v1/vector_stores/{vector_store_id}/files`
 
 **Retrieve Vector Store File Content:**
-- **GET** `/v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content`
+- **GET** `/v1/openAi/v1/vector_stores/{vector_store_id}/files/{file_id}/content`
 
 **Attach File to Vector Store:**
-- **POST** `/v1/openai/v1/vector_stores/{vector_store_id}/files`
+- **POST** `/v1/openAi/v1/vector_stores/{vector_store_id}/files`
 
 ## Error Handling
 
@@ -264,15 +267,15 @@ content = await client.files.retrieve_content(file_info.id)
 
 ```bash
 # Upload file
-curl -X POST http://localhost:8000/v1/openai/v1/files \
+curl -X POST http://localhost:8000/v1/openAi/v1/files \
   -F "file=@data.jsonl" \
   -F "purpose=fine-tune"
 
 # List files
-curl http://localhost:8000/v1/openai/v1/files
+curl http://localhost:8000/v1/openAi/v1/files
 
 # Download file content
-curl http://localhost:8000/v1/openai/v1/files/file-abc123/content \
+curl http://localhost:8000/v1/openAi/v1/files/file-abc123/content \
   -o downloaded_file.jsonl
 ```
 
