@@ -258,8 +258,8 @@ class PythonListCustomToolGenerator(PromptTemplateGeneratorBase):  # noqa: N801
                 {# manually setting up JSON because jinja sorts keys in unexpected ways -#}
                 {%- set tname = t.tool_name -%}
                 {%- set tdesc = t.description -%}
-                {%- set tprops = t.input_schema.get('properties', {}) -%}
-                {%- set required_params = t.input_schema.get('required', []) -%}
+                {%- set tprops = (t.input_schema or {}).get('properties', {}) -%}
+                {%- set required_params = (t.input_schema or {}).get('required', []) -%}
                 {
                     "name": "{{tname}}",
                     "description": "{{tdesc}}",

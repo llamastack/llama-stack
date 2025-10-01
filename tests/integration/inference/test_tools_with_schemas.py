@@ -199,14 +199,14 @@ class TestMCPToolsInChatCompletion:
         }
 
         # Get the tools from MCP
-        tools_response = llama_stack_client.tool_runtime.list_runtime_tools(
+        tools_response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             extra_headers=auth_headers,
         )
 
         # Convert to OpenAI format for inference
         tools = []
-        for tool in tools_response.data:
+        for tool in tools_response:
             tools.append(
                 {
                     "type": "function",

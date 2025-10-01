@@ -129,12 +129,12 @@ class TestMCPSchemaPreservation:
         }
 
         # List runtime tools
-        response = llama_stack_client.tool_runtime.list_runtime_tools(
+        response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             extra_headers=auth_headers,
         )
 
-        tools = response.data
+        tools = response
         assert len(tools) > 0
 
         # Check each tool has input_schema
@@ -166,20 +166,19 @@ class TestMCPSchemaPreservation:
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
         )
-
         provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
         auth_headers = {
             "X-LlamaStack-Provider-Data": json.dumps(provider_data),
         }
 
         # List tools
-        response = llama_stack_client.tool_runtime.list_runtime_tools(
+        response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             extra_headers=auth_headers,
         )
 
         # Find book_flight tool (which should have $ref/$defs)
-        book_flight_tool = next((t for t in response.data if t.name == "book_flight"), None)
+        book_flight_tool = next((t for t in response if t.name == "book_flight"), None)
 
         if book_flight_tool and book_flight_tool.input_schema:
             # If the MCP server provides $defs, they should be preserved
@@ -222,13 +221,13 @@ class TestMCPSchemaPreservation:
             "X-LlamaStack-Provider-Data": json.dumps(provider_data),
         }
 
-        response = llama_stack_client.tool_runtime.list_runtime_tools(
+        response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             extra_headers=auth_headers,
         )
 
         # Find get_weather tool
-        weather_tool = next((t for t in response.data if t.name == "get_weather"), None)
+        weather_tool = next((t for t in response if t.name == "get_weather"), None)
 
         if weather_tool:
             # Check if output_schema field exists and is preserved
