@@ -11,27 +11,7 @@
     "body": {
       "__type__": "ollama._types.ProcessResponse",
       "__data__": {
-        "models": [
-          {
-            "model": "llama3.2:3b-instruct-fp16",
-            "name": "llama3.2:3b-instruct-fp16",
-            "digest": "195a8c01d91ec3cb1e0aad4624a51f2602c51fa7d96110f8ab5a20c84081804d",
-            "expires_at": "2025-09-30T14:29:52.682809-07:00",
-            "size": 8581748736,
-            "size_vram": 8581748736,
-            "details": {
-              "parent_model": "",
-              "format": "gguf",
-              "family": "llama",
-              "families": [
-                "llama"
-              ],
-              "parameter_size": "3.2B",
-              "quantization_level": "F16"
-            },
-            "context_length": null
-          }
-        ]
+        "models": []
       }
     },
     "is_streaming": false
