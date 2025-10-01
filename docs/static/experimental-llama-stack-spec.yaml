@@ -14,6 +14,212 @@ info:
 servers:
   - url: http://any-hosted-llama-stack.com
 paths:
+  /v1beta/datasetio/append-rows/{dataset_id}:
+    post:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - DatasetIO
+      summary: Append rows to a dataset.
+      description: Append rows to a dataset.
+      parameters:
+        - name: dataset_id
+          in: path
+          description: >-
+            The ID of the dataset to append the rows to.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppendRowsRequest'
+        required: true
+      deprecated: false
+  /v1beta/datasetio/iterrows/{dataset_id}:
+    get:
+      responses:
+        '200':
+          description: A PaginatedResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - DatasetIO
+      summary: >-
+        Get a paginated list of rows from a dataset.
+      description: >-
+        Get a paginated list of rows from a dataset.
+
+        Uses offset-based pagination where:
+
+        - start_index: The starting index (0-based). If None, starts from beginning.
+
+        - limit: Number of items to return. If None or -1, returns all items.
+
+
+        The response includes:
+
+        - data: List of items for the current page.
+
+        - has_more: Whether there are more items available after this set.
+      parameters:
+        - name: dataset_id
+          in: path
+          description: >-
+            The ID of the dataset to get the rows from.
+          required: true
+          schema:
+            type: string
+        - name: start_index
+          in: query
+          description: >-
+            Index into dataset for the first row to get. Get all rows if None.
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: The number of rows to get.
+          required: false
+          schema:
+            type: integer
+      deprecated: false
+  /v1beta/datasets:
+    get:
+      responses:
+        '200':
+          description: A ListDatasetsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDatasetsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Datasets
+      summary: List all datasets.
+      description: List all datasets.
+      parameters: []
+      deprecated: false
+    post:
+      responses:
+        '200':
+          description: A Dataset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Datasets
+      summary: Register a new dataset.
+      description: Register a new dataset.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDatasetRequest'
+        required: true
+      deprecated: false
+  /v1beta/datasets/{dataset_id}:
+    get:
+      responses:
+        '200':
+          description: A Dataset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Datasets
+      summary: Get a dataset by its ID.
+      description: Get a dataset by its ID.
+      parameters:
+        - name: dataset_id
+          in: path
+          description: The ID of the dataset to get.
+          required: true
+          schema:
+            type: string
+      deprecated: false
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Datasets
+      summary: Unregister a dataset by its ID.
+      description: Unregister a dataset by its ID.
+      parameters:
+        - name: dataset_id
+          in: path
+          description: The ID of the dataset to unregister.
+          required: true
+          schema:
+            type: string
+      deprecated: false
   /v1alpha/agents:
     get:
       responses:
@@ -1018,6 +1224,238 @@ paths:
               $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
       deprecated: false
+  /v1alpha/telemetry/metrics/{metric_name}:
+    post:
+      responses:
+        '200':
+          description: A QueryMetricsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMetricsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Telemetry
+      summary: Query metrics.
+      description: Query metrics.
+      parameters:
+        - name: metric_name
+          in: path
+          description: The name of the metric to query.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryMetricsRequest'
+        required: true
+      deprecated: false
+  /v1alpha/telemetry/spans:
+    post:
+      responses:
+        '200':
+          description: A QuerySpansResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuerySpansResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Telemetry
+      summary: Query spans.
+      description: Query spans.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuerySpansRequest'
+        required: true
+      deprecated: false
+  /v1alpha/telemetry/spans/export:
+    post:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Telemetry
+      summary: Save spans to a dataset.
+      description: Save spans to a dataset.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveSpansToDatasetRequest'
+        required: true
+      deprecated: false
+  /v1alpha/telemetry/spans/{span_id}/tree:
+    post:
+      responses:
+        '200':
+          description: A QuerySpanTreeResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuerySpanTreeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Telemetry
+      summary: Get a span tree by its ID.
+      description: Get a span tree by its ID.
+      parameters:
+        - name: span_id
+          in: path
+          description: The ID of the span to get the tree from.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSpanTreeRequest'
+        required: true
+      deprecated: false
+  /v1alpha/telemetry/traces:
+    post:
+      responses:
+        '200':
+          description: A QueryTracesResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryTracesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Telemetry
+      summary: Query traces.
+      description: Query traces.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryTracesRequest'
+        required: true
+      deprecated: false
+  /v1alpha/telemetry/traces/{trace_id}:
+    get:
+      responses:
+        '200':
+          description: A Trace.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trace'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Telemetry
+      summary: Get a trace by its ID.
+      description: Get a trace by its ID.
+      parameters:
+        - name: trace_id
+          in: path
+          description: The ID of the trace to get.
+          required: true
+          schema:
+            type: string
+      deprecated: false
+  /v1alpha/telemetry/traces/{trace_id}/spans/{span_id}:
+    get:
+      responses:
+        '200':
+          description: A Span.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Span'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Telemetry
+      summary: Get a span by its ID.
+      description: Get a span by its ID.
+      parameters:
+        - name: trace_id
+          in: path
+          description: >-
+            The ID of the trace to get the span from.
+          required: true
+          schema:
+            type: string
+        - name: span_id
+          in: path
+          description: The ID of the span to get.
+          required: true
+          schema:
+            type: string
+      deprecated: false
 jsonSchemaDialect: >-
   https://json-schema.org/draft/2020-12/schema
 components:
@@ -1050,6 +1488,26 @@ components:
       title: Error
       description: >-
         Error response from the API. Roughly follows RFC 7807.
+    AppendRowsRequest:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: 'null'
+                - type: boolean
+                - type: number
+                - type: string
+                - type: array
+                - type: object
+          description: The rows to append to the dataset.
+      additionalProperties: false
+      required:
+        - rows
+      title: AppendRowsRequest
     PaginatedResponse:
       type: object
       properties:
@@ -1080,6 +1538,195 @@ components:
       title: PaginatedResponse
       description: >-
         A generic paginated response that follows a simple format.
+    Dataset:
+      type: object
+      properties:
+        identifier:
+          type: string
+        provider_resource_id:
+          type: string
+        provider_id:
+          type: string
+        type:
+          type: string
+          enum:
+            - model
+            - shield
+            - vector_db
+            - dataset
+            - scoring_function
+            - benchmark
+            - tool
+            - tool_group
+            - prompt
+          const: dataset
+          default: dataset
+          description: >-
+            Type of resource, always 'dataset' for datasets
+        purpose:
+          type: string
+          enum:
+            - post-training/messages
+            - eval/question-answer
+            - eval/messages-answer
+          description: >-
+            Purpose of the dataset indicating its intended use
+        source:
+          oneOf:
+            - $ref: '#/components/schemas/URIDataSource'
+            - $ref: '#/components/schemas/RowsDataSource'
+          discriminator:
+            propertyName: type
+            mapping:
+              uri: '#/components/schemas/URIDataSource'
+              rows: '#/components/schemas/RowsDataSource'
+          description: >-
+            Data source configuration for the dataset
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Additional metadata for the dataset
+      additionalProperties: false
+      required:
+        - identifier
+        - provider_id
+        - type
+        - purpose
+        - source
+        - metadata
+      title: Dataset
+      description: >-
+        Dataset resource for storing and accessing training or evaluation data.
+    RowsDataSource:
+      type: object
+      properties:
+        type:
+          type: string
+          const: rows
+          default: rows
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: 'null'
+                - type: boolean
+                - type: number
+                - type: string
+                - type: array
+                - type: object
+          description: >-
+            The dataset is stored in rows. E.g. - [ {"messages": [{"role": "user",
+            "content": "Hello, world!"}, {"role": "assistant", "content": "Hello,
+            world!"}]} ]
+      additionalProperties: false
+      required:
+        - type
+        - rows
+      title: RowsDataSource
+      description: A dataset stored in rows.
+    URIDataSource:
+      type: object
+      properties:
+        type:
+          type: string
+          const: uri
+          default: uri
+        uri:
+          type: string
+          description: >-
+            The dataset can be obtained from a URI. E.g. - "https://mywebsite.com/mydata.jsonl"
+            - "lsfs://mydata.jsonl" - "data:csv;base64,{base64_content}"
+      additionalProperties: false
+      required:
+        - type
+        - uri
+      title: URIDataSource
+      description: >-
+        A dataset that can be obtained from a URI.
+    ListDatasetsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dataset'
+          description: List of datasets
+      additionalProperties: false
+      required:
+        - data
+      title: ListDatasetsResponse
+      description: Response from listing datasets.
+    DataSource:
+      oneOf:
+        - $ref: '#/components/schemas/URIDataSource'
+        - $ref: '#/components/schemas/RowsDataSource'
+      discriminator:
+        propertyName: type
+        mapping:
+          uri: '#/components/schemas/URIDataSource'
+          rows: '#/components/schemas/RowsDataSource'
+    RegisterDatasetRequest:
+      type: object
+      properties:
+        purpose:
+          type: string
+          enum:
+            - post-training/messages
+            - eval/question-answer
+            - eval/messages-answer
+          description: >-
+            The purpose of the dataset. One of: - "post-training/messages": The dataset
+            contains a messages column with list of messages for post-training. {
+            "messages": [ {"role": "user", "content": "Hello, world!"}, {"role": "assistant",
+            "content": "Hello, world!"}, ] } - "eval/question-answer": The dataset
+            contains a question column and an answer column for evaluation. { "question":
+            "What is the capital of France?", "answer": "Paris" } - "eval/messages-answer":
+            The dataset contains a messages column with list of messages and an answer
+            column for evaluation. { "messages": [ {"role": "user", "content": "Hello,
+            my name is John Doe."}, {"role": "assistant", "content": "Hello, John
+            Doe. How can I help you today?"}, {"role": "user", "content": "What's
+            my name?"}, ], "answer": "John Doe" }
+        source:
+          $ref: '#/components/schemas/DataSource'
+          description: >-
+            The data source of the dataset. Ensure that the data source schema is
+            compatible with the purpose of the dataset. Examples: - { "type": "uri",
+            "uri": "https://mywebsite.com/mydata.jsonl" } - { "type": "uri", "uri":
+            "lsfs://mydata.jsonl" } - { "type": "uri", "uri": "data:csv;base64,{base64_content}"
+            } - { "type": "uri", "uri": "huggingface://llamastack/simpleqa?split=train"
+            } - { "type": "rows", "rows": [ { "messages": [ {"role": "user", "content":
+            "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}, ]
+            } ] }
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The metadata for the dataset. - E.g. {"description": "My dataset"}.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset. If not provided, an ID will be generated.
+      additionalProperties: false
+      required:
+        - purpose
+        - source
+      title: RegisterDatasetRequest
     AgentConfig:
       type: object
       properties:
@@ -3651,6 +4298,434 @@ components:
         - hyperparam_search_config
         - logger_config
       title: SupervisedFineTuneRequest
+    QueryMetricsRequest:
+      type: object
+      properties:
+        start_time:
+          type: integer
+          description: The start time of the metric to query.
+        end_time:
+          type: integer
+          description: The end time of the metric to query.
+        granularity:
+          type: string
+          description: The granularity of the metric to query.
+        query_type:
+          type: string
+          enum:
+            - range
+            - instant
+          description: The type of query to perform.
+        label_matchers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The name of the label to match
+              value:
+                type: string
+                description: The value to match against
+              operator:
+                type: string
+                enum:
+                  - '='
+                  - '!='
+                  - =~
+                  - '!~'
+                description: >-
+                  The comparison operator to use for matching
+                default: '='
+            additionalProperties: false
+            required:
+              - name
+              - value
+              - operator
+            title: MetricLabelMatcher
+            description: >-
+              A matcher for filtering metrics by label values.
+          description: >-
+            The label matchers to apply to the metric.
+      additionalProperties: false
+      required:
+        - start_time
+        - query_type
+      title: QueryMetricsRequest
+    MetricDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          description: >-
+            Unix timestamp when the metric value was recorded
+        value:
+          type: number
+          description: >-
+            The numeric value of the metric at this timestamp
+        unit:
+          type: string
+      additionalProperties: false
+      required:
+        - timestamp
+        - value
+        - unit
+      title: MetricDataPoint
+      description: >-
+        A single data point in a metric time series.
+    MetricLabel:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the label
+        value:
+          type: string
+          description: The value of the label
+      additionalProperties: false
+      required:
+        - name
+        - value
+      title: MetricLabel
+      description: A label associated with a metric.
+    MetricSeries:
+      type: object
+      properties:
+        metric:
+          type: string
+          description: The name of the metric
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricLabel'
+          description: >-
+            List of labels associated with this metric series
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricDataPoint'
+          description: >-
+            List of data points in chronological order
+      additionalProperties: false
+      required:
+        - metric
+        - labels
+        - values
+      title: MetricSeries
+      description: A time series of metric data points.
+    QueryMetricsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricSeries'
+          description: >-
+            List of metric series matching the query criteria
+      additionalProperties: false
+      required:
+        - data
+      title: QueryMetricsResponse
+      description: >-
+        Response containing metric time series data.
+    QueryCondition:
+      type: object
+      properties:
+        key:
+          type: string
+          description: The attribute key to filter on
+        op:
+          $ref: '#/components/schemas/QueryConditionOp'
+          description: The comparison operator to apply
+        value:
+          oneOf:
+            - type: 'null'
+            - type: boolean
+            - type: number
+            - type: string
+            - type: array
+            - type: object
+          description: The value to compare against
+      additionalProperties: false
+      required:
+        - key
+        - op
+        - value
+      title: QueryCondition
+      description: A condition for filtering query results.
+    QueryConditionOp:
+      type: string
+      enum:
+        - eq
+        - ne
+        - gt
+        - lt
+      title: QueryConditionOp
+      description: >-
+        Comparison operators for query conditions.
+    QuerySpansRequest:
+      type: object
+      properties:
+        attribute_filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryCondition'
+          description: >-
+            The attribute filters to apply to the spans.
+        attributes_to_return:
+          type: array
+          items:
+            type: string
+          description: The attributes to return in the spans.
+        max_depth:
+          type: integer
+          description: The maximum depth of the tree.
+      additionalProperties: false
+      required:
+        - attribute_filters
+        - attributes_to_return
+      title: QuerySpansRequest
+    Span:
+      type: object
+      properties:
+        span_id:
+          type: string
+          description: Unique identifier for the span
+        trace_id:
+          type: string
+          description: >-
+            Unique identifier for the trace this span belongs to
+        parent_span_id:
+          type: string
+          description: >-
+            (Optional) Unique identifier for the parent span, if this is a child span
+        name:
+          type: string
+          description: >-
+            Human-readable name describing the operation this span represents
+        start_time:
+          type: string
+          format: date-time
+          description: Timestamp when the operation began
+        end_time:
+          type: string
+          format: date-time
+          description: >-
+            (Optional) Timestamp when the operation finished, if completed
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Key-value pairs containing additional metadata about the span
+      additionalProperties: false
+      required:
+        - span_id
+        - trace_id
+        - name
+        - start_time
+      title: Span
+      description: >-
+        A span representing a single operation within a trace.
+    QuerySpansResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Span'
+          description: >-
+            List of spans matching the query criteria
+      additionalProperties: false
+      required:
+        - data
+      title: QuerySpansResponse
+      description: Response containing a list of spans.
+    SaveSpansToDatasetRequest:
+      type: object
+      properties:
+        attribute_filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryCondition'
+          description: >-
+            The attribute filters to apply to the spans.
+        attributes_to_save:
+          type: array
+          items:
+            type: string
+          description: The attributes to save to the dataset.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset to save the spans to.
+        max_depth:
+          type: integer
+          description: The maximum depth of the tree.
+      additionalProperties: false
+      required:
+        - attribute_filters
+        - attributes_to_save
+        - dataset_id
+      title: SaveSpansToDatasetRequest
+    GetSpanTreeRequest:
+      type: object
+      properties:
+        attributes_to_return:
+          type: array
+          items:
+            type: string
+          description: The attributes to return in the tree.
+        max_depth:
+          type: integer
+          description: The maximum depth of the tree.
+      additionalProperties: false
+      title: GetSpanTreeRequest
+    SpanStatus:
+      type: string
+      enum:
+        - ok
+        - error
+      title: SpanStatus
+      description: >-
+        The status of a span indicating whether it completed successfully or with
+        an error.
+    SpanWithStatus:
+      type: object
+      properties:
+        span_id:
+          type: string
+          description: Unique identifier for the span
+        trace_id:
+          type: string
+          description: >-
+            Unique identifier for the trace this span belongs to
+        parent_span_id:
+          type: string
+          description: >-
+            (Optional) Unique identifier for the parent span, if this is a child span
+        name:
+          type: string
+          description: >-
+            Human-readable name describing the operation this span represents
+        start_time:
+          type: string
+          format: date-time
+          description: Timestamp when the operation began
+        end_time:
+          type: string
+          format: date-time
+          description: >-
+            (Optional) Timestamp when the operation finished, if completed
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Key-value pairs containing additional metadata about the span
+        status:
+          $ref: '#/components/schemas/SpanStatus'
+          description: >-
+            (Optional) The current status of the span
+      additionalProperties: false
+      required:
+        - span_id
+        - trace_id
+        - name
+        - start_time
+      title: SpanWithStatus
+      description: A span that includes status information.
+    QuerySpanTreeResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/SpanWithStatus'
+          description: >-
+            Dictionary mapping span IDs to spans with status information
+      additionalProperties: false
+      required:
+        - data
+      title: QuerySpanTreeResponse
+      description: >-
+        Response containing a tree structure of spans.
+    QueryTracesRequest:
+      type: object
+      properties:
+        attribute_filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryCondition'
+          description: >-
+            The attribute filters to apply to the traces.
+        limit:
+          type: integer
+          description: The limit of traces to return.
+        offset:
+          type: integer
+          description: The offset of the traces to return.
+        order_by:
+          type: array
+          items:
+            type: string
+          description: The order by of the traces to return.
+      additionalProperties: false
+      title: QueryTracesRequest
+    Trace:
+      type: object
+      properties:
+        trace_id:
+          type: string
+          description: Unique identifier for the trace
+        root_span_id:
+          type: string
+          description: >-
+            Unique identifier for the root span that started this trace
+        start_time:
+          type: string
+          format: date-time
+          description: Timestamp when the trace began
+        end_time:
+          type: string
+          format: date-time
+          description: >-
+            (Optional) Timestamp when the trace finished, if completed
+      additionalProperties: false
+      required:
+        - trace_id
+        - root_span_id
+        - start_time
+      title: Trace
+      description: >-
+        A trace representing the complete execution path of a request across multiple
+        operations.
+    QueryTracesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trace'
+          description: >-
+            List of traces matching the query criteria
+      additionalProperties: false
+      required:
+        - data
+      title: QueryTracesResponse
+      description: Response containing a list of traces.
   responses:
     BadRequest400:
       description: The request was invalid or malformed
@@ -3748,16 +4823,25 @@ tags:
     x-displayName: Agents
   - name: Benchmarks
     description: ''
+  - name: DatasetIO
+    description: ''
+  - name: Datasets
+    description: ''
   - name: Eval
     description: ''
     x-displayName: >-
       Llama Stack Evaluation API for running evaluations on model and agent candidates.
   - name: PostTraining (Coming Soon)
     description: ''
+  - name: Telemetry
+    description: ''
 x-tagGroups:
   - name: Operations
     tags:
       - Agents
       - Benchmarks
+      - DatasetIO
+      - Datasets
       - Eval
       - PostTraining (Coming Soon)
+      - Telemetry
