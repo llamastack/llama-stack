@@ -6,13 +6,15 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, SecretStr
 
 
 class BingSearchToolConfig(BaseModel):
     """Configuration for Bing Search Tool Runtime"""
 
-    api_key: str | None = None
+    api_key: SecretStr = Field(
+        description="The Bing API key",
+    )
     top_k: int = 3
 
     @classmethod

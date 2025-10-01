@@ -29,7 +29,7 @@ class SambaNovaInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         LiteLLMOpenAIMixin.__init__(
             self,
             litellm_provider_name="sambanova",
-            api_key_from_config=self.config.api_key.get_secret_value() if self.config.api_key else None,
+            api_key_from_config=self.config.api_key,
             provider_data_api_key_field="sambanova_api_key",
             openai_compat_api_base=self.config.url,
             download_images=True,  # SambaNova requires base64 image encoding

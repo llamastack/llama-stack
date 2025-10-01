@@ -6,12 +6,11 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 
 class BraveSearchToolConfig(BaseModel):
-    api_key: str | None = Field(
-        default=None,
+    api_key: SecretStr = Field(
         description="The Brave Search API Key",
     )
     max_results: int = Field(

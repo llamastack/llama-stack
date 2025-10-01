@@ -64,6 +64,7 @@ class ConsoleSpanProcessor(SpanProcessor):
                 for key, value in event.attributes.items():
                     if key.startswith("__") or key in ["message", "severity"]:
                         continue
+
                     logger.info(f"[dim]{key}[/dim]: {value}")
 
     def shutdown(self) -> None:
