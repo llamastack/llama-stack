@@ -9,7 +9,6 @@ from typing import Any
 
 from llama_stack_client import AsyncLlamaStackClient
 
-from llama_stack.apis.common.content_types import InterleavedContent
 from llama_stack.apis.inference import (
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
@@ -85,37 +84,6 @@ class PassthroughInferenceAdapter(Inference):
             api_key=passthrough_api_key,
             provider_data=provider_data,
         )
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        client = self._get_client()
-        model = await self.model_store.get_model(model_id)
-
-        request_params = {
-            "model_id": model.provider_resource_id,
-            "content": content,
-            "sampling_params": sampling_params,
-            "response_format": response_format,
-            "stream": stream,
-            "logprobs": logprobs,
-        }
-
-        request_params = {key: value for key, value in request_params.items() if value is not None}
-
-        # cast everything to json dict
-        json_params = self.cast_value_to_json_dict(request_params)
-
-        # only pass through the not None params
-        return await client.inference.completion(**json_params)
 
     async def chat_completion(
         self,

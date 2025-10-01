@@ -9,14 +9,9 @@ from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.inference import (
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
     Inference,
     LogProbConfig,
     Message,
@@ -62,17 +57,6 @@ class DatabricksInferenceAdapter(
 
     async def shutdown(self) -> None:
         pass
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> CompletionResponse | AsyncIterator[CompletionResponseStreamChunk]:
-        raise NotImplementedError()
 
     async def openai_completion(
         self,

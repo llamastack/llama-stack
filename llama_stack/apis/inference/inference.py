@@ -1008,28 +1008,6 @@ class InferenceProvider(Protocol):
 
     model_store: ModelStore | None = None
 
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> CompletionResponse | AsyncIterator[CompletionResponseStreamChunk]:
-        """Generate a completion for the given content using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param content: The content to generate a completion for.
-        :param sampling_params: (Optional) Parameters to control the sampling strategy.
-        :param response_format: (Optional) Grammar specification for guided (structured) decoding.
-        :param stream: (Optional) If True, generate an SSE event stream of the response. Defaults to False.
-        :param logprobs: (Optional) If specified, log probabilities for each token position will be returned.
-        :returns: If stream=False, returns a CompletionResponse with the full completion.
-                 If stream=True, returns an SSE event stream of CompletionResponseStreamChunk.
-        """
-        ...
-
     async def chat_completion(
         self,
         model_id: str,

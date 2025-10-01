@@ -11,7 +11,6 @@ from ibm_watsonx_ai.foundation_models import Model
 from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from openai import AsyncOpenAI
 
-from llama_stack.apis.common.content_types import InterleavedContent
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -43,8 +42,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
     prepare_openai_completion_params,
     process_chat_completion_response,
     process_chat_completion_stream_response,
-    process_completion_response,
-    process_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
@@ -87,31 +84,6 @@ class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
     async def shutdown(self) -> None:
         pass
 
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = CompletionRequest(
-            model=model.provider_resource_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-        if stream:
-            return self._stream_completion(request)
-        else:
-            return await self._nonstream_completion(request)
-
     def _get_client(self, model_id) -> Model:
         config_api_key = self._config.api_key.get_secret_value() if self._config.api_key else None
         config_url = self._config.url
@@ -127,40 +99,6 @@ class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
                 api_key=self._config.api_key,
             )
         return self._openai_client
-
-    async def _nonstream_completion(self, request: CompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        r = self._get_client(request.model).generate(**params)
-        choices = []
-        if "results" in r:
-            for result in r["results"]:
-                choice = OpenAICompatCompletionChoice(
-                    finish_reason=result["stop_reason"] if result["stop_reason"] else None,
-                    text=result["generated_text"],
-                )
-                choices.append(choice)
-        response = OpenAICompatCompletionResponse(
-            choices=choices,
-        )
-        return process_completion_response(response)
-
-    async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-
-        async def _generate_and_convert_to_openai_compat():
-            s = self._get_client(request.model).generate_text_stream(**params)
-            for chunk in s:
-                choice = OpenAICompatCompletionChoice(
-                    finish_reason=None,
-                    text=chunk,
-                )
-                yield OpenAICompatCompletionResponse(
-                    choices=[choice],
-                )
-
-        stream = _generate_and_convert_to_openai_compat()
-        async for chunk in process_completion_stream_response(stream):
-            yield chunk
 
     async def chat_completion(
         self,

@@ -9,16 +9,10 @@ from collections.abc import AsyncIterator
 
 from openai import NOT_GIVEN, APIConnectionError
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatCompletionResponseStreamChunk,
-    CompletionRequest,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
     Inference,
     LogProbConfig,
     Message,
@@ -37,14 +31,10 @@ from llama_stack.providers.utils.inference.openai_compat import (
     convert_openai_chat_completion_stream,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
-from llama_stack.providers.utils.inference.prompt_adapter import content_has_media
 
 from . import NVIDIAConfig
 from .openai_utils import (
     convert_chat_completion_request,
-    convert_completion_request,
-    convert_openai_completion_choice,
-    convert_openai_completion_stream,
 )
 from .utils import _is_nvidia_hosted
 
@@ -108,48 +98,6 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
         :return: The NVIDIA API base URL
         """
         return f"{self._config.url}/v1" if self._config.append_api_version else self._config.url
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> CompletionResponse | AsyncIterator[CompletionResponseStreamChunk]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        if content_has_media(content):
-            raise NotImplementedError("Media is not supported")
-
-        # ToDo: check health of NeMo endpoints and enable this
-        # removing this health check as NeMo customizer endpoint health check is returning 404
-        # await check_health(self._config)  # this raises errors
-
-        provider_model_id = await self._get_provider_model_id(model_id)
-        request = convert_completion_request(
-            request=CompletionRequest(
-                model=provider_model_id,
-                content=content,
-                sampling_params=sampling_params,
-                response_format=response_format,
-                stream=stream,
-                logprobs=logprobs,
-            ),
-            n=1,
-        )
-
-        try:
-            response = await self.client.completions.create(**request)
-        except APIConnectionError as e:
-            raise ConnectionError(f"Failed to connect to NVIDIA NIM at {self._config.url}: {e}") from e
-
-        if stream:
-            return convert_openai_completion_stream(response)
-        else:
-            # we pass n=1 to get only one completion
-            return convert_openai_completion_choice(response.choices[0])
 
     async def openai_embeddings(
         self,

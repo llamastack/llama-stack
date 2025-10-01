@@ -4,14 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncIterator
 from typing import Any
 
 import litellm
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -62,7 +59,7 @@ class LiteLLMOpenAIMixin(
         self,
         litellm_provider_name: str,
         api_key_from_config: str | None,
-        provider_data_api_key_field: str,
+        provider_data_api_key_field: str | None = None,
         model_entries: list[ProviderModelEntry] | None = None,
         openai_compat_api_base: str | None = None,
         download_images: bool = False,
@@ -73,7 +70,7 @@ class LiteLLMOpenAIMixin(
 
         :param model_entries: The model entries to register.
         :param api_key_from_config: The API key to use from the config.
-        :param provider_data_api_key_field: The field in the provider data that contains the API key.
+        :param provider_data_api_key_field: The field in the provider data that contains the API key (optional).
         :param litellm_provider_name: The name of the provider, used for model lookups.
         :param openai_compat_api_base: The base URL for OpenAI compatibility, or None if not using OpenAI compatibility.
         :param download_images: Whether to download images and convert to base64 for message conversion.
@@ -107,17 +104,6 @@ class LiteLLMOpenAIMixin(
             if self.is_openai_compat and not model_id.startswith(self.litellm_provider_name)
             else model_id
         )
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        raise NotImplementedError("LiteLLM does not support completion requests")
 
     async def chat_completion(
         self,

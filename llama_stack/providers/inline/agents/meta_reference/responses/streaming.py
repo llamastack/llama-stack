@@ -355,8 +355,11 @@ class StreamingResponseOrchestrator:
 
         # Emit arguments.done events for completed tool calls (differentiate between MCP and function calls)
         for tool_call_index in sorted(chat_response_tool_calls.keys()):
+            tool_call = chat_response_tool_calls[tool_call_index]
+            # Ensure that arguments, if sent back to the inference provider, are not None
+            tool_call.function.arguments = tool_call.function.arguments or "{}"
             tool_call_item_id = tool_call_item_ids[tool_call_index]
-            final_arguments = chat_response_tool_calls[tool_call_index].function.arguments or ""
+            final_arguments = tool_call.function.arguments
             tool_call_name = chat_response_tool_calls[tool_call_index].function.name
 
             # Check if this is an MCP tool call
