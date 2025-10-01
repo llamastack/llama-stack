@@ -5,8 +5,7 @@
 # the root directory of this source tree.
 
 from collections.abc import AsyncGenerator
-
-from pyparsing import Any
+from typing import Any
 
 from llama_stack.apis.inference import (
     InferenceProvider,
