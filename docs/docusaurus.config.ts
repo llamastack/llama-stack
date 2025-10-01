@@ -55,10 +55,27 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          type: 'docSidebar',
-          sidebarId: 'apiSidebar',
-          position: 'left',
+          type: 'dropdown',
           label: 'API Reference',
+          position: 'left',
+          to: '/docs/api-overview',
+          items: [
+            {
+              type: 'docSidebar',
+              sidebarId: 'stableApiSidebar',
+              label: '🟢 Stable APIs',
+            },
+            {
+              type: 'docSidebar',
+              sidebarId: 'experimentalApiSidebar',
+              label: '🟡 Experimental APIs',
+            },
+            {
+              type: 'docSidebar',
+              sidebarId: 'deprecatedApiSidebar',
+              label: '🔴 Deprecated APIs',
+            },
+          ],
         },
         {
           href: 'https://github.com/llamastack/llama-stack',
@@ -83,7 +100,7 @@ const config: Config = {
             },
             {
               label: 'API Reference',
-              to: '/docs/api/llama-stack-specification',
+              to: '/docs/api-overview',
             },
           ],
         },
@@ -170,10 +187,28 @@ const config: Config = {
         id: "openapi",
         docsPluginId: "classic",
         config: {
-          llamastack: {
+          stable: {
             specPath: "static/llama-stack-spec.yaml",
             outputDir: "docs/api",
             downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/llama-stack-spec.yaml",
+            sidebarOptions: {
+              groupPathsBy: "tag",
+              categoryLinkSource: "tag",
+            },
+          } satisfies OpenApiPlugin.Options,
+          experimental: {
+            specPath: "static/experimental-llama-stack-spec.yaml",
+            outputDir: "docs/api-experimental",
+            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/experimental-llama-stack-spec.yaml",
+            sidebarOptions: {
+              groupPathsBy: "tag",
+              categoryLinkSource: "tag",
+            },
+          } satisfies OpenApiPlugin.Options,
+          deprecated: {
+            specPath: "static/deprecated-llama-stack-spec.yaml",
+            outputDir: "docs/api-deprecated",
+            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/deprecated-llama-stack-spec.yaml",
             sidebarOptions: {
               groupPathsBy: "tag",
               categoryLinkSource: "tag",

@@ -472,20 +472,23 @@ class AgentStepResponse(BaseModel):
 
 @runtime_checkable
 class Agents(Protocol):
-    """Agents API for creating and interacting with agentic systems.
+    """Agents
 
-    Main functionalities provided by this API:
-    - Create agents with specific instructions and ability to use tools.
-    - Interactions with agents are grouped into sessions ("threads"), and each interaction is called a "turn".
-    - Agents can be provided with various tools (see the ToolGroups and ToolRuntime APIs for more details).
-    - Agents can be provided with various shields (see the Safety API for more details).
-    - Agents can also use Memory to retrieve information from knowledge bases. See the RAG Tool and Vector IO APIs for more details.
-    """
+    APIs for creating and interacting with agentic systems."""
 
     @webmethod(
-        route="/agents", method="POST", descriptive_name="create_agent", deprecated=True, level=LLAMA_STACK_API_V1
+        route="/agents",
+        method="POST",
+        descriptive_name="create_agent",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
     )
-    @webmethod(route="/agents", method="POST", descriptive_name="create_agent", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(
+        route="/agents",
+        method="POST",
+        descriptive_name="create_agent",
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def create_agent(
         self,
         agent_config: AgentConfig,
@@ -648,8 +651,17 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}",
+        method="GET",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def get_agents_session(
         self,
         session_id: str,
@@ -666,9 +678,16 @@ class Agents(Protocol):
         ...
 
     @webmethod(
-        route="/agents/{agent_id}/session/{session_id}", method="DELETE", deprecated=True, level=LLAMA_STACK_API_V1
+        route="/agents/{agent_id}/session/{session_id}",
+        method="DELETE",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
     )
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}",
+        method="DELETE",
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def delete_agents_session(
         self,
         session_id: str,
@@ -681,7 +700,12 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}", method="DELETE", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents/{agent_id}",
+        method="DELETE",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
     @webmethod(route="/agents/{agent_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def delete_agent(
         self,
@@ -704,7 +728,12 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents/{agent_id}",
+        method="GET",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
     @webmethod(route="/agents/{agent_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_agent(self, agent_id: str) -> Agent:
         """Describe an agent by its ID.
@@ -714,7 +743,12 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}/sessions", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents/{agent_id}/sessions",
+        method="GET",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
     @webmethod(route="/agents/{agent_id}/sessions", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_agent_sessions(
         self,
@@ -793,7 +827,11 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/responses/{response_id}/input_items", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/responses/{response_id}/input_items",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
     async def list_openai_response_input_items(
         self,
         response_id: str,
