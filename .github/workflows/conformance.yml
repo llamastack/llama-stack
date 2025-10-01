@@ -1,6 +1,11 @@
 # API Conformance Tests
 # This workflow ensures that API changes maintain backward compatibility and don't break existing integrations
 # It runs schema validation and OpenAPI diff checks to catch breaking changes early
+#
+# The workflow handles both monolithic and split API specifications:
+# - If split specs exist (stable/experimental/deprecated), they are stitched together for comparison
+# - If only monolithic spec exists, it is used directly
+# This allows for clean API organization while maintaining robust conformance testing
 
 name: API Conformance Tests
 
@@ -13,9 +18,12 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened, edited]
     paths:
-      - 'docs/static/llama-stack-spec.yaml'
-      - 'docs/static/llama-stack-spec.html'
-      - '.github/workflows/conformance.yml' # This workflow itself
+      - 'docs/static/llama-stack-spec.yaml'              # Legacy monolithic spec
+      - 'docs/static/stable-llama-stack-spec.yaml'       # Stable APIs spec
+      - 'docs/static/experimental-llama-stack-spec.yaml' # Experimental APIs spec
+      - 'docs/static/deprecated-llama-stack-spec.yaml'   # Deprecated APIs spec
+      - 'docs/static/llama-stack-spec.html'              # Legacy HTML spec
+      - '.github/workflows/conformance.yml'              # This workflow itself
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
@@ -79,6 +87,64 @@ jobs:
         run: |
           sudo cp ~/oasdiff /usr/local/bin/oasdiff
           sudo chmod +x /usr/local/bin/oasdiff
+
+      # Install yq for YAML processing
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      # Stitch together complete API specs for conformance testing
+      # This handles cases where APIs have been split across multiple files
+      - name: Create Complete API Specs for Comparison
+        run: |
+          # Function to create complete spec from split files or use existing monolithic spec
+          create_complete_spec() {
+            local source_dir="$1"
+            local output_file="$2"
+
+            # Check if split specs exist
+            if [ -f "${source_dir}/docs/static/stable-llama-stack-spec.yaml" ] &&
+               [ -f "${source_dir}/docs/static/experimental-llama-stack-spec.yaml" ] &&
+               [ -f "${source_dir}/docs/static/deprecated-llama-stack-spec.yaml" ]; then
+              echo "Found split specs in ${source_dir}, stitching together..."
+
+              # Start with stable spec as base
+              cp "${source_dir}/docs/static/stable-llama-stack-spec.yaml" "${output_file}"
+
+              # Merge paths from experimental spec
+              if [ -s "${source_dir}/docs/static/experimental-llama-stack-spec.yaml" ]; then
+                yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
+                  "${output_file}" \
+                  "${source_dir}/docs/static/experimental-llama-stack-spec.yaml" > "${output_file}.tmp"
+                mv "${output_file}.tmp" "${output_file}"
+              fi
+
+              # Merge paths from deprecated spec
+              if [ -s "${source_dir}/docs/static/deprecated-llama-stack-spec.yaml" ]; then
+                yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
+                  "${output_file}" \
+                  "${source_dir}/docs/static/deprecated-llama-stack-spec.yaml" > "${output_file}.tmp"
+                mv "${output_file}.tmp" "${output_file}"
+              fi
+
+            elif [ -f "${source_dir}/docs/static/llama-stack-spec.yaml" ]; then
+              echo "Using monolithic spec from ${source_dir}..."
+              cp "${source_dir}/docs/static/llama-stack-spec.yaml" "${output_file}"
+            else
+              echo "ERROR: No API specs found in ${source_dir}"
+              ls -la "${source_dir}/docs/static/" || true
+              exit 1
+            fi
+          }
+
+          # Create complete specs for both base and current
+          create_complete_spec "base" "base-complete-spec.yaml"
+          create_complete_spec "." "current-complete-spec.yaml"
+
+          echo "Generated complete specs for comparison:"
+          echo "Base spec size: $(wc -l < base-complete-spec.yaml) lines"
+          echo "Current spec size: $(wc -l < current-complete-spec.yaml) lines"
 
       # Run oasdiff to detect breaking changes in the API specification
       # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
