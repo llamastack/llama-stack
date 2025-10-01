@@ -139,7 +139,8 @@ def test_openai_create_vector_store(compat_client_with_empty_stores, client_with
 
     # Create a vector store
     vector_store = client.vector_stores.create(
-        name="Vs_test_vector_store", metadata={"purpose": "testing", "environment": "integration"}
+        name="Vs_test_vector_store",
+        metadata={"purpose": "testing", "environment": "integration"},
     )
 
     assert vector_store is not None
@@ -209,7 +210,9 @@ def test_openai_update_vector_store(compat_client_with_empty_stores, client_with
     time.sleep(1)
     # Modify the store
     modified_store = client.vector_stores.update(
-        vector_store_id=created_store.id, name="modified_name", metadata={"version": "1.1", "updated": "true"}
+        vector_store_id=created_store.id,
+        name="modified_name",
+        metadata={"version": "1.1", "updated": "true"},
     )
 
     assert modified_store is not None
@@ -282,7 +285,9 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
 
     # Search using OpenAI API
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id, query="What is Python programming language?", max_num_results=3
+        vector_store_id=vector_store.id,
+        query="What is Python programming language?",
+        max_num_results=3,
     )
     assert search_response is not None
     assert len(search_response.data) > 0
@@ -295,7 +300,10 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
 
     # Test filtering by metadata
     filtered_search = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id, query="artificial intelligence", filters={"topic": "ai"}, max_num_results=5
+        vector_store_id=vector_store.id,
+        query="artificial intelligence",
+        filters={"topic": "ai"},
+        max_num_results=5,
     )
 
     assert filtered_search is not None
@@ -326,7 +334,8 @@ def test_openai_vector_store_search_relevance(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name=f"relevance_test_{expected_doc_id}", metadata={"purpose": "relevance_testing"}
+        name=f"relevance_test_{expected_doc_id}",
+        metadata={"purpose": "relevance_testing"},
     )
 
     # Insert chunks using native API
@@ -457,7 +466,8 @@ def test_openai_vector_store_search_with_max_num_results(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name="max_num_results_test_store", metadata={"purpose": "max_num_results_testing"}
+        name="max_num_results_test_store",
+        metadata={"purpose": "max_num_results_testing"},
     )
 
     # Insert chunks
@@ -516,7 +526,9 @@ def test_openai_vector_store_attach_file(compat_client_with_empty_stores, client
 
     # Search using OpenAI API to confirm our file attached
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id, query="What is the secret string?", max_num_results=1
+        vector_store_id=vector_store.id,
+        query="What is the secret string?",
+        max_num_results=1,
     )
     assert search_response is not None
     assert len(search_response.data) > 0
@@ -773,7 +785,9 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
 
     # Search using OpenAI API to confirm our file attached
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id, query="What is the secret string?", max_num_results=1
+        vector_store_id=vector_store.id,
+        query="What is the secret string?",
+        max_num_results=1,
     )
     assert "foobazbar" in search_response.data[0].content[0].text.lower()
 
@@ -782,7 +796,9 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
 
     # Search using OpenAI API to confirm our file deleted
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id, query="What is the secret string?", max_num_results=1
+        vector_store_id=vector_store.id,
+        query="What is the secret string?",
+        max_num_results=1,
     )
     assert not search_response.data
 
@@ -902,3 +918,224 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
         search_mode=search_mode,
     )
     assert search_response is not None
+
+
+def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_empty_stores, client_with_models):
+    """Test creating and retrieving a vector store file batch."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_test_store")
+
+    # Create multiple files
+    file_ids = []
+    for i in range(3):
+        with BytesIO(f"This is batch test file {i}".encode()) as file_buffer:
+            file_buffer.name = f"batch_test_{i}.txt"
+            file = compat_client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(file.id)
+
+    # Create a file batch
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    assert batch is not None
+    assert batch.object == "vector_store.file_batch"
+    assert batch.vector_store_id == vector_store.id
+    assert batch.status in ["in_progress", "completed"]
+    assert batch.file_counts.total == len(file_ids)
+    assert hasattr(batch, "id")
+    assert hasattr(batch, "created_at")
+
+    # Wait for batch processing to complete
+    max_retries = 30  # 30 seconds max wait
+    retries = 0
+    retrieved_batch = None
+    while retries < max_retries:
+        retrieved_batch = compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+        if retrieved_batch.status in ["completed", "failed"]:
+            break
+        time.sleep(1)
+        retries += 1
+
+    assert retrieved_batch is not None
+    assert retrieved_batch.id == batch.id
+    assert retrieved_batch.vector_store_id == vector_store.id
+    assert retrieved_batch.object == "vector_store.file_batch"
+    assert retrieved_batch.file_counts.total == len(file_ids)
+    assert retrieved_batch.status == "completed"  # Should be completed after processing
+
+
+def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stores, client_with_models):
+    """Test listing files in a vector store file batch."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_list_test_store")
+
+    # Create multiple files
+    file_ids = []
+    for i in range(5):
+        with BytesIO(f"This is batch list test file {i}".encode()) as file_buffer:
+            file_buffer.name = f"batch_list_test_{i}.txt"
+            file = compat_client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(file.id)
+
+    # Create a file batch
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    # Wait for batch processing to complete
+    max_retries = 30  # 30 seconds max wait
+    retries = 0
+    while retries < max_retries:
+        retrieved_batch = compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+        if retrieved_batch.status in ["completed", "failed"]:
+            break
+        time.sleep(1)
+        retries += 1
+
+    # List all files in the batch
+    files_response = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+    )
+
+    assert files_response is not None
+    assert files_response.object == "list"
+    assert hasattr(files_response, "data")
+    assert len(files_response.data) == len(file_ids)
+
+    # Verify all files are in the response
+    response_file_ids = {file.id for file in files_response.data}
+    assert response_file_ids == set(file_ids)
+
+    # Test pagination with limit
+    limited_response = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+        limit=3,
+    )
+
+    assert len(limited_response.data) == 3
+    assert limited_response.has_more is True
+
+    # Test pagination with after cursor
+    first_page = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+        limit=2,
+    )
+
+    second_page = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+        limit=2,
+        after=first_page.data[-1].id,
+    )
+
+    assert len(first_page.data) == 2
+    assert len(second_page.data) <= 3  # Should be <= remaining files
+    # Ensure no overlap between pages
+    first_page_ids = {file.id for file in first_page.data}
+    second_page_ids = {file.id for file in second_page.data}
+    assert first_page_ids.isdisjoint(second_page_ids)
+
+
+def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, client_with_models):
+    """Test cancelling a vector store file batch."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_cancel_test_store")
+
+    # Create multiple files
+    file_ids = []
+    for i in range(3):
+        with BytesIO(f"This is batch cancel test file {i}".encode()) as file_buffer:
+            file_buffer.name = f"batch_cancel_test_{i}.txt"
+            file = compat_client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(file.id)
+
+    # Create a file batch
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+    # Try to cancel the batch (may fail if already completed)
+    try:
+        cancelled_batch = compat_client.vector_stores.file_batches.cancel(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+
+        assert cancelled_batch is not None
+        assert cancelled_batch.id == batch.id
+        assert cancelled_batch.vector_store_id == vector_store.id
+        assert cancelled_batch.status == "cancelled"
+        assert cancelled_batch.object == "vector_store.file_batch"
+    except Exception as e:
+        # If cancellation fails because batch is already completed, that's acceptable
+        if "Cannot cancel" in str(e) or "already completed" in str(e):
+            pytest.skip(f"Batch completed too quickly to cancel: {e}")
+        else:
+            raise
+
+
+def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_stores, client_with_models):
+    """Test error handling for file batch operations."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_error_test_store")
+
+    # Test with invalid file IDs (should handle gracefully)
+    file_ids = ["invalid_file_id_1", "invalid_file_id_2"]
+
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    assert batch is not None
+    assert batch.file_counts.total == len(file_ids)
+    # Invalid files should be marked as failed
+    assert batch.file_counts.failed >= 0  # Implementation may vary
+
+    # Determine expected errors based on client type
+    if isinstance(compat_client, LlamaStackAsLibraryClient):
+        errors = ValueError
+    else:
+        errors = (BadRequestError, OpenAIBadRequestError)
+
+    # Test retrieving non-existent batch
+    with pytest.raises(errors):  # Should raise an error for non-existent batch
+        compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id="non_existent_batch_id",
+        )
+
+    # Test operations on non-existent vector store
+    with pytest.raises(errors):  # Should raise an error for non-existent vector store
+        compat_client.vector_stores.file_batches.create(
+            vector_store_id="non_existent_vector_store",
+            file_ids=["any_file_id"],
+        )

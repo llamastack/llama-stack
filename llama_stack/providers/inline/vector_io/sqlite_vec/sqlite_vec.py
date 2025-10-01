@@ -415,6 +415,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         self.files_api = files_api
         self.cache: dict[str, VectorDBWithIndex] = {}
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
+        self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.kvstore: KVStore | None = None
 
     async def initialize(self) -> None:

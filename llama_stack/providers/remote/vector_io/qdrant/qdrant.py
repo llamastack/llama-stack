@@ -170,6 +170,7 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.vector_db_store = None
         self.kvstore: KVStore | None = None
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
+        self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self._qdrant_lock = asyncio.Lock()
 
     async def initialize(self) -> None:
