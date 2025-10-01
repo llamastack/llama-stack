@@ -30,7 +30,7 @@ class TelemetryConfig(BaseModel):
         description="The service name to use for telemetry",
     )
     sinks: list[TelemetrySink] = Field(
-        default=[TelemetrySink.CONSOLE, TelemetrySink.SQLITE],
+        default=[TelemetrySink.SQLITE],
         description="List of telemetry sinks to enable (possible values: otel_trace, otel_metric, sqlite, console)",
     )
     sqlite_db_path: str = Field(
@@ -49,7 +49,7 @@ class TelemetryConfig(BaseModel):
     def sample_run_config(cls, __distro_dir__: str, db_name: str = "trace_store.db") -> dict[str, Any]:
         return {
             "service_name": "${env.OTEL_SERVICE_NAME:=\u200b}",
-            "sinks": "${env.TELEMETRY_SINKS:=console,sqlite}",
+            "sinks": "${env.TELEMETRY_SINKS:=sqlite}",
             "sqlite_db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
             "otel_exporter_otlp_endpoint": "${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}",
         }

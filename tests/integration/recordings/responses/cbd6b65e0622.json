@@ -8,29 +8,18 @@
       "messages": [
         {
           "role": "user",
-          "content": "What's the weather in Tokyo? YOU MUST USE THE get_weather function to get the weather."
+          "content": "what's the current time? You MUST call the `get_current_time` function to find out."
         }
       ],
-      "response_format": {
-        "type": "text"
-      },
       "stream": true,
       "tools": [
         {
           "type": "function",
           "function": {
             "type": "function",
-            "name": "get_weather",
-            "description": "Get the weather in a given city",
-            "parameters": {
-              "type": "object",
-              "properties": {
-                "city": {
-                  "type": "string",
-                  "description": "The city to get the weather for"
-                }
-              }
-            },
+            "name": "get_current_time",
+            "description": "Get the current time",
+            "parameters": {},
             "strict": null
           }
         }
@@ -44,7 +33,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-163",
+          "id": "chatcmpl-979",
           "choices": [
             {
               "delta": {
@@ -55,10 +44,10 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_5gqadim6",
+                    "id": "call_ik598ri6",
                     "function": {
-                      "arguments": "{\"city\":\"Tokyo\"}",
-                      "name": "get_weather"
+                      "arguments": "{}",
+                      "name": "get_current_time"
                     },
                     "type": "function"
                   }
@@ -69,7 +58,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759254129,
+          "created": 1759282380,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -80,7 +69,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-163",
+          "id": "chatcmpl-979",
           "choices": [
             {
               "delta": {
@@ -95,7 +84,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759254129,
+          "created": 1759282380,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

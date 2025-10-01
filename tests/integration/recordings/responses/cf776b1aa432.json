@@ -8,28 +8,9 @@
       "messages": [
         {
           "role": "user",
-          "content": "Message A: What is the capital of France?"
-        },
-        {
-          "role": "assistant",
-          "content": "The capital of France is Paris."
-        },
-        {
-          "role": "user",
-          "content": "Message B: What about Spain?"
-        },
-        {
-          "role": "assistant",
-          "content": "The capital of Spain is Madrid."
-        },
-        {
-          "role": "user",
-          "content": "Message C: And Italy?"
+          "content": "What is the capital of France?"
         }
       ],
-      "response_format": {
-        "type": "text"
-      },
       "stream": true
     },
     "endpoint": "/v1/chat/completions",
@@ -40,7 +21,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
@@ -55,7 +36,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253815,
+          "created": 1759282661,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -66,7 +47,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
@@ -81,7 +62,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253815,
+          "created": 1759282661,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -92,7 +73,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
@@ -107,7 +88,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253815,
+          "created": 1759282661,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -118,11 +99,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
-                "content": " Italy",
+                "content": " France",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -133,7 +114,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253816,
+          "created": 1759282661,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -144,7 +125,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
@@ -159,7 +140,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253816,
+          "created": 1759282661,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -170,11 +151,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
-                "content": " Rome",
+                "content": " Paris",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -185,7 +166,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253816,
+          "created": 1759282662,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -196,7 +177,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
@@ -211,7 +192,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253816,
+          "created": 1759282662,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -222,7 +203,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-629",
+          "id": "chatcmpl-615",
           "choices": [
             {
               "delta": {
@@ -237,7 +218,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253816,
+          "created": 1759282662,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
