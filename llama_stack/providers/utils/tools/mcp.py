@@ -20,7 +20,6 @@ from llama_stack.apis.tools import (
     ListToolDefsResponse,
     ToolDef,
     ToolInvocationResult,
-    ToolParameter,
 )
 from llama_stack.core.datatypes import AuthenticationRequiredError
 from llama_stack.log import get_logger
@@ -113,24 +112,12 @@ async def list_mcp_tools(endpoint: str, headers: dict[str, str]) -> ListToolDefs
     async with client_wrapper(endpoint, headers) as session:
         tools_result = await session.list_tools()
         for tool in tools_result.tools:
-            parameters = []
-            for param_name, param_schema in tool.inputSchema.get("properties", {}).items():
-                parameters.append(
-                    ToolParameter(
-                        name=param_name,
-                        parameter_type=param_schema.get("type", "string"),
-                        description=param_schema.get("description", ""),
-                        required="default" not in param_schema,
-                        items=param_schema.get("items", None),
-                        title=param_schema.get("title", None),
-                        default=param_schema.get("default", None),
-                    )
-                )
             tools.append(
                 ToolDef(
                     name=tool.name,
                     description=tool.description,
-                    parameters=parameters,
+                    input_schema=tool.inputSchema,
+                    output_schema=getattr(tool, "outputSchema", None),
                     metadata={
                         "endpoint": endpoint,
                     },

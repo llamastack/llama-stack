@@ -62,22 +62,38 @@ def convert_tooldef_to_chat_tool(tool_def):
         ChatCompletionToolParam suitable for OpenAI chat completion
     """
 
-    from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
+    from llama_stack.models.llama.datatypes import ToolDefinition
     from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
+
+    # Build JSON Schema from tool parameters
+    properties = {}
+    required = []
+
+    for param in tool_def.parameters:
+        param_schema = {
+            "type": param.parameter_type,
+            "description": param.description,
+        }
+        if param.default is not None:
+            param_schema["default"] = param.default
+        if param.items is not None:
+            param_schema["items"] = param.items
+
+        properties[param.name] = param_schema
+
+        if param.required:
+            required.append(param.name)
+
+    input_schema = {
+        "type": "object",
+        "properties": properties,
+        "required": required,
+    }
 
     internal_tool_def = ToolDefinition(
         tool_name=tool_def.name,
         description=tool_def.description,
-        parameters={
-            param.name: ToolParamDefinition(
-                param_type=param.parameter_type,
-                description=param.description,
-                required=param.required,
-                default=param.default,
-                items=param.items,
-            )
-            for param in tool_def.parameters
-        },
+        input_schema=input_schema,
     )
     return convert_tooldef_to_openai_tool(internal_tool_def)
 
@@ -526,22 +542,37 @@ class StreamingResponseOrchestrator:
         from openai.types.chat import ChatCompletionToolParam
 
         from llama_stack.apis.tools import Tool
-        from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
+        from llama_stack.models.llama.datatypes import ToolDefinition
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
         def make_openai_tool(tool_name: str, tool: Tool) -> ChatCompletionToolParam:
+            # Build JSON Schema from tool parameters
+            properties = {}
+            required = []
+
+            for param in tool.parameters:
+                param_schema = {
+                    "type": param.parameter_type,
+                    "description": param.description,
+                }
+                if param.default is not None:
+                    param_schema["default"] = param.default
+
+                properties[param.name] = param_schema
+
+                if param.required:
+                    required.append(param.name)
+
+            input_schema = {
+                "type": "object",
+                "properties": properties,
+                "required": required,
+            }
+
             tool_def = ToolDefinition(
                 tool_name=tool_name,
                 description=tool.description,
-                parameters={
-                    param.name: ToolParamDefinition(
-                        param_type=param.parameter_type,
-                        description=param.description,
-                        required=param.required,
-                        default=param.default,
-                    )
-                    for param in tool.parameters
-                },
+                input_schema=input_schema,
             )
             return convert_tooldef_to_openai_tool(tool_def)
 

@@ -54,7 +54,6 @@ from llama_stack.apis.inference import (
     StopReason,
     SystemMessage,
     ToolDefinition,
-    ToolParamDefinition,
     ToolResponse,
     ToolResponseMessage,
     UserMessage,
@@ -790,20 +789,38 @@ class ChatAgent(ShieldRunnerMixin):
         for tool_def in self.agent_config.client_tools:
             if tool_name_to_def.get(tool_def.name, None):
                 raise ValueError(f"Tool {tool_def.name} already exists")
+
+            # Build JSON Schema from tool parameters
+            properties = {}
+            required = []
+
+            for param in tool_def.parameters:
+                param_schema = {
+                    "type": param.parameter_type,
+                    "description": param.description,
+                }
+                if param.default is not None:
+                    param_schema["default"] = param.default
+                if param.items is not None:
+                    param_schema["items"] = param.items
+                if param.title is not None:
+                    param_schema["title"] = param.title
+
+                properties[param.name] = param_schema
+
+                if param.required:
+                    required.append(param.name)
+
+            input_schema = {
+                "type": "object",
+                "properties": properties,
+                "required": required,
+            }
+
             tool_name_to_def[tool_def.name] = ToolDefinition(
                 tool_name=tool_def.name,
                 description=tool_def.description,
-                parameters={
-                    param.name: ToolParamDefinition(
-                        param_type=param.parameter_type,
-                        description=param.description,
-                        required=param.required,
-                        items=param.items,
-                        title=param.title,
-                        default=param.default,
-                    )
-                    for param in tool_def.parameters
-                },
+                input_schema=input_schema,
             )
         for toolgroup_name_with_maybe_tool_name in agent_config_toolgroups:
             toolgroup_name, input_tool_name = self._parse_toolgroup_name(toolgroup_name_with_maybe_tool_name)
@@ -835,20 +852,37 @@ class ChatAgent(ShieldRunnerMixin):
                 if tool_name_to_def.get(identifier, None):
                     raise ValueError(f"Tool {identifier} already exists")
                 if identifier:
+                    # Build JSON Schema from tool parameters
+                    properties = {}
+                    required = []
+
+                    for param in tool_def.parameters:
+                        param_schema = {
+                            "type": param.parameter_type,
+                            "description": param.description,
+                        }
+                        if param.default is not None:
+                            param_schema["default"] = param.default
+                        if param.items is not None:
+                            param_schema["items"] = param.items
+                        if param.title is not None:
+                            param_schema["title"] = param.title
+
+                        properties[param.name] = param_schema
+
+                        if param.required:
+                            required.append(param.name)
+
+                    input_schema = {
+                        "type": "object",
+                        "properties": properties,
+                        "required": required,
+                    }
+
                     tool_name_to_def[tool_def.identifier] = ToolDefinition(
                         tool_name=identifier,
                         description=tool_def.description,
-                        parameters={
-                            param.name: ToolParamDefinition(
-                                param_type=param.parameter_type,
-                                description=param.description,
-                                required=param.required,
-                                items=param.items,
-                                title=param.title,
-                                default=param.default,
-                            )
-                            for param in tool_def.parameters
-                        },
+                        input_schema=input_schema,
                     )
                     tool_name_to_args[tool_def.identifier] = toolgroup_to_args.get(toolgroup_name, {})
 

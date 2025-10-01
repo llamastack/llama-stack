@@ -88,19 +88,11 @@ class StopReason(Enum):
     out_of_tokens = "out_of_tokens"
 
 
-class ToolParamDefinition(BaseModel):
-    param_type: str
-    description: str | None = None
-    required: bool | None = True
-    items: Any | None = None
-    title: str | None = None
-    default: Any | None = None
-
-
 class ToolDefinition(BaseModel):
     tool_name: BuiltinTool | str
     description: str | None = None
-    parameters: dict[str, ToolParamDefinition] | None = None
+    input_schema: dict[str, Any] | None = None
+    output_schema: dict[str, Any] | None = None
 
     @field_validator("tool_name", mode="before")
     @classmethod

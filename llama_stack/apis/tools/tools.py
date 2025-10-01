@@ -65,13 +65,15 @@ class ToolDef(BaseModel):
 
     :param name: Name of the tool
     :param description: (Optional) Human-readable description of what the tool does
-    :param parameters: (Optional) List of parameters this tool accepts
+    :param input_schema: (Optional) JSON Schema for tool inputs (MCP inputSchema)
+    :param output_schema: (Optional) JSON Schema for tool outputs (MCP outputSchema)
     :param metadata: (Optional) Additional metadata about the tool
     """
 
     name: str
     description: str | None = None
-    parameters: list[ToolParameter] | None = None
+    input_schema: dict[str, Any] | None = None
+    output_schema: dict[str, Any] | None = None
     metadata: dict[str, Any] | None = None
 
 

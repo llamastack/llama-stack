@@ -27,14 +27,12 @@ from llama_stack.models.llama.datatypes import (
     StopReason,
     ToolCall,
     ToolDefinition,
-    ToolParamDefinition,
     ToolPromptFormat,
 )
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 register_schema(ToolCall)
-register_schema(ToolParamDefinition)
 register_schema(ToolDefinition)
 
 from enum import StrEnum
