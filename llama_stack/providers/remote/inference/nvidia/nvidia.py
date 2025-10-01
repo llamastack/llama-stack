@@ -4,38 +4,19 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import warnings
-from collections.abc import AsyncIterator
 
-from openai import NOT_GIVEN, APIConnectionError
+from openai import NOT_GIVEN
 
 from llama_stack.apis.inference import (
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatCompletionResponseStreamChunk,
     Inference,
-    LogProbConfig,
-    Message,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-    ResponseFormat,
-    SamplingParams,
-    ToolChoice,
-    ToolConfig,
 )
 from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import ToolDefinition, ToolPromptFormat
-from llama_stack.providers.utils.inference.openai_compat import (
-    convert_openai_chat_completion_choice,
-    convert_openai_chat_completion_stream,
-)
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from . import NVIDIAConfig
-from .openai_utils import (
-    convert_chat_completion_request,
-)
 from .utils import _is_nvidia_hosted
 
 logger = get_logger(name=__name__, category="inference::nvidia")
@@ -149,49 +130,3 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
             model=response.model,
             usage=usage,
         )
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        if tool_prompt_format:
-            warnings.warn("tool_prompt_format is not supported by NVIDIA NIM, ignoring", stacklevel=2)
-
-        # await check_health(self._config)  # this raises errors
-
-        provider_model_id = await self._get_provider_model_id(model_id)
-        request = await convert_chat_completion_request(
-            request=ChatCompletionRequest(
-                model=provider_model_id,
-                messages=messages,
-                sampling_params=sampling_params,
-                response_format=response_format,
-                tools=tools,
-                stream=stream,
-                logprobs=logprobs,
-                tool_config=tool_config,
-            ),
-            n=1,
-        )
-
-        try:
-            response = await self.client.chat.completions.create(**request)
-        except APIConnectionError as e:
-            raise ConnectionError(f"Failed to connect to NVIDIA NIM at {self._config.url}: {e}") from e
-
-        if stream:
-            return convert_openai_chat_completion_stream(response, enable_incremental_tool_calls=False)
-        else:
-            # we pass n=1 to get only one completion
-            return convert_openai_chat_completion_choice(response.choices[0])

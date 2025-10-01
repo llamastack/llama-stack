@@ -4,23 +4,16 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator
 
 from fireworks.client import Fireworks
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
     Inference,
     LogProbConfig,
-    Message,
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -30,8 +23,6 @@ from llama_stack.providers.utils.inference.model_registry import (
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict,
     get_sampling_options,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -79,67 +70,6 @@ class FireworksInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Nee
     def _get_client(self) -> Fireworks:
         fireworks_api_key = self.get_api_key()
         return Fireworks(api_key=fireworks_api_key)
-
-    def _preprocess_prompt_for_fireworks(self, prompt: str) -> str:
-        """Remove BOS token as Fireworks automatically prepends it"""
-        if prompt.startswith("<|begin_of_text|>"):
-            return prompt[len("<|begin_of_text|>") :]
-        return prompt
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        if stream:
-            return self._stream_chat_completion(request)
-        else:
-            return await self._nonstream_chat_completion(request)
-
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        if "messages" in params:
-            r = await self._get_client().chat.completions.acreate(**params)
-        else:
-            r = await self._get_client().completion.acreate(**params)
-        return process_chat_completion_response(r, request)
-
-    async def _stream_chat_completion(self, request: ChatCompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-
-        async def _to_async_generator():
-            if "messages" in params:
-                stream = self._get_client().chat.completions.acreate(**params)
-            else:
-                stream = self._get_client().completion.acreate(**params)
-            async for chunk in stream:
-                yield chunk
-
-        stream = _to_async_generator()
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
 
     def _build_options(
         self,

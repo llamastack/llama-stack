@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator
 
 from openai import AsyncOpenAI
 from together import AsyncTogether
@@ -12,18 +11,12 @@ from together.constants import BASE_URL
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
     Inference,
     LogProbConfig,
-    Message,
     OpenAIEmbeddingsResponse,
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
 from llama_stack.apis.models import Model, ModelType
@@ -33,8 +26,6 @@ from llama_stack.providers.utils.inference.model_registry import ModelRegistryHe
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict,
     get_sampling_options,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -121,58 +112,6 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
             options["logprobs"] = 1
 
         return options
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        if stream:
-            return self._stream_chat_completion(request)
-        else:
-            return await self._nonstream_chat_completion(request)
-
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        client = self._get_client()
-        if "messages" in params:
-            r = await client.chat.completions.create(**params)
-        else:
-            r = await client.completions.create(**params)
-        return process_chat_completion_response(r, request)
-
-    async def _stream_chat_completion(self, request: ChatCompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-        client = self._get_client()
-        if "messages" in params:
-            stream = await client.chat.completions.create(**params)
-        else:
-            stream = await client.completions.create(**params)
-
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict:
         input_dict = {}

@@ -13,35 +13,22 @@ from openai import AsyncOpenAI
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
     CompletionRequest,
     GreedySamplingStrategy,
     Inference,
-    LogProbConfig,
-    Message,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
-    ResponseFormat,
-    SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
     TopKSamplingStrategy,
     TopPSamplingStrategy,
 )
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import (
-    OpenAICompatCompletionChoice,
-    OpenAICompatCompletionResponse,
     prepare_openai_completion_params,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
@@ -99,74 +86,6 @@ class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
                 api_key=self._config.api_key,
             )
         return self._openai_client
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        if stream:
-            return self._stream_chat_completion(request)
-        else:
-            return await self._nonstream_chat_completion(request)
-
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        r = self._get_client(request.model).generate(**params)
-        choices = []
-        if "results" in r:
-            for result in r["results"]:
-                choice = OpenAICompatCompletionChoice(
-                    finish_reason=result["stop_reason"] if result["stop_reason"] else None,
-                    text=result["generated_text"],
-                )
-                choices.append(choice)
-        response = OpenAICompatCompletionResponse(
-            choices=choices,
-        )
-        return process_chat_completion_response(response, request)
-
-    async def _stream_chat_completion(self, request: ChatCompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-        model_id = request.model
-
-        # if we shift to TogetherAsyncClient, we won't need this wrapper
-        async def _to_async_generator():
-            s = self._get_client(model_id).generate_text_stream(**params)
-            for chunk in s:
-                choice = OpenAICompatCompletionChoice(
-                    finish_reason=None,
-                    text=chunk,
-                )
-                yield OpenAICompatCompletionResponse(
-                    choices=[choice],
-                )
-
-        stream = _to_async_generator()
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
 
     async def _get_params(self, request: ChatCompletionRequest | CompletionRequest) -> dict:
         input_dict = {"params": {}}

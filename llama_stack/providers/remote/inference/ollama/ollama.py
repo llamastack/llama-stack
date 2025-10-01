@@ -6,7 +6,6 @@
 
 
 import asyncio
-from collections.abc import AsyncGenerator
 from typing import Any
 
 from ollama import AsyncClient as AsyncOllamaClient
@@ -18,19 +17,10 @@ from llama_stack.apis.common.content_types import (
 from llama_stack.apis.common.errors import UnsupportedModelError
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatCompletionResponseStreamChunk,
     GrammarResponseFormat,
     InferenceProvider,
     JsonSchemaResponseFormat,
-    LogProbConfig,
     Message,
-    ResponseFormat,
-    SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.apis.models import Model
 from llama_stack.log import get_logger
@@ -46,11 +36,7 @@ from llama_stack.providers.utils.inference.model_registry import (
     build_hf_repo_model_entry,
 )
 from llama_stack.providers.utils.inference.openai_compat import (
-    OpenAICompatCompletionChoice,
-    OpenAICompatCompletionResponse,
     get_sampling_options,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -161,39 +147,6 @@ class OllamaInferenceAdapter(
             raise ValueError("Model store not set")
         return await self.model_store.get_model(model_id)
 
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self._get_model(model_id)
-        if model.provider_resource_id is None:
-            raise ValueError(f"Model {model_id} has no provider_resource_id set")
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            stream=stream,
-            logprobs=logprobs,
-            response_format=response_format,
-            tool_config=tool_config,
-        )
-        if stream:
-            return self._stream_chat_completion(request)
-        else:
-            return await self._nonstream_chat_completion(request)
-
     async def _get_params(self, request: ChatCompletionRequest) -> dict:
         sampling_options = get_sampling_options(request.sampling_params)
         # This is needed since the Ollama API expects num_predict to be set
@@ -232,57 +185,6 @@ class OllamaInferenceAdapter(
         logger.debug(f"params to ollama: {params}")
 
         return params
-
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        if "messages" in params:
-            r = await self.ollama_client.chat(**params)
-        else:
-            r = await self.ollama_client.generate(**params)
-
-        if "message" in r:
-            choice = OpenAICompatCompletionChoice(
-                finish_reason=r["done_reason"] if r["done"] else None,
-                text=r["message"]["content"],
-            )
-        else:
-            choice = OpenAICompatCompletionChoice(
-                finish_reason=r["done_reason"] if r["done"] else None,
-                text=r["response"],
-            )
-        response = OpenAICompatCompletionResponse(
-            choices=[choice],
-        )
-        return process_chat_completion_response(response, request)
-
-    async def _stream_chat_completion(
-        self, request: ChatCompletionRequest
-    ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
-        params = await self._get_params(request)
-
-        async def _generate_and_convert_to_openai_compat():
-            if "messages" in params:
-                s = await self.ollama_client.chat(**params)
-            else:
-                s = await self.ollama_client.generate(**params)
-            async for chunk in s:
-                if "message" in chunk:
-                    choice = OpenAICompatCompletionChoice(
-                        finish_reason=chunk["done_reason"] if chunk["done"] else None,
-                        text=chunk["message"]["content"],
-                    )
-                else:
-                    choice = OpenAICompatCompletionChoice(
-                        finish_reason=chunk["done_reason"] if chunk["done"] else None,
-                        text=chunk["response"],
-                    )
-                yield OpenAICompatCompletionResponse(
-                    choices=[choice],
-                )
-
-        stream = _generate_and_convert_to_openai_compat()
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
 
     async def register_model(self, model: Model) -> Model:
         if await self.check_model_availability(model.provider_model_id):

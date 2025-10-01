@@ -9,7 +9,7 @@ from typing import Any
 from urllib.parse import urljoin
 
 import httpx
-from openai import APIConnectionError, AsyncOpenAI
+from openai import APIConnectionError
 from openai.types.chat.chat_completion_chunk import (
     ChatCompletionChunk as OpenAIChatCompletionChunk,
 )
@@ -21,23 +21,18 @@ from llama_stack.apis.common.content_types import (
 )
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
     ChatCompletionResponseEvent,
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
-    CompletionMessage,
     GrammarResponseFormat,
     Inference,
     JsonSchemaResponseFormat,
-    LogProbConfig,
-    Message,
     ModelStore,
-    ResponseFormat,
-    SamplingParams,
+    OpenAIChatCompletion,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     ToolChoice,
-    ToolConfig,
     ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.log import get_logger
@@ -56,10 +51,8 @@ from llama_stack.providers.utils.inference.model_registry import (
 from llama_stack.providers.utils.inference.openai_compat import (
     UnparseableToolCall,
     convert_message_to_openai_dict,
-    convert_openai_chat_completion_stream,
     convert_tool_call,
     get_sampling_options,
-    process_chat_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
@@ -353,90 +346,6 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     def get_extra_client_params(self):
         return {"http_client": httpx.AsyncClient(verify=self.config.tls_verify)}
 
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self._get_model(model_id)
-        if model.provider_resource_id is None:
-            raise ValueError(f"Model {model_id} has no provider_resource_id set")
-        # This is to be consistent with OpenAI API and support vLLM <= v0.6.3
-        # References:
-        #   * https://platform.openai.com/docs/api-reference/chat/create#chat-create-tool_choice
-        #   * https://github.com/vllm-project/vllm/pull/10000
-        if not tools and tool_config is not None:
-            tool_config.tool_choice = ToolChoice.none
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            stream=stream,
-            logprobs=logprobs,
-            response_format=response_format,
-            tool_config=tool_config,
-        )
-        if stream:
-            return self._stream_chat_completion_with_client(request, self.client)
-        else:
-            return await self._nonstream_chat_completion(request, self.client)
-
-    async def _nonstream_chat_completion(
-        self, request: ChatCompletionRequest, client: AsyncOpenAI
-    ) -> ChatCompletionResponse:
-        assert self.client is not None
-        params = await self._get_params(request)
-        r = await client.chat.completions.create(**params)
-        choice = r.choices[0]
-        result = ChatCompletionResponse(
-            completion_message=CompletionMessage(
-                content=choice.message.content or "",
-                stop_reason=_convert_to_vllm_finish_reason(choice.finish_reason),
-                tool_calls=_convert_to_vllm_tool_calls_in_response(choice.message.tool_calls),
-            ),
-            logprobs=None,
-        )
-        return result
-
-    async def _stream_chat_completion(self, response: Any) -> AsyncIterator[ChatCompletionResponseStreamChunk]:
-        # This method is called from LiteLLMOpenAIMixin.chat_completion
-        # The response parameter contains the litellm response
-        # We need to convert it to our format
-        async def _stream_generator():
-            async for chunk in response:
-                yield chunk
-
-        async for chunk in convert_openai_chat_completion_stream(
-            _stream_generator(), enable_incremental_tool_calls=True
-        ):
-            yield chunk
-
-    async def _stream_chat_completion_with_client(
-        self, request: ChatCompletionRequest, client: AsyncOpenAI
-    ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
-        """Helper method for streaming with explicit client parameter."""
-        assert self.client is not None
-        params = await self._get_params(request)
-
-        stream = await client.chat.completions.create(**params)
-        if request.tools:
-            res = _process_vllm_chat_completion_stream_response(stream)
-        else:
-            res = process_chat_completion_stream_response(stream, request)
-        async for chunk in res:
-            yield chunk
-
     async def register_model(self, model: Model) -> Model:
         try:
             model = await self.register_helper.register_model(model)
@@ -485,3 +394,64 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             "stream": request.stream,
             **options,
         }
+
+    async def openai_chat_completion(
+        self,
+        model: str,
+        messages: list[OpenAIMessageParam],
+        frequency_penalty: float | None = None,
+        function_call: str | dict[str, Any] | None = None,
+        functions: list[dict[str, Any]] | None = None,
+        logit_bias: dict[str, float] | None = None,
+        logprobs: bool | None = None,
+        max_completion_tokens: int | None = None,
+        max_tokens: int | None = None,
+        n: int | None = None,
+        parallel_tool_calls: bool | None = None,
+        presence_penalty: float | None = None,
+        response_format: OpenAIResponseFormatParam | None = None,
+        seed: int | None = None,
+        stop: str | list[str] | None = None,
+        stream: bool | None = None,
+        stream_options: dict[str, Any] | None = None,
+        temperature: float | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        top_logprobs: int | None = None,
+        top_p: float | None = None,
+        user: str | None = None,
+    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        max_tokens = max_tokens or self.config.max_tokens
+
+        # This is to be consistent with OpenAI API and support vLLM <= v0.6.3
+        # References:
+        #   * https://platform.openai.com/docs/api-reference/chat/create#chat-create-tool_choice
+        #   * https://github.com/vllm-project/vllm/pull/10000
+        if not tools and tool_choice is not None:
+            tool_choice = ToolChoice.none.value
+
+        return await super().openai_chat_completion(
+            model=model,
+            messages=messages,
+            frequency_penalty=frequency_penalty,
+            function_call=function_call,
+            functions=functions,
+            logit_bias=logit_bias,
+            logprobs=logprobs,
+            max_completion_tokens=max_completion_tokens,
+            max_tokens=max_tokens,
+            n=n,
+            parallel_tool_calls=parallel_tool_calls,
+            presence_penalty=presence_penalty,
+            response_format=response_format,
+            seed=seed,
+            stop=stop,
+            stream=stream,
+            stream_options=stream_options,
+            temperature=temperature,
+            tool_choice=tool_choice,
+            tools=tools,
+            top_logprobs=top_logprobs,
+            top_p=top_p,
+            user=user,
+        )

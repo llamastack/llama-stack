@@ -5,25 +5,16 @@
 # the root directory of this source tree.
 
 
-from collections.abc import AsyncGenerator
-
 from huggingface_hub import AsyncInferenceClient, HfApi
 from pydantic import SecretStr
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
     Inference,
-    LogProbConfig,
-    Message,
     OpenAIEmbeddingsResponse,
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.apis.models import Model
 from llama_stack.apis.models.models import ModelType
@@ -35,11 +26,7 @@ from llama_stack.providers.utils.inference.model_registry import (
     build_hf_repo_model_entry,
 )
 from llama_stack.providers.utils.inference.openai_compat import (
-    OpenAICompatCompletionChoice,
-    OpenAICompatCompletionResponse,
     get_sampling_options,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -147,68 +134,6 @@ class _HfAdapter(
                 raise ValueError(f"Unexpected response format: {fmt.type}")
 
         return options
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        if stream:
-            return self._stream_chat_completion(request)
-        else:
-            return await self._nonstream_chat_completion(request)
-
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        r = await self.hf_client.text_generation(**params)
-
-        choice = OpenAICompatCompletionChoice(
-            finish_reason=r.details.finish_reason,
-            text="".join(t.text for t in r.details.tokens),
-        )
-        response = OpenAICompatCompletionResponse(
-            choices=[choice],
-        )
-        return process_chat_completion_response(response, request)
-
-    async def _stream_chat_completion(self, request: ChatCompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-
-        async def _generate_and_convert_to_openai_compat():
-            s = await self.hf_client.text_generation(**params)
-            async for chunk in s:
-                token_result = chunk.token
-
-                choice = OpenAICompatCompletionChoice(text=token_result.text)
-                yield OpenAICompatCompletionResponse(
-                    choices=[choice],
-                )
-
-        stream = _generate_and_convert_to_openai_compat()
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict:
         prompt, input_tokens = await chat_completion_request_to_model_input_info(

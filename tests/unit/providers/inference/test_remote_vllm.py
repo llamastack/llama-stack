@@ -30,18 +30,14 @@ from openai.types.model import Model as OpenAIModel
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     ChatCompletionResponseEventType,
-    CompletionMessage,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChoice,
-    SystemMessage,
     ToolChoice,
-    ToolConfig,
-    ToolResponseMessage,
     UserMessage,
 )
 from llama_stack.apis.models import Model
-from llama_stack.models.llama.datatypes import StopReason, ToolCall
+from llama_stack.models.llama.datatypes import StopReason
 from llama_stack.providers.datatypes import HealthStatus
 from llama_stack.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
 from llama_stack.providers.remote.inference.vllm.vllm import (
@@ -99,67 +95,24 @@ async def test_old_vllm_tool_choice(vllm_inference_adapter):
     mock_model = Model(identifier="mock-model", provider_resource_id="mock-model", provider_id="vllm-inference")
     vllm_inference_adapter.model_store.get_model.return_value = mock_model
 
-    with patch.object(vllm_inference_adapter, "_nonstream_chat_completion") as mock_nonstream_completion:
+    # Patch the client property to avoid instantiating a real AsyncOpenAI client
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_client_property:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock()
+        mock_client_property.return_value = mock_client
+
         # No tools but auto tool choice
-        await vllm_inference_adapter.chat_completion(
+        await vllm_inference_adapter.openai_chat_completion(
             "mock-model",
             [],
             stream=False,
             tools=None,
-            tool_config=ToolConfig(tool_choice=ToolChoice.auto),
+            tool_choice=ToolChoice.auto.value,
         )
-        mock_nonstream_completion.assert_called()
-        request = mock_nonstream_completion.call_args.args[0]
+        mock_client.chat.completions.create.assert_called()
+        call_args = mock_client.chat.completions.create.call_args
         # Ensure tool_choice gets converted to none for older vLLM versions
-        assert request.tool_config.tool_choice == ToolChoice.none
-
-
-async def test_tool_call_response(vllm_inference_adapter):
-    """Verify that tool call arguments from a CompletionMessage are correctly converted
-    into the expected JSON format."""
-
-    # Patch the client property to avoid instantiating a real AsyncOpenAI client
-    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
-        mock_client = MagicMock()
-        mock_client.chat.completions.create = AsyncMock()
-        mock_create_client.return_value = mock_client
-
-        # Mock the model to return a proper provider_resource_id
-        mock_model = Model(identifier="mock-model", provider_resource_id="mock-model", provider_id="vllm-inference")
-        vllm_inference_adapter.model_store.get_model.return_value = mock_model
-
-        messages = [
-            SystemMessage(content="You are a helpful assistant"),
-            UserMessage(content="How many?"),
-            CompletionMessage(
-                content="",
-                stop_reason=StopReason.end_of_turn,
-                tool_calls=[
-                    ToolCall(
-                        call_id="foo",
-                        tool_name="knowledge_search",
-                        arguments={"query": "How many?"},
-                        arguments_json='{"query": "How many?"}',
-                    )
-                ],
-            ),
-            ToolResponseMessage(call_id="foo", content="knowledge_search found 5...."),
-        ]
-        await vllm_inference_adapter.chat_completion(
-            "mock-model",
-            messages,
-            stream=False,
-            tools=[],
-            tool_config=ToolConfig(tool_choice=ToolChoice.auto),
-        )
-
-        assert mock_client.chat.completions.create.call_args.kwargs["messages"][2]["tool_calls"] == [
-            {
-                "id": "foo",
-                "type": "function",
-                "function": {"name": "knowledge_search", "arguments": '{"query": "How many?"}'},
-            }
-        ]
+        assert call_args.kwargs["tool_choice"] == ToolChoice.none.value
 
 
 async def test_tool_call_delta_empty_tool_call_buf():
@@ -745,12 +698,10 @@ async def test_provider_data_var_context_propagation(vllm_inference_adapter):
 
         try:
             # Execute chat completion
-            await vllm_inference_adapter.chat_completion(
-                "test-model",
-                [UserMessage(content="Hello")],
+            await vllm_inference_adapter.openai_chat_completion(
+                model="test-model",
+                messages=[UserMessage(content="Hello")],
                 stream=False,
-                tools=None,
-                tool_config=ToolConfig(tool_choice=ToolChoice.auto),
             )
 
             # Verify that ALL client calls were made with the correct parameters

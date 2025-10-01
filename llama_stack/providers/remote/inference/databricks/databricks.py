@@ -4,25 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncIterator
 from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
 from llama_stack.apis.inference import (
-    ChatCompletionResponse,
-    ChatCompletionResponseStreamChunk,
     Inference,
-    LogProbConfig,
-    Message,
     Model,
     OpenAICompletion,
-    ResponseFormat,
-    SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
@@ -81,21 +70,6 @@ class DatabricksInferenceAdapter(
         prompt_logprobs: int | None = None,
         suffix: str | None = None,
     ) -> OpenAICompletion:
-        raise NotImplementedError()
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
         raise NotImplementedError()
 
     async def list_models(self) -> list[Model] | None:
