@@ -65,35 +65,10 @@ def convert_tooldef_to_chat_tool(tool_def):
     from llama_stack.models.llama.datatypes import ToolDefinition
     from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
-    # Build JSON Schema from tool parameters
-    properties = {}
-    required = []
-
-    for param in tool_def.parameters:
-        param_schema = {
-            "type": param.parameter_type,
-            "description": param.description,
-        }
-        if param.default is not None:
-            param_schema["default"] = param.default
-        if param.items is not None:
-            param_schema["items"] = param.items
-
-        properties[param.name] = param_schema
-
-        if param.required:
-            required.append(param.name)
-
-    input_schema = {
-        "type": "object",
-        "properties": properties,
-        "required": required,
-    }
-
     internal_tool_def = ToolDefinition(
         tool_name=tool_def.name,
         description=tool_def.description,
-        input_schema=input_schema,
+        input_schema=tool_def.input_schema,
     )
     return convert_tooldef_to_openai_tool(internal_tool_def)
 
@@ -546,33 +521,10 @@ class StreamingResponseOrchestrator:
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
         def make_openai_tool(tool_name: str, tool: Tool) -> ChatCompletionToolParam:
-            # Build JSON Schema from tool parameters
-            properties = {}
-            required = []
-
-            for param in tool.parameters:
-                param_schema = {
-                    "type": param.parameter_type,
-                    "description": param.description,
-                }
-                if param.default is not None:
-                    param_schema["default"] = param.default
-
-                properties[param.name] = param_schema
-
-                if param.required:
-                    required.append(param.name)
-
-            input_schema = {
-                "type": "object",
-                "properties": properties,
-                "required": required,
-            }
-
             tool_def = ToolDefinition(
                 tool_name=tool_name,
                 description=tool.description,
-                input_schema=input_schema,
+                input_schema=tool.input_schema,
             )
             return convert_tooldef_to_openai_tool(tool_def)
 
@@ -659,16 +611,11 @@ class StreamingResponseOrchestrator:
                         MCPListToolsTool(
                             name=t.name,
                             description=t.description,
-                            input_schema={
+                            input_schema=t.input_schema
+                            or {
                                 "type": "object",
-                                "properties": {
-                                    p.name: {
-                                        "type": p.parameter_type,
-                                        "description": p.description,
-                                    }
-                                    for p in t.parameters
-                                },
-                                "required": [p.name for p in t.parameters if p.required],
+                                "properties": {},
+                                "required": [],
                             },
                         )
                     )

@@ -83,7 +83,8 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
                     identifier=t.name,
                     toolgroup_id=toolgroup.identifier,
                     description=t.description or "",
-                    parameters=t.parameters or [],
+                    input_schema=t.input_schema,
+                    output_schema=t.output_schema,
                     metadata=t.metadata,
                     provider_id=toolgroup.provider_id,
                 )

@@ -110,18 +110,6 @@ def _convert_to_vllm_tools_in_request(tools: list[ToolDefinition]) -> list[dict]
     compat_tools = []
 
     for tool in tools:
-        properties = {}
-        compat_required = []
-        if tool.parameters:
-            for tool_key, tool_param in tool.parameters.items():
-                properties[tool_key] = {"type": tool_param.param_type}
-                if tool_param.description:
-                    properties[tool_key]["description"] = tool_param.description
-                if tool_param.default:
-                    properties[tool_key]["default"] = tool_param.default
-                if tool_param.required:
-                    compat_required.append(tool_key)
-
         # The tool.tool_name can be a str or a BuiltinTool enum. If
         # it's the latter, convert to a string.
         tool_name = tool.tool_name
@@ -133,10 +121,11 @@ def _convert_to_vllm_tools_in_request(tools: list[ToolDefinition]) -> list[dict]
             "function": {
                 "name": tool_name,
                 "description": tool.description,
-                "parameters": {
+                "parameters": tool.input_schema
+                or {
                     "type": "object",
-                    "properties": properties,
-                    "required": compat_required,
+                    "properties": {},
+                    "required": [],
                 },
             },
         }

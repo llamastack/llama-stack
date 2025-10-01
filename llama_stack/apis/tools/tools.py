@@ -48,14 +48,16 @@ class Tool(Resource):
     :param type: Type of resource, always 'tool'
     :param toolgroup_id: ID of the tool group this tool belongs to
     :param description: Human-readable description of what the tool does
-    :param parameters: List of parameters this tool accepts
+    :param input_schema: JSON Schema for the tool's input parameters
+    :param output_schema: JSON Schema for the tool's output
     :param metadata: (Optional) Additional metadata about the tool
     """
 
     type: Literal[ResourceType.tool] = ResourceType.tool
     toolgroup_id: str
     description: str
-    parameters: list[ToolParameter]
+    input_schema: dict[str, Any] | None = None
+    output_schema: dict[str, Any] | None = None
     metadata: dict[str, Any] | None = None
 
 

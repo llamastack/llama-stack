@@ -9614,11 +9614,29 @@ components:
           type: string
           description: >-
             Human-readable description of what the tool does
-        parameters:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolParameter'
-          description: List of parameters this tool accepts
+        input_schema:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            JSON Schema for the tool's input parameters
+        output_schema:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: JSON Schema for the tool's output
         metadata:
           type: object
           additionalProperties:
@@ -9638,53 +9656,8 @@ components:
         - type
         - toolgroup_id
         - description
-        - parameters
       title: Tool
       description: A tool that can be invoked by agents.
-    ToolParameter:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the parameter
-        parameter_type:
-          type: string
-          description: >-
-            Type of the parameter (e.g., string, integer)
-        description:
-          type: string
-          description: >-
-            Human-readable description of what the parameter does
-        required:
-          type: boolean
-          default: true
-          description: >-
-            Whether this parameter is required for tool invocation
-        items:
-          type: object
-          description: >-
-            Type of the elements when parameter_type is array
-        title:
-          type: string
-          description: (Optional) Title of the parameter
-        default:
-          oneOf:
-            - type: 'null'
-            - type: boolean
-            - type: number
-            - type: string
-            - type: array
-            - type: object
-          description: >-
-            (Optional) Default value for the parameter if not provided
-      additionalProperties: false
-      required:
-        - name
-        - parameter_type
-        - description
-        - required
-      title: ToolParameter
-      description: Parameter definition for a tool.
     ToolGroup:
       type: object
       properties:
