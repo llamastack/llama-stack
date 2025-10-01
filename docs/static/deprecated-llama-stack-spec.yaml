@@ -1012,6 +1012,1387 @@ paths:
           schema:
             type: string
       deprecated: true
+  /v1/openai/v1/chat/completions:
+    get:
+      responses:
+        '200':
+          description: A ListOpenAIChatCompletionResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOpenAIChatCompletionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Inference
+      summary: List all chat completions.
+      description: List all chat completions.
+      parameters:
+        - name: after
+          in: query
+          description: >-
+            The ID of the last chat completion to return.
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: >-
+            The maximum number of chat completions to return.
+          required: false
+          schema:
+            type: integer
+        - name: model
+          in: query
+          description: The model to filter by.
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: >-
+            The order to sort the chat completions by: "asc" or "desc". Defaults to
+            "desc".
+          required: false
+          schema:
+            $ref: '#/components/schemas/Order'
+      deprecated: true
+    post:
+      responses:
+        '200':
+          description: An OpenAIChatCompletion.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/OpenAIChatCompletion'
+                  - $ref: '#/components/schemas/OpenAIChatCompletionChunk'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Inference
+      summary: >-
+        Generate an OpenAI-compatible chat completion for the given messages using
+        the specified model.
+      description: >-
+        Generate an OpenAI-compatible chat completion for the given messages using
+        the specified model.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiChatCompletionRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/chat/completions/{completion_id}:
+    get:
+      responses:
+        '200':
+          description: A OpenAICompletionWithInputMessages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAICompletionWithInputMessages'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Inference
+      summary: Describe a chat completion by its ID.
+      description: Describe a chat completion by its ID.
+      parameters:
+        - name: completion_id
+          in: path
+          description: ID of the chat completion.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/completions:
+    post:
+      responses:
+        '200':
+          description: An OpenAICompletion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAICompletion'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Inference
+      summary: >-
+        Generate an OpenAI-compatible completion for the given prompt using the specified
+        model.
+      description: >-
+        Generate an OpenAI-compatible completion for the given prompt using the specified
+        model.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiCompletionRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/embeddings:
+    post:
+      responses:
+        '200':
+          description: >-
+            An OpenAIEmbeddingsResponse containing the embeddings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIEmbeddingsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Inference
+      summary: >-
+        Generate OpenAI-compatible embeddings for the given input using the specified
+        model.
+      description: >-
+        Generate OpenAI-compatible embeddings for the given input using the specified
+        model.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiEmbeddingsRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/files:
+    get:
+      responses:
+        '200':
+          description: >-
+            An ListOpenAIFileResponse containing the list of files.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOpenAIFileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Files
+      summary: >-
+        Returns a list of files that belong to the user's organization.
+      description: >-
+        Returns a list of files that belong to the user's organization.
+      parameters:
+        - name: after
+          in: query
+          description: >-
+            A cursor for use in pagination. `after` is an object ID that defines your
+            place in the list. For instance, if you make a list request and receive
+            100 objects, ending with obj_foo, your subsequent call can include after=obj_foo
+            in order to fetch the next page of the list.
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: >-
+            A limit on the number of objects to be returned. Limit can range between
+            1 and 10,000, and the default is 10,000.
+          required: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: >-
+            Sort order by the `created_at` timestamp of the objects. `asc` for ascending
+            order and `desc` for descending order.
+          required: false
+          schema:
+            $ref: '#/components/schemas/Order'
+        - name: purpose
+          in: query
+          description: >-
+            Only return files with the given purpose.
+          required: false
+          schema:
+            $ref: '#/components/schemas/OpenAIFilePurpose'
+      deprecated: true
+    post:
+      responses:
+        '200':
+          description: >-
+            An OpenAIFileObject representing the uploaded file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIFileObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Files
+      summary: >-
+        Upload a file that can be used across various endpoints.
+      description: >-
+        Upload a file that can be used across various endpoints.
+
+        The file upload should be a multipart form request with:
+
+        - file: The File object (not file name) to be uploaded.
+
+        - purpose: The intended purpose of the uploaded file.
+
+        - expires_after: Optional form values describing expiration for the file.
+      parameters: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                purpose:
+                  $ref: '#/components/schemas/OpenAIFilePurpose'
+                expires_after:
+                  $ref: '#/components/schemas/ExpiresAfter'
+              required:
+                - file
+                - purpose
+        required: true
+      deprecated: true
+  /v1/openai/v1/files/{file_id}:
+    get:
+      responses:
+        '200':
+          description: >-
+            An OpenAIFileObject containing file information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIFileObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Files
+      summary: >-
+        Returns information about a specific file.
+      description: >-
+        Returns information about a specific file.
+      parameters:
+        - name: file_id
+          in: path
+          description: >-
+            The ID of the file to use for this request.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+    delete:
+      responses:
+        '200':
+          description: >-
+            An OpenAIFileDeleteResponse indicating successful deletion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIFileDeleteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Files
+      summary: Delete a file.
+      description: Delete a file.
+      parameters:
+        - name: file_id
+          in: path
+          description: >-
+            The ID of the file to use for this request.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/files/{file_id}/content:
+    get:
+      responses:
+        '200':
+          description: >-
+            The raw file content as a binary response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Files
+      summary: >-
+        Returns the contents of the specified file.
+      description: >-
+        Returns the contents of the specified file.
+      parameters:
+        - name: file_id
+          in: path
+          description: >-
+            The ID of the file to use for this request.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/models:
+    get:
+      responses:
+        '200':
+          description: A OpenAIListModelsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIListModelsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Models
+      summary: List models using the OpenAI API.
+      description: List models using the OpenAI API.
+      parameters: []
+      deprecated: true
+  /v1/openai/v1/moderations:
+    post:
+      responses:
+        '200':
+          description: A moderation object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Safety
+      summary: >-
+        Classifies if text and/or image inputs are potentially harmful.
+      description: >-
+        Classifies if text and/or image inputs are potentially harmful.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunModerationRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/responses:
+    get:
+      responses:
+        '200':
+          description: A ListOpenAIResponseObject.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Agents
+      summary: List all OpenAI responses.
+      description: List all OpenAI responses.
+      parameters:
+        - name: after
+          in: query
+          description: The ID of the last response to return.
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The number of responses to return.
+          required: false
+          schema:
+            type: integer
+        - name: model
+          in: query
+          description: The model to filter responses by.
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: >-
+            The order to sort responses by when sorted by created_at ('asc' or 'desc').
+          required: false
+          schema:
+            $ref: '#/components/schemas/Order'
+      deprecated: true
+    post:
+      responses:
+        '200':
+          description: A ListOpenAIResponseObject.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Agents
+      summary: List all OpenAI responses.
+      description: List all OpenAI responses.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListOpenaiResponsesRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/responses/{response_id}:
+    get:
+      responses:
+        '200':
+          description: An OpenAIResponseObject.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Agents
+      summary: Retrieve an OpenAI response by its ID.
+      description: Retrieve an OpenAI response by its ID.
+      parameters:
+        - name: response_id
+          in: path
+          description: >-
+            The ID of the OpenAI response to retrieve.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+    delete:
+      responses:
+        '200':
+          description: An OpenAIDeleteResponseObject
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIDeleteResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Agents
+      summary: Delete an OpenAI response by its ID.
+      description: Delete an OpenAI response by its ID.
+      parameters:
+        - name: response_id
+          in: path
+          description: The ID of the OpenAI response to delete.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/responses/{response_id}/input_items:
+    get:
+      responses:
+        '200':
+          description: An ListOpenAIResponseInputItem.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOpenAIResponseInputItem'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Agents
+      summary: >-
+        List input items for a given OpenAI response.
+      description: >-
+        List input items for a given OpenAI response.
+      parameters:
+        - name: response_id
+          in: path
+          description: >-
+            The ID of the response to retrieve input items for.
+          required: true
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: >-
+            An item ID to list items after, used for pagination.
+          required: false
+          schema:
+            type: string
+        - name: before
+          in: query
+          description: >-
+            An item ID to list items before, used for pagination.
+          required: false
+          schema:
+            type: string
+        - name: include
+          in: query
+          description: >-
+            Additional fields to include in the response.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: limit
+          in: query
+          description: >-
+            A limit on the number of objects to be returned. Limit can range between
+            1 and 100, and the default is 20.
+          required: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: >-
+            The order to return the input items in. Default is desc.
+          required: false
+          schema:
+            $ref: '#/components/schemas/Order'
+      deprecated: true
+  /v1/openai/v1/vector_stores:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreListResponse containing the list of vector stores.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Returns a list of vector stores.
+      description: Returns a list of vector stores.
+      parameters:
+        - name: limit
+          in: query
+          description: >-
+            A limit on the number of objects to be returned. Limit can range between
+            1 and 100, and the default is 20.
+          required: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: >-
+            Sort order by the `created_at` timestamp of the objects. `asc` for ascending
+            order and `desc` for descending order.
+          required: false
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: >-
+            A cursor for use in pagination. `after` is an object ID that defines your
+            place in the list.
+          required: false
+          schema:
+            type: string
+        - name: before
+          in: query
+          description: >-
+            A cursor for use in pagination. `before` is an object ID that defines
+            your place in the list.
+          required: false
+          schema:
+            type: string
+      deprecated: true
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreObject representing the created vector store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Creates a vector store.
+      description: Creates a vector store.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiCreateVectorStoreRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreObject representing the vector store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Retrieves a vector store.
+      description: Retrieves a vector store.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: The ID of the vector store to retrieve.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreObject representing the updated vector store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Updates a vector store.
+      description: Updates a vector store.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: The ID of the vector store to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiUpdateVectorStoreRequest'
+        required: true
+      deprecated: true
+    delete:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreDeleteResponse indicating the deletion status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreDeleteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Delete a vector store.
+      description: Delete a vector store.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: The ID of the vector store to delete.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/file_batches:
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFileBatchObject representing the created file batch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileBatchObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Create a vector store file batch.
+      description: Create a vector store file batch.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store to create the file batch for.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiCreateVectorStoreFileBatchRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFileBatchObject representing the file batch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileBatchObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Retrieve a vector store file batch.
+      description: Retrieve a vector store file batch.
+      parameters:
+        - name: batch_id
+          in: path
+          description: The ID of the file batch to retrieve.
+          required: true
+          schema:
+            type: string
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the file batch.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel:
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFileBatchObject representing the cancelled file batch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileBatchObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Cancels a vector store file batch.
+      description: Cancels a vector store file batch.
+      parameters:
+        - name: batch_id
+          in: path
+          description: The ID of the file batch to cancel.
+          required: true
+          schema:
+            type: string
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the file batch.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFilesListInBatchResponse containing the list of files in
+            the batch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFilesListInBatchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: >-
+        Returns a list of vector store files in a batch.
+      description: >-
+        Returns a list of vector store files in a batch.
+      parameters:
+        - name: batch_id
+          in: path
+          description: >-
+            The ID of the file batch to list files from.
+          required: true
+          schema:
+            type: string
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the file batch.
+          required: true
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: >-
+            A cursor for use in pagination. `after` is an object ID that defines your
+            place in the list.
+          required: false
+          schema:
+            type: string
+        - name: before
+          in: query
+          description: >-
+            A cursor for use in pagination. `before` is an object ID that defines
+            your place in the list.
+          required: false
+          schema:
+            type: string
+        - name: filter
+          in: query
+          description: >-
+            Filter by file status. One of in_progress, completed, failed, cancelled.
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: >-
+            A limit on the number of objects to be returned. Limit can range between
+            1 and 100, and the default is 20.
+          required: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: >-
+            Sort order by the `created_at` timestamp of the objects. `asc` for ascending
+            order and `desc` for descending order.
+          required: false
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/files:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreListFilesResponse containing the list of files.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreListFilesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: List files in a vector store.
+      description: List files in a vector store.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store to list files from.
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: >-
+            (Optional) A limit on the number of objects to be returned. Limit can
+            range between 1 and 100, and the default is 20.
+          required: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: >-
+            (Optional) Sort order by the `created_at` timestamp of the objects. `asc`
+            for ascending order and `desc` for descending order.
+          required: false
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: >-
+            (Optional) A cursor for use in pagination. `after` is an object ID that
+            defines your place in the list.
+          required: false
+          schema:
+            type: string
+        - name: before
+          in: query
+          description: >-
+            (Optional) A cursor for use in pagination. `before` is an object ID that
+            defines your place in the list.
+          required: false
+          schema:
+            type: string
+        - name: filter
+          in: query
+          description: >-
+            (Optional) Filter by file status to only return files with the specified
+            status.
+          required: false
+          schema:
+            $ref: '#/components/schemas/VectorStoreFileStatus'
+      deprecated: true
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFileObject representing the attached file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Attach a file to a vector store.
+      description: Attach a file to a vector store.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store to attach the file to.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiAttachFileToVectorStoreRequest'
+        required: true
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}:
+    get:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFileObject representing the file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Retrieves a vector store file.
+      description: Retrieves a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the file to retrieve.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file to retrieve.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFileObject representing the updated file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Updates a vector store file.
+      description: Updates a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the file to update.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiUpdateVectorStoreFileRequest'
+        required: true
+      deprecated: true
+    delete:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreFileDeleteResponse indicating the deletion status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileDeleteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Delete a vector store file.
+      description: Delete a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the file to delete.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file to delete.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content:
+    get:
+      responses:
+        '200':
+          description: >-
+            A list of InterleavedContent representing the file contents.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileContentsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: >-
+        Retrieves the contents of a vector store file.
+      description: >-
+        Retrieves the contents of a vector store file.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store containing the file to retrieve.
+          required: true
+          schema:
+            type: string
+        - name: file_id
+          in: path
+          description: The ID of the file to retrieve.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/openai/v1/vector_stores/{vector_store_id}/search:
+    post:
+      responses:
+        '200':
+          description: >-
+            A VectorStoreSearchResponse containing the search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreSearchResponsePage'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - VectorIO
+      summary: Search for chunks in a vector store.
+      description: >-
+        Search for chunks in a vector store.
+
+        Searches a vector store for relevant chunks based on a query and optional
+        file attribute filters.
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: The ID of the vector store to search.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenaiSearchVectorStoreRequest'
+        required: true
+      deprecated: true
   /v1/post-training/job/artifacts:
     get:
       responses:
@@ -3608,6 +4989,4035 @@ components:
       title: Job
       description: >-
         A job execution instance with status tracking.
+    Order:
+      type: string
+      enum:
+        - asc
+        - desc
+      title: Order
+      description: Sort order for paginated responses.
+    ListOpenAIChatCompletionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The ID of the chat completion
+              choices:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OpenAIChoice'
+                description: List of choices
+              object:
+                type: string
+                const: chat.completion
+                default: chat.completion
+                description: >-
+                  The object type, which will be "chat.completion"
+              created:
+                type: integer
+                description: >-
+                  The Unix timestamp in seconds when the chat completion was created
+              model:
+                type: string
+                description: >-
+                  The model that was used to generate the chat completion
+              input_messages:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OpenAIMessageParam'
+            additionalProperties: false
+            required:
+              - id
+              - choices
+              - object
+              - created
+              - model
+              - input_messages
+            title: OpenAICompletionWithInputMessages
+          description: >-
+            List of chat completion objects with their input messages
+        has_more:
+          type: boolean
+          description: >-
+            Whether there are more completions available beyond this list
+        first_id:
+          type: string
+          description: ID of the first completion in this list
+        last_id:
+          type: string
+          description: ID of the last completion in this list
+        object:
+          type: string
+          const: list
+          default: list
+          description: >-
+            Must be "list" to identify this as a list response
+      additionalProperties: false
+      required:
+        - data
+        - has_more
+        - first_id
+        - last_id
+        - object
+      title: ListOpenAIChatCompletionResponse
+      description: >-
+        Response from listing OpenAI-compatible chat completions.
+    OpenAIAssistantMessageParam:
+      type: object
+      properties:
+        role:
+          type: string
+          const: assistant
+          default: assistant
+          description: >-
+            Must be "assistant" to identify this as the model's response
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+          description: The content of the model's response
+        name:
+          type: string
+          description: >-
+            (Optional) The name of the assistant message participant.
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+          description: >-
+            List of tool calls. Each tool call is an OpenAIChatCompletionToolCall
+            object.
+      additionalProperties: false
+      required:
+        - role
+      title: OpenAIAssistantMessageParam
+      description: >-
+        A message containing the model's (assistant) response in an OpenAI-compatible
+        chat completion request.
+    "OpenAIChatCompletionContentPartImageParam":
+      type: object
+      properties:
+        type:
+          type: string
+          const: image_url
+          default: image_url
+          description: >-
+            Must be "image_url" to identify this as image content
+        image_url:
+          $ref: '#/components/schemas/OpenAIImageURL'
+          description: >-
+            Image URL specification and processing details
+      additionalProperties: false
+      required:
+        - type
+        - image_url
+      title: >-
+        OpenAIChatCompletionContentPartImageParam
+      description: >-
+        Image content part for OpenAI-compatible chat completion messages.
+    OpenAIChatCompletionContentPartParam:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+        - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
+        - $ref: '#/components/schemas/OpenAIFile'
+      discriminator:
+        propertyName: type
+        mapping:
+          text: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+          image_url: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
+          file: '#/components/schemas/OpenAIFile'
+    OpenAIChatCompletionContentPartTextParam:
+      type: object
+      properties:
+        type:
+          type: string
+          const: text
+          default: text
+          description: >-
+            Must be "text" to identify this as text content
+        text:
+          type: string
+          description: The text content of the message
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: OpenAIChatCompletionContentPartTextParam
+      description: >-
+        Text content part for OpenAI-compatible chat completion messages.
+    OpenAIChatCompletionToolCall:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: >-
+            (Optional) Index of the tool call in the list
+        id:
+          type: string
+          description: >-
+            (Optional) Unique identifier for the tool call
+        type:
+          type: string
+          const: function
+          default: function
+          description: >-
+            Must be "function" to identify this as a function call
+        function:
+          $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
+          description: (Optional) Function call details
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIChatCompletionToolCall
+      description: >-
+        Tool call specification for OpenAI-compatible chat completion responses.
+    OpenAIChatCompletionToolCallFunction:
+      type: object
+      properties:
+        name:
+          type: string
+          description: (Optional) Name of the function to call
+        arguments:
+          type: string
+          description: >-
+            (Optional) Arguments to pass to the function as a JSON string
+      additionalProperties: false
+      title: OpenAIChatCompletionToolCallFunction
+      description: >-
+        Function call details for OpenAI-compatible tool calls.
+    OpenAIChoice:
+      type: object
+      properties:
+        message:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIUserMessageParam'
+            - $ref: '#/components/schemas/OpenAISystemMessageParam'
+            - $ref: '#/components/schemas/OpenAIAssistantMessageParam'
+            - $ref: '#/components/schemas/OpenAIToolMessageParam'
+            - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
+          discriminator:
+            propertyName: role
+            mapping:
+              user: '#/components/schemas/OpenAIUserMessageParam'
+              system: '#/components/schemas/OpenAISystemMessageParam'
+              assistant: '#/components/schemas/OpenAIAssistantMessageParam'
+              tool: '#/components/schemas/OpenAIToolMessageParam'
+              developer: '#/components/schemas/OpenAIDeveloperMessageParam'
+          description: The message from the model
+        finish_reason:
+          type: string
+          description: The reason the model stopped generating
+        index:
+          type: integer
+          description: The index of the choice
+        logprobs:
+          $ref: '#/components/schemas/OpenAIChoiceLogprobs'
+          description: >-
+            (Optional) The log probabilities for the tokens in the message
+      additionalProperties: false
+      required:
+        - message
+        - finish_reason
+        - index
+      title: OpenAIChoice
+      description: >-
+        A choice from an OpenAI-compatible chat completion response.
+    OpenAIChoiceLogprobs:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAITokenLogProb'
+          description: >-
+            (Optional) The log probabilities for the tokens in the message
+        refusal:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAITokenLogProb'
+          description: >-
+            (Optional) The log probabilities for the tokens in the message
+      additionalProperties: false
+      title: OpenAIChoiceLogprobs
+      description: >-
+        The log probabilities for the tokens in the message from an OpenAI-compatible
+        chat completion response.
+    OpenAIDeveloperMessageParam:
+      type: object
+      properties:
+        role:
+          type: string
+          const: developer
+          default: developer
+          description: >-
+            Must be "developer" to identify this as a developer message
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+          description: The content of the developer message
+        name:
+          type: string
+          description: >-
+            (Optional) The name of the developer message participant.
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: OpenAIDeveloperMessageParam
+      description: >-
+        A message from the developer in an OpenAI-compatible chat completion request.
+    OpenAIFile:
+      type: object
+      properties:
+        type:
+          type: string
+          const: file
+          default: file
+        file:
+          $ref: '#/components/schemas/OpenAIFileFile'
+      additionalProperties: false
+      required:
+        - type
+        - file
+      title: OpenAIFile
+    OpenAIFileFile:
+      type: object
+      properties:
+        file_data:
+          type: string
+        file_id:
+          type: string
+        filename:
+          type: string
+      additionalProperties: false
+      title: OpenAIFileFile
+    OpenAIImageURL:
+      type: object
+      properties:
+        url:
+          type: string
+          description: >-
+            URL of the image to include in the message
+        detail:
+          type: string
+          description: >-
+            (Optional) Level of detail for image processing. Can be "low", "high",
+            or "auto"
+      additionalProperties: false
+      required:
+        - url
+      title: OpenAIImageURL
+      description: >-
+        Image URL specification for OpenAI-compatible chat completion messages.
+    OpenAIMessageParam:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIUserMessageParam'
+        - $ref: '#/components/schemas/OpenAISystemMessageParam'
+        - $ref: '#/components/schemas/OpenAIAssistantMessageParam'
+        - $ref: '#/components/schemas/OpenAIToolMessageParam'
+        - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
+      discriminator:
+        propertyName: role
+        mapping:
+          user: '#/components/schemas/OpenAIUserMessageParam'
+          system: '#/components/schemas/OpenAISystemMessageParam'
+          assistant: '#/components/schemas/OpenAIAssistantMessageParam'
+          tool: '#/components/schemas/OpenAIToolMessageParam'
+          developer: '#/components/schemas/OpenAIDeveloperMessageParam'
+    OpenAISystemMessageParam:
+      type: object
+      properties:
+        role:
+          type: string
+          const: system
+          default: system
+          description: >-
+            Must be "system" to identify this as a system message
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+          description: >-
+            The content of the "system prompt". If multiple system messages are provided,
+            they are concatenated. The underlying Llama Stack code may also add other
+            system messages (for example, for formatting tool definitions).
+        name:
+          type: string
+          description: >-
+            (Optional) The name of the system message participant.
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: OpenAISystemMessageParam
+      description: >-
+        A system message providing instructions or context to the model.
+    OpenAITokenLogProb:
+      type: object
+      properties:
+        token:
+          type: string
+        bytes:
+          type: array
+          items:
+            type: integer
+        logprob:
+          type: number
+        top_logprobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAITopLogProb'
+      additionalProperties: false
+      required:
+        - token
+        - logprob
+        - top_logprobs
+      title: OpenAITokenLogProb
+      description: >-
+        The log probability for a token from an OpenAI-compatible chat completion
+        response.
+    OpenAIToolMessageParam:
+      type: object
+      properties:
+        role:
+          type: string
+          const: tool
+          default: tool
+          description: >-
+            Must be "tool" to identify this as a tool response
+        tool_call_id:
+          type: string
+          description: >-
+            Unique identifier for the tool call this response is for
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+          description: The response content from the tool
+      additionalProperties: false
+      required:
+        - role
+        - tool_call_id
+        - content
+      title: OpenAIToolMessageParam
+      description: >-
+        A message representing the result of a tool invocation in an OpenAI-compatible
+        chat completion request.
+    OpenAITopLogProb:
+      type: object
+      properties:
+        token:
+          type: string
+        bytes:
+          type: array
+          items:
+            type: integer
+        logprob:
+          type: number
+      additionalProperties: false
+      required:
+        - token
+        - logprob
+      title: OpenAITopLogProb
+      description: >-
+        The top log probability for a token from an OpenAI-compatible chat completion
+        response.
+    OpenAIUserMessageParam:
+      type: object
+      properties:
+        role:
+          type: string
+          const: user
+          default: user
+          description: >-
+            Must be "user" to identify this as a user message
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIChatCompletionContentPartParam'
+          description: >-
+            The content of the message, which can include text and other media
+        name:
+          type: string
+          description: >-
+            (Optional) The name of the user message participant.
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: OpenAIUserMessageParam
+      description: >-
+        A message from the user in an OpenAI-compatible chat completion request.
+    OpenAIJSONSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the schema
+        description:
+          type: string
+          description: (Optional) Description of the schema
+        strict:
+          type: boolean
+          description: >-
+            (Optional) Whether to enforce strict adherence to the schema
+        schema:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: (Optional) The JSON schema definition
+      additionalProperties: false
+      required:
+        - name
+      title: OpenAIJSONSchema
+      description: >-
+        JSON schema specification for OpenAI-compatible structured response format.
+    OpenAIResponseFormatJSONObject:
+      type: object
+      properties:
+        type:
+          type: string
+          const: json_object
+          default: json_object
+          description: >-
+            Must be "json_object" to indicate generic JSON object response format
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIResponseFormatJSONObject
+      description: >-
+        JSON object response format for OpenAI-compatible chat completion requests.
+    OpenAIResponseFormatJSONSchema:
+      type: object
+      properties:
+        type:
+          type: string
+          const: json_schema
+          default: json_schema
+          description: >-
+            Must be "json_schema" to indicate structured JSON response format
+        json_schema:
+          $ref: '#/components/schemas/OpenAIJSONSchema'
+          description: >-
+            The JSON schema specification for the response
+      additionalProperties: false
+      required:
+        - type
+        - json_schema
+      title: OpenAIResponseFormatJSONSchema
+      description: >-
+        JSON schema response format for OpenAI-compatible chat completion requests.
+    OpenAIResponseFormatParam:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseFormatText'
+        - $ref: '#/components/schemas/OpenAIResponseFormatJSONSchema'
+        - $ref: '#/components/schemas/OpenAIResponseFormatJSONObject'
+      discriminator:
+        propertyName: type
+        mapping:
+          text: '#/components/schemas/OpenAIResponseFormatText'
+          json_schema: '#/components/schemas/OpenAIResponseFormatJSONSchema'
+          json_object: '#/components/schemas/OpenAIResponseFormatJSONObject'
+    OpenAIResponseFormatText:
+      type: object
+      properties:
+        type:
+          type: string
+          const: text
+          default: text
+          description: >-
+            Must be "text" to indicate plain text response format
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIResponseFormatText
+      description: >-
+        Text response format for OpenAI-compatible chat completion requests.
+    OpenaiChatCompletionRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          description: >-
+            The identifier of the model to use. The model must be registered with
+            Llama Stack and available via the /models endpoint.
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIMessageParam'
+          description: List of messages in the conversation.
+        frequency_penalty:
+          type: number
+          description: >-
+            (Optional) The penalty for repeated tokens.
+        function_call:
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties:
+                oneOf:
+                  - type: 'null'
+                  - type: boolean
+                  - type: number
+                  - type: string
+                  - type: array
+                  - type: object
+          description: (Optional) The function call to use.
+        functions:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: 'null'
+                - type: boolean
+                - type: number
+                - type: string
+                - type: array
+                - type: object
+          description: (Optional) List of functions to use.
+        logit_bias:
+          type: object
+          additionalProperties:
+            type: number
+          description: (Optional) The logit bias to use.
+        logprobs:
+          type: boolean
+          description: (Optional) The log probabilities to use.
+        max_completion_tokens:
+          type: integer
+          description: >-
+            (Optional) The maximum number of tokens to generate.
+        max_tokens:
+          type: integer
+          description: >-
+            (Optional) The maximum number of tokens to generate.
+        n:
+          type: integer
+          description: >-
+            (Optional) The number of completions to generate.
+        parallel_tool_calls:
+          type: boolean
+          description: >-
+            (Optional) Whether to parallelize tool calls.
+        presence_penalty:
+          type: number
+          description: >-
+            (Optional) The penalty for repeated tokens.
+        response_format:
+          $ref: '#/components/schemas/OpenAIResponseFormatParam'
+          description: (Optional) The response format to use.
+        seed:
+          type: integer
+          description: (Optional) The seed to use.
+        stop:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: (Optional) The stop tokens to use.
+        stream:
+          type: boolean
+          description: >-
+            (Optional) Whether to stream the response.
+        stream_options:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: (Optional) The stream options to use.
+        temperature:
+          type: number
+          description: (Optional) The temperature to use.
+        tool_choice:
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties:
+                oneOf:
+                  - type: 'null'
+                  - type: boolean
+                  - type: number
+                  - type: string
+                  - type: array
+                  - type: object
+          description: (Optional) The tool choice to use.
+        tools:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: 'null'
+                - type: boolean
+                - type: number
+                - type: string
+                - type: array
+                - type: object
+          description: (Optional) The tools to use.
+        top_logprobs:
+          type: integer
+          description: >-
+            (Optional) The top log probabilities to use.
+        top_p:
+          type: number
+          description: (Optional) The top p to use.
+        user:
+          type: string
+          description: (Optional) The user to use.
+      additionalProperties: false
+      required:
+        - model
+        - messages
+      title: OpenaiChatCompletionRequest
+    OpenAIChatCompletion:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the chat completion
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIChoice'
+          description: List of choices
+        object:
+          type: string
+          const: chat.completion
+          default: chat.completion
+          description: >-
+            The object type, which will be "chat.completion"
+        created:
+          type: integer
+          description: >-
+            The Unix timestamp in seconds when the chat completion was created
+        model:
+          type: string
+          description: >-
+            The model that was used to generate the chat completion
+      additionalProperties: false
+      required:
+        - id
+        - choices
+        - object
+        - created
+        - model
+      title: OpenAIChatCompletion
+      description: >-
+        Response from an OpenAI-compatible chat completion request.
+    OpenAIChatCompletionChunk:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the chat completion
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIChunkChoice'
+          description: List of choices
+        object:
+          type: string
+          const: chat.completion.chunk
+          default: chat.completion.chunk
+          description: >-
+            The object type, which will be "chat.completion.chunk"
+        created:
+          type: integer
+          description: >-
+            The Unix timestamp in seconds when the chat completion was created
+        model:
+          type: string
+          description: >-
+            The model that was used to generate the chat completion
+      additionalProperties: false
+      required:
+        - id
+        - choices
+        - object
+        - created
+        - model
+      title: OpenAIChatCompletionChunk
+      description: >-
+        Chunk from a streaming response to an OpenAI-compatible chat completion request.
+    OpenAIChoiceDelta:
+      type: object
+      properties:
+        content:
+          type: string
+          description: (Optional) The content of the delta
+        refusal:
+          type: string
+          description: (Optional) The refusal of the delta
+        role:
+          type: string
+          description: (Optional) The role of the delta
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+          description: (Optional) The tool calls of the delta
+      additionalProperties: false
+      title: OpenAIChoiceDelta
+      description: >-
+        A delta from an OpenAI-compatible chat completion streaming response.
+    OpenAIChunkChoice:
+      type: object
+      properties:
+        delta:
+          $ref: '#/components/schemas/OpenAIChoiceDelta'
+          description: The delta from the chunk
+        finish_reason:
+          type: string
+          description: The reason the model stopped generating
+        index:
+          type: integer
+          description: The index of the choice
+        logprobs:
+          $ref: '#/components/schemas/OpenAIChoiceLogprobs'
+          description: >-
+            (Optional) The log probabilities for the tokens in the message
+      additionalProperties: false
+      required:
+        - delta
+        - finish_reason
+        - index
+      title: OpenAIChunkChoice
+      description: >-
+        A chunk choice from an OpenAI-compatible chat completion streaming response.
+    OpenAICompletionWithInputMessages:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the chat completion
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIChoice'
+          description: List of choices
+        object:
+          type: string
+          const: chat.completion
+          default: chat.completion
+          description: >-
+            The object type, which will be "chat.completion"
+        created:
+          type: integer
+          description: >-
+            The Unix timestamp in seconds when the chat completion was created
+        model:
+          type: string
+          description: >-
+            The model that was used to generate the chat completion
+        input_messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIMessageParam'
+      additionalProperties: false
+      required:
+        - id
+        - choices
+        - object
+        - created
+        - model
+        - input_messages
+      title: OpenAICompletionWithInputMessages
+    OpenaiCompletionRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          description: >-
+            The identifier of the model to use. The model must be registered with
+            Llama Stack and available via the /models endpoint.
+        prompt:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+            - type: array
+              items:
+                type: integer
+            - type: array
+              items:
+                type: array
+                items:
+                  type: integer
+          description: The prompt to generate a completion for.
+        best_of:
+          type: integer
+          description: >-
+            (Optional) The number of completions to generate.
+        echo:
+          type: boolean
+          description: (Optional) Whether to echo the prompt.
+        frequency_penalty:
+          type: number
+          description: >-
+            (Optional) The penalty for repeated tokens.
+        logit_bias:
+          type: object
+          additionalProperties:
+            type: number
+          description: (Optional) The logit bias to use.
+        logprobs:
+          type: boolean
+          description: (Optional) The log probabilities to use.
+        max_tokens:
+          type: integer
+          description: >-
+            (Optional) The maximum number of tokens to generate.
+        n:
+          type: integer
+          description: >-
+            (Optional) The number of completions to generate.
+        presence_penalty:
+          type: number
+          description: >-
+            (Optional) The penalty for repeated tokens.
+        seed:
+          type: integer
+          description: (Optional) The seed to use.
+        stop:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: (Optional) The stop tokens to use.
+        stream:
+          type: boolean
+          description: >-
+            (Optional) Whether to stream the response.
+        stream_options:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: (Optional) The stream options to use.
+        temperature:
+          type: number
+          description: (Optional) The temperature to use.
+        top_p:
+          type: number
+          description: (Optional) The top p to use.
+        user:
+          type: string
+          description: (Optional) The user to use.
+        guided_choice:
+          type: array
+          items:
+            type: string
+        prompt_logprobs:
+          type: integer
+        suffix:
+          type: string
+          description: >-
+            (Optional) The suffix that should be appended to the completion.
+      additionalProperties: false
+      required:
+        - model
+        - prompt
+      title: OpenaiCompletionRequest
+    OpenAICompletion:
+      type: object
+      properties:
+        id:
+          type: string
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAICompletionChoice'
+        created:
+          type: integer
+        model:
+          type: string
+        object:
+          type: string
+          const: text_completion
+          default: text_completion
+      additionalProperties: false
+      required:
+        - id
+        - choices
+        - created
+        - model
+        - object
+      title: OpenAICompletion
+      description: >-
+        Response from an OpenAI-compatible completion request.
+    OpenAICompletionChoice:
+      type: object
+      properties:
+        finish_reason:
+          type: string
+        text:
+          type: string
+        index:
+          type: integer
+        logprobs:
+          $ref: '#/components/schemas/OpenAIChoiceLogprobs'
+      additionalProperties: false
+      required:
+        - finish_reason
+        - text
+        - index
+      title: OpenAICompletionChoice
+      description: >-
+        A choice from an OpenAI-compatible completion response.
+    OpenaiEmbeddingsRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          description: >-
+            The identifier of the model to use. The model must be an embedding model
+            registered with Llama Stack and available via the /models endpoint.
+        input:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: >-
+            Input text to embed, encoded as a string or array of strings. To embed
+            multiple inputs in a single request, pass an array of strings.
+        encoding_format:
+          type: string
+          description: >-
+            (Optional) The format to return the embeddings in. Can be either "float"
+            or "base64". Defaults to "float".
+        dimensions:
+          type: integer
+          description: >-
+            (Optional) The number of dimensions the resulting output embeddings should
+            have. Only supported in text-embedding-3 and later models.
+        user:
+          type: string
+          description: >-
+            (Optional) A unique identifier representing your end-user, which can help
+            OpenAI to monitor and detect abuse.
+      additionalProperties: false
+      required:
+        - model
+        - input
+      title: OpenaiEmbeddingsRequest
+    OpenAIEmbeddingData:
+      type: object
+      properties:
+        object:
+          type: string
+          const: embedding
+          default: embedding
+          description: >-
+            The object type, which will be "embedding"
+        embedding:
+          oneOf:
+            - type: array
+              items:
+                type: number
+            - type: string
+          description: >-
+            The embedding vector as a list of floats (when encoding_format="float")
+            or as a base64-encoded string (when encoding_format="base64")
+        index:
+          type: integer
+          description: >-
+            The index of the embedding in the input list
+      additionalProperties: false
+      required:
+        - object
+        - embedding
+        - index
+      title: OpenAIEmbeddingData
+      description: >-
+        A single embedding data object from an OpenAI-compatible embeddings response.
+    OpenAIEmbeddingUsage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+          description: The number of tokens in the input
+        total_tokens:
+          type: integer
+          description: The total number of tokens used
+      additionalProperties: false
+      required:
+        - prompt_tokens
+        - total_tokens
+      title: OpenAIEmbeddingUsage
+      description: >-
+        Usage information for an OpenAI-compatible embeddings response.
+    OpenAIEmbeddingsResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          const: list
+          default: list
+          description: The object type, which will be "list"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIEmbeddingData'
+          description: List of embedding data objects
+        model:
+          type: string
+          description: >-
+            The model that was used to generate the embeddings
+        usage:
+          $ref: '#/components/schemas/OpenAIEmbeddingUsage'
+          description: Usage information
+      additionalProperties: false
+      required:
+        - object
+        - data
+        - model
+        - usage
+      title: OpenAIEmbeddingsResponse
+      description: >-
+        Response from an OpenAI-compatible embeddings request.
+    OpenAIFilePurpose:
+      type: string
+      enum:
+        - assistants
+        - batch
+      title: OpenAIFilePurpose
+      description: >-
+        Valid purpose values for OpenAI Files API.
+    ListOpenAIFileResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIFileObject'
+          description: List of file objects
+        has_more:
+          type: boolean
+          description: >-
+            Whether there are more files available beyond this page
+        first_id:
+          type: string
+          description: >-
+            ID of the first file in the list for pagination
+        last_id:
+          type: string
+          description: >-
+            ID of the last file in the list for pagination
+        object:
+          type: string
+          const: list
+          default: list
+          description: The object type, which is always "list"
+      additionalProperties: false
+      required:
+        - data
+        - has_more
+        - first_id
+        - last_id
+        - object
+      title: ListOpenAIFileResponse
+      description: >-
+        Response for listing files in OpenAI Files API.
+    OpenAIFileObject:
+      type: object
+      properties:
+        object:
+          type: string
+          const: file
+          default: file
+          description: The object type, which is always "file"
+        id:
+          type: string
+          description: >-
+            The file identifier, which can be referenced in the API endpoints
+        bytes:
+          type: integer
+          description: The size of the file, in bytes
+        created_at:
+          type: integer
+          description: >-
+            The Unix timestamp (in seconds) for when the file was created
+        expires_at:
+          type: integer
+          description: >-
+            The Unix timestamp (in seconds) for when the file expires
+        filename:
+          type: string
+          description: The name of the file
+        purpose:
+          type: string
+          enum:
+            - assistants
+            - batch
+          description: The intended purpose of the file
+      additionalProperties: false
+      required:
+        - object
+        - id
+        - bytes
+        - created_at
+        - expires_at
+        - filename
+        - purpose
+      title: OpenAIFileObject
+      description: >-
+        OpenAI File object as defined in the OpenAI Files API.
+    ExpiresAfter:
+      type: object
+      properties:
+        anchor:
+          type: string
+          const: created_at
+        seconds:
+          type: integer
+      additionalProperties: false
+      required:
+        - anchor
+        - seconds
+      title: ExpiresAfter
+      description: >-
+        Control expiration of uploaded files.
+
+        Params:
+         - anchor, must be "created_at"
+         - seconds, must be int between 3600 and 2592000 (1 hour to 30 days)
+    OpenAIFileDeleteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The file identifier that was deleted
+        object:
+          type: string
+          const: file
+          default: file
+          description: The object type, which is always "file"
+        deleted:
+          type: boolean
+          description: >-
+            Whether the file was successfully deleted
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - deleted
+      title: OpenAIFileDeleteResponse
+      description: >-
+        Response for deleting a file in OpenAI Files API.
+    Response:
+      type: object
+      title: Response
+    OpenAIModel:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          const: model
+          default: model
+        created:
+          type: integer
+        owned_by:
+          type: string
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created
+        - owned_by
+      title: OpenAIModel
+      description: A model from OpenAI.
+    OpenAIListModelsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIModel'
+      additionalProperties: false
+      required:
+        - data
+      title: OpenAIListModelsResponse
+    RunModerationRequest:
+      type: object
+      properties:
+        input:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: >-
+            Input (or inputs) to classify. Can be a single string, an array of strings,
+            or an array of multi-modal input objects similar to other models.
+        model:
+          type: string
+          description: >-
+            The content moderation model you would like to use.
+      additionalProperties: false
+      required:
+        - input
+        - model
+      title: RunModerationRequest
+    ModerationObject:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            The unique identifier for the moderation request.
+        model:
+          type: string
+          description: >-
+            The model used to generate the moderation results.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModerationObjectResults'
+          description: A list of moderation objects
+      additionalProperties: false
+      required:
+        - id
+        - model
+        - results
+      title: ModerationObject
+      description: A moderation object.
+    ModerationObjectResults:
+      type: object
+      properties:
+        flagged:
+          type: boolean
+          description: >-
+            Whether any of the below categories are flagged.
+        categories:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: >-
+            A list of the categories, and whether they are flagged or not.
+        category_applied_input_types:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: >-
+            A list of the categories along with the input type(s) that the score applies
+            to.
+        category_scores:
+          type: object
+          additionalProperties:
+            type: number
+          description: >-
+            A list of the categories along with their scores as predicted by model.
+        user_message:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+      additionalProperties: false
+      required:
+        - flagged
+        - metadata
+      title: ModerationObjectResults
+      description: A moderation object.
+    ListOpenAIResponseObject:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseObjectWithInput'
+          description: >-
+            List of response objects with their input context
+        has_more:
+          type: boolean
+          description: >-
+            Whether there are more results available beyond this page
+        first_id:
+          type: string
+          description: >-
+            Identifier of the first item in this page
+        last_id:
+          type: string
+          description: Identifier of the last item in this page
+        object:
+          type: string
+          const: list
+          default: list
+          description: Object type identifier, always "list"
+      additionalProperties: false
+      required:
+        - data
+        - has_more
+        - first_id
+        - last_id
+        - object
+      title: ListOpenAIResponseObject
+      description: >-
+        Paginated list of OpenAI response objects with navigation metadata.
+    OpenAIResponseAnnotationCitation:
+      type: object
+      properties:
+        type:
+          type: string
+          const: url_citation
+          default: url_citation
+          description: >-
+            Annotation type identifier, always "url_citation"
+        end_index:
+          type: integer
+          description: >-
+            End position of the citation span in the content
+        start_index:
+          type: integer
+          description: >-
+            Start position of the citation span in the content
+        title:
+          type: string
+          description: Title of the referenced web resource
+        url:
+          type: string
+          description: URL of the referenced web resource
+      additionalProperties: false
+      required:
+        - type
+        - end_index
+        - start_index
+        - title
+        - url
+      title: OpenAIResponseAnnotationCitation
+      description: >-
+        URL citation annotation for referencing external web resources.
+    "OpenAIResponseAnnotationContainerFileCitation":
+      type: object
+      properties:
+        type:
+          type: string
+          const: container_file_citation
+          default: container_file_citation
+        container_id:
+          type: string
+        end_index:
+          type: integer
+        file_id:
+          type: string
+        filename:
+          type: string
+        start_index:
+          type: integer
+      additionalProperties: false
+      required:
+        - type
+        - container_id
+        - end_index
+        - file_id
+        - filename
+        - start_index
+      title: >-
+        OpenAIResponseAnnotationContainerFileCitation
+    OpenAIResponseAnnotationFileCitation:
+      type: object
+      properties:
+        type:
+          type: string
+          const: file_citation
+          default: file_citation
+          description: >-
+            Annotation type identifier, always "file_citation"
+        file_id:
+          type: string
+          description: Unique identifier of the referenced file
+        filename:
+          type: string
+          description: Name of the referenced file
+        index:
+          type: integer
+          description: >-
+            Position index of the citation within the content
+      additionalProperties: false
+      required:
+        - type
+        - file_id
+        - filename
+        - index
+      title: OpenAIResponseAnnotationFileCitation
+      description: >-
+        File citation annotation for referencing specific files in response content.
+    OpenAIResponseAnnotationFilePath:
+      type: object
+      properties:
+        type:
+          type: string
+          const: file_path
+          default: file_path
+        file_id:
+          type: string
+        index:
+          type: integer
+      additionalProperties: false
+      required:
+        - type
+        - file_id
+        - index
+      title: OpenAIResponseAnnotationFilePath
+    OpenAIResponseAnnotations:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+        - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+      discriminator:
+        propertyName: type
+        mapping:
+          file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+          url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+          container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+          file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+    OpenAIResponseError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: >-
+            Error code identifying the type of failure
+        message:
+          type: string
+          description: >-
+            Human-readable error message describing the failure
+      additionalProperties: false
+      required:
+        - code
+        - message
+      title: OpenAIResponseError
+      description: >-
+        Error details for failed OpenAI response requests.
+    OpenAIResponseInput:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+        - $ref: '#/components/schemas/OpenAIResponseMessage'
+    "OpenAIResponseInputFunctionToolCallOutput":
+      type: object
+      properties:
+        call_id:
+          type: string
+        output:
+          type: string
+        type:
+          type: string
+          const: function_call_output
+          default: function_call_output
+        id:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+      required:
+        - call_id
+        - output
+        - type
+      title: >-
+        OpenAIResponseInputFunctionToolCallOutput
+      description: >-
+        This represents the output of a function call that gets passed back to the
+        model.
+    OpenAIResponseInputMessageContent:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
+        - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+      discriminator:
+        propertyName: type
+        mapping:
+          input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
+          input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+    OpenAIResponseInputMessageContentImage:
+      type: object
+      properties:
+        detail:
+          oneOf:
+            - type: string
+              const: low
+            - type: string
+              const: high
+            - type: string
+              const: auto
+          default: auto
+          description: >-
+            Level of detail for image processing, can be "low", "high", or "auto"
+        type:
+          type: string
+          const: input_image
+          default: input_image
+          description: >-
+            Content type identifier, always "input_image"
+        image_url:
+          type: string
+          description: (Optional) URL of the image content
+      additionalProperties: false
+      required:
+        - detail
+        - type
+      title: OpenAIResponseInputMessageContentImage
+      description: >-
+        Image content for input messages in OpenAI response format.
+    OpenAIResponseInputMessageContentText:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The text content of the input message
+        type:
+          type: string
+          const: input_text
+          default: input_text
+          description: >-
+            Content type identifier, always "input_text"
+      additionalProperties: false
+      required:
+        - text
+        - type
+      title: OpenAIResponseInputMessageContentText
+      description: >-
+        Text content for input messages in OpenAI response format.
+    OpenAIResponseMCPApprovalRequest:
+      type: object
+      properties:
+        arguments:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        server_label:
+          type: string
+        type:
+          type: string
+          const: mcp_approval_request
+          default: mcp_approval_request
+      additionalProperties: false
+      required:
+        - arguments
+        - id
+        - name
+        - server_label
+        - type
+      title: OpenAIResponseMCPApprovalRequest
+      description: >-
+        A request for human approval of a tool invocation.
+    OpenAIResponseMCPApprovalResponse:
+      type: object
+      properties:
+        approval_request_id:
+          type: string
+        approve:
+          type: boolean
+        type:
+          type: string
+          const: mcp_approval_response
+          default: mcp_approval_response
+        id:
+          type: string
+        reason:
+          type: string
+      additionalProperties: false
+      required:
+        - approval_request_id
+        - approve
+        - type
+      title: OpenAIResponseMCPApprovalResponse
+      description: A response to an MCP approval request.
+    OpenAIResponseMessage:
+      type: object
+      properties:
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIResponseInputMessageContent'
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIResponseOutputMessageContent'
+        role:
+          oneOf:
+            - type: string
+              const: system
+            - type: string
+              const: developer
+            - type: string
+              const: user
+            - type: string
+              const: assistant
+        type:
+          type: string
+          const: message
+          default: message
+        id:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+      required:
+        - content
+        - role
+        - type
+      title: OpenAIResponseMessage
+      description: >-
+        Corresponds to the various Message types in the Responses API. They are all
+        under one type because the Responses API gives them all the same "type" value,
+        and there is no way to tell them apart in certain scenarios.
+    OpenAIResponseObjectWithInput:
+      type: object
+      properties:
+        created_at:
+          type: integer
+          description: >-
+            Unix timestamp when the response was created
+        error:
+          $ref: '#/components/schemas/OpenAIResponseError'
+          description: >-
+            (Optional) Error details if the response generation failed
+        id:
+          type: string
+          description: Unique identifier for this response
+        model:
+          type: string
+          description: Model identifier used for generation
+        object:
+          type: string
+          const: response
+          default: response
+          description: >-
+            Object type identifier, always "response"
+        output:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseOutput'
+          description: >-
+            List of generated output items (messages, tool calls, etc.)
+        parallel_tool_calls:
+          type: boolean
+          default: false
+          description: >-
+            Whether tool calls can be executed in parallel
+        previous_response_id:
+          type: string
+          description: >-
+            (Optional) ID of the previous response in a conversation
+        status:
+          type: string
+          description: >-
+            Current status of the response generation
+        temperature:
+          type: number
+          description: >-
+            (Optional) Sampling temperature used for generation
+        text:
+          $ref: '#/components/schemas/OpenAIResponseText'
+          description: >-
+            Text formatting configuration for the response
+        top_p:
+          type: number
+          description: >-
+            (Optional) Nucleus sampling parameter used for generation
+        truncation:
+          type: string
+          description: >-
+            (Optional) Truncation strategy applied to the response
+        input:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseInput'
+          description: >-
+            List of input items that led to this response
+      additionalProperties: false
+      required:
+        - created_at
+        - id
+        - model
+        - object
+        - output
+        - parallel_tool_calls
+        - status
+        - text
+        - input
+      title: OpenAIResponseObjectWithInput
+      description: >-
+        OpenAI response object extended with input context information.
+    OpenAIResponseOutput:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseMessage'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+      discriminator:
+        propertyName: type
+        mapping:
+          message: '#/components/schemas/OpenAIResponseMessage'
+          web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+          mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+          mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+          mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+    OpenAIResponseOutputMessageContent:
+      type: object
+      properties:
+        text:
+          type: string
+        type:
+          type: string
+          const: output_text
+          default: output_text
+        annotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseAnnotations'
+      additionalProperties: false
+      required:
+        - text
+        - type
+        - annotations
+      title: >-
+        OpenAIResponseOutputMessageContentOutputText
+    "OpenAIResponseOutputMessageFileSearchToolCall":
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this tool call
+        queries:
+          type: array
+          items:
+            type: string
+          description: List of search queries executed
+        status:
+          type: string
+          description: >-
+            Current status of the file search operation
+        type:
+          type: string
+          const: file_search_call
+          default: file_search_call
+          description: >-
+            Tool call type identifier, always "file_search_call"
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              attributes:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: 'null'
+                    - type: boolean
+                    - type: number
+                    - type: string
+                    - type: array
+                    - type: object
+                description: >-
+                  (Optional) Key-value attributes associated with the file
+              file_id:
+                type: string
+                description: >-
+                  Unique identifier of the file containing the result
+              filename:
+                type: string
+                description: Name of the file containing the result
+              score:
+                type: number
+                description: >-
+                  Relevance score for this search result (between 0 and 1)
+              text:
+                type: string
+                description: Text content of the search result
+            additionalProperties: false
+            required:
+              - attributes
+              - file_id
+              - filename
+              - score
+              - text
+            title: >-
+              OpenAIResponseOutputMessageFileSearchToolCallResults
+            description: >-
+              Search results returned by the file search operation.
+          description: >-
+            (Optional) Search results returned by the file search operation
+      additionalProperties: false
+      required:
+        - id
+        - queries
+        - status
+        - type
+      title: >-
+        OpenAIResponseOutputMessageFileSearchToolCall
+      description: >-
+        File search tool call output message for OpenAI responses.
+    "OpenAIResponseOutputMessageFunctionToolCall":
+      type: object
+      properties:
+        call_id:
+          type: string
+          description: Unique identifier for the function call
+        name:
+          type: string
+          description: Name of the function being called
+        arguments:
+          type: string
+          description: >-
+            JSON string containing the function arguments
+        type:
+          type: string
+          const: function_call
+          default: function_call
+          description: >-
+            Tool call type identifier, always "function_call"
+        id:
+          type: string
+          description: >-
+            (Optional) Additional identifier for the tool call
+        status:
+          type: string
+          description: >-
+            (Optional) Current status of the function call execution
+      additionalProperties: false
+      required:
+        - call_id
+        - name
+        - arguments
+        - type
+      title: >-
+        OpenAIResponseOutputMessageFunctionToolCall
+      description: >-
+        Function tool call output message for OpenAI responses.
+    OpenAIResponseOutputMessageMCPCall:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this MCP call
+        type:
+          type: string
+          const: mcp_call
+          default: mcp_call
+          description: >-
+            Tool call type identifier, always "mcp_call"
+        arguments:
+          type: string
+          description: >-
+            JSON string containing the MCP call arguments
+        name:
+          type: string
+          description: Name of the MCP method being called
+        server_label:
+          type: string
+          description: >-
+            Label identifying the MCP server handling the call
+        error:
+          type: string
+          description: >-
+            (Optional) Error message if the MCP call failed
+        output:
+          type: string
+          description: >-
+            (Optional) Output result from the successful MCP call
+      additionalProperties: false
+      required:
+        - id
+        - type
+        - arguments
+        - name
+        - server_label
+      title: OpenAIResponseOutputMessageMCPCall
+      description: >-
+        Model Context Protocol (MCP) call output message for OpenAI responses.
+    OpenAIResponseOutputMessageMCPListTools:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            Unique identifier for this MCP list tools operation
+        type:
+          type: string
+          const: mcp_list_tools
+          default: mcp_list_tools
+          description: >-
+            Tool call type identifier, always "mcp_list_tools"
+        server_label:
+          type: string
+          description: >-
+            Label identifying the MCP server providing the tools
+        tools:
+          type: array
+          items:
+            type: object
+            properties:
+              input_schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: 'null'
+                    - type: boolean
+                    - type: number
+                    - type: string
+                    - type: array
+                    - type: object
+                description: >-
+                  JSON schema defining the tool's input parameters
+              name:
+                type: string
+                description: Name of the tool
+              description:
+                type: string
+                description: >-
+                  (Optional) Description of what the tool does
+            additionalProperties: false
+            required:
+              - input_schema
+              - name
+            title: MCPListToolsTool
+            description: >-
+              Tool definition returned by MCP list tools operation.
+          description: >-
+            List of available tools provided by the MCP server
+      additionalProperties: false
+      required:
+        - id
+        - type
+        - server_label
+        - tools
+      title: OpenAIResponseOutputMessageMCPListTools
+      description: >-
+        MCP list tools output message containing available tools from an MCP server.
+    "OpenAIResponseOutputMessageWebSearchToolCall":
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this tool call
+        status:
+          type: string
+          description: >-
+            Current status of the web search operation
+        type:
+          type: string
+          const: web_search_call
+          default: web_search_call
+          description: >-
+            Tool call type identifier, always "web_search_call"
+      additionalProperties: false
+      required:
+        - id
+        - status
+        - type
+      title: >-
+        OpenAIResponseOutputMessageWebSearchToolCall
+      description: >-
+        Web search tool call output message for OpenAI responses.
+    OpenAIResponseText:
+      type: object
+      properties:
+        format:
+          type: object
+          properties:
+            type:
+              oneOf:
+                - type: string
+                  const: text
+                - type: string
+                  const: json_schema
+                - type: string
+                  const: json_object
+              description: >-
+                Must be "text", "json_schema", or "json_object" to identify the format
+                type
+            name:
+              type: string
+              description: >-
+                The name of the response format. Only used for json_schema.
+            schema:
+              type: object
+              additionalProperties:
+                oneOf:
+                  - type: 'null'
+                  - type: boolean
+                  - type: number
+                  - type: string
+                  - type: array
+                  - type: object
+              description: >-
+                The JSON schema the response should conform to. In a Python SDK, this
+                is often a `pydantic` model. Only used for json_schema.
+            description:
+              type: string
+              description: >-
+                (Optional) A description of the response format. Only used for json_schema.
+            strict:
+              type: boolean
+              description: >-
+                (Optional) Whether to strictly enforce the JSON schema. If true, the
+                response must match the schema exactly. Only used for json_schema.
+          additionalProperties: false
+          required:
+            - type
+          description: >-
+            (Optional) Text format configuration specifying output format requirements
+      additionalProperties: false
+      title: OpenAIResponseText
+      description: >-
+        Text response configuration for OpenAI responses.
+    OpenAIResponseInputTool:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+      discriminator:
+        propertyName: type
+        mapping:
+          web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+          file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+          function: '#/components/schemas/OpenAIResponseInputToolFunction'
+          mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+    OpenAIResponseInputToolFileSearch:
+      type: object
+      properties:
+        type:
+          type: string
+          const: file_search
+          default: file_search
+          description: >-
+            Tool type identifier, always "file_search"
+        vector_store_ids:
+          type: array
+          items:
+            type: string
+          description: >-
+            List of vector store identifiers to search within
+        filters:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Additional filters to apply to the search
+        max_num_results:
+          type: integer
+          default: 10
+          description: >-
+            (Optional) Maximum number of search results to return (1-50)
+        ranking_options:
+          type: object
+          properties:
+            ranker:
+              type: string
+              description: >-
+                (Optional) Name of the ranking algorithm to use
+            score_threshold:
+              type: number
+              default: 0.0
+              description: >-
+                (Optional) Minimum relevance score threshold for results
+          additionalProperties: false
+          description: >-
+            (Optional) Options for ranking and scoring search results
+      additionalProperties: false
+      required:
+        - type
+        - vector_store_ids
+      title: OpenAIResponseInputToolFileSearch
+      description: >-
+        File search tool configuration for OpenAI response inputs.
+    OpenAIResponseInputToolFunction:
+      type: object
+      properties:
+        type:
+          type: string
+          const: function
+          default: function
+          description: Tool type identifier, always "function"
+        name:
+          type: string
+          description: Name of the function that can be called
+        description:
+          type: string
+          description: >-
+            (Optional) Description of what the function does
+        parameters:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) JSON schema defining the function's parameters
+        strict:
+          type: boolean
+          description: >-
+            (Optional) Whether to enforce strict parameter validation
+      additionalProperties: false
+      required:
+        - type
+        - name
+      title: OpenAIResponseInputToolFunction
+      description: >-
+        Function tool configuration for OpenAI response inputs.
+    OpenAIResponseInputToolMCP:
+      type: object
+      properties:
+        type:
+          type: string
+          const: mcp
+          default: mcp
+          description: Tool type identifier, always "mcp"
+        server_label:
+          type: string
+          description: Label to identify this MCP server
+        server_url:
+          type: string
+          description: URL endpoint of the MCP server
+        headers:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) HTTP headers to include when connecting to the server
+        require_approval:
+          oneOf:
+            - type: string
+              const: always
+            - type: string
+              const: never
+            - type: object
+              properties:
+                always:
+                  type: array
+                  items:
+                    type: string
+                  description: >-
+                    (Optional) List of tool names that always require approval
+                never:
+                  type: array
+                  items:
+                    type: string
+                  description: >-
+                    (Optional) List of tool names that never require approval
+              additionalProperties: false
+              title: ApprovalFilter
+              description: >-
+                Filter configuration for MCP tool approval requirements.
+          default: never
+          description: >-
+            Approval requirement for tool calls ("always", "never", or filter)
+        allowed_tools:
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: object
+              properties:
+                tool_names:
+                  type: array
+                  items:
+                    type: string
+                  description: >-
+                    (Optional) List of specific tool names that are allowed
+              additionalProperties: false
+              title: AllowedToolsFilter
+              description: >-
+                Filter configuration for restricting which MCP tools can be used.
+          description: >-
+            (Optional) Restriction on which tools can be used from this server
+      additionalProperties: false
+      required:
+        - type
+        - server_label
+        - server_url
+        - require_approval
+      title: OpenAIResponseInputToolMCP
+      description: >-
+        Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
+    OpenAIResponseInputToolWebSearch:
+      type: object
+      properties:
+        type:
+          oneOf:
+            - type: string
+              const: web_search
+            - type: string
+              const: web_search_preview
+            - type: string
+              const: web_search_preview_2025_03_11
+          default: web_search
+          description: Web search tool type variant to use
+        search_context_size:
+          type: string
+          default: medium
+          description: >-
+            (Optional) Size of search context, must be "low", "medium", or "high"
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIResponseInputToolWebSearch
+      description: >-
+        Web search tool configuration for OpenAI response inputs.
+    CreateOpenaiResponseRequest:
+      type: object
+      properties:
+        input:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIResponseInput'
+          description: Input message(s) to create the response.
+        model:
+          type: string
+          description: The underlying LLM used for completions.
+        instructions:
+          type: string
+        previous_response_id:
+          type: string
+          description: >-
+            (Optional) if specified, the new response will be a continuation of the
+            previous response. This can be used to easily fork-off new responses from
+            existing responses.
+        store:
+          type: boolean
+        stream:
+          type: boolean
+        temperature:
+          type: number
+        text:
+          $ref: '#/components/schemas/OpenAIResponseText'
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseInputTool'
+        include:
+          type: array
+          items:
+            type: string
+          description: >-
+            (Optional) Additional fields to include in the response.
+        max_infer_iters:
+          type: integer
+      additionalProperties: false
+      required:
+        - input
+        - model
+      title: CreateOpenaiResponseRequest
+    OpenAIResponseObject:
+      type: object
+      properties:
+        created_at:
+          type: integer
+          description: >-
+            Unix timestamp when the response was created
+        error:
+          $ref: '#/components/schemas/OpenAIResponseError'
+          description: >-
+            (Optional) Error details if the response generation failed
+        id:
+          type: string
+          description: Unique identifier for this response
+        model:
+          type: string
+          description: Model identifier used for generation
+        object:
+          type: string
+          const: response
+          default: response
+          description: >-
+            Object type identifier, always "response"
+        output:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseOutput'
+          description: >-
+            List of generated output items (messages, tool calls, etc.)
+        parallel_tool_calls:
+          type: boolean
+          default: false
+          description: >-
+            Whether tool calls can be executed in parallel
+        previous_response_id:
+          type: string
+          description: >-
+            (Optional) ID of the previous response in a conversation
+        status:
+          type: string
+          description: >-
+            Current status of the response generation
+        temperature:
+          type: number
+          description: >-
+            (Optional) Sampling temperature used for generation
+        text:
+          $ref: '#/components/schemas/OpenAIResponseText'
+          description: >-
+            Text formatting configuration for the response
+        top_p:
+          type: number
+          description: >-
+            (Optional) Nucleus sampling parameter used for generation
+        truncation:
+          type: string
+          description: >-
+            (Optional) Truncation strategy applied to the response
+      additionalProperties: false
+      required:
+        - created_at
+        - id
+        - model
+        - object
+        - output
+        - parallel_tool_calls
+        - status
+        - text
+      title: OpenAIResponseObject
+      description: >-
+        Complete OpenAI response object containing generation results and metadata.
+    OpenAIResponseContentPartOutputText:
+      type: object
+      properties:
+        type:
+          type: string
+          const: output_text
+          default: output_text
+        text:
+          type: string
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: OpenAIResponseContentPartOutputText
+    OpenAIResponseContentPartRefusal:
+      type: object
+      properties:
+        type:
+          type: string
+          const: refusal
+          default: refusal
+        refusal:
+          type: string
+      additionalProperties: false
+      required:
+        - type
+        - refusal
+      title: OpenAIResponseContentPartRefusal
+    OpenAIResponseObjectStream:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallInProgress'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallSearching'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallCompleted'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsInProgress'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsFailed'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsCompleted'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallInProgress'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallFailed'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
+      discriminator:
+        propertyName: type
+        mapping:
+          response.created: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
+          response.output_item.added: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded'
+          response.output_item.done: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone'
+          response.output_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta'
+          response.output_text.done: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDone'
+          response.function_call_arguments.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta'
+          response.function_call_arguments.done: '#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone'
+          response.web_search_call.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallInProgress'
+          response.web_search_call.searching: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallSearching'
+          response.web_search_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallCompleted'
+          response.mcp_list_tools.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsInProgress'
+          response.mcp_list_tools.failed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsFailed'
+          response.mcp_list_tools.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsCompleted'
+          response.mcp_call.arguments.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta'
+          response.mcp_call.arguments.done: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDone'
+          response.mcp_call.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallInProgress'
+          response.mcp_call.failed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallFailed'
+          response.mcp_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
+          response.content_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
+          response.content_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+          response.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
+    "OpenAIResponseObjectStreamResponseCompleted":
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: The completed response object
+        type:
+          type: string
+          const: response.completed
+          default: response.completed
+          description: >-
+            Event type identifier, always "response.completed"
+      additionalProperties: false
+      required:
+        - response
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseCompleted
+      description: >-
+        Streaming event indicating a response has been completed.
+    "OpenAIResponseObjectStreamResponseContentPartAdded":
+      type: object
+      properties:
+        response_id:
+          type: string
+          description: >-
+            Unique identifier of the response containing this content
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the output item containing this content part
+        part:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
+            - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+          discriminator:
+            propertyName: type
+            mapping:
+              output_text: '#/components/schemas/OpenAIResponseContentPartOutputText'
+              refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+          description: The content part that was added
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.content_part.added
+          default: response.content_part.added
+          description: >-
+            Event type identifier, always "response.content_part.added"
+      additionalProperties: false
+      required:
+        - response_id
+        - item_id
+        - part
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseContentPartAdded
+      description: >-
+        Streaming event for when a new content part is added to a response item.
+    "OpenAIResponseObjectStreamResponseContentPartDone":
+      type: object
+      properties:
+        response_id:
+          type: string
+          description: >-
+            Unique identifier of the response containing this content
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the output item containing this content part
+        part:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
+            - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+          discriminator:
+            propertyName: type
+            mapping:
+              output_text: '#/components/schemas/OpenAIResponseContentPartOutputText'
+              refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+          description: The completed content part
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.content_part.done
+          default: response.content_part.done
+          description: >-
+            Event type identifier, always "response.content_part.done"
+      additionalProperties: false
+      required:
+        - response_id
+        - item_id
+        - part
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseContentPartDone
+      description: >-
+        Streaming event for when a content part is completed.
+    "OpenAIResponseObjectStreamResponseCreated":
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: The newly created response object
+        type:
+          type: string
+          const: response.created
+          default: response.created
+          description: >-
+            Event type identifier, always "response.created"
+      additionalProperties: false
+      required:
+        - response
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseCreated
+      description: >-
+        Streaming event indicating a new response has been created.
+    "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta":
+      type: object
+      properties:
+        delta:
+          type: string
+          description: >-
+            Incremental function call arguments being added
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the function call being updated
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.function_call_arguments.delta
+          default: response.function_call_arguments.delta
+          description: >-
+            Event type identifier, always "response.function_call_arguments.delta"
+      additionalProperties: false
+      required:
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta
+      description: >-
+        Streaming event for incremental function call argument updates.
+    "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone":
+      type: object
+      properties:
+        arguments:
+          type: string
+          description: >-
+            Final complete arguments JSON string for the function call
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed function call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.function_call_arguments.done
+          default: response.function_call_arguments.done
+          description: >-
+            Event type identifier, always "response.function_call_arguments.done"
+      additionalProperties: false
+      required:
+        - arguments
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone
+      description: >-
+        Streaming event for when function call arguments are completed.
+    "OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta":
+      type: object
+      properties:
+        delta:
+          type: string
+        item_id:
+          type: string
+        output_index:
+          type: integer
+        sequence_number:
+          type: integer
+        type:
+          type: string
+          const: response.mcp_call.arguments.delta
+          default: response.mcp_call.arguments.delta
+      additionalProperties: false
+      required:
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta
+    "OpenAIResponseObjectStreamResponseMcpCallArgumentsDone":
+      type: object
+      properties:
+        arguments:
+          type: string
+        item_id:
+          type: string
+        output_index:
+          type: integer
+        sequence_number:
+          type: integer
+        type:
+          type: string
+          const: response.mcp_call.arguments.done
+          default: response.mcp_call.arguments.done
+      additionalProperties: false
+      required:
+        - arguments
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpCallArgumentsDone
+    "OpenAIResponseObjectStreamResponseMcpCallCompleted":
+      type: object
+      properties:
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.mcp_call.completed
+          default: response.mcp_call.completed
+          description: >-
+            Event type identifier, always "response.mcp_call.completed"
+      additionalProperties: false
+      required:
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpCallCompleted
+      description: Streaming event for completed MCP calls.
+    "OpenAIResponseObjectStreamResponseMcpCallFailed":
+      type: object
+      properties:
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.mcp_call.failed
+          default: response.mcp_call.failed
+          description: >-
+            Event type identifier, always "response.mcp_call.failed"
+      additionalProperties: false
+      required:
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpCallFailed
+      description: Streaming event for failed MCP calls.
+    "OpenAIResponseObjectStreamResponseMcpCallInProgress":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the MCP call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.mcp_call.in_progress
+          default: response.mcp_call.in_progress
+          description: >-
+            Event type identifier, always "response.mcp_call.in_progress"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpCallInProgress
+      description: >-
+        Streaming event for MCP calls in progress.
+    "OpenAIResponseObjectStreamResponseMcpListToolsCompleted":
+      type: object
+      properties:
+        sequence_number:
+          type: integer
+        type:
+          type: string
+          const: response.mcp_list_tools.completed
+          default: response.mcp_list_tools.completed
+      additionalProperties: false
+      required:
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpListToolsCompleted
+    "OpenAIResponseObjectStreamResponseMcpListToolsFailed":
+      type: object
+      properties:
+        sequence_number:
+          type: integer
+        type:
+          type: string
+          const: response.mcp_list_tools.failed
+          default: response.mcp_list_tools.failed
+      additionalProperties: false
+      required:
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpListToolsFailed
+    "OpenAIResponseObjectStreamResponseMcpListToolsInProgress":
+      type: object
+      properties:
+        sequence_number:
+          type: integer
+        type:
+          type: string
+          const: response.mcp_list_tools.in_progress
+          default: response.mcp_list_tools.in_progress
+      additionalProperties: false
+      required:
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseMcpListToolsInProgress
+    "OpenAIResponseObjectStreamResponseOutputItemAdded":
+      type: object
+      properties:
+        response_id:
+          type: string
+          description: >-
+            Unique identifier of the response containing this output
+        item:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseMessage'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          discriminator:
+            propertyName: type
+            mapping:
+              message: '#/components/schemas/OpenAIResponseMessage'
+              web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+              function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+              mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+              mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          description: >-
+            The output item that was added (message, tool call, etc.)
+        output_index:
+          type: integer
+          description: >-
+            Index position of this item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.output_item.added
+          default: response.output_item.added
+          description: >-
+            Event type identifier, always "response.output_item.added"
+      additionalProperties: false
+      required:
+        - response_id
+        - item
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseOutputItemAdded
+      description: >-
+        Streaming event for when a new output item is added to the response.
+    "OpenAIResponseObjectStreamResponseOutputItemDone":
+      type: object
+      properties:
+        response_id:
+          type: string
+          description: >-
+            Unique identifier of the response containing this output
+        item:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseMessage'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          discriminator:
+            propertyName: type
+            mapping:
+              message: '#/components/schemas/OpenAIResponseMessage'
+              web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+              function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+              mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+              mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          description: >-
+            The completed output item (message, tool call, etc.)
+        output_index:
+          type: integer
+          description: >-
+            Index position of this item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.output_item.done
+          default: response.output_item.done
+          description: >-
+            Event type identifier, always "response.output_item.done"
+      additionalProperties: false
+      required:
+        - response_id
+        - item
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseOutputItemDone
+      description: >-
+        Streaming event for when an output item is completed.
+    "OpenAIResponseObjectStreamResponseOutputTextDelta":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position within the text content
+        delta:
+          type: string
+          description: Incremental text content being added
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the output item being updated
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.output_text.delta
+          default: response.output_text.delta
+          description: >-
+            Event type identifier, always "response.output_text.delta"
+      additionalProperties: false
+      required:
+        - content_index
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseOutputTextDelta
+      description: >-
+        Streaming event for incremental text content updates.
+    "OpenAIResponseObjectStreamResponseOutputTextDone":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position within the text content
+        text:
+          type: string
+          description: >-
+            Final complete text content of the output item
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.output_text.done
+          default: response.output_text.done
+          description: >-
+            Event type identifier, always "response.output_text.done"
+      additionalProperties: false
+      required:
+        - content_index
+        - text
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseOutputTextDone
+      description: >-
+        Streaming event for when text output is completed.
+    "OpenAIResponseObjectStreamResponseWebSearchCallCompleted":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed web search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.web_search_call.completed
+          default: response.web_search_call.completed
+          description: >-
+            Event type identifier, always "response.web_search_call.completed"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseWebSearchCallCompleted
+      description: >-
+        Streaming event for completed web search calls.
+    "OpenAIResponseObjectStreamResponseWebSearchCallInProgress":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the web search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.web_search_call.in_progress
+          default: response.web_search_call.in_progress
+          description: >-
+            Event type identifier, always "response.web_search_call.in_progress"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseWebSearchCallInProgress
+      description: >-
+        Streaming event for web search calls in progress.
+    "OpenAIResponseObjectStreamResponseWebSearchCallSearching":
+      type: object
+      properties:
+        item_id:
+          type: string
+        output_index:
+          type: integer
+        sequence_number:
+          type: integer
+        type:
+          type: string
+          const: response.web_search_call.searching
+          default: response.web_search_call.searching
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseWebSearchCallSearching
+    ListOpenaiResponsesRequest:
+      type: object
+      properties:
+        after:
+          type: string
+          description: The ID of the last response to return.
+        limit:
+          type: integer
+          description: The number of responses to return.
+        model:
+          type: string
+          description: The model to filter responses by.
+        order:
+          type: string
+          enum:
+            - asc
+            - desc
+          description: >-
+            The order to sort responses by when sorted by created_at ('asc' or 'desc').
+      additionalProperties: false
+      title: ListOpenaiResponsesRequest
+    OpenAIDeleteResponseObject:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            Unique identifier of the deleted response
+        object:
+          type: string
+          const: response
+          default: response
+          description: >-
+            Object type identifier, always "response"
+        deleted:
+          type: boolean
+          default: true
+          description: Deletion confirmation flag, always True
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - deleted
+      title: OpenAIDeleteResponseObject
+      description: >-
+        Response object confirming deletion of an OpenAI response.
+    ListOpenAIResponseInputItem:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseInput'
+          description: List of input items
+        object:
+          type: string
+          const: list
+          default: list
+          description: Object type identifier, always "list"
+      additionalProperties: false
+      required:
+        - data
+        - object
+      title: ListOpenAIResponseInputItem
+      description: >-
+        List container for OpenAI response input items.
+    VectorStoreFileCounts:
+      type: object
+      properties:
+        completed:
+          type: integer
+          description: >-
+            Number of files that have been successfully processed
+        cancelled:
+          type: integer
+          description: >-
+            Number of files that had their processing cancelled
+        failed:
+          type: integer
+          description: Number of files that failed to process
+        in_progress:
+          type: integer
+          description: >-
+            Number of files currently being processed
+        total:
+          type: integer
+          description: >-
+            Total number of files in the vector store
+      additionalProperties: false
+      required:
+        - completed
+        - cancelled
+        - failed
+        - in_progress
+        - total
+      title: VectorStoreFileCounts
+      description: >-
+        File processing status counts for a vector store.
+    VectorStoreListResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          default: list
+          description: Object type identifier, always "list"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VectorStoreObject'
+          description: List of vector store objects
+        first_id:
+          type: string
+          description: >-
+            (Optional) ID of the first vector store in the list for pagination
+        last_id:
+          type: string
+          description: >-
+            (Optional) ID of the last vector store in the list for pagination
+        has_more:
+          type: boolean
+          default: false
+          description: >-
+            Whether there are more vector stores available beyond this page
+      additionalProperties: false
+      required:
+        - object
+        - data
+        - has_more
+      title: VectorStoreListResponse
+      description: Response from listing vector stores.
+    VectorStoreObject:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the vector store
+        object:
+          type: string
+          default: vector_store
+          description: >-
+            Object type identifier, always "vector_store"
+        created_at:
+          type: integer
+          description: >-
+            Timestamp when the vector store was created
+        name:
+          type: string
+          description: (Optional) Name of the vector store
+        usage_bytes:
+          type: integer
+          default: 0
+          description: >-
+            Storage space used by the vector store in bytes
+        file_counts:
+          $ref: '#/components/schemas/VectorStoreFileCounts'
+          description: >-
+            File processing status counts for the vector store
+        status:
+          type: string
+          default: completed
+          description: Current status of the vector store
+        expires_after:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Expiration policy for the vector store
+        expires_at:
+          type: integer
+          description: >-
+            (Optional) Timestamp when the vector store will expire
+        last_active_at:
+          type: integer
+          description: >-
+            (Optional) Timestamp of last activity on the vector store
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            Set of key-value pairs that can be attached to the vector store
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created_at
+        - usage_bytes
+        - file_counts
+        - status
+        - metadata
+      title: VectorStoreObject
+      description: OpenAI Vector Store object.
+    OpenaiCreateVectorStoreRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: A name for the vector store.
+        file_ids:
+          type: array
+          items:
+            type: string
+          description: >-
+            A list of File IDs that the vector store should use. Useful for tools
+            like `file_search` that can access files.
+        expires_after:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The expiration policy for a vector store.
+        chunking_strategy:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The chunking strategy used to chunk the file(s). If not set, will use
+            the `auto` strategy.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            Set of 16 key-value pairs that can be attached to an object.
+        embedding_model:
+          type: string
+          description: >-
+            The embedding model to use for this vector store.
+        embedding_dimension:
+          type: integer
+          description: >-
+            The dimension of the embedding vectors (default: 384).
+        provider_id:
+          type: string
+          description: >-
+            The ID of the provider to use for this vector store.
+      additionalProperties: false
+      title: OpenaiCreateVectorStoreRequest
+    OpenaiUpdateVectorStoreRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the vector store.
+        expires_after:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The expiration policy for a vector store.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            Set of 16 key-value pairs that can be attached to an object.
+      additionalProperties: false
+      title: OpenaiUpdateVectorStoreRequest
+    VectorStoreDeleteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            Unique identifier of the deleted vector store
+        object:
+          type: string
+          default: vector_store.deleted
+          description: >-
+            Object type identifier for the deletion response
+        deleted:
+          type: boolean
+          default: true
+          description: >-
+            Whether the deletion operation was successful
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - deleted
+      title: VectorStoreDeleteResponse
+      description: Response from deleting a vector store.
+    VectorStoreChunkingStrategy:
+      oneOf:
+        - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+        - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+      discriminator:
+        propertyName: type
+        mapping:
+          auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+          static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+    VectorStoreChunkingStrategyAuto:
+      type: object
+      properties:
+        type:
+          type: string
+          const: auto
+          default: auto
+          description: >-
+            Strategy type, always "auto" for automatic chunking
+      additionalProperties: false
+      required:
+        - type
+      title: VectorStoreChunkingStrategyAuto
+      description: >-
+        Automatic chunking strategy for vector store files.
+    VectorStoreChunkingStrategyStatic:
+      type: object
+      properties:
+        type:
+          type: string
+          const: static
+          default: static
+          description: >-
+            Strategy type, always "static" for static chunking
+        static:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategyStaticConfig'
+          description: >-
+            Configuration parameters for the static chunking strategy
+      additionalProperties: false
+      required:
+        - type
+        - static
+      title: VectorStoreChunkingStrategyStatic
+      description: >-
+        Static chunking strategy with configurable parameters.
+    VectorStoreChunkingStrategyStaticConfig:
+      type: object
+      properties:
+        chunk_overlap_tokens:
+          type: integer
+          default: 400
+          description: >-
+            Number of tokens to overlap between adjacent chunks
+        max_chunk_size_tokens:
+          type: integer
+          default: 800
+          description: >-
+            Maximum number of tokens per chunk, must be between 100 and 4096
+      additionalProperties: false
+      required:
+        - chunk_overlap_tokens
+        - max_chunk_size_tokens
+      title: VectorStoreChunkingStrategyStaticConfig
+      description: >-
+        Configuration for static chunking strategy.
+    OpenaiCreateVectorStoreFileBatchRequest:
+      type: object
+      properties:
+        file_ids:
+          type: array
+          items:
+            type: string
+          description: >-
+            A list of File IDs that the vector store should use.
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Key-value attributes to store with the files.
+        chunking_strategy:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategy'
+          description: >-
+            (Optional) The chunking strategy used to chunk the file(s). Defaults to
+            auto.
+      additionalProperties: false
+      required:
+        - file_ids
+      title: OpenaiCreateVectorStoreFileBatchRequest
+    VectorStoreFileBatchObject:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the file batch
+        object:
+          type: string
+          default: vector_store.file_batch
+          description: >-
+            Object type identifier, always "vector_store.file_batch"
+        created_at:
+          type: integer
+          description: >-
+            Timestamp when the file batch was created
+        vector_store_id:
+          type: string
+          description: >-
+            ID of the vector store containing the file batch
+        status:
+          $ref: '#/components/schemas/VectorStoreFileStatus'
+          description: >-
+            Current processing status of the file batch
+        file_counts:
+          $ref: '#/components/schemas/VectorStoreFileCounts'
+          description: >-
+            File processing status counts for the batch
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created_at
+        - vector_store_id
+        - status
+        - file_counts
+      title: VectorStoreFileBatchObject
+      description: OpenAI Vector Store File Batch object.
+    VectorStoreFileStatus:
+      oneOf:
+        - type: string
+          const: completed
+        - type: string
+          const: in_progress
+        - type: string
+          const: cancelled
+        - type: string
+          const: failed
+    VectorStoreFileLastError:
+      type: object
+      properties:
+        code:
+          oneOf:
+            - type: string
+              const: server_error
+            - type: string
+              const: rate_limit_exceeded
+          description: >-
+            Error code indicating the type of failure
+        message:
+          type: string
+          description: >-
+            Human-readable error message describing the failure
+      additionalProperties: false
+      required:
+        - code
+        - message
+      title: VectorStoreFileLastError
+      description: >-
+        Error information for failed vector store file processing.
+    VectorStoreFileObject:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the file
+        object:
+          type: string
+          default: vector_store.file
+          description: >-
+            Object type identifier, always "vector_store.file"
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            Key-value attributes associated with the file
+        chunking_strategy:
+          oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+          discriminator:
+            propertyName: type
+            mapping:
+              auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+          description: >-
+            Strategy used for splitting the file into chunks
+        created_at:
+          type: integer
+          description: >-
+            Timestamp when the file was added to the vector store
+        last_error:
+          $ref: '#/components/schemas/VectorStoreFileLastError'
+          description: >-
+            (Optional) Error information if file processing failed
+        status:
+          $ref: '#/components/schemas/VectorStoreFileStatus'
+          description: Current processing status of the file
+        usage_bytes:
+          type: integer
+          default: 0
+          description: Storage space used by this file in bytes
+        vector_store_id:
+          type: string
+          description: >-
+            ID of the vector store containing this file
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - attributes
+        - chunking_strategy
+        - created_at
+        - status
+        - usage_bytes
+        - vector_store_id
+      title: VectorStoreFileObject
+      description: OpenAI Vector Store File object.
+    VectorStoreFilesListInBatchResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          default: list
+          description: Object type identifier, always "list"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VectorStoreFileObject'
+          description: >-
+            List of vector store file objects in the batch
+        first_id:
+          type: string
+          description: >-
+            (Optional) ID of the first file in the list for pagination
+        last_id:
+          type: string
+          description: >-
+            (Optional) ID of the last file in the list for pagination
+        has_more:
+          type: boolean
+          default: false
+          description: >-
+            Whether there are more files available beyond this page
+      additionalProperties: false
+      required:
+        - object
+        - data
+        - has_more
+      title: VectorStoreFilesListInBatchResponse
+      description: >-
+        Response from listing files in a vector store file batch.
+    VectorStoreListFilesResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          default: list
+          description: Object type identifier, always "list"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VectorStoreFileObject'
+          description: List of vector store file objects
+        first_id:
+          type: string
+          description: >-
+            (Optional) ID of the first file in the list for pagination
+        last_id:
+          type: string
+          description: >-
+            (Optional) ID of the last file in the list for pagination
+        has_more:
+          type: boolean
+          default: false
+          description: >-
+            Whether there are more files available beyond this page
+      additionalProperties: false
+      required:
+        - object
+        - data
+        - has_more
+      title: VectorStoreListFilesResponse
+      description: >-
+        Response from listing files in a vector store.
+    OpenaiAttachFileToVectorStoreRequest:
+      type: object
+      properties:
+        file_id:
+          type: string
+          description: >-
+            The ID of the file to attach to the vector store.
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The key-value attributes stored with the file, which can be used for filtering.
+        chunking_strategy:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategy'
+          description: >-
+            The chunking strategy to use for the file.
+      additionalProperties: false
+      required:
+        - file_id
+      title: OpenaiAttachFileToVectorStoreRequest
+    OpenaiUpdateVectorStoreFileRequest:
+      type: object
+      properties:
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The updated key-value attributes to store with the file.
+      additionalProperties: false
+      required:
+        - attributes
+      title: OpenaiUpdateVectorStoreFileRequest
+    VectorStoreFileDeleteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the deleted file
+        object:
+          type: string
+          default: vector_store.file.deleted
+          description: >-
+            Object type identifier for the deletion response
+        deleted:
+          type: boolean
+          default: true
+          description: >-
+            Whether the deletion operation was successful
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - deleted
+      title: VectorStoreFileDeleteResponse
+      description: >-
+        Response from deleting a vector store file.
+    VectorStoreContent:
+      type: object
+      properties:
+        type:
+          type: string
+          const: text
+          description: >-
+            Content type, currently only "text" is supported
+        text:
+          type: string
+          description: The actual text content
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: VectorStoreContent
+      description: >-
+        Content item from a vector store file or search result.
+    VectorStoreFileContentsResponse:
+      type: object
+      properties:
+        file_id:
+          type: string
+          description: Unique identifier for the file
+        filename:
+          type: string
+          description: Name of the file
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            Key-value attributes associated with the file
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/VectorStoreContent'
+          description: List of content items from the file
+      additionalProperties: false
+      required:
+        - file_id
+        - filename
+        - attributes
+        - content
+      title: VectorStoreFileContentsResponse
+      description: >-
+        Response from retrieving the contents of a vector store file.
+    OpenaiSearchVectorStoreRequest:
+      type: object
+      properties:
+        query:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: >-
+            The query string or array for performing the search.
+        filters:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            Filters based on file attributes to narrow the search results.
+        max_num_results:
+          type: integer
+          description: >-
+            Maximum number of results to return (1 to 50 inclusive, default 10).
+        ranking_options:
+          type: object
+          properties:
+            ranker:
+              type: string
+              description: >-
+                (Optional) Name of the ranking algorithm to use
+            score_threshold:
+              type: number
+              default: 0.0
+              description: >-
+                (Optional) Minimum relevance score threshold for results
+          additionalProperties: false
+          description: >-
+            Ranking options for fine-tuning the search results.
+        rewrite_query:
+          type: boolean
+          description: >-
+            Whether to rewrite the natural language query for vector search (default
+            false)
+        search_mode:
+          type: string
+          description: >-
+            The search mode to use - "keyword", "vector", or "hybrid" (default "vector")
+      additionalProperties: false
+      required:
+        - query
+      title: OpenaiSearchVectorStoreRequest
+    VectorStoreSearchResponse:
+      type: object
+      properties:
+        file_id:
+          type: string
+          description: >-
+            Unique identifier of the file containing the result
+        filename:
+          type: string
+          description: Name of the file containing the result
+        score:
+          type: number
+          description: Relevance score for this search result
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+          description: >-
+            (Optional) Key-value attributes associated with the file
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/VectorStoreContent'
+          description: >-
+            List of content items matching the search query
+      additionalProperties: false
+      required:
+        - file_id
+        - filename
+        - score
+        - content
+      title: VectorStoreSearchResponse
+      description: Response from searching a vector store.
+    VectorStoreSearchResponsePage:
+      type: object
+      properties:
+        object:
+          type: string
+          default: vector_store.search_results.page
+          description: >-
+            Object type identifier for the search results page
+        search_query:
+          type: string
+          description: >-
+            The original search query that was executed
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VectorStoreSearchResponse'
+          description: List of search result objects
+        has_more:
+          type: boolean
+          default: false
+          description: >-
+            Whether there are more results available beyond this page
+        next_page:
+          type: string
+          description: >-
+            (Optional) Token for retrieving the next page of results
+      additionalProperties: false
+      required:
+        - object
+        - search_query
+        - data
+        - has_more
+      title: VectorStoreSearchResponsePage
+      description: >-
+        Paginated response from searching a vector store.
     Checkpoint:
       type: object
       properties:
@@ -4643,9 +10053,29 @@ tags:
     description: ''
     x-displayName: >-
       Llama Stack Evaluation API for running evaluations on model and agent candidates.
+  - name: Files
+    description: ''
+  - name: Inference
+    description: >-
+      This API provides the raw interface to the underlying models. Two kinds of models
+      are supported:
+
+      - LLM models: these models generate "raw" and "chat" (conversational) completions.
+
+      - Embedding models: these models generate embeddings to be used for semantic
+      search.
+    x-displayName: >-
+      Llama Stack Inference API for generating completions, chat completions, and
+      embeddings.
+  - name: Models
+    description: ''
   - name: PostTraining (Coming Soon)
     description: ''
+  - name: Safety
+    description: ''
   - name: Telemetry
+    description: ''
+  - name: VectorIO
     description: ''
 x-tagGroups:
   - name: Operations
@@ -4655,5 +10085,10 @@ x-tagGroups:
       - DatasetIO
       - Datasets
       - Eval
+      - Files
+      - Inference
+      - Models
       - PostTraining (Coming Soon)
+      - Safety
       - Telemetry
+      - VectorIO
