@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 type BatchSpanProcessor = Literal["batch"]
 type SimpleSpanProcessor = Literal["simple"]
 
+
 class OTelTelemetryConfig(BaseModel):
     """
     The configuration for the OpenTelemetry telemetry provider.
