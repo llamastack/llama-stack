@@ -96,6 +96,7 @@ jobs:
 
       # Verify API specs exist for conformance testing
       - name: Check API Specs
+        if: steps.skip-check.outputs.skip != 'true'
         run: |
           echo "Checking for API specification files..."
 
@@ -134,10 +135,10 @@ jobs:
       - name: Run OpenAPI Breaking Change Diff
         if: steps.skip-check.outputs.skip != 'true'
         run: |
-          oasdiff breaking --fail-on ERR base/docs/static/llama-stack-spec.yaml docs/static/llama-stack-spec.yaml --match-path '^/v1/'
+          oasdiff breaking --fail-on ERR $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
 
       # Report when test is skipped
       - name: Report skip reason
         if: steps.skip-check.outputs.skip == 'true'
         run: |
-          oasdiff breaking --fail-on ERR $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
+          echo "Conformance test skipped due to breaking change indicator"
