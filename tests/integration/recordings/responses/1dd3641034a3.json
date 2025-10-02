@@ -15,15 +15,10 @@
           "content": "What is the boiling point of the liquid polyjuice in celsius?"
         }
       ],
-      "max_tokens": 0,
+      "max_tokens": 512,
       "stream": true,
       "temperature": 0.0001,
-      "tool_choice": {
-        "type": "function",
-        "function": {
-          "name": "get_boiling_point"
-        }
-      },
+      "tool_choice": "auto",
       "tools": [
         {
           "type": "function",
@@ -60,7 +55,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-726",
+          "id": "chatcmpl-9",
           "choices": [
             {
               "delta": {
@@ -71,7 +66,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_26xsv4bs",
+                    "id": "call_88k1yds9",
                     "function": {
                       "arguments": "{\"celcius\":true,\"liquid_name\":\"polyjuice\"}",
                       "name": "get_boiling_point"
@@ -85,7 +80,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759368387,
+          "created": 1759427014,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -96,7 +91,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-726",
+          "id": "chatcmpl-9",
           "choices": [
             {
               "delta": {
@@ -111,7 +106,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759368387,
+          "created": 1759427014,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

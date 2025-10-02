@@ -816,7 +816,7 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/openai/v1/responses", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses", method="GET", level=LLAMA_STACK_API_V1)
     async def list_openai_responses(
         self,
