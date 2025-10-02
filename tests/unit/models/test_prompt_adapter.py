@@ -143,7 +143,7 @@ async def test_completion_message_encoding():
                 tool_calls=[
                     ToolCall(
                         tool_name="custom1",
-                        arguments={"param1": "value1"},
+                        arguments='{"param1": "value1"}',  # arguments must be a JSON string
                         call_id="123",
                     )
                 ],

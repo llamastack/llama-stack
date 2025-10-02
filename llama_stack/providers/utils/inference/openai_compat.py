@@ -635,7 +635,7 @@ async def convert_message_to_openai_dict_new(
                 id=tool.call_id,
                 function=OpenAIFunction(
                     name=(tool.tool_name if not isinstance(tool.tool_name, BuiltinTool) else tool.tool_name.value),
-                    arguments=json.dumps(tool.arguments),
+                    arguments=tool.arguments,  # Already a JSON string, don't double-encode
                 ),
                 type="function",
             )
