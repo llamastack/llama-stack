@@ -24,11 +24,7 @@ from llama_stack.apis.inference import (
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
     CompletionMessage,
-    CompletionRequest,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
     InferenceProvider,
-    InterleavedContent,
     LogProbConfig,
     Message,
     ResponseFormat,
@@ -59,10 +55,8 @@ from llama_stack.providers.utils.inference.model_registry import (
 )
 from llama_stack.providers.utils.inference.openai_compat import (
     OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompletionToLlamaStackMixin,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
-    augment_content_with_response_format_prompt,
     chat_completion_request_to_messages,
     convert_request_to_raw,
 )
@@ -82,7 +76,6 @@ def llama_builder_fn(config: MetaReferenceInferenceConfig, model_id: str, llama_
 
 
 class MetaReferenceInferenceImpl(
-    OpenAICompletionToLlamaStackMixin,
     OpenAIChatCompletionToLlamaStackMixin,
     SentenceTransformerEmbeddingMixin,
     InferenceProvider,
@@ -99,6 +92,9 @@ class MetaReferenceInferenceImpl(
     async def shutdown(self) -> None:
         if self.config.create_distributed_process_group:
             self.generator.stop()
+
+    async def openai_completion(self, *args, **kwargs):
+        raise NotImplementedError("OpenAI completion not supported by meta reference provider")
 
     async def should_refresh_models(self) -> bool:
         return False
@@ -165,11 +161,6 @@ class MetaReferenceInferenceImpl(
         self.llama_model = llama_model
 
         log.info("Warming up...")
-        await self.completion(
-            model_id=model_id,
-            content="Hello, world!",
-            sampling_params=SamplingParams(max_tokens=10),
-        )
         await self.chat_completion(
             model_id=model_id,
             messages=[UserMessage(content="Hi how are you?")],
@@ -184,137 +175,6 @@ class MetaReferenceInferenceImpl(
             )
         elif request.model != self.model_id:
             raise RuntimeError(f"Model mismatch: request model: {request.model} != loaded model: {self.model_id}")
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> CompletionResponse | CompletionResponseStreamChunk:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        if logprobs:
-            assert logprobs.top_k == 1, f"Unexpected top_k={logprobs.top_k}"
-
-        content = augment_content_with_response_format_prompt(response_format, content)
-        request = CompletionRequest(
-            model=model_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-        self.check_model(request)
-        request = await convert_request_to_raw(request)
-
-        if request.stream:
-            return self._stream_completion(request)
-        else:
-            results = await self._nonstream_completion([request])
-            return results[0]
-
-    async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
-        tokenizer = self.generator.formatter.tokenizer
-
-        def impl():
-            stop_reason = None
-
-            for token_results in self.generator.completion([request]):
-                token_result = token_results[0]
-                if token_result.token == tokenizer.eot_id:
-                    stop_reason = StopReason.end_of_turn
-                    text = ""
-                elif token_result.token == tokenizer.eom_id:
-                    stop_reason = StopReason.end_of_message
-                    text = ""
-                else:
-                    text = token_result.text
-
-                logprobs = None
-                if stop_reason is None:
-                    if request.logprobs:
-                        assert len(token_result.logprobs) == 1
-
-                        logprobs = [TokenLogProbs(logprobs_by_token={token_result.text: token_result.logprobs[0]})]
-
-                yield CompletionResponseStreamChunk(
-                    delta=text,
-                    stop_reason=stop_reason,
-                    logprobs=logprobs if request.logprobs else None,
-                )
-
-            if stop_reason is None:
-                yield CompletionResponseStreamChunk(
-                    delta="",
-                    stop_reason=StopReason.out_of_tokens,
-                )
-
-        if self.config.create_distributed_process_group:
-            async with SEMAPHORE:
-                for x in impl():
-                    yield x
-        else:
-            for x in impl():
-                yield x
-
-    async def _nonstream_completion(self, request_batch: list[CompletionRequest]) -> list[CompletionResponse]:
-        tokenizer = self.generator.formatter.tokenizer
-
-        first_request = request_batch[0]
-
-        class ItemState(BaseModel):
-            tokens: list[int] = []
-            logprobs: list[TokenLogProbs] = []
-            stop_reason: StopReason | None = None
-            finished: bool = False
-
-        def impl():
-            states = [ItemState() for _ in request_batch]
-
-            results = []
-            for token_results in self.generator.completion(request_batch):
-                for result in token_results:
-                    idx = result.batch_idx
-                    state = states[idx]
-                    if state.finished or result.ignore_token:
-                        continue
-
-                    state.finished = result.finished
-                    if first_request.logprobs:
-                        state.logprobs.append(TokenLogProbs(logprobs_by_token={result.text: result.logprobs[0]}))
-
-                    state.tokens.append(result.token)
-                    if result.token == tokenizer.eot_id:
-                        state.stop_reason = StopReason.end_of_turn
-                    elif result.token == tokenizer.eom_id:
-                        state.stop_reason = StopReason.end_of_message
-
-            for state in states:
-                if state.stop_reason is None:
-                    state.stop_reason = StopReason.out_of_tokens
-
-                if state.tokens[-1] in self.generator.formatter.tokenizer.stop_tokens:
-                    state.tokens = state.tokens[:-1]
-                content = self.generator.formatter.tokenizer.decode(state.tokens)
-                results.append(
-                    CompletionResponse(
-                        content=content,
-                        stop_reason=state.stop_reason,
-                        logprobs=state.logprobs if first_request.logprobs else None,
-                    )
-                )
-
-            return results
-
-        if self.config.create_distributed_process_group:
-            async with SEMAPHORE:
-                return impl()
-        else:
-            return impl()
 
     async def chat_completion(
         self,

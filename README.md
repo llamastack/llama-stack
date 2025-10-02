@@ -120,7 +120,7 @@ By reducing friction and complexity, Llama Stack empowers developers to focus on
 
 ### API Providers
 Here is a list of the various API providers and available distributions that can help developers get started easily with Llama Stack.
-Please checkout for [full list](https://llamastack.github.io/latest/providers/index.html)
+Please checkout for [full list](https://llamastack.github.io/providers/index.html)
 
 | API Provider Builder | Environments | Agents | Inference | VectorIO | Safety | Telemetry | Post Training | Eval | DatasetIO |
 |:--------------------:|:------------:|:------:|:---------:|:--------:|:------:|:---------:|:-------------:|:----:|:--------:|
@@ -151,7 +151,7 @@ Please checkout for [full list](https://llamastack.github.io/latest/providers/in
 |     NVIDIA NEMO      | Hosted | | ✅ | ✅ | | | ✅ | ✅ | ✅ |
 |        NVIDIA        | Hosted | | | | | | ✅ | ✅ | ✅ |
 
-> **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/latest/providers/external/index.html) documentation.
+> **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/providers/external/index.html) documentation.
 
 ### Distributions
 

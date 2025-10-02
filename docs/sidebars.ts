@@ -335,8 +335,10 @@ const sidebars: SidebarsConfig = {
     },
   ],
 
-  // API Reference sidebar - use plugin-generated sidebar
-  apiSidebar: require('./docs/api/sidebar.ts').default,
+  // API Reference sidebars - use plugin-generated sidebars
+  stableApiSidebar: require('./docs/api/sidebar.ts').default,
+  experimentalApiSidebar: require('./docs/api-experimental/sidebar.ts').default,
+  deprecatedApiSidebar: require('./docs/api-deprecated/sidebar.ts').default,
 };
 
 export default sidebars;
