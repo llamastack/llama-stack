@@ -1094,7 +1094,9 @@ class InferenceProvider(Protocol):
         # for fill-in-the-middle type completion
         suffix: str | None = None,
     ) -> OpenAICompletion:
-        """Generate an OpenAI-compatible completion for the given prompt using the specified model.
+        """Create completion.
+
+        Generate an OpenAI-compatible completion for the given prompt using the specified model.
 
         :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
         :param prompt: The prompt to generate a completion for.
@@ -1146,7 +1148,9 @@ class InferenceProvider(Protocol):
         top_p: float | None = None,
         user: str | None = None,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        """Generate an OpenAI-compatible chat completion for the given messages using the specified model.
+        """Create chat completions.
+
+        Generate an OpenAI-compatible chat completion for the given messages using the specified model.
 
         :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
         :param messages: List of messages in the conversation.
@@ -1185,7 +1189,9 @@ class InferenceProvider(Protocol):
         dimensions: int | None = None,
         user: str | None = None,
     ) -> OpenAIEmbeddingsResponse:
-        """Generate OpenAI-compatible embeddings for the given input using the specified model.
+        """Create embeddings.
+
+        Generate OpenAI-compatible embeddings for the given input using the specified model.
 
         :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
         :param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.
@@ -1198,7 +1204,9 @@ class InferenceProvider(Protocol):
 
 
 class Inference(InferenceProvider):
-    """Llama Stack Inference API for generating completions, chat completions, and embeddings.
+    """Inference
+
+    Llama Stack Inference API for generating completions, chat completions, and embeddings.
 
     This API provides the raw interface to the underlying models. Two kinds of models are supported:
     - LLM models: these models generate "raw" and "chat" (conversational) completions.
@@ -1214,7 +1222,7 @@ class Inference(InferenceProvider):
         model: str | None = None,
         order: Order | None = Order.desc,
     ) -> ListOpenAIChatCompletionResponse:
-        """List all chat completions.
+        """List chat completions.
 
         :param after: The ID of the last chat completion to return.
         :param limit: The maximum number of chat completions to return.
@@ -1229,7 +1237,9 @@ class Inference(InferenceProvider):
     )
     @webmethod(route="/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_chat_completion(self, completion_id: str) -> OpenAICompletionWithInputMessages:
-        """Describe a chat completion by its ID.
+        """Get chat completion.
+
+        Describe a chat completion by its ID.
 
         :param completion_id: ID of the chat completion.
         :returns: A OpenAICompletionWithInputMessages.

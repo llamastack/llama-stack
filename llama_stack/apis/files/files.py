@@ -104,6 +104,11 @@ class OpenAIFileDeleteResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Files(Protocol):
+    """Files
+
+    This API is used to upload documents that can be used with other Llama Stack APIs.
+    """
+
     # OpenAI Files API Endpoints
     @webmethod(route="/openai/v1/files", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/files", method="POST", level=LLAMA_STACK_API_V1)
@@ -113,7 +118,8 @@ class Files(Protocol):
         purpose: Annotated[OpenAIFilePurpose, Form()],
         expires_after: Annotated[ExpiresAfter | None, Form()] = None,
     ) -> OpenAIFileObject:
-        """
+        """Upload file.
+
         Upload a file that can be used across various endpoints.
 
         The file upload should be a multipart form request with:
@@ -137,7 +143,8 @@ class Files(Protocol):
         order: Order | None = Order.desc,
         purpose: OpenAIFilePurpose | None = None,
     ) -> ListOpenAIFileResponse:
-        """
+        """List files.
+
         Returns a list of files that belong to the user's organization.
 
         :param after: A cursor for use in pagination. `after` is an object ID that defines your place in the list. For instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent call can include after=obj_foo in order to fetch the next page of the list.
@@ -154,7 +161,8 @@ class Files(Protocol):
         self,
         file_id: str,
     ) -> OpenAIFileObject:
-        """
+        """Retrieve file.
+
         Returns information about a specific file.
 
         :param file_id: The ID of the file to use for this request.
@@ -168,8 +176,7 @@ class Files(Protocol):
         self,
         file_id: str,
     ) -> OpenAIFileDeleteResponse:
-        """
-        Delete a file.
+        """Delete file.
 
         :param file_id: The ID of the file to use for this request.
         :returns: An OpenAIFileDeleteResponse indicating successful deletion.
@@ -182,7 +189,8 @@ class Files(Protocol):
         self,
         file_id: str,
     ) -> Response:
-        """
+        """Retrieve file content.
+
         Returns the contents of the specified file.
 
         :param file_id: The ID of the file to use for this request.

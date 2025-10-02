@@ -42,13 +42,16 @@ class ListProvidersResponse(BaseModel):
 
 @runtime_checkable
 class Providers(Protocol):
-    """
+    """Providers
+
     Providers API for inspecting, listing, and modifying providers and their configurations.
     """
 
     @webmethod(route="/providers", method="GET", level=LLAMA_STACK_API_V1)
     async def list_providers(self) -> ListProvidersResponse:
-        """List all available providers.
+        """List providers.
+
+        List all available providers.
 
         :returns: A ListProvidersResponse containing information about all providers.
         """
@@ -56,7 +59,9 @@ class Providers(Protocol):
 
     @webmethod(route="/providers/{provider_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def inspect_provider(self, provider_id: str) -> ProviderInfo:
-        """Get detailed information about a specific provider.
+        """Get provider.
+
+        Get detailed information about a specific provider.
 
         :param provider_id: The ID of the provider to inspect.
         :returns: A ProviderInfo object containing the provider's details.
