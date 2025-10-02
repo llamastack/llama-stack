@@ -516,11 +516,11 @@ class StreamingResponseOrchestrator:
         """Process all tools and emit appropriate streaming events."""
         from openai.types.chat import ChatCompletionToolParam
 
-        from llama_stack.apis.tools import Tool
+        from llama_stack.apis.tools import ToolDef
         from llama_stack.models.llama.datatypes import ToolDefinition
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
-        def make_openai_tool(tool_name: str, tool: Tool) -> ChatCompletionToolParam:
+        def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
             tool_def = ToolDefinition(
                 tool_name=tool_name,
                 description=tool.description,

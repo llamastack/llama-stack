@@ -18,7 +18,7 @@ from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.inference import Inference
 from llama_stack.apis.resource import ResourceType
 from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ListToolsResponse, Tool, ToolGroups, ToolParameter, ToolRuntime
+from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.providers.inline.agents.meta_reference.agent_instance import ChatAgent
 from llama_stack.providers.inline.agents.meta_reference.agents import MetaReferenceAgentsImpl
@@ -232,32 +232,30 @@ async def test_delete_agent(agents_impl, sample_agent_config):
 
 async def test__initialize_tools(agents_impl, sample_agent_config):
     # Mock tool_groups_api.list_tools()
-    agents_impl.tool_groups_api.list_tools.return_value = ListToolsResponse(
+    agents_impl.tool_groups_api.list_tools.return_value = ListToolDefsResponse(
         data=[
-            Tool(
-                identifier="story_maker",
-                provider_id="model-context-protocol",
-                type=ResourceType.tool,
+            ToolDef(
+                name="story_maker",
                 toolgroup_id="mcp::my_mcp_server",
                 description="Make a story",
-                parameters=[
-                    ToolParameter(
-                        name="story_title",
-                        parameter_type="string",
-                        description="Title of the story",
-                        required=True,
-                        title="Story Title",
-                    ),
-                    ToolParameter(
-                        name="input_words",
-                        parameter_type="array",
-                        description="Input words",
-                        required=False,
-                        items={"type": "string"},
-                        title="Input Words",
-                        default=[],
-                    ),
-                ],
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "story_title": {
+                            "type": "string",
+                            "description": "Title of the story",
+                            "title": "Story Title"
+                        },
+                        "input_words": {
+                            "type": "array",
+                            "description": "Input words",
+                            "items": {"type": "string"},
+                            "title": "Input Words",
+                            "default": []
+                        }
+                    },
+                    "required": ["story_title"]
+                },
             )
         ]
     )

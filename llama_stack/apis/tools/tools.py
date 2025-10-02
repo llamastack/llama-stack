@@ -31,7 +31,7 @@ class ToolDef(BaseModel):
     :param toolgroup_id: (Optional) ID of the tool group this tool belongs to
     """
 
-    toolgroup_id: str | None = None 
+    toolgroup_id: str | None = None
     name: str
     description: str | None = None
     input_schema: dict[str, Any] | None = None

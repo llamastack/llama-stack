@@ -7,33 +7,36 @@
       "model": "llama3.2:3b-instruct-fp16",
       "messages": [
         {
-          "role": "system",
-          "content": "Pretend you are a weather assistant."
-        },
-        {
           "role": "user",
-          "content": "What's the weather like in San Francisco, CA?"
+          "content": "Process this data"
         }
       ],
-      "stream": false,
-      "tool_choice": "auto",
       "tools": [
         {
           "type": "function",
           "function": {
-            "name": "get_weather",
-            "description": "Get the current weather",
+            "name": "process_data",
+            "description": "Process structured data",
             "parameters": {
               "type": "object",
               "properties": {
-                "location": {
-                  "type": "string",
-                  "description": "The city and state (both required), e.g. San Francisco, CA."
+                "data": {
+                  "$ref": "#/$defs/DataObject"
                 }
               },
-              "required": [
-                "location"
-              ]
+              "$defs": {
+                "DataObject": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -46,42 +49,32 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-236",
+        "id": "chatcmpl-798",
         "choices": [
           {
-            "finish_reason": "tool_calls",
+            "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "",
+              "content": "{\"name\":\"process_data\",\"parameters\":{\"data\":[{\"values\":[2,3]}]\"}}",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": [
-                {
-                  "id": "call_u4ydewqv",
-                  "function": {
-                    "arguments": "{\"location\":\"San Francisco, CA\"}",
-                    "name": "get_weather"
-                  },
-                  "type": "function",
-                  "index": 0
-                }
-              ]
+              "tool_calls": null
             }
           }
         ],
-        "created": 1759376610,
+        "created": 1759376608,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
           "completion_tokens": 20,
-          "prompt_tokens": 185,
-          "total_tokens": 205,
+          "prompt_tokens": 176,
+          "total_tokens": 196,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

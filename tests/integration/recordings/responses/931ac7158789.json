@@ -40,7 +40,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-190",
+        "id": "chatcmpl-854",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -55,7 +55,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_st2uc9zo",
+                  "id": "call_frxtygkf",
                   "function": {
                     "arguments": "{\"location\":\"San Francisco\"}",
                     "name": "get_weather"
@@ -67,15 +67,15 @@
             }
           }
         ],
-        "created": 1759351458,
+        "created": 1759376619,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 18,
+          "completion_tokens": 16,
           "prompt_tokens": 161,
-          "total_tokens": 179,
+          "total_tokens": 177,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

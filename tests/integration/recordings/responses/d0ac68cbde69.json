@@ -16,7 +16,7 @@
             "model": "llama3.2:3b-instruct-fp16",
             "name": "llama3.2:3b-instruct-fp16",
             "digest": "195a8c01d91ec3cb1e0aad4624a51f2602c51fa7d96110f8ab5a20c84081804d",
-            "expires_at": "2025-10-01T16:04:02.100179-07:00",
+            "expires_at": "2025-10-01T20:49:01.661997-07:00",
             "size": 7919570944,
             "size_vram": 7919570944,
             "details": {
@@ -27,6 +27,24 @@
                 "llama"
               ],
               "parameter_size": "3.2B",
+              "quantization_level": "F16"
+            }
+          },
+          {
+            "model": "all-minilm:l6-v2",
+            "name": "all-minilm:l6-v2",
+            "digest": "1b226e2802dbb772b5fc32a58f103ca1804ef7501331012de126ab22f67475ef",
+            "expires_at": "2025-10-01T20:48:49.131311-07:00",
+            "size": 585846784,
+            "size_vram": 585846784,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "bert",
+              "families": [
+                "bert"
+              ],
+              "parameter_size": "23M",
               "quantization_level": "F16"
             }
           }

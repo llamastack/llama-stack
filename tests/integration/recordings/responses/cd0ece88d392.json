@@ -6,7 +6,7 @@
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
       "raw": true,
-      "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nGive me a sentence that contains the word: hello<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+      "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant. You have access to functions, but you should only use them if they are required.\nYou are an expert in composing functions. You are given a question and a set of possible functions.\nBased on the question, you may or may not need to make one function/tool call to achieve the purpose.\n\nIf you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)]\nIf you decide to invoke a function, you SHOULD NOT include any other text in the response. besides the function call in the above format.\nFor a boolean parameter, be sure to use `True` or `False` (capitalized) for the value.\n\n\nHere is a list of functions in JSON format that you can invoke.\n\n[\n    {\n        \"name\": \"get_boiling_point\",\n        \"description\": \"Returns the boiling point of a liquid in Celcius or Fahrenheit.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\"liquid_name\"],\n            \"properties\": {\n                \"liquid_name\": {\n                    \"type\": \"str\",\n                    \"description\": \"The name of the liquid\"\n                },\n                \"celcius\": {\n                    \"type\": \"bool\",\n                    \"description\": \"Whether to return the boiling point in Celcius\"\n                }\n            }\n        }\n    }\n]\n\nYou can answer general questions or invoke tools when necessary.\nIn addition to tool calls, you should also augment your responses by using the tool outputs.\nYou are a helpful assistant<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nWhat is the boiling point of the liquid polyjuice in celsius?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n[get_boiling_point(liquid_name=\"polyjuice\", celcius=True)]<|eot_id|><|start_header_id|>ipython<|end_header_id|>\n\n-100<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
       "options": {
         "temperature": 0.0001,
         "top_p": 0.9
@@ -22,7 +22,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.50254Z",
+          "created_at": "2025-10-02T02:54:55.86924Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -31,7 +31,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": "Hello",
+          "response": "The",
           "thinking": null,
           "context": null
         }
@@ -40,7 +40,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.549521Z",
+          "created_at": "2025-10-02T02:54:55.911521Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -49,7 +49,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": ",",
+          "response": " boiling",
           "thinking": null,
           "context": null
         }
@@ -58,7 +58,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.594384Z",
+          "created_at": "2025-10-02T02:54:55.95324Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -67,7 +67,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": " how",
+          "response": " point",
           "thinking": null,
           "context": null
         }
@@ -76,7 +76,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.637769Z",
+          "created_at": "2025-10-02T02:54:55.996666Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -85,7 +85,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": " can",
+          "response": " of",
           "thinking": null,
           "context": null
         }
@@ -94,7 +94,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.684099Z",
+          "created_at": "2025-10-02T02:54:56.038076Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -103,7 +103,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": " I",
+          "response": " poly",
           "thinking": null,
           "context": null
         }
@@ -112,7 +112,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.730912Z",
+          "created_at": "2025-10-02T02:54:56.079306Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -121,7 +121,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": " assist",
+          "response": "ju",
           "thinking": null,
           "context": null
         }
@@ -130,7 +130,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.777299Z",
+          "created_at": "2025-10-02T02:54:56.121626Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -139,7 +139,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": " you",
+          "response": "ice",
           "thinking": null,
           "context": null
         }
@@ -148,7 +148,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.823309Z",
+          "created_at": "2025-10-02T02:54:56.162658Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -157,7 +157,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": " today",
+          "response": " is",
           "thinking": null,
           "context": null
         }
@@ -166,7 +166,7 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.868924Z",
+          "created_at": "2025-10-02T02:54:56.203804Z",
           "done": false,
           "done_reason": null,
           "total_duration": null,
@@ -175,7 +175,7 @@
           "prompt_eval_duration": null,
           "eval_count": null,
           "eval_duration": null,
-          "response": "?",
+          "response": " -",
           "thinking": null,
           "context": null
         }
@@ -184,15 +184,69 @@
         "__type__": "ollama._types.GenerateResponse",
         "__data__": {
           "model": "llama3.2:3b-instruct-fp16",
-          "created_at": "2025-10-02T02:54:51.915105Z",
+          "created_at": "2025-10-02T02:54:56.245419Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "100",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-02T02:54:56.286364Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\u00b0C",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-02T02:54:56.327683Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": ".",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-02T02:54:56.369528Z",
           "done": true,
           "done_reason": "stop",
-          "total_duration": 5098012833,
-          "load_duration": 4289621791,
-          "prompt_eval_count": 31,
-          "prompt_eval_duration": 393000541,
-          "eval_count": 10,
-          "eval_duration": 414080875,
+          "total_duration": 708500166,
+          "load_duration": 138748458,
+          "prompt_eval_count": 392,
+          "prompt_eval_duration": 68099125,
+          "eval_count": 13,
+          "eval_duration": 500834417,
           "response": "",
           "thinking": null,
           "context": null

@@ -38,7 +38,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-958",
+        "id": "chatcmpl-545",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -53,7 +53,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_wc359mqt",
+                  "id": "call_oy2by8f2",
                   "function": {
                     "arguments": "{\"city\":\"Tokyo\"}",
                     "name": "get_weather"
@@ -65,15 +65,15 @@
             }
           }
         ],
-        "created": 1759351475,
+        "created": 1759376642,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 14,
+          "completion_tokens": 15,
           "prompt_tokens": 177,
-          "total_tokens": 191,
+          "total_tokens": 192,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
