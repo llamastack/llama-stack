@@ -9,6 +9,7 @@ import pytest
 
 @pytest.mark.integration
 class TestOpenAIConversations:
+    # TODO: Update to compat_client after client-SDK is generated
     def test_conversation_create(self, openai_client):
         conversation = openai_client.conversations.create(
             metadata={"topic": "demo"}, items=[{"type": "message", "role": "user", "content": "Hello!"}]
