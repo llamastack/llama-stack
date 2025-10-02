@@ -22,7 +22,7 @@ from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from ..sqlstore.sqlstore import SqlStoreConfig, SqlStoreType, sqlstore_impl
 
-logger = get_logger(name=__name__, category="inference_store")
+logger = get_logger(name=__name__, category="inference")
 
 
 class InferenceStore:
