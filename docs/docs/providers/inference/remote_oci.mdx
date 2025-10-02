@@ -1,0 +1,48 @@
+---
+description: |
+  Oracle Cloud Infrastructure (OCI) Generative AI inference provider for accessing OCI's Generative AI Platform-as-a-Service models.
+  Provider documentation
+  https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
+sidebar_label: Remote - Oci
+title: remote::oci
+---
+
+# remote::oci
+
+## Description
+
+
+Oracle Cloud Infrastructure (OCI) Generative AI inference provider for accessing OCI's Generative AI Platform-as-a-Service models.
+Provider documentation
+https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `oci_auth_type` | `<class 'str'>` | No | instance_principal | OCI authentication type (must be one of: instance_principal, config_file) |
+| `oci_config_file_path` | `<class 'str'>` | No | ~/.oci/config | OCI config file path (required if oci_auth_type is config_file) |
+| `oci_config_profile` | `<class 'str'>` | No | DEFAULT | OCI config profile (required if oci_auth_type is config_file) |
+| `oci_region` | `str \| None` | No |  | OCI region (e.g., us-ashburn-1) |
+| `oci_compartment_id` | `str \| None` | No |  | OCI compartment ID for the Generative AI service |
+| `oci_user_ocid` | `str \| None` | No |  | OCI user OCID for authentication |
+| `oci_tenancy_ocid` | `str \| None` | No |  | OCI tenancy OCID for authentication |
+| `oci_fingerprint` | `str \| None` | No |  | OCI API key fingerprint for authentication |
+| `oci_private_key` | `str \| None` | No |  | OCI private key for authentication |
+| `oci_serving_mode` | `<class 'str'>` | No | ON_DEMAND | OCI serving mode (must be one of: ON_DEMAND, DEDICATED) |
+
+## Sample Configuration
+
+```yaml
+oci_auth_type: ${env.OCI_AUTH_TYPE:=instance_principal}
+oci_config_file_path: ${env.OCI_CONFIG_FILE_PATH:=~/.oci/config}
+oci_config_profile: ${env.OCI_CLI_PROFILE:=DEFAULT}
+oci_region: ${env.OCI_REGION:=us-ashburn-1}
+oci_compartment_id: ${env.OCI_COMPARTMENT_OCID:=}
+oci_serving_mode: ${env.OCI_SERVING_MODE:=ON_DEMAND}
+oci_user_ocid: ${env.OCI_USER_OCID:=}
+oci_tenancy_ocid: ${env.OCI_TENANCY_OCID:=}
+oci_fingerprint: ${env.OCI_FINGERPRINT:=}
+oci_private_key: ${env.OCI_PRIVATE_KEY:=}
+```
