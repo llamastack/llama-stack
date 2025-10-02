@@ -10,17 +10,23 @@ First, bootstrap and install all necessary libraries for open telemtry:
 uv run opentelemetry-bootstrap -a requirements | uv pip install --requirement -
 ```
 
-Then, run with automatic code injection:
-
+Make sure you export required environment variables for open telemetry:
 ```
-uv run opentelemetry-instrument llama stack run --config myconfig.yaml
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
 ```
 
-### Excluded Fast API URLs
+If you want certian endpoints to be ignored from the fast API telemetry, set the following environment variable:
 
 ```
 export OTEL_PYTHON_FASTAPI_EXCLUDED_URLS="client/.*/info,healthcheck"
 ```
 
-#### Environment Variables
+Finaly, run Llama Stack with automatic code injection:
+
+```
+uv run opentelemetry-instrument llama stack run --config myconfig.yaml
+```
+
+#### Open Telemetry Configuration Environment Variables
 Environment Variables: https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/

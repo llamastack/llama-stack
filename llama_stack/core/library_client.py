@@ -48,12 +48,7 @@ from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry.tracing import (
-    CURRENT_TRACE_CONTEXT,
-    end_trace,
-    setup_logger,
-    start_trace,
-)
+
 
 logger = get_logger(name=__name__, category="core")
 
@@ -293,8 +288,6 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             raise _e
 
         assert self.impls is not None
-        if Api.telemetry in self.impls:
-            setup_logger(self.impls[Api.telemetry])
 
         if not os.environ.get("PYTEST_CURRENT_TEST"):
             console = Console()
@@ -384,13 +377,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         body, field_names = self._handle_file_uploads(options, body)
 
         body = self._convert_body(path, options.method, body, exclude_params=set(field_names))
-
-        trace_path = webmethod.descriptive_name or route_path
-        await start_trace(trace_path, {"__location__": "library_client"})
-        try:
-            result = await matched_func(**body)
-        finally:
-            await end_trace()
+        result = await matched_func(**body)
 
         # Handle FastAPI Response objects (e.g., from file content retrieval)
         if isinstance(result, FastAPIResponse):
@@ -448,9 +435,6 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         body = self._convert_body(path, options.method, body)
 
-        trace_path = webmethod.descriptive_name or route_path
-        await start_trace(trace_path, {"__location__": "library_client"})
-
         async def gen():
             try:
                 async for chunk in await func(**body):
@@ -458,9 +442,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     sse_event = f"data: {data}\n\n"
                     yield sse_event.encode("utf-8")
             finally:
-                await end_trace()
+                pass
 
-        wrapped_gen = preserve_contexts_async_generator(gen(), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR])
+        wrapped_gen = preserve_contexts_async_generator(gen(), [PROVIDER_DATA_VAR])
 
         mock_response = httpx.Response(
             status_code=httpx.codes.OK,

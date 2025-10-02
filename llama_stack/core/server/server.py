@@ -70,6 +70,8 @@ logger = get_logger(name=__name__, category="core::server")
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
     log = file if hasattr(file, "write") else sys.stderr
+    if log is None:
+        return
     traceback.print_stack(file=log)
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
 
