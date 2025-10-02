@@ -783,7 +783,7 @@ class Agents(Protocol):
         self,
         response_id: str,
     ) -> OpenAIResponseObject:
-        """Retrieve an OpenAI response by its ID.
+        """Get a model response.
 
         :param response_id: The ID of the OpenAI response to retrieve.
         :returns: An OpenAIResponseObject.
@@ -806,7 +806,7 @@ class Agents(Protocol):
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
-        """Create a new OpenAI response.
+        """Create a model response.
 
         :param input: Input message(s) to create the response.
         :param model: The underlying LLM used for completions.
@@ -825,7 +825,7 @@ class Agents(Protocol):
         model: str | None = None,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseObject:
-        """List all OpenAI responses.
+        """List all responses.
 
         :param after: The ID of the last response to return.
         :param limit: The number of responses to return.
@@ -848,7 +848,7 @@ class Agents(Protocol):
         limit: int | None = 20,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseInputItem:
-        """List input items for a given OpenAI response.
+        """List input items.
 
         :param response_id: The ID of the response to retrieve input items for.
         :param after: An item ID to list items after, used for pagination.
@@ -863,7 +863,7 @@ class Agents(Protocol):
     @webmethod(route="/openai/v1/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
-        """Delete an OpenAI response by its ID.
+        """Delete a response.
 
         :param response_id: The ID of the OpenAI response to delete.
         :returns: An OpenAIDeleteResponseObject
