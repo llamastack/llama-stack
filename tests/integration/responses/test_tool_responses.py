@@ -127,6 +127,70 @@ def test_response_non_streaming_file_search_empty_vector_store(compat_client, te
     assert response.output_text
 
 
+def test_response_sequential_file_search(compat_client, text_model_id, tmp_path):
+    """Test file search with sequential responses using previous_response_id."""
+    if isinstance(compat_client, LlamaStackAsLibraryClient):
+        pytest.skip("Responses API file search is not yet supported in library client.")
+
+    vector_store = new_vector_store(compat_client, "test_vector_store")
+
+    # Create a test file with content
+    file_content = "The Llama 4 Maverick model has 128 experts in its mixture of experts architecture."
+    file_name = "test_sequential_file_search.txt"
+    file_path = tmp_path / file_name
+    file_path.write_text(file_content)
+
+    file_response = upload_file(compat_client, file_name, file_path)
+
+    # Attach the file to the vector store
+    compat_client.vector_stores.files.create(
+        vector_store_id=vector_store.id,
+        file_id=file_response.id,
+    )
+
+    # Wait for the file to be attached
+    wait_for_file_attachment(compat_client, vector_store.id, file_response.id)
+
+    tools = [{"type": "file_search", "vector_store_ids": [vector_store.id]}]
+
+    # First response request with file search
+    response = compat_client.responses.create(
+        model=text_model_id,
+        input="How many experts does the Llama 4 Maverick model have?",
+        tools=tools,
+        stream=False,
+        include=["file_search_call.results"],
+    )
+
+    # Verify the file_search_tool was called
+    assert len(response.output) > 1
+    assert response.output[0].type == "file_search_call"
+    assert response.output[0].status == "completed"
+    assert response.output[0].queries
+    assert response.output[0].results
+    assert "128" in response.output_text or "experts" in response.output_text.lower()
+
+    # Second response request using previous_response_id
+    response2 = compat_client.responses.create(
+        model=text_model_id,
+        input="Can you tell me more about the architecture?",
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+        include=["file_search_call.results"],
+    )
+
+    # Verify the second response has output
+    assert len(response2.output) >= 1
+    assert response2.output_text
+
+    # The second response should maintain context from the first
+    final_message = [output for output in response2.output if output.type == "message"]
+    assert len(final_message) >= 1
+    assert final_message[-1].role == "assistant"
+    assert final_message[-1].status == "completed"
+
+
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
 def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case):
     if not isinstance(compat_client, LlamaStackAsLibraryClient):

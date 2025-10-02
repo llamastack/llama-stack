@@ -8,7 +8,7 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.apis.agents import Order
 from llama_stack.apis.agents.openai_responses import (
@@ -26,12 +26,16 @@ from llama_stack.apis.agents.openai_responses import (
 )
 from llama_stack.apis.inference import (
     Inference,
+    OpenAIMessageParam,
     OpenAISystemMessageParam,
 )
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.responses.responses_store import ResponsesStore
+from llama_stack.providers.utils.responses.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
@@ -72,26 +76,48 @@ class OpenAIResponsesImpl:
     async def _prepend_previous_response(
         self,
         input: str | list[OpenAIResponseInput],
-        previous_response_id: str | None = None,
+        previous_response: _OpenAIResponseObjectWithInputAndMessages,
     ):
+        new_input_items = previous_response.input.copy()
+        new_input_items.extend(previous_response.output)
+
+        if isinstance(input, str):
+            new_input_items.append(OpenAIResponseMessage(content=input, role="user"))
+        else:
+            new_input_items.extend(input)
+
+        return new_input_items
+
+    async def _process_input_with_previous_response(
+        self,
+        input: str | list[OpenAIResponseInput],
+        previous_response_id: str | None,
+    ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam]]:
+        """Process input with optional previous response context.
+
+        Returns:
+            tuple: (all_input for storage, messages for chat completion)
+        """
         if previous_response_id:
-            previous_response_with_input = await self.responses_store.get_response_object(previous_response_id)
+            previous_response: _OpenAIResponseObjectWithInputAndMessages = (
+                await self.responses_store.get_response_object(previous_response_id)
+            )
+            all_input = await self._prepend_previous_response(input, previous_response)
 
-            # previous response input items
-            new_input_items = previous_response_with_input.input
-
-            # previous response output items
-            new_input_items.extend(previous_response_with_input.output)
-
-            # new input items from the current request
-            if isinstance(input, str):
-                new_input_items.append(OpenAIResponseMessage(content=input, role="user"))
+            if previous_response.messages:
+                # Use stored messages directly and convert only new input
+                message_adapter = TypeAdapter(list[OpenAIMessageParam])
+                messages = message_adapter.validate_python(previous_response.messages)
+                new_messages = await convert_response_input_to_chat_messages(input)
+                messages.extend(new_messages)
             else:
-                new_input_items.extend(input)
+                # Backward compatibility: reconstruct from inputs
+                messages = await convert_response_input_to_chat_messages(all_input)
+        else:
+            all_input = input
+            messages = await convert_response_input_to_chat_messages(input)
 
-            input = new_input_items
-
-        return input
+        return all_input, messages
 
     async def _prepend_instructions(self, messages, instructions):
         if instructions:
@@ -102,7 +128,7 @@ class OpenAIResponsesImpl:
         response_id: str,
     ) -> OpenAIResponseObject:
         response_with_input = await self.responses_store.get_response_object(response_id)
-        return OpenAIResponseObject(**{k: v for k, v in response_with_input.model_dump().items() if k != "input"})
+        return response_with_input.to_response_object()
 
     async def list_openai_responses(
         self,
@@ -138,6 +164,7 @@ class OpenAIResponsesImpl:
         self,
         response: OpenAIResponseObject,
         input: str | list[OpenAIResponseInput],
+        messages: list[OpenAIMessageParam],
     ) -> None:
         new_input_id = f"msg_{uuid.uuid4()}"
         if isinstance(input, str):
@@ -165,6 +192,7 @@ class OpenAIResponsesImpl:
         await self.responses_store.store_response_object(
             response_object=response,
             input=input_items_data,
+            messages=messages,
         )
 
     async def create_openai_response(
@@ -224,8 +252,7 @@ class OpenAIResponsesImpl:
         max_infer_iters: int | None = 10,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Input preprocessing
-        input = await self._prepend_previous_response(input, previous_response_id)
-        messages = await convert_response_input_to_chat_messages(input)
+        all_input, messages = await self._process_input_with_previous_response(input, previous_response_id)
         await self._prepend_instructions(messages, instructions)
 
         # Structured outputs
@@ -265,7 +292,8 @@ class OpenAIResponsesImpl:
         if store and final_response:
             await self._store_response(
                 response=final_response,
-                input=input,
+                input=all_input,
+                messages=orchestrator.final_messages,
             )
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:

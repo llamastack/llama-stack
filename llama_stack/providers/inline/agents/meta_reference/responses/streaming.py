@@ -43,6 +43,7 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionToolCall,
     OpenAIChoice,
+    OpenAIMessageParam,
 )
 from llama_stack.log import get_logger
 
@@ -103,6 +104,8 @@ class StreamingResponseOrchestrator:
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = {}
+        # Track final messages after all tool executions
+        self.final_messages: list[OpenAIMessageParam] = []
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Initialize output messages
@@ -191,6 +194,8 @@ class StreamingResponseOrchestrator:
                 break
 
             messages = next_turn_messages
+
+        self.final_messages = messages.copy() + [current_response.choices[0].message]
 
         # Create final response
         final_response = OpenAIResponseObject(
