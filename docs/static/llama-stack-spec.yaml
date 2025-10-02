@@ -967,14 +967,11 @@ paths:
     post:
       responses:
         '200':
-          description: An OpenAIResponseObject.
+          description: A ListOpenAIResponseObject.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpenAIResponseObject'
-            text/event-stream:
-              schema:
-                $ref: '#/components/schemas/OpenAIResponseObjectStream'
+                $ref: '#/components/schemas/ListOpenAIResponseObject'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -987,14 +984,14 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: Create a new OpenAI response.
-      description: Create a new OpenAI response.
+      summary: List all OpenAI responses.
+      description: List all OpenAI responses.
       parameters: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOpenaiResponseRequest'
+              $ref: '#/components/schemas/ListOpenaiResponsesRequest'
         required: true
       deprecated: false
   /v1/responses/{response_id}:
@@ -6199,6 +6196,27 @@ components:
         - type
       title: >-
         OpenAIResponseObjectStreamResponseWebSearchCallSearching
+    ListOpenaiResponsesRequest:
+      type: object
+      properties:
+        after:
+          type: string
+          description: The ID of the last response to return.
+        limit:
+          type: integer
+          description: The number of responses to return.
+        model:
+          type: string
+          description: The model to filter responses by.
+        order:
+          type: string
+          enum:
+            - asc
+            - desc
+          description: >-
+            The order to sort responses by when sorted by created_at ('asc' or 'desc').
+      additionalProperties: false
+      title: ListOpenaiResponsesRequest
     OpenAIDeleteResponseObject:
       type: object
       properties:
