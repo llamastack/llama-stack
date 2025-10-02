@@ -162,8 +162,7 @@ class ConversationServiceImpl(Conversations):
         for item in items:
             # Generate item ID based on item type
             random_bytes = secrets.token_bytes(24)
-            item_type = getattr(item, "type", None)
-            if item_type == "message":
+            if item.type == "message":
                 item_id = f"msg_{random_bytes.hex()}"
             else:
                 item_id = f"item_{random_bytes.hex()}"
