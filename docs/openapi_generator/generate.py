@@ -34,10 +34,17 @@ def str_presenter(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
 
-def generate_spec(output_dir: Path, stability_filter: str = None, main_spec: bool = False):
+def generate_spec(output_dir: Path, stability_filter: str = None, main_spec: bool = False, combined_spec: bool = False):
     """Generate OpenAPI spec with optional stability filtering."""
 
-    if stability_filter:
+    if combined_spec:
+        # Special case for combined stable + experimental APIs
+        title_suffix = " - Stable & Experimental APIs"
+        filename_prefix = "stainless-"
+        description_suffix = "\n\n**🔗 COMBINED**: This specification includes both stable production-ready APIs and experimental pre-release APIs. Use stable APIs for production deployments and experimental APIs for testing new features."
+        # Use the special "stainless" filter to include stable + experimental APIs
+        stability_filter = "stainless"
+    elif stability_filter:
         title_suffix = {
             "stable": " - Stable APIs" if not main_spec else "",
             "experimental": " - Experimental APIs",
@@ -124,6 +131,9 @@ def main(output_dir: str):
     print("Generating other stability-filtered specifications...")
     generate_spec(output_dir, "experimental")
     generate_spec(output_dir, "deprecated")
+
+    print("Generating combined stable + experimental specification...")
+    generate_spec(output_dir, combined_spec=True)
 
 
 if __name__ == "__main__":

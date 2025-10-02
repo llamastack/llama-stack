@@ -125,7 +125,6 @@ from llama_stack.models.llama.datatypes import (
     StopReason,
     ToolCall,
     ToolDefinition,
-    ToolParamDefinition,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
     convert_image_content_to_url,
@@ -537,18 +536,13 @@ async def convert_message_to_openai_dict(message: Message, download: bool = Fals
             if isinstance(tool_name, BuiltinTool):
                 tool_name = tool_name.value
 
-            # arguments_json can be None, so attempt it first and fall back to arguments
-            if hasattr(tc, "arguments_json") and tc.arguments_json:
-                arguments = tc.arguments_json
-            else:
-                arguments = json.dumps(tc.arguments)
             result["tool_calls"].append(
                 {
                     "id": tc.call_id,
                     "type": "function",
                     "function": {
                         "name": tool_name,
-                        "arguments": arguments,
+                        "arguments": tc.arguments,
                     },
                 }
             )
@@ -641,7 +635,7 @@ async def convert_message_to_openai_dict_new(
                 id=tool.call_id,
                 function=OpenAIFunction(
                     name=(tool.tool_name if not isinstance(tool.tool_name, BuiltinTool) else tool.tool_name.value),
-                    arguments=json.dumps(tool.arguments),
+                    arguments=tool.arguments,  # Already a JSON string, don't double-encode
                 ),
                 type="function",
             )
@@ -684,8 +678,7 @@ def convert_tool_call(
         valid_tool_call = ToolCall(
             call_id=tool_call.id,
             tool_name=tool_call.function.name,
-            arguments=json.loads(tool_call.function.arguments),
-            arguments_json=tool_call.function.arguments,
+            arguments=tool_call.function.arguments,
         )
     except Exception:
         return UnparseableToolCall(
@@ -745,14 +738,8 @@ def convert_tooldef_to_openai_tool(tool: ToolDefinition) -> dict:
     ToolDefinition:
         tool_name: str | BuiltinTool
         description: Optional[str]
-        parameters: Optional[Dict[str, ToolParamDefinition]]
-
-    ToolParamDefinition:
-        param_type: str
-        description: Optional[str]
-        required: Optional[bool]
-        default: Optional[Any]
-
+        input_schema: Optional[Dict[str, Any]]  # JSON Schema
+        output_schema: Optional[Dict[str, Any]]  # JSON Schema (not used by OpenAI)
 
     OpenAI spec -
 
@@ -761,20 +748,11 @@ def convert_tooldef_to_openai_tool(tool: ToolDefinition) -> dict:
         "function": {
             "name": tool_name,
             "description": description,
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    param_name: {
-                        "type": param_type,
-                        "description": description,
-                        "default": default,
-                    },
-                    ...
-                },
-                "required": [param_name, ...],
-            },
+            "parameters": {<JSON Schema>},
         },
     }
+
+    NOTE: OpenAI does not support output_schema, so it is dropped here.
     """
     out = {
         "type": "function",
@@ -783,37 +761,19 @@ def convert_tooldef_to_openai_tool(tool: ToolDefinition) -> dict:
     function = out["function"]
 
     if isinstance(tool.tool_name, BuiltinTool):
-        function.update(name=tool.tool_name.value)  # TODO(mf): is this sufficient?
+        function["name"] = tool.tool_name.value
     else:
-        function.update(name=tool.tool_name)
+        function["name"] = tool.tool_name
 
     if tool.description:
-        function.update(description=tool.description)
+        function["description"] = tool.description
 
-    if tool.parameters:
-        parameters = {
-            "type": "object",
-            "properties": {},
-        }
-        properties = parameters["properties"]
-        required = []
-        for param_name, param in tool.parameters.items():
-            properties[param_name] = to_openai_param_type(param.param_type)
-            if param.description:
-                properties[param_name].update(description=param.description)
-            if param.default:
-                properties[param_name].update(default=param.default)
-            if param.items:
-                properties[param_name].update(items=param.items)
-            if param.title:
-                properties[param_name].update(title=param.title)
-            if param.required:
-                required.append(param_name)
+    if tool.input_schema:
+        # Pass through the entire JSON Schema as-is
+        function["parameters"] = tool.input_schema
 
-        if required:
-            parameters.update(required=required)
-
-        function.update(parameters=parameters)
+    # NOTE: OpenAI does not support output_schema, so we drop it here
+    # It's stored in LlamaStack for validation and other provider usage
 
     return out
 
@@ -874,22 +834,12 @@ def _convert_openai_request_tools(tools: list[dict[str, Any]] | None = None) -> 
         tool_fn = tool.get("function", {})
         tool_name = tool_fn.get("name", None)
         tool_desc = tool_fn.get("description", None)
-
         tool_params = tool_fn.get("parameters", None)
-        lls_tool_params = {}
-        if tool_params is not None:
-            tool_param_properties = tool_params.get("properties", {})
-            for tool_param_key, tool_param_value in tool_param_properties.items():
-                tool_param_def = ToolParamDefinition(
-                    param_type=str(tool_param_value.get("type", None)),
-                    description=tool_param_value.get("description", None),
-                )
-                lls_tool_params[tool_param_key] = tool_param_def
 
         lls_tool = ToolDefinition(
             tool_name=tool_name,
             description=tool_desc,
-            parameters=lls_tool_params,
+            input_schema=tool_params,  # Pass through entire JSON Schema
         )
         lls_tools.append(lls_tool)
     return lls_tools
@@ -939,8 +889,7 @@ def _convert_openai_tool_calls(
         ToolCall(
             call_id=call.id,
             tool_name=call.function.name,
-            arguments=json.loads(call.function.arguments),
-            arguments_json=call.function.arguments,
+            arguments=call.function.arguments,
         )
         for call in tool_calls
     ]
@@ -1222,12 +1171,10 @@ async def convert_openai_chat_completion_stream(
             )
 
             try:
-                arguments = json.loads(buffer["arguments"])
                 tool_call = ToolCall(
                     call_id=buffer["call_id"],
                     tool_name=buffer["name"],
-                    arguments=arguments,
-                    arguments_json=buffer["arguments"],
+                    arguments=buffer["arguments"],
                 )
                 yield ChatCompletionResponseStreamChunk(
                     event=ChatCompletionResponseEvent(
@@ -1390,7 +1337,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
                         openai_tool_call = OpenAIChoiceDeltaToolCall(
                             index=0,
                             function=OpenAIChoiceDeltaToolCallFunction(
-                                arguments=tool_call.arguments_json,
+                                arguments=tool_call.arguments,
                             ),
                         )
                         delta = OpenAIChoiceDelta(tool_calls=[openai_tool_call])

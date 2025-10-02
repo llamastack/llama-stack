@@ -62,22 +62,13 @@ def convert_tooldef_to_chat_tool(tool_def):
         ChatCompletionToolParam suitable for OpenAI chat completion
     """
 
-    from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
+    from llama_stack.models.llama.datatypes import ToolDefinition
     from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
     internal_tool_def = ToolDefinition(
         tool_name=tool_def.name,
         description=tool_def.description,
-        parameters={
-            param.name: ToolParamDefinition(
-                param_type=param.parameter_type,
-                description=param.description,
-                required=param.required,
-                default=param.default,
-                items=param.items,
-            )
-            for param in tool_def.parameters
-        },
+        input_schema=tool_def.input_schema,
     )
     return convert_tooldef_to_openai_tool(internal_tool_def)
 
@@ -528,23 +519,15 @@ class StreamingResponseOrchestrator:
         """Process all tools and emit appropriate streaming events."""
         from openai.types.chat import ChatCompletionToolParam
 
-        from llama_stack.apis.tools import Tool
-        from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
+        from llama_stack.apis.tools import ToolDef
+        from llama_stack.models.llama.datatypes import ToolDefinition
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
-        def make_openai_tool(tool_name: str, tool: Tool) -> ChatCompletionToolParam:
+        def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
             tool_def = ToolDefinition(
                 tool_name=tool_name,
                 description=tool.description,
-                parameters={
-                    param.name: ToolParamDefinition(
-                        param_type=param.parameter_type,
-                        description=param.description,
-                        required=param.required,
-                        default=param.default,
-                    )
-                    for param in tool.parameters
-                },
+                input_schema=tool.input_schema,
             )
             return convert_tooldef_to_openai_tool(tool_def)
 
@@ -631,16 +614,11 @@ class StreamingResponseOrchestrator:
                         MCPListToolsTool(
                             name=t.name,
                             description=t.description,
-                            input_schema={
+                            input_schema=t.input_schema
+                            or {
                                 "type": "object",
-                                "properties": {
-                                    p.name: {
-                                        "type": p.parameter_type,
-                                        "description": p.description,
-                                    }
-                                    for p in t.parameters
-                                },
-                                "required": [p.name for p in t.parameters if p.required],
+                                "properties": {},
+                                "required": [],
                             },
                         )
                     )

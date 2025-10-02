@@ -2784,6 +2784,10 @@
             "ToolDef": {
                 "type": "object",
                 "properties": {
+                    "toolgroup_id": {
+                        "type": "string",
+                        "description": "(Optional) ID of the tool group this tool belongs to"
+                    },
                     "name": {
                         "type": "string",
                         "description": "Name of the tool"
@@ -2792,12 +2796,57 @@
                         "type": "string",
                         "description": "(Optional) Human-readable description of what the tool does"
                     },
-                    "parameters": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ToolParameter"
+                    "input_schema": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
                         },
-                        "description": "(Optional) List of parameters this tool accepts"
+                        "description": "(Optional) JSON Schema for tool inputs (MCP inputSchema)"
+                    },
+                    "output_schema": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) JSON Schema for tool outputs (MCP outputSchema)"
                     },
                     "metadata": {
                         "type": "object",
@@ -2832,68 +2881,6 @@
                 ],
                 "title": "ToolDef",
                 "description": "Tool definition used in runtime contexts."
-            },
-            "ToolParameter": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the parameter"
-                    },
-                    "parameter_type": {
-                        "type": "string",
-                        "description": "Type of the parameter (e.g., string, integer)"
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "Human-readable description of what the parameter does"
-                    },
-                    "required": {
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Whether this parameter is required for tool invocation"
-                    },
-                    "items": {
-                        "type": "object",
-                        "description": "Type of the elements when parameter_type is array"
-                    },
-                    "title": {
-                        "type": "string",
-                        "description": "(Optional) Title of the parameter"
-                    },
-                    "default": {
-                        "oneOf": [
-                            {
-                                "type": "null"
-                            },
-                            {
-                                "type": "boolean"
-                            },
-                            {
-                                "type": "number"
-                            },
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "array"
-                            },
-                            {
-                                "type": "object"
-                            }
-                        ],
-                        "description": "(Optional) Default value for the parameter if not provided"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "name",
-                    "parameter_type",
-                    "description",
-                    "required"
-                ],
-                "title": "ToolParameter",
-                "description": "Parameter definition for a tool."
             },
             "TopKSamplingStrategy": {
                 "type": "object",
@@ -3410,79 +3397,6 @@
                         ]
                     },
                     "arguments": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "oneOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "integer"
-                                        },
-                                        {
-                                            "type": "number"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "type": "null"
-                                        },
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "oneOf": [
-                                                    {
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "type": "integer"
-                                                    },
-                                                    {
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "type": "boolean"
-                                                    },
-                                                    {
-                                                        "type": "null"
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "oneOf": [
-                                                    {
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "type": "integer"
-                                                    },
-                                                    {
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "type": "boolean"
-                                                    },
-                                                    {
-                                                        "type": "null"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    "arguments_json": {
                         "type": "string"
                     }
                 },

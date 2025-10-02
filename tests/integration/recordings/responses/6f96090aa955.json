@@ -21,7 +21,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
@@ -36,7 +36,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921359,
+          "created": 1759437880,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -47,7 +47,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
@@ -62,7 +62,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921359,
+          "created": 1759437880,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -73,11 +73,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
-                "content": " It",
+                "content": " How",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -88,7 +88,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921359,
+          "created": 1759437880,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -99,267 +99,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": "'s",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " nice",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " to",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " meet",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " you",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": ".",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " Is",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " there",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " something",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " I",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
@@ -374,7 +114,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921359,
+          "created": 1759437880,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -385,11 +125,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
-                "content": " help",
+                "content": " I",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -400,7 +140,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921359,
+          "created": 1759437881,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -411,11 +151,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
-                "content": " you",
+                "content": " assist",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -426,7 +166,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921359,
+          "created": 1759437881,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -437,85 +177,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " with",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " or",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " would",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921359,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
@@ -530,7 +192,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921360,
+          "created": 1759437881,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -541,11 +203,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
-                "content": " like",
+                "content": " today",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -556,7 +218,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921360,
+          "created": 1759437881,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -567,59 +229,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " to",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921360,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
-          "choices": [
-            {
-              "delta": {
-                "content": " chat",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 1756921360,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
@@ -634,7 +244,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921360,
+          "created": 1759437881,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -645,7 +255,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-698",
+          "id": "chatcmpl-456",
           "choices": [
             {
               "delta": {
@@ -660,7 +270,7 @@
               "logprobs": null
             }
           ],
-          "created": 1756921360,
+          "created": 1759437881,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

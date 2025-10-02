@@ -60,7 +60,6 @@ from llama_stack.apis.inference import (
     StopReason,
     SystemMessage,
     ToolDefinition,
-    ToolParamDefinition,
     ToolResponse,
     ToolResponseMessage,
     UserMessage,
@@ -866,20 +865,12 @@ class ChatAgent(ShieldRunnerMixin):
         for tool_def in self.agent_config.client_tools:
             if tool_name_to_def.get(tool_def.name, None):
                 raise ValueError(f"Tool {tool_def.name} already exists")
+
+            # Use input_schema from ToolDef directly
             tool_name_to_def[tool_def.name] = ToolDefinition(
                 tool_name=tool_def.name,
                 description=tool_def.description,
-                parameters={
-                    param.name: ToolParamDefinition(
-                        param_type=param.parameter_type,
-                        description=param.description,
-                        required=param.required,
-                        items=param.items,
-                        title=param.title,
-                        default=param.default,
-                    )
-                    for param in tool_def.parameters
-                },
+                input_schema=tool_def.input_schema,
             )
         for toolgroup_name_with_maybe_tool_name in agent_config_toolgroups:
             toolgroup_name, input_tool_name = self._parse_toolgroup_name(toolgroup_name_with_maybe_tool_name)
@@ -889,44 +880,34 @@ class ChatAgent(ShieldRunnerMixin):
                     [t.identifier for t in (await self.tool_groups_api.list_tool_groups()).data]
                 )
                 raise ValueError(f"Toolgroup {toolgroup_name} not found, available toolgroups: {available_tool_groups}")
-            if input_tool_name is not None and not any(tool.identifier == input_tool_name for tool in tools.data):
+            if input_tool_name is not None and not any(tool.name == input_tool_name for tool in tools.data):
                 raise ValueError(
-                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.identifier for tool in tools.data])}"
+                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.name for tool in tools.data])}"
                 )
 
             for tool_def in tools.data:
                 if toolgroup_name.startswith("builtin") and toolgroup_name != RAG_TOOL_GROUP:
-                    identifier: str | BuiltinTool | None = tool_def.identifier
+                    identifier: str | BuiltinTool | None = tool_def.name
                     if identifier == "web_search":
                         identifier = BuiltinTool.brave_search
                     else:
                         identifier = BuiltinTool(identifier)
                 else:
                     # add if tool_name is unspecified or the tool_def identifier is the same as the tool_name
-                    if input_tool_name in (None, tool_def.identifier):
-                        identifier = tool_def.identifier
+                    if input_tool_name in (None, tool_def.name):
+                        identifier = tool_def.name
                     else:
                         identifier = None
 
                 if tool_name_to_def.get(identifier, None):
                     raise ValueError(f"Tool {identifier} already exists")
                 if identifier:
-                    tool_name_to_def[tool_def.identifier] = ToolDefinition(
+                    tool_name_to_def[identifier] = ToolDefinition(
                         tool_name=identifier,
                         description=tool_def.description,
-                        parameters={
-                            param.name: ToolParamDefinition(
-                                param_type=param.parameter_type,
-                                description=param.description,
-                                required=param.required,
-                                items=param.items,
-                                title=param.title,
-                                default=param.default,
-                            )
-                            for param in tool_def.parameters
-                        },
+                        input_schema=tool_def.input_schema,
                     )
-                    tool_name_to_args[tool_def.identifier] = toolgroup_to_args.get(toolgroup_name, {})
+                    tool_name_to_args[identifier] = toolgroup_to_args.get(toolgroup_name, {})
 
         self.tool_defs, self.tool_name_to_args = (
             list(tool_name_to_def.values()),
@@ -970,12 +951,18 @@ class ChatAgent(ShieldRunnerMixin):
             tool_name_str = tool_name
 
         logger.info(f"executing tool call: {tool_name_str} with args: {tool_call.arguments}")
+
+        try:
+            args = json.loads(tool_call.arguments)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse arguments for tool call: {tool_call.arguments}") from e
+
         result = await self.tool_runtime_api.invoke_tool(
             tool_name=tool_name_str,
             kwargs={
                 "session_id": session_id,
                 # get the arguments generated by the model and augment with toolgroup arg overrides for the agent
-                **tool_call.arguments,
+                **args,
                 **self.tool_name_to_args.get(tool_name_str, {}),
             },
         )

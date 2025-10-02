@@ -1753,11 +1753,11 @@ paths:
     get:
       responses:
         '200':
-          description: A ListToolsResponse.
+          description: A ListToolDefsResponse.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListToolsResponse'
+                $ref: '#/components/schemas/ListToolDefsResponse'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -1785,11 +1785,11 @@ paths:
     get:
       responses:
         '200':
-          description: A Tool.
+          description: A ToolDef.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tool'
+                $ref: '#/components/schemas/ToolDef'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -6398,33 +6398,6 @@ components:
               title: BuiltinTool
             - type: string
         arguments:
-          oneOf:
-            - type: string
-            - type: object
-              additionalProperties:
-                oneOf:
-                  - type: string
-                  - type: integer
-                  - type: number
-                  - type: boolean
-                  - type: 'null'
-                  - type: array
-                    items:
-                      oneOf:
-                        - type: string
-                        - type: integer
-                        - type: number
-                        - type: boolean
-                        - type: 'null'
-                  - type: object
-                    additionalProperties:
-                      oneOf:
-                        - type: string
-                        - type: integer
-                        - type: number
-                        - type: boolean
-                        - type: 'null'
-        arguments_json:
           type: string
       additionalProperties: false
       required:
@@ -7552,6 +7525,10 @@ components:
     ToolDef:
       type: object
       properties:
+        toolgroup_id:
+          type: string
+          description: >-
+            (Optional) ID of the tool group this tool belongs to
         name:
           type: string
           description: Name of the tool
@@ -7559,12 +7536,30 @@ components:
           type: string
           description: >-
             (Optional) Human-readable description of what the tool does
-        parameters:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolParameter'
+        input_schema:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
           description: >-
-            (Optional) List of parameters this tool accepts
+            (Optional) JSON Schema for tool inputs (MCP inputSchema)
+        output_schema:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) JSON Schema for tool outputs (MCP outputSchema)
         metadata:
           type: object
           additionalProperties:
@@ -7583,50 +7578,6 @@ components:
       title: ToolDef
       description: >-
         Tool definition used in runtime contexts.
-    ToolParameter:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the parameter
-        parameter_type:
-          type: string
-          description: >-
-            Type of the parameter (e.g., string, integer)
-        description:
-          type: string
-          description: >-
-            Human-readable description of what the parameter does
-        required:
-          type: boolean
-          default: true
-          description: >-
-            Whether this parameter is required for tool invocation
-        items:
-          type: object
-          description: >-
-            Type of the elements when parameter_type is array
-        title:
-          type: string
-          description: (Optional) Title of the parameter
-        default:
-          oneOf:
-            - type: 'null'
-            - type: boolean
-            - type: number
-            - type: string
-            - type: array
-            - type: object
-          description: >-
-            (Optional) Default value for the parameter if not provided
-      additionalProperties: false
-      required:
-        - name
-        - parameter_type
-        - description
-        - required
-      title: ToolParameter
-      description: Parameter definition for a tool.
     ListToolDefsResponse:
       type: object
       properties:
@@ -8002,78 +7953,6 @@ components:
         - toolgroup_id
         - provider_id
       title: RegisterToolGroupRequest
-    Tool:
-      type: object
-      properties:
-        identifier:
-          type: string
-        provider_resource_id:
-          type: string
-        provider_id:
-          type: string
-        type:
-          type: string
-          enum:
-            - model
-            - shield
-            - vector_db
-            - dataset
-            - scoring_function
-            - benchmark
-            - tool
-            - tool_group
-            - prompt
-          const: tool
-          default: tool
-          description: Type of resource, always 'tool'
-        toolgroup_id:
-          type: string
-          description: >-
-            ID of the tool group this tool belongs to
-        description:
-          type: string
-          description: >-
-            Human-readable description of what the tool does
-        parameters:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolParameter'
-          description: List of parameters this tool accepts
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            (Optional) Additional metadata about the tool
-      additionalProperties: false
-      required:
-        - identifier
-        - provider_id
-        - type
-        - toolgroup_id
-        - description
-        - parameters
-      title: Tool
-      description: A tool that can be invoked by agents.
-    ListToolsResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tool'
-          description: List of tools
-      additionalProperties: false
-      required:
-        - data
-      title: ListToolsResponse
-      description: Response containing a list of tools.
     VectorDB:
       type: object
       properties:

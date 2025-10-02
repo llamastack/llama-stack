@@ -25,7 +25,7 @@ from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from ..sqlstore.sqlstore import SqliteSqlStoreConfig, SqlStoreConfig, SqlStoreType, sqlstore_impl
 
-logger = get_logger(name=__name__, category="responses_store")
+logger = get_logger(name=__name__, category="openai_responses")
 
 
 class ResponsesStore:

@@ -216,7 +216,7 @@ async def test_tool_call_delta_streaming_arguments_dict():
     assert chunks[1].event.event_type.value == "progress"
     assert chunks[1].event.delta.type == "tool_call"
     assert chunks[1].event.delta.parse_status.value == "succeeded"
-    assert chunks[1].event.delta.tool_call.arguments_json == '{"number": 28, "power": 3}'
+    assert chunks[1].event.delta.tool_call.arguments == '{"number": 28, "power": 3}'
     assert chunks[2].event.event_type.value == "complete"
 
 
@@ -292,11 +292,11 @@ async def test_multiple_tool_calls():
     assert chunks[1].event.event_type.value == "progress"
     assert chunks[1].event.delta.type == "tool_call"
     assert chunks[1].event.delta.parse_status.value == "succeeded"
-    assert chunks[1].event.delta.tool_call.arguments_json == '{"number": 28, "power": 3}'
+    assert chunks[1].event.delta.tool_call.arguments == '{"number": 28, "power": 3}'
     assert chunks[2].event.event_type.value == "progress"
     assert chunks[2].event.delta.type == "tool_call"
     assert chunks[2].event.delta.parse_status.value == "succeeded"
-    assert chunks[2].event.delta.tool_call.arguments_json == '{"first_number": 4, "second_number": 7}'
+    assert chunks[2].event.delta.tool_call.arguments == '{"first_number": 4, "second_number": 7}'
     assert chunks[3].event.event_type.value == "complete"
 
 
@@ -409,7 +409,7 @@ async def test_process_vllm_chat_completion_stream_response_tool_call_args_last_
     assert chunks[-1].event.event_type == ChatCompletionResponseEventType.complete
     assert chunks[-2].event.delta.type == "tool_call"
     assert chunks[-2].event.delta.tool_call.tool_name == mock_tool_name
-    assert chunks[-2].event.delta.tool_call.arguments == mock_tool_arguments
+    assert chunks[-2].event.delta.tool_call.arguments == mock_tool_arguments_str
 
 
 async def test_process_vllm_chat_completion_stream_response_no_finish_reason():
@@ -421,7 +421,7 @@ async def test_process_vllm_chat_completion_stream_response_no_finish_reason():
 
     mock_tool_name = "mock_tool"
     mock_tool_arguments = {"arg1": 0, "arg2": 100}
-    mock_tool_arguments_str = '"{\\"arg1\\": 0, \\"arg2\\": 100}"'
+    mock_tool_arguments_str = json.dumps(mock_tool_arguments)
 
     async def mock_stream():
         mock_chunks = [
@@ -461,7 +461,7 @@ async def test_process_vllm_chat_completion_stream_response_no_finish_reason():
     assert chunks[-1].event.event_type == ChatCompletionResponseEventType.complete
     assert chunks[-2].event.delta.type == "tool_call"
     assert chunks[-2].event.delta.tool_call.tool_name == mock_tool_name
-    assert chunks[-2].event.delta.tool_call.arguments == mock_tool_arguments
+    assert chunks[-2].event.delta.tool_call.arguments == mock_tool_arguments_str
 
 
 async def test_process_vllm_chat_completion_stream_response_tool_without_args():
@@ -509,7 +509,7 @@ async def test_process_vllm_chat_completion_stream_response_tool_without_args():
     assert chunks[-1].event.event_type == ChatCompletionResponseEventType.complete
     assert chunks[-2].event.delta.type == "tool_call"
     assert chunks[-2].event.delta.tool_call.tool_name == mock_tool_name
-    assert chunks[-2].event.delta.tool_call.arguments == {}
+    assert chunks[-2].event.delta.tool_call.arguments == "{}"
 
 
 async def test_health_status_success(vllm_inference_adapter):

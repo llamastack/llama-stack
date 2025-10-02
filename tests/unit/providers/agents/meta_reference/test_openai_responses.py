@@ -39,7 +39,7 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
 )
-from llama_stack.apis.tools.tools import Tool, ToolGroups, ToolInvocationResult, ToolParameter, ToolRuntime
+from llama_stack.apis.tools.tools import ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.datatypes import ResponsesStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
@@ -186,14 +186,15 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
     input_text = "What is the capital of Ireland?"
     model = "meta-llama/Llama-3.1-8B-Instruct"
 
-    openai_responses_impl.tool_groups_api.get_tool.return_value = Tool(
-        identifier="web_search",
-        provider_id="client",
+    openai_responses_impl.tool_groups_api.get_tool.return_value = ToolDef(
+        name="web_search",
         toolgroup_id="web_search",
         description="Search the web for information",
-        parameters=[
-            ToolParameter(name="query", parameter_type="string", description="The query to search for", required=True)
-        ],
+        input_schema={
+            "type": "object",
+            "properties": {"query": {"type": "string", "description": "The query to search for"}},
+            "required": ["query"],
+        },
     )
 
     openai_responses_impl.tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(

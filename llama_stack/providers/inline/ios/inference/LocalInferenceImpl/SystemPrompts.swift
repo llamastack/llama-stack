@@ -68,9 +68,7 @@ public class FunctionTagCustomToolGenerator {
             {
                 "name": "{{t.tool_name}}",
                 "description": "{{t.description}}",
-                "parameters": {
-                    "type": "dict",
-                    "properties": { {{t.parameters}} }
+                "input_schema": { {{t.input_schema}} }
             }
 
             {{/let}}

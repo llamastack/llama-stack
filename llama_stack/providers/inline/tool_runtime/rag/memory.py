@@ -33,7 +33,6 @@ from llama_stack.apis.tools import (
     ToolDef,
     ToolGroup,
     ToolInvocationResult,
-    ToolParameter,
     ToolRuntime,
 )
 from llama_stack.apis.vector_io import (
@@ -301,13 +300,16 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
                 ToolDef(
                     name="knowledge_search",
                     description="Search for information in a database.",
-                    parameters=[
-                        ToolParameter(
-                            name="query",
-                            description="The query to search for. Can be a natural language sentence or keywords.",
-                            parameter_type="string",
-                        ),
-                    ],
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The query to search for. Can be a natural language sentence or keywords.",
+                            }
+                        },
+                        "required": ["query"],
+                    },
                 ),
             ]
         )

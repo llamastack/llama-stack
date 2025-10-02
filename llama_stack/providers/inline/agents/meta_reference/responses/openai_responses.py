@@ -41,7 +41,7 @@ from .utils import (
     convert_response_text_to_chat_response_format,
 )
 
-logger = get_logger(name=__name__, category="openai::responses")
+logger = get_logger(name=__name__, category="openai_responses")
 
 
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):

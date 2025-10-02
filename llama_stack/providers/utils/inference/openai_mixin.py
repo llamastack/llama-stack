@@ -286,33 +286,33 @@ class OpenAIMixin(ModelRegistryHelper, NeedsRequestProviderData, ABC):
 
             messages = [await _localize_image_url(m) for m in messages]
 
-        resp = await self.client.chat.completions.create(
-            **await prepare_openai_completion_params(
-                model=await self._get_provider_model_id(model),
-                messages=messages,
-                frequency_penalty=frequency_penalty,
-                function_call=function_call,
-                functions=functions,
-                logit_bias=logit_bias,
-                logprobs=logprobs,
-                max_completion_tokens=max_completion_tokens,
-                max_tokens=max_tokens,
-                n=n,
-                parallel_tool_calls=parallel_tool_calls,
-                presence_penalty=presence_penalty,
-                response_format=response_format,
-                seed=seed,
-                stop=stop,
-                stream=stream,
-                stream_options=stream_options,
-                temperature=temperature,
-                tool_choice=tool_choice,
-                tools=tools,
-                top_logprobs=top_logprobs,
-                top_p=top_p,
-                user=user,
-            )
+        params = await prepare_openai_completion_params(
+            model=await self._get_provider_model_id(model),
+            messages=messages,
+            frequency_penalty=frequency_penalty,
+            function_call=function_call,
+            functions=functions,
+            logit_bias=logit_bias,
+            logprobs=logprobs,
+            max_completion_tokens=max_completion_tokens,
+            max_tokens=max_tokens,
+            n=n,
+            parallel_tool_calls=parallel_tool_calls,
+            presence_penalty=presence_penalty,
+            response_format=response_format,
+            seed=seed,
+            stop=stop,
+            stream=stream,
+            stream_options=stream_options,
+            temperature=temperature,
+            tool_choice=tool_choice,
+            tools=tools,
+            top_logprobs=top_logprobs,
+            top_p=top_p,
+            user=user,
         )
+
+        resp = await self.client.chat.completions.create(**params)
 
         return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 

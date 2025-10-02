@@ -948,6 +948,10 @@ class Generator:
                     # Include only deprecated endpoints
                     if deprecated:
                         filtered_operations.append(op)
+                elif self.options.stability_filter == "stainless":
+                    # Include both stable (v1 non-deprecated) and experimental (v1alpha, v1beta) endpoints
+                    if (stability_level == "v1" and not deprecated) or stability_level in ["v1alpha", "v1beta"]:
+                        filtered_operations.append(op)
 
             operations = filtered_operations
             print(

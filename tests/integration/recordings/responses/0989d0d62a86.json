@@ -8,44 +8,62 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are a helpful assistant"
+          "content": "You are a helpful assistant."
         },
         {
           "role": "user",
-          "content": "What is the boiling point of the liquid polyjuice in celsius?"
+          "content": "Say hi to the world. Use tools to do so."
         }
       ],
       "max_tokens": 0,
       "stream": true,
-      "temperature": 0.0001,
       "tool_choice": "auto",
       "tools": [
         {
           "type": "function",
           "function": {
-            "name": "get_boiling_point",
-            "description": "Returns the boiling point of a liquid in Celcius or Fahrenheit.",
+            "name": "greet_everyone",
             "parameters": {
-              "type": "object",
+              "properties": {
+                "url": {
+                  "title": "Url",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "url"
+              ],
+              "title": "greet_everyoneArguments",
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "get_boiling_point",
+            "description": "\n        Returns the boiling point of a liquid in Celsius or Fahrenheit.\n\n        :param liquid_name: The name of the liquid\n        :param celsius: Whether to return the boiling point in Celsius\n        :return: The boiling point of the liquid in Celcius or Fahrenheit\n        ",
+            "parameters": {
               "properties": {
                 "liquid_name": {
-                  "type": "string",
-                  "description": "The name of the liquid"
+                  "title": "Liquid Name",
+                  "type": "string"
                 },
-                "celcius": {
-                  "type": "boolean",
-                  "description": "Whether to return the boiling point in Celcius",
-                  "default": true
+                "celsius": {
+                  "default": true,
+                  "title": "Celsius",
+                  "type": "boolean"
                 }
               },
               "required": [
                 "liquid_name"
-              ]
+              ],
+              "title": "get_boiling_pointArguments",
+              "type": "object"
             }
           }
         }
-      ],
-      "top_p": 0.9
+      ]
     },
     "endpoint": "/v1/chat/completions",
     "model": "llama3.2:3b-instruct-fp16"
@@ -55,7 +73,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-709",
+          "id": "chatcmpl-359",
           "choices": [
             {
               "delta": {
@@ -66,10 +84,10 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_3wa5qjdc",
+                    "id": "call_qvp9u80l",
                     "function": {
-                      "arguments": "{\"celcius\":true,\"liquid_name\":\"polyjuice\"}",
-                      "name": "get_boiling_point"
+                      "arguments": "{\"url\":\"world\"}",
+                      "name": "greet_everyone"
                     },
                     "type": "function"
                   }
@@ -80,7 +98,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759368374,
+          "created": 1759437845,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -91,7 +109,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-709",
+          "id": "chatcmpl-359",
           "choices": [
             {
               "delta": {
@@ -106,7 +124,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759368374,
+          "created": 1759437845,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

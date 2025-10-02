@@ -1,0 +1,1355 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/api/generate",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "raw": true,
+      "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant. You have access to functions, but you should only use them if they are required.\nYou are an expert in composing functions. You are given a question and a set of possible functions.\nBased on the question, you may or may not need to make one function/tool call to achieve the purpose.\n\nIf you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)]\nIf you decide to invoke a function, you SHOULD NOT include any other text in the response. besides the function call in the above format.\nFor a boolean parameter, be sure to use `True` or `False` (capitalized) for the value.\n\n\nHere is a list of functions in JSON format that you can invoke.\n\n[\n    {\n        \"name\": \"book_flight\",\n        \"description\": \"\n        Book a flight with passenger and payment information.\n\n        This tool uses JSON Schema $ref and $defs for type reuse.\n        \",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\"flight\", \"passengers\", \"payment\"],\n            \"properties\": {\n                \"flight\": {\n                    \"type\": \"object\",\n                    \"description\": \"\"\n                },\n                \"passengers\": {\n                    \"type\": \"array\",\n                    \"description\": \"\"\n                },\n                \"payment\": {\n                    \"type\": \"object\",\n                    \"description\": \"\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"process_order\",\n        \"description\": \"\n        Process an order with nested address information.\n\n        Uses nested objects and $ref.\n        \",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\"order_data\"],\n            \"properties\": {\n                \"order_data\": {\n                    \"type\": \"object\",\n                    \"description\": \"\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"flexible_contact\",\n        \"description\": \"\n        Accept flexible contact (email or phone).\n\n        Uses anyOf schema.\n        \",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\"contact_info\"],\n            \"properties\": {\n                \"contact_info\": {\n                    \"type\": \"string\",\n                    \"description\": \"\"\n                }\n            }\n        }\n    }\n]\n\nYou can answer general questions or invoke tools when necessary.\nIn addition to tool calls, you should also augment your responses by using the tool outputs.\nYou are a helpful assistant that can process orders and book flights.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nProcess an order with 2 widgets going to 123 Main St, San Francisco<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n[process_order(order_data={order_id=1, customer_name=\"John Doe\", address={street=\"123 Main St\", city=\"San Francisco\"}})]<|eot_id|><|start_header_id|>ipython<|end_header_id|>\n\n{\n  \"order_id\": \"ORD789\",\n  \"status\": \"processing\",\n  \"data\": {\n    \"order_id\": 1,\n    \"customer_name\": \"John Doe\",\n    \"address\": {\n      \"street\": \"123 Main St\",\n      \"city\": \"San Francisco\"\n    }\n  }\n}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+      "options": {
+        "temperature": 0.0
+      },
+      "stream": true
+    },
+    "endpoint": "/api/generate",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.509066Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "[",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.551814Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "book",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.596704Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "_flight",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.641302Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "(f",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.683974Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "light",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.726757Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "={\"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.769592Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "flight",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.811613Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "_number",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.853673Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.896273Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.938557Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "AA",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:21.980765Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "101",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.022949Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\",",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.065012Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.10732Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "departure",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.149511Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.19172Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.234788Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "New",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.277472Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " York",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.321037Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\",",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.364313Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.407033Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "arrival",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.449572Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.492159Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.534652Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "Los",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.578509Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " Angeles",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.625903Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\",",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.671828Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.71768Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "pass",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.765213Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "engers",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.811377Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.8582Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " [{\"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.904666Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "name",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.950992Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:22.997067Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.042723Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "John",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.088476Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " Doe",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.135032Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\",",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.181489Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.227284Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "email",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.273828Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.320518Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.365466Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "j",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.410208Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "oh",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.455306Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "nd",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.500535Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "oe",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.54581Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "@example",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.591529Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": ".com",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.638938Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\"}",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.683537Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "],",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.727957Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.771084Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "payment",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.81393Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.856746Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " {\"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.899213Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "method",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.941386Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:23.984154Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.028068Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "credit",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.070217Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "_card",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.111913Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\",",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.153705Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.196172Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "card",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.240061Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "_number",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.283763Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\":",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.325975Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": " \"",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.368432Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "123",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.411036Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "456",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.45408Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "789",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.496458Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "012",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.538894Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "345",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.581294Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "6",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.624685Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": "\"}}",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.667599Z",
+          "done": false,
+          "done_reason": null,
+          "total_duration": null,
+          "load_duration": null,
+          "prompt_eval_count": null,
+          "prompt_eval_duration": null,
+          "eval_count": null,
+          "eval_duration": null,
+          "response": ")]",
+          "thinking": null,
+          "context": null
+        }
+      },
+      {
+        "__type__": "ollama._types.GenerateResponse",
+        "__data__": {
+          "model": "llama3.2:3b-instruct-fp16",
+          "created_at": "2025-10-01T23:00:24.709585Z",
+          "done": true,
+          "done_reason": "stop",
+          "total_duration": 3497578917,
+          "load_duration": 104591083,
+          "prompt_eval_count": 664,
+          "prompt_eval_duration": 191187834,
+          "eval_count": 74,
+          "eval_duration": 3201095416,
+          "response": "",
+          "thinking": null,
+          "context": null
+        }
+      }
+    ],
+    "is_streaming": true
+  }
+}

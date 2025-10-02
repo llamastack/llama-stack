@@ -11,7 +11,7 @@ from llama_stack.apis.common.content_types import (
     InterleavedContent,
 )
 from llama_stack.apis.tools import (
-    ListToolsResponse,
+    ListToolDefsResponse,
     RAGDocument,
     RAGQueryConfig,
     RAGQueryResult,
@@ -86,6 +86,6 @@ class ToolRuntimeRouter(ToolRuntime):
 
     async def list_runtime_tools(
         self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
-    ) -> ListToolsResponse:
+    ) -> ListToolDefsResponse:
         logger.debug(f"ToolRuntimeRouter.list_runtime_tools: {tool_group_id}")
         return await self.routing_table.list_tools(tool_group_id)

@@ -43,6 +43,7 @@ class Batches(Protocol):
     Note: This API is currently under active development and may undergo changes.
     """
 
+    @webmethod(route="/openai/v1/batches", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/batches", method="POST", level=LLAMA_STACK_API_V1)
     async def create_batch(
         self,
@@ -63,6 +64,7 @@ class Batches(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/batches/{batch_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/batches/{batch_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def retrieve_batch(self, batch_id: str) -> BatchObject:
         """Retrieve information about a specific batch.
@@ -72,6 +74,7 @@ class Batches(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/batches/{batch_id}/cancel", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/batches/{batch_id}/cancel", method="POST", level=LLAMA_STACK_API_V1)
     async def cancel_batch(self, batch_id: str) -> BatchObject:
         """Cancel a batch that is in progress.
@@ -81,6 +84,7 @@ class Batches(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/batches", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/batches", method="GET", level=LLAMA_STACK_API_V1)
     async def list_batches(
         self,
