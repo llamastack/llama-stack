@@ -20,7 +20,6 @@ from llama_stack.core.conversations.conversations import (
     ConversationServiceConfig,
     ConversationServiceImpl,
 )
-from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
 
 
@@ -29,13 +28,7 @@ async def service():
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test_conversations.db"
 
-        config = ConversationServiceConfig(
-            run_config=StackRunConfig(
-                image_name="test",
-                providers={},
-                conversations_store=SqliteSqlStoreConfig(db_path=str(db_path)),
-            )
-        )
+        config = ConversationServiceConfig(conversations_store=SqliteSqlStoreConfig(db_path=str(db_path)), policy=[])
         service = ConversationServiceImpl(config, {})
         await service.initialize()
         yield service
@@ -115,3 +108,25 @@ async def test_openai_type_compatibility(service):
 
     openai_item_adapter = TypeAdapter(OpenAIConversationItem)
     openai_item_adapter.validate_python(item_dict)
+
+
+async def test_policy_configuration():
+    from llama_stack.core.access_control.datatypes import Action, Scope
+    from llama_stack.core.datatypes import AccessRule
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test_conversations_policy.db"
+
+        restrictive_policy = [
+            AccessRule(forbid=Scope(principal="test_user", actions=[Action.CREATE, Action.READ], resource="*"))
+        ]
+
+        config = ConversationServiceConfig(
+            conversations_store=SqliteSqlStoreConfig(db_path=str(db_path)), policy=restrictive_policy
+        )
+        service = ConversationServiceImpl(config, {})
+        await service.initialize()
+
+        assert service.policy == restrictive_policy
+        assert len(service.policy) == 1
+        assert service.policy[0].forbid is not None
