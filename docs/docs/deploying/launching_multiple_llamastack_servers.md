@@ -1,468 +1,778 @@
-# Multiple Llama Stack Servers: Starter Distro Guide
+# Production Deployment: Multiple Llama Stack Servers
 
-A complete guide to running multiple Llama Stack servers using the **starter distribution** for first-time users.
+A production-focused guide for deploying multiple Llama Stack servers using container images and systemd services.
 
 ## Table of Contents
 
-1. [System Requirements](#system-requirements)
-2. [Verify Llama Stack](#Verify-that-llama-stack-is-installed)
-3. [Initialize Starter Distribution](#initialize-starter-distribution)
-4. [Set Up Multiple Servers](#set-up-multiple-servers)
-5. [Configure API Keys](#configure-api-keys)
-6. [Start the Servers](#start-the-servers)
-7. [Test Your Setup](#test-your-setup)
-8. [Manage Your Servers](#manage-your-servers)
-9. [Troubleshooting](#troubleshooting)
+1. [Production Use Cases](#production-use-cases)
+2. [Container-Based Deployment](#container-based-deployment)
+3. [Systemd Service Deployment](#systemd-service-deployment)
+4. [Docker Compose Deployment](#docker-compose-deployment)
+5. [Kubernetes Deployment](#kubernetes-deployment)
+6. [Load Balancing & High Availability](#load-balancing--high-availability)
+7. [Monitoring & Logging](#monitoring--logging)
+8. [Production Best Practices](#production-best-practices)
 
 ---
 
-## System Requirements
+## Production Use Cases
 
-### Minimum Requirements
-- **Operating System**: Linux, macOS, or Windows with WSL2
-- **Python**: Version 3.12 or higher
-- **RAM**: 8GB minimum (16GB recommended)
-- **Storage**: 10GB free space minimum
-- **Network**: Stable internet connection
+### When to Deploy Multiple Llama Stack Servers
 
-### Check Your System
-```bash
-# Check Python version
-python3 --version
-
-# Check available RAM
-free -h
-
-# Check disk space
-df -h
+**Provider Isolation**: Separate servers for different AI providers (local vs. cloud)
+```
+Server 1: Ollama + local models (internal traffic)
+Server 2: OpenAI + Anthropic (external API traffic)
+Server 3: Enterprise providers (Bedrock, Azure)
 ```
 
----
-
-## Verify Llama Stack
-
-### Step 1: Verify that llama stack is installed
-```bash
-# Verify installation
-llama stack --help
+**Workload Segmentation**: Different servers for different workloads
+```
+Server 1: Real-time inference (low latency)
+Server 2: Batch processing (high throughput)
+Server 3: Embeddings & vector operations
 ```
 
-### Step 2: Initialize Starter Distribution
-```bash
-# Initialize the starter distribution
-llama stack build --template starter --name starter
+**Multi-Tenancy**: Isolated servers per tenant/environment
+```
+Server 1: Production tenant A
+Server 2: Production tenant B
+Server 3: Staging environment
+```
 
-# This creates ~/.llama/distributions/starter/
+**High Availability**: Load-balanced instances for fault tolerance
+```
+Server 1-3: Same config, load balanced
+Server 4-6: Backup cluster
 ```
 
 ---
 
-## Set Up Multiple Servers
+## Container-Based Deployment
 
-The starter distribution provides a comprehensive configuration with multiple providers. We'll create **2 servers** based on this starter config:
+### Method 1: Docker Containers
 
-- **Server 1** (Port 8321): Full starter config with all providers
-- **Server 2** (Port 8322): Same config with different database paths (using CLI port override)
+#### Build Custom Container Images
 
-### Step 1: Examine the Base Configuration
+**Create Dockerfile for Llama Stack:**
 
-```bash
-# View the starter configuration
-cat ~/.llama/distributions/starter/starter-run.yaml
+```dockerfile
+# Option 1: Recommended - Python slim (balanced size/compatibility)
+FROM python:3.12-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Install Llama Stack
+RUN pip install --no-cache-dir llama-stack
+
+# Create app directory
+WORKDIR /app
+
+# Create non-root user for security
+RUN useradd -r -s /bin/false -m llamastack
+USER llamastack
+
+# Copy configuration
+COPY --chown=llamastack:llamastack configs/ /app/configs/
+
+# Expose port
+EXPOSE 8321
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8321/v1/health || exit 1
+
+# Default command
+CMD ["llama", "stack", "run", "/app/configs/server.yaml"]
 ```
 
-### Step 2: Create Server 1 Configuration (Full Starter)
+**Alternative: Ultra-lightweight Alpine version:**
+```dockerfile
+# Option 2: Alpine - Smallest size (~50MB total)
+FROM python:3.12-alpine
 
-```bash
-# Copy the starter config for Server 1
-cp ~/.llama/distributions/starter/starter-run.yaml ~/server1-starter.yaml
+# Install system dependencies
+RUN apk add --no-cache curl gcc musl-dev linux-headers
+
+# Install Llama Stack
+RUN pip install --no-cache-dir llama-stack
+
+# Create app directory
+WORKDIR /app
+
+# Create non-root user
+RUN adduser -D -s /bin/sh llamastack
+USER llamastack
+
+# Copy configuration
+COPY --chown=llamastack:llamastack configs/ /app/configs/
+
+# Expose port
+EXPOSE 8321
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8321/v1/health || exit 1
+
+# Default command
+CMD ["llama", "stack", "run", "/app/configs/server.yaml"]
 ```
 
-### Step 3: Create Server 2 Configuration (Same Config, Different Databases)
+**Alternative: Multi-stage build for production:**
+```dockerfile
+# Option 3: Multi-stage - Minimal runtime image
+FROM python:3.12-slim as builder
 
-```bash
-# Copy starter config for Server 2
-cp ~/.llama/distributions/starter/starter-run.yaml ~/server2-starter.yaml
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Change the database paths to avoid conflicts (only change needed!)
-sed -i 's|~/.llama/distributions/starter|~/.llama/distributions/starter2|g' ~/server2-starter.yaml
+# Install Python packages
+RUN pip install --user --no-cache-dir llama-stack
+
+# Runtime stage
+FROM python:3.12-slim
+
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy installed packages from builder
+COPY --from=builder /root/.local /root/.local
+
+# Create non-root user
+RUN useradd -r -s /bin/false -m llamastack
+USER llamastack
+
+# Set PATH
+ENV PATH="/root/.local/bin:$PATH"
+
+WORKDIR /app
+COPY --chown=llamastack:llamastack configs/ /app/configs/
+
+EXPOSE 8321
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8321/v1/health || exit 1
+
+CMD ["llama", "stack", "run", "/app/configs/server.yaml"]
 ```
 
-### Step 4: Create Separate Database Directories
-```bash
-# Create separate directories for Server 2
-mkdir -p ~/.llama/distributions/starter2
-```
+#### Prepare Server Configurations
 
-**That's it!** No need to modify ports in YAML files - we'll use the CLI `--port` flag instead.
-
----
-
-## Configure API Keys
-
-The starter configuration supports many providers. Set up the API keys you need:
-
-### Essential API Keys
-
-```bash
-# Groq (fast inference)
-export GROQ_API_KEY="your_groq_api_key_here"
-
-# OpenAI (if you want to use GPT models)
-export OPENAI_API_KEY="your_openai_api_key_here"
-
-# Anthropic (if you want Claude models)
-export ANTHROPIC_API_KEY="your_anthropic_api_key_here"
-
-# Ollama (for local models)
-export OLLAMA_URL="http://localhost:11434"
-```
-
-### Optional API Keys (Set only if you plan to use these providers)
-
-```bash
-# Fireworks AI
-export FIREWORKS_API_KEY="your_fireworks_api_key"
-
-# Together AI
-export TOGETHER_API_KEY="your_together_api_key"
-
-# Gemini
-export GEMINI_API_KEY="your_gemini_api_key"
-
-# NVIDIA
-export NVIDIA_API_KEY="your_nvidia_api_key"
-```
-
----
-
-## Set Up Ollama (Optional)
-
-If you want to use local models through Ollama:
-
-### Install and Start Ollama
-
-**Linux:**
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama serve
-```
-
-**macOS:**
-```bash
-brew install ollama
-ollama serve
-```
-
-### Download Models (in a new terminal)
-
-```bash
-# Download popular models
-ollama pull llama3.1:8b
-ollama pull llama-guard3:8b
-ollama pull all-minilm:l6-v2
-
-# Verify models
-ollama list
-```
-
----
-
-## Start the Servers
-
-### Method 1: Run in Separate Terminals (Recommended for Development)
-
-**Terminal 1 - Server 1:**
-```bash
-cd ~
-llama stack run ~/server1-starter.yaml --port 8321
-```
-
-**Terminal 2 - Server 2 (Uses CLI port override!):**
-```bash
-cd ~
-llama stack run ~/server2-starter.yaml --port 8322
-```
-
-### Method 2: Run in Background
-
-```bash
-# Start Server 1 in background
-cd ~
-nohup llama stack run ~/server1-starter.yaml --port 8321 > server1.log 2>&1 &
-
-# Start Server 2 in background with port override
-nohup llama stack run ~/server2-starter.yaml --port 8322 > server2.log 2>&1 &
-```
-
-### Method 3: Alternative - Use Environment Variable
-
-```bash
-# You can also set port via environment variable
-export LLAMA_STACK_PORT=8322
-llama stack run ~/server2-starter.yaml
-
-# Or inline
-LLAMA_STACK_PORT=8322 llama stack run ~/server2-starter.yaml
-```
-
-### Expected Output
-
-Both servers should start successfully:
-```
-Starting server on port 8321...
-Server is running at http://localhost:8321
-```
-
-```
-Starting server on port 8322...
-Server is running at http://localhost:8322
-```
-
----
-
-## Test Your Setup
-
-### Step 1: Health Check
-
-```bash
-# Test both servers
-curl http://localhost:8321/v1/health
-curl http://localhost:8322/v1/health
-```
-
-**Expected Response:**
-```json
-{"status": "OK"}
-```
-
-### Step 2: List Available Models
-
-```bash
-# Check models on Server 1
-curl -s http://localhost:8321/v1/models | python3 -m json.tool
-
-# Check models on Server 2
-curl -s http://localhost:8322/v1/models | python3 -m json.tool
-```
-
-### Step 3: Test Inference with Different Providers
-
-**Test Groq on Server 1:**
-```bash
-curl -X POST http://localhost:8321/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "Hello! How are you?"}],
-    "model": "groq/llama-3.1-8b-instant"
-  }'
-```
-
-**Test OpenAI on Server 2 (if you have OpenAI API key):**
-```bash
-curl -X POST http://localhost:8322/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "Hello from server 2!"}],
-    "model": "openai/gpt-4o-mini"
-  }'
-```
-
-**Test Ollama (if you set it up):**
-```bash
-curl -X POST http://localhost:8321/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "Hello from Ollama!"}],
-    "model": "ollama/llama3.1:8b"
-  }'
-```
-
-### Step 4: Test Embeddings
-
-```bash
-curl -X POST http://localhost:8321/v1/embeddings \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": "Hello world",
-    "model": "sentence-transformers/all-MiniLM-L6-v2"
-  }'
-```
-
----
-
-## Manage Your Servers
-
-### Check What's Running
-
-```bash
-# Check server processes
-lsof -i :8321 -i :8322
-
-# Check all llama stack processes
-ps aux | grep "llama.*stack"
-```
-
-### Stop Servers
-
-**Stop individual servers:**
-```bash
-# Stop Server 1
-kill $(lsof -t -i:8321)
-
-# Stop Server 2
-kill $(lsof -t -i:8322)
-```
-
-**Stop all servers:**
-```bash
-pkill -f "llama.*stack.*run"
-```
-
-### View Logs (if running in background)
-
-```bash
-# Watch Server 1 logs
-tail -f server1.log
-
-# Watch Server 2 logs
-tail -f server2.log
-```
-
-### Restart Servers
-
-```bash
-# Stop all servers first
-pkill -f "llama.*stack.*run"
-sleep 3
-
-# Restart both servers
-cd ~
-nohup llama stack run ~/server1-starter.yaml > server1.log 2>&1 &
-nohup llama stack run ~/server2-starter.yaml > server2.log 2>&1 &
-```
-
----
-
-## Troubleshooting
-
-### Problem: "Port already in use"
-
-```bash
-# Find what's using the ports
-lsof -i :8321 -i :8322
-
-# Kill processes using the ports
-kill $(lsof -t -i:8321)
-kill $(lsof -t -i:8322)
-```
-
-### Problem: "Provider not available"
-
-The starter config includes many providers that may not have API keys set. This is normal behavior:
-
-```bash
-# Check which environment variables are set
-env | grep -E "(GROQ|OPENAI|ANTHROPIC|OLLAMA)_"
-
-# Set missing API keys you want to use
-export GROQ_API_KEY="your_key_here"
-```
-
-### Problem: "No models available"
-
-```bash
-# Check available models
-curl -s http://localhost:8321/v1/models | python3 -m json.tool
-
-# If empty, check your API keys are set correctly
-echo $GROQ_API_KEY
-echo $OPENAI_API_KEY
-```
-
-### Problem: Ollama connection issues
-
-```bash
-# Check if Ollama is running
-curl http://localhost:11434/api/version
-
-# If not running, start it
-ollama serve
-
-# Verify OLLAMA_URL is set
-echo $OLLAMA_URL
-```
-
----
-
-## Advanced Usage
-
-### Customize Provider Selection
-
-You can modify the YAML files to enable/disable specific providers:
-
+**Server 1 Config (server1.yaml):**
 ```yaml
-# In your server config, comment out providers you don't want
+version: 2
+image_name: production-server1
 providers:
   inference:
-    # - provider_id: openai       # Disabled
-    #   provider_type: remote::openai
-    #   config:
-    #     api_key: ${env.OPENAI_API_KEY:=}
-
-    - provider_id: groq           # Enabled
-      provider_type: remote::groq
+    - provider_id: ollama
+      provider_type: remote::ollama
       config:
-        api_key: ${env.GROQ_API_KEY:=}
+        url: http://ollama-service:11434
+  vector_io:
+    - provider_id: faiss
+      provider_type: inline::faiss
+      config:
+        kvstore:
+          type: sqlite
+          db_path: /data/server1/faiss_store.db
+metadata_store:
+  type: sqlite
+  db_path: /data/server1/registry.db
+server:
+  port: 8321
 ```
 
-### You Can Use Different Providers on Different Servers
+**Server 2 Config (server2.yaml):**
+```yaml
+version: 2
+image_name: production-server2
+providers:
+  inference:
+    - provider_id: openai
+      provider_type: remote::openai
+      config:
+        api_key: ${OPENAI_API_KEY}
+    - provider_id: anthropic
+      provider_type: remote::anthropic
+      config:
+        api_key: ${ANTHROPIC_API_KEY}
+metadata_store:
+  type: sqlite
+  db_path: /data/server2/registry.db
+server:
+  port: 8322
+```
 
-**Server 1 - Local providers**
-- Enable: Ollama, vllm, other local providers
-- Disable: OpenAI, Anthropic, Groq, Fireworks
+#### Build and Run Containers
 
-**Server 2 - Remote providers:**
-- Enable: OpenAI, Anthropic, Gemini
-- Disable: Ollama, vllm and local providers
----
-
-## Summary
-
-You now have **2 Llama Stack servers** running with the starter distribution:
-
-### Server Configuration
-- **Server 1**: `http://localhost:8321` (Full starter config)
-- **Server 2**: `http://localhost:8322` (Modified starter config)
-
-### Key Files
-- `~/server1-starter.yaml` - Server 1 configuration
-- `~/server2-starter.yaml` - Server 2 configuration
-- `server1.log` - Server 1 logs (if background)
-- `server2.log` - Server 2 logs (if background)
-
-### Key Commands
 ```bash
-# Health check
-curl http://localhost:8321/v1/health
-curl http://localhost:8322/v1/health
+# Build images
+docker build -t llamastack-server1 -f Dockerfile.server1 .
+docker build -t llamastack-server2 -f Dockerfile.server2 .
 
-# Stop servers
-kill $(lsof -t -i:8321)
-kill $(lsof -t -i:8322)
+# Create volumes for persistent data
+docker volume create llamastack-server1-data
+docker volume create llamastack-server2-data
 
-# Check processes
-lsof -i :8321 -i :8322
+# Run Server 1
+docker run -d \
+  --name llamastack-server1 \
+  --restart unless-stopped \
+  -p 8321:8321 \
+  -v llamastack-server1-data:/data/server1 \
+  -e GROQ_API_KEY="${GROQ_API_KEY}" \
+  --network llamastack-network \
+  llamastack-server1
+
+# Run Server 2
+docker run -d \
+  --name llamastack-server2 \
+  --restart unless-stopped \
+  -p 8322:8322 \
+  -v llamastack-server2-data:/data/server2 \
+  -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
+  -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" \
+  --network llamastack-network \
+  llamastack-server2
 ```
 
-### Next Steps
-1. Create more servers with different configurations if needed.
-2. Set up API keys for providers you want to use.
-3. Test different models and providers.
-4. Customize configurations for your specific needs.
-5. Set up monitoring and logging for production use.
 
+## Docker Compose Deployment
+
+### Method 2: Docker Compose (Recommended)
+
+**docker-compose.yml:**
+```yaml
+# Note: Version specification is optional in modern Docker Compose
+# Using latest Docker Compose format
+services:
+  # Ollama service for local models
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-service
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - llamastack-network
+
+  # Server 1: Local providers
+  llamastack-server1:
+    build:
+      context: .
+      dockerfile: Dockerfile.server1
+    container_name: llamastack-server1
+    restart: unless-stopped
+    ports:
+      - "8321:8321"
+    volumes:
+      - server1-data:/data/server1
+      - ./configs/server1.yaml:/app/configs/server.yaml:ro
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    depends_on:
+      - ollama
+    networks:
+      - llamastack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8321/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Server 2: Cloud providers
+  llamastack-server2:
+    build:
+      context: .
+      dockerfile: Dockerfile.server2
+    container_name: llamastack-server2
+    restart: unless-stopped
+    ports:
+      - "8322:8322"
+    volumes:
+      - server2-data:/data/server2
+      - ./configs/server2.yaml:/app/configs/server.yaml:ro
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    networks:
+      - llamastack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8322/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Load balancer (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: llamastack-lb
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - llamastack-server1
+      - llamastack-server2
+    networks:
+      - llamastack-network
+
+volumes:
+  ollama-data:
+  server1-data:
+  server2-data:
+
+networks:
+  llamastack-network:
+    driver: bridge
+```
+
+**Environment file (.env):**
+```bash
+OPENAI_API_KEY=your_openai_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
+GROQ_API_KEY=your_groq_key_here
+```
+
+**Deploy with Docker Compose:**
+```bash
+# Start all services
+docker-compose up -d
+
+# Scale services
+docker-compose up -d --scale llamastack-server1=3
+
+# View logs
+docker-compose logs -f llamastack-server1
+docker-compose logs -f llamastack-server2
+
+# Stop services
+docker-compose down
+
+# Update services
+docker-compose pull && docker-compose up -d
+```
 
 ---
 
-*This guide uses the official Llama Stack starter distribution for maximum compatibility and feature coverage.*
+## Kubernetes Deployment
+
+### Method 3: Kubernetes
+
+**ConfigMap (llamastack-configs.yaml):**
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llamastack-configs
+data:
+  server1.yaml: |
+    version: 2
+    image_name: k8s-server1
+    providers:
+      inference:
+        - provider_id: ollama
+          provider_type: remote::ollama
+          config:
+            url: http://ollama-service:11434
+    metadata_store:
+      type: sqlite
+      db_path: /data/registry.db
+    server:
+      port: 8321
+
+  server2.yaml: |
+    version: 2
+    image_name: k8s-server2
+    providers:
+      inference:
+        - provider_id: openai
+          provider_type: remote::openai
+          config:
+            api_key: ${OPENAI_API_KEY}
+    metadata_store:
+      type: sqlite
+      db_path: /data/registry.db
+    server:
+      port: 8322
+```
+
+**Deployments (llamastack-deployments.yaml):**
+```yaml
+# Server 1 Deployment - Local Providers
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llamastack-server1
+  labels:
+    app.kubernetes.io/name: llamastack-server1
+    app.kubernetes.io/component: inference
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: llamastack-server1
+  template:
+    metadata:
+      labels:
+        app: llamastack-server1
+    spec:
+      containers:
+      - name: llamastack
+        image: llamastack-server1:latest
+        ports:
+        - containerPort: 8321
+          name: http-api
+        env:
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llamastack-secrets
+              key: groq-api-key
+        - name: OLLAMA_URL
+          value: "http://ollama-service:11434"
+        volumeMounts:
+        - name: config
+          mountPath: /app/configs
+          subPath: server1.yaml
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /v1/health
+            port: 8321
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /v1/health
+            port: 8321
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: config
+        configMap:
+          name: llamastack-configs
+      - name: data
+        persistentVolumeClaim:
+          claimName: llamastack-server1-pvc
+
+---
+# Server 2 Deployment - Cloud Providers
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llamastack-server2
+  labels:
+    app.kubernetes.io/name: llamastack-server2
+    app.kubernetes.io/component: inference
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: llamastack-server2
+  template:
+    metadata:
+      labels:
+        app: llamastack-server2
+    spec:
+      containers:
+      - name: llamastack
+        image: llamastack-server2:latest
+        ports:
+        - containerPort: 8322
+          name: http-api
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llamastack-secrets
+              key: openai-api-key
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llamastack-secrets
+              key: anthropic-api-key
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llamastack-secrets
+              key: groq-api-key
+        volumeMounts:
+        - name: config
+          mountPath: /app/configs
+          subPath: server2.yaml
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /v1/health
+            port: 8322
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /v1/health
+            port: 8322
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      volumes:
+      - name: config
+        configMap:
+          name: llamastack-configs
+      - name: data
+        persistentVolumeClaim:
+          claimName: llamastack-server2-pvc
+```
+
+**Services (llamastack-services.yaml):**
+```yaml
+# Server 1 Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: llamastack-server1-service
+  labels:
+    app.kubernetes.io/name: llamastack-server1
+spec:
+  selector:
+    app: llamastack-server1
+  ports:
+  - port: 8321
+    targetPort: 8321
+    protocol: TCP
+    name: http-api
+  type: LoadBalancer
+
+---
+# Server 2 Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: llamastack-server2-service
+  labels:
+    app.kubernetes.io/name: llamastack-server2
+spec:
+  selector:
+    app: llamastack-server2
+  ports:
+  - port: 8322
+    targetPort: 8322
+    protocol: TCP
+    name: http-api
+  type: LoadBalancer
+```
+
+**Persistent Volume Claims (llamastack-pvc.yaml):**
+```yaml
+# PVC for Server 1
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llamastack-server1-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+
+---
+# PVC for Server 2
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llamastack-server2-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: fast-ssd
+```
+
+**Secrets (llamastack-secrets.yaml):**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: llamastack-secrets
+type: Opaque
+stringData:
+  groq-api-key: "your_groq_api_key_here"
+  openai-api-key: "your_openai_api_key_here"
+  anthropic-api-key: "your_anthropic_api_key_here"
+```
+
+**Deploy to Kubernetes:**
+```bash
+# Apply configurations
+kubectl apply -f llamastack-configs.yaml
+kubectl apply -f llamastack-secrets.yaml
+kubectl apply -f llamastack-pvc.yaml
+kubectl apply -f llamastack-deployment.yaml
+kubectl apply -f llamastack-service.yaml
+
+# Check status
+kubectl get pods -l app=llamastack-server1
+kubectl get services
+
+# Scale deployment
+kubectl scale deployment llamastack-server1 --replicas=5
+
+# View logs
+kubectl logs -f deployment/llamastack-server1
+```
+
+---
+
+## Load Balancing & High Availability
+
+### NGINX Load Balancer Configuration
+
+**nginx.conf:**
+```nginx
+upstream llamastack_local {
+    least_conn;
+    server llamastack-server1:8321 max_fails=3 fail_timeout=30s;
+    server llamastack-server1-2:8321 max_fails=3 fail_timeout=30s;
+    server llamastack-server1-3:8321 max_fails=3 fail_timeout=30s;
+}
+
+upstream llamastack_cloud {
+    least_conn;
+    server llamastack-server2:8322 max_fails=3 fail_timeout=30s;
+    server llamastack-server2-2:8322 max_fails=3 fail_timeout=30s;
+}
+
+server {
+    listen 80;
+    server_name localhost;
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+
+    # Route to local providers
+    location /v1/local/ {
+        rewrite ^/v1/local/(.*) /v1/$1 break;
+        proxy_pass http://llamastack_local;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+    }
+
+    # Route to cloud providers
+    location /v1/cloud/ {
+        rewrite ^/v1/cloud/(.*) /v1/$1 break;
+        proxy_pass http://llamastack_cloud;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+    }
+
+    # Default routing
+    location /v1/ {
+        proxy_pass http://llamastack_local;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+---
+
+## Monitoring & Logging
+
+### Prometheus Monitoring
+
+**prometheus.yml:**
+```yaml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'llamastack-servers'
+    static_configs:
+      - targets: ['llamastack-server1:8321', 'llamastack-server2:8322']
+    metrics_path: /metrics
+    scrape_interval: 30s
+```
+
+### Grafana Dashboard
+
+**Key metrics to monitor:**
+- Request latency (p50, p95, p99)
+- Request rate (requests/second)
+- Error rate (4xx, 5xx responses)
+- Container resource usage (CPU, memory)
+- Provider-specific metrics (API quotas, rate limits)
+
+### Centralized Logging
+
+**docker-compose.yml addition:**
+```yaml
+  # ELK Stack for logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    ports:
+      - "5601:5601"
+```
+
+*This guide focuses on production deployments and operational best practices for multiple Llama Stack servers.*
