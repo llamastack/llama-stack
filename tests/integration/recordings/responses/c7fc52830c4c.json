@@ -7,29 +7,44 @@
       "model": "llama3.2:3b-instruct-fp16",
       "messages": [
         {
+          "role": "system",
+          "content": "You are a helpful assistant"
+        },
+        {
           "role": "user",
-          "content": "What's the weather in Tokyo? Use the get_weather function to get the weather."
+          "content": "What is the boiling point of the liquid polyjuice in celsius?"
         }
       ],
+      "max_tokens": 512,
       "stream": true,
+      "temperature": 0.0001,
+      "tool_choice": "auto",
       "tools": [
         {
           "type": "function",
           "function": {
-            "name": "get_weather",
-            "description": "Get the weather in a given city",
+            "name": "get_boiling_point",
+            "description": "Returns the boiling point of a liquid in Celcius or Fahrenheit.",
             "parameters": {
               "type": "object",
               "properties": {
-                "city": {
+                "liquid_name": {
                   "type": "string",
-                  "description": "The city to get the weather for"
+                  "description": "The name of the liquid"
+                },
+                "celcius": {
+                  "type": "boolean",
+                  "description": "Whether to return the boiling point in Celcius"
                 }
-              }
+              },
+              "required": [
+                "liquid_name"
+              ]
             }
           }
         }
-      ]
+      ],
+      "top_p": 0.9
     },
     "endpoint": "/v1/chat/completions",
     "model": "llama3.2:3b-instruct-fp16"
@@ -39,22 +54,32 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-828",
+          "id": "chatcmpl-544",
           "choices": [
             {
               "delta": {
-                "content": "{\"name\":\"get_water\", \"parameters\": {\"city\":\"Tokyo\"}}",
+                "content": "",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
-                "tool_calls": null
+                "tool_calls": [
+                  {
+                    "index": 0,
+                    "id": "call_kg9401ss",
+                    "function": {
+                      "arguments": "{\"celcius\":true,\"liquid_name\":\"polyjuice\"}",
+                      "name": "get_boiling_point"
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "finish_reason": null,
               "index": 0,
               "logprobs": null
             }
           ],
-          "created": 1759437882,
+          "created": 1759437813,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -65,7 +90,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-828",
+          "id": "chatcmpl-544",
           "choices": [
             {
               "delta": {
@@ -75,12 +100,12 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "stop",
+              "finish_reason": "tool_calls",
               "index": 0,
               "logprobs": null
             }
           ],
-          "created": 1759437882,
+          "created": 1759437813,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

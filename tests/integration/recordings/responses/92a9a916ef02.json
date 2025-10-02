@@ -20,14 +20,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-343",
+        "id": "chatcmpl-923",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "The currency of Japan is the Japanese yen (, ry\u014d) and its symbol, \u00a5.",
+              "content": "The currency of Japan is the Japanese yen (\u00a5). It is represented by the symbol \u00a5. In some contexts, it's also abbreviated as \"JPY\" or written as \"yen\". The Bank of Japan is responsible for managing the country's monetary policy and issuing new yen banknotes and coins.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -37,15 +37,15 @@
             }
           }
         ],
-        "created": 1759012146,
+        "created": 1759437863,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 20,
+          "completion_tokens": 61,
           "prompt_tokens": 32,
-          "total_tokens": 52,
+          "total_tokens": 93,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

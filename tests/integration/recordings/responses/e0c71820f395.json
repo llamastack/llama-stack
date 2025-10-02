@@ -76,32 +76,42 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-900",
+        "id": "chatcmpl-271",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "tool_calls",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "None of the provided functions directly respond to the prompt \"to format an answer to the original user question.\" However, based on the context that you want a tool call with its proper arguments to best answer the given prompt, I will choose the \"complex\" function and provide an argument. Here's the response:\n\n{\"name\":\"complex\",\"parameters\":{\"data\":\"JSON for a function call with its proper arguments\"}}",
+              "content": "",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": null
+              "tool_calls": [
+                {
+                  "id": "call_vxiwiifd",
+                  "function": {
+                    "arguments": "{\"x\":\"\"}",
+                    "name": "simple"
+                  },
+                  "type": "function",
+                  "index": 0
+                }
+              ]
             }
           }
         ],
-        "created": 1759376627,
+        "created": 1759437809,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 82,
+          "completion_tokens": 15,
           "prompt_tokens": 246,
-          "total_tokens": 328,
+          "total_tokens": 261,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

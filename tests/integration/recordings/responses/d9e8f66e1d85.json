@@ -71,7 +71,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-185",
+        "id": "chatcmpl-128",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -86,9 +86,9 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_re3m95b3",
+                  "id": "call_bdq6iic2",
                   "function": {
-                    "arguments": "{\"flight\":\"{\\\"date\\\": \\\"2024-03-16\\\", \\\"from\\\": \\\"SFO\\\", \\\"to\\\": \\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\": 40, \\\"name\\\": \\\"John Doe\\\"}\"}",
+                    "arguments": "{\"flight\":\"{\\\"date\\\":\\\"2023-08-20\\\",\\\"from\\\":\\\"SFO\\\",\\\"to\\\":\\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\":30,\\\"name\\\":\\\"John Doe\\\"}\"}",
                     "name": "book_flight"
                   },
                   "type": "function",
@@ -98,15 +98,15 @@
             }
           }
         ],
-        "created": 1759376621,
+        "created": 1759437805,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 59,
+          "completion_tokens": 52,
           "prompt_tokens": 227,
-          "total_tokens": 286,
+          "total_tokens": 279,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
