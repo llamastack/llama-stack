@@ -16,7 +16,6 @@ from llama_stack.apis.agents import (
 )
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.inference import Inference
-from llama_stack.apis.resource import ResourceType
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
@@ -241,20 +240,16 @@ async def test__initialize_tools(agents_impl, sample_agent_config):
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "story_title": {
-                            "type": "string",
-                            "description": "Title of the story",
-                            "title": "Story Title"
-                        },
+                        "story_title": {"type": "string", "description": "Title of the story", "title": "Story Title"},
                         "input_words": {
                             "type": "array",
                             "description": "Input words",
                             "items": {"type": "string"},
                             "title": "Input Words",
-                            "default": []
-                        }
+                            "default": [],
+                        },
                     },
-                    "required": ["story_title"]
+                    "required": ["story_title"],
                 },
             )
         ]

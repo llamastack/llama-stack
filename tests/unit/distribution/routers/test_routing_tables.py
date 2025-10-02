@@ -139,12 +139,7 @@ class ToolGroupsImpl(Impl):
                     description="Test tool",
                     input_schema={
                         "type": "object",
-                        "properties": {
-                            "test-param": {
-                                "type": "string",
-                                "description": "Test param"
-                            }
-                        }
+                        "properties": {"test-param": {"type": "string", "description": "Test param"}},
                     },
                 )
             ]

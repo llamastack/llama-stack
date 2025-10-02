@@ -22,14 +22,8 @@ def test_convert_tooldef_to_chat_tool_preserves_items_field():
         description="A test tool with array parameter",
         input_schema={
             "type": "object",
-            "properties": {
-                "tags": {
-                    "type": "array",
-                    "description": "List of tags",
-                    "items": {"type": "string"}
-                }
-            },
-            "required": ["tags"]
+            "properties": {"tags": {"type": "array", "description": "List of tags", "items": {"type": "string"}}},
+            "required": ["tags"],
         },
     )
 

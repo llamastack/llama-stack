@@ -192,13 +192,8 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
         description="Search the web for information",
         input_schema={
             "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "The query to search for"
-                }
-            },
-            "required": ["query"]
+            "properties": {"query": {"type": "string", "description": "The query to search for"}},
+            "required": ["query"],
         },
     )
 

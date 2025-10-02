@@ -1171,7 +1171,6 @@ async def convert_openai_chat_completion_stream(
             )
 
             try:
-                arguments = json.loads(buffer["arguments"])
                 tool_call = ToolCall(
                     call_id=buffer["call_id"],
                     tool_name=buffer["name"],
