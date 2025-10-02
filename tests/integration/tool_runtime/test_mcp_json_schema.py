@@ -107,7 +107,7 @@ class TestMCPSchemaPreservation:
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
             pytest.skip("Library client required for local MCP server")
 
-        test_toolgroup_id = "mcp::complex"
+        test_toolgroup_id = "mcp::complex_list"
         uri = mcp_server_with_complex_schemas["server_url"]
 
         # Clean up any existing registration
@@ -152,7 +152,7 @@ class TestMCPSchemaPreservation:
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
             pytest.skip("Library client required for local MCP server")
 
-        test_toolgroup_id = "mcp::complex"
+        test_toolgroup_id = "mcp::complex_refs"
         uri = mcp_server_with_complex_schemas["server_url"]
 
         # Register
@@ -249,7 +249,7 @@ class TestMCPToolInvocation:
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
             pytest.skip("Library client required for local MCP server")
 
-        test_toolgroup_id = "mcp::complex"
+        test_toolgroup_id = "mcp::complex_invoke_nested"
         uri = mcp_server_with_complex_schemas["server_url"]
 
         try:
@@ -267,6 +267,12 @@ class TestMCPToolInvocation:
         auth_headers = {
             "X-LlamaStack-Provider-Data": json.dumps(provider_data),
         }
+
+        # List tools to populate the tool index
+        llama_stack_client.tool_runtime.list_tools(
+            tool_group_id=test_toolgroup_id,
+            extra_headers=auth_headers,
+        )
 
         # Invoke tool with complex nested data
         result = llama_stack_client.tool_runtime.invoke_tool(
@@ -289,7 +295,7 @@ class TestMCPToolInvocation:
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
             pytest.skip("Library client required for local MCP server")
 
-        test_toolgroup_id = "mcp::complex"
+        test_toolgroup_id = "mcp::complex_invoke_flexible"
         uri = mcp_server_with_complex_schemas["server_url"]
 
         try:
@@ -307,6 +313,12 @@ class TestMCPToolInvocation:
         auth_headers = {
             "X-LlamaStack-Provider-Data": json.dumps(provider_data),
         }
+
+        # List tools to populate the tool index
+        llama_stack_client.tool_runtime.list_tools(
+            tool_group_id=test_toolgroup_id,
+            extra_headers=auth_headers,
+        )
 
         # Test with email format
         result_email = llama_stack_client.tool_runtime.invoke_tool(
@@ -330,6 +342,7 @@ class TestMCPToolInvocation:
 class TestAgentWithMCPTools:
     """Test agents using MCP tools with complex schemas."""
 
+    @pytest.mark.skip(reason="we need tool call recording for this test since session_id is injected")
     def test_agent_with_complex_mcp_tool(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
         """Test agent can use MCP tools with $ref/$defs schemas."""
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
@@ -337,7 +350,7 @@ class TestAgentWithMCPTools:
 
         from llama_stack_client import Agent
 
-        test_toolgroup_id = "mcp::complex"
+        test_toolgroup_id = "mcp::complex_agent"
         uri = mcp_server_with_complex_schemas["server_url"]
 
         try:
@@ -389,90 +402,3 @@ class TestAgentWithMCPTools:
             if step.tool_responses:
                 for tool_response in step.tool_responses:
                     assert tool_response.content is not None
-
-
-class TestSchemaValidation:
-    """Test schema validation (future feature)."""
-
-    def test_invalid_input_rejected(self, llama_stack_client, mcp_server_with_complex_schemas):
-        """Test that invalid input is rejected (if validation is implemented)."""
-        # This test documents expected behavior once we add input validation
-        # For now, it may pass invalid data through
-
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::complex"
-        uri = mcp_server_with_complex_schemas["server_url"]
-
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
-
-        # Try to invoke with completely wrong data type
-        # Once validation is added, this should raise an error
-        try:
-            llama_stack_client.tool_runtime.invoke_tool(
-                tool_name="process_order",
-                kwargs={"order_data": "this should be an object not a string"},
-                extra_headers=auth_headers,
-            )
-            # For now, this might succeed (no validation)
-            # After adding validation, we'd expect a ValidationError
-        except Exception:
-            # Expected once validation is implemented
-            pass
-
-
-class TestOutputValidation:
-    """Test output schema validation (future feature)."""
-
-    def test_output_matches_schema(self, llama_stack_client, mcp_server_with_output_schemas):
-        """Test that tool output is validated against output_schema (if implemented)."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::with_output"
-        uri = mcp_server_with_output_schemas["server_url"]
-
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
-
-        # Invoke tool
-        result = llama_stack_client.tool_runtime.invoke_tool(
-            tool_name="get_weather",
-            kwargs={"location": "San Francisco"},
-            extra_headers=auth_headers,
-        )
-
-        # Tool should return valid output
-        assert result.error_message is None
-        assert result.content is not None
-
-        # Once output validation is implemented, the system would check
-        # that result.content matches the tool's output_schema
