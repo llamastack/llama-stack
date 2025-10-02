@@ -167,6 +167,7 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
             self.client = chromadb.PersistentClient(path=self.config.db_path)
         self.openai_vector_stores = await self._load_openai_vector_stores()
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
+        self._last_file_batch_cleanup_time = 0
 
     async def shutdown(self) -> None:
         pass

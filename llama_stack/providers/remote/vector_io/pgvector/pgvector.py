@@ -354,6 +354,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         self.vector_db_store = None
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
+        self._last_file_batch_cleanup_time = 0
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:

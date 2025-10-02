@@ -207,6 +207,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPr
         self.kvstore: KVStore | None = None
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
+        self._last_file_batch_cleanup_time = 0
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.kvstore)
