@@ -52,117 +52,82 @@ Server 4-6: Backup cluster
 
 ### Method 1: Docker Containers
 
-#### Build Custom Container Images
+#### Use Official LlamaStack Container Approach
 
-**Create Dockerfile for Llama Stack:**
+**Option 1: Use Starter Distribution with Container Runtime**
+
 
 ```dockerfile
-# Option 1: Recommended - Python slim (balanced size/compatibility)
+# Simple Dockerfile leveraging the starter distribution
 FROM python:3.12-slim
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Install Llama Stack
+# Install LlamaStack
 RUN pip install --no-cache-dir llama-stack
 
-# Create app directory
-WORKDIR /app
+# Initialize starter distribution
+RUN llama stack build --template starter --name production-server
 
-# Create non-root user for security
+# Create non-root user
 RUN useradd -r -s /bin/false -m llamastack
 USER llamastack
 
-# Copy configuration
-COPY --chown=llamastack:llamastack configs/ /app/configs/
-
-# Expose port
-EXPOSE 8321
+WORKDIR /app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8321/v1/health || exit 1
 
-# Default command
-CMD ["llama", "stack", "run", "/app/configs/server.yaml"]
+# Use starter distribution configs
+CMD ["llama", "stack", "run", "~/.llama/distributions/starter/starter-run.yaml"]
 ```
 
-**Alternative: Ultra-lightweight Alpine version:**
+**Option 2: Use Standard Python Base Image (Recommended)**
+
+Since LlamaStack doesn't provide a Dockerfile, use the standard Python installation approach:
+
+```bash
+# Use the simple approach with standard Python image
+# No need to clone and build - just use pip install directly in containers
+```
+
+**Option 2b: Check for Official Images (Future)**
+
+```bash
+# Check if official images become available
+docker search meta-llama/llama-stack
+docker search llamastack
+
+# For now, use the pip-based approach in Option 1 or 3
+```
+
+**Option 3: Lightweight Container with Starter Distribution**
+
 ```dockerfile
-# Option 2: Alpine - Smallest size (~50MB total)
 FROM python:3.12-alpine
 
-# Install system dependencies
+# Install dependencies
 RUN apk add --no-cache curl gcc musl-dev linux-headers
 
-# Install Llama Stack
+# Install LlamaStack
 RUN pip install --no-cache-dir llama-stack
 
-# Create app directory
-WORKDIR /app
+# Initialize starter distribution
+RUN llama stack build --template starter --name starter
 
 # Create non-root user
-RUN adduser -D -s /bin/sh llamastack
+RUN adduser -D llamastack
 USER llamastack
-
-# Copy configuration
-COPY --chown=llamastack:llamastack configs/ /app/configs/
-
-# Expose port
-EXPOSE 8321
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8321/v1/health || exit 1
-
-# Default command
-CMD ["llama", "stack", "run", "/app/configs/server.yaml"]
-```
-
-**Alternative: Multi-stage build for production:**
-```dockerfile
-# Option 3: Multi-stage - Minimal runtime image
-FROM python:3.12-slim as builder
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python packages
-RUN pip install --user --no-cache-dir llama-stack
-
-# Runtime stage
-FROM python:3.12-slim
-
-# Install only runtime dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
-
-# Create non-root user
-RUN useradd -r -s /bin/false -m llamastack
-USER llamastack
-
-# Set PATH
-ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
-COPY --chown=llamastack:llamastack configs/ /app/configs/
-
-EXPOSE 8321
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8321/v1/health || exit 1
 
-CMD ["llama", "stack", "run", "/app/configs/server.yaml"]
+# Use CLI port override instead of modifying YAML
+CMD ["llama", "stack", "run", "/home/llamastack/.llama/distributions/starter/starter-run.yaml", "--port", "8321"]
 ```
 
 #### Prepare Server Configurations
