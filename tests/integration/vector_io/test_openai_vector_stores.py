@@ -1049,9 +1049,9 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(name="batch_cancel_test_store")
 
-    # Create a large batch to ensure we have time to cancel before completion
+    # Create a very large batch to ensure we have time to cancel before completion
     file_ids = []
-    for i in range(100):  # Large batch that will take time to process
+    for i in range(1000):  # Very large batch that will definitely take time to process
         with BytesIO(f"This is batch cancel test file {i} with substantial content".encode()) as file_buffer:
             file_buffer.name = f"batch_cancel_test_{i}.txt"
             file = compat_client.files.create(file=file_buffer, purpose="assistants")
