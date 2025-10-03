@@ -56,15 +56,40 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
     async def list_models(self) -> list[Model] | None:
         models = []
         for model_spec in self._get_model_specs():
-            models.append(
-                Model(
-                    identifier=model_spec["model_id"],
-                    provider_resource_id=f"{self.__provider_id__}/{model_spec['model_id']}",
-                    provider_id=self.__provider_id__,
-                    metadata={},
-                    model_type=ModelType.llm,
+            functions = [f['id'] for f in model_spec.get("functions", [])]
+            # Format: {"embedding_dimension": 1536, "context_length": 8192}
+
+            # Example of an embedding model:
+            # {'model_id': 'ibm/granite-embedding-278m-multilingual',
+            # 'label': 'granite-embedding-278m-multilingual', 
+            # 'model_limits': {'max_sequence_length': 512, 'embedding_dimension': 768},
+            # ... 
+            if "embedding" in functions:
+                embedding_dimension = model_spec["model_limits"]["embedding_dimension"]
+                context_length = model_spec["model_limits"]["max_sequence_length"]
+                embedding_metadata = {
+                    "embedding_dimension": embedding_dimension,
+                    "context_length": context_length,
+                }
+                models.append(
+                    Model(
+                        identifier=model_spec["model_id"],
+                        provider_resource_id=f"{self.__provider_id__}/{model_spec['model_id']}",
+                        provider_id=self.__provider_id__,
+                        metadata=embedding_metadata,
+                        model_type=ModelType.embedding,
+                    )
                 )
-            )
+            if "text_chat" in functions:
+                models.append(
+                    Model(
+                        identifier=model_spec["model_id"],
+                        provider_resource_id=f"{self.__provider_id__}/{model_spec['model_id']}",
+                        provider_id=self.__provider_id__,
+                        metadata={},
+                        model_type=ModelType.llm,
+                    )
+                )
         return models
 
     # LiteLLM provides methods to list models for many providers, but not for watsonx.ai.
@@ -91,18 +116,3 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         if "resources" not in response_data:
             raise ValueError("Resources not found in response")
         return response_data["resources"]
-
-
-# TO DO: Delete the test main method.
-if __name__ == "__main__":
-    config = WatsonXConfig(url="https://us-south.ml.cloud.ibm.com", api_key="xxx", project_id="xxx", timeout=60)
-    adapter = WatsonXInferenceAdapter(config)
-    model_specs = adapter._get_model_specs()
-    models = asyncio.run(adapter.list_models())
-    for model in models:
-        print(model.identifier)
-        print(model.provider_resource_id)
-        print(model.provider_id)
-        print(model.metadata)
-        print(model.model_type)
-        print("--------------------------------")
