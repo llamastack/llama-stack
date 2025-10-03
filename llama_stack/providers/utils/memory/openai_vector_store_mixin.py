@@ -289,7 +289,7 @@ class OpenAIVectorStoreMixin(ABC):
         self.openai_vector_stores = await self._load_openai_vector_stores()
         self.openai_file_batches = await self._load_openai_vector_store_file_batches()
         self._file_batch_tasks = {}
-        # TODO: Enable resume for multi-worker deployments, only works for single worker for now
+        # TODO: Resume only works for single worker deployment. Jobs with multiple workers will need to be handled differently.
         await self._resume_incomplete_batches()
         self._last_file_batch_cleanup_time = 0
 
