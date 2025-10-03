@@ -1062,24 +1062,17 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
         vector_store_id=vector_store.id,
         file_ids=file_ids,
     )
-    # Try to cancel the batch (may fail if already completed)
-    try:
-        cancelled_batch = compat_client.vector_stores.file_batches.cancel(
-            vector_store_id=vector_store.id,
-            batch_id=batch.id,
-        )
+    # Cancel the batch immediately after creation (before processing can complete)
+    cancelled_batch = compat_client.vector_stores.file_batches.cancel(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+    )
 
-        assert cancelled_batch is not None
-        assert cancelled_batch.id == batch.id
-        assert cancelled_batch.vector_store_id == vector_store.id
-        assert cancelled_batch.status == "cancelled"
-        assert cancelled_batch.object == "vector_store.file_batch"
-    except Exception as e:
-        # If cancellation fails because batch is already completed, that's acceptable
-        if "Cannot cancel" in str(e) or "already completed" in str(e):
-            pytest.skip(f"Batch completed too quickly to cancel: {e}")
-        else:
-            raise
+    assert cancelled_batch is not None
+    assert cancelled_batch.id == batch.id
+    assert cancelled_batch.vector_store_id == vector_store.id
+    assert cancelled_batch.status == "cancelled"
+    assert cancelled_batch.object == "vector_store.file_batch"
 
 
 def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_stores, client_with_models):

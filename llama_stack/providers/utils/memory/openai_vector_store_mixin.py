@@ -221,20 +221,75 @@ class OpenAIVectorStoreMixin(ABC):
         if expired_count > 0:
             logger.info(f"Cleaned up {expired_count} expired file batches")
 
+    async def _get_completed_files_in_batch(self, vector_store_id: str, file_ids: list[str]) -> set[str]:
+        """Determine which files in a batch are actually completed by checking vector store file_ids."""
+        if vector_store_id not in self.openai_vector_stores:
+            return set()
+
+        store_info = self.openai_vector_stores[vector_store_id]
+        completed_files = set(file_ids) & set(store_info["file_ids"])
+        return completed_files
+
+    async def _analyze_batch_completion_on_resume(self, batch_id: str, batch_info: dict[str, Any]) -> list[str]:
+        """Analyze batch completion status and return remaining files to process.
+
+        Returns:
+            List of file IDs that still need processing. Empty list if batch is complete.
+        """
+        vector_store_id = batch_info["vector_store_id"]
+        all_file_ids = batch_info["file_ids"]
+
+        # Find files that are actually completed
+        completed_files = await self._get_completed_files_in_batch(vector_store_id, all_file_ids)
+        remaining_files = [file_id for file_id in all_file_ids if file_id not in completed_files]
+
+        completed_count = len(completed_files)
+        total_count = len(all_file_ids)
+        remaining_count = len(remaining_files)
+
+        # Update file counts to reflect actual state
+        batch_info["file_counts"] = {
+            "completed": completed_count,
+            "failed": 0,  # We don't track failed files during resume - they'll be retried
+            "in_progress": remaining_count,
+            "cancelled": 0,
+            "total": total_count,
+        }
+
+        # If all files are already completed, mark batch as completed
+        if remaining_count == 0:
+            batch_info["status"] = "completed"
+            logger.info(f"Batch {batch_id} is already fully completed, updating status")
+
+        # Save updated batch info
+        await self._save_openai_vector_store_file_batch(batch_id, batch_info)
+
+        return remaining_files
+
     async def _resume_incomplete_batches(self) -> None:
         """Resume processing of incomplete file batches after server restart."""
         for batch_id, batch_info in self.openai_file_batches.items():
             if batch_info["status"] == "in_progress":
-                logger.info(f"Resuming incomplete file batch: {batch_id}")
-                # Restart the background processing task
-                task = asyncio.create_task(self._process_file_batch_async(batch_id, batch_info))
-                self._file_batch_tasks[batch_id] = task
+                logger.info(f"Analyzing incomplete file batch: {batch_id}")
+
+                remaining_files = await self._analyze_batch_completion_on_resume(batch_id, batch_info)
+
+                # Check if batch is now completed after analysis
+                if batch_info["status"] == "completed":
+                    continue
+
+                if remaining_files:
+                    logger.info(f"Resuming batch {batch_id} with {len(remaining_files)} remaining files")
+                    # Restart the background processing task with only remaining files
+                    task = asyncio.create_task(self._process_file_batch_async(batch_id, batch_info, remaining_files))
+                    self._file_batch_tasks[batch_id] = task
 
     async def initialize_openai_vector_stores(self) -> None:
         """Load existing OpenAI vector stores and file batches into the in-memory cache."""
         self.openai_vector_stores = await self._load_openai_vector_stores()
         self.openai_file_batches = await self._load_openai_vector_store_file_batches()
         self._file_batch_tasks = {}
+        # TODO: Enable resume for multi-worker deployments, only works for single worker for now
         await self._resume_incomplete_batches()
         self._last_file_batch_cleanup_time = 0
 
@@ -645,6 +700,14 @@ class OpenAIVectorStoreMixin(ABC):
         if vector_store_id not in self.openai_vector_stores:
             raise VectorStoreNotFoundError(vector_store_id)
 
+        # Check if file is already attached to this vector store
+        store_info = self.openai_vector_stores[vector_store_id]
+        if file_id in store_info["file_ids"]:
+            logger.warning(f"File {file_id} is already attached to vector store {vector_store_id}, skipping")
+            # Return existing file object
+            file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
+            return VectorStoreFileObject(**file_info)
+
         attributes = attributes or {}
         chunking_strategy = chunking_strategy or VectorStoreChunkingStrategyAuto()
         created_at = int(time.time())
@@ -1022,9 +1085,10 @@ class OpenAIVectorStoreMixin(ABC):
         self,
         batch_id: str,
         batch_info: dict[str, Any],
+        override_file_ids: list[str] | None = None,
     ) -> None:
         """Process files in a batch asynchronously in the background."""
-        file_ids = batch_info["file_ids"]
+        file_ids = override_file_ids if override_file_ids is not None else batch_info["file_ids"]
         attributes = batch_info["attributes"]
         chunking_strategy = batch_info["chunking_strategy"]
         vector_store_id = batch_info["vector_store_id"]
