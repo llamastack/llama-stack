@@ -11,8 +11,7 @@ from cerebras.cloud.sdk import AsyncCerebras
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    CompletionRequest,
-    CompletionResponse,
+    ChatCompletionResponse,
     Inference,
     LogProbConfig,
     Message,
@@ -25,9 +24,7 @@ from llama_stack.apis.inference import (
     ToolPromptFormat,
     TopKSamplingStrategy,
 )
-from llama_stack.providers.utils.inference.model_registry import (
-    ModelRegistryHelper,
-)
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import (
     get_sampling_options,
     process_chat_completion_response,
@@ -36,7 +33,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
-    completion_request_to_prompt,
 )
 
 from .config import CerebrasImplConfig
@@ -102,14 +98,18 @@ class CerebrasInferenceAdapter(
         else:
             return await self._nonstream_chat_completion(request)
 
-    async def _nonstream_chat_completion(self, request: CompletionRequest) -> CompletionResponse:
+    async def _nonstream_chat_completion(
+        self, request: ChatCompletionRequest
+    ) -> ChatCompletionResponse:
         params = await self._get_params(request)
 
         r = await self._cerebras_client.completions.create(**params)
 
         return process_chat_completion_response(r, request)
 
-    async def _stream_chat_completion(self, request: CompletionRequest) -> AsyncGenerator:
+    async def _stream_chat_completion(
+        self, request: ChatCompletionRequest
+    ) -> AsyncGenerator:
         params = await self._get_params(request)
 
         stream = await self._cerebras_client.completions.create(**params)
@@ -117,15 +117,17 @@ class CerebrasInferenceAdapter(
         async for chunk in process_chat_completion_stream_response(stream, request):
             yield chunk
 
-    async def _get_params(self, request: ChatCompletionRequest | CompletionRequest) -> dict:
-        if request.sampling_params and isinstance(request.sampling_params.strategy, TopKSamplingStrategy):
+    async def _get_params(self, request: ChatCompletionRequest) -> dict:
+        if request.sampling_params and isinstance(
+            request.sampling_params.strategy, TopKSamplingStrategy
+        ):
             raise ValueError("`top_k` not supported by Cerebras")
 
         prompt = ""
         if isinstance(request, ChatCompletionRequest):
-            prompt = await chat_completion_request_to_prompt(request, self.get_llama_model(request.model))
-        elif isinstance(request, CompletionRequest):
-            prompt = await completion_request_to_prompt(request)
+            prompt = await chat_completion_request_to_prompt(
+                request, self.get_llama_model(request.model)
+            )
         else:
             raise ValueError(f"Unknown request type {type(request)}")
 
