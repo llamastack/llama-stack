@@ -100,6 +100,9 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
     async def should_refresh_models(self) -> bool:
         return False
 
+    async def allow_listing_models(self) -> bool:
+        return True
+
     def get_provider_model_id(self, identifier: str) -> str | None:
         return self.alias_to_provider_id_map.get(identifier, None)
 
