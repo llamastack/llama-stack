@@ -24,7 +24,7 @@ class MockServerBase(BaseModel):
     async def await_start(self):
         # Start server and wait until ready
         ...
-    
+
     def stop(self):
         # Stop server and cleanup
         ...
@@ -49,29 +49,29 @@ Add to `servers.py`:
 ```python
 class MockRedisServer(MockServerBase):
     """Mock Redis server."""
-    
+
     port: int = Field(default=6379)
-    
+
     # Non-Pydantic fields
     server: Any = Field(default=None, exclude=True)
-    
+
     def model_post_init(self, __context):
         self.server = None
-    
+
     async def await_start(self):
         """Start Redis mock and wait until ready."""
         # Start your server
         self.server = create_redis_server(self.port)
         self.server.start()
-        
+
         # Wait for port to be listening
         for _ in range(10):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            if sock.connect_ex(('localhost', self.port)) == 0:
+            if sock.connect_ex(("localhost", self.port)) == 0:
                 sock.close()
                 return  # Ready!
             await asyncio.sleep(0.1)
-    
+
     def stop(self):
         if self.server:
             self.server.stop()
@@ -101,11 +101,11 @@ The harness automatically:
 
 ## Benefits
 
-✅ **Parallel Startup** - All servers start simultaneously  
-✅ **Type-Safe** - Pydantic validation  
-✅ **Simple** - Just implement 2 methods  
-✅ **Fast** - No HTTP polling, direct port checking  
-✅ **Clean** - Async/await pattern  
+✅ **Parallel Startup** - All servers start simultaneously
+✅ **Type-Safe** - Pydantic validation
+✅ **Simple** - Just implement 2 methods
+✅ **Fast** - No HTTP polling, direct port checking
+✅ **Clean** - Async/await pattern
 
 ## Usage in Tests
 
@@ -115,6 +115,7 @@ def mock_servers():
     servers = asyncio.run(start_mock_servers_async(MOCK_SERVERS))
     yield servers
     stop_mock_servers(servers)
+
 
 # Access specific servers
 @pytest.fixture(scope="module")

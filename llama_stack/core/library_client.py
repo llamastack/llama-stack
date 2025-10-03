@@ -32,7 +32,7 @@ from termcolor import cprint
 
 from llama_stack.core.build import print_pip_install_help
 from llama_stack.core.configure import parse_and_maybe_upgrade_config
-from llama_stack.core.datatypes import Api, BuildConfig, BuildProvider, DistributionSpec
+from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
 from llama_stack.core.request_headers import (
     PROVIDER_DATA_VAR,
     request_provider_data_context,
@@ -48,7 +48,6 @@ from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
 from llama_stack.log import get_logger
-
 
 logger = get_logger(name=__name__, category="core")
 

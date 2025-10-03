@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
-
 import pytest
 
 import llama_stack.providers.inline.telemetry.meta_reference.telemetry as telemetry_module
@@ -38,7 +36,7 @@ def test_warns_when_traces_endpoints_missing(monkeypatch: pytest.MonkeyPatch, ca
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
 
-    caplog.set_level(logging.WARNING)
+    caplog.set_level("WARNING")
 
     config = _make_config_with_sinks(TelemetrySink.OTEL_TRACE)
     telemetry_module.TelemetryAdapter(config=config, deps={})
@@ -57,7 +55,7 @@ def test_warns_when_metrics_endpoints_missing(monkeypatch: pytest.MonkeyPatch, c
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", raising=False)
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
 
-    caplog.set_level(logging.WARNING)
+    caplog.set_level("WARNING")
 
     config = _make_config_with_sinks(TelemetrySink.OTEL_METRIC)
     telemetry_module.TelemetryAdapter(config=config, deps={})
@@ -76,7 +74,7 @@ def test_no_warning_when_traces_endpoints_present(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "https://otel.example:4318/v1/traces")
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://otel.example:4318")
 
-    caplog.set_level(logging.WARNING)
+    caplog.set_level("WARNING")
 
     config = _make_config_with_sinks(TelemetrySink.OTEL_TRACE)
     telemetry_module.TelemetryAdapter(config=config, deps={})
@@ -91,7 +89,7 @@ def test_no_warning_when_metrics_endpoints_present(monkeypatch: pytest.MonkeyPat
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "https://otel.example:4318/v1/metrics")
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://otel.example:4318")
 
-    caplog.set_level(logging.WARNING)
+    caplog.set_level("WARNING")
 
     config = _make_config_with_sinks(TelemetrySink.OTEL_METRIC)
     telemetry_module.TelemetryAdapter(config=config, deps={})

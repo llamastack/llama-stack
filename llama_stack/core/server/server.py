@@ -63,7 +63,6 @@ from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
 
-
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
 
@@ -236,9 +235,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
             try:
                 if is_streaming:
-                    gen = preserve_contexts_async_generator(
-                        sse_generator(func(**kwargs)), [PROVIDER_DATA_VAR]
-                    )
+                    gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), [PROVIDER_DATA_VAR])
                     return StreamingResponse(gen, media_type="text/event-stream")
                 else:
                     value = func(**kwargs)
@@ -282,7 +279,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
             ]
         )
 
-    setattr(route_handler, "__signature__", sig.replace(parameters=new_params))
+    route_handler.__signature__ = sig.replace(parameters=new_params)
     return route_handler
 
 
