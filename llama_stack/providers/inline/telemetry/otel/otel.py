@@ -11,12 +11,10 @@ from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.metrics import Meter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import Attributes, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor
-from opentelemetry.trace import Tracer
 from sqlalchemy import Engine
 
 from llama_stack.core.telemetry.telemetry import TelemetryProvider
@@ -88,7 +86,7 @@ class OTelTelemetryProvider(TelemetryProvider):
         FastAPIInstrumentor.instrument_app(app)
 
         # Add custom middleware for HTTP metrics
-        meter = self.get_meter("llama_stack.http.server")
+        meter = metrics.get_meter("llama_stack.http.server")
 
         # Create HTTP metrics following semantic conventions
         # https://opentelemetry.io/docs/specs/semconv/http/http-metrics/
@@ -153,31 +151,3 @@ class OTelTelemetryProvider(TelemetryProvider):
         if engine:
             kwargs["engine"] = engine
         SQLAlchemyInstrumentor().instrument(**kwargs)
-
-    def get_tracer(
-        self,
-        instrumenting_module_name: str,
-        instrumenting_library_version: str | None = None,
-        tracer_provider: TracerProvider | None = None,
-        schema_url: str | None = None,
-        attributes: Attributes | None = None,
-    ) -> Tracer:
-        return trace.get_tracer(
-            instrumenting_module_name=instrumenting_module_name,
-            instrumenting_library_version=instrumenting_library_version,
-            tracer_provider=tracer_provider,
-            schema_url=schema_url,
-            attributes=attributes,
-        )
-
-    def get_meter(
-        self,
-        name: str,
-        version: str = "",
-        meter_provider: MeterProvider | None = None,
-        schema_url: str | None = None,
-        attributes: Attributes | None = None,
-    ) -> Meter:
-        return metrics.get_meter(
-            name=name, version=version, meter_provider=meter_provider, schema_url=schema_url, attributes=attributes
-        )
