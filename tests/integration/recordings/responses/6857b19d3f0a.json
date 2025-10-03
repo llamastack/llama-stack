@@ -38,7 +38,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-6857b19d3f0a",
+        "id": "oBUth9w-62bZhn-9801a3026bd20c8a",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -53,7 +53,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "toolcall-6857b19d-0",
+                  "id": "call_8prwkicthj6bjfqa9ye64y2b",
                   "function": {
                     "arguments": "{\"city\":\"Tokyo\"}",
                     "name": "get_weather"
@@ -66,7 +66,7 @@
             "seed": 977986247412336500
           }
         ],
-        "created": 0,
+        "created": 1758039055,
         "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
         "object": "chat.completion",
         "service_tier": null,

@@ -76,7 +76,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-e0c71820f395",
+        "id": "chatcmpl-271",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -91,7 +91,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "toolcall-e0c71820-0",
+                  "id": "call_vxiwiifd",
                   "function": {
                     "arguments": "{\"x\":\"\"}",
                     "name": "simple"
@@ -103,7 +103,7 @@
             }
           }
         ],
-        "created": 0,
+        "created": 1759437809,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,

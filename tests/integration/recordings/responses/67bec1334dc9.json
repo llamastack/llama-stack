@@ -60,7 +60,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-67bec1334dc9",
+          "id": "chatcmpl-560",
           "choices": [
             {
               "delta": {
@@ -71,7 +71,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "toolcall-67bec133-0",
+                    "id": "call_h50zu2cg",
                     "function": {
                       "arguments": "{\"celcius\":true,\"liquid_name\":\"polyjuice\"}",
                       "name": "get_boiling_point"
@@ -85,7 +85,7 @@
               "logprobs": null
             }
           ],
-          "created": 0,
+          "created": 1759427022,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -96,7 +96,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-67bec1334dc9",
+          "id": "chatcmpl-560",
           "choices": [
             {
               "delta": {
@@ -111,7 +111,7 @@
               "logprobs": null
             }
           ],
-          "created": 0,
+          "created": 1759427022,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

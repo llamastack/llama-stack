@@ -41,7 +41,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-73e97be515d9",
+          "id": "chatcmpl-72",
           "choices": [
             {
               "delta": {
@@ -52,7 +52,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "toolcall-73e97be5-0",
+                    "id": "call_aone7ocw",
                     "function": {
                       "arguments": "{\"city\":\"Tokyo\"}",
                       "name": "get_weather"
@@ -66,7 +66,7 @@
               "logprobs": null
             }
           ],
-          "created": 0,
+          "created": 1759282724,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -77,7 +77,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-73e97be515d9",
+          "id": "chatcmpl-72",
           "choices": [
             {
               "delta": {
@@ -92,7 +92,7 @@
               "logprobs": null
             }
           ],
-          "created": 0,
+          "created": 1759282724,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

@@ -90,11 +90,8 @@ def normalize_recording_file(file_path: Path, dry_run: bool = False) -> bool:
     modified = False
     old_recording = json.dumps(recording, sort_keys=True)
 
-    # Normalize request body (for tool_call_ids in message history)
-    if "request" in recording and "body" in recording["request"]:
-        request_body = recording["request"]["body"]
-        counter = {"count": 0, "tool_response_count": 0}
-        normalize_tool_call_ids(request_body, request_hash, counter)
+    # NOTE: We do NOT normalize request body here because that would change the request hash
+    # and break recording lookups. The recorder will normalize tool_call_ids in future recordings.
 
     # Normalize response body
     if "response" in recording and "body" in recording["response"]:
