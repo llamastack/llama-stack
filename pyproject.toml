@@ -99,6 +99,7 @@ unit = [
     "coverage",
     "chromadb>=1.0.15",
     "moto[s3]>=5.1.10",
+    "weaviate-client>=4.16.4",
 ]
 # These are the core dependencies required for running integration tests. They are shared across all
 # providers. If a provider requires additional dependencies, please add them to your environment
