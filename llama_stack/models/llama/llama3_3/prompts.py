@@ -11,6 +11,7 @@
 # top-level folder for each specific model found within the models/ directory at
 # the top-level of this source tree.
 
+import json
 import textwrap
 
 from llama_stack.models.llama.datatypes import (
@@ -185,7 +186,7 @@ def usecases() -> list[UseCase | str]:
                             ToolCall(
                                 call_id="tool_call_id",
                                 tool_name=BuiltinTool.wolfram_alpha,
-                                arguments={"query": "100th decimal of pi"},
+                                arguments=json.dumps({"query": "100th decimal of pi"}),
                             )
                         ],
                     ),

@@ -54,14 +54,14 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     }
 
     with pytest.raises(Exception, match="Unauthorized"):
-        llama_stack_client.tools.list()
+        llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)
 
     response = llama_stack_client.tools.list(
         toolgroup_id=test_toolgroup_id,
         extra_headers=auth_headers,
     )
     assert len(response) == 2
-    assert {t.identifier for t in response} == {"greet_everyone", "get_boiling_point"}
+    assert {t.name for t in response} == {"greet_everyone", "get_boiling_point"}
 
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="greet_everyone",

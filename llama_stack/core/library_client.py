@@ -374,6 +374,10 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         body = options.params or {}
         body |= options.json_data or {}
 
+        # Merge extra_json parameters (extra_body from SDK is converted to extra_json)
+        if hasattr(options, "extra_json") and options.extra_json:
+            body |= options.extra_json
+
         matched_func, path_params, route_path, webmethod = find_matching_route(options.method, path, self.route_impls)
         body |= path_params
 

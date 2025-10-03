@@ -185,6 +185,67 @@
   line-height: 1.5;
 }
 
+/* Ecosystem Section */
+.ecosystem {
+  padding: 4rem 0;
+  background: var(--ifm-background-color);
+}
+
+.ecosystemCard {
+  padding: 2rem;
+  border-radius: 12px;
+  background: var(--ifm-color-gray-50);
+  border: 1px solid var(--ifm-color-gray-200);
+  text-align: center;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.ecosystemCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary-lighter);
+}
+
+.ecosystemIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.ecosystemCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.ecosystemCard p {
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.linkGroup a {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.linkGroup a:hover {
+  background: var(--ifm-color-primary-lightest);
+  color: var(--ifm-color-primary-darker);
+}
+
 /* Community Section */
 .community {
   padding: 3rem 0;
@@ -211,11 +272,16 @@
   gap: 0.5rem;
   font-weight: 600;
   transition: all 0.3s ease;
+  color: var(--ifm-color-primary) !important;
+  border-color: var(--ifm-color-primary) !important;
 }
 
 .communityButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  background: var(--ifm-color-primary) !important;
+  color: white !important;
+  border-color: var(--ifm-color-primary) !important;
 }
 
 .communityIcon {
@@ -258,6 +324,15 @@
     width: 200px;
     justify-content: center;
   }
+
+  .ecosystem {
+    padding: 3rem 0;
+  }
+
+  .ecosystemCard {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+  }
 }
 
 @media screen and (max-width: 768px) {
@@ -279,5 +354,13 @@
 
   .feature {
     padding: 0.75rem;
+  }
+
+  .ecosystemCard {
+    padding: 1.25rem;
+  }
+
+  .ecosystemIcon {
+    font-size: 2.5rem;
   }
 }
