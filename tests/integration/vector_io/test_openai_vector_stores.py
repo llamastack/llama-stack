@@ -55,6 +55,8 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
         ],
         "keyword": [
             "inline::sqlite-vec",
+            "inline::qdrant",
+            "remote::qdrant",
             "remote::milvus",
             "inline::milvus",
             "remote::pgvector",
