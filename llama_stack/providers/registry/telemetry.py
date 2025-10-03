@@ -26,4 +26,16 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.inline.telemetry.meta_reference.config.TelemetryConfig",
             description="Meta's reference implementation of telemetry and observability using OpenTelemetry.",
         ),
+        InlineProviderSpec(
+            api=Api.telemetry,
+            provider_type="inline::otel",
+            pip_packages=[
+                "opentelemetry-sdk",
+                "opentelemetry-exporter-otlp-proto-http",
+                "opentelemetry-instrumentation-fastapi",
+            ],
+            module="llama_stack.providers.inline.telemetry.otel",
+            config_class="llama_stack.providers.inline.telemetry.otel.config.OTelTelemetryConfig",
+            description="Native OpenTelemetry provider with full access to OTel Tracer and Meter APIs for advanced instrumentation.",
+        ),
     ]

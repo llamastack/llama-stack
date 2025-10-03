@@ -1,5 +1,12 @@
-from aiohttp import hdrs
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 from typing import Any
+
+from aiohttp import hdrs
 
 from llama_stack.apis.datatypes import Api
 from llama_stack.core.external import ExternalApiSpec
@@ -7,8 +14,8 @@ from llama_stack.core.server.routes import find_matching_route, initialize_route
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.telemetry.tracing import end_trace, start_trace
 
-
 logger = get_logger(name=__name__, category="telemetry::meta_reference")
+
 
 class TracingMiddleware:
     def __init__(

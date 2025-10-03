@@ -10,7 +10,6 @@ import threading
 from typing import Any, cast
 
 from fastapi import FastAPI
-
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -22,11 +21,6 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.semconv.attributes import service_attributes
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.util.types import Attributes
-
-from llama_stack.core.external import ExternalApiSpec
-from llama_stack.core.server.tracing import TelemetryProvider
-from llama_stack.providers.inline.telemetry.meta_reference.middleware import TracingMiddleware
-
 
 from llama_stack.apis.telemetry import (
     Event,
@@ -47,10 +41,13 @@ from llama_stack.apis.telemetry import (
     UnstructuredLogEvent,
 )
 from llama_stack.core.datatypes import Api
+from llama_stack.core.external import ExternalApiSpec
+from llama_stack.core.server.tracing import TelemetryProvider
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.telemetry.meta_reference.console_span_processor import (
     ConsoleSpanProcessor,
 )
+from llama_stack.providers.inline.telemetry.meta_reference.middleware import TracingMiddleware
 from llama_stack.providers.inline.telemetry.meta_reference.sqlite_span_processor import (
     SQLiteSpanProcessor,
 )
@@ -381,7 +378,7 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry, TelemetryProvider):
                 max_depth=max_depth,
             )
         )
-    
+
     def fastapi_middleware(
         self,
         app: FastAPI,

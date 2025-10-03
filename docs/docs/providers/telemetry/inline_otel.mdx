@@ -1,0 +1,33 @@
+---
+description: "Native OpenTelemetry provider with full access to OTel Tracer and Meter APIs for advanced instrumentation."
+sidebar_label: Otel
+title: inline::otel
+---
+
+# inline::otel
+
+## Description
+
+Native OpenTelemetry provider with full access to OTel Tracer and Meter APIs for advanced instrumentation.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `service_name` | `<class 'str'>` | No |  | The name of the service to be monitored.
+        Is overridden by the OTEL_SERVICE_NAME or OTEL_RESOURCE_ATTRIBUTES environment variables. |
+| `service_version` | `str \| None` | No |  | The version of the service to be monitored.
+        Is overriden by the OTEL_RESOURCE_ATTRIBUTES environment variable. |
+| `deployment_environment` | `str \| None` | No |  | The name of the environment of the service to be monitored.
+        Is overriden by the OTEL_RESOURCE_ATTRIBUTES environment variable. |
+| `span_processor` | `BatchSpanProcessor \| SimpleSpanProcessor \| None` | No | batch | The span processor to use.
+        Is overriden by the OTEL_SPAN_PROCESSOR environment variable. |
+
+## Sample Configuration
+
+```yaml
+service_name: ${env.OTEL_SERVICE_NAME:=llama-stack}
+service_version: ${env.OTEL_SERVICE_VERSION:=}
+deployment_environment: ${env.OTEL_DEPLOYMENT_ENVIRONMENT:=}
+span_processor: ${env.OTEL_SPAN_PROCESSOR:=batch}
+```
