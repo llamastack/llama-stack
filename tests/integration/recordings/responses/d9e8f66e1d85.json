@@ -71,7 +71,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-128",
+        "id": "rec-d9e8f66e1d85",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -86,7 +86,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_bdq6iic2",
+                  "id": "toolcall-d9e8f66e-0",
                   "function": {
                     "arguments": "{\"flight\":\"{\\\"date\\\":\\\"2023-08-20\\\",\\\"from\\\":\\\"SFO\\\",\\\"to\\\":\\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\":30,\\\"name\\\":\\\"John Doe\\\"}\"}",
                     "name": "book_flight"
@@ -98,7 +98,7 @@
             }
           }
         ],
-        "created": 1759437805,
+        "created": 0,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,

@@ -36,7 +36,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-188",
+          "id": "rec-5c8d7ada4919",
           "choices": [
             {
               "delta": {
@@ -47,7 +47,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_bij0w4gk",
+                    "id": "toolcall-5c8d7ada-0",
                     "function": {
                       "arguments": "{}",
                       "name": "get_current_time"
@@ -61,7 +61,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253831,
+          "created": 0,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -72,7 +72,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-188",
+          "id": "rec-5c8d7ada4919",
           "choices": [
             {
               "delta": {
@@ -87,7 +87,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759253831,
+          "created": 0,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

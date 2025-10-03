@@ -19,7 +19,7 @@
           "content": "",
           "tool_calls": [
             {
-              "id": "call_b3bu19d8",
+              "id": "toolcall-ce7f0b89-0",
               "type": "function",
               "function": {
                 "name": "greet_everyone",
@@ -30,7 +30,7 @@
         },
         {
           "role": "tool",
-          "tool_call_id": "call_b3bu19d8",
+          "tool_call_id": "toolcall-ce7f0b89-0",
           "content": [
             {
               "type": "text",
@@ -103,7 +103,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-534",
+          "id": "rec-ce7f0b89454f",
           "choices": [
             {
               "delta": {
@@ -114,7 +114,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_pe0enwmn",
+                    "id": "toolcall-ce7f0b89-0",
                     "function": {
                       "arguments": "{\"celsius\":\"true\",\"liquid_name\":\"polyjuice\"}",
                       "name": "get_boiling_point"
@@ -128,7 +128,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759368463,
+          "created": 0,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -139,7 +139,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-534",
+          "id": "rec-ce7f0b89454f",
           "choices": [
             {
               "delta": {
@@ -154,7 +154,7 @@
               "logprobs": null
             }
           ],
-          "created": 1759368463,
+          "created": 0,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
