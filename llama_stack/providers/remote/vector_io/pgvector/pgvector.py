@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import asyncio
 import heapq
 from typing import Any
 
@@ -346,17 +345,12 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         inference_api: Api.inference,
         files_api: Files | None = None,
     ) -> None:
+        super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
         self.conn = None
         self.cache = {}
-        self.files_api = files_api
-        self.kvstore: KVStore | None = None
         self.vector_db_store = None
-        self.openai_vector_stores: dict[str, dict[str, Any]] = {}
-        self.openai_file_batches: dict[str, dict[str, Any]] = {}
-        self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
-        self._last_file_batch_cleanup_time = 0
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:

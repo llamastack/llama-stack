@@ -71,16 +71,15 @@ class OpenAIVectorStoreMixin(ABC):
     an openai_vector_stores in-memory cache.
     """
 
-    # These should be provided by the implementing class
-    openai_vector_stores: dict[str, dict[str, Any]]
-    openai_file_batches: dict[str, dict[str, Any]]
-    files_api: Files | None
-    # KV store for persisting OpenAI vector store metadata
-    kvstore: KVStore | None
-    # Track last cleanup time to throttle cleanup operations
-    _last_file_batch_cleanup_time: int
-    # Track running file batch processing tasks
-    _file_batch_tasks: dict[str, asyncio.Task[None]]
+    # Implementing classes should call super().__init__() in their __init__ method
+    # to properly initialize the mixin attributes.
+    def __init__(self, files_api: Files | None = None, kvstore: KVStore | None = None):
+        self.openai_vector_stores: dict[str, dict[str, Any]] = {}
+        self.openai_file_batches: dict[str, dict[str, Any]] = {}
+        self.files_api = files_api
+        self.kvstore = kvstore
+        self._last_file_batch_cleanup_time = 0
+        self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
 
     async def _save_openai_vector_store(self, store_id: str, store_info: dict[str, Any]) -> None:
         """Save vector store metadata to persistent storage."""

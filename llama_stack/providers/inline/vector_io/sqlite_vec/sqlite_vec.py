@@ -410,15 +410,10 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
     """
 
     def __init__(self, config, inference_api: Inference, files_api: Files | None) -> None:
+        super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.files_api = files_api
         self.cache: dict[str, VectorDBWithIndex] = {}
-        self.openai_vector_stores: dict[str, dict[str, Any]] = {}
-        self.openai_file_batches: dict[str, dict[str, Any]] = {}
-        self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
-        self._last_file_batch_cleanup_time = 0
-        self.kvstore: KVStore | None = None
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.kvstore)
