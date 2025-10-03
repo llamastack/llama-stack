@@ -25,9 +25,6 @@ from llama_stack.providers.datatypes import Model, ModelsProtocolPrivate
 from llama_stack.providers.utils.inference.embedding_mixin import (
     SentenceTransformerEmbeddingMixin,
 )
-from llama_stack.providers.utils.inference.openai_compat import (
-    OpenAIChatCompletionToLlamaStackMixin,
-)
 
 from .config import SentenceTransformersInferenceConfig
 
@@ -35,7 +32,6 @@ log = get_logger(name=__name__, category="inference")
 
 
 class SentenceTransformersInferenceImpl(
-    OpenAIChatCompletionToLlamaStackMixin,
     SentenceTransformerEmbeddingMixin,
     InferenceProvider,
     ModelsProtocolPrivate,
@@ -114,4 +110,6 @@ class SentenceTransformersInferenceImpl(
         # for fill-in-the-middle type completion
         suffix: str | None = None,
     ) -> OpenAICompletion:
-        raise NotImplementedError("OpenAI completion not supported by sentence transformers provider")
+        raise NotImplementedError(
+            "OpenAI completion not supported by sentence transformers provider"
+        )
