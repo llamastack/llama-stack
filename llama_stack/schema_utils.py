@@ -6,15 +6,12 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 from .strong_typing.schema import json_schema_type, register_schema  # noqa: F401
 
 
-T = TypeVar("T")
-
-
-class ExtraBodyField(Generic[T]):
+class ExtraBodyField[T]:
     """
     Marker annotation for parameters that arrive via extra_body in the client SDK.
 
@@ -30,7 +27,9 @@ class ExtraBodyField(Generic[T]):
             self,
             input: str,
             model: str,
-            shields: Annotated[list[str] | None, ExtraBodyField("List of shields to apply")] = None,
+            shields: Annotated[
+                list[str] | None, ExtraBodyField("List of shields to apply")
+            ] = None,
         ) -> ResponseObject:
             # shields is available here with proper typing
             if shields:
@@ -40,12 +39,11 @@ class ExtraBodyField(Generic[T]):
         Client usage:
         ```python
         client.responses.create(
-            input="hello",
-            model="llama-3",
-            extra_body={"shields": ["shield-1"]}
+            input="hello", model="llama-3", extra_body={"shields": ["shield-1"]}
         )
         ```
     """
+
     def __init__(self, description: str | None = None):
         self.description = description
 

@@ -819,7 +819,12 @@ class Agents(Protocol):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
-        shields: Annotated[list[ResponseShield] | None, ExtraBodyField("List of shields to apply during response generation. Shields provide safety and content moderation.")] = None,
+        shields: Annotated[
+            list[ResponseShield] | None,
+            ExtraBodyField(
+                "List of shields to apply during response generation. Shields provide safety and content moderation."
+            ),
+        ] = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a new OpenAI response.
 

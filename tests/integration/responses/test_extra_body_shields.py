@@ -25,16 +25,12 @@ def test_shields_via_extra_body(compat_client, text_model_id):
             model=text_model_id,
             input="What is the capital of France?",
             stream=False,
-            extra_body={
-                "shields": ["test-shield-1", "test-shield-2"]
-            }
+            extra_body={"shields": ["test-shield-1", "test-shield-2"]},
         )
 
     # Verify the error message indicates shields are not implemented
     error_message = str(exc_info.value)
     assert "not yet implemented" in error_message.lower() or "not implemented" in error_message.lower()
-
-
 
 
 def test_response_without_shields_still_works(compat_client, text_model_id):
@@ -70,9 +66,7 @@ def test_shields_parameter_received_end_to_end(compat_client, text_model_id):
             model=text_model_id,
             input="Test message for shields verification",
             stream=False,
-            extra_body={
-                "shields": ["shield-1", "shield-2"]
-            }
+            extra_body={"shields": ["shield-1", "shield-2"]},
         )
 
     # The NotImplementedError proves that:
