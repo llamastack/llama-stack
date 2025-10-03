@@ -1,0 +1,116 @@
+name: Pre-commit Bot - Trigger
+
+run-name: Pre-commit bot trigger
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  trigger:
+    # Only run on pull request comments
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '@github-actions run precommit')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Check comment author
+        id: check_author
+        uses: actions/github-script@b72609b8d3f6598eef55e8f8010b7cba8b9ff9c5 # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Get PR details
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Check if commenter has write access or is the PR author
+            const commenter = context.payload.comment.user.login;
+            const prAuthor = pr.data.user.login;
+
+            let hasPermission = false;
+
+            // Check if commenter is PR author
+            if (commenter === prAuthor) {
+              hasPermission = true;
+              console.log(`Comment author ${commenter} is the PR author`);
+            } else {
+              // Check if commenter has write/admin access
+              try {
+                const permission = await github.rest.repos.getCollaboratorPermissionLevel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  username: commenter
+                });
+
+                const level = permission.data.permission;
+                hasPermission = ['write', 'admin', 'maintain'].includes(level);
+                console.log(`Comment author ${commenter} has permission: ${level}`);
+              } catch (error) {
+                console.log(`Could not check permissions for ${commenter}: ${error.message}`);
+              }
+            }
+
+            if (!hasPermission) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `❌ @${commenter} You don't have permission to trigger pre-commit. Only PR authors or repository collaborators can run this command.`
+              });
+              core.setFailed(`User ${commenter} does not have permission`);
+              return;
+            }
+
+            // Save PR info for the execution workflow
+            core.setOutput('pr_number', context.issue.number);
+            core.setOutput('pr_head_ref', pr.data.head.ref);
+            core.setOutput('pr_head_sha', pr.data.head.sha);
+            core.setOutput('pr_head_repo', pr.data.head.repo.full_name);
+            core.setOutput('pr_base_ref', pr.data.base.ref);
+            core.setOutput('authorized', 'true');
+
+      - name: React to comment
+        if: steps.check_author.outputs.authorized == 'true'
+        uses: actions/github-script@b72609b8d3f6598eef55e8f8010b7cba8b9ff9c5 # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      - name: Trigger execution workflow
+        if: steps.check_author.outputs.authorized == 'true'
+        uses: actions/github-script@b72609b8d3f6598eef55e8f8010b7cba8b9ff9c5 # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'precommit-execute.yml',
+              ref: context.payload.repository.default_branch,
+              inputs: {
+                pr_number: '${{ steps.check_author.outputs.pr_number }}',
+                pr_head_ref: '${{ steps.check_author.outputs.pr_head_ref }}',
+                pr_head_sha: '${{ steps.check_author.outputs.pr_head_sha }}',
+                pr_head_repo: '${{ steps.check_author.outputs.pr_head_repo }}',
+                pr_base_ref: '${{ steps.check_author.outputs.pr_base_ref }}'
+              }
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `🚀 Pre-commit workflow triggered! Check the [Actions tab](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/precommit-execute.yml) for progress.`
+            });

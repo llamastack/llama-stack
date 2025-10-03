@@ -1,0 +1,179 @@
+name: Pre-commit Bot - Execute
+
+run-name: Pre-commit bot execution for PR #${{ inputs.pr_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number'
+        required: true
+        type: string
+      pr_head_ref:
+        description: 'PR head ref'
+        required: true
+        type: string
+      pr_head_sha:
+        description: 'PR head SHA'
+        required: true
+        type: string
+      pr_head_repo:
+        description: 'PR head repository'
+        required: true
+        type: string
+      pr_base_ref:
+        description: 'PR base ref'
+        required: true
+        type: string
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Comment starting
+        uses: actions/github-script@b72609b8d3f6598eef55e8f8010b7cba8b9ff9c5 # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.pr_number }},
+              body: `⏳ Running pre-commit hooks on PR #${{ inputs.pr_number }}...`
+            });
+
+      - name: Determine checkout strategy
+        id: checkout_strategy
+        run: |
+          # Check if this is a fork PR
+          if [[ "${{ inputs.pr_head_repo }}" != "${{ github.repository }}" ]]; then
+            echo "is_fork=true" >> $GITHUB_OUTPUT
+            echo "This is a fork PR from ${{ inputs.pr_head_repo }}"
+          else
+            echo "is_fork=false" >> $GITHUB_OUTPUT
+            echo "This is a same-repo PR"
+          fi
+
+      - name: Checkout PR branch (same-repo)
+        if: steps.checkout_strategy.outputs.is_fork == 'false'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ inputs.pr_head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout PR branch (fork)
+        if: steps.checkout_strategy.outputs.is_fork == 'true'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ inputs.pr_head_repo }}
+          ref: ${{ inputs.pr_head_ref }}
+          fetch-depth: 0
+          # For forks, we need a token with write access to push
+          # This will only work if the fork has granted workflow permissions
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify checkout
+        run: |
+          echo "Current SHA: $(git rev-parse HEAD)"
+          echo "Expected SHA: ${{ inputs.pr_head_sha }}"
+          if [[ "$(git rev-parse HEAD)" != "${{ inputs.pr_head_sha }}" ]]; then
+            echo "::error::Checked out SHA does not match expected SHA"
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            **/requirements*.txt
+            .pre-commit-config.yaml
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'llama_stack/ui/'
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: llama_stack/ui
+
+      - name: Run pre-commit
+        id: precommit
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+        continue-on-error: true
+        env:
+          SKIP: no-commit-to-branch
+          RUFF_OUTPUT_FORMAT: github
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if ! git diff --exit-code || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected after pre-commit"
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes after pre-commit"
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add -A
+          git commit -m "style: apply pre-commit fixes
+
+          🤖 Applied by @github-actions bot via pre-commit workflow"
+
+          # Push changes
+          git push origin HEAD:${{ inputs.pr_head_ref }}
+
+      - name: Comment success with changes
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: actions/github-script@b72609b8d3f6598eef55e8f8010b7cba8b9ff9c5 # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.pr_number }},
+              body: `✅ Pre-commit hooks completed successfully!\n\n🔧 Changes have been committed and pushed to the PR branch.`
+            });
+
+      - name: Comment success without changes
+        if: steps.changes.outputs.has_changes == 'false' && steps.precommit.outcome == 'success'
+        uses: actions/github-script@b72609b8d3f6598eef55e8f8010b7cba8b9ff9c5 # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.pr_number }},
+              body: `✅ Pre-commit hooks passed!\n\n✨ No changes needed - your code is already formatted correctly.`
+            });
+
+      - name: Comment failure
+        if: failure()
+        uses: actions/github-script@b72609b8d3f6598eef55e8f8010b7cba8b9ff9c5 # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.pr_number }},
+              body: `❌ Pre-commit workflow failed!\n\nPlease check the [workflow logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.`
+            });
