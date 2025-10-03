@@ -10,6 +10,6 @@ from .config import VertexAIConfig
 async def get_adapter_impl(config: VertexAIConfig, _deps):
     from .vertexai import VertexAIInferenceAdapter
 
-    impl = VertexAIInferenceAdapter(config)
+    impl = VertexAIInferenceAdapter(config=config)
     await impl.initialize()
     return impl

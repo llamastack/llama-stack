@@ -17,6 +17,6 @@ async def get_adapter_impl(config: FireworksImplConfig, _deps):
     from .fireworks import FireworksInferenceAdapter
 
     assert isinstance(config, FireworksImplConfig), f"Unexpected config type: {type(config)}"
-    impl = FireworksInferenceAdapter(config)
+    impl = FireworksInferenceAdapter(config=config)
     await impl.initialize()
     return impl

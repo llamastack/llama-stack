@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import json
+from collections.abc import Iterable
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
@@ -13,6 +14,7 @@ from pydantic import BaseModel, Field
 from llama_stack.apis.inference import Model, OpenAIUserMessageParam
 from llama_stack.apis.models import ModelType
 from llama_stack.core.request_headers import request_provider_data_context
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 
@@ -29,7 +31,7 @@ class OpenAIMixinImpl(OpenAIMixin):
 class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
     """Test implementation with embedding model metadata"""
 
-    embedding_model_metadata = {
+    embedding_model_metadata: dict[str, dict[str, int]] = {
         "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
         "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
     }
@@ -38,7 +40,8 @@ class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
 @pytest.fixture
 def mixin():
     """Create a test instance of OpenAIMixin with mocked model_store"""
-    mixin_instance = OpenAIMixinImpl()
+    config = RemoteInferenceProviderConfig()
+    mixin_instance = OpenAIMixinImpl(config=config)
 
     # just enough to satisfy _get_provider_model_id calls
     mock_model_store = MagicMock()
@@ -53,7 +56,8 @@ def mixin():
 @pytest.fixture
 def mixin_with_embeddings():
     """Create a test instance of OpenAIMixin with embedding model metadata"""
-    return OpenAIMixinWithEmbeddingsImpl()
+    config = RemoteInferenceProviderConfig()
+    return OpenAIMixinWithEmbeddingsImpl(config=config)
 
 
 @pytest.fixture
@@ -498,13 +502,296 @@ class OpenAIMixinWithProviderData(OpenAIMixinImpl):
         return "default-base-url"
 
 
+class OpenAIMixinWithCustomGetModels(OpenAIMixinImpl):
+    """Test implementation with custom get_models override"""
+
+    def __init__(self, config, custom_model_ids):
+        super().__init__(config=config)
+        self._custom_model_ids = custom_model_ids
+
+    async def get_models(self) -> Iterable[str] | None:
+        """Return custom model IDs list"""
+        return self._custom_model_ids
+
+
+class TestOpenAIMixinCustomGetModels:
+    """Test cases for custom get_models() implementation functionality"""
+
+    @pytest.fixture
+    def custom_model_ids_list(self):
+        """Create a list of custom model ID strings"""
+        return ["custom-model-1", "custom-model-2", "custom-embedding"]
+
+    @pytest.fixture
+    def mixin_with_custom_get_models(self, custom_model_ids_list):
+        """Create mixin instance with custom get_models implementation"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinWithCustomGetModels(config=config, custom_model_ids=custom_model_ids_list)
+        # Add embedding metadata to test that feature still works
+        mixin.embedding_model_metadata = {"custom-embedding": {"embedding_dimension": 768, "context_length": 512}}
+        return mixin
+
+    async def test_custom_get_models_is_used(self, mixin_with_custom_get_models, custom_model_ids_list):
+        """Test that custom get_models() implementation is used instead of client.models.list()"""
+        result = await mixin_with_custom_get_models.list_models()
+
+        assert result is not None
+        assert len(result) == 3
+
+        # Verify all custom models are present
+        identifiers = {m.identifier for m in result}
+        assert "custom-model-1" in identifiers
+        assert "custom-model-2" in identifiers
+        assert "custom-embedding" in identifiers
+
+    async def test_custom_get_models_populates_cache(self, mixin_with_custom_get_models):
+        """Test that custom get_models() results are cached"""
+        assert len(mixin_with_custom_get_models._model_cache) == 0
+
+        await mixin_with_custom_get_models.list_models()
+
+        assert len(mixin_with_custom_get_models._model_cache) == 3
+        assert "custom-model-1" in mixin_with_custom_get_models._model_cache
+        assert "custom-model-2" in mixin_with_custom_get_models._model_cache
+        assert "custom-embedding" in mixin_with_custom_get_models._model_cache
+
+    async def test_custom_get_models_respects_allowed_models(self):
+        """Test that custom get_models() respects allowed_models filtering"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinWithCustomGetModels(config=config, custom_model_ids=["model-1", "model-2", "model-3"])
+        mixin.allowed_models = ["model-1"]
+
+        result = await mixin.list_models()
+
+        assert result is not None
+        assert len(result) == 1
+        assert result[0].identifier == "model-1"
+
+    async def test_custom_get_models_with_embedding_metadata(self, mixin_with_custom_get_models):
+        """Test that custom get_models() works with embedding_model_metadata"""
+        result = await mixin_with_custom_get_models.list_models()
+
+        # Find the embedding model
+        embedding_model = next((m for m in result if m.identifier == "custom-embedding"), None)
+        assert embedding_model is not None
+        assert embedding_model.model_type == ModelType.embedding
+        assert embedding_model.metadata == {"embedding_dimension": 768, "context_length": 512}
+
+        # Verify LLM models
+        llm_models = [m for m in result if m.model_type == ModelType.llm]
+        assert len(llm_models) == 2
+
+    async def test_custom_get_models_with_empty_list(self, mock_client_with_empty_models, mock_client_context):
+        """Test that custom get_models() handles empty list correctly"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinWithCustomGetModels(config=config, custom_model_ids=[])
+
+        # Empty list from get_models() falls back to client.models.list()
+        with mock_client_context(mixin, mock_client_with_empty_models):
+            result = await mixin.list_models()
+
+            assert result is not None
+            assert len(result) == 0
+            assert len(mixin._model_cache) == 0
+
+    async def test_default_get_models_returns_none(self, mixin):
+        """Test that default get_models() implementation returns None"""
+        custom_models = await mixin.get_models()
+        assert custom_models is None
+
+    async def test_fallback_to_client_when_get_models_returns_none(
+        self, mixin, mock_client_with_models, mock_client_context
+    ):
+        """Test that when get_models() returns None, falls back to client.models.list()"""
+        # Default get_models() returns None, so should use client
+        with mock_client_context(mixin, mock_client_with_models):
+            result = await mixin.list_models()
+
+            assert result is not None
+            assert len(result) == 3
+            mock_client_with_models.models.list.assert_called_once()
+
+    async def test_custom_get_models_creates_proper_model_objects(self):
+        """Test that custom get_models() model IDs are converted to proper Model objects"""
+        config = RemoteInferenceProviderConfig()
+        model_ids = ["gpt-4", "gpt-3.5-turbo"]
+        mixin = OpenAIMixinWithCustomGetModels(config=config, custom_model_ids=model_ids)
+
+        result = await mixin.list_models()
+
+        assert result is not None
+        assert len(result) == 2
+
+        for model in result:
+            assert isinstance(model, Model)
+            assert model.provider_id == "test-provider"
+            assert model.identifier in model_ids
+            assert model.provider_resource_id in model_ids
+            assert model.model_type == ModelType.llm
+
+    async def test_custom_get_models_bypasses_client(self, mock_client_context):
+        """Test that providing get_models() means client.models.list() is NOT called"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinWithCustomGetModels(config=config, custom_model_ids=["model-1", "model-2"])
+
+        # Create a mock client that should NOT be called
+        mock_client = MagicMock()
+        mock_client.models.list = MagicMock(side_effect=AssertionError("client.models.list should not be called!"))
+
+        with mock_client_context(mixin, mock_client):
+            result = await mixin.list_models()
+
+            # Should succeed without calling client.models.list
+            assert result is not None
+            assert len(result) == 2
+            mock_client.models.list.assert_not_called()
+
+    async def test_get_models_wrong_type_raises_error(self):
+        """Test that get_models() returning non-string items results in an error"""
+
+        class BadGetModelsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                # Return list with non-string items
+                return [["nested", "list"], {"key": "value"}]  # type: ignore
+
+        config = RemoteInferenceProviderConfig()
+        mixin = BadGetModelsAdapter(config=config)
+
+        # Should raise ValueError for non-string model ID
+        with pytest.raises(ValueError, match="Model ID .* from get_models\\(\\) is not a string"):
+            await mixin.list_models()
+
+    async def test_get_models_non_iterable_raises_error(self):
+        """Test that get_models() returning non-iterable type raises error"""
+
+        class NonIterableGetModelsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                # Return non-iterable type
+                return 42  # type: ignore
+
+        config = RemoteInferenceProviderConfig()
+        mixin = NonIterableGetModelsAdapter(config=config)
+
+        # Should raise TypeError when trying to convert to list
+        with pytest.raises(TypeError, match="'int' object is not iterable"):
+            await mixin.list_models()
+
+    async def test_get_models_with_none_items_raises_error(self):
+        """Test that get_models() returning list with None items causes error"""
+
+        class NoneItemsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                # Return list with None items
+                return [None, "valid-model", None]  # type: ignore
+
+        config = RemoteInferenceProviderConfig()
+        mixin = NoneItemsAdapter(config=config)
+
+        # Should raise ValueError for non-string model ID
+        with pytest.raises(ValueError, match="Model ID .* from get_models\\(\\) is not a string"):
+            await mixin.list_models()
+
+    async def test_get_models_with_non_string_items_raises_error(self):
+        """Test that get_models() returning non-string items raises ValueError"""
+
+        class NonStringItemsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                # Return list with non-string items (integers)
+                return ["valid-model", 123, "another-model"]  # type: ignore
+
+        config = RemoteInferenceProviderConfig()
+        mixin = NonStringItemsAdapter(config=config)
+
+        # Should raise ValueError for non-string model ID
+        with pytest.raises(ValueError, match="Model ID 123 from get_models\\(\\) is not a string"):
+            await mixin.list_models()
+
+    async def test_embedding_models_from_custom_get_models_have_correct_type(self, mixin_with_custom_get_models):
+        """Test that embedding models from custom get_models() are properly typed as embedding"""
+        result = await mixin_with_custom_get_models.list_models()
+
+        # Verify we have both LLM and embedding models
+        llm_models = [m for m in result if m.model_type == ModelType.llm]
+        embedding_models = [m for m in result if m.model_type == ModelType.embedding]
+
+        assert len(llm_models) == 2
+        assert len(embedding_models) == 1
+        assert embedding_models[0].identifier == "custom-embedding"
+
+    async def test_llm_models_from_custom_get_models_have_correct_type(self):
+        """Test that LLM models from custom get_models() are properly typed as llm"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinWithCustomGetModels(config=config, custom_model_ids=["gpt-4", "claude-3"])
+
+        result = await mixin.list_models()
+
+        assert result is not None
+        assert len(result) == 2
+        for model in result:
+            assert model.model_type == ModelType.llm
+
+    async def test_get_models_accepts_various_iterables(self):
+        """Test that get_models() accepts tuples, sets, generators, etc."""
+
+        # Test with tuple
+        class TupleGetModelsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                return ("model-1", "model-2", "model-3")
+
+        config = RemoteInferenceProviderConfig()
+        mixin = TupleGetModelsAdapter(config=config)
+        result = await mixin.list_models()
+        assert result is not None
+        assert len(result) == 3
+
+        # Test with generator
+        class GeneratorGetModelsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                def gen():
+                    yield "gen-model-1"
+                    yield "gen-model-2"
+
+                return gen()
+
+        mixin = GeneratorGetModelsAdapter(config=config)
+        result = await mixin.list_models()
+        assert result is not None
+        assert len(result) == 2
+
+        # Test with set (order may vary)
+        class SetGetModelsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                return {"set-model-1", "set-model-2"}
+
+        mixin = SetGetModelsAdapter(config=config)
+        result = await mixin.list_models()
+        assert result is not None
+        assert len(result) == 2
+
+    async def test_get_models_exception_propagates(self):
+        """Test that when get_models() raises an exception, it propagates to the caller"""
+
+        class FailingGetModelsAdapter(OpenAIMixinImpl):
+            async def get_models(self) -> Iterable[str] | None:
+                # Simulate an exception during custom model listing
+                raise RuntimeError("Failed to fetch custom models")
+
+        config = RemoteInferenceProviderConfig()
+        mixin = FailingGetModelsAdapter(config=config)
+
+        # Exception should propagate and not fall back to client.models.list()
+        with pytest.raises(RuntimeError, match="Failed to fetch custom models"):
+            await mixin.list_models()
+
+
 class TestOpenAIMixinProviderDataApiKey:
     """Test cases for provider_data_api_key_field functionality"""
 
     @pytest.fixture
     def mixin_with_provider_data_field(self):
         """Mixin instance with provider_data_api_key_field set"""
-        mixin_instance = OpenAIMixinWithProviderData()
+        config = RemoteInferenceProviderConfig()
+        mixin_instance = OpenAIMixinWithProviderData(config=config)
 
         # Mock provider_spec for provider data validation
         mock_provider_spec = MagicMock()

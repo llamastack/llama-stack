@@ -131,6 +131,27 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "fireworks/accounts/fireworks/models/qwen3-embedding-8b",
         },
     ),
+    "anthropic": Setup(
+        name="anthropic",
+        description="Anthropic Claude models",
+        defaults={
+            "text_model": "anthropic/claude-3-5-haiku-20241022",
+        },
+    ),
+    "llama-api": Setup(
+        name="llama-openai-compat",
+        description="Llama models from https://api.llama.com",
+        defaults={
+            "text_model": "llama_openai_compat/Llama-3.3-8B-Instruct",
+        },
+    ),
+    "groq": Setup(
+        name="groq",
+        description="Groq models",
+        defaults={
+            "text_model": "groq/llama-3.3-70b-versatile",
+        },
+    ),
 }
 
 
