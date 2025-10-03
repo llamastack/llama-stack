@@ -62,7 +62,7 @@ async def test_conversation_items(service):
     item_list = await service.create(conversation.id, items)
 
     assert len(item_list.data) == 1
-    assert item_list.data[0].id.startswith("msg_")
+    assert item_list.data[0].id == "msg_test123"
 
     items = await service.list(conversation.id)
     assert len(items.data) == 1
