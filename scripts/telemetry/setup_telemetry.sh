@@ -17,6 +17,7 @@
 set -Eeuo pipefail
 
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "🚀 Setting up telemetry stack for Llama Stack using Podman..."
 
@@ -53,7 +54,7 @@ $CONTAINER_RUNTIME run -d --name otel-collector \
   -p 4317:4317 \
   -p 9464:9464 \
   -p 13133:13133 \
-  -v $(pwd)/otel-collector-config.yaml:/etc/otel-collector-config.yaml:Z \
+  -v "$SCRIPT_DIR/otel-collector-config.yaml:/etc/otel-collector-config.yaml:Z" \
   docker.io/otel/opentelemetry-collector-contrib:latest \
   --config /etc/otel-collector-config.yaml
 
@@ -62,7 +63,7 @@ echo "📈 Starting Prometheus..."
 $CONTAINER_RUNTIME run -d --name prometheus \
   --network llama-telemetry \
   -p 9090:9090 \
-  -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml:Z \
+  -v "$SCRIPT_DIR/prometheus.yml:/etc/prometheus/prometheus.yml:Z" \
   docker.io/prom/prometheus:latest \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/prometheus \
@@ -72,13 +73,15 @@ $CONTAINER_RUNTIME run -d --name prometheus \
   --web.enable-lifecycle
 
 # Start Grafana
+# Note: Using 11.0.0 because grafana:latest arm64 image has a broken /run.sh (0 bytes)
 echo "📊 Starting Grafana..."
 $CONTAINER_RUNTIME run -d --name grafana \
   --network llama-telemetry \
   -p 3000:3000 \
   -e GF_SECURITY_ADMIN_PASSWORD=admin \
   -e GF_USERS_ALLOW_SIGN_UP=false \
-  docker.io/grafana/grafana:latest
+  -v "$SCRIPT_DIR/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z" \
+  docker.io/grafana/grafana:11.0.0
 
 # Wait for services to start
 echo "⏳ Waiting for services to start..."
