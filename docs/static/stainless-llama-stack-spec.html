@@ -614,7 +614,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreateRequest"
+                                "$ref": "#/components/schemas/AddItemsRequest"
                             }
                         }
                     },
@@ -8364,7 +8364,7 @@
                 "title": "ConversationItemList",
                 "description": "List of conversation items with pagination."
             },
-            "CreateRequest": {
+            "AddItemsRequest": {
                 "type": "object",
                 "properties": {
                     "items": {
@@ -8379,7 +8379,7 @@
                 "required": [
                     "items"
                 ],
-                "title": "CreateRequest"
+                "title": "AddItemsRequest"
             },
             "ConversationItemDeletedResource": {
                 "type": "object",

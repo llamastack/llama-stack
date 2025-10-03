@@ -508,7 +508,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRequest'
+              $ref: '#/components/schemas/AddItemsRequest'
         required: true
       deprecated: false
   /v1/conversations/{conversation_id}/items/{item_id}:
@@ -6208,7 +6208,7 @@ components:
       title: ConversationItemList
       description: >-
         List of conversation items with pagination.
-    CreateRequest:
+    AddItemsRequest:
       type: object
       properties:
         items:
@@ -6220,7 +6220,7 @@ components:
       additionalProperties: false
       required:
         - items
-      title: CreateRequest
+      title: AddItemsRequest
     ConversationItemDeletedResource:
       type: object
       properties:

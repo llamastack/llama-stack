@@ -208,7 +208,7 @@ class Conversations(Protocol):
         ...
 
     @webmethod(route="/conversations/{conversation_id}/items", method="POST", level=LLAMA_STACK_API_V1)
-    async def create(self, conversation_id: str, items: list[ConversationItem]) -> ConversationItemList:
+    async def add_items(self, conversation_id: str, items: list[ConversationItem]) -> ConversationItemList:
         """Create items in the conversation.
 
         :param conversation_id: The conversation identifier.

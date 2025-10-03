@@ -185,8 +185,8 @@ class ConversationServiceImpl(Conversations):
         self._validate_conversation_id(conversation_id)
         return await self.get_conversation(conversation_id)
 
-    async def create(self, conversation_id: str, items: list[ConversationItem]) -> ConversationItemList:
-        """Create items in the conversation."""
+    async def add_items(self, conversation_id: str, items: list[ConversationItem]) -> ConversationItemList:
+        """Create (add) items to a conversation."""
         await self._get_validated_conversation(conversation_id)
 
         created_items = []

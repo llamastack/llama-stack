@@ -59,7 +59,7 @@ async def test_conversation_items(service):
             status="completed",
         )
     ]
-    item_list = await service.create(conversation.id, items)
+    item_list = await service.add_items(conversation.id, items)
 
     assert len(item_list.data) == 1
     assert item_list.data[0].id == "msg_test123"
@@ -96,7 +96,7 @@ async def test_openai_type_compatibility(service):
             status="completed",
         )
     ]
-    item_list = await service.create(conversation.id, items)
+    item_list = await service.add_items(conversation.id, items)
 
     for attr in ["object", "data", "first_id", "last_id", "has_more"]:
         assert hasattr(item_list, attr)
