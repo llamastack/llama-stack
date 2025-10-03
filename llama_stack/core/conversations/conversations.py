@@ -112,6 +112,7 @@ class ConversationServiceImpl(Conversations):
         )
 
         if items:
+            item_records = []
             for item in items:
                 item_dict = item.model_dump()
                 item_id = self._get_or_generate_item_id(item, item_dict)
@@ -123,7 +124,9 @@ class ConversationServiceImpl(Conversations):
                     "item_data": item_dict,
                 }
 
-                await self.sql_store.insert(table="conversation_items", data=item_record)
+                item_records.append(item_record)
+
+            await self.sql_store.insert(table="conversation_items", data=item_records)
 
         conversation = Conversation(
             id=conversation_id,
