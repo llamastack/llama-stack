@@ -7,7 +7,6 @@ from abc import abstractmethod
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from sqlalchemy import Engine
 
 
 class TelemetryProvider(BaseModel):
@@ -19,12 +18,5 @@ class TelemetryProvider(BaseModel):
     def fastapi_middleware(self, app: FastAPI, *args, **kwargs):
         """
         Injects FastAPI middleware that instruments the application for telemetry.
-        """
-        ...
-
-    @abstractmethod
-    def sqlalchemy_instrumentation(self, engine: Engine | None = None):
-        """
-        Injects SQLAlchemy instrumentation that instruments the application for telemetry.
         """
         ...

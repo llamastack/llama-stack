@@ -252,7 +252,8 @@ class MockVLLMServer(MockServerBase):
                 # Route to appropriate handler
                 if "/chat/completions" in self.path:
                     response = self._create_chat_completion_response(request_data)
-                    self._send_json_response(200, response)
+                    if response is not None:  # None means already sent (streaming)
+                        self._send_json_response(200, response)
 
                 elif "/completions" in self.path:
                     response = self._create_text_completion_response(request_data)
@@ -285,8 +286,65 @@ class MockVLLMServer(MockServerBase):
                 """
                 Create OpenAI ChatCompletion response.
 
-                Returns a valid response matching openai.types.ChatCompletion
+                Returns a valid response matching openai.types.ChatCompletion.
+                Supports both regular and streaming responses.
                 """
+                # Check if streaming is requested
+                is_streaming = request_data.get("stream", False)
+
+                if is_streaming:
+                    # Return SSE streaming response
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Cache-Control", "no-cache")
+                    self.send_header("Connection", "keep-alive")
+                    self.end_headers()
+
+                    # Send streaming chunks
+                    chunks = [
+                        {
+                            "id": "chatcmpl-test",
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": request_data.get("model", "test"),
+                            "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
+                        },
+                        {
+                            "id": "chatcmpl-test",
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": request_data.get("model", "test"),
+                            "choices": [{"index": 0, "delta": {"content": "Test "}, "finish_reason": None}],
+                        },
+                        {
+                            "id": "chatcmpl-test",
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": request_data.get("model", "test"),
+                            "choices": [{"index": 0, "delta": {"content": "streaming "}, "finish_reason": None}],
+                        },
+                        {
+                            "id": "chatcmpl-test",
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": request_data.get("model", "test"),
+                            "choices": [{"index": 0, "delta": {"content": "response"}, "finish_reason": None}],
+                        },
+                        {
+                            "id": "chatcmpl-test",
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": request_data.get("model", "test"),
+                            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                        },
+                    ]
+
+                    for chunk in chunks:
+                        self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
+                    self.wfile.write(b"data: [DONE]\n\n")
+                    return None  # Already sent response
+
+                # Regular response
                 return {
                     "id": "chatcmpl-test123",
                     "object": "chat.completion",

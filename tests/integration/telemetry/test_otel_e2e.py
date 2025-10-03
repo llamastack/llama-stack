@@ -96,6 +96,18 @@ TEST_CASES = [
         expected_trace_exports=2,  # Stack request + vLLM backend call
         expected_metric_exports=1,  # HTTP metrics (duration, count, active_requests)
     ),
+    TelemetryTestCase(
+        name="chat_completion_streaming",
+        http_method="POST",
+        api_path="/v1/inference/chat_completion",
+        request_body={
+            "model": "meta-llama/Llama-3.2-1B-Instruct",
+            "messages": [{"role": "user", "content": "Streaming test"}],
+            "stream": True,  # Enable streaming response
+        },
+        expected_trace_exports=2,  # Stack request + vLLM backend call
+        expected_metric_exports=1,  # HTTP + streaming metrics
+    ),
 ]
 
 
