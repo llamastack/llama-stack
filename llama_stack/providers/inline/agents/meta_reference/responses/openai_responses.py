@@ -208,9 +208,14 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
+        shields: list | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
+
+        # Shields parameter received via extra_body - not yet implemented
+        if shields is not None:
+            raise NotImplementedError("Shields parameter is not yet implemented in the meta-reference provider")
 
         stream_gen = self._create_streaming_response(
             input=input,
