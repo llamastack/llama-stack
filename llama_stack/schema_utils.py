@@ -6,7 +6,7 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
 from .strong_typing.schema import json_schema_type, register_schema  # noqa: F401
 
