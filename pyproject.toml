@@ -52,6 +52,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.41",           # server - for conversations
     "opentelemetry-semantic-conventions>=0.57b0",
     "opentelemetry-instrumentation-fastapi>=0.57b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.57b0",
 ]
 
 [project.optional-dependencies]

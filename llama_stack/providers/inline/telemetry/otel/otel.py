@@ -1,21 +1,20 @@
 import os
-import threading
 
 from opentelemetry import trace, metrics
-from opentelemetry.context.context import Context
 from opentelemetry.sdk.resources import Attributes, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.metrics import Counter, UpDownCounter, Histogram, ObservableGauge
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.trace import Span, SpanKind, _Links
-from typing import Sequence
-from pydantic import PrivateAttr
+from opentelemetry.trace import Tracer
+from opentelemetry.metrics import Meter
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
-from llama_stack.core.telemetry.tracing import TelemetryProvider
+from llama_stack.core.telemetry.telemetry import TelemetryProvider
 from llama_stack.log import get_logger
+
+from sqlalchemy import Engine
 
 from .config import OTelTelemetryConfig
 from fastapi import FastAPI
@@ -29,15 +28,9 @@ class OTelTelemetryProvider(TelemetryProvider):
     A simple Open Telemetry native telemetry provider.
     """
     config: OTelTelemetryConfig
-    _counters: dict[str, Counter] = PrivateAttr(default_factory=dict)
-    _up_down_counters: dict[str, UpDownCounter] = PrivateAttr(default_factory=dict)
-    _histograms: dict[str, Histogram] = PrivateAttr(default_factory=dict)
-    _gauges: dict[str, ObservableGauge] = PrivateAttr(default_factory=dict)
-
 
     def model_post_init(self, __context):
         """Initialize provider after Pydantic validation."""
-        self._lock = threading.Lock()
 
         attributes: Attributes = {
             key: value
@@ -74,68 +67,114 @@ class OTelTelemetryProvider(TelemetryProvider):
             if not os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"):
                 logger.warning("OTEL_EXPORTER_OTLP_ENDPOINT or OTEL_EXPORTER_OTLP_METRICS_ENDPOINT is not set. Metrics will not be exported.")
 
+
     def fastapi_middleware(self, app: FastAPI):
+        """
+        Instrument FastAPI with OTel for automatic tracing and metrics.
+        
+        Captures:
+        - Distributed traces for all HTTP requests (via FastAPIInstrumentor)
+        - HTTP metrics following semantic conventions (custom middleware)
+        """
+        # Enable automatic tracing
         FastAPIInstrumentor.instrument_app(app)
+        
+        # Add custom middleware for HTTP metrics
+        meter = self.get_meter("llama_stack.http.server")
+        
+        # Create HTTP metrics following semantic conventions
+        # https://opentelemetry.io/docs/specs/semconv/http/http-metrics/
+        request_duration = meter.create_histogram(
+            "http.server.request.duration",
+            unit="ms",
+            description="Duration of HTTP server requests"
+        )
+        
+        active_requests = meter.create_up_down_counter(
+            "http.server.active_requests",
+            unit="requests",
+            description="Number of active HTTP server requests"
+        )
+        
+        request_count = meter.create_counter(
+            "http.server.request.count",
+            unit="requests",
+            description="Total number of HTTP server requests"
+        )
+        
+        # Add middleware to record metrics
+        @app.middleware("http")  # type: ignore[misc]
+        async def http_metrics_middleware(request, call_next):
+            import time
+            
+            # Record active request
+            active_requests.add(1, {
+                "http.method": request.method,
+                "http.route": request.url.path,
+            })
+            
+            start_time = time.time()
+            status_code = 500  # Default to error
+            
+            try:
+                response = await call_next(request)
+                status_code = response.status_code
+            except Exception:
+                raise
+            finally:
+                # Record metrics
+                duration_ms = (time.time() - start_time) * 1000
+                
+                attributes = {
+                    "http.method": request.method,
+                    "http.route": request.url.path,
+                    "http.status_code": status_code,
+                }
+                
+                request_duration.record(duration_ms, attributes)
+                request_count.add(1, attributes)
+                active_requests.add(-1, {
+                    "http.method": request.method,
+                    "http.route": request.url.path,
+                })
+            
+            return response
 
-    def custom_trace(self, 
+
+    def sqlalchemy_instrumentation(self, engine: Engine | None = None):
+        kwargs = {}
+        if engine:
+            kwargs["engine"] = engine
+        SQLAlchemyInstrumentor().instrument(**kwargs)
+
+
+    def get_tracer(self, 
+    instrumenting_module_name: str,
+    instrumenting_library_version: str | None = None,
+    tracer_provider: TracerProvider | None = None,
+    schema_url: str | None = None,
+    attributes: Attributes | None = None
+    ) -> Tracer:
+        return trace.get_tracer(
+            instrumenting_module_name=instrumenting_module_name, 
+            instrumenting_library_version=instrumenting_library_version, 
+            tracer_provider=tracer_provider, 
+            schema_url=schema_url, 
+            attributes=attributes
+        )
+
+
+    def get_meter(self,
     name: str,
-    context: Context | None = None,
-    kind: SpanKind = SpanKind.INTERNAL,
-    attributes: Attributes = {},
-    links: _Links = None,
-    start_time: int | None = None,
-    record_exception: bool = True,
-    set_status_on_exception: bool = True) -> Span:
-        """
-        Creates a custom tracing span using the Open Telemetry SDK.
-        """
-        tracer = trace.get_tracer(__name__)
-        return tracer.start_span(name, context, kind, attributes, links, start_time, record_exception, set_status_on_exception)
-
-
-    def record_count(self, name: str, amount: int|float, context: Context | None = None, attributes: dict[str, str] | None = None, unit: str = "", description: str = ""):
-        """
-        Increments a counter metric using the Open Telemetry SDK that are indexed by the meter name.
-        This function is designed to be compatible with other popular telemetry providers design patterns,
-        like Datadog and New Relic.
-        """
-        meter = metrics.get_meter(__name__)
-
-        with self._lock:
-            if name not in self._counters:
-                self._counters[name] = meter.create_counter(name, unit=unit, description=description)
-            counter = self._counters[name]
-
-        counter.add(amount, attributes=attributes, context=context)
-
-
-    def record_histogram(self, name: str, value: int|float, context: Context | None = None, attributes: dict[str, str] | None = None, unit: str = "", description: str = "", explicit_bucket_boundaries_advisory: Sequence[float] | None = None):
-        """
-        Records a histogram metric using the Open Telemetry SDK that are indexed by the meter name.
-        This function is designed to be compatible with other popular telemetry providers design patterns,
-        like Datadog and New Relic.
-        """
-        meter = metrics.get_meter(__name__)
-
-        with self._lock:
-            if name not in self._histograms:
-                self._histograms[name] = meter.create_histogram(name, unit=unit, description=description, explicit_bucket_boundaries_advisory=explicit_bucket_boundaries_advisory)
-            histogram = self._histograms[name]
-
-        histogram.record(value, attributes=attributes, context=context)
-
-
-    def record_up_down_counter(self, name: str, value: int|float, context: Context | None = None, attributes: dict[str, str] | None = None, unit: str = "", description: str = ""):
-        """
-        Records an up/down counter metric using the Open Telemetry SDK that are indexed by the meter name.
-        This function is designed to be compatible with other popular telemetry providers design patterns,
-        like Datadog and New Relic.
-        """
-        meter = metrics.get_meter(__name__)
-
-        with self._lock:
-            if name not in self._up_down_counters:
-                self._up_down_counters[name] = meter.create_up_down_counter(name, unit=unit, description=description)
-            up_down_counter = self._up_down_counters[name]
-
-        up_down_counter.add(value, attributes=attributes, context=context)
+    version: str = "",
+    meter_provider: MeterProvider | None = None,
+    schema_url: str | None = None,
+    attributes: Attributes | None = None
+    ) -> Meter:
+        return metrics.get_meter(
+            name=name, 
+            version=version, 
+            meter_provider=meter_provider,
+            schema_url=schema_url,
+            attributes=attributes
+        )

@@ -424,6 +424,7 @@ def create_app(
 
     if Api.telemetry in impls:
         impls[Api.telemetry].fastapi_middleware(app)
+        impls[Api.telemetry].sqlalchemy_instrumentation()
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)

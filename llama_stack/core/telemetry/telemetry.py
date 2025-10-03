@@ -6,7 +6,13 @@
 from abc import abstractmethod
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import Any
+
+from opentelemetry.trace import Tracer
+from opentelemetry.metrics import Meter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.resources import Attributes
+from sqlalchemy import Engine
 
 
 class TelemetryProvider(BaseModel):
@@ -19,31 +25,34 @@ class TelemetryProvider(BaseModel):
         Injects FastAPI middleware that instruments the application for telemetry.
         """
         ...
-
+    
     @abstractmethod
-    def custom_trace(self, name: str, *args, **kwargs) -> Any:
+    def sqlalchemy_instrumentation(self, engine: Engine | None = None):
         """
-        Creates a custom trace.
+        Injects SQLAlchemy instrumentation that instruments the application for telemetry.
         """
         ...
     
     @abstractmethod
-    def record_count(self, name: str, *args, **kwargs):
+    def get_tracer(self, 
+    instrumenting_module_name: str,
+    instrumenting_library_version: str | None = None,
+    tracer_provider: TracerProvider | None = None,
+    schema_url: str | None = None,
+    attributes: Attributes | None = None
+    ) -> Tracer:
         """
-        Increments a counter metric.
+        Gets a tracer.
         """
         ...
     
     @abstractmethod
-    def record_histogram(self, name: str, *args, **kwargs):
+    def get_meter(self, name: str,
+    version: str = "",
+    meter_provider: MeterProvider | None = None,
+    schema_url: str | None = None,
+    attributes: Attributes | None = None) -> Meter:
         """
-        Records a histogram metric.
-        """
-        ...
-    
-    @abstractmethod
-    def record_up_down_counter(self, name: str, *args, **kwargs):
-        """
-        Records an up/down counter metric.
+        Gets a meter.
         """
         ...
