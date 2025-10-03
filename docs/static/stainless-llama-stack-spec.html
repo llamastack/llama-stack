@@ -1830,7 +1830,27 @@
                     },
                     "required": true
                 },
-                "deprecated": false
+                "deprecated": false,
+                "x-llama-stack-extra-body-params": [
+                    {
+                        "name": "shields",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ResponseShieldSpec"
+                                    }
+                                ]
+                            }
+                        },
+                        "description": "List of shields to apply during response generation. Shields provide safety and content moderation.",
+                        "required": false
+                    }
+                ]
             }
         },
         "/v1/responses/{response_id}": {
@@ -9624,6 +9644,21 @@
                 "additionalProperties": false,
                 "title": "OpenAIResponseText",
                 "description": "Text response configuration for OpenAI responses."
+            },
+            "ResponseShieldSpec": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "The type/identifier of the shield."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "ResponseShieldSpec",
+                "description": "Specification for a shield to apply during response generation."
             },
             "OpenAIResponseInputTool": {
                 "oneOf": [

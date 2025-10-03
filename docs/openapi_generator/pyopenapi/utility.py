@@ -52,6 +52,17 @@ class Specification:
                     if display_name:
                         tag["x-displayName"] = display_name
 
+            # Handle operations to rename extraBodyParameters -> x-llama-stack-extra-body-params
+            paths = json_doc.get("paths", {})
+            for path_item in paths.values():
+                if isinstance(path_item, dict):
+                    for method in ["get", "post", "put", "delete", "patch"]:
+                        operation = path_item.get(method)
+                        if operation and isinstance(operation, dict):
+                            extra_body_params = operation.pop("extraBodyParameters", None)
+                            if extra_body_params:
+                                operation["x-llama-stack-extra-body-params"] = extra_body_params
+
         return json_doc
 
     def get_json_string(self, pretty_print: bool = False) -> str:

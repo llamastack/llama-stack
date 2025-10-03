@@ -28,7 +28,7 @@ from llama_stack.apis.inference import (
 from llama_stack.apis.safety import SafetyViolation
 from llama_stack.apis.tools import ToolDef
 from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
-from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
+from llama_stack.schema_utils import ExtraBodyField, json_schema_type, register_schema, webmethod
 
 from .openai_responses import (
     ListOpenAIResponseInputItem,
@@ -40,6 +40,20 @@ from .openai_responses import (
     OpenAIResponseObjectStream,
     OpenAIResponseText,
 )
+
+
+@json_schema_type
+class ResponseShieldSpec(BaseModel):
+    """Specification for a shield to apply during response generation.
+
+    :param type: The type/identifier of the shield.
+    """
+
+    type: str
+    # TODO: more fields to be added for shield configuration
+
+
+ResponseShield = str | ResponseShieldSpec
 
 
 class Attachment(BaseModel):
@@ -805,6 +819,7 @@ class Agents(Protocol):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
+        shields: Annotated[list[ResponseShield] | None, ExtraBodyField("List of shields to apply during response generation. Shields provide safety and content moderation.")] = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a new OpenAI response.
 
@@ -812,6 +827,7 @@ class Agents(Protocol):
         :param model: The underlying LLM used for completions.
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
         :param include: (Optional) Additional fields to include in the response.
+        :param shields: (Optional) List of shields to apply during response generation. Can be shield IDs (strings) or shield specifications.
         :returns: An OpenAIResponseObject.
         """
         ...
