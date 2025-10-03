@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 """
 Utility script to re-normalize existing recording files.
 
@@ -9,6 +15,7 @@ git diffs when recordings are re-recorded.
 Usage:
     python scripts/normalize_recordings.py [--dry-run]
 """
+
 import argparse
 import json
 from pathlib import Path

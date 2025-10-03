@@ -85,7 +85,7 @@ def _normalize_tool_call_ids(obj: Any, request_hash: str, counter: dict[str, int
     if isinstance(obj, dict):
         # Normalize tool_calls array
         if "tool_calls" in obj and isinstance(obj["tool_calls"], list):
-            for i, tool_call in enumerate(obj["tool_calls"]):
+            for tool_call in obj["tool_calls"]:
                 if isinstance(tool_call, dict) and "id" in tool_call:
                     # Generate deterministic tool call ID
                     tool_call["id"] = f"toolcall-{request_hash[:8]}-{counter['count']}"
@@ -204,7 +204,9 @@ class ResponseStorage:
         if "body" in serialized_response:
             if isinstance(serialized_response["body"], list):
                 # Handle streaming responses (list of chunks)
-                serialized_response["body"] = [_serialize_response(chunk, request_hash) for chunk in serialized_response["body"]]
+                serialized_response["body"] = [
+                    _serialize_response(chunk, request_hash) for chunk in serialized_response["body"]
+                ]
             else:
                 # Handle single response
                 serialized_response["body"] = _serialize_response(serialized_response["body"], request_hash)
