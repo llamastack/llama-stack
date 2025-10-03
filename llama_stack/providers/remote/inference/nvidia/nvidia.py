@@ -8,7 +8,6 @@
 from openai import NOT_GIVEN
 
 from llama_stack.apis.inference import (
-    Inference,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
@@ -22,7 +21,9 @@ from .utils import _is_nvidia_hosted
 logger = get_logger(name=__name__, category="inference::nvidia")
 
 
-class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
+class NVIDIAInferenceAdapter(OpenAIMixin):
+    config: NVIDIAConfig
+
     """
     NVIDIA Inference Adapter for Llama Stack.
 
@@ -37,32 +38,21 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
     """
 
     # source: https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/support-matrix.html
-    embedding_model_metadata = {
+    embedding_model_metadata: dict[str, dict[str, int]] = {
         "nvidia/llama-3.2-nv-embedqa-1b-v2": {"embedding_dimension": 2048, "context_length": 8192},
         "nvidia/nv-embedqa-e5-v5": {"embedding_dimension": 512, "context_length": 1024},
         "nvidia/nv-embedqa-mistral-7b-v2": {"embedding_dimension": 512, "context_length": 4096},
         "snowflake/arctic-embed-l": {"embedding_dimension": 512, "context_length": 1024},
     }
 
-    def __init__(self, config: NVIDIAConfig) -> None:
-        logger.info(f"Initializing NVIDIAInferenceAdapter({config.url})...")
+    async def initialize(self) -> None:
+        logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.url})...")
 
-        if _is_nvidia_hosted(config):
-            if not config.api_key:
+        if _is_nvidia_hosted(self.config):
+            if not self.config.api_key:
                 raise RuntimeError(
                     "API key is required for hosted NVIDIA NIM. Either provide an API key or use a self-hosted NIM."
                 )
-        # elif self._config.api_key:
-        #
-        # we don't raise this warning because a user may have deployed their
-        # self-hosted NIM with an API key requirement.
-        #
-        #     warnings.warn(
-        #         "API key is not required for self-hosted NVIDIA NIM. "
-        #         "Consider removing the api_key from the configuration."
-        #     )
-
-        self._config = config
 
     def get_api_key(self) -> str:
         """
@@ -70,7 +60,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
 
         :return: The NVIDIA API key
         """
-        return self._config.api_key.get_secret_value() if self._config.api_key else "NO KEY"
+        return self.config.api_key.get_secret_value() if self.config.api_key else "NO KEY"
 
     def get_base_url(self) -> str:
         """
@@ -78,7 +68,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, Inference):
 
         :return: The NVIDIA API base URL
         """
-        return f"{self._config.url}/v1" if self._config.append_api_version else self._config.url
+        return f"{self.config.url}/v1" if self.config.append_api_version else self.config.url
 
     async def openai_embeddings(
         self,

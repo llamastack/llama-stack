@@ -9,7 +9,6 @@ from fireworks.client import Fireworks
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    Inference,
     LogProbConfig,
     ResponseFormat,
     ResponseFormatType,
@@ -17,9 +16,6 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import (
-    ModelRegistryHelper,
-)
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict,
     get_sampling_options,
@@ -35,22 +31,13 @@ from .config import FireworksImplConfig
 logger = get_logger(name=__name__, category="inference::fireworks")
 
 
-class FireworksInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData):
-    embedding_model_metadata = {
+class FireworksInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
+    config: FireworksImplConfig
+
+    embedding_model_metadata: dict[str, dict[str, int]] = {
         "nomic-ai/nomic-embed-text-v1.5": {"embedding_dimension": 768, "context_length": 8192},
         "accounts/fireworks/models/qwen3-embedding-8b": {"embedding_dimension": 4096, "context_length": 40960},
     }
-
-    def __init__(self, config: FireworksImplConfig) -> None:
-        ModelRegistryHelper.__init__(self)
-        self.config = config
-        self.allowed_models = config.allowed_models
-
-    async def initialize(self) -> None:
-        pass
-
-    async def shutdown(self) -> None:
-        pass
 
     def get_api_key(self) -> str:
         config_api_key = self.config.api_key.get_secret_value() if self.config.api_key else None

@@ -10,6 +10,6 @@ from .config import AnthropicConfig
 async def get_adapter_impl(config: AnthropicConfig, _deps):
     from .anthropic import AnthropicInferenceAdapter
 
-    impl = AnthropicInferenceAdapter(config)
+    impl = AnthropicInferenceAdapter(config=config)
     await impl.initialize()
     return impl

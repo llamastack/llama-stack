@@ -22,7 +22,7 @@ def test_groq_provider_openai_client_caching():
     """Ensure the Groq provider does not cache api keys across client requests"""
 
     config = GroqConfig()
-    inference_adapter = GroqInferenceAdapter(config)
+    inference_adapter = GroqInferenceAdapter(config=config)
 
     inference_adapter.__provider_spec__ = MagicMock()
     inference_adapter.__provider_spec__.provider_data_validator = (
@@ -40,7 +40,7 @@ def test_openai_provider_openai_client_caching():
     """Ensure the OpenAI provider does not cache api keys across client requests"""
 
     config = OpenAIConfig()
-    inference_adapter = OpenAIInferenceAdapter(config)
+    inference_adapter = OpenAIInferenceAdapter(config=config)
 
     inference_adapter.__provider_spec__ = MagicMock()
     inference_adapter.__provider_spec__.provider_data_validator = (
@@ -59,7 +59,7 @@ def test_together_provider_openai_client_caching():
     """Ensure the Together provider does not cache api keys across client requests"""
 
     config = TogetherImplConfig()
-    inference_adapter = TogetherInferenceAdapter(config)
+    inference_adapter = TogetherInferenceAdapter(config=config)
 
     inference_adapter.__provider_spec__ = MagicMock()
     inference_adapter.__provider_spec__.provider_data_validator = (
@@ -77,7 +77,7 @@ def test_together_provider_openai_client_caching():
 def test_llama_compat_provider_openai_client_caching():
     """Ensure the LlamaCompat provider does not cache api keys across client requests"""
     config = LlamaCompatConfig()
-    inference_adapter = LlamaCompatInferenceAdapter(config)
+    inference_adapter = LlamaCompatInferenceAdapter(config=config)
 
     inference_adapter.__provider_spec__ = MagicMock()
     inference_adapter.__provider_spec__.provider_data_validator = (

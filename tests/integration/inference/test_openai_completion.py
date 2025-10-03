@@ -59,6 +59,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         #  again. You can learn more about which models can be used with each operation here:
         #  https://go.microsoft.com/fwlink/?linkid=2197993.'}}"}
         "remote::watsonx",  # return 404 when hitting the /openai/v1 endpoint
+        "remote::llama-openai-compat",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI completions.")
 

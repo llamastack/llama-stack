@@ -10,6 +10,6 @@ from .config import GeminiConfig
 async def get_adapter_impl(config: GeminiConfig, _deps):
     from .gemini import GeminiInferenceAdapter
 
-    impl = GeminiInferenceAdapter(config)
+    impl = GeminiInferenceAdapter(config=config)
     await impl.initialize()
     return impl

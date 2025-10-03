@@ -10,6 +10,6 @@ from .config import OpenAIConfig
 async def get_adapter_impl(config: OpenAIConfig, _deps):
     from .openai import OpenAIInferenceAdapter
 
-    impl = OpenAIInferenceAdapter(config)
+    impl = OpenAIInferenceAdapter(config=config)
     await impl.initialize()
     return impl

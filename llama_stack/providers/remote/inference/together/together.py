@@ -11,7 +11,6 @@ from together.constants import BASE_URL
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    Inference,
     LogProbConfig,
     OpenAIEmbeddingsResponse,
     ResponseFormat,
@@ -22,7 +21,6 @@ from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict,
     get_sampling_options,
@@ -38,8 +36,10 @@ from .config import TogetherImplConfig
 logger = get_logger(name=__name__, category="inference::together")
 
 
-class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData):
-    embedding_model_metadata = {
+class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
+    config: TogetherImplConfig
+
+    embedding_model_metadata: dict[str, dict[str, int]] = {
         "togethercomputer/m2-bert-80M-32k-retrieval": {"embedding_dimension": 768, "context_length": 32768},
         "BAAI/bge-large-en-v1.5": {"embedding_dimension": 1024, "context_length": 512},
         "BAAI/bge-base-en-v1.5": {"embedding_dimension": 768, "context_length": 512},
@@ -47,23 +47,13 @@ class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData)
         "intfloat/multilingual-e5-large-instruct": {"embedding_dimension": 1024, "context_length": 512},
     }
 
-    def __init__(self, config: TogetherImplConfig) -> None:
-        ModelRegistryHelper.__init__(self)
-        self.config = config
-        self.allowed_models = config.allowed_models
-        self._model_cache: dict[str, Model] = {}
+    _model_cache: dict[str, Model] = {}
 
     def get_api_key(self):
         return self.config.api_key.get_secret_value()
 
     def get_base_url(self):
         return BASE_URL
-
-    async def initialize(self) -> None:
-        pass
-
-    async def shutdown(self) -> None:
-        pass
 
     def _get_client(self) -> AsyncTogether:
         together_api_key = None

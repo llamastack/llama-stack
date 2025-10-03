@@ -11,6 +11,6 @@ async def get_adapter_impl(config: SambaNovaImplConfig, _deps):
     from .sambanova import SambaNovaInferenceAdapter
 
     assert isinstance(config, SambaNovaImplConfig), f"Unexpected config type: {type(config)}"
-    impl = SambaNovaInferenceAdapter(config)
+    impl = SambaNovaInferenceAdapter(config=config)
     await impl.initialize()
     return impl
