@@ -416,6 +416,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         self.cache: dict[str, VectorDBWithIndex] = {}
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
+        self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
         self._last_file_batch_cleanup_time = 0
         self.kvstore: KVStore | None = None
 

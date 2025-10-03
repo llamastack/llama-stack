@@ -6,7 +6,7 @@
 
 import json
 import time
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
@@ -29,6 +29,24 @@ from llama_stack.providers.remote.vector_io.milvus.milvus import VECTOR_DBS_PREF
 #
 # pytest tests/unit/providers/vector_io/test_vector_io_openai_vector_stores.py \
 # -v -s --tb=short --disable-warnings --asyncio-mode=auto
+
+
+@pytest.fixture(autouse=True)
+def mock_resume_file_batches(request):
+    """Mock the resume functionality to prevent stale file batches from being processed during tests."""
+    # Skip mocking for tests that specifically test the resume functionality
+    if any(
+        test_name in request.node.name
+        for test_name in ["test_only_in_progress_batches_resumed", "test_file_batch_persistence_across_restarts"]
+    ):
+        yield
+        return
+
+    with patch(
+        "llama_stack.providers.utils.memory.openai_vector_store_mixin.OpenAIVectorStoreMixin._resume_incomplete_batches",
+        new_callable=AsyncMock,
+    ):
+        yield
 
 
 async def test_initialize_index(vector_index):
@@ -918,3 +936,55 @@ async def test_expired_batch_access_error(vector_io_adapter):
     # Try to access expired batch
     with pytest.raises(ValueError, match="File batch batch_expired has expired after 7 days from creation"):
         vector_io_adapter._get_and_validate_batch("batch_expired", store_id)
+
+
+async def test_max_concurrent_files_per_batch(vector_io_adapter):
+    """Test that file batch processing respects MAX_CONCURRENT_FILES_PER_BATCH limit."""
+    import asyncio
+
+    store_id = "vs_1234"
+
+    # Setup vector store
+    vector_io_adapter.openai_vector_stores[store_id] = {
+        "id": store_id,
+        "name": "Test Store",
+        "files": {},
+        "file_ids": [],
+    }
+
+    active_files = 0
+
+    async def mock_attach_file_with_delay(vector_store_id: str, file_id: str, **kwargs):
+        """Mock that tracks concurrency and blocks indefinitely to test concurrency limit."""
+        nonlocal active_files
+        active_files += 1
+
+        # Block indefinitely to test concurrency limit
+        await asyncio.sleep(float("inf"))
+
+    # Replace the attachment method
+    vector_io_adapter.openai_attach_file_to_vector_store = mock_attach_file_with_delay
+
+    # Create a batch with more files than the concurrency limit
+    file_ids = [f"file_{i}" for i in range(8)]  # 8 files, but limit should be 5
+
+    batch = await vector_io_adapter.openai_create_vector_store_file_batch(
+        vector_store_id=store_id,
+        file_ids=file_ids,
+    )
+
+    # Give time for the semaphore logic to start processing files
+    await asyncio.sleep(0.2)
+
+    # Verify that only MAX_CONCURRENT_FILES_PER_BATCH files are processing concurrently
+    # The semaphore in _process_files_with_concurrency should limit this
+    from llama_stack.providers.utils.memory.openai_vector_store_mixin import MAX_CONCURRENT_FILES_PER_BATCH
+
+    assert active_files == MAX_CONCURRENT_FILES_PER_BATCH, (
+        f"Expected {MAX_CONCURRENT_FILES_PER_BATCH} active files, got {active_files}"
+    )
+
+    # Verify batch is in progress
+    assert batch.status == "in_progress"
+    assert batch.file_counts.total == 8
+    assert batch.file_counts.in_progress == 8
