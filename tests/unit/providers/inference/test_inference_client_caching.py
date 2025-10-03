@@ -16,6 +16,8 @@ from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
 from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
 from llama_stack.providers.remote.inference.together.config import TogetherImplConfig
 from llama_stack.providers.remote.inference.together.together import TogetherInferenceAdapter
+from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
+from llama_stack.providers.remote.inference.watsonx.watsonx import WatsonXInferenceAdapter
 
 
 def test_groq_provider_openai_client_caching():
@@ -27,6 +29,24 @@ def test_groq_provider_openai_client_caching():
     inference_adapter.__provider_spec__ = MagicMock()
     inference_adapter.__provider_spec__.provider_data_validator = (
         "llama_stack.providers.remote.inference.groq.config.GroqProviderDataValidator"
+    )
+
+    for api_key in ["test1", "test2"]:
+        with request_provider_data_context(
+            {"x-llamastack-provider-data": json.dumps({inference_adapter.provider_data_api_key_field: api_key})}
+        ):
+            assert inference_adapter.client.api_key == api_key
+
+
+def test_watsonx_provider_openai_client_caching():
+    """Ensure the WatsonX provider does not cache api keys across client requests"""
+
+    config = WatsonXConfig()
+    inference_adapter = WatsonXInferenceAdapter(config)
+
+    inference_adapter.__provider_spec__ = MagicMock()
+    inference_adapter.__provider_spec__.provider_data_validator = (
+        "llama_stack.providers.remote.inference.watsonx.config.WatsonXProviderDataValidator"
     )
 
     for api_key in ["test1", "test2"]:

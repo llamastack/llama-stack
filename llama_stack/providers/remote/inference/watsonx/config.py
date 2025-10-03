@@ -27,11 +27,11 @@ class WatsonXConfig(RemoteInferenceProviderConfig):
     )
     api_key: SecretStr | None = Field(
         default_factory=lambda: os.getenv("WATSONX_API_KEY"),
-        description="The watsonx API key",
+        description="The watsonx.ai API key",
     )
     project_id: str | None = Field(
         default_factory=lambda: os.getenv("WATSONX_PROJECT_ID"),
-        description="The Project ID key",
+        description="The watsonx.ai project ID",
     )
     timeout: int = Field(
         default=60,
