@@ -174,4 +174,4 @@ class MetaReferenceInferenceImpl(
         top_p: float | None = None,
         user: str | None = None,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        raise NotImplementedError("OpenAI chat completion not supported by sentence transformers provider")
+        raise NotImplementedError("OpenAI chat completion not supported by meta-reference inference provider")
