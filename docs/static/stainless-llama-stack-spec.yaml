@@ -7085,6 +7085,10 @@ components:
           type: string
           description: >-
             (Optional) ID of the previous response in a conversation
+        prompt:
+          $ref: '#/components/schemas/Prompt'
+          description: >-
+            (Optional) Prompt object with ID, version, and variables
         status:
           type: string
           description: >-
@@ -7418,6 +7422,34 @@ components:
       title: OpenAIResponseInputToolWebSearch
       description: >-
         Web search tool configuration for OpenAI response inputs.
+    OpenAIResponsePromptParam:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the prompt template
+        variables:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            Dictionary of variable names to values for template substitution
+        version:
+          type: string
+          description: >-
+            Version number of the prompt to use (defaults to latest if not specified)
+      additionalProperties: false
+      required:
+        - id
+      title: OpenAIResponsePromptParam
+      description: >-
+        Prompt object that is used for OpenAI responses.
     CreateOpenaiResponseRequest:
       type: object
       properties:
@@ -7431,6 +7463,10 @@ components:
         model:
           type: string
           description: The underlying LLM used for completions.
+        prompt:
+          $ref: '#/components/schemas/OpenAIResponsePromptParam'
+          description: >-
+            Prompt object with ID, version, and variables.
         instructions:
           type: string
         previous_response_id:
@@ -7502,6 +7538,10 @@ components:
           type: string
           description: >-
             (Optional) ID of the previous response in a conversation
+        prompt:
+          $ref: '#/components/schemas/Prompt'
+          description: >-
+            (Optional) Prompt object with ID, version, and variables
         status:
           type: string
           description: >-

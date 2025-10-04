@@ -38,6 +38,7 @@ from .openai_responses import (
     OpenAIResponseInputTool,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
+    OpenAIResponsePromptParam,
     OpenAIResponseText,
 )
 
@@ -810,6 +811,7 @@ class Agents(Protocol):
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
+        prompt: OpenAIResponsePromptParam | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
         store: bool | None = True,
@@ -827,9 +829,9 @@ class Agents(Protocol):
         ] = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a new OpenAI response.
-
         :param input: Input message(s) to create the response.
         :param model: The underlying LLM used for completions.
+        :param prompt: Prompt object with ID, version, and variables.
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
         :param include: (Optional) Additional fields to include in the response.
         :param shields: (Optional) List of shields to apply during response generation. Can be shield IDs (strings) or shield specifications.
