@@ -299,15 +299,3 @@ class OTelTelemetryProvider(TelemetryProvider):
             logger.warning(
                 f"TracerProvider is not TracerProvider instance, it's {type(provider)}. MetricsSpanExporter not added."
             )
-
-    def sqlalchemy_instrumentation(self, engine: Engine | None = None):
-        """Instrument SQLAlchemy with OpenTelemetry."""
-        kwargs = {}
-        if engine:
-            kwargs["engine"] = engine
-        SQLAlchemyInstrumentor().instrument(**kwargs)
-
-    # TODO: remove the legacy Telemtry API and its validation logic in resolver.py
-    async def log_event(self, event: dict, ttl_seconds: int | None = None):
-        """Log an event to the telemetry system (no-op for OTel provider)."""
-        pass
