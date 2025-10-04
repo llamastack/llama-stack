@@ -324,14 +324,14 @@ fi
 RUN pip uninstall -y uv
 EOF
 
-# If a run config is provided, we use the --config flag
+# If a run config is provided, we use the llama stack CLI
 if [[ -n "$run_config" ]]; then
   add_to_container << EOF
-ENTRYPOINT ["python", "-m", "llama_stack.core.server.server", "$RUN_CONFIG_PATH"]
+ENTRYPOINT ["llama", "stack", "run", "$RUN_CONFIG_PATH"]
 EOF
 elif [[ "$distro_or_config" != *.yaml ]]; then
   add_to_container << EOF
-ENTRYPOINT ["python", "-m", "llama_stack.core.server.server", "$distro_or_config"]
+ENTRYPOINT ["llama", "stack", "run", "$distro_or_config"]
 EOF
 fi
 

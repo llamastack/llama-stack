@@ -52,7 +52,7 @@ spec:
           value: "${SAFETY_MODEL}"
         - name: TAVILY_SEARCH_API_KEY
           value: "${TAVILY_SEARCH_API_KEY}"
-        command: ["python", "-m", "llama_stack.core.server.server", "/etc/config/stack_run_config.yaml", "--port", "8321"]
+        command: ["llama", "stack", "run", "/etc/config/stack_run_config.yaml", "--port", "8321"]
         ports:
           - containerPort: 8321
         volumeMounts:
