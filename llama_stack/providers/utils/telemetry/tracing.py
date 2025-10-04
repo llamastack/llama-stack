@@ -3,6 +3,8 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+#
+# Deprecated. Use the Open Telemetry SDK instead.
 
 import asyncio
 import contextvars

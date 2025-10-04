@@ -5,9 +5,11 @@
 # the root directory of this source tree.
 
 import datetime
+import os
 import threading
-from typing import Any
+from typing import Any, cast
 
+from fastapi import FastAPI
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -16,8 +18,9 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.semconv.resource import ResourceAttributes
+from opentelemetry.semconv.attributes import service_attributes
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from opentelemetry.util.types import Attributes
 
 from llama_stack.apis.telemetry import (
     Event,
@@ -38,10 +41,13 @@ from llama_stack.apis.telemetry import (
     UnstructuredLogEvent,
 )
 from llama_stack.core.datatypes import Api
+from llama_stack.core.external import ExternalApiSpec
+from llama_stack.core.server.tracing import TelemetryProvider
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.telemetry.meta_reference.console_span_processor import (
     ConsoleSpanProcessor,
 )
+from llama_stack.providers.inline.telemetry.meta_reference.middleware import TracingMiddleware
 from llama_stack.providers.inline.telemetry.meta_reference.sqlite_span_processor import (
     SQLiteSpanProcessor,
 )
@@ -68,15 +74,15 @@ def is_tracing_enabled(tracer):
         return span.is_recording()
 
 
-class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
+class TelemetryAdapter(TelemetryDatasetMixin, Telemetry, TelemetryProvider):
     def __init__(self, config: TelemetryConfig, deps: dict[Api, Any]) -> None:
         self.config = config
         self.datasetio_api = deps.get(Api.datasetio)
         self.meter = None
 
         resource = Resource.create(
-            {
-                ResourceAttributes.SERVICE_NAME: self.config.service_name,
+            attributes={
+                service_attributes.SERVICE_NAME: self.config.service_name,
             }
         )
 
@@ -93,28 +99,36 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
 
             # Use single OTLP endpoint for all telemetry signals
             if TelemetrySink.OTEL_TRACE in self.config.sinks or TelemetrySink.OTEL_METRIC in self.config.sinks:
-                if self.config.otel_exporter_otlp_endpoint is None:
-                    raise ValueError(
-                        "otel_exporter_otlp_endpoint is required when OTEL_TRACE or OTEL_METRIC is enabled"
-                    )
-
                 # Let OpenTelemetry SDK handle endpoint construction automatically
                 # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
                 # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
                 if TelemetrySink.OTEL_TRACE in self.config.sinks:
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") and not os.environ.get(
+                        "OTEL_EXPORTER_OTLP_ENDPOINT"
+                    ):
+                        logger.warning(
+                            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is not set. Traces will not be exported."
+                        )
                     span_exporter = OTLPSpanExporter()
                     span_processor = BatchSpanProcessor(span_exporter)
-                    trace.get_tracer_provider().add_span_processor(span_processor)
+                    provider.add_span_processor(span_processor)
 
                 if TelemetrySink.OTEL_METRIC in self.config.sinks:
-                    metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+                    if not os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT") and not os.environ.get(
+                        "OTEL_EXPORTER_OTLP_ENDPOINT"
+                    ):
+                        logger.warning(
+                            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT is not set. Metrics will not be exported."
+                        )
+                    metric_exporter = OTLPMetricExporter()
+                    metric_reader = PeriodicExportingMetricReader(metric_exporter)
                     metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
                     metrics.set_meter_provider(metric_provider)
 
             if TelemetrySink.SQLITE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
+                provider.add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
             if TelemetrySink.CONSOLE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(ConsoleSpanProcessor(print_attributes=True))
+                provider.add_span_processor(ConsoleSpanProcessor(print_attributes=True))
 
         if TelemetrySink.OTEL_METRIC in self.config.sinks:
             self.meter = metrics.get_meter(__name__)
@@ -127,7 +141,8 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         pass
 
     async def shutdown(self) -> None:
-        trace.get_tracer_provider().force_flush()
+        if isinstance(_TRACER_PROVIDER, TracerProvider):
+            _TRACER_PROVIDER.force_flush()
 
     async def log_event(self, event: Event, ttl_seconds: int = 604800) -> None:
         if isinstance(event, UnstructuredLogEvent):
@@ -252,12 +267,13 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         # Log to OpenTelemetry meter if available
         if self.meter is None:
             return
+        normalized_attributes = self._normalize_attributes(event.attributes)
         if isinstance(event.value, int):
             counter = self._get_or_create_counter(event.metric, event.unit)
-            counter.add(event.value, attributes=event.attributes)
+            counter.add(event.value, attributes=normalized_attributes)
         elif isinstance(event.value, float):
             up_down_counter = self._get_or_create_up_down_counter(event.metric, event.unit)
-            up_down_counter.add(event.value, attributes=event.attributes)
+            up_down_counter.add(event.value, attributes=normalized_attributes)
 
     def _get_or_create_up_down_counter(self, name: str, unit: str) -> metrics.UpDownCounter:
         assert self.meter is not None
@@ -273,18 +289,17 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         with self._lock:
             span_id = int(event.span_id, 16)
             tracer = trace.get_tracer(__name__)
-            if event.attributes is None:
-                event.attributes = {}
-            event.attributes["__ttl__"] = ttl_seconds
+            event_attributes = dict(event.attributes or {})
+            event_attributes["__ttl__"] = ttl_seconds
 
             # Extract these W3C trace context attributes so they are not written to
             # underlying storage, as we just need them to propagate the trace context.
-            traceparent = event.attributes.pop("traceparent", None)
-            tracestate = event.attributes.pop("tracestate", None)
+            traceparent = event_attributes.pop("traceparent", None)
+            tracestate = event_attributes.pop("tracestate", None)
             if traceparent:
                 # If we have a traceparent header value, we're not the root span.
                 for root_attribute in ROOT_SPAN_MARKERS:
-                    event.attributes.pop(root_attribute, None)
+                    event_attributes.pop(root_attribute, None)
 
             if isinstance(event.payload, SpanStartPayload):
                 # Check if span already exists to prevent duplicates
@@ -295,7 +310,8 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 if event.payload.parent_span_id:
                     parent_span_id = int(event.payload.parent_span_id, 16)
                     parent_span = _GLOBAL_STORAGE["active_spans"].get(parent_span_id)
-                    context = trace.set_span_in_context(parent_span)
+                    if parent_span:
+                        context = trace.set_span_in_context(parent_span)
                 elif traceparent:
                     carrier = {
                         "traceparent": traceparent,
@@ -306,15 +322,15 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 span = tracer.start_span(
                     name=event.payload.name,
                     context=context,
-                    attributes=event.attributes or {},
+                    attributes=self._normalize_attributes(event_attributes),
                 )
                 _GLOBAL_STORAGE["active_spans"][span_id] = span
 
             elif isinstance(event.payload, SpanEndPayload):
                 span = _GLOBAL_STORAGE["active_spans"].get(span_id)
                 if span:
-                    if event.attributes:
-                        span.set_attributes(event.attributes)
+                    if event_attributes:
+                        span.set_attributes(self._normalize_attributes(event_attributes))
 
                     status = (
                         trace.Status(status_code=trace.StatusCode.OK)
@@ -362,3 +378,15 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 max_depth=max_depth,
             )
         )
+
+    def fastapi_middleware(
+        self,
+        app: FastAPI,
+        impls: dict[Api, Any],
+        external_apis: dict[str, ExternalApiSpec],
+    ):
+        TracingMiddleware(app, impls, external_apis)
+
+    @staticmethod
+    def _normalize_attributes(attributes: dict[str, Any] | None) -> Attributes:
+        return cast(Attributes, dict(attributes) if attributes else {})

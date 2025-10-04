@@ -16,8 +16,17 @@
 
 set -Eeuo pipefail
 
-CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Auto-detect container runtime if not set
+if [ -z "${CONTAINER_RUNTIME:-}" ]; then
+  if which docker &> /dev/null; then
+    CONTAINER_RUNTIME=docker
+  elif which podman &> /dev/null; then
+    CONTAINER_RUNTIME=podman
+  else
+    echo "🚨 Neither Docker nor Podman could be found"
+    exit 1
+  fi
+fi
 
 echo "🚀 Setting up telemetry stack for Llama Stack using Podman..."
 
@@ -54,7 +63,11 @@ $CONTAINER_RUNTIME run -d --name otel-collector \
   -p 4317:4317 \
   -p 9464:9464 \
   -p 13133:13133 \
+<<<<<<< HEAD:scripts/telemetry/setup_telemetry.sh
   -v "$SCRIPT_DIR/otel-collector-config.yaml:/etc/otel-collector-config.yaml:Z" \
+=======
+  -v $(pwd)/otel-collector-config.yaml:/etc/otel-collector-config.yaml:${OTEL_COLLECTOR_CONFIG_PATH}:Z \
+>>>>>>> 57e4e553 (Revert "add sane defaults to telemetry script"):scripts/setup_telemetry.sh
   docker.io/otel/opentelemetry-collector-contrib:latest \
   --config /etc/otel-collector-config.yaml
 
@@ -63,7 +76,11 @@ echo "📈 Starting Prometheus..."
 $CONTAINER_RUNTIME run -d --name prometheus \
   --network llama-telemetry \
   -p 9090:9090 \
+<<<<<<< HEAD:scripts/telemetry/setup_telemetry.sh
   -v "$SCRIPT_DIR/prometheus.yml:/etc/prometheus/prometheus.yml:Z" \
+=======
+  -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml:${PROMETHEUS_CONFIG_PATH}:Z \
+>>>>>>> 57e4e553 (Revert "add sane defaults to telemetry script"):scripts/setup_telemetry.sh
   docker.io/prom/prometheus:latest \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/prometheus \
