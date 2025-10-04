@@ -1,0 +1,66 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:*"
+            - "https://localhost:*"
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof: {}
+  zpages: {}
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1500
+  resource:
+    attributes:
+      - key: environment
+        value: "development"
+        action: upsert
+
+exporters:
+  # Send traces to Jaeger via Zipkin protocol
+  zipkin:
+    endpoint: http://jaeger:9411/api/v2/spans
+
+  # Send metrics to Prometheus
+  prometheus:
+    endpoint: 0.0.0.0:9464
+    namespace: "llama_stack"
+    const_labels:
+      label1: value1
+    send_timestamps: true
+    metric_expiration: 180m
+    enable_open_metrics: true
+
+  # Debug exporter for debugging (replaces deprecated logging exporter)
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, memory_limiter, resource]
+      exporters: [zipkin, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch, memory_limiter, resource]
+      exporters: [prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch, memory_limiter, resource]
+      exporters: [debug]
+
+  extensions: [health_check, pprof, zpages]

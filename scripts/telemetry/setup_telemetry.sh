@@ -16,12 +16,22 @@
 
 set -Eeuo pipefail
 
-CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Auto-detect container runtime if not set
+if [ -z "${CONTAINER_RUNTIME:-}" ]; then
+  if which docker &> /dev/null; then
+    CONTAINER_RUNTIME=docker
+  elif which podman &> /dev/null; then
+    CONTAINER_RUNTIME=podman
+  else
+    echo "🚨 Neither Docker nor Podman could be found"
+    exit 1
+  fi
+fi
 
-echo "🚀 Setting up telemetry stack for Llama Stack using Podman..."
+echo "🚀 Setting up telemetry stack for Llama Stack using $CONTAINER_RUNTIME..."
 
-if ! command -v "$CONTAINER_RUNTIME" &> /dev/null; then
+# Verify the selected runtime is available
+if ! which "$CONTAINER_RUNTIME" &> /dev/null; then
   echo "🚨 $CONTAINER_RUNTIME could not be found"
   echo "Docker or Podman is required. Install Docker: https://docs.docker.com/get-docker/ or Podman: https://podman.io/getting-started/installation"
   exit 1
@@ -114,9 +124,10 @@ echo "   5. Check Prometheus for metrics: http://localhost:9090"
 echo "   6. Set up Grafana dashboards: http://localhost:3000"
 echo ""
 echo "🔍 To test the setup, run:"
-echo "   curl -X POST http://localhost:5000/v1/inference/chat/completions \\"
+echo "   curl -X POST http://localhost:8321/v1/chat/completions \\"
 echo "     -H 'Content-Type: application/json' \\"
-echo "     -d '{\"model_id\": \"your-model\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'"
+echo "     -H 'Authorization: Bearer fake' \\"
+echo "     -d '{\"model\": \"your-model\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'"
 echo ""
 echo "🧹 To clean up when done:"
 echo "   $CONTAINER_RUNTIME stop jaeger otel-collector prometheus grafana"

@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # OpenTelemetry Collector metrics endpoint
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:9464']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # If Llama Stack exposes metrics directly (future enhancement)
+  - job_name: 'llama-stack'
+    static_configs:
+      - targets: ['localhost:5000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Jaeger metrics (if enabled)
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:16686']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+# Alerting rules (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Recording rules (optional)
+# rule_files:
+#   - "recording_rules.yml"
