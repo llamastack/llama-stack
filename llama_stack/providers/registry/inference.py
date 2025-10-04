@@ -52,9 +52,7 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter_type="cerebras",
             provider_type="remote::cerebras",
-            pip_packages=[
-                "cerebras_cloud_sdk",
-            ],
+            pip_packages=[],
             module="llama_stack.providers.remote.inference.cerebras",
             config_class="llama_stack.providers.remote.inference.cerebras.CerebrasImplConfig",
             description="Cerebras inference provider for running models on Cerebras Cloud platform.",

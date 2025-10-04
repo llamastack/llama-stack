@@ -65,12 +65,6 @@ class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
 
         self._project_id = self._config.project_id
 
-    async def initialize(self) -> None:
-        pass
-
-    async def shutdown(self) -> None:
-        pass
-
     def _get_client(self, model_id) -> Model:
         config_api_key = self._config.api_key.get_secret_value() if self._config.api_key else None
         config_url = self._config.url

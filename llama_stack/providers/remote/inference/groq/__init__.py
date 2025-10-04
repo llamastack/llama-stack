@@ -11,5 +11,5 @@ async def get_adapter_impl(config: GroqConfig, _deps):
     # import dynamically so the import is used only when it is needed
     from .groq import GroqInferenceAdapter
 
-    adapter = GroqInferenceAdapter(config)
+    adapter = GroqInferenceAdapter(config=config)
     return adapter

@@ -53,12 +53,6 @@ class RunpodInferenceAdapter(
         ModelRegistryHelper.__init__(self, stack_to_provider_models_map=RUNPOD_SUPPORTED_MODELS)
         self.config = config
 
-    async def initialize(self) -> None:
-        return
-
-    async def shutdown(self) -> None:
-        pass
-
     def _get_params(self, request: ChatCompletionRequest) -> dict:
         return {
             "model": self.map_to_provider_model(request.model),

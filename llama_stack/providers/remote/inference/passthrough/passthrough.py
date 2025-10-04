@@ -31,12 +31,6 @@ class PassthroughInferenceAdapter(Inference):
         ModelRegistryHelper.__init__(self)
         self.config = config
 
-    async def initialize(self) -> None:
-        pass
-
-    async def shutdown(self) -> None:
-        pass
-
     async def unregister_model(self, model_id: str) -> None:
         pass
 

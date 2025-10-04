@@ -15,7 +15,8 @@ async def get_adapter_impl(config: NVIDIAConfig, _deps) -> Inference:
 
     if not isinstance(config, NVIDIAConfig):
         raise RuntimeError(f"Unexpected config type: {type(config)}")
-    adapter = NVIDIAInferenceAdapter(config)
+    adapter = NVIDIAInferenceAdapter(config=config)
+    await adapter.initialize()
     return adapter
 
 
