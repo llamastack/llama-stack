@@ -746,15 +746,7 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
 
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
-    OpenAIResponseOutputMessageWebSearchToolCall
-    | OpenAIResponseOutputMessageFileSearchToolCall
-    | OpenAIResponseOutputMessageFunctionToolCall
-    | OpenAIResponseInputFunctionToolCallOutput
-    | OpenAIResponseMCPApprovalRequest
-    | OpenAIResponseMCPApprovalResponse
-    |
-    # Fallback to the generic message type as a last resort
-    OpenAIResponseMessage,
+    OpenAIResponseOutput | OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse,
     Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")
