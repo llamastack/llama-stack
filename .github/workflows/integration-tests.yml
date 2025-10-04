@@ -48,12 +48,25 @@ jobs:
       fail-fast: false
       matrix:
         client-type: [library, server]
-        # Use vllm on weekly schedule, otherwise use test-setup input (defaults to ollama)
-        setup: ${{ (github.event.schedule == '1 0 * * 0') && fromJSON('["vllm"]') || fromJSON(format('["{0}"]', github.event.inputs.test-setup || 'ollama')) }}
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        suite: [base, vision]
+        # Define (setup, suite) pairs - they are always matched and cannot be independent
+        # Weekly schedule (Sun 1 AM): vllm+base
+        # Input test-setup=ollama-vision: ollama-vision+vision
+        # Default (including test-setup=ollama): both ollama+base and ollama-vision+vision
+        include: ${{
+          github.event.schedule == '1 0 * * 0' && fromJSON('[
+            {"setup": "vllm", "suite": "base"}
+          ]') ||
+          github.event.inputs.test-setup == 'ollama-vision' && fromJSON('[
+            {"setup": "ollama-vision", "suite": "vision"}
+          ]') ||
+          fromJSON('[
+            {"setup": "ollama", "suite": "base"},
+            {"setup": "ollama-vision", "suite": "vision"}
+          ]')
+        }}
 
     steps:
       - name: Checkout repository
@@ -64,7 +77,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
-          setup: ${{ matrix.setup }}
+          setup: ${{ matrix.suite }}
           suite: ${{ matrix.suite }}
           inference-mode: 'replay'
 
