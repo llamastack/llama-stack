@@ -52,6 +52,9 @@ class SentenceTransformersInferenceImpl(
     async def should_refresh_models(self) -> bool:
         return False
 
+    async def allow_listing_models(self) -> bool:
+        return True
+
     async def list_models(self) -> list[Model] | None:
         return [
             Model(

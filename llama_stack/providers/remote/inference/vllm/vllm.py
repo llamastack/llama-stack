@@ -282,7 +282,18 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
         # Strictly respecting the refresh_models directive
         return self.config.refresh_models
 
+    async def allow_listing_models(self) -> bool:
+        # Respecting the allow_listing_models directive
+        result = self.config.allow_listing_models
+        log.debug(f"VLLM allow_listing_models: {result}")
+        return result
+
     async def list_models(self) -> list[Model] | None:
+        log.debug(f"VLLM list_models called, allow_listing_models={self.config.allow_listing_models}")
+        if not self.config.allow_listing_models:
+            log.debug("VLLM list_models returning None due to allow_listing_models=False")
+            return None
+
         models = []
         async for m in self.client.models.list():
             model_type = ModelType.llm  # unclear how to determine embedding vs. llm models
@@ -332,24 +343,34 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     def get_extra_client_params(self):
         return {"http_client": httpx.AsyncClient(verify=self.config.tls_verify)}
 
-    async def register_model(self, model: Model) -> Model:
-        try:
-            model = await self.register_helper.register_model(model)
-        except ValueError:
-            pass  # Ignore statically unknown model, will check live listing
+    async def check_model_availability(self, model: str) -> bool:
+        """
+        Check if a specific model is available from the vLLM server.
+
+        This method respects the allow_listing_models configuration flag.
+        If allow_listing_models is False, it returns True to allow model registration
+        without making HTTP requests (trusting that the model exists).
+
+        :param model: The model identifier to check.
+        :return: True if the model is available or if allow_listing_models is False, False otherwise.
+        """
+        # Check if provider allows listing models before making HTTP request
+        if not self.config.allow_listing_models:
+            log.debug(
+                "VLLM check_model_availability returning True due to allow_listing_models=False (trusting model exists)"
+            )
+            return True
+
         try:
             res = self.client.models.list()
         except APIConnectionError as e:
-            raise ValueError(
-                f"Failed to connect to vLLM at {self.config.url}. Please check if vLLM is running and accessible at that URL."
-            ) from e
+            log.warning(f"Failed to connect to vLLM at {self.config.url}: {e}")
+            return False
+
         available_models = [m.id async for m in res]
-        if model.provider_resource_id not in available_models:
-            raise ValueError(
-                f"Model {model.provider_resource_id} is not being served by vLLM. "
-                f"Available models: {', '.join(available_models)}"
-            )
-        return model
+        is_available = model in available_models
+        log.debug(f"VLLM model {model} availability: {is_available}")
+        return is_available
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict:
         options = get_sampling_options(request.sampling_params)

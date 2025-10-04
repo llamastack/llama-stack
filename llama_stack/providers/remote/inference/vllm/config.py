@@ -34,6 +34,10 @@ class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
         default=False,
         description="Whether to refresh models periodically",
     )
+    allow_listing_models: bool = Field(
+        default=True,
+        description="Whether to allow listing models from the vLLM server",
+    )
 
     @field_validator("tls_verify")
     @classmethod
@@ -59,4 +63,5 @@ class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
             "max_tokens": "${env.VLLM_MAX_TOKENS:=4096}",
             "api_token": "${env.VLLM_API_TOKEN:=fake}",
             "tls_verify": "${env.VLLM_TLS_VERIFY:=true}",
+            "allow_listing_models": "${env.VLLM_ALLOW_LISTING_MODELS:=true}",
         }
