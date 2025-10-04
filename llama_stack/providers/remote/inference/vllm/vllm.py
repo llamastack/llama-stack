@@ -9,7 +9,6 @@ from typing import Any
 from urllib.parse import urljoin
 
 import httpx
-from openai import APIConnectionError
 from openai.types.chat.chat_completion_chunk import (
     ChatCompletionChunk as OpenAIChatCompletionChunk,
 )
@@ -339,16 +338,19 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             pass  # Ignore statically unknown model, will check live listing
         try:
             res = self.client.models.list()
-        except APIConnectionError as e:
-            raise ValueError(
-                f"Failed to connect to vLLM at {self.config.url}. Please check if vLLM is running and accessible at that URL."
-            ) from e
-        available_models = [m.id async for m in res]
-        if model.provider_resource_id not in available_models:
-            raise ValueError(
-                f"Model {model.provider_resource_id} is not being served by vLLM. "
-                f"Available models: {', '.join(available_models)}"
-            )
+            available_models = [m.id async for m in res]
+            if model.provider_resource_id not in available_models:
+                raise ValueError(
+                    f"Model {model.provider_resource_id} is not being served by vLLM. "
+                    f"Available models: {', '.join(available_models)}"
+                )
+        except Exception as e:
+            if self.config.refresh_models:
+                raise ValueError(f"Model verification failed: {e}") from e
+            # if refresh_models is false, gracefully continue without verification
+            log.warning(f"Model verification failed for model {model.model_id} with error {e}")
+            log.warning("Continuing without live check (refresh_models=false).")
+
         return model
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict:
