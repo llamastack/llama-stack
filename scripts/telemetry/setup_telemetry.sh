@@ -28,10 +28,9 @@ if [ -z "${CONTAINER_RUNTIME:-}" ]; then
   fi
 fi
 
-echo "🚀 Setting up telemetry stack for Llama Stack using $CONTAINER_RUNTIME..."
+echo "🚀 Setting up telemetry stack for Llama Stack using Podman..."
 
-# Verify the selected runtime is available
-if ! which "$CONTAINER_RUNTIME" &> /dev/null; then
+if ! command -v "$CONTAINER_RUNTIME" &> /dev/null; then
   echo "🚨 $CONTAINER_RUNTIME could not be found"
   echo "Docker or Podman is required. Install Docker: https://docs.docker.com/get-docker/ or Podman: https://podman.io/getting-started/installation"
   exit 1
@@ -64,7 +63,11 @@ $CONTAINER_RUNTIME run -d --name otel-collector \
   -p 4317:4317 \
   -p 9464:9464 \
   -p 13133:13133 \
+<<<<<<< HEAD:scripts/telemetry/setup_telemetry.sh
   -v "$SCRIPT_DIR/otel-collector-config.yaml:/etc/otel-collector-config.yaml:Z" \
+=======
+  -v $(pwd)/otel-collector-config.yaml:/etc/otel-collector-config.yaml:${OTEL_COLLECTOR_CONFIG_PATH}:Z \
+>>>>>>> 57e4e553 (Revert "add sane defaults to telemetry script"):scripts/setup_telemetry.sh
   docker.io/otel/opentelemetry-collector-contrib:latest \
   --config /etc/otel-collector-config.yaml
 
@@ -73,7 +76,11 @@ echo "📈 Starting Prometheus..."
 $CONTAINER_RUNTIME run -d --name prometheus \
   --network llama-telemetry \
   -p 9090:9090 \
+<<<<<<< HEAD:scripts/telemetry/setup_telemetry.sh
   -v "$SCRIPT_DIR/prometheus.yml:/etc/prometheus/prometheus.yml:Z" \
+=======
+  -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml:${PROMETHEUS_CONFIG_PATH}:Z \
+>>>>>>> 57e4e553 (Revert "add sane defaults to telemetry script"):scripts/setup_telemetry.sh
   docker.io/prom/prometheus:latest \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/prometheus \
@@ -124,10 +131,9 @@ echo "   5. Check Prometheus for metrics: http://localhost:9090"
 echo "   6. Set up Grafana dashboards: http://localhost:3000"
 echo ""
 echo "🔍 To test the setup, run:"
-echo "   curl -X POST http://localhost:8321/v1/chat/completions \\"
+echo "   curl -X POST http://localhost:5000/v1/inference/chat/completions \\"
 echo "     -H 'Content-Type: application/json' \\"
-echo "     -H 'Authorization: Bearer fake' \\"
-echo "     -d '{\"model\": \"your-model\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'"
+echo "     -d '{\"model_id\": \"your-model\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'"
 echo ""
 echo "🧹 To clean up when done:"
 echo "   $CONTAINER_RUNTIME stop jaeger otel-collector prometheus grafana"

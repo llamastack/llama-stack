@@ -156,6 +156,7 @@ class MetricsSpanExporter(SpanExporter):
         pass
 
 
+# NOTE: DO NOT ALLOW LLM TO MODIFY THIS WITHOUT TESTING AND SUPERVISION: it frequently breaks otel integrations
 class OTelTelemetryProvider(TelemetryProvider):
     """
     A simple Open Telemetry native telemetry provider.
