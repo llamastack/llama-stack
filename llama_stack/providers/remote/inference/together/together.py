@@ -4,34 +4,19 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator
 
 from openai import AsyncOpenAI
 from together import AsyncTogether
 from together.constants import BASE_URL
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-    InterleavedContentItem,
-)
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
-    CompletionRequest,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     LogProbConfig,
-    Message,
     OpenAIEmbeddingsResponse,
     ResponseFormat,
     ResponseFormatType,
     SamplingParams,
-    TextTruncation,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
 from llama_stack.apis.models import Model, ModelType
@@ -41,17 +26,10 @@ from llama_stack.providers.utils.inference.model_registry import ModelRegistryHe
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict,
     get_sampling_options,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
-    process_completion_response,
-    process_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
-    completion_request_to_prompt,
-    content_has_media,
-    interleaved_content_as_str,
     request_has_media,
 )
 
@@ -60,7 +38,7 @@ from .config import TogetherImplConfig
 logger = get_logger(name=__name__, category="inference::together")
 
 
-class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, NeedsRequestProviderData):
+class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData):
     embedding_model_metadata = {
         "togethercomputer/m2-bert-80M-32k-retrieval": {"embedding_dimension": 768, "context_length": 32768},
         "BAAI/bge-large-en-v1.5": {"embedding_dimension": 1024, "context_length": 512},
@@ -87,31 +65,6 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
     async def shutdown(self) -> None:
         pass
 
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = CompletionRequest(
-            model=model.provider_resource_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-        if stream:
-            return self._stream_completion(request)
-        else:
-            return await self._nonstream_completion(request)
-
     def _get_client(self) -> AsyncTogether:
         together_api_key = None
         config_api_key = self.config.api_key.get_secret_value() if self.config.api_key else None
@@ -132,19 +85,6 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
             base_url=together_client.base_url,
             api_key=together_client.api_key,
         )
-
-    async def _nonstream_completion(self, request: CompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        client = self._get_client()
-        r = await client.completions.create(**params)
-        return process_completion_response(r)
-
-    async def _stream_completion(self, request: CompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-        client = self._get_client()
-        stream = await client.completions.create(**params)
-        async for chunk in process_completion_stream_response(stream):
-            yield chunk
 
     def _build_options(
         self,
@@ -173,70 +113,14 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
 
         return options
 
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        if stream:
-            return self._stream_chat_completion(request)
-        else:
-            return await self._nonstream_chat_completion(request)
-
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params(request)
-        client = self._get_client()
-        if "messages" in params:
-            r = await client.chat.completions.create(**params)
-        else:
-            r = await client.completions.create(**params)
-        return process_chat_completion_response(r, request)
-
-    async def _stream_chat_completion(self, request: ChatCompletionRequest) -> AsyncGenerator:
-        params = await self._get_params(request)
-        client = self._get_client()
-        if "messages" in params:
-            stream = await client.chat.completions.create(**params)
-        else:
-            stream = await client.completions.create(**params)
-
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
-
-    async def _get_params(self, request: ChatCompletionRequest | CompletionRequest) -> dict:
+    async def _get_params(self, request: ChatCompletionRequest) -> dict:
         input_dict = {}
         media_present = request_has_media(request)
         llama_model = self.get_llama_model(request.model)
-        if isinstance(request, ChatCompletionRequest):
-            if media_present or not llama_model:
-                input_dict["messages"] = [await convert_message_to_openai_dict(m) for m in request.messages]
-            else:
-                input_dict["prompt"] = await chat_completion_request_to_prompt(request, llama_model)
+        if media_present or not llama_model:
+            input_dict["messages"] = [await convert_message_to_openai_dict(m) for m in request.messages]
         else:
-            assert not media_present, "Together does not support media for Completion requests"
-            input_dict["prompt"] = await completion_request_to_prompt(request)
+            input_dict["prompt"] = await chat_completion_request_to_prompt(request, llama_model)
 
         params = {
             "model": request.model,
@@ -246,26 +130,6 @@ class TogetherInferenceAdapter(OpenAIMixin, ModelRegistryHelper, Inference, Need
         }
         logger.debug(f"params to together: {params}")
         return params
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-        assert all(not content_has_media(content) for content in contents), (
-            "Together does not support media for embeddings"
-        )
-        client = self._get_client()
-        r = await client.embeddings.create(
-            model=model.provider_resource_id,
-            input=[interleaved_content_as_str(content) for content in contents],
-        )
-        embeddings = [item.embedding for item in r.data]
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def list_models(self) -> list[Model] | None:
         self._model_cache = {}

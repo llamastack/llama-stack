@@ -60,7 +60,7 @@ client = LlamaStackClient(
   base_url="http://localhost:8321"
 )
 
-response = client.inference.chat_completion(
+response = client.chat.completions.create(
   model="Llama3.2-3B-Instruct",
   messages=[{
     "role": "user",
@@ -99,6 +99,60 @@ response = client.inference.chat_completion(
                   <h4>Multi-Platform</h4>
                   <p>SDKs for Python, Node.js, iOS, Android, and REST APIs for any language.</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Ecosystem() {
+  return (
+    <section className={styles.ecosystem}>
+      <div className="container">
+        <div className="text--center">
+          <h2 className={styles.sectionTitle}>Llama Stack Ecosystem</h2>
+          <p className={styles.sectionDescription}>
+            Complete toolkit for building AI applications with Llama Stack
+          </p>
+        </div>
+
+        <div className="row margin-top--lg">
+          <div className="col col--4">
+            <div className={styles.ecosystemCard}>
+              <div className={styles.ecosystemIcon}>🛠️</div>
+              <h3>SDKs & Clients</h3>
+              <p>Official client libraries for multiple programming languages</p>
+              <div className={styles.linkGroup}>
+                <a href="https://github.com/llamastack/llama-stack-client-python" target="_blank" rel="noopener noreferrer">Python SDK</a>
+                <a href="https://github.com/llamastack/llama-stack-client-typescript" target="_blank" rel="noopener noreferrer">TypeScript SDK</a>
+                <a href="https://github.com/llamastack/llama-stack-client-kotlin" target="_blank" rel="noopener noreferrer">Kotlin SDK</a>
+                <a href="https://github.com/llamastack/llama-stack-client-swift" target="_blank" rel="noopener noreferrer">Swift SDK</a>
+                <a href="https://github.com/llamastack/llama-stack-client-go" target="_blank" rel="noopener noreferrer">Go SDK</a>
+              </div>
+            </div>
+          </div>
+
+          <div className="col col--4">
+            <div className={styles.ecosystemCard}>
+              <div className={styles.ecosystemIcon}>🚀</div>
+              <h3>Example Applications</h3>
+              <p>Ready-to-run examples to jumpstart your AI projects</p>
+              <div className={styles.linkGroup}>
+                <a href="https://github.com/llamastack/llama-stack-apps" target="_blank" rel="noopener noreferrer">Browse Example Apps</a>
+              </div>
+            </div>
+          </div>
+
+          <div className="col col--4">
+            <div className={styles.ecosystemCard}>
+              <div className={styles.ecosystemIcon}>☸️</div>
+              <h3>Kubernetes Operator</h3>
+              <p>Deploy and manage Llama Stack on Kubernetes clusters</p>
+              <div className={styles.linkGroup}>
+                <a href="https://github.com/llamastack/llama-stack-k8s-operator" target="_blank" rel="noopener noreferrer">K8s Operator</a>
               </div>
             </div>
           </div>
@@ -156,6 +210,7 @@ export default function Home() {
       <HomepageHeader />
       <main>
         <QuickStart />
+        <Ecosystem />
         <CommunityLinks />
       </main>
     </Layout>

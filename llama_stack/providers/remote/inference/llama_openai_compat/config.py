@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -19,7 +20,7 @@ class LlamaProviderDataValidator(BaseModel):
 
 
 @json_schema_type
-class LlamaCompatConfig(BaseModel):
+class LlamaCompatConfig(RemoteInferenceProviderConfig):
     api_key: str | None = Field(
         default=None,
         description="The Llama API key",

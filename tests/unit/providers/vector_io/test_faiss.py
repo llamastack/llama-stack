@@ -5,13 +5,12 @@
 # the root directory of this source tree.
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from llama_stack.apis.files import Files
-from llama_stack.apis.inference import EmbeddingsResponse, Inference
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
 from llama_stack.providers.datatypes import HealthStatus
@@ -71,13 +70,6 @@ def mock_vector_db(vector_db_id, embedding_dimension) -> MagicMock:
 
 
 @pytest.fixture
-def mock_inference_api(sample_embeddings):
-    mock_api = MagicMock(spec=Inference)
-    mock_api.embeddings = AsyncMock(return_value=EmbeddingsResponse(embeddings=sample_embeddings))
-    return mock_api
-
-
-@pytest.fixture
 def mock_files_api():
     mock_api = MagicMock(spec=Files)
     return mock_api
@@ -94,22 +86,6 @@ def faiss_config():
 async def faiss_index(embedding_dimension):
     index = await FaissIndex.create(dimension=embedding_dimension)
     yield index
-
-
-@pytest.fixture
-async def faiss_adapter(faiss_config, mock_inference_api, mock_files_api) -> FaissVectorIOAdapter:
-    # Create the adapter
-    adapter = FaissVectorIOAdapter(config=faiss_config, inference_api=mock_inference_api, files_api=mock_files_api)
-
-    # Create a mock KVStore
-    mock_kvstore = MagicMock()
-    mock_kvstore.values_in_range = AsyncMock(return_value=[])
-
-    # Patch the initialize method to avoid the kvstore_impl call
-    with patch.object(FaissVectorIOAdapter, "initialize"):
-        # Set the kvstore directly
-        adapter.kvstore = mock_kvstore
-        yield adapter
 
 
 async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_identical(

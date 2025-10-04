@@ -6,13 +6,14 @@
 
 from pathlib import Path
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
 
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
 @json_schema_type
-class VLLMInferenceAdapterConfig(BaseModel):
+class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
     url: str | None = Field(
         default=None,
         description="The URL for the vLLM model serving endpoint",

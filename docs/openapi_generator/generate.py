@@ -34,40 +34,59 @@ def str_presenter(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
 
-def main(output_dir: str):
-    output_dir = Path(output_dir)
-    if not output_dir.exists():
-        raise ValueError(f"Directory {output_dir} does not exist")
+def generate_spec(output_dir: Path, stability_filter: str = None, main_spec: bool = False, combined_spec: bool = False):
+    """Generate OpenAPI spec with optional stability filtering."""
 
-    # Validate API protocols before generating spec
-    return_type_errors = validate_api()
-    if return_type_errors:
-        print("\nAPI Method Return Type Validation Errors:\n")
-        for error in return_type_errors:
-            print(error, file=sys.stderr)
-        sys.exit(1)
-    now = str(datetime.now())
-    print(
-        "Converting the spec to YAML (openapi.yaml) and HTML (openapi.html) at " + now
-    )
-    print("")
+    if combined_spec:
+        # Special case for combined stable + experimental APIs
+        title_suffix = " - Stable & Experimental APIs"
+        filename_prefix = "stainless-"
+        description_suffix = "\n\n**🔗 COMBINED**: This specification includes both stable production-ready APIs and experimental pre-release APIs. Use stable APIs for production deployments and experimental APIs for testing new features."
+        # Use the special "stainless" filter to include stable + experimental APIs
+        stability_filter = "stainless"
+    elif stability_filter:
+        title_suffix = {
+            "stable": " - Stable APIs" if not main_spec else "",
+            "experimental": " - Experimental APIs",
+            "deprecated": " - Deprecated APIs"
+        }.get(stability_filter, f" - {stability_filter.title()} APIs")
+
+        # Use main spec filename for stable when main_spec=True
+        if main_spec and stability_filter == "stable":
+            filename_prefix = ""
+        else:
+            filename_prefix = f"{stability_filter}-"
+
+        description_suffix = {
+            "stable": "\n\n**✅ STABLE**: Production-ready APIs with backward compatibility guarantees.",
+            "experimental": "\n\n**🧪 EXPERIMENTAL**: Pre-release APIs (v1alpha, v1beta) that may change before becoming stable.",
+            "deprecated": "\n\n**⚠️ DEPRECATED**: Legacy APIs that may be removed in future versions. Use for migration reference only."
+        }.get(stability_filter, "")
+    else:
+        title_suffix = ""
+        filename_prefix = ""
+        description_suffix = ""
 
     spec = Specification(
         LlamaStack,
         Options(
             server=Server(url="http://any-hosted-llama-stack.com"),
             info=Info(
-                title="Llama Stack Specification",
+                title=f"Llama Stack Specification{title_suffix}",
                 version=LLAMA_STACK_API_V1,
-                description="""This is the specification of the Llama Stack that provides
+                description=f"""This is the specification of the Llama Stack that provides
                 a set of endpoints and their corresponding interfaces that are tailored to
-                best leverage Llama Models.""",
+                best leverage Llama Models.{description_suffix}""",
             ),
             include_standard_error_responses=True,
+            stability_filter=stability_filter,  # Pass the filter to the generator
         ),
     )
 
-    with open(output_dir / "llama-stack-spec.yaml", "w", encoding="utf-8") as fp:
+    yaml_filename = f"{filename_prefix}llama-stack-spec.yaml"
+    html_filename = f"{filename_prefix}llama-stack-spec.html"
+
+    with open(output_dir / yaml_filename, "w", encoding="utf-8") as fp:
         y = yaml.YAML()
         y.default_flow_style = False
         y.block_seq_indent = 2
@@ -83,8 +102,38 @@ def main(output_dir: str):
             fp,
         )
 
-    with open(output_dir / "llama-stack-spec.html", "w") as fp:
+    with open(output_dir / html_filename, "w") as fp:
         spec.write_html(fp, pretty_print=True)
+
+    print(f"Generated {yaml_filename} and {html_filename}")
+
+def main(output_dir: str):
+    output_dir = Path(output_dir)
+    if not output_dir.exists():
+        raise ValueError(f"Directory {output_dir} does not exist")
+
+    # Validate API protocols before generating spec
+    return_type_errors = validate_api()
+    if return_type_errors:
+        print("\nAPI Method Return Type Validation Errors:\n")
+        for error in return_type_errors:
+            print(error, file=sys.stderr)
+        sys.exit(1)
+
+    now = str(datetime.now())
+    print(f"Converting the spec to YAML (openapi.yaml) and HTML (openapi.html) at {now}")
+    print("")
+
+    # Generate main spec as stable APIs (llama-stack-spec.yaml)
+    print("Generating main specification (stable APIs)...")
+    generate_spec(output_dir, "stable", main_spec=True)
+
+    print("Generating other stability-filtered specifications...")
+    generate_spec(output_dir, "experimental")
+    generate_spec(output_dir, "deprecated")
+
+    print("Generating combined stable + experimental specification...")
+    generate_spec(output_dir, combined_spec=True)
 
 
 if __name__ == "__main__":

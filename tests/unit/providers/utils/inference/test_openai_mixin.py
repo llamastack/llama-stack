@@ -4,18 +4,20 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+import json
+from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
+from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import Model, OpenAIUserMessageParam
 from llama_stack.apis.models import ModelType
+from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 
 class OpenAIMixinImpl(OpenAIMixin):
-    def __init__(self):
-        self.__provider_id__ = "test-provider"
+    __provider_id__: str = "test-provider"
 
     def get_api_key(self) -> str:
         raise NotImplementedError("This method should be mocked in tests")
@@ -24,21 +26,13 @@ class OpenAIMixinImpl(OpenAIMixin):
         raise NotImplementedError("This method should be mocked in tests")
 
 
-class OpenAIMixinWithEmbeddingsImpl(OpenAIMixin):
+class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
     """Test implementation with embedding model metadata"""
 
     embedding_model_metadata = {
         "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
         "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
     }
-
-    __provider_id__ = "test-provider"
-
-    def get_api_key(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
-
-    def get_base_url(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
 
 
 @pytest.fixture
@@ -366,3 +360,196 @@ class TestOpenAIMixinAllowedModels:
             assert await mixin.check_model_availability("final-mock-model-id")
             assert not await mixin.check_model_availability("some-mock-model-id")
             assert not await mixin.check_model_availability("another-mock-model-id")
+
+
+class TestOpenAIMixinModelRegistration:
+    """Test cases for model registration functionality"""
+
+    async def test_register_model_success(self, mixin, mock_client_with_models, mock_client_context):
+        """Test successful model registration when model is available"""
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="some-mock-model-id",
+            identifier="test-model",
+            model_type=ModelType.llm,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            result = await mixin.register_model(model)
+
+            assert result == model
+            assert result.provider_id == "test-provider"
+            assert result.provider_resource_id == "some-mock-model-id"
+            assert result.identifier == "test-model"
+            assert result.model_type == ModelType.llm
+            mock_client_with_models.models.list.assert_called_once()
+
+    async def test_register_model_not_available(self, mixin, mock_client_with_models, mock_client_context):
+        """Test model registration failure when model is not available from provider"""
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            with pytest.raises(
+                ValueError, match="Model non-existent-model is not available from provider test-provider"
+            ):
+                await mixin.register_model(model)
+            mock_client_with_models.models.list.assert_called_once()
+
+    async def test_register_model_with_allowed_models_filter(self, mixin, mock_client_with_models, mock_client_context):
+        """Test model registration with allowed_models filtering"""
+        mixin.allowed_models = {"some-mock-model-id"}
+
+        # Test with allowed model
+        allowed_model = Model(
+            provider_id="test-provider",
+            provider_resource_id="some-mock-model-id",
+            identifier="allowed-model",
+            model_type=ModelType.llm,
+        )
+
+        # Test with disallowed model
+        disallowed_model = Model(
+            provider_id="test-provider",
+            provider_resource_id="final-mock-model-id",
+            identifier="disallowed-model",
+            model_type=ModelType.llm,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            result = await mixin.register_model(allowed_model)
+            assert result == allowed_model
+            with pytest.raises(
+                ValueError, match="Model final-mock-model-id is not available from provider test-provider"
+            ):
+                await mixin.register_model(disallowed_model)
+            mock_client_with_models.models.list.assert_called_once()
+
+    async def test_register_embedding_model(self, mixin_with_embeddings, mock_client_context):
+        """Test registration of embedding models with metadata"""
+        mock_embedding_model = MagicMock(id="text-embedding-3-small")
+        mock_models = [mock_embedding_model]
+
+        mock_client = MagicMock()
+
+        async def mock_models_list():
+            for model in mock_models:
+                yield model
+
+        mock_client.models.list.return_value = mock_models_list()
+
+        embedding_model = Model(
+            provider_id="test-provider",
+            provider_resource_id="text-embedding-3-small",
+            identifier="embedding-test",
+            model_type=ModelType.embedding,
+        )
+
+        with mock_client_context(mixin_with_embeddings, mock_client):
+            result = await mixin_with_embeddings.register_model(embedding_model)
+            assert result == embedding_model
+            assert result.model_type == ModelType.embedding
+
+    async def test_unregister_model(self, mixin):
+        """Test model unregistration (should be no-op)"""
+        # unregister_model should not raise any exceptions and return None
+        result = await mixin.unregister_model("any-model-id")
+        assert result is None
+
+    async def test_should_refresh_models(self, mixin):
+        """Test should_refresh_models method (should always return False)"""
+        result = await mixin.should_refresh_models()
+        assert result is False
+
+    async def test_register_model_error_propagation(self, mixin, mock_client_with_exception, mock_client_context):
+        """Test that errors from provider API are properly propagated during registration"""
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="some-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+        )
+
+        with mock_client_context(mixin, mock_client_with_exception):
+            # The exception from the API should be propagated
+            with pytest.raises(Exception, match="API Error"):
+                await mixin.register_model(model)
+
+
+class ProviderDataValidator(BaseModel):
+    """Validator for provider data in tests"""
+
+    test_api_key: str | None = Field(default=None)
+
+
+class OpenAIMixinWithProviderData(OpenAIMixinImpl):
+    """Test implementation that supports provider data API key field"""
+
+    provider_data_api_key_field: str = "test_api_key"
+
+    def get_api_key(self) -> str:
+        return "default-api-key"
+
+    def get_base_url(self):
+        return "default-base-url"
+
+
+class TestOpenAIMixinProviderDataApiKey:
+    """Test cases for provider_data_api_key_field functionality"""
+
+    @pytest.fixture
+    def mixin_with_provider_data_field(self):
+        """Mixin instance with provider_data_api_key_field set"""
+        mixin_instance = OpenAIMixinWithProviderData()
+
+        # Mock provider_spec for provider data validation
+        mock_provider_spec = MagicMock()
+        mock_provider_spec.provider_type = "test-provider-with-data"
+        mock_provider_spec.provider_data_validator = (
+            "tests.unit.providers.utils.inference.test_openai_mixin.ProviderDataValidator"
+        )
+        mixin_instance.__provider_spec__ = mock_provider_spec
+
+        return mixin_instance
+
+    @pytest.fixture
+    def mixin_with_provider_data_field_and_none_api_key(self, mixin_with_provider_data_field):
+        mixin_with_provider_data_field.get_api_key = Mock(return_value=None)
+        return mixin_with_provider_data_field
+
+    def test_no_provider_data(self, mixin_with_provider_data_field):
+        """Test that client uses config API key when no provider data is available"""
+        assert mixin_with_provider_data_field.client.api_key == "default-api-key"
+
+    def test_with_provider_data(self, mixin_with_provider_data_field):
+        """Test that provider data API key overrides config API key"""
+        with request_provider_data_context(
+            {"x-llamastack-provider-data": json.dumps({"test_api_key": "provider-data-key"})}
+        ):
+            assert mixin_with_provider_data_field.client.api_key == "provider-data-key"
+
+    def test_with_wrong_key(self, mixin_with_provider_data_field):
+        """Test fallback to config when provider data doesn't have the required key"""
+        with request_provider_data_context({"x-llamastack-provider-data": json.dumps({"wrong_key": "some-value"})}):
+            assert mixin_with_provider_data_field.client.api_key == "default-api-key"
+
+    def test_error_when_no_config_and_provider_data_has_wrong_key(
+        self, mixin_with_provider_data_field_and_none_api_key
+    ):
+        """Test that ValueError is raised when provider data exists but doesn't have required key"""
+        with request_provider_data_context({"x-llamastack-provider-data": json.dumps({"wrong_key": "some-value"})}):
+            with pytest.raises(ValueError, match="API key is not set"):
+                _ = mixin_with_provider_data_field_and_none_api_key.client
+
+    def test_error_message_includes_correct_field_names(self, mixin_with_provider_data_field_and_none_api_key):
+        """Test that error message includes correct field name and header information"""
+        with pytest.raises(ValueError) as exc_info:
+            _ = mixin_with_provider_data_field_and_none_api_key.client
+
+        error_message = str(exc_info.value)
+        assert "test_api_key" in error_message
+        assert "x-llamastack-provider-data" in error_message

@@ -16,7 +16,6 @@ from pydantic import Field, TypeAdapter
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.inference import (
@@ -26,11 +25,8 @@ from llama_stack.apis.inference import (
     CompletionMessage,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     ListOpenAIChatCompletionResponse,
-    LogProbConfig,
     Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
@@ -45,13 +41,7 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
     Order,
-    ResponseFormat,
-    SamplingParams,
     StopReason,
-    TextTruncation,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
     ToolPromptFormat,
 )
 from llama_stack.apis.models import Model, ModelType
@@ -188,148 +178,6 @@ class InferenceRouter(Inference):
         if model.model_type != expected_model_type:
             raise ModelTypeError(model_id, model.model_type, expected_model_type)
         return model
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = None,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        logger.debug(
-            f"InferenceRouter.chat_completion: {model_id=}, {stream=}, {messages=}, {tools=}, {tool_config=}, {response_format=}",
-        )
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self._get_model(model_id, ModelType.llm)
-        if tool_config:
-            if tool_choice and tool_choice != tool_config.tool_choice:
-                raise ValueError("tool_choice and tool_config.tool_choice must match")
-            if tool_prompt_format and tool_prompt_format != tool_config.tool_prompt_format:
-                raise ValueError("tool_prompt_format and tool_config.tool_prompt_format must match")
-        else:
-            params = {}
-            if tool_choice:
-                params["tool_choice"] = tool_choice
-            if tool_prompt_format:
-                params["tool_prompt_format"] = tool_prompt_format
-            tool_config = ToolConfig(**params)
-
-        tools = tools or []
-        if tool_config.tool_choice == ToolChoice.none:
-            tools = []
-        elif tool_config.tool_choice == ToolChoice.auto:
-            pass
-        elif tool_config.tool_choice == ToolChoice.required:
-            pass
-        else:
-            # verify tool_choice is one of the tools
-            tool_names = [t.tool_name if isinstance(t.tool_name, str) else t.tool_name.value for t in tools]
-            if tool_config.tool_choice not in tool_names:
-                raise ValueError(f"Tool choice {tool_config.tool_choice} is not one of the tools: {tool_names}")
-
-        params = dict(
-            model_id=model_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools,
-            tool_choice=tool_choice,
-            tool_prompt_format=tool_prompt_format,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        prompt_tokens = await self._count_tokens(messages, tool_config.tool_prompt_format)
-
-        if stream:
-            response_stream = await provider.chat_completion(**params)
-            return self.stream_tokens_and_compute_metrics(
-                response=response_stream,
-                prompt_tokens=prompt_tokens,
-                model=model,
-                tool_prompt_format=tool_config.tool_prompt_format,
-            )
-
-        response = await provider.chat_completion(**params)
-        metrics = await self.count_tokens_and_compute_metrics(
-            response=response,
-            prompt_tokens=prompt_tokens,
-            model=model,
-            tool_prompt_format=tool_config.tool_prompt_format,
-        )
-        # these metrics will show up in the client response.
-        response.metrics = (
-            metrics if not hasattr(response, "metrics") or response.metrics is None else response.metrics + metrics
-        )
-        return response
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        logger.debug(
-            f"InferenceRouter.completion: {model_id=}, {stream=}, {content=}, {sampling_params=}, {response_format=}",
-        )
-        model = await self._get_model(model_id, ModelType.llm)
-        provider = await self.routing_table.get_provider_impl(model_id)
-        params = dict(
-            model_id=model_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-
-        prompt_tokens = await self._count_tokens(content)
-        response = await provider.completion(**params)
-        if stream:
-            return self.stream_tokens_and_compute_metrics(
-                response=response,
-                prompt_tokens=prompt_tokens,
-                model=model,
-            )
-
-        metrics = await self.count_tokens_and_compute_metrics(
-            response=response, prompt_tokens=prompt_tokens, model=model
-        )
-        response.metrics = metrics if response.metrics is None else response.metrics + metrics
-
-        return response
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        logger.debug(f"InferenceRouter.embeddings: {model_id}")
-        await self._get_model(model_id, ModelType.embedding)
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.embeddings(
-            model_id=model_id,
-            contents=contents,
-            text_truncation=text_truncation,
-            output_dimension=output_dimension,
-            task_type=task_type,
-        )
 
     async def openai_completion(
         self,

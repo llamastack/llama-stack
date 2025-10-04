@@ -313,7 +313,7 @@ client = LlamaStackClient(
 )
 
 # All API calls will be automatically traced
-response = client.inference.chat_completion(
+response = client.chat.completions.create(
     model="meta-llama/Llama-3.2-3B-Instruct",
     messages=[{"role": "user", "content": "Hello!"}]
 )
@@ -327,7 +327,7 @@ with tracer.start_as_current_span("custom_operation") as span:
     span.set_attribute("user_id", "user123")
     span.set_attribute("operation_type", "chat_completion")
 
-    response = client.inference.chat_completion(
+    response = client.chat.completions.create(
         model="meta-llama/Llama-3.2-3B-Instruct",
         messages=[{"role": "user", "content": "Hello!"}]
     )

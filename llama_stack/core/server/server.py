@@ -257,7 +257,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
                     return result
             except Exception as e:
-                if logger.isEnabledFor(logging.DEBUG):
+                if logger.isEnabledFor(logging.INFO):
                     logger.exception(f"Error executing endpoint {route=} {method=}")
                 else:
                     logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
@@ -451,6 +451,7 @@ def create_app(
     apis_to_serve.add("inspect")
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
+    apis_to_serve.add("conversations")
     for api_str in apis_to_serve:
         api = Api(api_str)
 

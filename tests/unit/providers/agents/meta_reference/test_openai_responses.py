@@ -22,7 +22,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolWebSearch,
     OpenAIResponseMessage,
-    OpenAIResponseObjectWithInput,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageWebSearchToolCall,
@@ -37,15 +36,19 @@ from llama_stack.apis.inference import (
     OpenAIJSONSchema,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
-    OpenAIResponseFormatText,
     OpenAIUserMessageParam,
 )
-from llama_stack.apis.tools.tools import Tool, ToolGroups, ToolInvocationResult, ToolParameter, ToolRuntime
+from llama_stack.apis.tools.tools import ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
+from llama_stack.core.datatypes import ResponsesStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
-from llama_stack.providers.utils.responses.responses_store import ResponsesStore
+from llama_stack.providers.utils.responses.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
+from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
 
@@ -146,7 +149,7 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     mock_inference_api.openai_chat_completion.assert_called_once_with(
         model=model,
         messages=[OpenAIUserMessageParam(role="user", content="What is the capital of Ireland?", name=None)],
-        response_format=OpenAIResponseFormatText(),
+        response_format=None,
         tools=None,
         stream=True,
         temperature=0.1,
@@ -185,14 +188,15 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
     input_text = "What is the capital of Ireland?"
     model = "meta-llama/Llama-3.1-8B-Instruct"
 
-    openai_responses_impl.tool_groups_api.get_tool.return_value = Tool(
-        identifier="web_search",
-        provider_id="client",
+    openai_responses_impl.tool_groups_api.get_tool.return_value = ToolDef(
+        name="web_search",
         toolgroup_id="web_search",
         description="Search the web for information",
-        parameters=[
-            ToolParameter(name="query", parameter_type="string", description="The query to search for", required=True)
-        ],
+        input_schema={
+            "type": "object",
+            "properties": {"query": {"type": "string", "description": "The query to search for"}},
+            "required": ["query"],
+        },
     )
 
     openai_responses_impl.tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(
@@ -326,6 +330,132 @@ async def test_create_openai_response_with_tool_call_type_none(openai_responses_
     assert chunks[5].response.output[0].name == "get_weather"
 
 
+async def test_create_openai_response_with_tool_call_function_arguments_none(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with a tool call response that has a function that does not accept arguments, or arguments set to None when they are not mandatory."""
+    # Setup
+    input_text = "What is the time right now?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    async def fake_stream_toolcall():
+        yield ChatCompletionChunk(
+            id="123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="tc_123",
+                                function=ChoiceDeltaToolCallFunction(name="get_current_time", arguments=None),
+                                type=None,
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
+
+    # Function does not accept arguments
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=True,
+        temperature=0.1,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_current_time",
+                description="Get current time for system's timezone",
+                parameters={},
+            )
+        ],
+    )
+
+    # Check that we got the content from our mocked tool execution result
+    chunks = [chunk async for chunk in result]
+
+    # Verify event types
+    # Should have: response.created, output_item.added, function_call_arguments.delta,
+    # function_call_arguments.done, output_item.done, response.completed
+    assert len(chunks) == 5
+
+    # Verify inference API was called correctly (after iterating over result)
+    first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
+    assert first_call.kwargs["messages"][0].content == input_text
+    assert first_call.kwargs["tools"] is not None
+    assert first_call.kwargs["temperature"] == 0.1
+
+    # Check response.created event (should have empty output)
+    assert chunks[0].type == "response.created"
+    assert len(chunks[0].response.output) == 0
+
+    # Check streaming events
+    assert chunks[1].type == "response.output_item.added"
+    assert chunks[2].type == "response.function_call_arguments.done"
+    assert chunks[3].type == "response.output_item.done"
+
+    # Check response.completed event (should have the tool call with arguments set to "{}")
+    assert chunks[4].type == "response.completed"
+    assert len(chunks[4].response.output) == 1
+    assert chunks[4].response.output[0].type == "function_call"
+    assert chunks[4].response.output[0].name == "get_current_time"
+    assert chunks[4].response.output[0].arguments == "{}"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
+
+    # Function accepts optional arguments
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=True,
+        temperature=0.1,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_current_time",
+                description="Get current time for system's timezone",
+                parameters={
+                    "timezone": "string",
+                },
+            )
+        ],
+    )
+
+    # Check that we got the content from our mocked tool execution result
+    chunks = [chunk async for chunk in result]
+
+    # Verify event types
+    # Should have: response.created, output_item.added, function_call_arguments.delta,
+    # function_call_arguments.done, output_item.done, response.completed
+    assert len(chunks) == 5
+
+    # Verify inference API was called correctly (after iterating over result)
+    first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
+    assert first_call.kwargs["messages"][0].content == input_text
+    assert first_call.kwargs["tools"] is not None
+    assert first_call.kwargs["temperature"] == 0.1
+
+    # Check response.created event (should have empty output)
+    assert chunks[0].type == "response.created"
+    assert len(chunks[0].response.output) == 0
+
+    # Check streaming events
+    assert chunks[1].type == "response.output_item.added"
+    assert chunks[2].type == "response.function_call_arguments.done"
+    assert chunks[3].type == "response.output_item.done"
+
+    # Check response.completed event (should have the tool call with arguments set to "{}")
+    assert chunks[4].type == "response.completed"
+    assert len(chunks[4].response.output) == 1
+    assert chunks[4].response.output[0].type == "function_call"
+    assert chunks[4].response.output[0].name == "get_current_time"
+    assert chunks[4].response.output[0].arguments == "{}"
+
+
 async def test_create_openai_response_with_multiple_messages(openai_responses_impl, mock_inference_api):
     """Test creating an OpenAI response with multiple messages."""
     # Setup
@@ -371,13 +501,6 @@ async def test_create_openai_response_with_multiple_messages(openai_responses_im
             assert isinstance(inference_messages[i], OpenAIDeveloperMessageParam)
 
 
-async def test_prepend_previous_response_none(openai_responses_impl):
-    """Test prepending no previous response to a new response."""
-
-    input = await openai_responses_impl._prepend_previous_response("fake_input", None)
-    assert input == "fake_input"
-
-
 async def test_prepend_previous_response_basic(openai_responses_impl, mock_responses_store):
     """Test prepending a basic previous response to a new response."""
 
@@ -392,7 +515,7 @@ async def test_prepend_previous_response_basic(openai_responses_impl, mock_respo
         status="completed",
         role="assistant",
     )
-    previous_response = OpenAIResponseObjectWithInput(
+    previous_response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -400,10 +523,11 @@ async def test_prepend_previous_response_basic(openai_responses_impl, mock_respo
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[OpenAIUserMessageParam(content="fake_previous_input")],
     )
     mock_responses_store.get_response_object.return_value = previous_response
 
-    input = await openai_responses_impl._prepend_previous_response("fake_input", "resp_123")
+    input = await openai_responses_impl._prepend_previous_response("fake_input", previous_response)
 
     assert len(input) == 3
     # Check for previous input
@@ -434,7 +558,7 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
         status="completed",
         role="assistant",
     )
-    response = OpenAIResponseObjectWithInput(
+    response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -442,11 +566,12 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[OpenAIUserMessageParam(content="test input")],
     )
     mock_responses_store.get_response_object.return_value = response
 
     input_messages = [OpenAIResponseMessage(content="fake_input", role="user")]
-    input = await openai_responses_impl._prepend_previous_response(input_messages, "resp_123")
+    input = await openai_responses_impl._prepend_previous_response(input_messages, response)
 
     assert len(input) == 4
     # Check for previous input
@@ -481,7 +606,7 @@ async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mo
         status="completed",
         role="assistant",
     )
-    response = OpenAIResponseObjectWithInput(
+    response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -489,11 +614,12 @@ async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mo
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[OpenAIUserMessageParam(content="test input")],
     )
     mock_responses_store.get_response_object.return_value = response
 
     input_messages = [OpenAIResponseMessage(content="fake_input", role="user")]
-    input = await openai_responses_impl._prepend_previous_response(input_messages, "resp_123")
+    input = await openai_responses_impl._prepend_previous_response(input_messages, response)
 
     assert len(input) == 4
     # Check for previous input
@@ -597,7 +723,7 @@ async def test_create_openai_response_with_instructions_and_previous_response(
         status="completed",
         role="assistant",
     )
-    response = OpenAIResponseObjectWithInput(
+    response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -605,6 +731,10 @@ async def test_create_openai_response_with_instructions_and_previous_response(
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[
+            OpenAIUserMessageParam(content="Name some towns in Ireland"),
+            OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
+        ],
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -677,7 +807,9 @@ async def test_responses_store_list_input_items_logic():
 
     # Create mock store and response store
     mock_sql_store = AsyncMock()
-    responses_store = ResponsesStore(sql_store_config=None, policy=default_policy())
+    responses_store = ResponsesStore(
+        ResponsesStoreConfig(sql_store_config=SqliteSqlStoreConfig(db_path="mock_db_path")), policy=default_policy()
+    )
     responses_store.sql_store = mock_sql_store
 
     # Setup test data - multiple input items
@@ -688,7 +820,7 @@ async def test_responses_store_list_input_items_logic():
         OpenAIResponseMessage(id="msg_4", content="Fourth message", role="user"),
     ]
 
-    response_with_input = OpenAIResponseObjectWithInput(
+    response_with_input = _OpenAIResponseObjectWithInputAndMessages(
         id="resp_123",
         model="test_model",
         created_at=1234567890,
@@ -697,6 +829,7 @@ async def test_responses_store_list_input_items_logic():
         output=[],
         text=OpenAIResponseText(format=(OpenAIResponseTextFormat(type="text"))),
         input=input_items,
+        messages=[OpenAIUserMessageParam(content="First message")],
     )
 
     # Mock the get_response_object method to return our test data
@@ -757,7 +890,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
     rather than just the original input when previous_response_id is provided."""
 
     # Setup - Create a previous response that should be included in the stored input
-    previous_response = OpenAIResponseObjectWithInput(
+    previous_response = _OpenAIResponseObjectWithInputAndMessages(
         id="resp-previous-123",
         object="response",
         created_at=1234567890,
@@ -775,6 +908,10 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
                 role="assistant",
                 content=[OpenAIResponseOutputMessageContentOutputText(text="2+2 equals 4.")],
             )
+        ],
+        messages=[
+            OpenAIUserMessageParam(content="What is 2+2?"),
+            OpenAIAssistantMessageParam(content="2+2 equals 4."),
         ],
     )
 
@@ -819,16 +956,16 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
 @pytest.mark.parametrize(
     "text_format, response_format",
     [
-        (OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")), OpenAIResponseFormatText()),
+        (OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")), None),
         (
             OpenAIResponseText(format=OpenAIResponseTextFormat(name="Test", schema={"foo": "bar"}, type="json_schema")),
             OpenAIResponseFormatJSONSchema(json_schema=OpenAIJSONSchema(name="Test", schema={"foo": "bar"})),
         ),
         (OpenAIResponseText(format=OpenAIResponseTextFormat(type="json_object")), OpenAIResponseFormatJSONObject()),
-        # ensure text param with no format specified defaults to text
-        (OpenAIResponseText(format=None), OpenAIResponseFormatText()),
-        # ensure text param of None defaults to text
-        (None, OpenAIResponseFormatText()),
+        # ensure text param with no format specified defaults to None
+        (OpenAIResponseText(format=None), None),
+        # ensure text param of None defaults to None
+        (None, None),
     ],
 )
 async def test_create_openai_response_with_text_format(
@@ -851,7 +988,6 @@ async def test_create_openai_response_with_text_format(
     # Verify
     first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
     assert first_call.kwargs["messages"][0].content == input_text
-    assert first_call.kwargs["response_format"] is not None
     assert first_call.kwargs["response_format"] == response_format
 
 

@@ -15,7 +15,6 @@ from llama_stack.apis.tools import (
     ToolDef,
     ToolGroup,
     ToolInvocationResult,
-    ToolParameter,
     ToolRuntime,
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
@@ -57,13 +56,16 @@ class WolframAlphaToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
                 ToolDef(
                     name="wolfram_alpha",
                     description="Query WolframAlpha for computational knowledge",
-                    parameters=[
-                        ToolParameter(
-                            name="query",
-                            description="The query to compute",
-                            parameter_type="string",
-                        )
-                    ],
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The query to compute",
+                            }
+                        },
+                        "required": ["query"],
+                    },
                 )
             ]
         )

@@ -26,7 +26,7 @@ def test_web_search_tool(llama_stack_client, sample_search_query):
         pytest.skip("TAVILY_SEARCH_API_KEY not set, skipping test")
 
     tools = llama_stack_client.tool_runtime.list_tools()
-    assert any(tool.identifier == "web_search" for tool in tools)
+    assert any(tool.name == "web_search" for tool in tools)
 
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="web_search", kwargs={"query": sample_search_query}
@@ -52,7 +52,7 @@ def test_wolfram_alpha_tool(llama_stack_client, sample_wolfram_alpha_query):
         pytest.skip("WOLFRAM_ALPHA_API_KEY not set, skipping test")
 
     tools = llama_stack_client.tool_runtime.list_tools()
-    assert any(tool.identifier == "wolfram_alpha" for tool in tools)
+    assert any(tool.name == "wolfram_alpha" for tool in tools)
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="wolfram_alpha", kwargs={"query": sample_wolfram_alpha_query}
     )

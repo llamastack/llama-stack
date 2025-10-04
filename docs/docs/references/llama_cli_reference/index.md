@@ -261,7 +261,7 @@ You can even run `llama model prompt-format` see all of the templates and their 
 ```
 llama model prompt-format -m Llama3.2-3B-Instruct
 ```
-![alt text](../../../resources/prompt-format.png)
+![alt text](/img/prompt-format.png)
 
 
 You will be shown a Markdown formatted description of the model interface and how prompts / messages are formatted for various scenarios.

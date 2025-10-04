@@ -8,9 +8,7 @@ import asyncio
 import uuid
 from typing import Any
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
+from llama_stack.apis.common.content_types import InterleavedContent
 from llama_stack.apis.models import ModelType
 from llama_stack.apis.vector_io import (
     Chunk,
@@ -19,9 +17,11 @@ from llama_stack.apis.vector_io import (
     VectorIO,
     VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
+    VectorStoreFileBatchObject,
     VectorStoreFileContentsResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
+    VectorStoreFilesListInBatchResponse,
     VectorStoreFileStatus,
     VectorStoreListResponse,
     VectorStoreObject,
@@ -193,7 +193,10 @@ class VectorIORouter(VectorIO):
                 all_stores = all_stores[after_index + 1 :]
 
         if before:
-            before_index = next((i for i, store in enumerate(all_stores) if store.id == before), len(all_stores))
+            before_index = next(
+                (i for i, store in enumerate(all_stores) if store.id == before),
+                len(all_stores),
+            )
             all_stores = all_stores[:before_index]
 
         # Apply limit
@@ -363,3 +366,61 @@ class VectorIORouter(VectorIO):
                     status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}"
                 )
         return health_statuses
+
+    async def openai_create_vector_store_file_batch(
+        self,
+        vector_store_id: str,
+        file_ids: list[str],
+        attributes: dict[str, Any] | None = None,
+        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+    ) -> VectorStoreFileBatchObject:
+        logger.debug(f"VectorIORouter.openai_create_vector_store_file_batch: {vector_store_id}, {len(file_ids)} files")
+        return await self.routing_table.openai_create_vector_store_file_batch(
+            vector_store_id=vector_store_id,
+            file_ids=file_ids,
+            attributes=attributes,
+            chunking_strategy=chunking_strategy,
+        )
+
+    async def openai_retrieve_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        logger.debug(f"VectorIORouter.openai_retrieve_vector_store_file_batch: {batch_id}, {vector_store_id}")
+        return await self.routing_table.openai_retrieve_vector_store_file_batch(
+            batch_id=batch_id,
+            vector_store_id=vector_store_id,
+        )
+
+    async def openai_list_files_in_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+        after: str | None = None,
+        before: str | None = None,
+        filter: str | None = None,
+        limit: int | None = 20,
+        order: str | None = "desc",
+    ) -> VectorStoreFilesListInBatchResponse:
+        logger.debug(f"VectorIORouter.openai_list_files_in_vector_store_file_batch: {batch_id}, {vector_store_id}")
+        return await self.routing_table.openai_list_files_in_vector_store_file_batch(
+            batch_id=batch_id,
+            vector_store_id=vector_store_id,
+            after=after,
+            before=before,
+            filter=filter,
+            limit=limit,
+            order=order,
+        )
+
+    async def openai_cancel_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        logger.debug(f"VectorIORouter.openai_cancel_vector_store_file_batch: {batch_id}, {vector_store_id}")
+        return await self.routing_table.openai_cancel_vector_store_file_batch(
+            batch_id=batch_id,
+            vector_store_id=vector_store_id,
+        )

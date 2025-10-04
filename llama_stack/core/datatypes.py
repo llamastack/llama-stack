@@ -22,7 +22,7 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnInput
 from llama_stack.apis.shields import Shield, ShieldInput
-from llama_stack.apis.tools import Tool, ToolGroup, ToolGroupInput, ToolRuntime
+from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
@@ -84,15 +84,11 @@ class BenchmarkWithOwner(Benchmark, ResourceWithOwner):
     pass
 
 
-class ToolWithOwner(Tool, ResourceWithOwner):
-    pass
-
-
 class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
     pass
 
 
-RoutableObject = Model | Shield | VectorDB | Dataset | ScoringFn | Benchmark | Tool | ToolGroup
+RoutableObject = Model | Shield | VectorDB | Dataset | ScoringFn | Benchmark | ToolGroup
 
 RoutableObjectWithProvider = Annotated[
     ModelWithOwner
@@ -101,7 +97,6 @@ RoutableObjectWithProvider = Annotated[
     | DatasetWithOwner
     | ScoringFnWithOwner
     | BenchmarkWithOwner
-    | ToolWithOwner
     | ToolGroupWithOwner,
     Field(discriminator="type"),
 ]
@@ -433,6 +428,12 @@ class InferenceStoreConfig(BaseModel):
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 
+class ResponsesStoreConfig(BaseModel):
+    sql_store_config: SqlStoreConfig
+    max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
+    num_writers: int = Field(default=4, description="Number of concurrent background writers")
+
+
 class StackRunConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
@@ -471,6 +472,13 @@ a default SQLite store will be used.""",
         description="""
 Configuration for the persistence store used by the inference API. Can be either a
 InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
+If not specified, a default SQLite store will be used.""",
+    )
+
+    conversations_store: SqlStoreConfig | None = Field(
+        default=None,
+        description="""
+Configuration for the persistence store used by the conversations API.
 If not specified, a default SQLite store will be used.""",
     )
 

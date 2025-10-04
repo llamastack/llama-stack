@@ -80,9 +80,43 @@ def setup_inference_recording():
     return inference_recording(mode=mode, storage_dir=storage_dir)
 
 
-def _serialize_response(response: Any) -> Any:
+def _normalize_response_data(data: dict[str, Any], request_hash: str) -> dict[str, Any]:
+    """Normalize fields that change between recordings but don't affect functionality.
+
+    This reduces noise in git diffs by making IDs deterministic and timestamps constant.
+    """
+    # Only normalize ID for completion/chat responses, not for model objects
+    # Model objects have "object": "model" and the ID is the actual model identifier
+    if "id" in data and data.get("object") != "model":
+        data["id"] = f"rec-{request_hash[:12]}"
+
+    # Normalize timestamp to epoch (0) (for OpenAI-style responses)
+    # But not for model objects where created timestamp might be meaningful
+    if "created" in data and data.get("object") != "model":
+        data["created"] = 0
+
+    # Normalize Ollama-specific timestamp fields
+    if "created_at" in data:
+        data["created_at"] = "1970-01-01T00:00:00.000000Z"
+
+    # Normalize Ollama-specific duration fields (these vary based on system load)
+    if "total_duration" in data and data["total_duration"] is not None:
+        data["total_duration"] = 0
+    if "load_duration" in data and data["load_duration"] is not None:
+        data["load_duration"] = 0
+    if "prompt_eval_duration" in data and data["prompt_eval_duration"] is not None:
+        data["prompt_eval_duration"] = 0
+    if "eval_duration" in data and data["eval_duration"] is not None:
+        data["eval_duration"] = 0
+
+    return data
+
+
+def _serialize_response(response: Any, request_hash: str = "") -> Any:
     if hasattr(response, "model_dump"):
         data = response.model_dump(mode="json")
+        # Normalize fields to reduce noise
+        data = _normalize_response_data(data, request_hash)
         return {
             "__type__": f"{response.__class__.__module__}.{response.__class__.__qualname__}",
             "__data__": data,
@@ -141,10 +175,12 @@ class ResponseStorage:
         if "body" in serialized_response:
             if isinstance(serialized_response["body"], list):
                 # Handle streaming responses (list of chunks)
-                serialized_response["body"] = [_serialize_response(chunk) for chunk in serialized_response["body"]]
+                serialized_response["body"] = [
+                    _serialize_response(chunk, request_hash) for chunk in serialized_response["body"]
+                ]
             else:
                 # Handle single response
-                serialized_response["body"] = _serialize_response(serialized_response["body"])
+                serialized_response["body"] = _serialize_response(serialized_response["body"], request_hash)
 
         # If this is an Ollama /api/tags recording, include models digest in filename to distinguish variants
         endpoint = request.get("endpoint")

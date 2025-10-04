@@ -16,7 +16,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: false,
+      collapsed: true,
       items: [
         'getting_started/quickstart',
         'getting_started/detailed_tutorial',
@@ -26,7 +26,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Concepts',
-      collapsed: false,
+      collapsed: true,
       items: [
         'concepts/index',
         'concepts/architecture',
@@ -48,7 +48,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Distributions',
-      collapsed: false,
+      collapsed: true,
       items: [
         'distributions/index',
         'distributions/list_of_distributions',
@@ -93,7 +93,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Providers',
-      collapsed: false,
+      collapsed: true,
       items: [
         'providers/index',
         {
@@ -276,7 +276,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Building Applications',
-      collapsed: false,
+      collapsed: true,
       items: [
         'building_applications/index',
         'building_applications/rag',
@@ -293,7 +293,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Advanced APIs',
-      collapsed: false,
+      collapsed: true,
       items: [
         'advanced_apis/post_training',
         'advanced_apis/evaluation',
@@ -303,7 +303,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Deploying',
-      collapsed: false,
+      collapsed: true,
       items: [
         'deploying/index',
         'deploying/kubernetes_deployment',
@@ -313,7 +313,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Contributing',
-      collapsed: false,
+      collapsed: true,
       items: [
         'contributing/index',
         'contributing/new_api_provider',
@@ -324,7 +324,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'References',
-      collapsed: false,
+      collapsed: true,
       items: [
         'references/index',
         'references/llama_cli_reference/index',
@@ -335,8 +335,10 @@ const sidebars: SidebarsConfig = {
     },
   ],
 
-  // API Reference sidebar - use plugin-generated sidebar
-  apiSidebar: require('./docs/api/sidebar.ts').default,
+  // API Reference sidebars - use plugin-generated sidebars
+  stableApiSidebar: require('./docs/api/sidebar.ts').default,
+  experimentalApiSidebar: require('./docs/api-experimental/sidebar.ts').default,
+  deprecatedApiSidebar: require('./docs/api-deprecated/sidebar.ts').default,
 };
 
 export default sidebars;

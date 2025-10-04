@@ -43,7 +43,6 @@ const convertResponseListData = (
     temperature: responseData.temperature,
     top_p: responseData.top_p,
     truncation: responseData.truncation,
-    user: responseData.user,
   };
 };
 

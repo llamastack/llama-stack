@@ -216,8 +216,6 @@ from llama_stack_client.types import (
 
 Methods:
 
-- <code title="post /v1/inference/chat-completion">client.inference.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/inference.py">chat_completion</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/inference_chat_completion_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/inference_chat_completion_response.py">InferenceChatCompletionResponse</a></code>
-- <code title="post /v1/inference/completion">client.inference.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/inference.py">completion</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/inference_completion_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/inference_completion_response.py">InferenceCompletionResponse</a></code>
 - <code title="post /v1/inference/embeddings">client.inference.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/inference.py">embeddings</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/inference_embeddings_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/embeddings_response.py">EmbeddingsResponse</a></code>
 
 ## VectorIo

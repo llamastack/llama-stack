@@ -61,7 +61,7 @@ Before pushing your changes, make sure that the pre-commit hooks have passed suc
 
 We actively welcome your pull requests. However, please read the following. This is heavily inspired by [Ghostty](https://github.com/ghostty-org/ghostty/blob/main/CONTRIBUTING.md).
 
-If in doubt, please open a [discussion](https://github.com/meta-llama/llama-stack/discussions); we can always convert that to an issue later.
+If in doubt, please open a [discussion](https://github.com/llamastack/llama-stack/discussions); we can always convert that to an issue later.
 
 ### Issues
 We use GitHub issues to track public bugs. Please ensure your description is
@@ -165,8 +165,8 @@ Building a stack image will use the production version of the `llama-stack` and 
 Example:
 ```bash
 cd work/
-git clone https://github.com/meta-llama/llama-stack.git
-git clone https://github.com/meta-llama/llama-stack-client-python.git
+git clone https://github.com/llamastack/llama-stack.git
+git clone https://github.com/llamastack/llama-stack-client-python.git
 cd llama-stack
 LLAMA_STACK_DIR=$(pwd) LLAMA_STACK_CLIENT_DIR=../llama-stack-client-python llama stack build --distro <...>
 ```

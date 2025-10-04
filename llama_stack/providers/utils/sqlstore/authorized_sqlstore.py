@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
 from llama_stack.core.access_control.access_control import default_policy, is_action_allowed
@@ -36,6 +36,18 @@ SQL_OPTIMIZED_POLICY = [
         when=["user in owners roles", "user in owners teams", "user in owners projects", "user in owners namespaces"],
     ),
 ]
+
+
+def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: User | None) -> Mapping[str, Any]:
+    """Add access control attributes to a data item."""
+    enhanced = dict(item)
+    if current_user:
+        enhanced["owner_principal"] = current_user.principal
+        enhanced["access_attributes"] = current_user.attributes
+    else:
+        enhanced["owner_principal"] = None
+        enhanced["access_attributes"] = None
+    return enhanced
 
 
 class SqlRecord(ProtectedResource):
@@ -102,18 +114,14 @@ class AuthorizedSqlStore:
         await self.sql_store.add_column_if_not_exists(table, "access_attributes", ColumnType.JSON)
         await self.sql_store.add_column_if_not_exists(table, "owner_principal", ColumnType.STRING)
 
-    async def insert(self, table: str, data: Mapping[str, Any]) -> None:
-        """Insert a row with automatic access control attribute capture."""
-        enhanced_data = dict(data)
-
+    async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
+        """Insert a row or batch of rows with automatic access control attribute capture."""
         current_user = get_authenticated_user()
-        if current_user:
-            enhanced_data["owner_principal"] = current_user.principal
-            enhanced_data["access_attributes"] = current_user.attributes
+        enhanced_data: Mapping[str, Any] | Sequence[Mapping[str, Any]]
+        if isinstance(data, Mapping):
+            enhanced_data = _enhance_item_with_access_control(data, current_user)
         else:
-            enhanced_data["owner_principal"] = None
-            enhanced_data["access_attributes"] = None
-
+            enhanced_data = [_enhance_item_with_access_control(item, current_user) for item in data]
         await self.sql_store.insert(table, enhanced_data)
 
     async def fetch_all(

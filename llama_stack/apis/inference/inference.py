@@ -17,24 +17,22 @@ from typing import (
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
-from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent, InterleavedContentItem
+from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.models import Model
 from llama_stack.apis.telemetry import MetricResponseMixin
-from llama_stack.apis.version import LLAMA_STACK_API_V1
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     StopReason,
     ToolCall,
     ToolDefinition,
-    ToolParamDefinition,
     ToolPromptFormat,
 )
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 register_schema(ToolCall)
-register_schema(ToolParamDefinition)
 register_schema(ToolDefinition)
 
 from enum import StrEnum
@@ -1008,89 +1006,7 @@ class InferenceProvider(Protocol):
 
     model_store: ModelStore | None = None
 
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> CompletionResponse | AsyncIterator[CompletionResponseStreamChunk]:
-        """Generate a completion for the given content using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param content: The content to generate a completion for.
-        :param sampling_params: (Optional) Parameters to control the sampling strategy.
-        :param response_format: (Optional) Grammar specification for guided (structured) decoding.
-        :param stream: (Optional) If True, generate an SSE event stream of the response. Defaults to False.
-        :param logprobs: (Optional) If specified, log probabilities for each token position will be returned.
-        :returns: If stream=False, returns a CompletionResponse with the full completion.
-                 If stream=True, returns an SSE event stream of CompletionResponseStreamChunk.
-        """
-        ...
-
-    @webmethod(route="/inference/chat-completion", method="POST", level=LLAMA_STACK_API_V1)
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        """Generate a chat completion for the given messages using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param messages: List of messages in the conversation.
-        :param sampling_params: Parameters to control the sampling strategy.
-        :param tools: (Optional) List of tool definitions available to the model.
-        :param tool_choice: (Optional) Whether tool use is required or automatic. Defaults to ToolChoice.auto.
-            .. deprecated::
-               Use tool_config instead.
-        :param tool_prompt_format: (Optional) Instructs the model how to format tool calls. By default, Llama Stack will attempt to use a format that is best adapted to the model.
-            - `ToolPromptFormat.json`: The tool calls are formatted as a JSON object.
-            - `ToolPromptFormat.function_tag`: The tool calls are enclosed in a <function=function_name> tag.
-            - `ToolPromptFormat.python_list`: The tool calls are output as Python syntax -- a list of function calls.
-            .. deprecated::
-               Use tool_config instead.
-        :param response_format: (Optional) Grammar specification for guided (structured) decoding. There are two options:
-            - `ResponseFormat.json_schema`: The grammar is a JSON schema. Most providers support this format.
-            - `ResponseFormat.grammar`: The grammar is a BNF grammar. This format is more flexible, but not all providers support it.
-        :param stream: (Optional) If True, generate an SSE event stream of the response. Defaults to False.
-        :param logprobs: (Optional) If specified, log probabilities for each token position will be returned.
-        :param tool_config: (Optional) Configuration for tool use.
-        :returns: If stream=False, returns a ChatCompletionResponse with the full completion.
-                 If stream=True, returns an SSE event stream of ChatCompletionResponseStreamChunk.
-        """
-        ...
-
-    @webmethod(route="/inference/embeddings", method="POST", level=LLAMA_STACK_API_V1)
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        """Generate embeddings for content pieces using the specified model.
-
-        :param model_id: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
-        :param contents: List of contents to generate embeddings for. Each content can be a string or an InterleavedContentItem (and hence can be multimodal). The behavior depends on the model and provider. Some models may only support text.
-        :param output_dimension: (Optional) Output dimensionality for the embeddings. Only supported by Matryoshka models.
-        :param text_truncation: (Optional) Config for how to truncate text for embedding when text is longer than the model's max sequence length.
-        :param task_type: (Optional) How is the embedding being used? This is only supported by asymmetric embedding models.
-        :returns: An array of embeddings, one for each content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}.
-        """
-        ...
-
-    @webmethod(route="/inference/rerank", method="POST", experimental=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/inference/rerank", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def rerank(
         self,
         model: str,
@@ -1109,7 +1025,8 @@ class InferenceProvider(Protocol):
         raise NotImplementedError("Reranking is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
 
-    @webmethod(route="/openai/v1/completions", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/openai/v1/completions", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_completion(
         self,
         # Standard OpenAI completion parameters
@@ -1160,7 +1077,8 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/openai/v1/chat/completions", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_chat_completion(
         self,
         model: str,
@@ -1216,7 +1134,8 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/embeddings", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/openai/v1/embeddings", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/embeddings", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_embeddings(
         self,
         model: str,
@@ -1245,7 +1164,8 @@ class Inference(InferenceProvider):
     - Embedding models: these models generate embeddings to be used for semantic search.
     """
 
-    @webmethod(route="/openai/v1/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/openai/v1/chat/completions", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_chat_completions(
         self,
         after: str | None = None,
@@ -1263,7 +1183,10 @@ class Inference(InferenceProvider):
         """
         raise NotImplementedError("List chat completions is not implemented")
 
-    @webmethod(route="/openai/v1/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/openai/v1/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True
+    )
+    @webmethod(route="/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_chat_completion(self, completion_id: str) -> OpenAICompletionWithInputMessages:
         """Describe a chat completion by its ID.
 

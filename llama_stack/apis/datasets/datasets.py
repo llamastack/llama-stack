@@ -10,7 +10,7 @@ from typing import Annotated, Any, Literal, Protocol
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.resource import Resource, ResourceType
-from llama_stack.apis.version import LLAMA_STACK_API_V1
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 
@@ -146,7 +146,8 @@ class ListDatasetsResponse(BaseModel):
 
 
 class Datasets(Protocol):
-    @webmethod(route="/datasets", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets", method="POST", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets", method="POST", level=LLAMA_STACK_API_V1BETA)
     async def register_dataset(
         self,
         purpose: DatasetPurpose,
@@ -215,7 +216,8 @@ class Datasets(Protocol):
         """
         ...
 
-    @webmethod(route="/datasets/{dataset_id:path}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets/{dataset_id:path}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets/{dataset_id:path}", method="GET", level=LLAMA_STACK_API_V1BETA)
     async def get_dataset(
         self,
         dataset_id: str,
@@ -227,7 +229,8 @@ class Datasets(Protocol):
         """
         ...
 
-    @webmethod(route="/datasets", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets", method="GET", level=LLAMA_STACK_API_V1BETA)
     async def list_datasets(self) -> ListDatasetsResponse:
         """List all datasets.
 
@@ -235,7 +238,8 @@ class Datasets(Protocol):
         """
         ...
 
-    @webmethod(route="/datasets/{dataset_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets/{dataset_id:path}", method="DELETE", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/datasets/{dataset_id:path}", method="DELETE", level=LLAMA_STACK_API_V1BETA)
     async def unregister_dataset(
         self,
         dataset_id: str,

@@ -8,7 +8,7 @@ from typing import Any
 
 from llama_stack.apis.common.content_types import URL
 from llama_stack.apis.common.errors import ToolGroupNotFoundError
-from llama_stack.apis.tools import ListToolGroupsResponse, ListToolsResponse, Tool, ToolGroup, ToolGroups
+from llama_stack.apis.tools import ListToolDefsResponse, ListToolGroupsResponse, ToolDef, ToolGroup, ToolGroups
 from llama_stack.core.datatypes import AuthenticationRequiredError, ToolGroupWithOwner
 from llama_stack.log import get_logger
 
@@ -27,7 +27,7 @@ def parse_toolgroup_from_toolgroup_name_pair(toolgroup_name_with_maybe_tool_name
 
 
 class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
-    toolgroups_to_tools: dict[str, list[Tool]] = {}
+    toolgroups_to_tools: dict[str, list[ToolDef]] = {}
     tool_to_toolgroup: dict[str, str] = {}
 
     # overridden
@@ -43,7 +43,7 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
             routing_key = self.tool_to_toolgroup[routing_key]
         return await super().get_provider_impl(routing_key, provider_id)
 
-    async def list_tools(self, toolgroup_id: str | None = None) -> ListToolsResponse:
+    async def list_tools(self, toolgroup_id: str | None = None) -> ListToolDefsResponse:
         if toolgroup_id:
             if group_id := parse_toolgroup_from_toolgroup_name_pair(toolgroup_id):
                 toolgroup_id = group_id
@@ -68,30 +68,19 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
                     continue
             all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])
 
-        return ListToolsResponse(data=all_tools)
+        return ListToolDefsResponse(data=all_tools)
 
     async def _index_tools(self, toolgroup: ToolGroup):
         provider_impl = await super().get_provider_impl(toolgroup.identifier, toolgroup.provider_id)
         tooldefs_response = await provider_impl.list_runtime_tools(toolgroup.identifier, toolgroup.mcp_endpoint)
 
-        # TODO: kill this Tool vs ToolDef distinction
         tooldefs = tooldefs_response.data
-        tools = []
         for t in tooldefs:
-            tools.append(
-                Tool(
-                    identifier=t.name,
-                    toolgroup_id=toolgroup.identifier,
-                    description=t.description or "",
-                    parameters=t.parameters or [],
-                    metadata=t.metadata,
-                    provider_id=toolgroup.provider_id,
-                )
-            )
+            t.toolgroup_id = toolgroup.identifier
 
-        self.toolgroups_to_tools[toolgroup.identifier] = tools
-        for tool in tools:
-            self.tool_to_toolgroup[tool.identifier] = toolgroup.identifier
+        self.toolgroups_to_tools[toolgroup.identifier] = tooldefs
+        for tool in tooldefs:
+            self.tool_to_toolgroup[tool.name] = toolgroup.identifier
 
     async def list_tool_groups(self) -> ListToolGroupsResponse:
         return ListToolGroupsResponse(data=await self.get_all_with_type("tool_group"))
@@ -102,12 +91,12 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
             raise ToolGroupNotFoundError(toolgroup_id)
         return tool_group
 
-    async def get_tool(self, tool_name: str) -> Tool:
+    async def get_tool(self, tool_name: str) -> ToolDef:
         if tool_name in self.tool_to_toolgroup:
             toolgroup_id = self.tool_to_toolgroup[tool_name]
             tools = self.toolgroups_to_tools[toolgroup_id]
             for tool in tools:
-                if tool.identifier == tool_name:
+                if tool.name == tool_name:
                     return tool
         raise ValueError(f"Tool '{tool_name}' not found")
 
@@ -132,7 +121,6 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
         # baked in some of the code and tests right now.
         if not toolgroup.mcp_endpoint:
             await self._index_tools(toolgroup)
-        return toolgroup
 
     async def unregister_toolgroup(self, toolgroup_id: str) -> None:
         await self.unregister_object(await self.get_tool_group(toolgroup_id))

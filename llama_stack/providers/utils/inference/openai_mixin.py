@@ -24,15 +24,16 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
 )
 from llama_stack.apis.models import ModelType
+from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack.providers.datatypes import ModelsProtocolPrivate
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-class OpenAIMixin(ModelRegistryHelper, ABC):
+class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
     """
     Mixin class that provides OpenAI-specific functionality for inference providers.
     This class handles direct OpenAI API calls using the AsyncOpenAI client.
@@ -68,6 +69,12 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
 
     # List of allowed models for this provider, if empty all models allowed
     allowed_models: list[str] = []
+
+    # Optional field name in provider data to look for API key, which takes precedence
+    provider_data_api_key_field: str | None = None
+
+    # automatically set by the resolver when instantiating the provider
+    __provider_id__: str
 
     @abstractmethod
     def get_api_key(self) -> str:
@@ -111,9 +118,28 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
 
         Uses the abstract methods get_api_key() and get_base_url() which must be
         implemented by child classes.
+
+        Users can also provide the API key via the provider data header, which
+        is used instead of any config API key.
         """
+
+        api_key = self.get_api_key()
+
+        if self.provider_data_api_key_field:
+            provider_data = self.get_request_provider_data()
+            if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
+                api_key = getattr(provider_data, self.provider_data_api_key_field)
+
+            if not api_key:  # TODO: let get_api_key return None
+                raise ValueError(
+                    "API key is not set. Please provide a valid API key in the "
+                    "provider data header, e.g. x-llamastack-provider-data: "
+                    f'{{"{self.provider_data_api_key_field}": "<API_KEY>"}}, '
+                    "or in the provider config."
+                )
+
         return AsyncOpenAI(
-            api_key=self.get_api_key(),
+            api_key=api_key,
             base_url=self.get_base_url(),
             **self.get_extra_client_params(),
         )
@@ -263,33 +289,33 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
 
             messages = [await _localize_image_url(m) for m in messages]
 
-        resp = await self.client.chat.completions.create(
-            **await prepare_openai_completion_params(
-                model=await self._get_provider_model_id(model),
-                messages=messages,
-                frequency_penalty=frequency_penalty,
-                function_call=function_call,
-                functions=functions,
-                logit_bias=logit_bias,
-                logprobs=logprobs,
-                max_completion_tokens=max_completion_tokens,
-                max_tokens=max_tokens,
-                n=n,
-                parallel_tool_calls=parallel_tool_calls,
-                presence_penalty=presence_penalty,
-                response_format=response_format,
-                seed=seed,
-                stop=stop,
-                stream=stream,
-                stream_options=stream_options,
-                temperature=temperature,
-                tool_choice=tool_choice,
-                tools=tools,
-                top_logprobs=top_logprobs,
-                top_p=top_p,
-                user=user,
-            )
+        params = await prepare_openai_completion_params(
+            model=await self._get_provider_model_id(model),
+            messages=messages,
+            frequency_penalty=frequency_penalty,
+            function_call=function_call,
+            functions=functions,
+            logit_bias=logit_bias,
+            logprobs=logprobs,
+            max_completion_tokens=max_completion_tokens,
+            max_tokens=max_tokens,
+            n=n,
+            parallel_tool_calls=parallel_tool_calls,
+            presence_penalty=presence_penalty,
+            response_format=response_format,
+            seed=seed,
+            stop=stop,
+            stream=stream,
+            stream_options=stream_options,
+            temperature=temperature,
+            tool_choice=tool_choice,
+            tools=tools,
+            top_logprobs=top_logprobs,
+            top_p=top_p,
+            user=user,
         )
+
+        resp = await self.client.chat.completions.create(**params)
 
         return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
@@ -332,6 +358,24 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
             model=model,
             usage=usage,
         )
+
+    ###
+    # ModelsProtocolPrivate implementation - provide model management functionality
+    #
+    #  async def register_model(self, model: Model) -> Model: ...
+    #  async def unregister_model(self, model_id: str) -> None: ...
+    #
+    #  async def list_models(self) -> list[Model] | None: ...
+    #  async def should_refresh_models(self) -> bool: ...
+    ##
+
+    async def register_model(self, model: Model) -> Model:
+        if not await self.check_model_availability(model.provider_model_id):
+            raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")
+        return model
+
+    async def unregister_model(self, model_id: str) -> None:
+        return None
 
     async def list_models(self) -> list[Model] | None:
         """
@@ -377,5 +421,7 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
         """
         if not self._model_cache:
             await self.list_models()
-
         return model in self._model_cache
+
+    async def should_refresh_models(self) -> bool:
+        return False

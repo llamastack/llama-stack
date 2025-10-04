@@ -18,7 +18,6 @@ from llama_stack.apis.inference import (
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     ToolDefinition,
-    ToolParamDefinition,
     ToolPromptFormat,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -75,12 +74,15 @@ async def test_system_custom_only():
             ToolDefinition(
                 tool_name="custom1",
                 description="custom1 tool",
-                parameters={
-                    "param1": ToolParamDefinition(
-                        param_type="str",
-                        description="param1 description",
-                        required=True,
-                    ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "param1": {
+                            "type": "str",
+                            "description": "param1 description",
+                        },
+                    },
+                    "required": ["param1"],
                 },
             )
         ],
@@ -107,12 +109,15 @@ async def test_system_custom_and_builtin():
             ToolDefinition(
                 tool_name="custom1",
                 description="custom1 tool",
-                parameters={
-                    "param1": ToolParamDefinition(
-                        param_type="str",
-                        description="param1 description",
-                        required=True,
-                    ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "param1": {
+                            "type": "str",
+                            "description": "param1 description",
+                        },
+                    },
+                    "required": ["param1"],
                 },
             ),
         ],
@@ -138,7 +143,7 @@ async def test_completion_message_encoding():
                 tool_calls=[
                     ToolCall(
                         tool_name="custom1",
-                        arguments={"param1": "value1"},
+                        arguments='{"param1": "value1"}',  # arguments must be a JSON string
                         call_id="123",
                     )
                 ],
@@ -148,12 +153,15 @@ async def test_completion_message_encoding():
             ToolDefinition(
                 tool_name="custom1",
                 description="custom1 tool",
-                parameters={
-                    "param1": ToolParamDefinition(
-                        param_type="str",
-                        description="param1 description",
-                        required=True,
-                    ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "param1": {
+                            "type": "str",
+                            "description": "param1 description",
+                        },
+                    },
+                    "required": ["param1"],
                 },
             ),
         ],
@@ -227,12 +235,15 @@ async def test_replace_system_message_behavior_custom_tools():
             ToolDefinition(
                 tool_name="custom1",
                 description="custom1 tool",
-                parameters={
-                    "param1": ToolParamDefinition(
-                        param_type="str",
-                        description="param1 description",
-                        required=True,
-                    ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "param1": {
+                            "type": "str",
+                            "description": "param1 description",
+                        },
+                    },
+                    "required": ["param1"],
                 },
             ),
         ],
@@ -264,12 +275,15 @@ async def test_replace_system_message_behavior_custom_tools_with_template():
             ToolDefinition(
                 tool_name="custom1",
                 description="custom1 tool",
-                parameters={
-                    "param1": ToolParamDefinition(
-                        param_type="str",
-                        description="param1 description",
-                        required=True,
-                    ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "param1": {
+                            "type": "str",
+                            "description": "param1 description",
+                        },
+                    },
+                    "required": ["param1"],
                 },
             ),
         ],

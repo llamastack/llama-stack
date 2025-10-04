@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import Enum
 from typing import Any, Literal, Protocol
 
@@ -41,9 +41,9 @@ class SqlStore(Protocol):
         """
         pass
 
-    async def insert(self, table: str, data: Mapping[str, Any]) -> None:
+    async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
         """
-        Insert a row into a table.
+        Insert a row or batch of rows into a table.
         """
         pass
 

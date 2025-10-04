@@ -4,25 +4,15 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncIterator
 from typing import Any
 
 import litellm
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-    InterleavedContentItem,
-)
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatCompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     InferenceProvider,
     JsonSchemaResponseFormat,
-    LogProbConfig,
-    Message,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
@@ -30,13 +20,7 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
-    ResponseFormat,
-    SamplingParams,
-    TextTruncation,
     ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -44,14 +28,9 @@ from llama_stack.providers.utils.inference.model_registry import ModelRegistryHe
 from llama_stack.providers.utils.inference.openai_compat import (
     b64_encode_openai_embeddings_response,
     convert_message_to_openai_dict_new,
-    convert_openai_chat_completion_choice,
-    convert_openai_chat_completion_stream,
     convert_tooldef_to_openai_tool,
     get_sampling_options,
     prepare_openai_completion_params,
-)
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -69,7 +48,7 @@ class LiteLLMOpenAIMixin(
         self,
         litellm_provider_name: str,
         api_key_from_config: str | None,
-        provider_data_api_key_field: str,
+        provider_data_api_key_field: str | None = None,
         model_entries: list[ProviderModelEntry] | None = None,
         openai_compat_api_base: str | None = None,
         download_images: bool = False,
@@ -80,7 +59,7 @@ class LiteLLMOpenAIMixin(
 
         :param model_entries: The model entries to register.
         :param api_key_from_config: The API key to use from the config.
-        :param provider_data_api_key_field: The field in the provider data that contains the API key.
+        :param provider_data_api_key_field: The field in the provider data that contains the API key (optional).
         :param litellm_provider_name: The name of the provider, used for model lookups.
         :param openai_compat_api_base: The base URL for OpenAI compatibility, or None if not using OpenAI compatibility.
         :param download_images: Whether to download images and convert to base64 for message conversion.
@@ -114,68 +93,6 @@ class LiteLLMOpenAIMixin(
             if self.is_openai_compat and not model_id.startswith(self.litellm_provider_name)
             else model_id
         )
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        raise NotImplementedError("LiteLLM does not support completion requests")
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        params = await self._get_params(request)
-        params["model"] = self.get_litellm_model_name(params["model"])
-
-        logger.debug(f"params to litellm (openai compat): {params}")
-        # see https://docs.litellm.ai/docs/completion/stream#async-completion
-        response = await litellm.acompletion(**params)
-        if stream:
-            return self._stream_chat_completion(response)
-        else:
-            return convert_openai_chat_completion_choice(response.choices[0])
-
-    async def _stream_chat_completion(
-        self, response: litellm.ModelResponse
-    ) -> AsyncIterator[ChatCompletionResponseStreamChunk]:
-        async def _stream_generator():
-            async for chunk in response:
-                yield chunk
-
-        async for chunk in convert_openai_chat_completion_stream(
-            _stream_generator(), enable_incremental_tool_calls=True
-        ):
-            yield chunk
 
     def _add_additional_properties_recursive(self, schema):
         """
@@ -268,24 +185,6 @@ class LiteLLMOpenAIMixin(
                 f'{{"{key_field}": "<API_KEY>"}}, or in the provider config.'
             )
         return api_key
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        model = await self.model_store.get_model(model_id)
-
-        response = litellm.embedding(
-            model=self.get_litellm_model_name(model.provider_resource_id),
-            input=[interleaved_content_as_str(content) for content in contents],
-        )
-
-        embeddings = [data["embedding"] for data in response["data"]]
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,
@@ -399,6 +298,14 @@ class LiteLLMOpenAIMixin(
         top_p: float | None = None,
         user: str | None = None,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        # Add usage tracking for streaming when telemetry is active
+        from llama_stack.providers.utils.telemetry.tracing import get_current_span
+
+        if stream and get_current_span() is not None:
+            if stream_options is None:
+                stream_options = {"include_usage": True}
+            elif "include_usage" not in stream_options:
+                stream_options = {**stream_options, "include_usage": True}
         model_obj = await self.model_store.get_model(model)
         params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(model_obj.provider_resource_id),

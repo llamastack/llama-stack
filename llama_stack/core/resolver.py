@@ -10,6 +10,7 @@ from typing import Any
 from llama_stack.apis.agents import Agents
 from llama_stack.apis.batches import Batches
 from llama_stack.apis.benchmarks import Benchmarks
+from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.datatypes import ExternalApiSpec
@@ -29,6 +30,7 @@ from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.core.client import get_client_impl
 from llama_stack.core.datatypes import (
     AccessRule,
@@ -95,6 +97,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.tool_runtime: ToolRuntime,
         Api.files: Files,
         Api.prompts: Prompts,
+        Api.conversations: Conversations,
     }
 
     if external_apis:
@@ -412,8 +415,14 @@ def check_protocol_compliance(obj: Any, protocol: Any) -> None:
 
     mro = type(obj).__mro__
     for name, value in inspect.getmembers(protocol):
-        if inspect.isfunction(value) and hasattr(value, "__webmethod__"):
-            if value.__webmethod__.experimental:
+        if inspect.isfunction(value) and hasattr(value, "__webmethods__"):
+            has_alpha_api = False
+            for webmethod in value.__webmethods__:
+                if webmethod.level == LLAMA_STACK_API_V1ALPHA:
+                    has_alpha_api = True
+                    break
+            # if this API has multiple webmethods, and one of them is an alpha API, this API should be skipped when checking for missing or not callable routes
+            if has_alpha_api:
                 continue
             if not hasattr(obj, name):
                 missing_methods.append((name, "missing"))

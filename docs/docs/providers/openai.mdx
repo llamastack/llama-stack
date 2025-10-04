@@ -7,7 +7,7 @@ sidebar_position: 1
 
 ### Server path
 
-Llama Stack exposes an OpenAI-compatible API endpoint at `/v1/openai/v1`. So, for a Llama Stack server running locally on port `8321`, the full url to the OpenAI-compatible API endpoint is `http://localhost:8321/v1/openai/v1`.
+Llama Stack exposes OpenAI-compatible API endpoints at `/v1`. So, for a Llama Stack server running locally on port `8321`, the full url to the OpenAI-compatible API endpoint is `http://localhost:8321/v1`.
 
 ### Clients
 
@@ -25,12 +25,12 @@ client = LlamaStackClient(base_url="http://localhost:8321")
 
 #### OpenAI Client
 
-When using an OpenAI client, set the `base_url` to the `/v1/openai/v1` path on your Llama Stack server.
+When using an OpenAI client, set the `base_url` to the `/v1` path on your Llama Stack server.
 
 ```python
 from openai import OpenAI
 
-client = OpenAI(base_url="http://localhost:8321/v1/openai/v1", api_key="none")
+client = OpenAI(base_url="http://localhost:8321/v1", api_key="none")
 ```
 
 Regardless of the client you choose, the following code examples should all work the same.

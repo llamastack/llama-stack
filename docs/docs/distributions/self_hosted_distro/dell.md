@@ -102,7 +102,7 @@ You can start a chroma-db easily using docker.
 # This is where the indices are persisted
 mkdir -p $HOME/chromadb
 
-podman run --rm -it \
+docker run --rm -it \
   --network host \
   --name chromadb \
   -v $HOME/chromadb:/chroma/chroma \
@@ -127,7 +127,7 @@ docker run -it \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
   # NOTE: mount the llama-stack / llama-model directories if testing local changes else not needed
-  -v /home/hjshah/git/llama-stack:/app/llama-stack-source -v /home/hjshah/git/llama-models:/app/llama-models-source \
+  -v $HOME/git/llama-stack:/app/llama-stack-source -v $HOME/git/llama-models:/app/llama-models-source \
   # localhost/distribution-dell:dev if building / testing locally
   llamastack/distribution-dell\
   --port $LLAMA_STACK_PORT  \

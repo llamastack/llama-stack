@@ -16,7 +16,7 @@ from llama_stack.apis.datasets.datasets import Dataset, DatasetPurpose, URIDataS
 from llama_stack.apis.datatypes import Api
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.apis.shields.shields import Shield
-from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroup, ToolParameter
+from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroup
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.core.datatypes import RegistryEntrySource
 from llama_stack.core.routing_tables.benchmarks import BenchmarksRoutingTable
@@ -137,7 +137,10 @@ class ToolGroupsImpl(Impl):
                 ToolDef(
                     name="test-tool",
                     description="Test tool",
-                    parameters=[ToolParameter(name="test-param", description="Test param", parameter_type="string")],
+                    input_schema={
+                        "type": "object",
+                        "properties": {"test-param": {"type": "string", "description": "Test param"}},
+                    },
                 )
             ]
         )
