@@ -27,10 +27,12 @@ class ModelType(StrEnum):
     """Enumeration of supported model types in Llama Stack.
     :cvar llm: Large language model for text generation and completion
     :cvar embedding: Embedding model for converting text to vector representations
+    :cvar rerank: Reranking model for reordering documents based on their relevance to a query
     """
 
     llm = "llm"
     embedding = "embedding"
+    rerank = "rerank"
 
 
 @json_schema_type
