@@ -55,18 +55,12 @@ jobs:
         # Weekly schedule (Sun 1 AM): vllm+base
         # Input test-setup=ollama-vision: ollama-vision+vision
         # Default (including test-setup=ollama): both ollama+base and ollama-vision+vision
-        include: ${{
-          github.event.schedule == '1 0 * * 0' && fromJSON('[
-            {"setup": "vllm", "suite": "base"}
-          ]') ||
-          github.event.inputs.test-setup == 'ollama-vision' && fromJSON('[
-            {"setup": "ollama-vision", "suite": "vision"}
-          ]') ||
-          fromJSON('[
-            {"setup": "ollama", "suite": "base"},
-            {"setup": "ollama-vision", "suite": "vision"}
-          ]')
-        }}
+        include: >-
+          ${{
+            github.event.schedule == '1 0 * * 0' && fromJSON('[{"setup": "vllm", "suite": "base"}]')
+            || github.event.inputs.test-setup == 'ollama-vision' && fromJSON('[{"setup": "ollama-vision", "suite": "vision"}]')
+            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}]')
+          }}
 
     steps:
       - name: Checkout repository
