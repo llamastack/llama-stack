@@ -8,7 +8,7 @@ FROM --platform=linux/amd64 ollama/ollama:latest
 RUN ollama serve & \
     sleep 5 && \
     ollama pull llama3.2-vision:11b && \
-    ollama pull all-minilm:l6-v2
+    ollama pull nomic-embed-text:v1.5
 
 # Set the entrypoint to start ollama serve
 ENTRYPOINT ["ollama", "serve"]

@@ -29,7 +29,7 @@ from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantVectorIOA
 from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
 from llama_stack.providers.remote.vector_io.weaviate.weaviate import WeaviateIndex, WeaviateVectorIOAdapter
 
-EMBEDDING_DIMENSION = 384
+EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
 MILVUS_ALIAS = "test_milvus"
 

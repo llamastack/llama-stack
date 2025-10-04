@@ -66,8 +66,8 @@ def rag_chat_page():
 
                 llama_stack_api.client.vector_dbs.register(
                     vector_db_id=vector_db_name,  # Use the user-provided name
-                    embedding_dimension=384,
-                    embedding_model="all-MiniLM-L6-v2",
+                    embedding_dimension=768,
+                    embedding_model="nomic-embed-text-v1.5",
                     provider_id=vector_io_provider,
                 )
 

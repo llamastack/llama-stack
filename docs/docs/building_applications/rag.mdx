@@ -47,8 +47,8 @@ client = LlamaStackClient(base_url=f"http://localhost:{os.environ['LLAMA_STACK_P
 vector_db_id = "my_documents"
 response = client.vector_dbs.register(
     vector_db_id=vector_db_id,
-    embedding_model="all-MiniLM-L6-v2",
-    embedding_dimension=384,
+    embedding_model="nomic-embed-text-v1.5",
+    embedding_dimension=768,
     provider_id="faiss",
 )
 ```
