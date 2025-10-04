@@ -1405,7 +1405,7 @@ def prepare_openai_embeddings_params(
 
 
 def b64_encode_openai_embeddings_response(
-    response_data: dict, encoding_format: str | None = "float"
+    response_data: list[dict], encoding_format: str | None = "float"
 ) -> list[OpenAIEmbeddingData]:
     """
     Process the OpenAI embeddings response to encode the embeddings in base64 format if specified.
@@ -1414,12 +1414,12 @@ def b64_encode_openai_embeddings_response(
     for i, embedding_data in enumerate(response_data):
         if encoding_format == "base64":
             byte_array = bytearray()
-            for embedding_value in embedding_data.embedding:
+            for embedding_value in embedding_data["embedding"]:
                 byte_array.extend(struct.pack("f", float(embedding_value)))
 
             response_embedding = base64.b64encode(byte_array).decode("utf-8")
         else:
-            response_embedding = embedding_data.embedding
+            response_embedding = embedding_data["embedding"]
         data.append(
             OpenAIEmbeddingData(
                 embedding=response_embedding,
