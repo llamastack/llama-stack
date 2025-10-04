@@ -65,6 +65,15 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
           path: 'base'
 
+
+      # Cache openai spec
+      - name: Cache openai openapi spec
+        id: cache-openapi
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ~/openai-openapi
+          key: openai-openapi.yml
+
       # Cache oasdiff to avoid checksum failures and speed up builds
       - name: Cache oasdiff
         if: steps.skip-check.outputs.skip != 'true'
@@ -80,6 +89,12 @@ jobs:
         run: |
           curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
           cp /usr/local/bin/oasdiff ~/oasdiff
+
+      - name: Get openai openapi spec
+        if: steps.cache-openapi.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/openai-openapi
+          curl -L https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml -o ~/openai-openapi/openai-openapi.yml
 
       # Setup cached oasdiff
       - name: Setup cached oasdiff
@@ -136,6 +151,25 @@ jobs:
         if: steps.skip-check.outputs.skip != 'true'
         run: |
           oasdiff breaking --fail-on ERR $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
+
+      # Run oasdiff to detect breaking changes in the API specification when compared to the OpenAI openAPI spec
+      - name: Run OpenAPI Breaking Change Diff Against OpenAI API
+        if: steps.skip-check.outputs.skip != 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          OPENAI_SPEC=~/openai-openapi/openai-openapi.yml
+          LOCAL_SPEC=docs/static/llama-stack-spec.yaml
+
+          # Compare OpenAI spec against Llama Stack spec
+          # Strip /v1 prefix from our spec to match OpenAI's paths
+          # Filter out api-path-removed errors for OpenAI routes we don't implement
+          oasdiff breaking --fail-on ERR \
+            "$OPENAI_SPEC" \
+            "$LOCAL_SPEC" \
+            --strip-prefix-revision "/v1" 2>&1 | \
+            grep -v "api-path-removed-without-deprecation" | \
+            grep -v "api-removed-without-deprecation" || true
 
       # Report when test is skipped
       - name: Report skip reason
