@@ -31,16 +31,22 @@ These normalizations ensure that re-recording tests produces minimal git diffs, 
 
 ## Usage
 
-### Recording mode
-Set `LLAMA_STACK_TEST_INFERENCE_MODE=record` to capture new responses:
-```bash
-LLAMA_STACK_TEST_INFERENCE_MODE=record pytest tests/integration/
-```
-
 ### Replay mode (default)
 Responses are replayed from recordings:
 ```bash
 LLAMA_STACK_TEST_INFERENCE_MODE=replay pytest tests/integration/
+```
+
+### Record-if-missing mode (recommended for adding new tests)
+Records only when no recording exists, otherwise replays. Use this for iterative development:
+```bash
+LLAMA_STACK_TEST_INFERENCE_MODE=record-if-missing pytest tests/integration/
+```
+
+### Recording mode
+**Force-records all API interactions**, overwriting existing recordings. Use with caution:
+```bash
+LLAMA_STACK_TEST_INFERENCE_MODE=record pytest tests/integration/
 ```
 
 ### Live mode

@@ -71,7 +71,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
-          setup: ${{ matrix.suite }}
+          setup: ${{ matrix.setup }}
           suite: ${{ matrix.suite }}
           inference-mode: 'replay'
 
