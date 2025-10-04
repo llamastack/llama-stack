@@ -64,7 +64,7 @@ def normalize_request(method: str, url: str, headers: dict[str, Any], body: dict
     from urllib.parse import urlparse
 
     parsed = urlparse(url)
-    normalized = {
+    normalized: dict[str, Any] = {
         "method": method.upper(),
         "endpoint": parsed.path,
         "body": body,
