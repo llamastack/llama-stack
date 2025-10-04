@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming[client_with_models-txt=ollama/llama3.2:3b-instruct-fp16-inference:chat_completion:non_streaming_01]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -8,7 +9,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Test trace openai 0"
+          "content": "Which planet do humans live on?"
         }
       ],
       "stream": false
@@ -20,14 +21,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-140187e305dc",
+        "id": "rec-acdd905b0481",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "I'm happy to help you test the OpenAI API, however I can not access the API.\n\nInstead why don't we follow these steps:\n\n*   Check documentation\n*   Contact support\n*   Reach out to their community forum. \n\nLet me know if I can be of any additional assistance",
+              "content": "Humans live on Earth. It is the third planet from the Sun and the only known planet in the universe that supports life.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -43,9 +44,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 61,
-          "prompt_tokens": 31,
-          "total_tokens": 92,
+          "completion_tokens": 26,
+          "prompt_tokens": 32,
+          "total_tokens": 58,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
