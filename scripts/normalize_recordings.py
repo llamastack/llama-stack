@@ -21,38 +21,6 @@ import json
 from pathlib import Path
 
 
-def normalize_tool_call_ids(obj, request_hash: str, counter: dict) -> None:
-    """Recursively normalize tool call IDs in an object structure."""
-    if isinstance(obj, dict):
-        # Normalize tool_calls array
-        if "tool_calls" in obj and isinstance(obj["tool_calls"], list):
-            for tool_call in obj["tool_calls"]:
-                if isinstance(tool_call, dict) and "id" in tool_call:
-                    # Generate deterministic tool call ID
-                    tool_call["id"] = f"toolcall-{request_hash[:8]}-{counter['count']}"
-                    counter["count"] += 1
-                # Recurse into nested structures
-                normalize_tool_call_ids(tool_call, request_hash, counter)
-
-        # Normalize tool_call_id field (used in tool response messages)
-        if "tool_call_id" in obj:
-            # We need to map this to the same ID that was used in tool_calls
-            # For post-facto cleanup, we'll use a simple approach: extract index if possible
-            # Otherwise just normalize with counter
-            obj["tool_call_id"] = f"toolcall-{request_hash[:8]}-{counter['tool_response_count']}"
-            counter["tool_response_count"] += 1
-
-        # Recurse into all dict values
-        for key, value in obj.items():
-            if key not in ("tool_calls", "tool_call_id"):  # Already handled above
-                normalize_tool_call_ids(value, request_hash, counter)
-
-    elif isinstance(obj, list):
-        # Recurse into list items
-        for item in obj:
-            normalize_tool_call_ids(item, request_hash, counter)
-
-
 def normalize_response_data(data: dict, request_hash: str) -> dict:
     """Normalize fields that change between recordings but don't affect functionality."""
     # Only normalize ID for completion/chat responses, not for model objects
@@ -78,10 +46,6 @@ def normalize_response_data(data: dict, request_hash: str) -> dict:
         data["prompt_eval_duration"] = 0
     if "eval_duration" in data and data["eval_duration"] is not None:
         data["eval_duration"] = 0
-
-    # Normalize tool call IDs
-    counter = {"count": 0, "tool_response_count": 0}
-    normalize_tool_call_ids(data, request_hash, counter)
 
     return data
 
