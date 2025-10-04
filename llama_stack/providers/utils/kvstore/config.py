@@ -54,6 +54,7 @@ class SqliteKVStoreConfig(CommonConfig):
     db_path: str = Field(
         default=(RUNTIME_BASE_DIR / "kvstore.db").as_posix(),
         description="File path for the sqlite database",
+        json_schema_extra={"default": "~/.llama/runtime/kvstore.db"},
     )
 
     @classmethod
