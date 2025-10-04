@@ -20,8 +20,15 @@ import json
 import socket
 import threading
 import time
+from collections import defaultdict
 from typing import Any
 
+from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import (
+    ExportMetricsServiceRequest,
+)
+from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
+    ExportTraceServiceRequest,
+)
 from pydantic import Field
 
 from .mock_base import MockServerBase
@@ -47,6 +54,7 @@ class MockOTLPCollector(MockServerBase):
     # Non-Pydantic fields (set after initialization)
     traces: list[dict] = Field(default_factory=list, exclude=True)
     metrics: list[dict] = Field(default_factory=list, exclude=True)
+    all_http_requests: list[dict] = Field(default_factory=list, exclude=True)  # Track ALL HTTP requests for debugging
     server: Any = Field(default=None, exclude=True)
     server_thread: Any = Field(default=None, exclude=True)
 
@@ -78,6 +86,16 @@ class MockOTLPCollector(MockServerBase):
                 """Handle OTLP POST requests."""
                 content_length = int(self.headers.get("Content-Length", 0))
                 body = self.rfile.read(content_length) if content_length > 0 else b""
+
+                # Track ALL requests for debugging
+                collector_self.all_http_requests.append(
+                    {
+                        "method": "POST",
+                        "path": self.path,
+                        "timestamp": time.time(),
+                        "body_length": len(body),
+                    }
+                )
 
                 # Store the export request
                 if "/v1/traces" in self.path:
@@ -156,6 +174,132 @@ class MockOTLPCollector(MockServerBase):
     def get_all_metrics(self) -> list[dict]:
         """Get all captured metric exports."""
         return self.metrics
+
+    # -----------------------------
+    # Trace parsing helpers
+    # -----------------------------
+    def parse_traces(self) -> dict[str, list[dict]]:
+        """
+        Parse protobuf trace data and return spans grouped by trace ID.
+
+        Returns:
+            Dict mapping trace_id (hex) -> list of span dicts
+        """
+        trace_id_to_spans: dict[str, list[dict]] = {}
+
+        for export in self.traces:
+            request = ExportTraceServiceRequest()
+            body = export.get("body", b"")
+            try:
+                request.ParseFromString(body)
+            except Exception as e:
+                raise RuntimeError(f"Failed to parse OTLP traces export (len={len(body)}): {e}") from e
+
+            for resource_span in request.resource_spans:
+                for scope_span in resource_span.scope_spans:
+                    for span in scope_span.spans:
+                        # span.trace_id is bytes; convert to hex string
+                        trace_id = (
+                            span.trace_id.hex() if isinstance(span.trace_id, bytes | bytearray) else str(span.trace_id)
+                        )
+                        span_entry = {
+                            "name": span.name,
+                            "span_id": span.span_id.hex()
+                            if isinstance(span.span_id, bytes | bytearray)
+                            else str(span.span_id),
+                            "start_time_unix_nano": int(getattr(span, "start_time_unix_nano", 0)),
+                            "end_time_unix_nano": int(getattr(span, "end_time_unix_nano", 0)),
+                        }
+                        trace_id_to_spans.setdefault(trace_id, []).append(span_entry)
+
+        return trace_id_to_spans
+
+    def get_all_trace_ids(self) -> set[str]:
+        """Return set of all trace IDs seen so far."""
+        return set(self.parse_traces().keys())
+
+    def get_trace_span_counts(self) -> dict[str, int]:
+        """Return span counts per trace ID."""
+        grouped = self.parse_traces()
+        return {tid: len(spans) for tid, spans in grouped.items()}
+
+    def get_new_trace_ids(self, prior_ids: set[str]) -> set[str]:
+        """Return trace IDs that appeared after prior_ids snapshot."""
+        return self.get_all_trace_ids() - set(prior_ids)
+
+    def parse_metrics(self) -> dict[str, list[Any]]:
+        """
+        Parse protobuf metric data and return metrics by name.
+
+        Returns:
+            Dict mapping metric names to list of metric data points
+        """
+        metrics_by_name = defaultdict(list)
+
+        for export in self.metrics:
+            # Parse the protobuf body
+            request = ExportMetricsServiceRequest()
+            body = export.get("body", b"")
+            try:
+                request.ParseFromString(body)
+            except Exception as e:
+                raise RuntimeError(f"Failed to parse OTLP metrics export (len={len(body)}): {e}") from e
+
+            # Extract metrics from the request
+            for resource_metric in request.resource_metrics:
+                for scope_metric in resource_metric.scope_metrics:
+                    for metric in scope_metric.metrics:
+                        metric_name = metric.name
+
+                        # Extract data points based on metric type
+                        data_points = []
+                        if metric.HasField("gauge"):
+                            data_points = list(metric.gauge.data_points)
+                        elif metric.HasField("sum"):
+                            data_points = list(metric.sum.data_points)
+                        elif metric.HasField("histogram"):
+                            data_points = list(metric.histogram.data_points)
+                        elif metric.HasField("summary"):
+                            data_points = list(metric.summary.data_points)
+
+                        metrics_by_name[metric_name].extend(data_points)
+
+        return dict(metrics_by_name)
+
+    def get_metric_by_name(self, metric_name: str) -> list[Any]:
+        """
+        Get all data points for a specific metric by name.
+
+        Args:
+            metric_name: The name of the metric to retrieve
+
+        Returns:
+            List of data points for the metric, or empty list if not found
+        """
+        metrics = self.parse_metrics()
+        return metrics.get(metric_name, [])
+
+    def has_metric(self, metric_name: str) -> bool:
+        """
+        Check if a metric with the given name has been captured.
+
+        Args:
+            metric_name: The name of the metric to check
+
+        Returns:
+            True if the metric exists and has data points, False otherwise
+        """
+        data_points = self.get_metric_by_name(metric_name)
+        return len(data_points) > 0
+
+    def get_all_metric_names(self) -> list[str]:
+        """
+        Get all unique metric names that have been captured.
+
+        Returns:
+            List of metric names
+        """
+        return list(self.parse_metrics().keys())
 
 
 class MockVLLMServer(MockServerBase):
@@ -282,12 +426,13 @@ class MockVLLMServer(MockServerBase):
                     ],
                 }
 
-            def _create_chat_completion_response(self, request_data: dict) -> dict:
+            def _create_chat_completion_response(self, request_data: dict) -> dict | None:
                 """
                 Create OpenAI ChatCompletion response.
 
                 Returns a valid response matching openai.types.ChatCompletion.
                 Supports both regular and streaming responses.
+                Returns None for streaming responses (already sent via SSE).
                 """
                 # Check if streaming is requested
                 is_streaming = request_data.get("stream", False)

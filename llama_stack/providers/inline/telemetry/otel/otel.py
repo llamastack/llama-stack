@@ -121,22 +121,34 @@ class MetricsSpanExporter(SpanExporter):
                 "http.method": str(span.attributes.get("http.method", "UNKNOWN")),
                 "http.route": str(span.attributes.get("http.route", span.attributes.get("http.target", "/"))),
                 "http.status_code": str(span.attributes.get("http.status_code", 0)),
-                "trace_id": str(span.attributes.get("trace_id", default="")),
-                "span_id": str(span.attributes.get("span_id", default="")),
             }
 
+            # set distributed trace attributes
+            if span.attributes.get("trace_id"):
+                attributes["trace_id"] = str(span.attributes.get("trace_id"))
+            if span.attributes.get("span_id"):
+                attributes["span_id"] = str(span.attributes.get("span_id"))
+
             # Record request count and duration
+            logger.debug(f"Recording metrics: duration={duration_ms}ms, attributes={attributes}")
             self.request_count.add(1, attributes)
             self.request_duration.record(duration_ms, attributes)
+            logger.debug("Metrics recorded successfully")
 
             # For streaming, record separately
             if is_streaming:
+                logger.debug(f"MetricsSpanExporter: Recording streaming metrics for {span.name}")
                 self.streaming_requests.add(1, attributes)
 
                 # If full streaming duration is available
                 stream_total_duration = span.attributes.get("http.streaming.total_duration_ms")
                 if stream_total_duration and isinstance(stream_total_duration, int | float):
+                    logger.debug(f"MetricsSpanExporter: Recording streaming duration: {stream_total_duration}ms")
                     self.streaming_duration.record(float(stream_total_duration), attributes)
+                else:
+                    logger.warning(
+                        "MetricsSpanExporter: Streaming span has no http.streaming.total_duration_ms attribute"
+                    )
 
         return SpanExportResult.SUCCESS
 
@@ -165,8 +177,10 @@ class OTelTelemetryProvider(TelemetryProvider):
                     "OTEL_EXPORTER_OTLP_ENDPOINT or OTEL_EXPORTER_OTLP_METRICS_ENDPOINT is not set. Metrics will not be exported."
                 )
 
-        # Get service name from environment, with fallback
-        service_name = os.environ.get("OTEL_SERVICE_NAME", "llama-stack")
+        # Respect OTEL design standards where environment variables get highest precedence
+        service_name = os.environ.get("OTEL_SERVICE_NAME")
+        if not service_name:
+            service_name = self.config.service_name
 
         # Create resource with service name
         resource = Resource.create({"service.name": service_name})
@@ -203,8 +217,6 @@ class OTelTelemetryProvider(TelemetryProvider):
         - HTTP request metrics (count, duration, status)
         - Streaming-specific metrics (time-to-first-byte, total stream duration)
         """
-        logger.debug("fastapi_middleware called")
-        logger.debug(f"App already instrumented: {getattr(app, '_is_instrumented_by_opentelemetry', False)}")
 
         # Create meter for HTTP metrics
         meter = metrics.get_meter("llama_stack.http.server")
@@ -255,7 +267,7 @@ class OTelTelemetryProvider(TelemetryProvider):
             }
 
             request_count.add(1, attributes)
-            logger.debug(f"Hook: recorded request_count for {method} {path}")
+            logger.debug(f"server_request_hook: recorded request_count for {method} {path}, attributes={attributes}")
 
         # NOTE: This is called BEFORE routes are added to the app
         # FastAPIInstrumentor.instrument_app() patches build_middleware_stack(),
@@ -272,6 +284,7 @@ class OTelTelemetryProvider(TelemetryProvider):
 
         # Add metrics span processor
         provider = trace.get_tracer_provider()
+        logger.debug(f"TracerProvider: {provider}")
         if isinstance(provider, TracerProvider):
             metrics_exporter = MetricsSpanExporter(
                 request_duration=request_duration,
@@ -280,6 +293,11 @@ class OTelTelemetryProvider(TelemetryProvider):
                 request_count=request_count,
             )
             provider.add_span_processor(BatchSpanProcessor(metrics_exporter))
+            logger.debug("Added MetricsSpanExporter as BatchSpanProcessor")
+        else:
+            logger.warning(
+                f"TracerProvider is not TracerProvider instance, it's {type(provider)}. MetricsSpanExporter not added."
+            )
 
     def sqlalchemy_instrumentation(self, engine: Engine | None = None):
         """Instrument SQLAlchemy with OpenTelemetry."""
@@ -287,3 +305,8 @@ class OTelTelemetryProvider(TelemetryProvider):
         if engine:
             kwargs["engine"] = engine
         SQLAlchemyInstrumentor().instrument(**kwargs)
+
+    # TODO: remove the legacy Telemtry API and its validation logic in resolver.py
+    async def log_event(self, event: dict, ttl_seconds: int | None = None):
+        """Log an event to the telemetry system (no-op for OTel provider)."""
+        pass
