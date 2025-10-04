@@ -1,0 +1,57 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 2"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-395c30078677",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I'd be happy to help you test the OpenAI 2.0 model!\n\nPlease note that I need to clarify a few things:\n\n1. **I can only simulate the conversation**: I won't have direct access to the actual OpenAI 2.0 model.\n2. **The simulation might not be perfect**: The testing process will be based on my understanding of the model's capabilities and limitations.\n\nThat being said, here's how you can test the OpenAI 2.0 model with me:\n\n**Testing Scenarios**\n\nChoose one or more of the following scenarios to test the OpenAI 2.0 model:\n\n1. **Basic Conversation**: Test basic conversations, such as asking questions and receiving answers.\n2. **Dialogue Flow**: Test the model's ability to maintain a conversation flow by asking follow-up questions.\n3. **Creative Writing**: Test the model's creativity by asking it to generate paragraphs or short stories.\n4. **Fact Retrieval**: Test the model's knowledge retrieval capabilities by asking it factual questions.\n\n**Input Format**\n\nPlease format your input using plain text. You can use:\n\n* A single question or statement\n* Multiple statements separated by commas\n* A prompt with a specific format (e.g., \"Write a short story about [topic]\")\n\n**Example Input**\n```\nAsk me: What is the capital of France?\n```\n\nGo ahead and choose your testing scenario, and I'll simulate the conversation!",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 293,
+          "prompt_tokens": 31,
+          "total_tokens": 324,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

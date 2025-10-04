@@ -1,0 +1,57 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 1"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-1098240ef53b",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I'm happy to help you test the OpenAI API, but I need to clarify that I'm a large language model, not a direct interface to the OpenAI API. However, I can guide you through a simple testing process.\n\nOpenAI provides an API key that allows access to their models, including the powerful \"text-001\" model you mentioned. Here's how you can test it:\n\n**Step 1: Get your API Key**\n\nIf you haven't already, sign up for an OpenAI account at [openai.com](http://openai.com) and obtain a free API key.\n\n**Step 2: Access the API endpoint**\n\nOpenAI provides a few different endpoints for their models. For testing purposes, we'll use the \"API endpoint\" which is `https://api.openai.com/v1/models/text-001`. You can access this URL directly in your web browser or use a tool like `curl` to send an HTTP request.\n\n**Step 3: Test with a simple prompt**\n\nTo test the model, you can use a simple prompt, such as:\n\n`\"Write a short paragraph about AI.\"`\n\nYou can modify this prompt to suit your testing needs. You can also try using more complex prompts or even generating text based on user input.\n\nHere's an example of how you could send a request to the OpenAI endpoint using `curl`:\n```bash\ncurl -X POST \\\n  https://api.openai.com/v1/models/text-001 \\\n  -H 'Authorization: Bearer YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"prompt\": \"Write a short paragraph about AI.\"}'\n```\nReplace `YOUR_API_KEY` with your actual OpenAI API key.\n\n**Step 4: Verify the response**\n\nAfter sending the request, you should receive a JSON response from OpenAI. The response will contain the generated text based on your prompt.\n\nIf everything goes well, you should see some text in response to your prompt. This might look something like this:\n```json\n{\n  \"result\": [\n    {\n      \"text\": \"Artificial intelligence has been able to learn and adapt quickly, allowing it to take over various tasks automatically.\"\n    }\n  ]\n}\n```\nThis is just a simple example to demonstrate the process of testing the OpenAI API. Keep in mind that this is just a brief illustration and the actual experience may vary depending on your specific use case.\n\nDo you want me to try using python - gpt-3 via Hugging Face to run some tests ? I can give it a shot if you're not up to the task yourself!",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 539,
+          "prompt_tokens": 31,
+          "total_tokens": 570,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
