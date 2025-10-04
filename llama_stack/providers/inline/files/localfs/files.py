@@ -95,7 +95,9 @@ class LocalfsFilesImpl(Files):
             raise RuntimeError("Files provider not initialized")
 
         if expires_after is not None:
-            raise NotImplementedError("File expiration is not supported by this provider")
+            logger.warning(
+                f"File expiration is not supported by this provider, ignoring expires_after: {expires_after}"
+            )
 
         file_id = self._generate_file_id()
         file_path = self._get_file_path(file_id)

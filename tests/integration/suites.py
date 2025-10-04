@@ -39,7 +39,7 @@ class Setup(BaseModel):
 
     name: str
     description: str
-    defaults: dict[str, str] = Field(default_factory=dict)
+    defaults: dict[str, str | int] = Field(default_factory=dict)
     env: dict[str, str] = Field(default_factory=dict)
 
 
@@ -88,6 +88,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
+            "embedding_dimension": 1536,
         },
     ),
     "tgi": Setup(

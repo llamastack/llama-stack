@@ -29,7 +29,7 @@ Options:
     --stack-config STRING    Stack configuration to use (required)
     --suite STRING           Test suite to run (default: 'base')
     --setup STRING           Test setup (models, env) to use (e.g., 'ollama', 'ollama-vision', 'gpt', 'vllm')
-    --inference-mode STRING  Inference mode: record or replay (default: replay)
+    --inference-mode STRING  Inference mode: replay, record-if-missing or record (default: replay)
     --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
     --pattern STRING         Regex pattern to pass to pytest -k
     --help                   Show this help message
@@ -102,7 +102,7 @@ if [[ -z "$STACK_CONFIG" ]]; then
 fi
 
 if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" ]]; then
-    echo "Error: --test-setup is required when --test-subdirs is provided"
+    echo "Error: --test-setup is required when --test-subdirs is not provided"
     usage
     exit 1
 fi

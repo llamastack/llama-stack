@@ -103,9 +103,13 @@ async def convert_response_content_to_chat_content(
 
 async def convert_response_input_to_chat_messages(
     input: str | list[OpenAIResponseInput],
+    previous_messages: list[OpenAIMessageParam] | None = None,
 ) -> list[OpenAIMessageParam]:
     """
     Convert the input from an OpenAI Response API request into OpenAI Chat Completion messages.
+
+    :param input: The input to convert
+    :param previous_messages: Optional previous messages to check for function_call references
     """
     messages: list[OpenAIMessageParam] = []
     if isinstance(input, list):
@@ -169,14 +173,51 @@ async def convert_response_input_to_chat_messages(
                     raise ValueError(
                         f"Llama Stack OpenAI Responses does not yet support message role '{input_item.role}' in this context"
                     )
+                # Skip user messages that duplicate the last user message in previous_messages
+                # This handles cases where input includes context for function_call_outputs
+                if previous_messages and input_item.role == "user":
+                    last_user_msg = None
+                    for msg in reversed(previous_messages):
+                        if isinstance(msg, OpenAIUserMessageParam):
+                            last_user_msg = msg
+                            break
+                    if last_user_msg:
+                        last_user_content = getattr(last_user_msg, "content", None)
+                        if last_user_content == content:
+                            continue  # Skip duplicate user message
                 messages.append(message_type(content=content))
         if len(tool_call_results):
-            raise ValueError(
-                f"Received function_call_output(s) with call_id(s) {tool_call_results.keys()}, but no corresponding function_call"
-            )
+            # Check if unpaired function_call_outputs reference function_calls from previous messages
+            if previous_messages:
+                previous_call_ids = _extract_tool_call_ids(previous_messages)
+                for call_id in list(tool_call_results.keys()):
+                    if call_id in previous_call_ids:
+                        # Valid: this output references a call from previous messages
+                        # Add the tool message
+                        messages.append(tool_call_results[call_id])
+                        del tool_call_results[call_id]
+
+            # If still have unpaired outputs, error
+            if len(tool_call_results):
+                raise ValueError(
+                    f"Received function_call_output(s) with call_id(s) {tool_call_results.keys()}, but no corresponding function_call"
+                )
     else:
         messages.append(OpenAIUserMessageParam(content=input))
     return messages
+
+
+def _extract_tool_call_ids(messages: list[OpenAIMessageParam]) -> set[str]:
+    """Extract all tool_call IDs from messages."""
+    call_ids = set()
+    for msg in messages:
+        if isinstance(msg, OpenAIAssistantMessageParam):
+            tool_calls = getattr(msg, "tool_calls", None)
+            if tool_calls:
+                for tool_call in tool_calls:
+                    # tool_call is a Pydantic model, use attribute access
+                    call_ids.add(tool_call.id)
+    return call_ids
 
 
 async def convert_response_text_to_chat_response_format(

@@ -108,7 +108,7 @@ class OpenAIResponsesImpl:
                 # Use stored messages directly and convert only new input
                 message_adapter = TypeAdapter(list[OpenAIMessageParam])
                 messages = message_adapter.validate_python(previous_response.messages)
-                new_messages = await convert_response_input_to_chat_messages(input)
+                new_messages = await convert_response_input_to_chat_messages(input, previous_messages=messages)
                 messages.extend(new_messages)
             else:
                 # Backward compatibility: reconstruct from inputs

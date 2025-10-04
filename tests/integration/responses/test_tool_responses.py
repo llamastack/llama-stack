@@ -46,11 +46,13 @@ def test_response_non_streaming_web_search(compat_client, text_model_id, case):
 
 
 @pytest.mark.parametrize("case", file_search_test_cases)
-def test_response_non_streaming_file_search(compat_client, text_model_id, tmp_path, case):
+def test_response_non_streaming_file_search(
+    compat_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path, case
+):
     if isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("Responses API file search is not yet supported in library client.")
 
-    vector_store = new_vector_store(compat_client, "test_vector_store")
+    vector_store = new_vector_store(compat_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     if case.file_content:
         file_name = "test_response_non_streaming_file_search.txt"
@@ -101,11 +103,13 @@ def test_response_non_streaming_file_search(compat_client, text_model_id, tmp_pa
     assert case.expected.lower() in response.output_text.lower().strip()
 
 
-def test_response_non_streaming_file_search_empty_vector_store(compat_client, text_model_id):
+def test_response_non_streaming_file_search_empty_vector_store(
+    compat_client, text_model_id, embedding_model_id, embedding_dimension
+):
     if isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("Responses API file search is not yet supported in library client.")
 
-    vector_store = new_vector_store(compat_client, "test_vector_store")
+    vector_store = new_vector_store(compat_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     # Create the response request, which should query our vector store
     response = compat_client.responses.create(
@@ -127,12 +131,14 @@ def test_response_non_streaming_file_search_empty_vector_store(compat_client, te
     assert response.output_text
 
 
-def test_response_sequential_file_search(compat_client, text_model_id, tmp_path):
+def test_response_sequential_file_search(
+    compat_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path
+):
     """Test file search with sequential responses using previous_response_id."""
     if isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("Responses API file search is not yet supported in library client.")
 
-    vector_store = new_vector_store(compat_client, "test_vector_store")
+    vector_store = new_vector_store(compat_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     # Create a test file with content
     file_content = "The Llama 4 Maverick model has 128 experts in its mixture of experts architecture."

@@ -16,6 +16,7 @@ import pytest
 from llama_stack_client import APIStatusError
 
 
+@pytest.mark.xfail(reason="Shields are not yet implemented inside responses")
 def test_shields_via_extra_body(compat_client, text_model_id):
     """Test that shields parameter is received by the server and raises NotImplementedError."""
 

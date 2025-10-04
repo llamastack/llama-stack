@@ -183,6 +183,12 @@ def llama_stack_client(request):
     # would be forced to use llama_stack_client, which is not what we want.
     print("\ninstantiating llama_stack_client")
     start_time = time.time()
+
+    # Patch httpx to inject test ID for server-mode test isolation
+    from llama_stack.testing.api_recorder import patch_httpx_for_test_id
+
+    patch_httpx_for_test_id()
+
     client = instantiate_llama_stack_client(request.session)
     print(f"llama_stack_client instantiated in {time.time() - start_time:.3f}s")
     return client
