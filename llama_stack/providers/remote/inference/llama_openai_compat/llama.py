@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+from typing import Any
+
+from llama_stack.apis.inference.inference import OpenAICompletion
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.llama_openai_compat.config import LlamaCompatConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
@@ -51,3 +54,28 @@ class LlamaCompatInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
 
     async def shutdown(self):
         await super().shutdown()
+
+    async def openai_completion(
+        self,
+        model: str,
+        prompt: str | list[str] | list[int] | list[list[int]],
+        best_of: int | None = None,
+        echo: bool | None = None,
+        frequency_penalty: float | None = None,
+        logit_bias: dict[str, float] | None = None,
+        logprobs: bool | None = None,
+        max_tokens: int | None = None,
+        n: int | None = None,
+        presence_penalty: float | None = None,
+        seed: int | None = None,
+        stop: str | list[str] | None = None,
+        stream: bool | None = None,
+        stream_options: dict[str, Any] | None = None,
+        temperature: float | None = None,
+        top_p: float | None = None,
+        user: str | None = None,
+        guided_choice: list[str] | None = None,
+        prompt_logprobs: int | None = None,
+        suffix: str | None = None,
+    ) -> OpenAICompletion:
+        raise NotImplementedError()
