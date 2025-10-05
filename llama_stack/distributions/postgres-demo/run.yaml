@@ -71,21 +71,20 @@ providers:
     provider_type: inline::rag-runtime
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
-metadata_store:
-  type: postgres
-  host: ${env.POSTGRES_HOST:=localhost}
-  port: ${env.POSTGRES_PORT:=5432}
-  db: ${env.POSTGRES_DB:=llamastack}
-  user: ${env.POSTGRES_USER:=llamastack}
-  password: ${env.POSTGRES_PASSWORD:=llamastack}
-  table_name: ${env.POSTGRES_TABLE_NAME:=llamastack_kvstore}
-inference_store:
-  type: postgres
-  host: ${env.POSTGRES_HOST:=localhost}
-  port: ${env.POSTGRES_PORT:=5432}
-  db: ${env.POSTGRES_DB:=llamastack}
-  user: ${env.POSTGRES_USER:=llamastack}
-  password: ${env.POSTGRES_PASSWORD:=llamastack}
+persistence:
+  backends:
+    default:
+      type: postgres
+      host: ${env.POSTGRES_HOST:=localhost}
+      port: ${env.POSTGRES_PORT:=5432}
+      db: ${env.POSTGRES_DB:=llamastack}
+      user: ${env.POSTGRES_USER:=llamastack}
+      password: ${env.POSTGRES_PASSWORD:=llamastack}
+      table_name: ${env.POSTGRES_TABLE_NAME:=llamastack_kvstore}
+  metadata:
+    backend: default
+  inference:
+    backend: default
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}
