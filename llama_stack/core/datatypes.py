@@ -27,8 +27,18 @@ from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.providers.datatypes import Api, ProviderSpec
-from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
-from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreConfig
+from llama_stack.providers.utils.kvstore.config import (
+    KVStoreConfig,
+    MongoDBKVStoreConfig,
+    PostgresKVStoreConfig,
+    RedisKVStoreConfig,
+    SqliteKVStoreConfig,
+)
+from llama_stack.providers.utils.sqlstore.sqlstore import (
+    PostgresSqlStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreConfig,
+)
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
 LLAMA_STACK_RUN_CONFIG_VERSION = 2
@@ -467,13 +477,52 @@ class StoresConfig(BaseModel):
 class PersistenceConfig(BaseModel):
     """Unified persistence configuration."""
 
-    backends: dict[str, KVStoreConfig | SqlStoreConfig] = Field(
+    backends: dict[str, Any] = Field(
         description="Named backend configurations (e.g., 'default', 'cache')",
     )
     stores: StoresConfig | None = Field(
         default=None,
         description="Store references to backends",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_backends(cls, data: Any) -> Any:
+        """Parse backends intelligently based on which stores reference them."""
+        if not isinstance(data, dict) or "backends" not in data:
+            return data
+
+        backends_raw = data["backends"]
+        stores = data.get("stores", {})
+
+        # Determine which backends are used by which store types
+        metadata_backend = (stores.get("metadata") or {}).get("backend")
+        inference_backend = (stores.get("inference") or {}).get("backend")
+        conversations_backend = (stores.get("conversations") or {}).get("backend")
+
+        # Parse each backend based on usage context
+        parsed_backends = {}
+        for name, config in backends_raw.items():
+            if not isinstance(config, dict):
+                parsed_backends[name] = config
+                continue
+
+            # Determine backend type based on which store uses it
+            if name == metadata_backend:
+                # Metadata requires KVStore
+                parsed_backends[name] = _parse_kvstore_config(config)
+            elif name in (inference_backend, conversations_backend):
+                # Inference/conversations require SqlStore
+                parsed_backends[name] = _parse_sqlstore_config(config)
+            else:
+                # Unknown usage - try SqlStore first (for backward compat), then KVStore
+                try:
+                    parsed_backends[name] = _parse_sqlstore_config(config)
+                except:
+                    parsed_backends[name] = _parse_kvstore_config(config)
+
+        data["backends"] = parsed_backends
+        return data
 
     @model_validator(mode="after")
     def validate_backend_references(self) -> Self:
@@ -495,14 +544,45 @@ class PersistenceConfig(BaseModel):
         return self
 
 
+def _parse_kvstore_config(config: dict) -> (
+    RedisKVStoreConfig
+    | SqliteKVStoreConfig
+    | PostgresKVStoreConfig
+    | MongoDBKVStoreConfig
+):
+    """Parse a KVStore config from dict."""
+    type_val = config.get("type")
+    if type_val == "redis":
+        return RedisKVStoreConfig(**config)
+    elif type_val == "sqlite":
+        return SqliteKVStoreConfig(**config)
+    elif type_val == "postgres":
+        return PostgresKVStoreConfig(**config)
+    elif type_val == "mongodb":
+        return MongoDBKVStoreConfig(**config)
+    else:
+        raise ValueError(f"Unknown KVStore type: {type_val}")
+
+
+def _parse_sqlstore_config(config: dict) -> SqliteSqlStoreConfig | PostgresSqlStoreConfig:
+    """Parse a SqlStore config from dict."""
+    type_val = config.get("type")
+    if type_val == "sqlite":
+        return SqliteSqlStoreConfig(**config)
+    elif type_val == "postgres":
+        return PostgresSqlStoreConfig(**config)
+    else:
+        raise ValueError(f"Unknown SqlStore type: {type_val}")
+
+
 class InferenceStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
+    sql_store_config: SqliteSqlStoreConfig | PostgresSqlStoreConfig
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 
 class ResponsesStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
+    sql_store_config: SqliteSqlStoreConfig | PostgresSqlStoreConfig
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 

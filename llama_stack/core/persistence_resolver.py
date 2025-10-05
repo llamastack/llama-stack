@@ -12,13 +12,27 @@ from llama_stack.core.datatypes import (
     StoreReference,
 )
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR, RUNTIME_BASE_DIR
-from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
+from llama_stack.providers.utils.kvstore.config import (
+    MongoDBKVStoreConfig,
+    PostgresKVStoreConfig,
+    RedisKVStoreConfig,
+    SqliteKVStoreConfig,
+)
 from llama_stack.providers.utils.sqlstore.sqlstore import (
-    SqlStoreConfig,
+    PostgresSqlStoreConfig,
     SqliteSqlStoreConfig,
 )
 
-T = TypeVar("T", KVStoreConfig, SqlStoreConfig)
+# Type aliases for cleaner code
+KVStoreConfigTypes = (
+    RedisKVStoreConfig,
+    SqliteKVStoreConfig,
+    PostgresKVStoreConfig,
+    MongoDBKVStoreConfig,
+)
+SqlStoreConfigTypes = (SqliteSqlStoreConfig, PostgresSqlStoreConfig)
+
+T = TypeVar("T")
 
 
 def resolve_backend(
@@ -50,7 +64,7 @@ def resolve_backend(
         )
 
     # Clone backend and apply namespace if KVStore
-    if isinstance(backend_config, (KVStoreConfig.__args__)):  # type: ignore
+    if isinstance(backend_config, KVStoreConfigTypes):
         config_dict = backend_config.model_dump()
         if store_ref.namespace:
             config_dict["namespace"] = store_ref.namespace
@@ -61,7 +75,7 @@ def resolve_backend(
 
 def resolve_inference_store_config(
     persistence: PersistenceConfig | None,
-) -> tuple[SqlStoreConfig, int, int]:
+) -> tuple[SqliteSqlStoreConfig | PostgresSqlStoreConfig, int, int]:
     """
     Resolve inference store configuration.
 
@@ -86,7 +100,7 @@ def resolve_inference_store_config(
             f"not found in persistence.backends"
         )
 
-    if not isinstance(backend_config, (SqlStoreConfig.__args__)):  # type: ignore
+    if not isinstance(backend_config, SqlStoreConfigTypes):
         raise ValueError(
             f"Inference store requires SqlStore backend, got {type(backend_config).__name__}"
         )
@@ -101,7 +115,12 @@ def resolve_inference_store_config(
 def resolve_metadata_store_config(
     persistence: PersistenceConfig | None,
     image_name: str,
-) -> KVStoreConfig:
+) -> (
+    RedisKVStoreConfig
+    | SqliteKVStoreConfig
+    | PostgresKVStoreConfig
+    | MongoDBKVStoreConfig
+):
     """
     Resolve metadata store configuration.
 
@@ -116,21 +135,32 @@ def resolve_metadata_store_config(
         db_path=(DISTRIBS_BASE_DIR / image_name / "kvstore.db").as_posix()
     )
 
-    store_ref = None
-    if persistence and persistence.stores:
-        store_ref = persistence.stores.metadata
+    if not persistence or not persistence.stores or not persistence.stores.metadata:
+        return default_config
 
-    return resolve_backend(
-        persistence=persistence,
-        store_ref=store_ref,
-        default_factory=lambda: default_config,
-        store_name="metadata",
-    )
+    metadata_ref = persistence.stores.metadata
+    backend_config = persistence.backends.get(metadata_ref.backend)
+    if not backend_config:
+        raise ValueError(
+            f"Backend '{metadata_ref.backend}' referenced by metadata store "
+            f"not found in persistence.backends"
+        )
+
+    if not isinstance(backend_config, KVStoreConfigTypes):
+        raise ValueError(
+            f"Metadata store requires KVStore backend, got {type(backend_config).__name__}"
+        )
+
+    # Apply namespace if specified
+    config_dict = backend_config.model_dump()
+    if metadata_ref.namespace:
+        config_dict["namespace"] = metadata_ref.namespace
+    return type(backend_config)(**config_dict)  # type: ignore
 
 
 def resolve_conversations_store_config(
     persistence: PersistenceConfig | None,
-) -> SqlStoreConfig:
+) -> SqliteSqlStoreConfig | PostgresSqlStoreConfig:
     """
     Resolve conversations store configuration.
 
@@ -141,13 +171,20 @@ def resolve_conversations_store_config(
         db_path=(RUNTIME_BASE_DIR / "conversations.db").as_posix()
     )
 
-    store_ref = None
-    if persistence and persistence.stores:
-        store_ref = persistence.stores.conversations
+    if not persistence or not persistence.stores or not persistence.stores.conversations:
+        return default_config
 
-    return resolve_backend(
-        persistence=persistence,
-        store_ref=store_ref,
-        default_factory=lambda: default_config,
-        store_name="conversations",
-    )
+    conversations_ref = persistence.stores.conversations
+    backend_config = persistence.backends.get(conversations_ref.backend)
+    if not backend_config:
+        raise ValueError(
+            f"Backend '{conversations_ref.backend}' referenced by conversations store "
+            f"not found in persistence.backends"
+        )
+
+    if not isinstance(backend_config, SqlStoreConfigTypes):
+        raise ValueError(
+            f"Conversations store requires SqlStore backend, got {type(backend_config).__name__}"
+        )
+
+    return backend_config  # type: ignore

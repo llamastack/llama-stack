@@ -28,8 +28,8 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.providers.utils.sqlstore.sqlstore import (
+    PostgresSqlStoreConfig,
     SqliteSqlStoreConfig,
-    SqlStoreConfig,
     sqlstore_impl,
 )
 
@@ -47,7 +47,7 @@ class ConversationServiceConfig(BaseModel):
     policy: list[AccessRule] = []
 
     @property
-    def conversations_store(self) -> SqlStoreConfig:
+    def conversations_store(self) -> SqliteSqlStoreConfig | PostgresSqlStoreConfig:
         """Resolve conversations store from persistence config."""
         return resolve_conversations_store_config(self.run_config.persistence)
 
