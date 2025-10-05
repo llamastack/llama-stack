@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from llama_stack.apis.prompts import ListPromptsResponse, Prompt, Prompts
 from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.persistence_resolver import resolve_metadata_store_config
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
 from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
@@ -41,9 +42,16 @@ class PromptServiceImpl(Prompts):
         self.kvstore: KVStore
 
     async def initialize(self) -> None:
-        kvstore_config = SqliteKVStoreConfig(
-            db_path=(DISTRIBS_BASE_DIR / self.config.run_config.image_name / "prompts.db").as_posix()
+        # Use metadata store backend with prompts namespace
+        kvstore_config = resolve_metadata_store_config(
+            self.config.run_config.persistence,
+            self.config.run_config.image_name,
         )
+        # Override namespace for prompts if using a shared backend
+        if kvstore_config.namespace is None:
+            config_dict = kvstore_config.model_dump()
+            config_dict["namespace"] = "prompts"
+            kvstore_config = type(kvstore_config)(**config_dict)
         self.kvstore = await kvstore_impl(kvstore_config)
 
     def _get_default_key(self, prompt_id: str) -> str:
