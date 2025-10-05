@@ -218,12 +218,18 @@ providers:
       kvstore:
         type: sqlite
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/batches.db
-metadata_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/registry.db
-inference_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/inference_store.db
+persistence:
+  backends:
+    metadata_backend:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/registry.db
+    inference_backend:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/inference_store.db
+  metadata:
+    backend: metadata_backend
+  inference:
+    backend: inference_backend
 models: []
 shields:
 - shield_id: llama-guard
