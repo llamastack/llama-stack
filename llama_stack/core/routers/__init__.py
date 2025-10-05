@@ -6,7 +6,12 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import AccessRule, RoutedProtocol
+from llama_stack.core.datatypes import (
+    AccessRule,
+    InferenceStoreConfig,
+    RoutedProtocol,
+)
+from llama_stack.core.persistence_resolver import resolve_inference_store_config
 from llama_stack.core.stack import StackRunConfig
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.providers.datatypes import Api, RoutingTable
@@ -77,9 +82,17 @@ async def get_auto_router_impl(
             api_to_dep_impl[dep_name] = deps[dep_api]
 
     # TODO: move pass configs to routers instead
-    if api == Api.inference and run_config.inference_store:
+    if api == Api.inference:
+        sql_config, max_queue, num_writers = resolve_inference_store_config(
+            run_config.persistence
+        )
+        inference_store_config = InferenceStoreConfig(
+            sql_store_config=sql_config,
+            max_write_queue_size=max_queue,
+            num_writers=num_writers,
+        )
         inference_store = InferenceStore(
-            config=run_config.inference_store,
+            config=inference_store_config,
             policy=policy,
         )
         await inference_store.initialize()
