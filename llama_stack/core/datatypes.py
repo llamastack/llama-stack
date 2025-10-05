@@ -467,7 +467,7 @@ class StoresConfig(BaseModel):
 class PersistenceConfig(BaseModel):
     """Unified persistence configuration."""
 
-    backends: dict[str, Annotated[KVStoreConfig | SqlStoreConfig, Field(discriminator="type")]] = Field(
+    backends: dict[str, KVStoreConfig | SqlStoreConfig] = Field(
         description="Named backend configurations (e.g., 'default', 'cache')",
     )
     stores: StoresConfig | None = Field(
