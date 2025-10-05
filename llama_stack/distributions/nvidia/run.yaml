@@ -86,12 +86,18 @@ providers:
       metadata_store:
         type: sqlite
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/files_metadata.db
-metadata_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/registry.db
-inference_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/inference_store.db
+persistence:
+  backends:
+    metadata_backend:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/registry.db
+    inference_backend:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/inference_store.db
+  metadata:
+    backend: metadata_backend
+  inference:
+    backend: inference_backend
 models: []
 shields: []
 vector_dbs: []

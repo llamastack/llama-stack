@@ -91,12 +91,18 @@ providers:
       max_results: 3
   - provider_id: rag-runtime
     provider_type: inline::rag-runtime
-metadata_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/registry.db
-inference_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/inference_store.db
+persistence:
+  backends:
+    metadata_backend:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/registry.db
+    inference_backend:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/inference_store.db
+  metadata:
+    backend: metadata_backend
+  inference:
+    backend: inference_backend
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}
