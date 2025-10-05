@@ -105,14 +105,17 @@ providers:
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/files_metadata.db
 persistence:
   backends:
-    default:
+    kvstore:
       type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/registry.db
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/kvstore.db
+    sqlstore:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/sqlstore.db
   stores:
     metadata:
-      backend: default
+      backend: kvstore
     inference:
-      backend: default
+      backend: sqlstore
 models:
 - metadata: {}
   model_id: meta-llama/llama-3-3-70b-instruct
