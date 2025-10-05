@@ -13,7 +13,7 @@ apis:
 - tool_runtime
 - vector_io
 providers:
-    inference:
+  inference:
   - provider_id: nvidia
     provider_type: remote::nvidia
     config:
@@ -86,16 +86,12 @@ providers:
       metadata_store:
         type: sqlite
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/files_metadata.db
-persistence:
-  backends:
-    default:
-      type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/registry.db
-  stores:
-    metadata:
-      backend: default
-    inference:
-      backend: default
+metadata_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/registry.db
+inference_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/inference_store.db
 models: []
 shields: []
 vector_dbs: []

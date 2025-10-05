@@ -447,12 +447,9 @@ class InferenceStoreReference(StoreReference):
     )
 
 
-class PersistenceConfig(BaseModel):
-    """Unified persistence configuration."""
+class StoresConfig(BaseModel):
+    """Store references configuration."""
 
-    backends: dict[str, Annotated[KVStoreConfig | SqlStoreConfig, Field(discriminator="type")]] = Field(
-        description="Named backend configurations (e.g., 'default', 'cache')",
-    )
     metadata: StoreReference | None = Field(
         default=None,
         description="Metadata store configuration (uses KVStore backend)",
@@ -466,13 +463,28 @@ class PersistenceConfig(BaseModel):
         description="Conversations store configuration (uses SqlStore backend)",
     )
 
+
+class PersistenceConfig(BaseModel):
+    """Unified persistence configuration."""
+
+    backends: dict[str, Annotated[KVStoreConfig | SqlStoreConfig, Field(discriminator="type")]] = Field(
+        description="Named backend configurations (e.g., 'default', 'cache')",
+    )
+    stores: StoresConfig | None = Field(
+        default=None,
+        description="Store references to backends",
+    )
+
     @model_validator(mode="after")
     def validate_backend_references(self) -> Self:
         """Check all store refs point to defined backends."""
+        if not self.stores:
+            return self
+
         stores = [
-            ("metadata", self.metadata),
-            ("inference", self.inference),
-            ("conversations", self.conversations),
+            ("metadata", self.stores.metadata),
+            ("inference", self.stores.inference),
+            ("conversations", self.stores.conversations),
         ]
         for store_name, store_ref in stores:
             if store_ref and store_ref.backend not in self.backends:

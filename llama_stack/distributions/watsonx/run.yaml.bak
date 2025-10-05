@@ -12,7 +12,7 @@ apis:
 - vector_io
 - files
 providers:
-    inference:
+  inference:
   - provider_id: watsonx
     provider_type: remote::watsonx
     config:
@@ -103,16 +103,12 @@ providers:
       metadata_store:
         type: sqlite
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/files_metadata.db
-persistence:
-  backends:
-    default:
-      type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/registry.db
-  stores:
-    metadata:
-      backend: default
-    inference:
-      backend: default
+metadata_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/registry.db
+inference_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/inference_store.db
 models:
 - metadata: {}
   model_id: meta-llama/llama-3-3-70b-instruct

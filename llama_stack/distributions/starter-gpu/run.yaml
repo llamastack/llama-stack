@@ -14,7 +14,7 @@ apis:
 - tool_runtime
 - vector_io
 providers:
-  inference:
+    inference:
   - provider_id: ${env.CEREBRAS_API_KEY:+cerebras}
     provider_type: remote::cerebras
     config:
@@ -223,16 +223,14 @@ providers:
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter-gpu}/batches.db
 persistence:
   backends:
-    metadata_backend:
+    default:
       type: sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter-gpu}/registry.db
-    inference_backend:
-      type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter-gpu}/inference_store.db
-  metadata:
-    backend: metadata_backend
-  inference:
-    backend: inference_backend
+  stores:
+    metadata:
+      backend: default
+    inference:
+      backend: default
 models: []
 shields:
 - shield_id: llama-guard

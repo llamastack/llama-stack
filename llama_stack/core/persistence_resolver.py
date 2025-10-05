@@ -39,7 +39,7 @@ def resolve_backend(
     Returns:
         Resolved backend config with store-specific overlays applied
     """
-    if not persistence or not store_ref:
+    if not persistence or not persistence.stores or not store_ref:
         return default_factory()
 
     backend_config = persistence.backends.get(store_ref.backend)
@@ -68,7 +68,7 @@ def resolve_inference_store_config(
     Returns:
         (sql_config, max_queue_size, num_writers)
     """
-    if not persistence or not persistence.inference:
+    if not persistence or not persistence.stores or not persistence.stores.inference:
         # Default SQLite
         return (
             SqliteSqlStoreConfig(
@@ -78,7 +78,7 @@ def resolve_inference_store_config(
             4,
         )
 
-    inference_ref = persistence.inference
+    inference_ref = persistence.stores.inference
     backend_config = persistence.backends.get(inference_ref.backend)
     if not backend_config:
         raise ValueError(
@@ -116,9 +116,13 @@ def resolve_metadata_store_config(
         db_path=(DISTRIBS_BASE_DIR / image_name / "kvstore.db").as_posix()
     )
 
+    store_ref = None
+    if persistence and persistence.stores:
+        store_ref = persistence.stores.metadata
+
     return resolve_backend(
         persistence=persistence,
-        store_ref=persistence.metadata if persistence else None,
+        store_ref=store_ref,
         default_factory=lambda: default_config,
         store_name="metadata",
     )
@@ -137,9 +141,13 @@ def resolve_conversations_store_config(
         db_path=(RUNTIME_BASE_DIR / "conversations.db").as_posix()
     )
 
+    store_ref = None
+    if persistence and persistence.stores:
+        store_ref = persistence.stores.conversations
+
     return resolve_backend(
         persistence=persistence,
-        store_ref=persistence.conversations if persistence else None,
+        store_ref=store_ref,
         default_factory=lambda: default_config,
         store_name="conversations",
     )
