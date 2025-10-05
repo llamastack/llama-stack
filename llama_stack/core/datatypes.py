@@ -422,6 +422,67 @@ class ServerConfig(BaseModel):
     )
 
 
+class StoreReference(BaseModel):
+    """Reference to a persistence backend with optional subsystem config."""
+
+    backend: str = Field(
+        description="Name of backend from persistence.backends",
+    )
+    namespace: str | None = Field(
+        default=None,
+        description="Key prefix for KVStore backends",
+    )
+
+
+class InferenceStoreReference(StoreReference):
+    """Inference store configuration with queue tuning."""
+
+    max_write_queue_size: int = Field(
+        default=10000,
+        description="Max queued writes for inference store",
+    )
+    num_writers: int = Field(
+        default=4,
+        description="Number of concurrent background writers",
+    )
+
+
+class PersistenceConfig(BaseModel):
+    """Unified persistence configuration."""
+
+    backends: dict[str, Annotated[KVStoreConfig | SqlStoreConfig, Field(discriminator="type")]] = Field(
+        description="Named backend configurations (e.g., 'default', 'cache')",
+    )
+    metadata: StoreReference | None = Field(
+        default=None,
+        description="Metadata store configuration (uses KVStore backend)",
+    )
+    inference: InferenceStoreReference | None = Field(
+        default=None,
+        description="Inference store configuration (uses SqlStore backend)",
+    )
+    conversations: StoreReference | None = Field(
+        default=None,
+        description="Conversations store configuration (uses SqlStore backend)",
+    )
+
+    @model_validator(mode="after")
+    def validate_backend_references(self) -> Self:
+        """Check all store refs point to defined backends."""
+        stores = [
+            ("metadata", self.metadata),
+            ("inference", self.inference),
+            ("conversations", self.conversations),
+        ]
+        for store_name, store_ref in stores:
+            if store_ref and store_ref.backend not in self.backends:
+                raise ValueError(
+                    f"Store '{store_name}' references backend '{store_ref.backend}' "
+                    f"which is not defined in persistence.backends"
+                )
+        return self
+
+
 class InferenceStoreConfig(BaseModel):
     sql_store_config: SqlStoreConfig
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
@@ -460,26 +521,11 @@ One or more providers to use for each API. The same provider_type (e.g., meta-re
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )
-    metadata_store: KVStoreConfig | None = Field(
+    persistence: PersistenceConfig | None = Field(
         default=None,
         description="""
-Configuration for the persistence store used by the distribution registry. If not specified,
-a default SQLite store will be used.""",
-    )
-
-    inference_store: InferenceStoreConfig | SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the inference API. Can be either a
-InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
-If not specified, a default SQLite store will be used.""",
-    )
-
-    conversations_store: SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the conversations API.
-If not specified, a default SQLite store will be used.""",
+Unified persistence configuration for all subsystems. Define backends once and
+reference them from multiple stores. If not specified, default SQLite stores will be used.""",
     )
 
     # registry of "resources" in the distribution
