@@ -66,9 +66,6 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
     async def should_refresh_models(self) -> bool:
         return True
 
-    async def check_model_availability(self, model):
-        return model in self._model_cache
-
     async def openai_embeddings(
         self,
         model: str,
