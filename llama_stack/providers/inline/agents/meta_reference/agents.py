@@ -64,6 +64,7 @@ class MetaReferenceAgentsImpl(Agents):
         tool_runtime_api: ToolRuntime,
         tool_groups_api: ToolGroups,
         policy: list[AccessRule],
+        telemetry_enabled: bool = False,
     ):
         self.config = config
         self.inference_api = inference_api
@@ -71,6 +72,7 @@ class MetaReferenceAgentsImpl(Agents):
         self.safety_api = safety_api
         self.tool_runtime_api = tool_runtime_api
         self.tool_groups_api = tool_groups_api
+        self.telemetry_enabled = telemetry_enabled
 
         self.in_memory_store = InmemoryKVStoreImpl()
         self.openai_responses_impl: OpenAIResponsesImpl | None = None
@@ -135,6 +137,7 @@ class MetaReferenceAgentsImpl(Agents):
             ),
             created_at=agent_info.created_at,
             policy=self.policy,
+            telemetry_enabled=self.telemetry_enabled,
         )
 
     async def create_agent_session(
