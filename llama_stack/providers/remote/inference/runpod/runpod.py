@@ -7,7 +7,6 @@
 from typing import Any
 
 from llama_stack.apis.inference import (
-    OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
 )
@@ -114,25 +113,3 @@ class RunpodInferenceAdapter(OpenAIMixin):
             )
 
         return model
-
-    async def openai_embeddings(
-        self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
-    ) -> OpenAIEmbeddingsResponse:
-        # Resolve model_id to provider_resource_id
-        model_obj = await self.model_store.get_model(model)
-        provider_model_id = model_obj.provider_resource_id or model
-
-        response = await self.client.embeddings.create(
-            model=provider_model_id,
-            input=input,
-            encoding_format=encoding_format,
-            dimensions=dimensions,
-            user=user,
-        )
-
-        return response
