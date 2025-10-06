@@ -544,7 +544,6 @@ class StreamingResponseOrchestrator:
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
         def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
-            print(f"!!!! make_openai_tool({tool_name}, {tool})")
             tool_def = ToolDefinition(
                 tool_name=tool_name,
                 description=tool.description,
