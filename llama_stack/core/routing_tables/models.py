@@ -43,12 +43,6 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             await self.update_registered_models(provider_id, models)
 
     async def list_models(self) -> ListModelsResponse:
-        # Check if providers enable model discovery before returning models
-        for provider_id, provider in self.impls_by_provider_id.items():
-            enable_model_discovery = await provider.enable_model_discovery()
-            logger.debug(f"Provider {provider_id}: enable_model_discovery={enable_model_discovery}")
-            if not enable_model_discovery:
-                logger.debug(f"Provider {provider_id} has enable_model_discovery disabled")
         return ListModelsResponse(data=await self.get_all_with_type("model"))
 
     async def openai_list_models(self) -> OpenAIListModelsResponse:

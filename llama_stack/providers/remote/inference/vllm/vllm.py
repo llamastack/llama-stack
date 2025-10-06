@@ -282,12 +282,6 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
         # Strictly respecting the refresh_models directive
         return self.config.refresh_models
 
-    async def enable_model_discovery(self) -> bool:
-        # Respecting the enable_model_discovery directive
-        result = self.config.enable_model_discovery
-        log.debug(f"VLLM enable_model_discovery: {result}")
-        return result
-
     async def list_models(self) -> list[Model] | None:
         log.debug(f"VLLM list_models called, enable_model_discovery={self.config.enable_model_discovery}")
         if not self.config.enable_model_discovery:
@@ -343,17 +337,12 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
     def get_extra_client_params(self):
         return {"http_client": httpx.AsyncClient(verify=self.config.tls_verify)}
 
-    async def check_model_availability(self, model: str) -> bool:
-        """
-        Check if a specific model is available from the vLLM server.
+    async def register_model(self, model: Model) -> Model:
+        try:
+            model = await self.register_helper.register_model(model)
+        except ValueError:
+            pass  # Ignore statically unknown model, will check live listing
 
-        This method respects the enable_model_discovery configuration flag.
-        If enable_model_discovery is False, it returns True to allow model registration
-        without making HTTP requests (trusting that the model exists).
-
-        :param model: The model identifier to check.
-        :return: True if the model is available or if enable_model_discovery is False, False otherwise.
-        """
         # Check if provider enables model discovery before making HTTP request
         if not self.config.enable_model_discovery:
             log.debug("Model discovery disabled for vLLM: Trusting model exists")
@@ -364,13 +353,14 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
                     "If you're not using model discovery, you may not need to set the API token. "
                     "Consider removing VLLM_API_TOKEN from your configuration or setting enable_model_discovery=true."
                 )
-            return True
+            return model
 
         try:
             res = self.client.models.list()
         except APIConnectionError as e:
-            log.warning(f"Failed to connect to vLLM at {self.config.url}: {e}")
-            return False
+            raise ValueError(
+                f"Failed to connect to vLLM at {self.config.url}. Please check if vLLM is running and accessible at that URL."
+            ) from e
 
         try:
             available_models = [m.id async for m in res]
@@ -385,11 +375,16 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
                 f"2. Ensure your provider server supports the /v1/models endpoint and if authenticated that VLLM_API_TOKEN is set, or\n"
                 f"3. Set enable_model_discovery=false for the problematic provider in your configuration\n"
             )
-            return False
+            raise ValueError(
+                f"Model discovery failed for vLLM at {self.config.url}. Please check the server configuration and logs."
+            ) from e
 
-        is_available = model in available_models
-        log.debug(f"VLLM model {model} availability: {is_available}")
-        return is_available
+        if model.provider_resource_id not in available_models:
+            raise ValueError(
+                f"Model {model.provider_resource_id} is not being served by vLLM. "
+                f"Available models: {', '.join(available_models)}"
+            )
+        return model
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict:
         options = get_sampling_options(request.sampling_params)
