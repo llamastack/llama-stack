@@ -650,6 +650,30 @@ reference them from multiple stores. If not specified, default SQLite stores wil
             return Path(v)
         return v
 
+    @model_validator(mode="after")
+    def resolve_provider_backend_references(self) -> Self:
+        """Resolve backend references in provider kvstore configs."""
+        if not self.persistence or not self.persistence.backends:
+            return self
+
+        from llama_stack.core.provider_config_resolver import resolve_provider_kvstore_references
+
+        # Convert providers to dict format for resolution
+        providers_dict = {}
+        for api, provider_list in self.providers.items():
+            providers_dict[api] = [p.model_dump() for p in provider_list]
+
+        # Resolve backend references
+        resolved_providers = resolve_provider_kvstore_references(
+            providers_dict, self.persistence.backends
+        )
+
+        # Convert back to Provider objects
+        for api, provider_list in resolved_providers.items():
+            self.providers[api] = [Provider(**p) for p in provider_list]
+
+        return self
+
 
 class BuildConfig(BaseModel):
     version: int = LLAMA_STACK_BUILD_CONFIG_VERSION
