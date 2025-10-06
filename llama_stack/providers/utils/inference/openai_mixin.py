@@ -111,7 +111,7 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
         """
         return {}
 
-    async def get_models(self) -> Iterable[str] | None:
+    async def list_provider_model_ids(self) -> Iterable[str]:
         """
         List available models from the provider.
 
@@ -121,7 +121,7 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
 
         :return: An iterable of model IDs or None if not implemented
         """
-        return None
+        return [m.id async for m in self.client.models.list()]
 
     @property
     def client(self) -> AsyncOpenAI:
@@ -400,41 +400,35 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
         self._model_cache = {}
 
         # give subclasses a chance to provide custom model listing
-        if (iterable := await self.get_models()) is not None:
-            if not hasattr(iterable, "__iter__"):
-                raise TypeError(
-                    f"Failed to list models: {self.__class__.__name__}.get_models() must return an iterable of "
-                    f"strings or None, but returned {type(iterable).__name__}"
-                )
-            models_ids = list(iterable)
-            logger.info(
-                f"Using {self.__class__.__name__}.get_models() implementation, received {len(models_ids)} models"
+        iterable = await self.list_provider_model_ids()
+        if not hasattr(iterable, "__iter__"):
+            raise TypeError(
+                f"Failed to list models: {self.__class__.__name__}.list_provider_model_ids() must return an iterable of "
+                f"strings or None, but returned {type(iterable).__name__}"
             )
-        else:
-            models_ids = [m.id async for m in self.client.models.list()]
+        provider_models_ids = list(iterable)
+        logger.info(f"{self.__class__.__name__}.list_provider_model_ids() returned {len(provider_models_ids)} models")
 
-        for m_id in models_ids:
-            if self.allowed_models and m_id not in self.allowed_models:
-                logger.info(f"Skipping model {m_id} as it is not in the allowed models list")
+        for provider_model_id in provider_models_ids:
+            if self.allowed_models and provider_model_id not in self.allowed_models:
+                logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
                 continue
-            if metadata := self.embedding_model_metadata.get(m_id):
-                # This is an embedding model - augment with metadata
+            if metadata := self.embedding_model_metadata.get(provider_model_id):
                 model = Model(
                     provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=m_id,
-                    identifier=m_id,
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
                     model_type=ModelType.embedding,
                     metadata=metadata,
                 )
             else:
-                # This is an LLM
                 model = Model(
                     provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=m_id,
-                    identifier=m_id,
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
                     model_type=ModelType.llm,
                 )
-            self._model_cache[m_id] = model
+            self._model_cache[provider_model_id] = model
 
         return list(self._model_cache.values())
 

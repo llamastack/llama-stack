@@ -4,13 +4,13 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import Iterable
 from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
 from llama_stack.apis.inference import (
     Inference,
-    Model,
     OpenAICompletion,
 )
 from llama_stack.log import get_logger
@@ -71,7 +71,7 @@ class DatabricksInferenceAdapter(
     ) -> OpenAICompletion:
         raise NotImplementedError()
 
-    async def get_models(self) -> list[Model] | None:
+    async def list_provider_model_ids(self) -> Iterable[str]:
         return [
             endpoint.name
             for endpoint in WorkspaceClient(
