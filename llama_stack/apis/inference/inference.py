@@ -351,34 +351,6 @@ class CompletionRequest(BaseModel):
     logprobs: LogProbConfig | None = None
 
 
-# @json_schema_type
-# class CompletionResponse(MetricResponseMixin):
-#     """Response from a completion request.
-
-#     :param content: The generated completion text
-#     :param stop_reason: Reason why generation stopped
-#     :param logprobs: Optional log probabilities for generated tokens
-#     """
-
-#     content: str
-#     stop_reason: StopReason
-#     logprobs: list[TokenLogProbs] | None = None
-
-
-# @json_schema_type
-# class CompletionResponseStreamChunk(MetricResponseMixin):
-#     """A chunk of a streamed completion response.
-
-#     :param delta: New content generated since last chunk. This can be one or more tokens.
-#     :param stop_reason: Optional reason why generation stopped, if complete
-#     :param logprobs: Optional log probabilities for generated tokens
-#     """
-
-#     delta: str
-#     stop_reason: StopReason | None = None
-#     logprobs: list[TokenLogProbs] | None = None
-
-
 class SystemMessageBehavior(Enum):
     """Config for how to override the default system prompt.
 
