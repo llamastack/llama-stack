@@ -22,7 +22,9 @@ class PGVectorVectorIOConfig(BaseModel):
     db: str | None = Field(default="postgres")
     user: str | None = Field(default="postgres")
     password: str | None = Field(default="mysecretpassword")
-    persistence: KVStoreConfig | None = Field(description="Config for KV store backend (SQLite only for now)", default=None)
+    persistence: KVStoreConfig | None = Field(
+        description="Config for KV store backend (SQLite only for now)", default=None
+    )
 
     @classmethod
     def sample_run_config(

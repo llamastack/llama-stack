@@ -19,7 +19,7 @@ __all__ = ["ReferenceBatchesImpl", "ReferenceBatchesImplConfig"]
 
 
 async def get_provider_impl(config: ReferenceBatchesImplConfig, deps: dict[Api, Any], policy: list[AccessRule]):
-    kvstore = await kvstore_impl(config.kvstore)
+    kvstore = await kvstore_impl(config.persistence)
     inference_api: Inference | None = deps.get(Api.inference)
     files_api: Files | None = deps.get(Api.files)
     models_api: Models | None = deps.get(Api.models)

@@ -15,6 +15,7 @@ from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig, 
 
 class AgentPersistenceConfig(BaseModel):
     """Nested persistence configuration for agents."""
+
     agent_state: KVStoreConfig
     responses: SqlStoreConfig
 

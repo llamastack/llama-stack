@@ -29,7 +29,7 @@ def resolve_provider_kvstore_references(
           db_path: /path/to/kvstore.db
           namespace: faiss
     """
-    for api, provider_list in providers.items():
+    for _api, provider_list in providers.items():
         for provider in provider_list:
             config = provider.get("config", {})
             _resolve_kvstore_in_dict(config, persistence_backends)
@@ -53,7 +53,9 @@ def _resolve_kvstore_in_dict(config: dict[str, Any], backends: dict[str, Any]) -
 
                 # Clone the backend config and apply namespace
                 backend_config = backends[backend_name]
-                resolved_config = backend_config.model_dump() if hasattr(backend_config, "model_dump") else dict(backend_config)
+                resolved_config = (
+                    backend_config.model_dump() if hasattr(backend_config, "model_dump") else dict(backend_config)
+                )
 
                 if namespace:
                     resolved_config["namespace"] = namespace

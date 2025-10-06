@@ -664,13 +664,11 @@ reference them from multiple stores. If not specified, default SQLite stores wil
             providers_dict[api] = [p.model_dump() for p in provider_list]
 
         # Resolve backend references
-        resolved_providers = resolve_provider_kvstore_references(
-            providers_dict, self.persistence.backends
-        )
+        resolved_providers = resolve_provider_kvstore_references(providers_dict, self.persistence.backends)
 
         # Convert back to Provider objects
-        for api, provider_list in resolved_providers.items():
-            self.providers[api] = [Provider(**p) for p in provider_list]
+        for api, provider_dicts in resolved_providers.items():
+            self.providers[api] = [Provider(**provider_dict) for provider_dict in provider_dicts]
 
         return self
 
