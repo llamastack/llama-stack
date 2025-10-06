@@ -83,9 +83,7 @@ async def get_auto_router_impl(
 
     # TODO: move pass configs to routers instead
     if api == Api.inference:
-        sql_config, max_queue, num_writers = resolve_inference_store_config(
-            run_config.persistence
-        )
+        sql_config, max_queue, num_writers = resolve_inference_store_config(run_config.persistence)
         inference_store_config = InferenceStoreConfig(
             sql_store_config=sql_config,
             max_write_queue_size=max_queue,

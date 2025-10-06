@@ -28,7 +28,6 @@ from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.providers.datatypes import Api, ProviderSpec
 from llama_stack.providers.utils.kvstore.config import (
-    KVStoreConfig,
     MongoDBKVStoreConfig,
     PostgresKVStoreConfig,
     RedisKVStoreConfig,
@@ -37,7 +36,6 @@ from llama_stack.providers.utils.kvstore.config import (
 from llama_stack.providers.utils.sqlstore.sqlstore import (
     PostgresSqlStoreConfig,
     SqliteSqlStoreConfig,
-    SqlStoreConfig,
 )
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
@@ -518,7 +516,7 @@ class PersistenceConfig(BaseModel):
                 # Unknown usage - try SqlStore first (for backward compat), then KVStore
                 try:
                     parsed_backends[name] = _parse_sqlstore_config(config)
-                except:
+                except ValueError:
                     parsed_backends[name] = _parse_kvstore_config(config)
 
         data["backends"] = parsed_backends
@@ -544,12 +542,9 @@ class PersistenceConfig(BaseModel):
         return self
 
 
-def _parse_kvstore_config(config: dict) -> (
-    RedisKVStoreConfig
-    | SqliteKVStoreConfig
-    | PostgresKVStoreConfig
-    | MongoDBKVStoreConfig
-):
+def _parse_kvstore_config(
+    config: dict,
+) -> RedisKVStoreConfig | SqliteKVStoreConfig | PostgresKVStoreConfig | MongoDBKVStoreConfig:
     """Parse a KVStore config from dict."""
     type_val = config.get("type")
     if type_val == "redis":

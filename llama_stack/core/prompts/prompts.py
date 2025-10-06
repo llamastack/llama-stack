@@ -12,9 +12,7 @@ from pydantic import BaseModel
 from llama_stack.apis.prompts import ListPromptsResponse, Prompt, Prompts
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.persistence_resolver import resolve_metadata_store_config
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 
 class PromptServiceConfig(BaseModel):

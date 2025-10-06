@@ -71,9 +71,7 @@ def test_mixed_backend_types_allowed():
     config = PersistenceConfig(
         backends={
             "kvstore": SqliteKVStoreConfig(db_path="/tmp/kv.db"),
-            "sqlstore": PostgresSqlStoreConfig(
-                user="test", password="test", host="localhost", db="test"
-            ),
+            "sqlstore": PostgresSqlStoreConfig(user="test", password="test", host="localhost", db="test"),
         },
         stores=StoresConfig(
             metadata=StoreReference(backend="kvstore"),

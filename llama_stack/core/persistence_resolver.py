@@ -4,10 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Callable, TypeVar
+from collections.abc import Callable
 
 from llama_stack.core.datatypes import (
-    InferenceStoreReference,
     PersistenceConfig,
     StoreReference,
 )
@@ -32,10 +31,8 @@ KVStoreConfigTypes = (
 )
 SqlStoreConfigTypes = (SqliteSqlStoreConfig, PostgresSqlStoreConfig)
 
-T = TypeVar("T")
 
-
-def resolve_backend(
+def resolve_backend[T](
     persistence: PersistenceConfig | None,
     store_ref: StoreReference | None,
     default_factory: Callable[[], T],
@@ -59,8 +56,7 @@ def resolve_backend(
     backend_config = persistence.backends.get(store_ref.backend)
     if not backend_config:
         raise ValueError(
-            f"Backend '{store_ref.backend}' referenced by store '{store_name}' "
-            f"not found in persistence.backends"
+            f"Backend '{store_ref.backend}' referenced by store '{store_name}' not found in persistence.backends"
         )
 
     # Clone backend and apply namespace if KVStore
@@ -96,14 +92,11 @@ def resolve_inference_store_config(
     backend_config = persistence.backends.get(inference_ref.backend)
     if not backend_config:
         raise ValueError(
-            f"Backend '{inference_ref.backend}' referenced by inference store "
-            f"not found in persistence.backends"
+            f"Backend '{inference_ref.backend}' referenced by inference store not found in persistence.backends"
         )
 
     if not isinstance(backend_config, SqlStoreConfigTypes):
-        raise ValueError(
-            f"Inference store requires SqlStore backend, got {type(backend_config).__name__}"
-        )
+        raise ValueError(f"Inference store requires SqlStore backend, got {type(backend_config).__name__}")
 
     return (
         backend_config,  # type: ignore
@@ -115,12 +108,7 @@ def resolve_inference_store_config(
 def resolve_metadata_store_config(
     persistence: PersistenceConfig | None,
     image_name: str,
-) -> (
-    RedisKVStoreConfig
-    | SqliteKVStoreConfig
-    | PostgresKVStoreConfig
-    | MongoDBKVStoreConfig
-):
+) -> RedisKVStoreConfig | SqliteKVStoreConfig | PostgresKVStoreConfig | MongoDBKVStoreConfig:
     """
     Resolve metadata store configuration.
 
@@ -131,9 +119,7 @@ def resolve_metadata_store_config(
     Returns:
         Resolved KVStore config
     """
-    default_config = SqliteKVStoreConfig(
-        db_path=(DISTRIBS_BASE_DIR / image_name / "kvstore.db").as_posix()
-    )
+    default_config = SqliteKVStoreConfig(db_path=(DISTRIBS_BASE_DIR / image_name / "kvstore.db").as_posix())
 
     if not persistence or not persistence.stores or not persistence.stores.metadata:
         return default_config
@@ -142,14 +128,11 @@ def resolve_metadata_store_config(
     backend_config = persistence.backends.get(metadata_ref.backend)
     if not backend_config:
         raise ValueError(
-            f"Backend '{metadata_ref.backend}' referenced by metadata store "
-            f"not found in persistence.backends"
+            f"Backend '{metadata_ref.backend}' referenced by metadata store not found in persistence.backends"
         )
 
     if not isinstance(backend_config, KVStoreConfigTypes):
-        raise ValueError(
-            f"Metadata store requires KVStore backend, got {type(backend_config).__name__}"
-        )
+        raise ValueError(f"Metadata store requires KVStore backend, got {type(backend_config).__name__}")
 
     # Apply namespace if specified
     config_dict = backend_config.model_dump()
@@ -167,9 +150,7 @@ def resolve_conversations_store_config(
     Returns:
         Resolved SqlStore config
     """
-    default_config = SqliteSqlStoreConfig(
-        db_path=(RUNTIME_BASE_DIR / "conversations.db").as_posix()
-    )
+    default_config = SqliteSqlStoreConfig(db_path=(RUNTIME_BASE_DIR / "conversations.db").as_posix())
 
     if not persistence or not persistence.stores or not persistence.stores.conversations:
         return default_config
@@ -178,13 +159,10 @@ def resolve_conversations_store_config(
     backend_config = persistence.backends.get(conversations_ref.backend)
     if not backend_config:
         raise ValueError(
-            f"Backend '{conversations_ref.backend}' referenced by conversations store "
-            f"not found in persistence.backends"
+            f"Backend '{conversations_ref.backend}' referenced by conversations store not found in persistence.backends"
         )
 
     if not isinstance(backend_config, SqlStoreConfigTypes):
-        raise ValueError(
-            f"Conversations store requires SqlStore backend, got {type(backend_config).__name__}"
-        )
+        raise ValueError(f"Conversations store requires SqlStore backend, got {type(backend_config).__name__}")
 
     return backend_config  # type: ignore

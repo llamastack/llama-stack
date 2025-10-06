@@ -23,7 +23,6 @@ from llama_stack.apis.conversations.conversations import (
 )
 from llama_stack.core.datatypes import AccessRule, StackRunConfig
 from llama_stack.core.persistence_resolver import resolve_conversations_store_config
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
