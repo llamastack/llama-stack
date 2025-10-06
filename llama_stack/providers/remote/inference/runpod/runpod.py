@@ -7,10 +7,9 @@
 
 from llama_stack.apis.inference import *  # noqa: F403
 from llama_stack.apis.inference import OpenAIEmbeddingsResponse
-
 from llama_stack.providers.utils.inference.model_registry import (
-    build_hf_repo_model_entry,
     ModelRegistryHelper,
+    build_hf_repo_model_entry,
 )
 from llama_stack.providers.utils.inference.openai_compat import (
     get_sampling_options,
@@ -51,9 +50,7 @@ class RunpodInferenceAdapter(
     Inference,
 ):
     def __init__(self, config: RunpodImplConfig) -> None:
-        ModelRegistryHelper.__init__(
-            self, stack_to_provider_models_map=RUNPOD_SUPPORTED_MODELS
-        )
+        ModelRegistryHelper.__init__(self, stack_to_provider_models_map=RUNPOD_SUPPORTED_MODELS)
         self.config = config
 
     def _get_params(self, request: ChatCompletionRequest) -> dict:

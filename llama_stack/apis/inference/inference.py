@@ -8,6 +8,9 @@ from collections.abc import AsyncIterator
 from enum import Enum
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
+from pydantic import BaseModel, Field, field_validator
+from typing_extensions import TypedDict
+
 from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.models import Model
@@ -22,9 +25,6 @@ from llama_stack.models.llama.datatypes import (
 )
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
-
-from pydantic import BaseModel, Field, field_validator
-from typing_extensions import TypedDict
 
 register_schema(ToolCall)
 register_schema(ToolDefinition)
@@ -381,9 +381,7 @@ class ToolConfig(BaseModel):
 
     tool_choice: ToolChoice | str | None = Field(default=ToolChoice.auto)
     tool_prompt_format: ToolPromptFormat | None = Field(default=None)
-    system_message_behavior: SystemMessageBehavior | None = Field(
-        default=SystemMessageBehavior.append
-    )
+    system_message_behavior: SystemMessageBehavior | None = Field(default=SystemMessageBehavior.append)
 
     def model_post_init(self, __context: Any) -> None:
         if isinstance(self.tool_choice, str):
@@ -512,21 +510,15 @@ class OpenAIFile(BaseModel):
 
 
 OpenAIChatCompletionContentPartParam = Annotated[
-    OpenAIChatCompletionContentPartTextParam
-    | OpenAIChatCompletionContentPartImageParam
-    | OpenAIFile,
+    OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile,
     Field(discriminator="type"),
 ]
-register_schema(
-    OpenAIChatCompletionContentPartParam, name="OpenAIChatCompletionContentPartParam"
-)
+register_schema(OpenAIChatCompletionContentPartParam, name="OpenAIChatCompletionContentPartParam")
 
 
 OpenAIChatCompletionMessageContent = str | list[OpenAIChatCompletionContentPartParam]
 
-OpenAIChatCompletionTextOnlyMessageContent = (
-    str | list[OpenAIChatCompletionContentPartTextParam]
-)
+OpenAIChatCompletionTextOnlyMessageContent = str | list[OpenAIChatCompletionContentPartTextParam]
 
 
 @json_schema_type
@@ -694,9 +686,7 @@ class OpenAIResponseFormatJSONObject(BaseModel):
 
 
 OpenAIResponseFormatParam = Annotated[
-    OpenAIResponseFormatText
-    | OpenAIResponseFormatJSONSchema
-    | OpenAIResponseFormatJSONObject,
+    OpenAIResponseFormatText | OpenAIResponseFormatJSONSchema | OpenAIResponseFormatJSONObject,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseFormatParam, name="OpenAIResponseFormatParam")
@@ -986,16 +976,8 @@ class InferenceProvider(Protocol):
     async def rerank(
         self,
         model: str,
-        query: (
-            str
-            | OpenAIChatCompletionContentPartTextParam
-            | OpenAIChatCompletionContentPartImageParam
-        ),
-        items: list[
-            str
-            | OpenAIChatCompletionContentPartTextParam
-            | OpenAIChatCompletionContentPartImageParam
-        ],
+        query: (str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam),
+        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
         max_num_results: int | None = None,
     ) -> RerankResponse:
         """Rerank a list of documents based on their relevance to a query.
