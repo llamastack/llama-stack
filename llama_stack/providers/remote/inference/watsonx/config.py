@@ -25,12 +25,16 @@ class WatsonXConfig(RemoteInferenceProviderConfig):
         default_factory=lambda: os.getenv("WATSONX_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
         description="A base url for accessing the watsonx.ai",
     )
+    # This seems like it should be required, but none of the other remote inference
+    # providers require it, so this is optional here too for consistency.
+    # The OpenAIConfig uses default=None instead, so this is following that precedent.
     api_key: SecretStr | None = Field(
-        default_factory=lambda: os.getenv("WATSONX_API_KEY"),
+        default=None,
         description="The watsonx.ai API key",
     )
+    # As above, this is optional here too for consistency.
     project_id: str | None = Field(
-        default_factory=lambda: os.getenv("WATSONX_PROJECT_ID"),
+        default=None,
         description="The watsonx.ai project ID",
     )
     timeout: int = Field(

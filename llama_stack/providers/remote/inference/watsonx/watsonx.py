@@ -16,9 +16,6 @@ from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOp
 
 
 class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
-    _config: WatsonXConfig
-    __provider_id__: str = "watsonx"
-
     def __init__(self, config: WatsonXConfig):
         LiteLLMOpenAIMixin.__init__(
             self,
@@ -29,16 +26,8 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         self.available_models = None
         self.config = config
 
-    # get_api_key = LiteLLMOpenAIMixin.get_api_key
-
     def get_base_url(self) -> str:
         return self.config.url
-
-    async def initialize(self):
-        await super().initialize()
-
-    async def shutdown(self):
-        await super().shutdown()
 
     async def _get_params(self, request: ChatCompletionRequest) -> dict[str, Any]:
         # Get base parameters from parent

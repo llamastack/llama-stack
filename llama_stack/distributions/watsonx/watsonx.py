@@ -4,17 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from pathlib import Path
 
-from llama_stack.apis.models import ModelType
-from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ToolGroupInput
-from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings, get_model_registry
+from llama_stack.core.datatypes import BuildProvider, Provider, ToolGroupInput
+from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
-from llama_stack.providers.inline.inference.sentence_transformers import (
-    SentenceTransformersInferenceConfig,
-)
 from llama_stack.providers.remote.inference.watsonx import WatsonXConfig
-from llama_stack.providers.remote.inference.watsonx.models import MODEL_ENTRIES
 
 
 def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
@@ -52,15 +46,6 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         config=WatsonXConfig.sample_run_config(),
     )
 
-    embedding_provider = Provider(
-        provider_id="sentence-transformers",
-        provider_type="inline::sentence-transformers",
-        config=SentenceTransformersInferenceConfig.sample_run_config(),
-    )
-
-    available_models = {
-        "watsonx": MODEL_ENTRIES,
-    }
     default_tool_groups = [
         ToolGroupInput(
             toolgroup_id="builtin::websearch",
@@ -72,36 +57,25 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         ),
     ]
 
-    embedding_model = ModelInput(
-        model_id="all-MiniLM-L6-v2",
-        provider_id="sentence-transformers",
-        model_type=ModelType.embedding,
-        metadata={
-            "embedding_dimension": 384,
-        },
-    )
-
     files_provider = Provider(
         provider_id="meta-reference-files",
         provider_type="inline::localfs",
         config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
     )
-    default_models, _ = get_model_registry(available_models)
     return DistributionTemplate(
         name=name,
         distro_type="remote_hosted",
         description="Use watsonx for running LLM inference",
         container_image=None,
-        template_path=Path(__file__).parent / "doc_template.md",
+        template_path=None,
         providers=providers,
-        available_models_by_provider=available_models,
         run_configs={
             "run.yaml": RunConfigSettings(
                 provider_overrides={
-                    "inference": [inference_provider, embedding_provider],
+                    "inference": [inference_provider],
                     "files": [files_provider],
                 },
-                default_models=default_models + [embedding_model],
+                default_models=[],
                 default_tool_groups=default_tool_groups,
             ),
         },
