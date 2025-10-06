@@ -86,7 +86,7 @@ jobs:
 
           # avoid line breaks in the server log, especially because we grep it below.
           export COLUMNS=1984
-          nohup uv run llama stack run $run_dir/run.yaml --image-type venv > server.log 2>&1 &
+          nohup uv run llama stack run $run_dir/run.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |
