@@ -17,12 +17,12 @@ from llama_stack.schema_utils import json_schema_type
 
 @json_schema_type
 class FaissVectorIOConfig(BaseModel):
-    kvstore: KVStoreConfig
+    persistence: KVStoreConfig
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="faiss_store.db",
             )

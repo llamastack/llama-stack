@@ -15,13 +15,13 @@ from llama_stack.schema_utils import json_schema_type
 @json_schema_type
 class ChromaVectorIOConfig(BaseModel):
     url: str | None
-    kvstore: KVStoreConfig = Field(description="Config for KV store backend")
+    persistence: KVStoreConfig = Field(description="Config for KV store backend")
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, url: str = "${env.CHROMADB_URL}", **kwargs: Any) -> dict[str, Any]:
         return {
             "url": url,
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="chroma_remote_registry.db",
             ),

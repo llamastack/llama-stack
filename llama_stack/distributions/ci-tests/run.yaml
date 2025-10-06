@@ -94,29 +94,29 @@ providers:
   - provider_id: faiss
     provider_type: inline::faiss
     config:
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: faiss
   - provider_id: sqlite-vec
     provider_type: inline::sqlite-vec
     config:
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sqlite_vec.db
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: sqlite_vec
   - provider_id: ${env.MILVUS_URL:+milvus}
     provider_type: inline::milvus
     config:
       db_path: ${env.MILVUS_DB_PATH:=~/.llama/distributions/ci-tests}/milvus.db
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: milvus
   - provider_id: ${env.CHROMADB_URL:+chromadb}
     provider_type: remote::chromadb
     config:
       url: ${env.CHROMADB_URL:=}
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: chromadb
   - provider_id: ${env.PGVECTOR_DB:+pgvector}
     provider_type: remote::pgvector
@@ -126,16 +126,16 @@ providers:
       db: ${env.PGVECTOR_DB:=}
       user: ${env.PGVECTOR_USER:=}
       password: ${env.PGVECTOR_PASSWORD:=}
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: pgvector
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/ci-tests/files}
-      metadata_store:
-        backend: default
+      persistence:
+        backend: sqlstore
         namespace: files
   safety:
   - provider_id: llama-guard
@@ -148,12 +148,13 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        backend: default
-        namespace: agents
-      responses_store:
-        backend: default
-        namespace: responses
+      persistence:
+        agent_state:
+          backend: kvstore
+          namespace: agents
+        responses:
+          backend: sqlstore
+          namespace: responses
   telemetry:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -171,21 +172,21 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: eval
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface
     config:
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: huggingface
   - provider_id: localfs
     provider_type: inline::localfs
     config:
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: localfs_datasetio
   scoring:
   - provider_id: basic
@@ -215,19 +216,22 @@ providers:
   - provider_id: reference
     provider_type: inline::reference
     config:
-      kvstore:
-        backend: default
+      persistence:
+        backend: kvstore
         namespace: batches
 persistence:
   backends:
-    default:
+    kvstore:
       type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/store.db
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/kvstore.db
+    sqlstore:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sqlstore.db
   stores:
     metadata:
-      backend: default
+      backend: kvstore
     inference:
-      backend: default
+      backend: sqlstore
 models: []
 shields:
 - shield_id: llama-guard

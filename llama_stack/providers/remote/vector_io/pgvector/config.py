@@ -22,7 +22,7 @@ class PGVectorVectorIOConfig(BaseModel):
     db: str | None = Field(default="postgres")
     user: str | None = Field(default="postgres")
     password: str | None = Field(default="mysecretpassword")
-    kvstore: KVStoreConfig | None = Field(description="Config for KV store backend (SQLite only for now)", default=None)
+    persistence: KVStoreConfig | None = Field(description="Config for KV store backend (SQLite only for now)", default=None)
 
     @classmethod
     def sample_run_config(
@@ -41,7 +41,7 @@ class PGVectorVectorIOConfig(BaseModel):
             "db": db,
             "user": user,
             "password": password,
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="pgvector_registry.db",
             ),

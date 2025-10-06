@@ -220,14 +220,17 @@ providers:
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/batches.db
 persistence:
   backends:
-    default:
+    kvstore:
       type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/store.db
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/kvstore.db
+    sqlstore:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/sqlstore.db
   stores:
     metadata:
-      backend: default
+      backend: kvstore
     inference:
-      backend: default
+      backend: sqlstore
 models: []
 shields:
 - shield_id: llama-guard

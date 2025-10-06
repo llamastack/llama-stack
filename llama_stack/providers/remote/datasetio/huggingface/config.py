@@ -14,12 +14,12 @@ from llama_stack.providers.utils.kvstore.config import (
 
 
 class HuggingfaceDatasetIOConfig(BaseModel):
-    kvstore: KVStoreConfig
+    persistence: KVStoreConfig
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="huggingface_datasetio.db",
             )

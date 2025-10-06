@@ -60,7 +60,7 @@ class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
         self.kvstore = None
 
     async def initialize(self) -> None:
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        self.kvstore = await kvstore_impl(self.config.persistence)
         # Load existing datasets from kvstore
         start_key = DATASETS_PREFIX
         end_key = f"{DATASETS_PREFIX}\xff"

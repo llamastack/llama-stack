@@ -39,12 +39,9 @@ def resolve_provider_kvstore_references(
 
 def _resolve_kvstore_in_dict(config: dict[str, Any], backends: dict[str, Any]) -> None:
     """Recursively find and resolve backend references in config dict."""
-    # Store keys that typically contain backend references
-    store_keys = {"kvstore", "metadata_store", "persistence_store", "responses_store"}
-
     for key, value in list(config.items()):
-        if key in store_keys and isinstance(value, dict):
-            # Check if it's a backend reference
+        if isinstance(value, dict):
+            # Check if this dict is a backend reference
             if "backend" in value:
                 backend_name = value["backend"]
                 namespace = value.get("namespace")
@@ -62,7 +59,6 @@ def _resolve_kvstore_in_dict(config: dict[str, Any], backends: dict[str, Any]) -
                     resolved_config["namespace"] = namespace
 
                 config[key] = resolved_config
-
-        elif isinstance(value, dict):
-            # Recursively process nested dicts
-            _resolve_kvstore_in_dict(value, backends)
+            else:
+                # Not a backend reference - recursively process
+                _resolve_kvstore_in_dict(value, backends)

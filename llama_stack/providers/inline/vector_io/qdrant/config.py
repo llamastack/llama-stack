@@ -19,13 +19,13 @@ from llama_stack.schema_utils import json_schema_type
 @json_schema_type
 class QdrantVectorIOConfig(BaseModel):
     path: str
-    kvstore: KVStoreConfig
+    persistence: KVStoreConfig
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
         return {
             "path": "${env.QDRANT_PATH:=~/.llama/" + __distro_dir__ + "}/" + "qdrant.db",
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__, db_name="qdrant_registry.db"
             ),
         }
