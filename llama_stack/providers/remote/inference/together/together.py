@@ -59,7 +59,7 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
             together_api_key = provider_data.together_api_key
         return AsyncTogether(api_key=together_api_key)
 
-    async def get_models(self) -> Iterable[str] | None:
+    async def list_provider_model_ids(self) -> Iterable[str]:
         # Together's /v1/models is not compatible with OpenAI's /v1/models. Together support ticket #13355 -> will not fix, use Together's own client
         return [m.id for m in await self._get_client().models.list()]
 

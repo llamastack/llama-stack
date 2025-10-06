@@ -35,7 +35,7 @@ class _HfAdapter(OpenAIMixin):
     def get_base_url(self):
         return self.url
 
-    async def get_models(self) -> Iterable[str] | None:
+    async def list_provider_model_ids(self) -> Iterable[str]:
         return [self.model_id]
 
     async def openai_embeddings(
