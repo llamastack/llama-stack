@@ -93,10 +93,13 @@ class RunpodInferenceAdapter(OpenAIMixin):
     async def register_model(self, model: Model) -> Model:
         """
         Register a model and verify it's available on the RunPod endpoint.
-        In the .yaml file the model: can be defined as example
+        This is mainly if you want to register a model with a custom identifier.
+        This will ping the endpoint and make sure the model is avaliable via the /v1/models.
+        In the .yaml file the model: can be defined as example.
+
         models:
             - metadata: {}
-            model_id: qwen3-32b-awq
+            model_id: custom_model_id
             model_type: llm
             provider_id: runpod
             provider_model_id: Qwen/Qwen3-32B-AWQ
