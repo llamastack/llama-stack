@@ -282,16 +282,16 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
         # Strictly respecting the refresh_models directive
         return self.config.refresh_models
 
-    async def allow_listing_models(self) -> bool:
-        # Respecting the allow_listing_models directive
-        result = self.config.allow_listing_models
-        log.debug(f"VLLM allow_listing_models: {result}")
+    async def enable_model_discovery(self) -> bool:
+        # Respecting the enable_model_discovery directive
+        result = self.config.enable_model_discovery
+        log.debug(f"VLLM enable_model_discovery: {result}")
         return result
 
     async def list_models(self) -> list[Model] | None:
-        log.debug(f"VLLM list_models called, allow_listing_models={self.config.allow_listing_models}")
-        if not self.config.allow_listing_models:
-            log.debug("VLLM list_models returning None due to allow_listing_models=False")
+        log.debug(f"VLLM list_models called, enable_model_discovery={self.config.enable_model_discovery}")
+        if not self.config.enable_model_discovery:
+            log.debug("VLLM list_models returning None due to enable_model_discovery=False")
             return None
 
         models = []
@@ -347,18 +347,23 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
         """
         Check if a specific model is available from the vLLM server.
 
-        This method respects the allow_listing_models configuration flag.
-        If allow_listing_models is False, it returns True to allow model registration
+        This method respects the enable_model_discovery configuration flag.
+        If enable_model_discovery is False, it returns True to allow model registration
         without making HTTP requests (trusting that the model exists).
 
         :param model: The model identifier to check.
-        :return: True if the model is available or if allow_listing_models is False, False otherwise.
+        :return: True if the model is available or if enable_model_discovery is False, False otherwise.
         """
-        # Check if provider allows listing models before making HTTP request
-        if not self.config.allow_listing_models:
-            log.debug(
-                "VLLM check_model_availability returning True due to allow_listing_models=False (trusting model exists)"
-            )
+        # Check if provider enables model discovery before making HTTP request
+        if not self.config.enable_model_discovery:
+            log.debug("Model discovery disabled for vLLM: Trusting model exists")
+            # Warn if API key is set but model discovery is disabled
+            if self.config.api_token:
+                log.warning(
+                    "Model discovery is disabled but VLLM_API_TOKEN is set. "
+                    "If you're not using model discovery, you may not need to set the API token. "
+                    "Consider removing VLLM_API_TOKEN from your configuration or setting enable_model_discovery=true."
+                )
             return True
 
         try:
@@ -367,7 +372,21 @@ class VLLMInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin, Inference, ModelsPro
             log.warning(f"Failed to connect to vLLM at {self.config.url}: {e}")
             return False
 
-        available_models = [m.id async for m in res]
+        try:
+            available_models = [m.id async for m in res]
+        except Exception as e:
+            # Provide helpful error message for model discovery failures
+            log.error(f"Model discovery failed with the following output from vLLM server: {e}.\n")
+            log.error(
+                f"Model discovery failed: This typically occurs when a provider (like vLLM) is configured "
+                f"with model discovery enabled but the provider server doesn't support the /models endpoint. "
+                f"To resolve this, either:\n"
+                f"1. Check that {self.config.url} correctly points to the vLLM server, or\n"
+                f"2. Ensure your provider server supports the /v1/models endpoint and if authenticated that VLLM_API_TOKEN is set, or\n"
+                f"3. Set enable_model_discovery=false for the problematic provider in your configuration\n"
+            )
+            return False
+
         is_available = model in available_models
         log.debug(f"VLLM model {model} availability: {is_available}")
         return is_available

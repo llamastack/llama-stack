@@ -653,17 +653,17 @@ async def test_should_refresh_models():
     assert result2 is False, "should_refresh_models should return False when refresh_models is False"
 
 
-async def test_allow_listing_models_flag():
+async def test_enable_model_discovery_flag():
     """
-    Test the allow_listing_models flag functionality.
+    Test the enable_model_discovery flag functionality.
 
     This test verifies that:
-    1. When allow_listing_models is True (default), list_models returns models from the server
-    2. When allow_listing_models is False, list_models returns None without calling the server
+    1. When enable_model_discovery is True (default), list_models returns models from the server
+    2. When enable_model_discovery is False, list_models returns None without calling the server
     """
 
-    # Test case 1: allow_listing_models is True (default)
-    config1 = VLLMInferenceAdapterConfig(url="http://test.localhost", allow_listing_models=True)
+    # Test case 1: enable_model_discovery is True (default)
+    config1 = VLLMInferenceAdapterConfig(url="http://test.localhost", enable_model_discovery=True)
     adapter1 = VLLMInferenceAdapter(config1)
     adapter1.__provider_id__ = "test-vllm"
 
@@ -679,14 +679,14 @@ async def test_allow_listing_models_flag():
         mock_client_property.return_value = mock_client
 
         models = await adapter1.list_models()
-        assert models is not None, "list_models should return models when allow_listing_models is True"
+        assert models is not None, "list_models should return models when enable_model_discovery is True"
         assert len(models) == 2, "Should return 2 models"
         assert models[0].identifier == "test-model-1"
         assert models[1].identifier == "test-model-2"
         mock_client.models.list.assert_called_once()
 
-    # Test case 2: allow_listing_models is False
-    config2 = VLLMInferenceAdapterConfig(url="http://test.localhost", allow_listing_models=False)
+    # Test case 2: enable_model_discovery is False
+    config2 = VLLMInferenceAdapterConfig(url="http://test.localhost", enable_model_discovery=False)
     adapter2 = VLLMInferenceAdapter(config2)
     adapter2.__provider_id__ = "test-vllm"
 
@@ -696,15 +696,15 @@ async def test_allow_listing_models_flag():
         mock_client_property.return_value = mock_client
 
         models = await adapter2.list_models()
-        assert models is None, "list_models should return None when allow_listing_models is False"
+        assert models is None, "list_models should return None when enable_model_discovery is False"
         mock_client.models.list.assert_not_called()
 
-    # Test case 3: allow_listing_models defaults to True
+    # Test case 3: enable_model_discovery defaults to True
     config3 = VLLMInferenceAdapterConfig(url="http://test.localhost")
     adapter3 = VLLMInferenceAdapter(config3)
     adapter3.__provider_id__ = "test-vllm"
-    result3 = await adapter3.allow_listing_models()
-    assert result3 is True, "allow_listing_models should return True by default"
+    result3 = await adapter3.enable_model_discovery()
+    assert result3 is True, "enable_model_discovery should return True by default"
 
     # Test case 4: refresh_models is True, api_token is real token
     config4 = VLLMInferenceAdapterConfig(url="http://test.localhost", api_token="real-token-123", refresh_models=True)
@@ -729,7 +729,7 @@ async def test_allow_listing_models_flag():
         mock_client_property.return_value = mock_client
 
         models = await adapter3.list_models()
-        assert models is not None, "list_models should return models when allow_listing_models defaults to True"
+        assert models is not None, "list_models should return models when enable_model_discovery defaults to True"
         assert len(models) == 1, "Should return 1 model"
         assert models[0].identifier == "default-model"
         mock_client.models.list.assert_called_once()

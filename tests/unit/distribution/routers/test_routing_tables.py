@@ -52,7 +52,7 @@ class InferenceImpl(Impl):
     async def should_refresh_models(self):
         return False
 
-    async def allow_listing_models(self):
+    async def enable_model_discovery(self):
         return True
 
     async def list_models(self):

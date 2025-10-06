@@ -20,7 +20,7 @@ Remote vLLM inference provider for connecting to vLLM servers.
 | `api_token` | `str \| None` | No | fake | The API token |
 | `tls_verify` | `bool \| str` | No | True | Whether to verify TLS certificates. Can be a boolean or a path to a CA certificate file. |
 | `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically |
-| `allow_listing_models` | `<class 'bool'>` | No | True | Whether to allow listing models from the vLLM server |
+| `enable_model_discovery` | `<class 'bool'>` | No | True | Whether to enable model discovery from the vLLM server |
 
 ## Sample Configuration
 
@@ -29,5 +29,5 @@ url: ${env.VLLM_URL:=}
 max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
 api_token: ${env.VLLM_API_TOKEN:=fake}
 tls_verify: ${env.VLLM_TLS_VERIFY:=true}
-allow_listing_models: ${env.VLLM_ALLOW_LISTING_MODELS:=true}
+enable_model_discovery: ${env.VLLM_ENABLE_MODEL_DISCOVERY:=true}
 ```

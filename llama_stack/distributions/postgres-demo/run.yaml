@@ -16,7 +16,7 @@ providers:
       max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
       api_token: ${env.VLLM_API_TOKEN:=fake}
       tls_verify: ${env.VLLM_TLS_VERIFY:=true}
-      allow_listing_models: ${env.VLLM_ALLOW_LISTING_MODELS:=true}
+      enable_model_discovery: ${env.VLLM_ENABLE_MODEL_DISCOVERY:=true}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
   vector_io:

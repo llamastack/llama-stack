@@ -32,7 +32,7 @@ async def test_setup(cached_disk_dist_registry):
     mock_inference.__provider_spec__ = MagicMock()
     mock_inference.__provider_spec__.api = Api.inference
     mock_inference.register_model = AsyncMock(side_effect=_return_model)
-    mock_inference.allow_listing_models = AsyncMock(return_value=True)
+    mock_inference.enable_model_discovery = AsyncMock(return_value=True)
     routing_table = ModelsRoutingTable(
         impls_by_provider_id={"test_provider": mock_inference},
         dist_registry=cached_disk_dist_registry,
