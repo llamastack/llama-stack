@@ -336,7 +336,6 @@ class LiteLLMOpenAIMixin(
             api_key=self.get_api_key(),
             api_base=self.api_base,
         )
-        logger.info(f"params to litellm (openai compat): {params}")
         return await litellm.acompletion(**params)
 
     async def check_model_availability(self, model: str) -> bool:
