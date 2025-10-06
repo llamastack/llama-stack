@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, TypeAdapter, field_validator, model_validator
 
 from llama_stack.apis.benchmarks import Benchmark, BenchmarkInput
 from llama_stack.apis.datasetio import DatasetIO
@@ -26,7 +26,10 @@ from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.core.instrumentation import InstrumentationProvider
+from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.providers.datatypes import Api, ProviderSpec
+from llama_stack.providers.registry.instrumentation import instrumentation_registry
 from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreConfig
 
@@ -493,6 +496,12 @@ If not specified, a default SQLite store will be used.""",
 
     logging: LoggingConfig | None = Field(default=None, description="Configuration for Llama Stack Logging")
 
+    # Middleware/instrumentation providers (not full APIs)
+    instrumentation: InstrumentationProvider | None = Field(
+        default=None,
+        description="Instrumentation provider for observability",
+    )
+
     server: ServerConfig = Field(
         default_factory=ServerConfig,
         description="Configuration for the HTTP(S) server",
@@ -517,11 +526,31 @@ If not specified, a default SQLite store will be used.""",
             return Path(v)
         return v
 
+    @field_validator("instrumentation", mode="before")
+    @classmethod
+    def load_instrumentation(cls, v: InstrumentationProvider | dict[str, Any] | None):
+        if v is None or isinstance(v, InstrumentationProvider):
+            return v
+
+        provider_type = v.get("provider")
+        if not isinstance(provider_type, str):
+            raise ValueError("instrumentation.provider must be a string")
+
+        entry = instrumentation_registry.get(provider_type)
+        if entry is None:
+            raise ValueError(f"Unknown instrumentation provider: {provider_type}")
+
+        cfg_cls = instantiate_class_type(entry.config_class)
+        prv_cls = instantiate_class_type(entry.provider_class)
+        cfg_data = v.get("config") or {}
+        cfg = TypeAdapter(cfg_cls).validate_python(cfg_data)
+        return prv_cls(provider=provider_type, config=cfg)
+
 
 class BuildConfig(BaseModel):
     version: int = LLAMA_STACK_BUILD_CONFIG_VERSION
 
-    distribution_spec: DistributionSpec = Field(description="The distribution spec to build including API providers. ")
+    distribution_spec: DistributionSpec = Field(description="The distribution spec to build including API providers.")
     image_type: str = Field(
         default="venv",
         description="Type of package to build (container | venv)",

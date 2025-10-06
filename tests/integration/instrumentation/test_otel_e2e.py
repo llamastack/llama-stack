@@ -395,7 +395,6 @@ def llama_stack_server(tmp_path_factory, mock_otlp_collector, mock_vllm_server):
         pytest.fail(f"Mock vLLM not accessible before starting Llama Stack: {e}")
 
     # Create run.yaml with inference and telemetry providers
-    # **TO ADD MORE PROVIDERS:** Add to providers dict
     run_config = {
         "image_name": "test-otel-e2e",
         "apis": ["inference"],
@@ -409,16 +408,16 @@ def llama_stack_server(tmp_path_factory, mock_otlp_collector, mock_vllm_server):
                     },
                 },
             ],
-            "telemetry": [
-                {
-                    "provider_id": "otel",
-                    "provider_type": "inline::otel",
-                    "config": {
-                        "service_name": "llama-stack-e2e-test",
-                        "span_processor": "simple",
-                    },
-                },
-            ],
+        },
+        "instrumentation": {
+            "provider": "otel",  # Discriminator for Pydantic
+            "config": {
+                "service_name": "llama-stack-e2e-test",
+                "span_processor": "simple",
+            },
+        },
+        "server": {
+            "host": "127.0.0.1",
         },
         "models": [
             {
@@ -485,7 +484,7 @@ def llama_stack_server(tmp_path_factory, mock_otlp_collector, mock_vllm_server):
 
     # Wait for server to start
     max_wait = 30
-    base_url = f"http://localhost:{port}"
+    base_url = f"http://127.0.0.1:{port}"
     startup_output = []
 
     for i in range(max_wait):

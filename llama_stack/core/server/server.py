@@ -400,9 +400,9 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
-    if Api.telemetry in impls:
-        impls[Api.telemetry].fastapi_middleware(app)
-        impls[Api.telemetry].sqlalchemy_instrumentation()
+    # Apply instrumentation provider (e.g., OpenTelemetry)
+    if config.instrumentation:
+        config.instrumentation.fastapi_middleware(app)
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)
