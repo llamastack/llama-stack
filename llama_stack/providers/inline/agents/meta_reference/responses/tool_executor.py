@@ -97,7 +97,7 @@ class ToolExecutor:
             sequence_number=sequence_number,
             final_output_message=output_message,
             final_input_message=input_message,
-            file_mapping=result.metadata.get("_annotation_file_mapping") if result and result.metadata else None,
+            citation_files=result.metadata.get("citation_files") if result and result.metadata else None,
         )
 
     async def _execute_knowledge_search_via_vector_store(
@@ -158,8 +158,10 @@ class ToolExecutor:
 
         citation_instruction = ""
         if unique_files:
-            citation_instruction = " Cite sources at the end of each sentence, after punctuation, using `<|file-id|>` (e.g. .<|file-Cn3MSNn72ENTiiq11Qda4A|>)."
-            citation_instruction += " Use only the file IDs provided (do not invent new ones)."
+            citation_instruction = " Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format (e.g., 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.')."
+            citation_instruction += (
+                " Do not add extra punctuation. Use only the file IDs provided (do not invent new ones)."
+            )
 
         content_items.append(
             TextContentItem(
@@ -168,7 +170,7 @@ class ToolExecutor:
         )
 
         # handling missing attributes for old versions
-        annotation_file_mapping = {
+        citation_files = {
             (r.file_id or (r.attributes.get("document_id") if r.attributes else None)): r.filename
             or (r.attributes.get("filename") if r.attributes else None)
             or "unknown"
@@ -181,7 +183,7 @@ class ToolExecutor:
                 "document_ids": [r.file_id for r in search_results],
                 "chunks": [r.content[0].text if r.content else "" for r in search_results],
                 "scores": [r.score for r in search_results],
-                "_annotation_file_mapping": annotation_file_mapping,
+                "citation_files": citation_files,
             },
         )
 

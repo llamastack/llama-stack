@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import re
-import unicodedata
 import uuid
 
 from llama_stack.apis.agents.openai_responses import (
@@ -49,7 +48,7 @@ from llama_stack.apis.inference import (
 
 
 async def convert_chat_choice_to_response_message(
-    choice: OpenAIChoice, file_mapping: dict[str, str] | None = None
+    choice: OpenAIChoice, citation_files: dict[str, str] | None = None
 ) -> OpenAIResponseMessage:
     """Convert an OpenAI Chat Completion choice into an OpenAI Response output message."""
     output_content = ""
@@ -62,7 +61,7 @@ async def convert_chat_choice_to_response_message(
             f"Llama Stack OpenAI Responses does not yet support output content type: {type(choice.message.content)}"
         )
 
-    annotations, clean_text = _extract_citations_from_text(output_content, file_mapping or {})
+    annotations, clean_text = _extract_citations_from_text(output_content, citation_files or {})
 
     return OpenAIResponseMessage(
         id=f"msg_{uuid.uuid4()}",
@@ -207,65 +206,50 @@ async def get_message_type_by_role(role: str):
     return role_to_type.get(role)
 
 
-def _is_punct(ch: str) -> bool:
-    return bool(ch) and unicodedata.category(ch).startswith("P")
-
-
-def _is_word_char(ch: str) -> bool:
-    return bool(ch) and (ch.isalnum() or ch == "_")
-
-
 def _extract_citations_from_text(
-    text: str, file_mapping: dict[str, str]
+    text: str, citation_files: dict[str, str]
 ) -> tuple[list[OpenAIResponseAnnotationFileCitation], str]:
     """Extract citation markers from text and create annotations
 
     Args:
         text: The text containing citation markers like [file-Cn3MSNn72ENTiiq11Qda4A]
-        file_mapping: Dictionary mapping file_id to filename
+        citation_files: Dictionary mapping file_id to filename
 
     Returns:
         Tuple of (annotations_list, clean_text_without_markers)
     """
     file_id_regex = re.compile(r"<\|(?P<file_id>file-[A-Za-z0-9_-]+)\|>")
 
-    annotations: list[OpenAIResponseAnnotationFileCitation] = []
-    parts: list[str] = []
+    annotations = []
+    parts = []
     total_len = 0
     last_end = 0
 
     for m in file_id_regex.finditer(text):
+        # segment before the marker
         prefix = text[last_end : m.start()]
-        # remove trailing space
+
+        # drop one space if it exists (since marker is at sentence end)
         if prefix.endswith(" "):
             prefix = prefix[:-1]
 
-        # skip all spaces after the marker
-        j = m.end()
-        while j < len(text) and text[j].isspace():
-            j += 1
-
-        # append normalized prefix
         parts.append(prefix)
         total_len += len(prefix)
 
-        # point to the next visible character
-        fid = m.group("file_id")
-        if fid in file_mapping:
+        fid = m.group(1)
+        if fid in citation_files:
             annotations.append(
                 OpenAIResponseAnnotationFileCitation(
                     file_id=fid,
-                    filename=file_mapping[fid],
-                    index=total_len,
+                    filename=citation_files[fid],
+                    index=total_len,  # index points to punctuation
                 )
             )
 
-        last_end = j
+        last_end = m.end()
 
-    # append remaining part
     parts.append(text[last_end:])
     cleaned_text = "".join(parts)
-    annotations.sort(key=lambda a: a.index)
     return annotations, cleaned_text
 
 

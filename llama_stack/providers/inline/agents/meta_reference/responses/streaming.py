@@ -97,8 +97,8 @@ class StreamingResponseOrchestrator:
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = {}
         # Track final messages after all tool executions
         self.final_messages: list[OpenAIMessageParam] = []
-        # file mapping for annotations
-        self.file_mapping: dict[str, str] = {}
+        # mapping for annotations
+        self.citation_files: dict[str, str] = {}
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Initialize output messages
@@ -163,7 +163,7 @@ class StreamingResponseOrchestrator:
             # Handle choices with no tool calls
             for choice in current_response.choices:
                 if not (choice.message.tool_calls and self.ctx.response_tools):
-                    output_messages.append(await convert_chat_choice_to_response_message(choice, self.file_mapping))
+                    output_messages.append(await convert_chat_choice_to_response_message(choice, self.citation_files))
 
             # Execute tool calls and coordinate results
             async for stream_event in self._coordinate_tool_execution(
@@ -475,8 +475,8 @@ class StreamingResponseOrchestrator:
                     tool_call_log = result.final_output_message
                     tool_response_message = result.final_input_message
                     self.sequence_number = result.sequence_number
-                    if result.file_mapping:
-                        self.file_mapping.update(result.file_mapping)
+                    if result.citation_files:
+                        self.citation_files.update(result.citation_files)
 
             if tool_call_log:
                 output_messages.append(tool_call_log)
@@ -562,9 +562,7 @@ class StreamingResponseOrchestrator:
                 tool = await self.tool_executor.tool_groups_api.get_tool(tool_name)
                 if not tool:
                     raise ValueError(f"Tool {tool_name} not found")
-                openai_tool = make_openai_tool(tool_name, tool)
-                logger.debug(f"Adding file_search tool as knowledge_search: {openai_tool}")
-                self.ctx.chat_tools.append(openai_tool)
+                self.ctx.chat_tools.append(make_openai_tool(tool_name, tool))
             elif input_tool.type == "mcp":
                 async for stream_event in self._process_mcp_tool(input_tool, output_messages):
                     yield stream_event

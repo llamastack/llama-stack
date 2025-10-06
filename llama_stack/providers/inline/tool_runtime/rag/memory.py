@@ -333,6 +333,6 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
             content=result.content or [],
             metadata={
                 **(result.metadata or {}),
-                "_annotation_file_mapping": getattr(result, "annotation_file_mapping", None),
+                "citation_files": getattr(result, "citation_files", None),
             },
         )

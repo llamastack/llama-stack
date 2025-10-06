@@ -361,8 +361,7 @@ class TestExtractCitationsFromText:
 
         assert cleaned_text == expected_clean_text
         assert annotations == expected_annotations
-        # OpenAI typically cites at the end of the sentence but we support the middle just in case,
-        # which makes the position the start of the next word.
+        # OpenAI cites at the end of the sentence
         assert cleaned_text[expected_annotations[0].index] == "."
         assert cleaned_text[expected_annotations[1].index] == "?"
         assert cleaned_text[expected_annotations[2].index] == "!"
