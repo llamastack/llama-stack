@@ -888,6 +888,10 @@ class OpenAIResponseObjectWithInput(OpenAIResponseObject):
 
     input: list[OpenAIResponseInput]
 
+    def to_response_object(self) -> OpenAIResponseObject:
+        """Convert to OpenAIResponseObject by excluding input field."""
+        return OpenAIResponseObject(**{k: v for k, v in self.model_dump().items() if k != "input"})
+
 
 @json_schema_type
 class ListOpenAIResponseObject(BaseModel):

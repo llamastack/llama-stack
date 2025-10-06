@@ -50,6 +50,7 @@ class ChunkForDeletion(BaseModel):
 # Constants for reranker types
 RERANKER_TYPE_RRF = "rrf"
 RERANKER_TYPE_WEIGHTED = "weighted"
+RERANKER_TYPE_NORMALIZED = "normalized"
 
 
 def parse_pdf(data: bytes) -> str:
@@ -325,6 +326,8 @@ class VectorDBWithIndex:
                 weights = ranker.get("params", {}).get("weights", [0.5, 0.5])
                 reranker_type = RERANKER_TYPE_WEIGHTED
                 reranker_params = {"alpha": weights[0] if len(weights) > 0 else 0.5}
+            elif strategy == "normalized":
+                reranker_type = RERANKER_TYPE_NORMALIZED
             else:
                 reranker_type = RERANKER_TYPE_RRF
                 k_value = ranker.get("params", {}).get("k", 60.0)

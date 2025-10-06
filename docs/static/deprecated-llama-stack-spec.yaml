@@ -1033,8 +1033,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: List all chat completions.
-      description: List all chat completions.
+      summary: List chat completions.
+      description: List chat completions.
       parameters:
         - name: after
           in: query
@@ -1087,10 +1087,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: >-
-        Generate an OpenAI-compatible chat completion for the given messages using
-        the specified model.
+      summary: Create chat completions.
       description: >-
+        Create chat completions.
+
         Generate an OpenAI-compatible chat completion for the given messages using
         the specified model.
       parameters: []
@@ -1122,8 +1122,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: Describe a chat completion by its ID.
-      description: Describe a chat completion by its ID.
+      summary: Get chat completion.
+      description: >-
+        Get chat completion.
+
+        Describe a chat completion by its ID.
       parameters:
         - name: completion_id
           in: path
@@ -1153,10 +1156,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: >-
-        Generate an OpenAI-compatible completion for the given prompt using the specified
-        model.
+      summary: Create completion.
       description: >-
+        Create completion.
+
         Generate an OpenAI-compatible completion for the given prompt using the specified
         model.
       parameters: []
@@ -1189,10 +1192,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: >-
-        Generate OpenAI-compatible embeddings for the given input using the specified
-        model.
+      summary: Create embeddings.
       description: >-
+        Create embeddings.
+
         Generate OpenAI-compatible embeddings for the given input using the specified
         model.
       parameters: []
@@ -1225,9 +1228,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: >-
-        Returns a list of files that belong to the user's organization.
+      summary: List files.
       description: >-
+        List files.
+
         Returns a list of files that belong to the user's organization.
       parameters:
         - name: after
@@ -1285,10 +1289,12 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: >-
-        Upload a file that can be used across various endpoints.
+      summary: Upload file.
       description: >-
+        Upload file.
+
         Upload a file that can be used across various endpoints.
+
 
         The file upload should be a multipart form request with:
 
@@ -1338,9 +1344,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: >-
-        Returns information about a specific file.
+      summary: Retrieve file.
       description: >-
+        Retrieve file.
+
         Returns information about a specific file.
       parameters:
         - name: file_id
@@ -1372,8 +1379,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: Delete a file.
-      description: Delete a file.
+      summary: Delete file.
+      description: Delete file.
       parameters:
         - name: file_id
           in: path
@@ -1405,9 +1412,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: >-
-        Returns the contents of the specified file.
+      summary: Retrieve file content.
       description: >-
+        Retrieve file content.
+
         Returns the contents of the specified file.
       parameters:
         - name: file_id
@@ -1464,9 +1472,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Safety
-      summary: >-
-        Classifies if text and/or image inputs are potentially harmful.
+      summary: Create moderation.
       description: >-
+        Create moderation.
+
         Classifies if text and/or image inputs are potentially harmful.
       parameters: []
       requestBody:
@@ -1497,8 +1506,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: List all OpenAI responses.
-      description: List all OpenAI responses.
+      summary: List all responses.
+      description: List all responses.
       parameters:
         - name: after
           in: query
@@ -1549,8 +1558,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: Create a new OpenAI response.
-      description: Create a new OpenAI response.
+      summary: Create a model response.
+      description: Create a model response.
       parameters: []
       requestBody:
         content:
@@ -1559,6 +1568,18 @@ paths:
               $ref: '#/components/schemas/CreateOpenaiResponseRequest'
         required: true
       deprecated: true
+      x-llama-stack-extra-body-params:
+        - name: shields
+          schema:
+            type: array
+            items:
+              oneOf:
+                - type: string
+                - $ref: '#/components/schemas/ResponseShieldSpec'
+          description: >-
+            List of shields to apply during response generation. Shields provide safety
+            and content moderation.
+          required: false
   /v1/openai/v1/responses/{response_id}:
     get:
       responses:
@@ -1580,8 +1601,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: Retrieve an OpenAI response by its ID.
-      description: Retrieve an OpenAI response by its ID.
+      summary: Get a model response.
+      description: Get a model response.
       parameters:
         - name: response_id
           in: path
@@ -1611,8 +1632,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: Delete an OpenAI response by its ID.
-      description: Delete an OpenAI response by its ID.
+      summary: Delete a response.
+      description: Delete a response.
       parameters:
         - name: response_id
           in: path
@@ -1642,10 +1663,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: >-
-        List input items for a given OpenAI response.
-      description: >-
-        List input items for a given OpenAI response.
+      summary: List input items.
+      description: List input items.
       parameters:
         - name: response_id
           in: path
@@ -7076,6 +7095,18 @@ components:
       title: OpenAIResponseText
       description: >-
         Text response configuration for OpenAI responses.
+    ResponseShieldSpec:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type/identifier of the shield.
+      additionalProperties: false
+      required:
+        - type
+      title: ResponseShieldSpec
+      description: >-
+        Specification for a shield to apply during response generation.
     OpenAIResponseInputTool:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
@@ -9987,9 +10018,16 @@ tags:
     x-displayName: >-
       Llama Stack Evaluation API for running evaluations on model and agent candidates.
   - name: Files
-    description: ''
+    description: >-
+      This API is used to upload documents that can be used with other Llama Stack
+      APIs.
+    x-displayName: Files
   - name: Inference
     description: >-
+      Llama Stack Inference API for generating completions, chat completions, and
+      embeddings.
+
+
       This API provides the raw interface to the underlying models. Two kinds of models
       are supported:
 
@@ -9997,15 +10035,14 @@ tags:
 
       - Embedding models: these models generate embeddings to be used for semantic
       search.
-    x-displayName: >-
-      Llama Stack Inference API for generating completions, chat completions, and
-      embeddings.
+    x-displayName: Inference
   - name: Models
     description: ''
   - name: PostTraining (Coming Soon)
     description: ''
   - name: Safety
-    description: ''
+    description: OpenAI-compatible Moderations API.
+    x-displayName: Safety
   - name: Telemetry
     description: ''
   - name: VectorIO

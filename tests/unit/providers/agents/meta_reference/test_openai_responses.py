@@ -22,7 +22,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolWebSearch,
     OpenAIResponseMessage,
-    OpenAIResponseObjectWithInput,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageWebSearchToolCall,
@@ -45,7 +44,10 @@ from llama_stack.core.datatypes import ResponsesStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
-from llama_stack.providers.utils.responses.responses_store import ResponsesStore
+from llama_stack.providers.utils.responses.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
 from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
@@ -499,13 +501,6 @@ async def test_create_openai_response_with_multiple_messages(openai_responses_im
             assert isinstance(inference_messages[i], OpenAIDeveloperMessageParam)
 
 
-async def test_prepend_previous_response_none(openai_responses_impl):
-    """Test prepending no previous response to a new response."""
-
-    input = await openai_responses_impl._prepend_previous_response("fake_input", None)
-    assert input == "fake_input"
-
-
 async def test_prepend_previous_response_basic(openai_responses_impl, mock_responses_store):
     """Test prepending a basic previous response to a new response."""
 
@@ -520,7 +515,7 @@ async def test_prepend_previous_response_basic(openai_responses_impl, mock_respo
         status="completed",
         role="assistant",
     )
-    previous_response = OpenAIResponseObjectWithInput(
+    previous_response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -528,10 +523,11 @@ async def test_prepend_previous_response_basic(openai_responses_impl, mock_respo
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[OpenAIUserMessageParam(content="fake_previous_input")],
     )
     mock_responses_store.get_response_object.return_value = previous_response
 
-    input = await openai_responses_impl._prepend_previous_response("fake_input", "resp_123")
+    input = await openai_responses_impl._prepend_previous_response("fake_input", previous_response)
 
     assert len(input) == 3
     # Check for previous input
@@ -562,7 +558,7 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
         status="completed",
         role="assistant",
     )
-    response = OpenAIResponseObjectWithInput(
+    response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -570,11 +566,12 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[OpenAIUserMessageParam(content="test input")],
     )
     mock_responses_store.get_response_object.return_value = response
 
     input_messages = [OpenAIResponseMessage(content="fake_input", role="user")]
-    input = await openai_responses_impl._prepend_previous_response(input_messages, "resp_123")
+    input = await openai_responses_impl._prepend_previous_response(input_messages, response)
 
     assert len(input) == 4
     # Check for previous input
@@ -609,7 +606,7 @@ async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mo
         status="completed",
         role="assistant",
     )
-    response = OpenAIResponseObjectWithInput(
+    response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -617,11 +614,12 @@ async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mo
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[OpenAIUserMessageParam(content="test input")],
     )
     mock_responses_store.get_response_object.return_value = response
 
     input_messages = [OpenAIResponseMessage(content="fake_input", role="user")]
-    input = await openai_responses_impl._prepend_previous_response(input_messages, "resp_123")
+    input = await openai_responses_impl._prepend_previous_response(input_messages, response)
 
     assert len(input) == 4
     # Check for previous input
@@ -725,7 +723,7 @@ async def test_create_openai_response_with_instructions_and_previous_response(
         status="completed",
         role="assistant",
     )
-    response = OpenAIResponseObjectWithInput(
+    response = _OpenAIResponseObjectWithInputAndMessages(
         created_at=1,
         id="resp_123",
         model="fake_model",
@@ -733,6 +731,10 @@ async def test_create_openai_response_with_instructions_and_previous_response(
         status="completed",
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
+        messages=[
+            OpenAIUserMessageParam(content="Name some towns in Ireland"),
+            OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
+        ],
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -818,7 +820,7 @@ async def test_responses_store_list_input_items_logic():
         OpenAIResponseMessage(id="msg_4", content="Fourth message", role="user"),
     ]
 
-    response_with_input = OpenAIResponseObjectWithInput(
+    response_with_input = _OpenAIResponseObjectWithInputAndMessages(
         id="resp_123",
         model="test_model",
         created_at=1234567890,
@@ -827,6 +829,7 @@ async def test_responses_store_list_input_items_logic():
         output=[],
         text=OpenAIResponseText(format=(OpenAIResponseTextFormat(type="text"))),
         input=input_items,
+        messages=[OpenAIUserMessageParam(content="First message")],
     )
 
     # Mock the get_response_object method to return our test data
@@ -887,7 +890,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
     rather than just the original input when previous_response_id is provided."""
 
     # Setup - Create a previous response that should be included in the stored input
-    previous_response = OpenAIResponseObjectWithInput(
+    previous_response = _OpenAIResponseObjectWithInputAndMessages(
         id="resp-previous-123",
         object="response",
         created_at=1234567890,
@@ -905,6 +908,10 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
                 role="assistant",
                 content=[OpenAIResponseOutputMessageContentOutputText(text="2+2 equals 4.")],
             )
+        ],
+        messages=[
+            OpenAIUserMessageParam(content="What is 2+2?"),
+            OpenAIAssistantMessageParam(content="2+2 equals 4."),
         ],
     )
 

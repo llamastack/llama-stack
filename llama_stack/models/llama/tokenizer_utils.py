@@ -9,7 +9,7 @@ from pathlib import Path
 
 from llama_stack.log import get_logger
 
-logger = get_logger(__name__, "tokenizer_utils")
+logger = get_logger(__name__, "models")
 
 
 def load_bpe_file(model_path: Path) -> dict[bytes, int]:

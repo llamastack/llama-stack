@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -23,7 +24,7 @@ class VertexAIProviderDataValidator(BaseModel):
 
 
 @json_schema_type
-class VertexAIConfig(BaseModel):
+class VertexAIConfig(RemoteInferenceProviderConfig):
     project: str = Field(
         description="Google Cloud project ID for Vertex AI",
     )

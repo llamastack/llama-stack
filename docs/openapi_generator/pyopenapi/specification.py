@@ -107,6 +107,15 @@ class Parameter:
 
 
 @dataclass
+class ExtraBodyParameter:
+    """Represents a parameter that arrives via extra_body in the request."""
+    name: str
+    schema: SchemaOrRef
+    description: Optional[str] = None
+    required: Optional[bool] = None
+
+
+@dataclass
 class Operation:
     responses: Dict[str, Union[Response, ResponseRef]]
     tags: Optional[List[str]] = None
@@ -118,6 +127,7 @@ class Operation:
     callbacks: Optional[Dict[str, "Callback"]] = None
     security: Optional[List["SecurityRequirement"]] = None
     deprecated: Optional[bool] = None
+    extraBodyParameters: Optional[List[ExtraBodyParameter]] = None
 
 
 @dataclass

@@ -1,0 +1,57 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 0"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-c34cccb2af2f",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I'm not capable of testing or interacting with the OpenAI API directly. However, I can provide some general information about the OpenAI model called \"Trace\" and how it can be used.\n\nThe Trace was a transformer-based language model developed by OpenAI in 2022. It was designed to generate text based on a given prompt, but it never gained widespread use.\n\nUnfortunately, the model is no longer available for public testing because OpenAI removed it from their model hub after some issues were raised about its quality and limitations.\n\nThat being said, there are various other models that you might be interested in using as an alternative to the Trace. Here's a list of popular models:\n\n1. **Text-Transformer**: This model is designed for text classification and generation tasks.\n2, **DALL-E 2**: A text-to-image model capable of generating images based on user-provided input prompts.\n3:**Diffusers**: An AI model that can generate raw pixel data in the form of an image.\n\nTo test these models or others available through OpenAI models hub you may need to complete a sign-up process.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 225,
+          "prompt_tokens": 31,
+          "total_tokens": 256,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

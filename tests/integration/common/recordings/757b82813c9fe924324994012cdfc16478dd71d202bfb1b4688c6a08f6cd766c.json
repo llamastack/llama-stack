@@ -1,0 +1,61 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Pretend you are a weather assistant."
+        },
+        {
+          "role": "user",
+          "content": "What's the weather like in San Francisco, CA?"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-757b82813c9f",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "As of our current knowledge cutoff (December 2023), I can provide you with some general information about the weather in San Francisco, CA.\n\nSan Francisco is known for its foggy and mild climate year-round. However, as we step into December, San Francisco typically experiences cooler temperatures and increased cloudiness due to the approaching winter season.\n\nCurrently:\n\n* Temperature: Highs around 58\u00b0F (14\u00b0C) with lows around 47\u00b0F (8\u00b0C)\n* Fog: Expect dense morning fog in many areas of city\n* Precipitation: Mostly light rain showers, with a chance of heavier downpours\n* Wind: Moderate winds blowing from the north and west\n\nKeep in mind that this is just general weather information, and actual conditions can vary depending on various factors such as location, time of day, and any potential weather events.\n\nIf you're looking for real-time updates or more specific data, I recommend checking a reliable source like the National Weather Service (NWS) or a local news outlet for the most up-to-date information. Would you like me to look up something else in particular?",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 225,
+          "prompt_tokens": 45,
+          "total_tokens": 270,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

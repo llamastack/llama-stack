@@ -475,6 +475,13 @@ InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (depreca
 If not specified, a default SQLite store will be used.""",
     )
 
+    conversations_store: SqlStoreConfig | None = Field(
+        default=None,
+        description="""
+Configuration for the persistence store used by the conversations API.
+If not specified, a default SQLite store will be used.""",
+    )
+
     # registry of "resources" in the distribution
     models: list[ModelInput] = Field(default_factory=list)
     shields: list[ShieldInput] = Field(default_factory=list)

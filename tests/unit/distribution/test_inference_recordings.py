@@ -131,10 +131,6 @@ class TestInferenceRecording:
         temp_storage_dir = temp_storage_dir / "test_response_storage"
         storage = ResponseStorage(temp_storage_dir)
 
-        # Test directory creation
-        assert storage.test_dir.exists()
-        assert storage.responses_dir.exists()
-
         # Test storing and retrieving a recording
         request_hash = "test_hash_123"
         request_data = {
@@ -174,7 +170,8 @@ class TestInferenceRecording:
 
         # Verify recording was stored
         storage = ResponseStorage(temp_storage_dir)
-        assert storage.responses_dir.exists()
+        dir = storage._get_test_dir()
+        assert dir.exists()
 
     async def test_replay_mode(self, temp_storage_dir, real_openai_chat_response):
         """Test that replay mode returns stored responses without making real calls."""

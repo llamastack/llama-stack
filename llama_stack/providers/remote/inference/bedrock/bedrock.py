@@ -5,39 +5,30 @@
 # the root directory of this source tree.
 
 import json
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncIterator
 from typing import Any
 
 from botocore.client import BaseClient
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatCompletionResponseStreamChunk,
     Inference,
-    LogProbConfig,
-    Message,
     OpenAIEmbeddingsResponse,
-    ResponseFormat,
-    SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
-from llama_stack.apis.inference.inference import OpenAICompletion
+from llama_stack.apis.inference.inference import (
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAICompletion,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
+)
 from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client
 from llama_stack.providers.utils.inference.model_registry import (
     ModelRegistryHelper,
 )
 from llama_stack.providers.utils.inference.openai_compat import (
-    OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompatCompletionChoice,
-    OpenAICompatCompletionResponse,
     get_sampling_strategy_options,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_prompt,
@@ -86,7 +77,6 @@ def _to_inference_profile_id(model_id: str, region: str = None) -> str:
 class BedrockInferenceAdapter(
     ModelRegistryHelper,
     Inference,
-    OpenAIChatCompletionToLlamaStackMixin,
 ):
     def __init__(self, config: BedrockConfig) -> None:
         ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
@@ -105,71 +95,6 @@ class BedrockInferenceAdapter(
     async def shutdown(self) -> None:
         if self._client is not None:
             self._client.close()
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        if stream:
-            return self._stream_chat_completion(request)
-        else:
-            return await self._nonstream_chat_completion(request)
-
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        params = await self._get_params_for_chat_completion(request)
-        res = self.client.invoke_model(**params)
-        chunk = next(res["body"])
-        result = json.loads(chunk.decode("utf-8"))
-
-        choice = OpenAICompatCompletionChoice(
-            finish_reason=result["stop_reason"],
-            text=result["generation"],
-        )
-
-        response = OpenAICompatCompletionResponse(choices=[choice])
-        return process_chat_completion_response(response, request)
-
-    async def _stream_chat_completion(self, request: ChatCompletionRequest) -> AsyncGenerator:
-        params = await self._get_params_for_chat_completion(request)
-        res = self.client.invoke_model_with_response_stream(**params)
-        event_stream = res["body"]
-
-        async def _generate_and_convert_to_openai_compat():
-            for chunk in event_stream:
-                chunk = chunk["chunk"]["bytes"]
-                result = json.loads(chunk.decode("utf-8"))
-                choice = OpenAICompatCompletionChoice(
-                    finish_reason=result["stop_reason"],
-                    text=result["generation"],
-                )
-                yield OpenAICompatCompletionResponse(choices=[choice])
-
-        stream = _generate_and_convert_to_openai_compat()
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
 
     async def _get_params_for_chat_completion(self, request: ChatCompletionRequest) -> dict:
         bedrock_model = request.model
@@ -235,3 +160,31 @@ class BedrockInferenceAdapter(
         suffix: str | None = None,
     ) -> OpenAICompletion:
         raise NotImplementedError("OpenAI completion not supported by the Bedrock provider")
+
+    async def openai_chat_completion(
+        self,
+        model: str,
+        messages: list[OpenAIMessageParam],
+        frequency_penalty: float | None = None,
+        function_call: str | dict[str, Any] | None = None,
+        functions: list[dict[str, Any]] | None = None,
+        logit_bias: dict[str, float] | None = None,
+        logprobs: bool | None = None,
+        max_completion_tokens: int | None = None,
+        max_tokens: int | None = None,
+        n: int | None = None,
+        parallel_tool_calls: bool | None = None,
+        presence_penalty: float | None = None,
+        response_format: OpenAIResponseFormatParam | None = None,
+        seed: int | None = None,
+        stop: str | list[str] | None = None,
+        stream: bool | None = None,
+        stream_options: dict[str, Any] | None = None,
+        temperature: float | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        top_logprobs: int | None = None,
+        top_p: float | None = None,
+        user: str | None = None,
+    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        raise NotImplementedError("OpenAI chat completion not supported by the Bedrock provider")

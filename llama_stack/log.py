@@ -128,7 +128,7 @@ def strip_rich_markup(text):
 
 class CustomRichHandler(RichHandler):
     def __init__(self, *args, **kwargs):
-        kwargs["console"] = Console(width=150)
+        kwargs["console"] = Console()
         super().__init__(*args, **kwargs)
 
     def emit(self, record):

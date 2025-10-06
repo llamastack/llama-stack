@@ -11,12 +11,8 @@ import litellm
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatCompletionResponseStreamChunk,
     InferenceProvider,
     JsonSchemaResponseFormat,
-    LogProbConfig,
-    Message,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
@@ -24,12 +20,7 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
-    ResponseFormat,
-    SamplingParams,
     ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -37,8 +28,6 @@ from llama_stack.providers.utils.inference.model_registry import ModelRegistryHe
 from llama_stack.providers.utils.inference.openai_compat import (
     b64_encode_openai_embeddings_response,
     convert_message_to_openai_dict_new,
-    convert_openai_chat_completion_choice,
-    convert_openai_chat_completion_stream,
     convert_tooldef_to_openai_tool,
     get_sampling_options,
     prepare_openai_completion_params,
@@ -104,57 +93,6 @@ class LiteLLMOpenAIMixin(
             if self.is_openai_compat and not model_id.startswith(self.litellm_provider_name)
             else model_id
         )
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-
-        model = await self.model_store.get_model(model_id)
-        request = ChatCompletionRequest(
-            model=model.provider_resource_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        params = await self._get_params(request)
-        params["model"] = self.get_litellm_model_name(params["model"])
-
-        logger.debug(f"params to litellm (openai compat): {params}")
-        # see https://docs.litellm.ai/docs/completion/stream#async-completion
-        response = await litellm.acompletion(**params)
-        if stream:
-            return self._stream_chat_completion(response)
-        else:
-            return convert_openai_chat_completion_choice(response.choices[0])
-
-    async def _stream_chat_completion(
-        self, response: litellm.ModelResponse
-    ) -> AsyncIterator[ChatCompletionResponseStreamChunk]:
-        async def _stream_generator():
-            async for chunk in response:
-                yield chunk
-
-        async for chunk in convert_openai_chat_completion_stream(
-            _stream_generator(), enable_incremental_tool_calls=True
-        ):
-            yield chunk
 
     def _add_additional_properties_recursive(self, schema):
         """

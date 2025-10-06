@@ -14,6 +14,7 @@ Remote vLLM inference provider for connecting to vLLM servers.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `url` | `str \| None` | No |  | The URL for the vLLM model serving endpoint |
 | `max_tokens` | `<class 'int'>` | No | 4096 | Maximum number of tokens to generate. |
 | `api_token` | `str \| None` | No | fake | The API token |

@@ -112,7 +112,7 @@ jobs:
           fi
           entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
           echo "Entrypoint: $entrypoint"
-          if [ "$entrypoint" != "[python -m llama_stack.core.server.server /app/run.yaml]" ]; then
+          if [ "$entrypoint" != "[llama stack run /app/run.yaml]" ]; then
             echo "Entrypoint is not correct"
             exit 1
           fi
@@ -150,7 +150,7 @@ jobs:
           fi
           entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
           echo "Entrypoint: $entrypoint"
-          if [ "$entrypoint" != "[python -m llama_stack.core.server.server /app/run.yaml]" ]; then
+          if [ "$entrypoint" != "[llama stack run /app/run.yaml]" ]; then
             echo "Entrypoint is not correct"
             exit 1
           fi

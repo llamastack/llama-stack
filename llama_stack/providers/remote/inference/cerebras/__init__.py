@@ -12,7 +12,7 @@ async def get_adapter_impl(config: CerebrasImplConfig, _deps):
 
     assert isinstance(config, CerebrasImplConfig), f"Unexpected config type: {type(config)}"
 
-    impl = CerebrasInferenceAdapter(config)
+    impl = CerebrasInferenceAdapter(config=config)
 
     await impl.initialize()
 
