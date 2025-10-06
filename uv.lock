@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
@@ -1759,7 +1759,6 @@ dependencies = [
     { name = "fire" },
     { name = "h11" },
     { name = "httpx" },
-    { name = "huggingface-hub" },
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "llama-stack-client" },
@@ -1884,7 +1883,6 @@ requires-dist = [
     { name = "fire" },
     { name = "h11", specifier = ">=0.16.0" },
     { name = "httpx" },
-    { name = "huggingface-hub", specifier = ">=0.34.0,<1.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
     { name = "llama-stack-client", specifier = ">=0.2.23" },
