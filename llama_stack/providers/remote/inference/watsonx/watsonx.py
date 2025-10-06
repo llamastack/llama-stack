@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import asyncio
 from typing import Any
 
 import requests
@@ -56,14 +55,14 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
     async def list_models(self) -> list[Model] | None:
         models = []
         for model_spec in self._get_model_specs():
-            functions = [f['id'] for f in model_spec.get("functions", [])]
+            functions = [f["id"] for f in model_spec.get("functions", [])]
             # Format: {"embedding_dimension": 1536, "context_length": 8192}
 
             # Example of an embedding model:
             # {'model_id': 'ibm/granite-embedding-278m-multilingual',
-            # 'label': 'granite-embedding-278m-multilingual', 
+            # 'label': 'granite-embedding-278m-multilingual',
             # 'model_limits': {'max_sequence_length': 512, 'embedding_dimension': 768},
-            # ... 
+            # ...
             if "embedding" in functions:
                 embedding_dimension = model_spec["model_limits"]["embedding_dimension"]
                 context_length = model_spec["model_limits"]["max_sequence_length"]
