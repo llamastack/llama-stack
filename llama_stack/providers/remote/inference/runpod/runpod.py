@@ -4,33 +4,18 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator
-import asyncio
 from typing import Any
 
-from openai import AsyncOpenAI
-
-from llama_stack.apis.inference import *
 from llama_stack.apis.inference import (
+    Inference,
+    OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
 )
-from llama_stack.apis.common.content_types import InterleavedContentItem
-from llama_stack.apis.models import Model, ModelType
+from llama_stack.apis.models import Model
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
-from llama_stack.providers.utils.inference.openai_compat import (
-    convert_message_to_openai_dict,
-    get_sampling_options,
-    process_chat_completion_response,
-    process_chat_completion_stream_response,
-    process_completion_response,
-    process_completion_stream_response,
-)
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    completion_request_to_prompt,
-    interleaved_content_as_str,
-)
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+
 from .config import RunpodImplConfig
 
 MODEL_ENTRIES = []
@@ -65,10 +50,6 @@ class RunpodInferenceAdapter(
 
     async def shutdown(self) -> None:
         pass
-
-    def get_extra_client_params(self) -> dict[str, Any]:
-        """Override to add RunPod-specific client parameters if needed."""
-        return {}
 
     async def openai_chat_completion(
         self,
@@ -128,7 +109,7 @@ class RunpodInferenceAdapter(
 
     async def register_model(self, model: Model) -> Model:
         """
-        Pass-through registration - accepts any model that the RunPod endpoint serves.
+        Register a model and verify it's available on the RunPod endpoint.
         In the .yaml file the model: can be defined as example
         models:
             - metadata: {}
@@ -137,162 +118,16 @@ class RunpodInferenceAdapter(
             provider_id: runpod
             provider_model_id: Qwen/Qwen3-32B-AWQ
         """
+        provider_model_id = model.provider_resource_id or model.identifier
+        is_available = await self.check_model_availability(provider_model_id)
+
+        if not is_available:
+            raise ValueError(
+                f"Model {provider_model_id} is not available on RunPod endpoint. "
+                f"Check your RunPod endpoint configuration."
+            )
+
         return model
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> CompletionResponse | AsyncGenerator[CompletionResponseStreamChunk, None]:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-
-        # Resolve model_id to provider_resource_id
-        model = await self.model_store.get_model(model_id)
-        provider_model_id = model.provider_resource_id or model_id
-
-        request = CompletionRequest(
-            model=provider_model_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-
-        if stream:
-            return self._stream_completion(request, self.client)
-        else:
-            return await self._nonstream_completion(request, self.client)
-
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
-        """Process chat completion requests using RunPod's OpenAI-compatible API."""
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-
-        # Resolve model_id to provider_resource_id
-        model = await self.model_store.get_model(model_id)
-        provider_model_id = model.provider_resource_id or model_id
-
-        request = ChatCompletionRequest(
-            model=provider_model_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools or [],
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-
-        if stream:
-            return self._stream_chat_completion(request, self.client)
-        else:
-            return await self._nonstream_chat_completion(request, self.client)
-
-    async def _nonstream_chat_completion(
-        self, request: ChatCompletionRequest, client: AsyncOpenAI
-    ) -> ChatCompletionResponse:
-        params = await self._get_chat_params(request)
-        # Make actual RunPod API call
-        r = await client.chat.completions.create(**params)
-        return process_chat_completion_response(r, request)
-
-    async def _stream_chat_completion(
-        self, request: ChatCompletionRequest, client: AsyncOpenAI
-    ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
-        params = await self._get_chat_params(request)
-        # Make actual RunPod API call for streaming
-        stream = await client.chat.completions.create(**params)
-        async for chunk in process_chat_completion_stream_response(stream, request):
-            yield chunk
-
-    async def _get_chat_params(self, request: ChatCompletionRequest) -> dict:
-        """Convert Llama Stack request to RunPod API parameters."""
-        messages = [await convert_message_to_openai_dict(m, download=False) for m in request.messages]
-
-        params = {
-            "model": request.model,
-            "messages": messages,
-            "stream": request.stream,
-            **get_sampling_options(request.sampling_params),
-        }
-
-        if request.stream:
-            params["stream_options"] = {"include_usage": True}
-
-        return params
-
-    async def _nonstream_completion(
-        self, request: CompletionRequest, client: AsyncOpenAI
-    ) -> CompletionResponse:
-        params = await self._get_completion_params(request)
-        # Make actual RunPod API call
-        r = await client.completions.create(**params)
-        return process_completion_response(r)
-
-    async def _stream_completion(
-        self, request: CompletionRequest, client: AsyncOpenAI
-    ) -> AsyncGenerator:
-        params = await self._get_completion_params(request)
-        # Make actual RunPod API call for streaming
-        stream = await client.completions.create(**params)
-        async for chunk in process_completion_stream_response(stream):
-            yield chunk
-
-    async def _get_completion_params(self, request: CompletionRequest) -> dict:
-        """Convert Llama Stack request to RunPod API parameters."""
-        params = {
-            "model": request.model,
-            "prompt": await completion_request_to_prompt(request),
-            "stream": request.stream,
-            **get_sampling_options(request.sampling_params),
-        }
-
-        if request.stream:
-            params["stream_options"] = {"include_usage": True}
-
-        return params
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        # Resolve model_id to provider_resource_id
-        model_obj = await self.model_store.get_model(model_id)
-        model = model_obj.provider_resource_id or model_id
-
-        kwargs = {}
-        if output_dimension:
-            kwargs["dimensions"] = output_dimension
-
-        response = await self.client.embeddings.create(
-            model=model,
-            input=[interleaved_content_as_str(content) for content in contents],
-            **kwargs,
-        )
-
-        embeddings = [data.embedding for data in response.data]
-        return EmbeddingsResponse(embeddings=embeddings)
 
     async def openai_embeddings(
         self,
