@@ -10,7 +10,6 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
 )
-from llama_stack.apis.models import Model
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import RunpodImplConfig
@@ -88,28 +87,3 @@ class RunpodInferenceAdapter(OpenAIMixin):
             top_p=top_p,
             user=user,
         )
-
-    async def register_model(self, model: Model) -> Model:
-        """
-        Register a model and verify it's available on the RunPod endpoint.
-        This is mainly if you want to register a model with a custom identifier.
-        This will ping the endpoint and make sure the model is avaliable via the /v1/models.
-        In the .yaml file the model: can be defined as example.
-
-        models:
-            - metadata: {}
-            model_id: custom_model_id
-            model_type: llm
-            provider_id: runpod
-            provider_model_id: Qwen/Qwen3-32B-AWQ
-        """
-        provider_model_id = model.provider_resource_id or model.identifier
-        is_available = await self.check_model_availability(provider_model_id)
-
-        if not is_available:
-            raise ValueError(
-                f"Model {provider_model_id} is not available on RunPod endpoint. "
-                f"Check your RunPod endpoint configuration."
-            )
-
-        return model
