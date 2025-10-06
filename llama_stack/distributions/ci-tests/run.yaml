@@ -95,28 +95,28 @@ providers:
     provider_type: inline::faiss
     config:
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: faiss
   - provider_id: sqlite-vec
     provider_type: inline::sqlite-vec
     config:
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sqlite_vec.db
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: sqlite_vec
   - provider_id: ${env.MILVUS_URL:+milvus}
     provider_type: inline::milvus
     config:
       db_path: ${env.MILVUS_DB_PATH:=~/.llama/distributions/ci-tests}/milvus.db
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: milvus
   - provider_id: ${env.CHROMADB_URL:+chromadb}
     provider_type: remote::chromadb
     config:
       url: ${env.CHROMADB_URL:=}
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: chromadb
   - provider_id: ${env.PGVECTOR_DB:+pgvector}
     provider_type: remote::pgvector
@@ -127,7 +127,7 @@ providers:
       user: ${env.PGVECTOR_USER:=}
       password: ${env.PGVECTOR_PASSWORD:=}
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: pgvector
   files:
   - provider_id: meta-reference-files
@@ -135,7 +135,7 @@ providers:
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/ci-tests/files}
       metadata_store:
-        backend: kvstore
+        backend: default
         namespace: files
   safety:
   - provider_id: llama-guard
@@ -149,10 +149,10 @@ providers:
     provider_type: inline::meta-reference
     config:
       persistence_store:
-        backend: sqlstore
+        backend: default
         namespace: agents
       responses_store:
-        backend: sqlstore
+        backend: default
         namespace: responses
   telemetry:
   - provider_id: meta-reference
@@ -172,20 +172,20 @@ providers:
     provider_type: inline::meta-reference
     config:
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: eval
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface
     config:
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: huggingface
   - provider_id: localfs
     provider_type: inline::localfs
     config:
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: localfs_datasetio
   scoring:
   - provider_id: basic
@@ -216,21 +216,18 @@ providers:
     provider_type: inline::reference
     config:
       kvstore:
-        backend: kvstore
+        backend: default
         namespace: batches
 persistence:
   backends:
-    kvstore:
+    default:
       type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/kvstore.db
-    sqlstore:
-      type: sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sqlstore.db
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/store.db
   stores:
     metadata:
-      backend: kvstore
+      backend: default
     inference:
-      backend: sqlstore
+      backend: default
 models: []
 shields:
 - shield_id: llama-guard
