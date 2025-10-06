@@ -86,9 +86,9 @@ docker run -it \
   --pull always \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v ~/.llama:/root/.llama \
+  -e OLLAMA_URL=http://host.docker.internal:11434 \
   llamastack/distribution-starter \
-  --port $LLAMA_STACK_PORT \
-  --env OLLAMA_URL=http://host.docker.internal:11434
+  --port $LLAMA_STACK_PORT
 ```
 Note to start the container with Podman, you can do the same but replace `docker` at the start of the command with
 `podman`. If you are using `podman` older than `4.7.0`, please also replace `host.docker.internal` in the `OLLAMA_URL`
@@ -106,9 +106,9 @@ docker run -it \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v ~/.llama:/root/.llama \
   --network=host \
+  -e OLLAMA_URL=http://localhost:11434 \
   llamastack/distribution-starter \
-  --port $LLAMA_STACK_PORT \
-  --env OLLAMA_URL=http://localhost:11434
+  --port $LLAMA_STACK_PORT
 ```
 :::
 You will see output like below:

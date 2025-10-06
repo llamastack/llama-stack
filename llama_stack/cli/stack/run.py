@@ -16,7 +16,7 @@ import yaml
 from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
 from llama_stack.core.datatypes import LoggingConfig, StackRunConfig
-from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars, validate_env_pair
+from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.log import get_logger
 
@@ -56,12 +56,6 @@ class StackRun(Subcommand):
             type=str,
             default=None,
             help="Name of the image to run. Defaults to the current environment",
-        )
-        self.parser.add_argument(
-            "--env",
-            action="append",
-            help="Environment variables to pass to the server in KEY=VALUE format. Can be specified multiple times.",
-            metavar="KEY=VALUE",
         )
         self.parser.add_argument(
             "--image-type",
@@ -162,33 +156,11 @@ class StackRun(Subcommand):
             if config_file:
                 run_args.extend(["--config", str(config_file)])
 
-            if args.env:
-                for env_var in args.env:
-                    if "=" not in env_var:
-                        self.parser.error(f"Environment variable '{env_var}' must be in KEY=VALUE format")
-                        return
-                    key, value = env_var.split("=", 1)  # split on first = only
-                    if not key:
-                        self.parser.error(f"Environment variable '{env_var}' has empty key")
-                        return
-                    run_args.extend(["--env", f"{key}={value}"])
-
             run_command(run_args)
 
     def _uvicorn_run(self, config_file: Path | None, args: argparse.Namespace) -> None:
         if not config_file:
             self.parser.error("Config file is required")
-
-        # Set environment variables if provided
-        if args.env:
-            for env_pair in args.env:
-                try:
-                    key, value = validate_env_pair(env_pair)
-                    logger.info(f"Setting environment variable {key} => {value}")
-                    os.environ[key] = value
-                except ValueError as e:
-                    logger.error(f"Error: {str(e)}")
-                    self.parser.error(f"Invalid environment variable format: {env_pair}")
 
         config_file = resolve_config_or_distro(str(config_file), Mode.RUN)
         with open(config_file) as fp:
