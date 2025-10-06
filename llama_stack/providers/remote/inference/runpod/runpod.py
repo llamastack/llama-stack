@@ -7,35 +7,24 @@
 from typing import Any
 
 from llama_stack.apis.inference import (
-    Inference,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
 )
 from llama_stack.apis.models import Model
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import RunpodImplConfig
 
-MODEL_ENTRIES = []
 
-
-class RunpodInferenceAdapter(
-    OpenAIMixin,
-    ModelRegistryHelper,
-    Inference,
-):
+class RunpodInferenceAdapter(OpenAIMixin):
     """
     Adapter for RunPod's OpenAI-compatible API endpoints.
     Supports VLLM for serverless endpoint self-hosted or public endpoints.
     Can work with any runpod endpoints that support OpenAI-compatible API
     """
 
-    def __init__(self, config: RunpodImplConfig) -> None:
-        OpenAIMixin.__init__(self)
-        ModelRegistryHelper.__init__(self, MODEL_ENTRIES)
-        self.config = config
+    config: RunpodImplConfig
 
     def get_api_key(self) -> str:
         """Get API key for OpenAI client."""
@@ -44,12 +33,6 @@ class RunpodInferenceAdapter(
     def get_base_url(self) -> str:
         """Get base URL for OpenAI client."""
         return self.config.url
-
-    async def initialize(self) -> None:
-        pass
-
-    async def shutdown(self) -> None:
-        pass
 
     async def openai_chat_completion(
         self,
