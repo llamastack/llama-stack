@@ -31,12 +31,17 @@ CATEGORIES = [
     "client",
     "telemetry",
     "openai_responses",
+    "openai_conversations",
     "testing",
     "providers",
     "models",
     "files",
     "vector_io",
     "tool_runtime",
+    "cli",
+    "post_training",
+    "scoring",
+    "tests",
 ]
 UNCATEGORIZED = "uncategorized"
 
@@ -261,11 +266,12 @@ def get_logger(
         if root_category in _category_levels:
             log_level = _category_levels[root_category]
         else:
-            log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
             if category != UNCATEGORIZED:
-                logging.warning(
-                    f"Unknown logging category: {category}. Falling back to default 'root' level: {log_level}"
+                raise ValueError(
+                    f"Unknown logging category: {category}. To resolve, choose a valid category from the CATEGORIES list "
+                    f"or add it to the CATEGORIES list. Available categories: {CATEGORIES}"
                 )
+            log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
     logger.setLevel(log_level)
     return logging.LoggerAdapter(logger, {"category": category})
 
