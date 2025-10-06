@@ -19,7 +19,6 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
     ToolChoice,
 )
-from llama_stack.apis.models import Model, ModelType
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import (
     HealthResponse,
@@ -57,21 +56,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
     async def should_refresh_models(self) -> bool:
         # Strictly respecting the refresh_models directive
         return self.config.refresh_models
-
-    async def list_models(self) -> list[Model] | None:
-        models = []
-        async for m in self.client.models.list():
-            model_type = ModelType.llm  # unclear how to determine embedding vs. llm models
-            models.append(
-                Model(
-                    identifier=m.id,
-                    provider_resource_id=m.id,
-                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    metadata={},
-                    model_type=model_type,
-                )
-            )
-        return models
 
     async def health(self) -> HealthResponse:
         """
