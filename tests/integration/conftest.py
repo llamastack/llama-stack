@@ -69,7 +69,9 @@ def pytest_configure(config):
     suite = config.getoption("--suite")
     if suite:
         if suite not in SUITE_DEFINITIONS:
-            raise pytest.UsageError(f"Unknown suite: {suite}. Available: {', '.join(sorted(SUITE_DEFINITIONS.keys()))}")
+            raise pytest.UsageError(
+                f"Unknown suite: {suite}. Available: {', '.join(sorted(SUITE_DEFINITIONS.keys()))}"
+            )
 
     # Apply setups (global parameterizations): env + defaults
     setup = config.getoption("--setup")
@@ -107,7 +109,9 @@ def pytest_addoption(parser):
             """
         ),
     )
-    parser.addoption("--env", action="append", help="Set environment variables, e.g. --env KEY=value")
+    parser.addoption(
+        "--env", action="append", help="Set environment variables, e.g. --env KEY=value"
+    )
     parser.addoption(
         "--text-model",
         help="comma-separated list of text models. Fixture name: text_model_id",
@@ -147,9 +151,7 @@ def pytest_addoption(parser):
     )
 
     available_suites = ", ".join(sorted(SUITE_DEFINITIONS.keys()))
-    suite_help = (
-        f"Single test suite to run (narrows collection). Available: {available_suites}. Example: --suite=responses"
-    )
+    suite_help = f"Single test suite to run (narrows collection). Available: {available_suites}. Example: --suite=responses"
     parser.addoption("--suite", help=suite_help)
 
     # Global setups for any suite
@@ -221,7 +223,11 @@ def pytest_generate_tests(metafunc):
 
     # Generate test IDs
     test_ids = []
-    non_empty_params = [(i, values) for i, values in enumerate(param_values.values()) if values[0] is not None]
+    non_empty_params = [
+        (i, values)
+        for i, values in enumerate(param_values.values())
+        if values[0] is not None
+    ]
 
     # Get actual function parameters using inspect
     test_func_params = set(inspect.signature(metafunc.function).parameters.keys())
@@ -238,10 +244,9 @@ def pytest_generate_tests(metafunc):
             if parts:
                 test_ids.append(":".join(parts))
 
-    metafunc.parametrize(params, value_combinations, scope="session", ids=test_ids if test_ids else None)
-
-
-pytest_plugins = ["tests.integration.fixtures.common"]
+    metafunc.parametrize(
+        params, value_combinations, scope="session", ids=test_ids if test_ids else None
+    )
 
 
 def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
@@ -251,7 +256,9 @@ def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
         return False
 
     sobj = SUITE_DEFINITIONS.get(suite)
-    roots: list[str] = sobj.get("roots", []) if isinstance(sobj, dict) else getattr(sobj, "roots", [])
+    roots: list[str] = (
+        sobj.get("roots", []) if isinstance(sobj, dict) else getattr(sobj, "roots", [])
+    )
     if not roots:
         return False
 
