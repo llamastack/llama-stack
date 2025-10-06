@@ -14,6 +14,7 @@ Llama OpenAI-compatible provider for using Llama models with OpenAI API format.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `api_key` | `str \| None` | No |  | The Llama API key |
 | `openai_compat_api_base` | `<class 'str'>` | No | https://api.llama.com/compat/v1/ | The URL for the Llama API server |
 

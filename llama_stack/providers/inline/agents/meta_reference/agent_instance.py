@@ -50,11 +50,16 @@ from llama_stack.apis.inference import (
     CompletionMessage,
     Inference,
     Message,
+    OpenAIAssistantMessageParam,
+    OpenAIDeveloperMessageParam,
+    OpenAIMessageParam,
+    OpenAISystemMessageParam,
+    OpenAIToolMessageParam,
+    OpenAIUserMessageParam,
     SamplingParams,
     StopReason,
     SystemMessage,
     ToolDefinition,
-    ToolParamDefinition,
     ToolResponse,
     ToolResponseMessage,
     UserMessage,
@@ -67,6 +72,11 @@ from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     ToolCall,
+)
+from llama_stack.providers.utils.inference.openai_compat import (
+    convert_message_to_openai_dict_new,
+    convert_openai_chat_completion_stream,
+    convert_tooldef_to_openai_tool,
 )
 from llama_stack.providers.utils.kvstore import KVStore
 from llama_stack.providers.utils.telemetry import tracing
@@ -177,12 +187,12 @@ class ChatAgent(ShieldRunnerMixin):
         return messages
 
     async def create_and_execute_turn(self, request: AgentTurnCreateRequest) -> AsyncGenerator:
+        turn_id = str(uuid.uuid4())
         span = tracing.get_current_span()
         if span:
             span.set_attribute("session_id", request.session_id)
             span.set_attribute("agent_id", self.agent_id)
             span.set_attribute("request", request.model_dump_json())
-            turn_id = str(uuid.uuid4())
             span.set_attribute("turn_id", turn_id)
             if self.agent_config.name:
                 span.set_attribute("agent_name", self.agent_config.name)
@@ -505,26 +515,93 @@ class ChatAgent(ShieldRunnerMixin):
 
             tool_calls = []
             content = ""
-            stop_reason = None
+            stop_reason: StopReason | None = None
 
             async with tracing.span("inference") as span:
                 if self.agent_config.name:
                     span.set_attribute("agent_name", self.agent_config.name)
-                async for chunk in await self.inference_api.chat_completion(
-                    self.agent_config.model,
-                    input_messages,
-                    tools=self.tool_defs,
-                    tool_prompt_format=self.agent_config.tool_config.tool_prompt_format,
+
+                def _serialize_nested(value):
+                    """Recursively serialize nested Pydantic models to dicts."""
+                    from pydantic import BaseModel
+
+                    if isinstance(value, BaseModel):
+                        return value.model_dump(mode="json")
+                    elif isinstance(value, dict):
+                        return {k: _serialize_nested(v) for k, v in value.items()}
+                    elif isinstance(value, list):
+                        return [_serialize_nested(item) for item in value]
+                    else:
+                        return value
+
+                def _add_type(openai_msg: dict) -> OpenAIMessageParam:
+                    # Serialize any nested Pydantic models to plain dicts
+                    openai_msg = _serialize_nested(openai_msg)
+
+                    role = openai_msg.get("role")
+                    if role == "user":
+                        return OpenAIUserMessageParam(**openai_msg)
+                    elif role == "system":
+                        return OpenAISystemMessageParam(**openai_msg)
+                    elif role == "assistant":
+                        return OpenAIAssistantMessageParam(**openai_msg)
+                    elif role == "tool":
+                        return OpenAIToolMessageParam(**openai_msg)
+                    elif role == "developer":
+                        return OpenAIDeveloperMessageParam(**openai_msg)
+                    else:
+                        raise ValueError(f"Unknown message role: {role}")
+
+                # Convert messages to OpenAI format
+                openai_messages: list[OpenAIMessageParam] = [
+                    _add_type(await convert_message_to_openai_dict_new(message)) for message in input_messages
+                ]
+
+                # Convert tool definitions to OpenAI format
+                openai_tools = [convert_tooldef_to_openai_tool(x) for x in (self.tool_defs or [])]
+
+                # Extract tool_choice from tool_config for OpenAI compatibility
+                # Note: tool_choice can only be provided when tools are also provided
+                tool_choice = None
+                if openai_tools and self.agent_config.tool_config and self.agent_config.tool_config.tool_choice:
+                    tc = self.agent_config.tool_config.tool_choice
+                    tool_choice_str = tc.value if hasattr(tc, "value") else str(tc)
+                    # Convert tool_choice to OpenAI format
+                    if tool_choice_str in ("auto", "none", "required"):
+                        tool_choice = tool_choice_str
+                    else:
+                        # It's a specific tool name, wrap it in the proper format
+                        tool_choice = {"type": "function", "function": {"name": tool_choice_str}}
+
+                # Convert sampling params to OpenAI format (temperature, top_p, max_tokens)
+                temperature = getattr(getattr(sampling_params, "strategy", None), "temperature", None)
+                top_p = getattr(getattr(sampling_params, "strategy", None), "top_p", None)
+                max_tokens = getattr(sampling_params, "max_tokens", None)
+
+                # Use OpenAI chat completion
+                openai_stream = await self.inference_api.openai_chat_completion(
+                    model=self.agent_config.model,
+                    messages=openai_messages,
+                    tools=openai_tools if openai_tools else None,
+                    tool_choice=tool_choice,
                     response_format=self.agent_config.response_format,
+                    temperature=temperature,
+                    top_p=top_p,
+                    max_tokens=max_tokens,
                     stream=True,
-                    sampling_params=sampling_params,
-                    tool_config=self.agent_config.tool_config,
-                ):
+                )
+
+                # Convert OpenAI stream back to Llama Stack format
+                response_stream = convert_openai_chat_completion_stream(
+                    openai_stream, enable_incremental_tool_calls=True
+                )
+
+                async for chunk in response_stream:
                     event = chunk.event
                     if event.event_type == ChatCompletionResponseEventType.start:
                         continue
                     elif event.event_type == ChatCompletionResponseEventType.complete:
-                        stop_reason = StopReason.end_of_turn
+                        stop_reason = event.stop_reason or StopReason.end_of_turn
                         continue
 
                     delta = event.delta
@@ -533,7 +610,7 @@ class ChatAgent(ShieldRunnerMixin):
                             tool_calls.append(delta.tool_call)
                         elif delta.parse_status == ToolCallParseStatus.failed:
                             # If we cannot parse the tools, set the content to the unparsed raw text
-                            content = delta.tool_call
+                            content = str(delta.tool_call)
                         if stream:
                             yield AgentTurnResponseStreamChunk(
                                 event=AgentTurnResponseEvent(
@@ -560,9 +637,7 @@ class ChatAgent(ShieldRunnerMixin):
                     else:
                         raise ValueError(f"Unexpected delta type {type(delta)}")
 
-                    if event.stop_reason is not None:
-                        stop_reason = event.stop_reason
-                span.set_attribute("stop_reason", stop_reason)
+                span.set_attribute("stop_reason", stop_reason or StopReason.end_of_turn)
                 span.set_attribute(
                     "input",
                     json.dumps([json.loads(m.model_dump_json()) for m in input_messages]),
@@ -790,20 +865,12 @@ class ChatAgent(ShieldRunnerMixin):
         for tool_def in self.agent_config.client_tools:
             if tool_name_to_def.get(tool_def.name, None):
                 raise ValueError(f"Tool {tool_def.name} already exists")
+
+            # Use input_schema from ToolDef directly
             tool_name_to_def[tool_def.name] = ToolDefinition(
                 tool_name=tool_def.name,
                 description=tool_def.description,
-                parameters={
-                    param.name: ToolParamDefinition(
-                        param_type=param.parameter_type,
-                        description=param.description,
-                        required=param.required,
-                        items=param.items,
-                        title=param.title,
-                        default=param.default,
-                    )
-                    for param in tool_def.parameters
-                },
+                input_schema=tool_def.input_schema,
             )
         for toolgroup_name_with_maybe_tool_name in agent_config_toolgroups:
             toolgroup_name, input_tool_name = self._parse_toolgroup_name(toolgroup_name_with_maybe_tool_name)
@@ -813,44 +880,34 @@ class ChatAgent(ShieldRunnerMixin):
                     [t.identifier for t in (await self.tool_groups_api.list_tool_groups()).data]
                 )
                 raise ValueError(f"Toolgroup {toolgroup_name} not found, available toolgroups: {available_tool_groups}")
-            if input_tool_name is not None and not any(tool.identifier == input_tool_name for tool in tools.data):
+            if input_tool_name is not None and not any(tool.name == input_tool_name for tool in tools.data):
                 raise ValueError(
-                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.identifier for tool in tools.data])}"
+                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.name for tool in tools.data])}"
                 )
 
             for tool_def in tools.data:
                 if toolgroup_name.startswith("builtin") and toolgroup_name != RAG_TOOL_GROUP:
-                    identifier: str | BuiltinTool | None = tool_def.identifier
+                    identifier: str | BuiltinTool | None = tool_def.name
                     if identifier == "web_search":
                         identifier = BuiltinTool.brave_search
                     else:
                         identifier = BuiltinTool(identifier)
                 else:
                     # add if tool_name is unspecified or the tool_def identifier is the same as the tool_name
-                    if input_tool_name in (None, tool_def.identifier):
-                        identifier = tool_def.identifier
+                    if input_tool_name in (None, tool_def.name):
+                        identifier = tool_def.name
                     else:
                         identifier = None
 
                 if tool_name_to_def.get(identifier, None):
                     raise ValueError(f"Tool {identifier} already exists")
                 if identifier:
-                    tool_name_to_def[tool_def.identifier] = ToolDefinition(
+                    tool_name_to_def[identifier] = ToolDefinition(
                         tool_name=identifier,
                         description=tool_def.description,
-                        parameters={
-                            param.name: ToolParamDefinition(
-                                param_type=param.parameter_type,
-                                description=param.description,
-                                required=param.required,
-                                items=param.items,
-                                title=param.title,
-                                default=param.default,
-                            )
-                            for param in tool_def.parameters
-                        },
+                        input_schema=tool_def.input_schema,
                     )
-                    tool_name_to_args[tool_def.identifier] = toolgroup_to_args.get(toolgroup_name, {})
+                    tool_name_to_args[identifier] = toolgroup_to_args.get(toolgroup_name, {})
 
         self.tool_defs, self.tool_name_to_args = (
             list(tool_name_to_def.values()),
@@ -894,12 +951,18 @@ class ChatAgent(ShieldRunnerMixin):
             tool_name_str = tool_name
 
         logger.info(f"executing tool call: {tool_name_str} with args: {tool_call.arguments}")
+
+        try:
+            args = json.loads(tool_call.arguments)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse arguments for tool call: {tool_call.arguments}") from e
+
         result = await self.tool_runtime_api.invoke_tool(
             tool_name=tool_name_str,
             kwargs={
                 "session_id": session_id,
                 # get the arguments generated by the model and augment with toolgroup arg overrides for the agent
-                **tool_call.arguments,
+                **args,
                 **self.tool_name_to_args.get(tool_name_str, {}),
             },
         )

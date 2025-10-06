@@ -114,6 +114,7 @@ class Safety(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/moderations", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/moderations", method="POST", level=LLAMA_STACK_API_V1)
     async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
         """Classifies if text and/or image inputs are potentially harmful.

@@ -81,7 +81,7 @@ def tool_chat_page():
 
         for toolgroup_id in toolgroup_selection:
             tools = client.tools.list(toolgroup_id=toolgroup_id)
-            grouped_tools[toolgroup_id] = [tool.identifier for tool in tools]
+            grouped_tools[toolgroup_id] = [tool.name for tool in tools]
             total_tools += len(tools)
 
         st.markdown(f"Active Tools: 🛠 {total_tools}")

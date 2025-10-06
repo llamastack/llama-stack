@@ -28,7 +28,7 @@ from llama_stack.apis.inference import (
 from llama_stack.apis.safety import SafetyViolation
 from llama_stack.apis.tools import ToolDef
 from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
-from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
+from llama_stack.schema_utils import ExtraBodyField, json_schema_type, register_schema, webmethod
 
 from .openai_responses import (
     ListOpenAIResponseInputItem,
@@ -40,6 +40,20 @@ from .openai_responses import (
     OpenAIResponseObjectStream,
     OpenAIResponseText,
 )
+
+
+@json_schema_type
+class ResponseShieldSpec(BaseModel):
+    """Specification for a shield to apply during response generation.
+
+    :param type: The type/identifier of the shield.
+    """
+
+    type: str
+    # TODO: more fields to be added for shield configuration
+
+
+ResponseShield = str | ResponseShieldSpec
 
 
 class Attachment(BaseModel):
@@ -472,20 +486,23 @@ class AgentStepResponse(BaseModel):
 
 @runtime_checkable
 class Agents(Protocol):
-    """Agents API for creating and interacting with agentic systems.
+    """Agents
 
-    Main functionalities provided by this API:
-    - Create agents with specific instructions and ability to use tools.
-    - Interactions with agents are grouped into sessions ("threads"), and each interaction is called a "turn".
-    - Agents can be provided with various tools (see the ToolGroups and ToolRuntime APIs for more details).
-    - Agents can be provided with various shields (see the Safety API for more details).
-    - Agents can also use Memory to retrieve information from knowledge bases. See the RAG Tool and Vector IO APIs for more details.
-    """
+    APIs for creating and interacting with agentic systems."""
 
     @webmethod(
-        route="/agents", method="POST", descriptive_name="create_agent", deprecated=True, level=LLAMA_STACK_API_V1
+        route="/agents",
+        method="POST",
+        descriptive_name="create_agent",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
     )
-    @webmethod(route="/agents", method="POST", descriptive_name="create_agent", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(
+        route="/agents",
+        method="POST",
+        descriptive_name="create_agent",
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def create_agent(
         self,
         agent_config: AgentConfig,
@@ -648,8 +665,17 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}",
+        method="GET",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def get_agents_session(
         self,
         session_id: str,
@@ -666,9 +692,16 @@ class Agents(Protocol):
         ...
 
     @webmethod(
-        route="/agents/{agent_id}/session/{session_id}", method="DELETE", deprecated=True, level=LLAMA_STACK_API_V1
+        route="/agents/{agent_id}/session/{session_id}",
+        method="DELETE",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
     )
-    @webmethod(route="/agents/{agent_id}/session/{session_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(
+        route="/agents/{agent_id}/session/{session_id}",
+        method="DELETE",
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def delete_agents_session(
         self,
         session_id: str,
@@ -681,7 +714,12 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}", method="DELETE", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents/{agent_id}",
+        method="DELETE",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
     @webmethod(route="/agents/{agent_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def delete_agent(
         self,
@@ -704,7 +742,12 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents/{agent_id}",
+        method="GET",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
     @webmethod(route="/agents/{agent_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_agent(self, agent_id: str) -> Agent:
         """Describe an agent by its ID.
@@ -714,7 +757,12 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents/{agent_id}/sessions", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/agents/{agent_id}/sessions",
+        method="GET",
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
     @webmethod(route="/agents/{agent_id}/sessions", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_agent_sessions(
         self,
@@ -738,6 +786,12 @@ class Agents(Protocol):
     #
     # Both of these APIs are inherently stateful.
 
+    @webmethod(
+        route="/openai/v1/responses/{response_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
     @webmethod(route="/responses/{response_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_openai_response(
         self,
@@ -750,6 +804,7 @@ class Agents(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/responses", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses", method="POST", level=LLAMA_STACK_API_V1)
     async def create_openai_response(
         self,
@@ -764,6 +819,12 @@ class Agents(Protocol):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
+        shields: Annotated[
+            list[ResponseShield] | None,
+            ExtraBodyField(
+                "List of shields to apply during response generation. Shields provide safety and content moderation."
+            ),
+        ] = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a new OpenAI response.
 
@@ -771,10 +832,12 @@ class Agents(Protocol):
         :param model: The underlying LLM used for completions.
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
         :param include: (Optional) Additional fields to include in the response.
+        :param shields: (Optional) List of shields to apply during response generation. Can be shield IDs (strings) or shield specifications.
         :returns: An OpenAIResponseObject.
         """
         ...
 
+    @webmethod(route="/openai/v1/responses", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses", method="GET", level=LLAMA_STACK_API_V1)
     async def list_openai_responses(
         self,
@@ -793,6 +856,9 @@ class Agents(Protocol):
         """
         ...
 
+    @webmethod(
+        route="/openai/v1/responses/{response_id}/input_items", method="GET", level=LLAMA_STACK_API_V1, deprecated=True
+    )
     @webmethod(route="/responses/{response_id}/input_items", method="GET", level=LLAMA_STACK_API_V1)
     async def list_openai_response_input_items(
         self,
@@ -815,6 +881,7 @@ class Agents(Protocol):
         """
         ...
 
+    @webmethod(route="/openai/v1/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         """Delete an OpenAI response by its ID.

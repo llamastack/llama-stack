@@ -1,0 +1,86 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Process this data"
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "process_data",
+            "description": "Process structured data",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/$defs/DataObject"
+                }
+              },
+              "$defs": {
+                "DataObject": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-b06137402531",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "{\"name\":\"process_data\",\"parameters {\"data\":[\"1,3,5\",\"2,4\",\"11,12,13\"]}}",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 28,
+          "prompt_tokens": 176,
+          "total_tokens": 204,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

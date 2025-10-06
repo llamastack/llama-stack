@@ -43,6 +43,7 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionToolCall,
     OpenAIChoice,
+    OpenAIMessageParam,
 )
 from llama_stack.log import get_logger
 
@@ -62,22 +63,13 @@ def convert_tooldef_to_chat_tool(tool_def):
         ChatCompletionToolParam suitable for OpenAI chat completion
     """
 
-    from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
+    from llama_stack.models.llama.datatypes import ToolDefinition
     from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
     internal_tool_def = ToolDefinition(
         tool_name=tool_def.name,
         description=tool_def.description,
-        parameters={
-            param.name: ToolParamDefinition(
-                param_type=param.parameter_type,
-                description=param.description,
-                required=param.required,
-                default=param.default,
-                items=param.items,
-            )
-            for param in tool_def.parameters
-        },
+        input_schema=tool_def.input_schema,
     )
     return convert_tooldef_to_openai_tool(internal_tool_def)
 
@@ -103,6 +95,8 @@ class StreamingResponseOrchestrator:
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = {}
+        # Track final messages after all tool executions
+        self.final_messages: list[OpenAIMessageParam] = []
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Initialize output messages
@@ -129,13 +123,16 @@ class StreamingResponseOrchestrator:
         messages = self.ctx.messages.copy()
 
         while True:
+            # Text is the default response format for chat completion so don't need to pass it
+            # (some providers don't support non-empty response_format when tools are present)
+            response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
             completion_result = await self.inference_api.openai_chat_completion(
                 model=self.ctx.model,
                 messages=messages,
                 tools=self.ctx.chat_tools,
                 stream=True,
                 temperature=self.ctx.temperature,
-                response_format=self.ctx.response_format,
+                response_format=response_format,
             )
 
             # Process streaming chunks and build complete response
@@ -188,6 +185,8 @@ class StreamingResponseOrchestrator:
                 break
 
             messages = next_turn_messages
+
+        self.final_messages = messages.copy() + [current_response.choices[0].message]
 
         # Create final response
         final_response = OpenAIResponseObject(
@@ -352,8 +351,11 @@ class StreamingResponseOrchestrator:
 
         # Emit arguments.done events for completed tool calls (differentiate between MCP and function calls)
         for tool_call_index in sorted(chat_response_tool_calls.keys()):
+            tool_call = chat_response_tool_calls[tool_call_index]
+            # Ensure that arguments, if sent back to the inference provider, are not None
+            tool_call.function.arguments = tool_call.function.arguments or "{}"
             tool_call_item_id = tool_call_item_ids[tool_call_index]
-            final_arguments = chat_response_tool_calls[tool_call_index].function.arguments or ""
+            final_arguments = tool_call.function.arguments
             tool_call_name = chat_response_tool_calls[tool_call_index].function.name
 
             # Check if this is an MCP tool call
@@ -522,23 +524,15 @@ class StreamingResponseOrchestrator:
         """Process all tools and emit appropriate streaming events."""
         from openai.types.chat import ChatCompletionToolParam
 
-        from llama_stack.apis.tools import Tool
-        from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
+        from llama_stack.apis.tools import ToolDef
+        from llama_stack.models.llama.datatypes import ToolDefinition
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
-        def make_openai_tool(tool_name: str, tool: Tool) -> ChatCompletionToolParam:
+        def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
             tool_def = ToolDefinition(
                 tool_name=tool_name,
                 description=tool.description,
-                parameters={
-                    param.name: ToolParamDefinition(
-                        param_type=param.parameter_type,
-                        description=param.description,
-                        required=param.required,
-                        default=param.default,
-                    )
-                    for param in tool.parameters
-                },
+                input_schema=tool.input_schema,
             )
             return convert_tooldef_to_openai_tool(tool_def)
 
@@ -625,16 +619,11 @@ class StreamingResponseOrchestrator:
                         MCPListToolsTool(
                             name=t.name,
                             description=t.description,
-                            input_schema={
+                            input_schema=t.input_schema
+                            or {
                                 "type": "object",
-                                "properties": {
-                                    p.name: {
-                                        "type": p.parameter_type,
-                                        "description": p.description,
-                                    }
-                                    for p in t.parameters
-                                },
-                                "required": [p.name for p in t.parameters if p.required],
+                                "properties": {},
+                                "required": [],
                             },
                         )
                     )

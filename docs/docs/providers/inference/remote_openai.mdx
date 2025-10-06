@@ -14,6 +14,7 @@ OpenAI inference provider for accessing GPT models and other OpenAI services.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `api_key` | `str \| None` | No |  | API key for OpenAI models |
 | `base_url` | `<class 'str'>` | No | https://api.openai.com/v1 | Base URL for OpenAI API |
 

@@ -14,6 +14,7 @@ Passthrough inference provider for connecting to any external inference service 
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `url` | `<class 'str'>` | No |  | The URL for the passthrough endpoint |
 | `api_key` | `pydantic.types.SecretStr \| None` | No |  | API Key for the passthrouth endpoint |
 

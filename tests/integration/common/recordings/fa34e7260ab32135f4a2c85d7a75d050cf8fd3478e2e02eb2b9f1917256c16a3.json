@@ -1,0 +1,57 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the smallest country in the world?"
+        }
+      ],
+      "max_tokens": 0
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-fa34e7260ab3",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "The smallest country in the world, both in terms of population and land area, is the Vatican City. Located within Rome, Italy, it has a total area of approximately 0.44 km\u00b2 (0.17 sq mi) and a population of around 800 people.\n\nVatican City is an independent city-state that serves as the headquarters of the Catholic Church, with the Pope residing in the iconic St. Peter's Basilica. It is a unique example of a sovereign state, separate from Italy but under its jurisdiction.\n\nInterestingly, Vatican City is not only the smallest country but also one of the wealthiest, thanks to the vast treasure collection and artwork held within its walls and museums.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 139,
+          "prompt_tokens": 34,
+          "total_tokens": 173,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

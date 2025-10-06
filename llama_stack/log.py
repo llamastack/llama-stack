@@ -31,7 +31,14 @@ CATEGORIES = [
     "client",
     "telemetry",
     "openai_responses",
+    "testing",
+    "providers",
+    "models",
+    "files",
+    "vector_io",
+    "tool_runtime",
 ]
+UNCATEGORIZED = "uncategorized"
 
 # Initialize category levels with default level
 _category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
@@ -121,7 +128,7 @@ def strip_rich_markup(text):
 
 class CustomRichHandler(RichHandler):
     def __init__(self, *args, **kwargs):
-        kwargs["console"] = Console(width=150)
+        kwargs["console"] = Console()
         super().__init__(*args, **kwargs)
 
     def emit(self, record):
@@ -165,7 +172,7 @@ def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None
 
         def filter(self, record):
             if not hasattr(record, "category"):
-                record.category = "uncategorized"  # Default to 'uncategorized' if no category found
+                record.category = UNCATEGORIZED  # Default to 'uncategorized' if no category found
             return True
 
     # Determine the root logger's level (default to WARNING if not specified)
@@ -247,7 +254,19 @@ def get_logger(
         _category_levels.update(parse_yaml_config(config))
 
     logger = logging.getLogger(name)
-    logger.setLevel(_category_levels.get(category, DEFAULT_LOG_LEVEL))
+    if category in _category_levels:
+        log_level = _category_levels[category]
+    else:
+        root_category = category.split("::")[0]
+        if root_category in _category_levels:
+            log_level = _category_levels[root_category]
+        else:
+            log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
+            if category != UNCATEGORIZED:
+                logging.warning(
+                    f"Unknown logging category: {category}. Falling back to default 'root' level: {log_level}"
+                )
+    logger.setLevel(log_level)
     return logging.LoggerAdapter(logger, {"category": category})
 
 

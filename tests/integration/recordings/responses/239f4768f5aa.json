@@ -53,14 +53,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "chatcmpl-433",
+        "id": "rec-239f4768f5aa",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "{\"first_name\": \"Michael\", \"last_name\": \"Jordan\", \"year_of_birth\": 1963}\n\n   \t\t\t\t\t\t\t\t\t\t\t \t\t   ",
+              "content": "{\"first_name\": \"Michael\", \"last_name\": \"Jordan\", \"year_of_birth\": 1963}",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -70,15 +70,15 @@
             }
           }
         ],
-        "created": 1758979490,
+        "created": 0,
         "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 31,
+          "completion_tokens": 26,
           "prompt_tokens": 60,
-          "total_tokens": 91,
+          "total_tokens": 86,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

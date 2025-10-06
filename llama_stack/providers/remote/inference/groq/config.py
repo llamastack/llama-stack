@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -19,7 +20,7 @@ class GroqProviderDataValidator(BaseModel):
 
 
 @json_schema_type
-class GroqConfig(BaseModel):
+class GroqConfig(RemoteInferenceProviderConfig):
     api_key: str | None = Field(
         # The Groq client library loads the GROQ_API_KEY environment variable by default
         default=None,

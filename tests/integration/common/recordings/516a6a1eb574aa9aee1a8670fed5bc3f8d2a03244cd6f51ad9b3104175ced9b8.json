@@ -1,0 +1,44 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "prompt": "Respond to this question and explain your answer. Complete the sentence using one word: Roses are red, violets are ",
+      "stream": false,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.completion.Completion",
+      "__data__": {
+        "id": "rec-516a6a1eb574",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "text": "Blue.\n\nMy response is a play on the traditional English nursery rhyme that says \"Roses are red, violets are blue.\" In the original poem or song, it's implied that roses red and violets blue are used to express love or admiration for someone. The correct completion of this sentence is indeed \"blue,\" but only in the sense intended by the traditional rhyming phrase."
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "text_completion",
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 81,
+          "prompt_tokens": 50,
+          "total_tokens": 131,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

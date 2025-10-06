@@ -7,10 +7,11 @@
 import base64
 import uuid
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
 from openai import NOT_GIVEN, AsyncOpenAI
+from pydantic import BaseModel, ConfigDict
 
 from llama_stack.apis.inference import (
     Model,
@@ -24,15 +25,16 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatParam,
 )
 from llama_stack.apis.models import ModelType
+from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-class OpenAIMixin(ModelRegistryHelper, ABC):
+class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     """
     Mixin class that provides OpenAI-specific functionality for inference providers.
     This class handles direct OpenAI API calls using the AsyncOpenAI client.
@@ -41,11 +43,24 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
     - get_api_key(): Method to retrieve the API key
     - get_base_url(): Method to retrieve the OpenAI-compatible API base URL
 
+    The behavior of this class can be customized by child classes in the following ways:
+    - overwrite_completion_id: If True, overwrites the 'id' field in OpenAI responses
+    - download_images: If True, downloads images and converts to base64 for providers that require it
+    - embedding_model_metadata: A dictionary mapping model IDs to their embedding metadata
+    - provider_data_api_key_field: Optional field name in provider data to look for API key
+    - list_provider_model_ids: Method to list available models from the provider
+    - get_extra_client_params: Method to provide extra parameters to the AsyncOpenAI client
+
     Expected Dependencies:
     - self.model_store: Injected by the Llama Stack distribution system at runtime.
       This provides model registry functionality for looking up registered models.
       The model_store is set in routing_tables/common.py during provider initialization.
     """
+
+    # Allow extra fields so the routing infra can inject model_store, __provider_id__, etc.
+    model_config = ConfigDict(extra="allow")
+
+    config: RemoteInferenceProviderConfig
 
     # Allow subclasses to control whether to overwrite the 'id' field in OpenAI responses
     # is overwritten with a client-side generated id.
@@ -68,6 +83,9 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
 
     # List of allowed models for this provider, if empty all models allowed
     allowed_models: list[str] = []
+
+    # Optional field name in provider data to look for API key, which takes precedence
+    provider_data_api_key_field: str | None = None
 
     @abstractmethod
     def get_api_key(self) -> str:
@@ -104,6 +122,38 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
         """
         return {}
 
+    async def list_provider_model_ids(self) -> Iterable[str]:
+        """
+        List available models from the provider.
+
+        Child classes can override this method to provide a custom implementation
+        for listing models. The default implementation uses the AsyncOpenAI client
+        to list models from the OpenAI-compatible endpoint.
+
+        :return: An iterable of model IDs or None if not implemented
+        """
+        return [m.id async for m in self.client.models.list()]
+
+    async def initialize(self) -> None:
+        """
+        Initialize the OpenAI mixin.
+
+        This method provides a default implementation that does nothing.
+        Subclasses can override this method to perform initialization tasks
+        such as setting up clients, validating configurations, etc.
+        """
+        pass
+
+    async def shutdown(self) -> None:
+        """
+        Shutdown the OpenAI mixin.
+
+        This method provides a default implementation that does nothing.
+        Subclasses can override this method to perform cleanup tasks
+        such as closing connections, releasing resources, etc.
+        """
+        pass
+
     @property
     def client(self) -> AsyncOpenAI:
         """
@@ -111,9 +161,28 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
 
         Uses the abstract methods get_api_key() and get_base_url() which must be
         implemented by child classes.
+
+        Users can also provide the API key via the provider data header, which
+        is used instead of any config API key.
         """
+
+        api_key = self.get_api_key()
+
+        if self.provider_data_api_key_field:
+            provider_data = self.get_request_provider_data()
+            if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
+                api_key = getattr(provider_data, self.provider_data_api_key_field)
+
+            if not api_key:  # TODO: let get_api_key return None
+                raise ValueError(
+                    "API key is not set. Please provide a valid API key in the "
+                    "provider data header, e.g. x-llamastack-provider-data: "
+                    f'{{"{self.provider_data_api_key_field}": "<API_KEY>"}}, '
+                    "or in the provider config."
+                )
+
         return AsyncOpenAI(
-            api_key=self.get_api_key(),
+            api_key=api_key,
             base_url=self.get_base_url(),
             **self.get_extra_client_params(),
         )
@@ -263,33 +332,33 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
 
             messages = [await _localize_image_url(m) for m in messages]
 
-        resp = await self.client.chat.completions.create(
-            **await prepare_openai_completion_params(
-                model=await self._get_provider_model_id(model),
-                messages=messages,
-                frequency_penalty=frequency_penalty,
-                function_call=function_call,
-                functions=functions,
-                logit_bias=logit_bias,
-                logprobs=logprobs,
-                max_completion_tokens=max_completion_tokens,
-                max_tokens=max_tokens,
-                n=n,
-                parallel_tool_calls=parallel_tool_calls,
-                presence_penalty=presence_penalty,
-                response_format=response_format,
-                seed=seed,
-                stop=stop,
-                stream=stream,
-                stream_options=stream_options,
-                temperature=temperature,
-                tool_choice=tool_choice,
-                tools=tools,
-                top_logprobs=top_logprobs,
-                top_p=top_p,
-                user=user,
-            )
+        params = await prepare_openai_completion_params(
+            model=await self._get_provider_model_id(model),
+            messages=messages,
+            frequency_penalty=frequency_penalty,
+            function_call=function_call,
+            functions=functions,
+            logit_bias=logit_bias,
+            logprobs=logprobs,
+            max_completion_tokens=max_completion_tokens,
+            max_tokens=max_tokens,
+            n=n,
+            parallel_tool_calls=parallel_tool_calls,
+            presence_penalty=presence_penalty,
+            response_format=response_format,
+            seed=seed,
+            stop=stop,
+            stream=stream,
+            stream_options=stream_options,
+            temperature=temperature,
+            tool_choice=tool_choice,
+            tools=tools,
+            top_logprobs=top_logprobs,
+            top_p=top_p,
+            user=user,
         )
+
+        resp = await self.client.chat.completions.create(**params)
 
         return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
@@ -333,6 +402,24 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
             usage=usage,
         )
 
+    ###
+    # ModelsProtocolPrivate implementation - provide model management functionality
+    #
+    #  async def register_model(self, model: Model) -> Model: ...
+    #  async def unregister_model(self, model_id: str) -> None: ...
+    #
+    #  async def list_models(self) -> list[Model] | None: ...
+    #  async def should_refresh_models(self) -> bool: ...
+    ##
+
+    async def register_model(self, model: Model) -> Model:
+        if not await self.check_model_availability(model.provider_model_id):
+            raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")  # type: ignore[attr-defined]
+        return model
+
+    async def unregister_model(self, model_id: str) -> None:
+        return None
+
     async def list_models(self) -> list[Model] | None:
         """
         List available models from the provider's /v1/models endpoint augmented with static embedding model metadata.
@@ -343,28 +430,42 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
         """
         self._model_cache = {}
 
-        async for m in self.client.models.list():
-            if self.allowed_models and m.id not in self.allowed_models:
-                logger.info(f"Skipping model {m.id} as it is not in the allowed models list")
+        try:
+            iterable = await self.list_provider_model_ids()
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__}.list_provider_model_ids() failed with: {e}")
+            raise
+        if not hasattr(iterable, "__iter__"):
+            raise TypeError(
+                f"Failed to list models: {self.__class__.__name__}.list_provider_model_ids() must return an iterable of "
+                f"strings, but returned {type(iterable).__name__}"
+            )
+
+        provider_models_ids = list(iterable)
+        logger.info(f"{self.__class__.__name__}.list_provider_model_ids() returned {len(provider_models_ids)} models")
+
+        for provider_model_id in provider_models_ids:
+            if not isinstance(provider_model_id, str):
+                raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
+            if self.allowed_models and provider_model_id not in self.allowed_models:
+                logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
                 continue
-            if metadata := self.embedding_model_metadata.get(m.id):
-                # This is an embedding model - augment with metadata
+            if metadata := self.embedding_model_metadata.get(provider_model_id):
                 model = Model(
                     provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=m.id,
-                    identifier=m.id,
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
                     model_type=ModelType.embedding,
                     metadata=metadata,
                 )
             else:
-                # This is an LLM
                 model = Model(
                     provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=m.id,
-                    identifier=m.id,
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
                     model_type=ModelType.llm,
                 )
-            self._model_cache[m.id] = model
+            self._model_cache[provider_model_id] = model
 
         return list(self._model_cache.values())
 
@@ -377,5 +478,33 @@ class OpenAIMixin(ModelRegistryHelper, ABC):
         """
         if not self._model_cache:
             await self.list_models()
-
         return model in self._model_cache
+
+    async def should_refresh_models(self) -> bool:
+        return False
+
+    #
+    # The model_dump implementations are to avoid serializing the extra fields,
+    # e.g. model_store, which are not pydantic.
+    #
+
+    def _filter_fields(self, **kwargs):
+        """Helper to exclude extra fields from serialization."""
+        # Exclude any extra fields stored in __pydantic_extra__
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            exclude = kwargs.get("exclude", set())
+            if not isinstance(exclude, set):
+                exclude = set(exclude) if exclude else set()
+            exclude.update(self.__pydantic_extra__.keys())
+            kwargs["exclude"] = exclude
+        return kwargs
+
+    def model_dump(self, **kwargs):
+        """Override to exclude extra fields from serialization."""
+        kwargs = self._filter_fields(**kwargs)
+        return super().model_dump(**kwargs)
+
+    def model_dump_json(self, **kwargs):
+        """Override to exclude extra fields from JSON serialization."""
+        kwargs = self._filter_fields(**kwargs)
+        return super().model_dump_json(**kwargs)

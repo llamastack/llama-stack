@@ -41,9 +41,7 @@ async def test_convert_message_to_openai_dict():
 async def test_convert_message_to_openai_dict_with_tool_call():
     message = CompletionMessage(
         content="",
-        tool_calls=[
-            ToolCall(call_id="123", tool_name="test_tool", arguments_json='{"foo": "bar"}', arguments={"foo": "bar"})
-        ],
+        tool_calls=[ToolCall(call_id="123", tool_name="test_tool", arguments='{"foo": "bar"}')],
         stop_reason=StopReason.end_of_turn,
     )
 
@@ -65,8 +63,7 @@ async def test_convert_message_to_openai_dict_with_builtin_tool_call():
             ToolCall(
                 call_id="123",
                 tool_name=BuiltinTool.brave_search,
-                arguments_json='{"foo": "bar"}',
-                arguments={"foo": "bar"},
+                arguments='{"foo": "bar"}',
             )
         ],
         stop_reason=StopReason.end_of_turn,
@@ -202,8 +199,7 @@ async def test_convert_message_to_openai_dict_new_completion_message_with_tool_c
             ToolCall(
                 call_id="call_123",
                 tool_name="get_weather",
-                arguments={"city": "Sligo"},
-                arguments_json='{"city": "Sligo"}',
+                arguments='{"city": "Sligo"}',
             )
         ],
         stop_reason=StopReason.end_of_turn,

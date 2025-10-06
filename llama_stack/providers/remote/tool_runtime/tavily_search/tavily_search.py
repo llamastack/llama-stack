@@ -15,7 +15,6 @@ from llama_stack.apis.tools import (
     ToolDef,
     ToolGroup,
     ToolInvocationResult,
-    ToolParameter,
     ToolRuntime,
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
@@ -56,13 +55,16 @@ class TavilySearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
                 ToolDef(
                     name="web_search",
                     description="Search the web for information",
-                    parameters=[
-                        ToolParameter(
-                            name="query",
-                            description="The query to search for",
-                            parameter_type="string",
-                        )
-                    ],
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The query to search for",
+                            }
+                        },
+                        "required": ["query"],
+                    },
                 )
             ]
         )

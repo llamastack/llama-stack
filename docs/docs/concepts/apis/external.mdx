@@ -152,7 +152,6 @@ __all__ = ["WeatherAPI", "available_providers"]
 from typing import Protocol
 
 from llama_stack.providers.datatypes import (
-    AdapterSpec,
     Api,
     ProviderSpec,
     RemoteProviderSpec,
@@ -166,12 +165,10 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.weather,
             provider_type="remote::kaze",
             config_class="llama_stack_provider_kaze.KazeProviderConfig",
-            adapter=AdapterSpec(
-                adapter_type="kaze",
-                module="llama_stack_provider_kaze",
-                pip_packages=["llama_stack_provider_kaze"],
-                config_class="llama_stack_provider_kaze.KazeProviderConfig",
-            ),
+            adapter_type="kaze",
+            module="llama_stack_provider_kaze",
+            pip_packages=["llama_stack_provider_kaze"],
+            config_class="llama_stack_provider_kaze.KazeProviderConfig",
         ),
     ]
 
@@ -325,11 +322,10 @@ class WeatherKazeAdapter(WeatherProvider):
 
 ```yaml
 # ~/.llama/providers.d/remote/weather/kaze.yaml
-adapter:
-  adapter_type: kaze
-  pip_packages: ["llama_stack_provider_kaze"]
-  config_class: llama_stack_provider_kaze.config.KazeProviderConfig
-  module: llama_stack_provider_kaze
+adapter_type: kaze
+pip_packages: ["llama_stack_provider_kaze"]
+config_class: llama_stack_provider_kaze.config.KazeProviderConfig
+module: llama_stack_provider_kaze
 optional_api_dependencies: []
 ```
 
@@ -361,7 +357,7 @@ server:
 8. Run the server:
 
 ```bash
-python -m llama_stack.core.server.server --yaml-config ~/.llama/run-byoa.yaml
+llama stack run ~/.llama/run-byoa.yaml
 ```
 
 9. Test the API:

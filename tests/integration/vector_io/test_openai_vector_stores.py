@@ -22,16 +22,16 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
     vector_io_providers = [p for p in client_with_models.providers.list() if p.api == "vector_io"]
     for p in vector_io_providers:
         if p.provider_type in [
-            "inline::faiss",
-            "inline::sqlite-vec",
-            "inline::milvus",
             "inline::chromadb",
-            "remote::pgvector",
-            "remote::chromadb",
-            "remote::qdrant",
+            "inline::faiss",
+            "inline::milvus",
             "inline::qdrant",
-            "remote::weaviate",
+            "inline::sqlite-vec",
+            "remote::chromadb",
             "remote::milvus",
+            "remote::pgvector",
+            "remote::qdrant",
+            "remote::weaviate",
         ]:
             return
 
@@ -47,23 +47,25 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "inline::milvus",
             "inline::chromadb",
             "inline::qdrant",
-            "remote::pgvector",
             "remote::chromadb",
-            "remote::weaviate",
-            "remote::qdrant",
             "remote::milvus",
+            "remote::pgvector",
+            "remote::qdrant",
+            "remote::weaviate",
         ],
         "keyword": [
+            "inline::milvus",
             "inline::sqlite-vec",
             "remote::milvus",
-            "inline::milvus",
             "remote::pgvector",
+            "remote::weaviate",
         ],
         "hybrid": [
-            "inline::sqlite-vec",
             "inline::milvus",
+            "inline::sqlite-vec",
             "remote::milvus",
             "remote::pgvector",
+            "remote::weaviate",
         ],
     }
     supported_providers = search_mode_support.get(search_mode, [])

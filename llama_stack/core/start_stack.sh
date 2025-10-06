@@ -116,7 +116,7 @@ if [[ "$env_type" == "venv" ]]; then
         yaml_config_arg=""
     fi
 
-    $PYTHON_BINARY -m llama_stack.core.server.server \
+    llama stack run \
     $yaml_config_arg \
     --port "$port" \
     $env_vars \

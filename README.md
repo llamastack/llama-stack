@@ -7,7 +7,7 @@
 [![Unit Tests](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml?query=branch%3Amain)
 [![Integration Tests](https://github.com/meta-llama/llama-stack/actions/workflows/integration-tests.yml/badge.svg?branch=main)](https://github.com/meta-llama/llama-stack/actions/workflows/integration-tests.yml?query=branch%3Amain)
 
-[**Quick Start**](https://llamastack.github.io/latest/getting_started/index.html) | [**Documentation**](https://llamastack.github.io/latest/index.html) | [**Colab Notebook**](./docs/getting_started.ipynb) | [**Discord**](https://discord.gg/llama-stack)
+[**Quick Start**](https://llamastack.github.io/docs/getting_started/quickstart) | [**Documentation**](https://llamastack.github.io/docs) | [**Colab Notebook**](./docs/getting_started.ipynb) | [**Discord**](https://discord.gg/llama-stack)
 
 
 ### ✨🎉 Llama 4 Support  🎉✨
@@ -120,7 +120,7 @@ By reducing friction and complexity, Llama Stack empowers developers to focus on
 
 ### API Providers
 Here is a list of the various API providers and available distributions that can help developers get started easily with Llama Stack.
-Please checkout for [full list](https://llamastack.github.io/latest/providers/index.html)
+Please checkout for [full list](https://llamastack.github.io/docs/providers)
 
 | API Provider Builder | Environments | Agents | Inference | VectorIO | Safety | Telemetry | Post Training | Eval | DatasetIO |
 |:--------------------:|:------------:|:------:|:---------:|:--------:|:------:|:---------:|:-------------:|:----:|:--------:|
@@ -151,7 +151,7 @@ Please checkout for [full list](https://llamastack.github.io/latest/providers/in
 |     NVIDIA NEMO      | Hosted | | ✅ | ✅ | | | ✅ | ✅ | ✅ |
 |        NVIDIA        | Hosted | | | | | | ✅ | ✅ | ✅ |
 
-> **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/latest/providers/external/index.html) documentation.
+> **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/docs/providers/external) documentation.
 
 ### Distributions
 

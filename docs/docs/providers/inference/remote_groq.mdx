@@ -14,6 +14,7 @@ Groq inference provider for ultra-fast inference using Groq's LPU technology.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `api_key` | `str \| None` | No |  | The Groq API key |
 | `url` | `<class 'str'>` | No | https://api.groq.com | The URL for the Groq AI server |
 

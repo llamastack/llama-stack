@@ -115,7 +115,7 @@ docker run -it \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
   # NOTE: mount the llama-stack directory if testing local changes else not needed
-  -v /home/hjshah/git/llama-stack:/app/llama-stack-source \
+  -v $HOME/git/llama-stack:/app/llama-stack-source \
   # localhost/distribution-dell:dev if building / testing locally
   llamastack/distribution-{{ name }}\
   --port $LLAMA_STACK_PORT  \

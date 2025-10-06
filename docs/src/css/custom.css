@@ -189,3 +189,29 @@ button[class*="button"]:hover,
 .pagination-nav__link--prev:hover {
   background-color: #f3f4f6 !important;
 }
+
+/* Deprecated endpoint styling */
+.menu__list-item--deprecated .menu__link {
+  text-decoration: line-through !important;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.menu__list-item--deprecated .menu__link:hover {
+  opacity: 0.9;
+}
+
+/* Deprecated endpoint badges - slightly muted */
+.menu__list-item--deprecated.api-method > .menu__link::before {
+  opacity: 0.7;
+  border-style: dashed !important;
+}
+
+/* Dark theme adjustments for deprecated endpoints */
+[data-theme='dark'] .menu__list-item--deprecated .menu__link {
+  opacity: 0.6;
+}
+
+[data-theme='dark'] .menu__list-item--deprecated .menu__link:hover {
+  opacity: 0.8;
+}

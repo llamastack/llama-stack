@@ -63,7 +63,7 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
         model_entries: list[ProviderModelEntry] | None = None,
         allowed_models: list[str] | None = None,
     ):
-        self.allowed_models = allowed_models
+        self.allowed_models = allowed_models if allowed_models else []
 
         self.alias_to_provider_id_map = {}
         self.provider_id_to_llama_model_map = {}

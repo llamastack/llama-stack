@@ -14,6 +14,7 @@ RunPod inference provider for running models on RunPod's cloud GPU platform.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `url` | `str \| None` | No |  | The URL for the Runpod model serving endpoint |
 | `api_token` | `str \| None` | No |  | The API token |
 
