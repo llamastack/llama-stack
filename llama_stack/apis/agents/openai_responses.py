@@ -363,6 +363,7 @@ class OpenAIResponseObject(BaseModel):
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
     :param truncation: (Optional) Truncation strategy applied to the response
+    :param max_output_tokens: (Optional) Upper bound for response tokens generation
     """
 
     created_at: int
@@ -380,6 +381,7 @@ class OpenAIResponseObject(BaseModel):
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
     truncation: str | None = None
+    max_output_tokens: int | None = None
 
 
 @json_schema_type

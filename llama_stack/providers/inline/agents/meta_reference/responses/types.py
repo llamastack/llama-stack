@@ -63,6 +63,7 @@ class ChatCompletionContext(BaseModel):
     response_format: OpenAIResponseFormatParam
     approval_requests: list[OpenAIResponseMCPApprovalRequest] = []
     approval_responses: dict[str, OpenAIResponseMCPApprovalResponse] = {}
+    max_tokens: int | None = None
 
     def __init__(
         self,
@@ -72,6 +73,7 @@ class ChatCompletionContext(BaseModel):
         temperature: float | None,
         response_format: OpenAIResponseFormatParam,
         inputs: list[OpenAIResponseInput] | str,
+        max_tokens: int | None = None,
     ):
         super().__init__(
             model=model,

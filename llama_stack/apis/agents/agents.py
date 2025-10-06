@@ -825,6 +825,7 @@ class Agents(Protocol):
                 "List of shields to apply during response generation. Shields provide safety and content moderation."
             ),
         ] = None,
+        max_output_tokens: int | None = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a new OpenAI response.
 

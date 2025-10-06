@@ -9096,6 +9096,10 @@
                         "type": "string",
                         "description": "(Optional) Truncation strategy applied to the response"
                     },
+                    "max_output_tokens": {
+                        "type": "integer",
+                        "description": "(Optional) Upper bound for response tokens generation"
+                    },
                     "input": {
                         "type": "array",
                         "items": {
@@ -9914,6 +9918,9 @@
                     },
                     "max_infer_iters": {
                         "type": "integer"
+                    },
+                    "max_output_tokens": {
+                        "type": "integer"
                     }
                 },
                 "additionalProperties": false,
@@ -9983,6 +9990,10 @@
                     "truncation": {
                         "type": "string",
                         "description": "(Optional) Truncation strategy applied to the response"
+                    },
+                    "max_output_tokens": {
+                        "type": "integer",
+                        "description": "(Optional) Upper bound for response tokens generation"
                     }
                 },
                 "additionalProperties": false,
