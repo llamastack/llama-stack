@@ -22,7 +22,7 @@ class CerebrasImplConfig(RemoteInferenceProviderConfig):
         description="Base URL for the Cerebras API",
     )
     api_key: SecretStr = Field(
-        default=SecretStr(os.environ.get("CEREBRAS_API_KEY")),
+        default=SecretStr(os.environ.get("CEREBRAS_API_KEY")),  # type: ignore[arg-type]
         description="Cerebras API Key",
     )
 

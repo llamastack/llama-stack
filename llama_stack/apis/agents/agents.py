@@ -28,7 +28,7 @@ from llama_stack.apis.inference import (
 from llama_stack.apis.safety import SafetyViolation
 from llama_stack.apis.tools import ToolDef
 from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
-from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
+from llama_stack.schema_utils import ExtraBodyField, json_schema_type, register_schema, webmethod
 
 from .openai_responses import (
     ListOpenAIResponseInputItem,
@@ -40,6 +40,20 @@ from .openai_responses import (
     OpenAIResponseObjectStream,
     OpenAIResponseText,
 )
+
+
+@json_schema_type
+class ResponseShieldSpec(BaseModel):
+    """Specification for a shield to apply during response generation.
+
+    :param type: The type/identifier of the shield.
+    """
+
+    type: str
+    # TODO: more fields to be added for shield configuration
+
+
+ResponseShield = str | ResponseShieldSpec
 
 
 class Attachment(BaseModel):
@@ -783,7 +797,7 @@ class Agents(Protocol):
         self,
         response_id: str,
     ) -> OpenAIResponseObject:
-        """Retrieve an OpenAI response by its ID.
+        """Get a model response.
 
         :param response_id: The ID of the OpenAI response to retrieve.
         :returns: An OpenAIResponseObject.
@@ -805,13 +819,20 @@ class Agents(Protocol):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
+        shields: Annotated[
+            list[ResponseShield] | None,
+            ExtraBodyField(
+                "List of shields to apply during response generation. Shields provide safety and content moderation."
+            ),
+        ] = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
-        """Create a new OpenAI response.
+        """Create a model response.
 
         :param input: Input message(s) to create the response.
         :param model: The underlying LLM used for completions.
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
         :param include: (Optional) Additional fields to include in the response.
+        :param shields: (Optional) List of shields to apply during response generation. Can be shield IDs (strings) or shield specifications.
         :returns: An OpenAIResponseObject.
         """
         ...
@@ -825,7 +846,7 @@ class Agents(Protocol):
         model: str | None = None,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseObject:
-        """List all OpenAI responses.
+        """List all responses.
 
         :param after: The ID of the last response to return.
         :param limit: The number of responses to return.
@@ -848,7 +869,7 @@ class Agents(Protocol):
         limit: int | None = 20,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseInputItem:
-        """List input items for a given OpenAI response.
+        """List input items.
 
         :param response_id: The ID of the response to retrieve input items for.
         :param after: An item ID to list items after, used for pagination.
@@ -863,7 +884,7 @@ class Agents(Protocol):
     @webmethod(route="/openai/v1/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
-        """Delete an OpenAI response by its ID.
+        """Delete a response.
 
         :param response_id: The ID of the OpenAI response to delete.
         :returns: An OpenAIDeleteResponseObject

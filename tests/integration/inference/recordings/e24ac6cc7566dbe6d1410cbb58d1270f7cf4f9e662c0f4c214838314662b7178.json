@@ -1,0 +1,20 @@
+{
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_completion_non_streaming[txt=ollama/llama3.2:3b-instruct-fp16-inference:completion:sanity]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/api/ps",
+    "headers": {},
+    "body": {},
+    "endpoint": "/api/ps",
+    "model": ""
+  },
+  "response": {
+    "body": {
+      "__type__": "ollama._types.ProcessResponse",
+      "__data__": {
+        "models": []
+      }
+    },
+    "is_streaming": false
+  }
+}

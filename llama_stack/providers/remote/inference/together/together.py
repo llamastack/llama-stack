@@ -5,41 +5,29 @@
 # the root directory of this source tree.
 
 
-from openai import AsyncOpenAI
+from collections.abc import Iterable
+
 from together import AsyncTogether
 from together.constants import BASE_URL
 
 from llama_stack.apis.inference import (
-    ChatCompletionRequest,
-    Inference,
-    LogProbConfig,
     OpenAIEmbeddingsResponse,
-    ResponseFormat,
-    ResponseFormatType,
-    SamplingParams,
 )
 from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
-from llama_stack.apis.models import Model, ModelType
+from llama_stack.apis.models import Model
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
-from llama_stack.providers.utils.inference.openai_compat import (
-    convert_message_to_openai_dict,
-    get_sampling_options,
-)
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    chat_completion_request_to_prompt,
-    request_has_media,
-)
 
 from .config import TogetherImplConfig
 
 logger = get_logger(name=__name__, category="inference::together")
 
 
-class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData):
-    embedding_model_metadata = {
+class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
+    config: TogetherImplConfig
+
+    embedding_model_metadata: dict[str, dict[str, int]] = {
         "togethercomputer/m2-bert-80M-32k-retrieval": {"embedding_dimension": 768, "context_length": 32768},
         "BAAI/bge-large-en-v1.5": {"embedding_dimension": 1024, "context_length": 512},
         "BAAI/bge-base-en-v1.5": {"embedding_dimension": 768, "context_length": 512},
@@ -47,23 +35,15 @@ class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData)
         "intfloat/multilingual-e5-large-instruct": {"embedding_dimension": 1024, "context_length": 512},
     }
 
-    def __init__(self, config: TogetherImplConfig) -> None:
-        ModelRegistryHelper.__init__(self)
-        self.config = config
-        self.allowed_models = config.allowed_models
-        self._model_cache: dict[str, Model] = {}
+    _model_cache: dict[str, Model] = {}
+
+    provider_data_api_key_field: str = "together_api_key"
 
     def get_api_key(self):
-        return self.config.api_key.get_secret_value()
+        return self.config.api_key.get_secret_value() if self.config.api_key else None
 
     def get_base_url(self):
         return BASE_URL
-
-    async def initialize(self) -> None:
-        pass
-
-    async def shutdown(self) -> None:
-        pass
 
     def _get_client(self) -> AsyncTogether:
         together_api_key = None
@@ -79,89 +59,12 @@ class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData)
             together_api_key = provider_data.together_api_key
         return AsyncTogether(api_key=together_api_key)
 
-    def _get_openai_client(self) -> AsyncOpenAI:
-        together_client = self._get_client().client
-        return AsyncOpenAI(
-            base_url=together_client.base_url,
-            api_key=together_client.api_key,
-        )
-
-    def _build_options(
-        self,
-        sampling_params: SamplingParams | None,
-        logprobs: LogProbConfig | None,
-        fmt: ResponseFormat,
-    ) -> dict:
-        options = get_sampling_options(sampling_params)
-        if fmt:
-            if fmt.type == ResponseFormatType.json_schema.value:
-                options["response_format"] = {
-                    "type": "json_object",
-                    "schema": fmt.json_schema,
-                }
-            elif fmt.type == ResponseFormatType.grammar.value:
-                raise NotImplementedError("Grammar response format not supported yet")
-            else:
-                raise ValueError(f"Unknown response format {fmt.type}")
-
-        if logprobs and logprobs.top_k:
-            if logprobs.top_k != 1:
-                raise ValueError(
-                    f"Unsupported value: Together only supports logprobs top_k=1. {logprobs.top_k} was provided",
-                )
-            options["logprobs"] = 1
-
-        return options
-
-    async def _get_params(self, request: ChatCompletionRequest) -> dict:
-        input_dict = {}
-        media_present = request_has_media(request)
-        llama_model = self.get_llama_model(request.model)
-        if media_present or not llama_model:
-            input_dict["messages"] = [await convert_message_to_openai_dict(m) for m in request.messages]
-        else:
-            input_dict["prompt"] = await chat_completion_request_to_prompt(request, llama_model)
-
-        params = {
-            "model": request.model,
-            **input_dict,
-            "stream": request.stream,
-            **self._build_options(request.sampling_params, request.logprobs, request.response_format),
-        }
-        logger.debug(f"params to together: {params}")
-        return params
-
-    async def list_models(self) -> list[Model] | None:
-        self._model_cache = {}
+    async def list_provider_model_ids(self) -> Iterable[str]:
         # Together's /v1/models is not compatible with OpenAI's /v1/models. Together support ticket #13355 -> will not fix, use Together's own client
-        for m in await self._get_client().models.list():
-            if m.type == "embedding":
-                if m.id not in self.embedding_model_metadata:
-                    logger.warning(f"Unknown embedding dimension for model {m.id}, skipping.")
-                    continue
-                metadata = self.embedding_model_metadata[m.id]
-                self._model_cache[m.id] = Model(
-                    provider_id=self.__provider_id__,
-                    provider_resource_id=m.id,
-                    identifier=m.id,
-                    model_type=ModelType.embedding,
-                    metadata=metadata,
-                )
-            else:
-                self._model_cache[m.id] = Model(
-                    provider_id=self.__provider_id__,
-                    provider_resource_id=m.id,
-                    identifier=m.id,
-                    model_type=ModelType.llm,
-                )
-
-        return self._model_cache.values()
+        return [m.id for m in await self._get_client().models.list()]
 
     async def should_refresh_models(self) -> bool:
         return True
-
-    async def check_model_availability(self, model):
-        return model in self._model_cache
 
     async def openai_embeddings(
         self,
@@ -203,4 +106,4 @@ class TogetherInferenceAdapter(OpenAIMixin, Inference, NeedsRequestProviderData)
             )
             response.usage = OpenAIEmbeddingUsage(prompt_tokens=-1, total_tokens=-1)
 
-        return response
+        return response  # type: ignore[no-any-return]

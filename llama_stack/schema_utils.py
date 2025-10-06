@@ -11,6 +11,43 @@ from typing import Any, TypeVar
 from .strong_typing.schema import json_schema_type, register_schema  # noqa: F401
 
 
+class ExtraBodyField[T]:
+    """
+    Marker annotation for parameters that arrive via extra_body in the client SDK.
+
+    These parameters:
+    - Will NOT appear in the generated client SDK method signature
+    - WILL be documented in OpenAPI spec under x-llama-stack-extra-body-params
+    - MUST be passed via the extra_body parameter in client SDK calls
+    - WILL be available in server-side method signature with proper typing
+
+    Example:
+        ```python
+        async def create_openai_response(
+            self,
+            input: str,
+            model: str,
+            shields: Annotated[
+                list[str] | None, ExtraBodyField("List of shields to apply")
+            ] = None,
+        ) -> ResponseObject:
+            # shields is available here with proper typing
+            if shields:
+                print(f"Using shields: {shields}")
+        ```
+
+        Client usage:
+        ```python
+        client.responses.create(
+            input="hello", model="llama-3", extra_body={"shields": ["shield-1"]}
+        )
+        ```
+    """
+
+    def __init__(self, description: str | None = None):
+        self.description = description
+
+
 @dataclass
 class WebMethod:
     level: str | None = None
@@ -26,7 +63,7 @@ class WebMethod:
     deprecated: bool | None = False
 
 
-T = TypeVar("T", bound=Callable[..., Any])
+CallableT = TypeVar("CallableT", bound=Callable[..., Any])
 
 
 def webmethod(
@@ -40,7 +77,7 @@ def webmethod(
     descriptive_name: str | None = None,
     required_scope: str | None = None,
     deprecated: bool | None = False,
-) -> Callable[[T], T]:
+) -> Callable[[CallableT], CallableT]:
     """
     Decorator that supplies additional metadata to an endpoint operation function.
 
@@ -51,7 +88,7 @@ def webmethod(
     :param required_scope: Required scope for this endpoint (e.g., 'monitoring.viewer').
     """
 
-    def wrap(func: T) -> T:
+    def wrap(func: CallableT) -> CallableT:
         webmethod_obj = WebMethod(
             route=route,
             method=method,

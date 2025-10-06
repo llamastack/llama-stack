@@ -50,6 +50,7 @@ from .specification import (
     Document,
     Example,
     ExampleRef,
+    ExtraBodyParameter,
     MediaType,
     Operation,
     Parameter,
@@ -677,6 +678,27 @@ class Generator:
         # parameters passed anywhere
         parameters = path_parameters + query_parameters
 
+        # Build extra body parameters documentation
+        extra_body_parameters = []
+        for param_name, param_type, description in op.extra_body_params:
+            if is_type_optional(param_type):
+                inner_type: type = unwrap_optional_type(param_type)
+                required = False
+            else:
+                inner_type = param_type
+                required = True
+
+            # Use description from ExtraBodyField if available, otherwise from docstring
+            param_description = description or doc_params.get(param_name)
+
+            extra_body_param = ExtraBodyParameter(
+                name=param_name,
+                schema=self.schema_builder.classdef_to_ref(inner_type),
+                description=param_description,
+                required=required,
+            )
+            extra_body_parameters.append(extra_body_param)
+
         webmethod = getattr(op.func_ref, "__webmethod__", None)
         raw_bytes_request_body = False
         if webmethod:
@@ -898,6 +920,7 @@ class Generator:
             deprecated=getattr(op.webmethod, "deprecated", False)
             or "DEPRECATED" in op.func_name,
             security=[] if op.public else None,
+            extraBodyParameters=extra_body_parameters if extra_body_parameters else None,
         )
 
     def _get_api_stability_priority(self, api_level: str) -> int:

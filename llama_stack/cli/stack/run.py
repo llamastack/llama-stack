@@ -6,11 +6,18 @@
 
 import argparse
 import os
+import ssl
 import subprocess
 from pathlib import Path
 
+import uvicorn
+import yaml
+
 from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
+from llama_stack.core.datatypes import LoggingConfig, StackRunConfig
+from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars, validate_env_pair
+from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.log import get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -146,23 +153,7 @@ class StackRun(Subcommand):
         # using the current environment packages.
         if not image_type and not image_name:
             logger.info("No image type or image name provided. Assuming environment packages.")
-            from llama_stack.core.server.server import main as server_main
-
-            # Build the server args from the current args passed to the CLI
-            server_args = argparse.Namespace()
-            for arg in vars(args):
-                # If this is a function, avoid passing it
-                # "args" contains:
-                # func=<bound method StackRun._run_stack_run_cmd of <llama_stack.cli.stack.run.StackRun object at 0x10484b010>>
-                if callable(getattr(args, arg)):
-                    continue
-                if arg == "config":
-                    server_args.config = str(config_file)
-                else:
-                    setattr(server_args, arg, getattr(args, arg))
-
-            # Run the server
-            server_main(server_args)
+            self._uvicorn_run(config_file, args)
         else:
             run_args = formulate_run_args(image_type, image_name)
 
@@ -183,6 +174,76 @@ class StackRun(Subcommand):
                     run_args.extend(["--env", f"{key}={value}"])
 
             run_command(run_args)
+
+    def _uvicorn_run(self, config_file: Path | None, args: argparse.Namespace) -> None:
+        if not config_file:
+            self.parser.error("Config file is required")
+
+        # Set environment variables if provided
+        if args.env:
+            for env_pair in args.env:
+                try:
+                    key, value = validate_env_pair(env_pair)
+                    logger.info(f"Setting environment variable {key} => {value}")
+                    os.environ[key] = value
+                except ValueError as e:
+                    logger.error(f"Error: {str(e)}")
+                    self.parser.error(f"Invalid environment variable format: {env_pair}")
+
+        config_file = resolve_config_or_distro(str(config_file), Mode.RUN)
+        with open(config_file) as fp:
+            config_contents = yaml.safe_load(fp)
+            if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
+                logger_config = LoggingConfig(**cfg)
+            else:
+                logger_config = None
+            config = StackRunConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
+
+        port = args.port or config.server.port
+        host = config.server.host or ["::", "0.0.0.0"]
+
+        # Set the config file in environment so create_app can find it
+        os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
+
+        uvicorn_config = {
+            "factory": True,
+            "host": host,
+            "port": port,
+            "lifespan": "on",
+            "log_level": logger.getEffectiveLevel(),
+            "log_config": logger_config,
+        }
+
+        keyfile = config.server.tls_keyfile
+        certfile = config.server.tls_certfile
+        if keyfile and certfile:
+            uvicorn_config["ssl_keyfile"] = config.server.tls_keyfile
+            uvicorn_config["ssl_certfile"] = config.server.tls_certfile
+            if config.server.tls_cafile:
+                uvicorn_config["ssl_ca_certs"] = config.server.tls_cafile
+                uvicorn_config["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+
+            logger.info(
+                f"HTTPS enabled with certificates:\n  Key: {keyfile}\n  Cert: {certfile}\n  CA: {config.server.tls_cafile}"
+            )
+        else:
+            logger.info(f"HTTPS enabled with certificates:\n  Key: {keyfile}\n  Cert: {certfile}")
+
+        logger.info(f"Listening on {host}:{port}")
+
+        # We need to catch KeyboardInterrupt because uvicorn's signal handling
+        # re-raises SIGINT signals using signal.raise_signal(), which Python
+        # converts to KeyboardInterrupt. Without this catch, we'd get a confusing
+        # stack trace when using Ctrl+C or kill -2 (SIGINT).
+        # SIGTERM (kill -15) works fine without this because Python doesn't
+        # have a default handler for it.
+        #
+        # Another approach would be to ignore SIGINT entirely - let uvicorn handle it through its own
+        # signal handling but this is quite intrusive and not worth the effort.
+        try:
+            uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)
+        except (KeyboardInterrupt, SystemExit):
+            logger.info("Received interrupt signal, shutting down gracefully...")
 
     def _start_ui_development_server(self, stack_server_port: int):
         logger.info("Attempting to start UI development server...")

@@ -99,6 +99,7 @@ unit = [
     "coverage",
     "chromadb>=1.0.15",
     "moto[s3]>=5.1.10",
+    "weaviate-client>=4.16.4",
 ]
 # These are the core dependencies required for running integration tests. They are shared across all
 # providers. If a provider requires additional dependencies, please add them to your environment
@@ -277,14 +278,10 @@ exclude = [
     "^llama_stack/providers/remote/datasetio/huggingface/",
     "^llama_stack/providers/remote/datasetio/nvidia/",
     "^llama_stack/providers/remote/inference/bedrock/",
-    "^llama_stack/providers/remote/inference/cerebras/",
-    "^llama_stack/providers/remote/inference/databricks/",
-    "^llama_stack/providers/remote/inference/fireworks/",
     "^llama_stack/providers/remote/inference/nvidia/",
     "^llama_stack/providers/remote/inference/passthrough/",
     "^llama_stack/providers/remote/inference/runpod/",
     "^llama_stack/providers/remote/inference/tgi/",
-    "^llama_stack/providers/remote/inference/together/",
     "^llama_stack/providers/remote/inference/watsonx/",
     "^llama_stack/providers/remote/safety/bedrock/",
     "^llama_stack/providers/remote/safety/nvidia/",

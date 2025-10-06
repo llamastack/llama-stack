@@ -1,0 +1,57 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test OpenAI telemetry creation"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-e944144fdb97",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "import numpy as np\nfrom openai_telemetry_sdk import Logger, Telemetry, Event\n\n# Create a new telemetry client\ntelemetry_client = Telemetry()\n\n# Define the name and version of your application\napp_name = \"My Application\"\napp_version = \"1.0\"\n\n# Initialize the telemetry logger\nlogger = Logger.new(\n    app_name=app_name,\n    app_version=app_version,\n)\n\n# Create a new event handler for telemetry events (e.g., start session, end session)\ndef handle_telemetry_event(event):\n    print(f\"Received telemetry event: {event.event}\")\n\n# Register the event handler with the logger\nlogger.add_handler(Event_TELEMETRY, handle_telemetry_event)\n\n# Start the telemetry session\nwhile True:\n    # Get a random integer value between 0 and 100\n    rand_value = np.random.randint(0, 101)\n    \n    # Record an event (e.g., user input) with the random value as metadata\n    logger.record Telemetry(\"user_input\", {\"random_field\": rand_value})\n    \n    # Flush any pending events to send them over the telemetry server\n    logger.flush()",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 238,
+          "prompt_tokens": 30,
+          "total_tokens": 268,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

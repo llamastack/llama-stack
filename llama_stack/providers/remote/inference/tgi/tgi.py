@@ -5,53 +5,21 @@
 # the root directory of this source tree.
 
 
+from collections.abc import Iterable
+
 from huggingface_hub import AsyncInferenceClient, HfApi
 from pydantic import SecretStr
 
-from llama_stack.apis.inference import (
-    ChatCompletionRequest,
-    Inference,
-    OpenAIEmbeddingsResponse,
-    ResponseFormat,
-    ResponseFormatType,
-    SamplingParams,
-)
-from llama_stack.apis.models import Model
-from llama_stack.apis.models.models import ModelType
+from llama_stack.apis.inference import OpenAIEmbeddingsResponse
 from llama_stack.log import get_logger
-from llama_stack.models.llama.sku_list import all_registered_models
-from llama_stack.providers.utils.inference.model_registry import (
-    ModelRegistryHelper,
-    build_hf_repo_model_entry,
-)
-from llama_stack.providers.utils.inference.openai_compat import (
-    get_sampling_options,
-)
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    chat_completion_request_to_model_input_info,
-)
 
 from .config import InferenceAPIImplConfig, InferenceEndpointImplConfig, TGIImplConfig
 
 log = get_logger(name=__name__, category="inference::tgi")
 
 
-def build_hf_repo_model_entries():
-    return [
-        build_hf_repo_model_entry(
-            model.huggingface_repo,
-            model.descriptor(),
-        )
-        for model in all_registered_models()
-        if model.huggingface_repo
-    ]
-
-
-class _HfAdapter(
-    OpenAIMixin,
-    Inference,
-):
+class _HfAdapter(OpenAIMixin):
     url: str
     api_key: SecretStr
 
@@ -61,90 +29,14 @@ class _HfAdapter(
 
     overwrite_completion_id = True  # TGI always returns id=""
 
-    def __init__(self) -> None:
-        self.register_helper = ModelRegistryHelper(build_hf_repo_model_entries())
-        self.huggingface_repo_to_llama_model_id = {
-            model.huggingface_repo: model.descriptor() for model in all_registered_models() if model.huggingface_repo
-        }
-
     def get_api_key(self):
         return self.api_key.get_secret_value()
 
     def get_base_url(self):
         return self.url
 
-    async def shutdown(self) -> None:
-        pass
-
-    async def list_models(self) -> list[Model] | None:
-        models = []
-        async for model in self.client.models.list():
-            models.append(
-                Model(
-                    identifier=model.id,
-                    provider_resource_id=model.id,
-                    provider_id=self.__provider_id__,
-                    metadata={},
-                    model_type=ModelType.llm,
-                )
-            )
-        return models
-
-    async def register_model(self, model: Model) -> Model:
-        if model.provider_resource_id != self.model_id:
-            raise ValueError(
-                f"Model {model.provider_resource_id} does not match the model {self.model_id} served by TGI."
-            )
-        return model
-
-    async def unregister_model(self, model_id: str) -> None:
-        pass
-
-    def _get_max_new_tokens(self, sampling_params, input_tokens):
-        return min(
-            sampling_params.max_tokens or (self.max_tokens - input_tokens),
-            self.max_tokens - input_tokens - 1,
-        )
-
-    def _build_options(
-        self,
-        sampling_params: SamplingParams | None = None,
-        fmt: ResponseFormat = None,
-    ):
-        options = get_sampling_options(sampling_params)
-        # TGI does not support temperature=0 when using greedy sampling
-        # We set it to 1e-3 instead, anything lower outputs garbage from TGI
-        # We can use top_p sampling strategy to specify lower temperature
-        if abs(options["temperature"]) < 1e-10:
-            options["temperature"] = 1e-3
-
-        # delete key "max_tokens" from options since its not supported by the API
-        options.pop("max_tokens", None)
-        if fmt:
-            if fmt.type == ResponseFormatType.json_schema.value:
-                options["grammar"] = {
-                    "type": "json",
-                    "value": fmt.json_schema,
-                }
-            elif fmt.type == ResponseFormatType.grammar.value:
-                raise ValueError("Grammar response format not supported yet")
-            else:
-                raise ValueError(f"Unexpected response format: {fmt.type}")
-
-        return options
-
-    async def _get_params(self, request: ChatCompletionRequest) -> dict:
-        prompt, input_tokens = await chat_completion_request_to_model_input_info(
-            request, self.register_helper.get_llama_model(request.model)
-        )
-        return dict(
-            prompt=prompt,
-            stream=request.stream,
-            details=True,
-            max_new_tokens=self._get_max_new_tokens(request.sampling_params, input_tokens),
-            stop_sequences=["<|eom_id|>", "<|eot_id|>"],
-            **self._build_options(request.sampling_params, request.response_format),
-        )
+    async def list_provider_model_ids(self) -> Iterable[str]:
+        return [self.model_id]
 
     async def openai_embeddings(
         self,

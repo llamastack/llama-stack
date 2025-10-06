@@ -19,9 +19,11 @@ from llama_stack.strong_typing.inspection import get_signature
 
 from typing import get_origin, get_args
 
-from fastapi import UploadFile 
+from fastapi import UploadFile
 from fastapi.params import File, Form
 from typing import Annotated
+
+from llama_stack.schema_utils import ExtraBodyField
 
 
 def split_prefix(
@@ -89,6 +91,7 @@ class EndpointOperation:
     :param query_params: Parameters of the operation signature that are passed in the query string as `key=value` pairs.
     :param request_params: The parameter that corresponds to the data transmitted in the request body.
     :param multipart_params: Parameters that indicate multipart/form-data request body.
+    :param extra_body_params: Parameters that arrive via extra_body and are documented but not in SDK.
     :param event_type: The Python type of the data that is transmitted out-of-band (e.g. via websockets) while the operation is in progress.
     :param response_type: The Python type of the data that is transmitted in the response body.
     :param http_method: The HTTP method used to invoke the endpoint such as POST, GET or PUT.
@@ -106,6 +109,7 @@ class EndpointOperation:
     query_params: List[OperationParameter]
     request_params: Optional[OperationParameter]
     multipart_params: List[OperationParameter]
+    extra_body_params: List[tuple[str, type, str | None]]
     event_type: Optional[type]
     response_type: type
     http_method: HTTPMethod
@@ -265,6 +269,7 @@ def get_endpoint_operations(
             query_params = []
             request_params = []
             multipart_params = []
+            extra_body_params = []
 
             for param_name, parameter in signature.parameters.items():
                 param_type = _get_annotation_type(parameter.annotation, func_ref)
@@ -278,6 +283,13 @@ def get_endpoint_operations(
                     raise ValidationError(
                         f"parameter '{param_name}' in function '{func_name}' has no type annotation"
                     )
+
+                # Check if this is an extra_body parameter
+                is_extra_body, extra_body_desc = _is_extra_body_param(param_type)
+                if is_extra_body:
+                    # Store in a separate list for documentation
+                    extra_body_params.append((param_name, param_type, extra_body_desc))
+                    continue  # Skip adding to request_params
 
                 is_multipart = _is_multipart_param(param_type)
 
@@ -351,6 +363,7 @@ def get_endpoint_operations(
                 query_params=query_params,
                 request_params=request_params,
                 multipart_params=multipart_params,
+                extra_body_params=extra_body_params,
                 event_type=event_type,
                 response_type=response_type,
                 http_method=http_method,
@@ -403,7 +416,7 @@ def get_endpoint_events(endpoint: type) -> Dict[str, type]:
 def _is_multipart_param(param_type: type) -> bool:
     """
     Check if a parameter type indicates multipart form data.
-    
+
     Returns True if the type is:
     - UploadFile
     - Annotated[UploadFile, File()]
@@ -413,19 +426,38 @@ def _is_multipart_param(param_type: type) -> bool:
     """
     if param_type is UploadFile:
         return True
-    
+
     # Check for Annotated types
     origin = get_origin(param_type)
     if origin is None:
         return False
-    
+
     if origin is Annotated:
         args = get_args(param_type)
         if len(args) < 2:
             return False
-        
+
         # Check the annotations for File() or Form()
         for annotation in args[1:]:
             if isinstance(annotation, (File, Form)):
                 return True
     return False
+
+
+def _is_extra_body_param(param_type: type) -> tuple[bool, str | None]:
+    """
+    Check if parameter is marked as coming from extra_body.
+
+    Returns:
+        (is_extra_body, description): Tuple of boolean and optional description
+    """
+    origin = get_origin(param_type)
+    if origin is Annotated:
+        args = get_args(param_type)
+        for annotation in args[1:]:
+            if isinstance(annotation, ExtraBodyField):
+                return True, annotation.description
+            # Also check by type name for cases where import matters
+            if type(annotation).__name__ == 'ExtraBodyField':
+                return True, getattr(annotation, 'description', None)
+    return False, None

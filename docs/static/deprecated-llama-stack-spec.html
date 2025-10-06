@@ -1443,8 +1443,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "List all chat completions.",
-                "description": "List all chat completions.",
+                "summary": "List chat completions.",
+                "description": "List chat completions.",
                 "parameters": [
                     {
                         "name": "after",
@@ -1520,8 +1520,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Generate an OpenAI-compatible chat completion for the given messages using the specified model.",
-                "description": "Generate an OpenAI-compatible chat completion for the given messages using the specified model.",
+                "summary": "Create chat completions.",
+                "description": "Create chat completions.\nGenerate an OpenAI-compatible chat completion for the given messages using the specified model.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1565,8 +1565,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Describe a chat completion by its ID.",
-                "description": "Describe a chat completion by its ID.",
+                "summary": "Get chat completion.",
+                "description": "Get chat completion.\nDescribe a chat completion by its ID.",
                 "parameters": [
                     {
                         "name": "completion_id",
@@ -1610,8 +1610,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Generate an OpenAI-compatible completion for the given prompt using the specified model.",
-                "description": "Generate an OpenAI-compatible completion for the given prompt using the specified model.",
+                "summary": "Create completion.",
+                "description": "Create completion.\nGenerate an OpenAI-compatible completion for the given prompt using the specified model.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1655,8 +1655,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Generate OpenAI-compatible embeddings for the given input using the specified model.",
-                "description": "Generate OpenAI-compatible embeddings for the given input using the specified model.",
+                "summary": "Create embeddings.",
+                "description": "Create embeddings.\nGenerate OpenAI-compatible embeddings for the given input using the specified model.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1700,8 +1700,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Returns a list of files that belong to the user's organization.",
-                "description": "Returns a list of files that belong to the user's organization.",
+                "summary": "List files.",
+                "description": "List files.\nReturns a list of files that belong to the user's organization.",
                 "parameters": [
                     {
                         "name": "after",
@@ -1770,8 +1770,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Upload a file that can be used across various endpoints.",
-                "description": "Upload a file that can be used across various endpoints.\nThe file upload should be a multipart form request with:\n- file: The File object (not file name) to be uploaded.\n- purpose: The intended purpose of the uploaded file.\n- expires_after: Optional form values describing expiration for the file.",
+                "summary": "Upload file.",
+                "description": "Upload file.\nUpload a file that can be used across various endpoints.\n\nThe file upload should be a multipart form request with:\n- file: The File object (not file name) to be uploaded.\n- purpose: The intended purpose of the uploaded file.\n- expires_after: Optional form values describing expiration for the file.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1831,8 +1831,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Returns information about a specific file.",
-                "description": "Returns information about a specific file.",
+                "summary": "Retrieve file.",
+                "description": "Retrieve file.\nReturns information about a specific file.",
                 "parameters": [
                     {
                         "name": "file_id",
@@ -1874,8 +1874,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Delete a file.",
-                "description": "Delete a file.",
+                "summary": "Delete file.",
+                "description": "Delete file.",
                 "parameters": [
                     {
                         "name": "file_id",
@@ -1919,8 +1919,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Returns the contents of the specified file.",
-                "description": "Returns the contents of the specified file.",
+                "summary": "Retrieve file content.",
+                "description": "Retrieve file content.\nReturns the contents of the specified file.",
                 "parameters": [
                     {
                         "name": "file_id",
@@ -1999,8 +1999,8 @@
                 "tags": [
                     "Safety"
                 ],
-                "summary": "Classifies if text and/or image inputs are potentially harmful.",
-                "description": "Classifies if text and/or image inputs are potentially harmful.",
+                "summary": "Create moderation.",
+                "description": "Create moderation.\nClassifies if text and/or image inputs are potentially harmful.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -2044,8 +2044,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "List all OpenAI responses.",
-                "description": "List all OpenAI responses.",
+                "summary": "List all responses.",
+                "description": "List all responses.",
                 "parameters": [
                     {
                         "name": "after",
@@ -2119,8 +2119,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "Create a new OpenAI response.",
-                "description": "Create a new OpenAI response.",
+                "summary": "Create a model response.",
+                "description": "Create a model response.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -2132,7 +2132,27 @@
                     },
                     "required": true
                 },
-                "deprecated": true
+                "deprecated": true,
+                "x-llama-stack-extra-body-params": [
+                    {
+                        "name": "shields",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ResponseShieldSpec"
+                                    }
+                                ]
+                            }
+                        },
+                        "description": "List of shields to apply during response generation. Shields provide safety and content moderation.",
+                        "required": false
+                    }
+                ]
             }
         },
         "/v1/openai/v1/responses/{response_id}": {
@@ -2164,8 +2184,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "Retrieve an OpenAI response by its ID.",
-                "description": "Retrieve an OpenAI response by its ID.",
+                "summary": "Get a model response.",
+                "description": "Get a model response.",
                 "parameters": [
                     {
                         "name": "response_id",
@@ -2207,8 +2227,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "Delete an OpenAI response by its ID.",
-                "description": "Delete an OpenAI response by its ID.",
+                "summary": "Delete a response.",
+                "description": "Delete a response.",
                 "parameters": [
                     {
                         "name": "response_id",
@@ -2252,8 +2272,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "List input items for a given OpenAI response.",
-                "description": "List input items for a given OpenAI response.",
+                "summary": "List input items.",
+                "description": "List input items.",
                 "parameters": [
                     {
                         "name": "response_id",
@@ -9521,6 +9541,21 @@
                 "title": "OpenAIResponseText",
                 "description": "Text response configuration for OpenAI responses."
             },
+            "ResponseShieldSpec": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "The type/identifier of the shield."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "ResponseShieldSpec",
+                "description": "Specification for a shield to apply during response generation."
+            },
             "OpenAIResponseInputTool": {
                 "oneOf": [
                     {
@@ -13331,12 +13366,13 @@
         },
         {
             "name": "Files",
-            "description": ""
+            "description": "This API is used to upload documents that can be used with other Llama Stack APIs.",
+            "x-displayName": "Files"
         },
         {
             "name": "Inference",
-            "description": "This API provides the raw interface to the underlying models. Two kinds of models are supported:\n- LLM models: these models generate \"raw\" and \"chat\" (conversational) completions.\n- Embedding models: these models generate embeddings to be used for semantic search.",
-            "x-displayName": "Llama Stack Inference API for generating completions, chat completions, and embeddings."
+            "description": "Llama Stack Inference API for generating completions, chat completions, and embeddings.\n\nThis API provides the raw interface to the underlying models. Two kinds of models are supported:\n- LLM models: these models generate \"raw\" and \"chat\" (conversational) completions.\n- Embedding models: these models generate embeddings to be used for semantic search.",
+            "x-displayName": "Inference"
         },
         {
             "name": "Models",
@@ -13348,7 +13384,8 @@
         },
         {
             "name": "Safety",
-            "description": ""
+            "description": "OpenAI-compatible Moderations API.",
+            "x-displayName": "Safety"
         },
         {
             "name": "Telemetry",

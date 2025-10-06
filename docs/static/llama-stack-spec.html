@@ -69,8 +69,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "List all chat completions.",
-                "description": "List all chat completions.",
+                "summary": "List chat completions.",
+                "description": "List chat completions.",
                 "parameters": [
                     {
                         "name": "after",
@@ -146,8 +146,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Generate an OpenAI-compatible chat completion for the given messages using the specified model.",
-                "description": "Generate an OpenAI-compatible chat completion for the given messages using the specified model.",
+                "summary": "Create chat completions.",
+                "description": "Create chat completions.\nGenerate an OpenAI-compatible chat completion for the given messages using the specified model.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -191,8 +191,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Describe a chat completion by its ID.",
-                "description": "Describe a chat completion by its ID.",
+                "summary": "Get chat completion.",
+                "description": "Get chat completion.\nDescribe a chat completion by its ID.",
                 "parameters": [
                     {
                         "name": "completion_id",
@@ -236,8 +236,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Generate an OpenAI-compatible completion for the given prompt using the specified model.",
-                "description": "Generate an OpenAI-compatible completion for the given prompt using the specified model.",
+                "summary": "Create completion.",
+                "description": "Create completion.\nGenerate an OpenAI-compatible completion for the given prompt using the specified model.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -758,8 +758,8 @@
                 "tags": [
                     "Inference"
                 ],
-                "summary": "Generate OpenAI-compatible embeddings for the given input using the specified model.",
-                "description": "Generate OpenAI-compatible embeddings for the given input using the specified model.",
+                "summary": "Create embeddings.",
+                "description": "Create embeddings.\nGenerate OpenAI-compatible embeddings for the given input using the specified model.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -803,8 +803,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Returns a list of files that belong to the user's organization.",
-                "description": "Returns a list of files that belong to the user's organization.",
+                "summary": "List files.",
+                "description": "List files.\nReturns a list of files that belong to the user's organization.",
                 "parameters": [
                     {
                         "name": "after",
@@ -873,8 +873,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Upload a file that can be used across various endpoints.",
-                "description": "Upload a file that can be used across various endpoints.\nThe file upload should be a multipart form request with:\n- file: The File object (not file name) to be uploaded.\n- purpose: The intended purpose of the uploaded file.\n- expires_after: Optional form values describing expiration for the file.",
+                "summary": "Upload file.",
+                "description": "Upload file.\nUpload a file that can be used across various endpoints.\n\nThe file upload should be a multipart form request with:\n- file: The File object (not file name) to be uploaded.\n- purpose: The intended purpose of the uploaded file.\n- expires_after: Optional form values describing expiration for the file.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -934,8 +934,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Returns information about a specific file.",
-                "description": "Returns information about a specific file.",
+                "summary": "Retrieve file.",
+                "description": "Retrieve file.\nReturns information about a specific file.",
                 "parameters": [
                     {
                         "name": "file_id",
@@ -977,8 +977,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Delete a file.",
-                "description": "Delete a file.",
+                "summary": "Delete file.",
+                "description": "Delete file.",
                 "parameters": [
                     {
                         "name": "file_id",
@@ -1022,8 +1022,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Returns the contents of the specified file.",
-                "description": "Returns the contents of the specified file.",
+                "summary": "Retrieve file content.",
+                "description": "Retrieve file content.\nReturns the contents of the specified file.",
                 "parameters": [
                     {
                         "name": "file_id",
@@ -1067,8 +1067,8 @@
                 "tags": [
                     "Inspect"
                 ],
-                "summary": "Get the current health status of the service.",
-                "description": "Get the current health status of the service.",
+                "summary": "Get health status.",
+                "description": "Get health status.\nGet the current health status of the service.",
                 "parameters": [],
                 "deprecated": false
             }
@@ -1102,8 +1102,8 @@
                 "tags": [
                     "Inspect"
                 ],
-                "summary": "List all available API routes with their methods and implementing providers.",
-                "description": "List all available API routes with their methods and implementing providers.",
+                "summary": "List routes.",
+                "description": "List routes.\nList all available API routes with their methods and implementing providers.",
                 "parameters": [],
                 "deprecated": false
             }
@@ -1170,8 +1170,8 @@
                 "tags": [
                     "Models"
                 ],
-                "summary": "Register a model.",
-                "description": "Register a model.",
+                "summary": "Register model.",
+                "description": "Register model.\nRegister a model.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1215,8 +1215,8 @@
                 "tags": [
                     "Models"
                 ],
-                "summary": "Get a model by its identifier.",
-                "description": "Get a model by its identifier.",
+                "summary": "Get model.",
+                "description": "Get model.\nGet a model by its identifier.",
                 "parameters": [
                     {
                         "name": "model_id",
@@ -1251,8 +1251,8 @@
                 "tags": [
                     "Models"
                 ],
-                "summary": "Unregister a model.",
-                "description": "Unregister a model.",
+                "summary": "Unregister model.",
+                "description": "Unregister model.\nUnregister a model.",
                 "parameters": [
                     {
                         "name": "model_id",
@@ -1296,8 +1296,8 @@
                 "tags": [
                     "Safety"
                 ],
-                "summary": "Classifies if text and/or image inputs are potentially harmful.",
-                "description": "Classifies if text and/or image inputs are potentially harmful.",
+                "summary": "Create moderation.",
+                "description": "Create moderation.\nClassifies if text and/or image inputs are potentially harmful.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1374,8 +1374,8 @@
                 "tags": [
                     "Prompts"
                 ],
-                "summary": "Create a new prompt.",
-                "description": "Create a new prompt.",
+                "summary": "Create prompt.",
+                "description": "Create prompt.\nCreate a new prompt.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1419,8 +1419,8 @@
                 "tags": [
                     "Prompts"
                 ],
-                "summary": "Get a prompt by its identifier and optional version.",
-                "description": "Get a prompt by its identifier and optional version.",
+                "summary": "Get prompt.",
+                "description": "Get prompt.\nGet a prompt by its identifier and optional version.",
                 "parameters": [
                     {
                         "name": "prompt_id",
@@ -1471,8 +1471,8 @@
                 "tags": [
                     "Prompts"
                 ],
-                "summary": "Update an existing prompt (increments version).",
-                "description": "Update an existing prompt (increments version).",
+                "summary": "Update prompt.",
+                "description": "Update prompt.\nUpdate an existing prompt (increments version).",
                 "parameters": [
                     {
                         "name": "prompt_id",
@@ -1517,8 +1517,8 @@
                 "tags": [
                     "Prompts"
                 ],
-                "summary": "Delete a prompt.",
-                "description": "Delete a prompt.",
+                "summary": "Delete prompt.",
+                "description": "Delete prompt.\nDelete a prompt.",
                 "parameters": [
                     {
                         "name": "prompt_id",
@@ -1562,8 +1562,8 @@
                 "tags": [
                     "Prompts"
                 ],
-                "summary": "Set which version of a prompt should be the default in get_prompt (latest).",
-                "description": "Set which version of a prompt should be the default in get_prompt (latest).",
+                "summary": "Set prompt version.",
+                "description": "Set prompt version.\nSet which version of a prompt should be the default in get_prompt (latest).",
                 "parameters": [
                     {
                         "name": "prompt_id",
@@ -1617,8 +1617,8 @@
                 "tags": [
                     "Prompts"
                 ],
-                "summary": "List all versions of a specific prompt.",
-                "description": "List all versions of a specific prompt.",
+                "summary": "List prompt versions.",
+                "description": "List prompt versions.\nList all versions of a specific prompt.",
                 "parameters": [
                     {
                         "name": "prompt_id",
@@ -1662,8 +1662,8 @@
                 "tags": [
                     "Providers"
                 ],
-                "summary": "List all available providers.",
-                "description": "List all available providers.",
+                "summary": "List providers.",
+                "description": "List providers.\nList all available providers.",
                 "parameters": [],
                 "deprecated": false
             }
@@ -1697,8 +1697,8 @@
                 "tags": [
                     "Providers"
                 ],
-                "summary": "Get detailed information about a specific provider.",
-                "description": "Get detailed information about a specific provider.",
+                "summary": "Get provider.",
+                "description": "Get provider.\nGet detailed information about a specific provider.",
                 "parameters": [
                     {
                         "name": "provider_id",
@@ -1742,8 +1742,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "List all OpenAI responses.",
-                "description": "List all OpenAI responses.",
+                "summary": "List all responses.",
+                "description": "List all responses.",
                 "parameters": [
                     {
                         "name": "after",
@@ -1817,8 +1817,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "Create a new OpenAI response.",
-                "description": "Create a new OpenAI response.",
+                "summary": "Create a model response.",
+                "description": "Create a model response.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -1830,7 +1830,27 @@
                     },
                     "required": true
                 },
-                "deprecated": false
+                "deprecated": false,
+                "x-llama-stack-extra-body-params": [
+                    {
+                        "name": "shields",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ResponseShieldSpec"
+                                    }
+                                ]
+                            }
+                        },
+                        "description": "List of shields to apply during response generation. Shields provide safety and content moderation.",
+                        "required": false
+                    }
+                ]
             }
         },
         "/v1/responses/{response_id}": {
@@ -1862,8 +1882,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "Retrieve an OpenAI response by its ID.",
-                "description": "Retrieve an OpenAI response by its ID.",
+                "summary": "Get a model response.",
+                "description": "Get a model response.",
                 "parameters": [
                     {
                         "name": "response_id",
@@ -1905,8 +1925,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "Delete an OpenAI response by its ID.",
-                "description": "Delete an OpenAI response by its ID.",
+                "summary": "Delete a response.",
+                "description": "Delete a response.",
                 "parameters": [
                     {
                         "name": "response_id",
@@ -1950,8 +1970,8 @@
                 "tags": [
                     "Agents"
                 ],
-                "summary": "List input items for a given OpenAI response.",
-                "description": "List input items for a given OpenAI response.",
+                "summary": "List input items.",
+                "description": "List input items.",
                 "parameters": [
                     {
                         "name": "response_id",
@@ -2043,8 +2063,8 @@
                 "tags": [
                     "Safety"
                 ],
-                "summary": "Run a shield.",
-                "description": "Run a shield.",
+                "summary": "Run shield.",
+                "description": "Run shield.\nRun a shield.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -4176,8 +4196,8 @@
                 "tags": [
                     "Inspect"
                 ],
-                "summary": "Get the version of the service.",
-                "description": "Get the version of the service.",
+                "summary": "Get version.",
+                "description": "Get version.\nGet the version of the service.",
                 "parameters": [],
                 "deprecated": false
             }
@@ -7615,6 +7635,21 @@
                 "additionalProperties": false,
                 "title": "OpenAIResponseText",
                 "description": "Text response configuration for OpenAI responses."
+            },
+            "ResponseShieldSpec": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "The type/identifier of the shield."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "ResponseShieldSpec",
+                "description": "Specification for a shield to apply during response generation."
             },
             "OpenAIResponseInputTool": {
                 "oneOf": [
@@ -12879,16 +12914,18 @@
         },
         {
             "name": "Files",
-            "description": ""
+            "description": "This API is used to upload documents that can be used with other Llama Stack APIs.",
+            "x-displayName": "Files"
         },
         {
             "name": "Inference",
-            "description": "This API provides the raw interface to the underlying models. Two kinds of models are supported:\n- LLM models: these models generate \"raw\" and \"chat\" (conversational) completions.\n- Embedding models: these models generate embeddings to be used for semantic search.",
-            "x-displayName": "Llama Stack Inference API for generating completions, chat completions, and embeddings."
+            "description": "Llama Stack Inference API for generating completions, chat completions, and embeddings.\n\nThis API provides the raw interface to the underlying models. Two kinds of models are supported:\n- LLM models: these models generate \"raw\" and \"chat\" (conversational) completions.\n- Embedding models: these models generate embeddings to be used for semantic search.",
+            "x-displayName": "Inference"
         },
         {
             "name": "Inspect",
-            "description": ""
+            "description": "APIs for inspecting the Llama Stack service, including health status, available API routes with methods and implementing providers.",
+            "x-displayName": "Inspect"
         },
         {
             "name": "Models",
@@ -12896,17 +12933,18 @@
         },
         {
             "name": "Prompts",
-            "description": "",
-            "x-displayName": "Protocol for prompt management operations."
+            "description": "Protocol for prompt management operations.",
+            "x-displayName": "Prompts"
         },
         {
             "name": "Providers",
-            "description": "",
-            "x-displayName": "Providers API for inspecting, listing, and modifying providers and their configurations."
+            "description": "Providers API for inspecting, listing, and modifying providers and their configurations.",
+            "x-displayName": "Providers"
         },
         {
             "name": "Safety",
-            "description": ""
+            "description": "OpenAI-compatible Moderations API.",
+            "x-displayName": "Safety"
         },
         {
             "name": "Scoring",
