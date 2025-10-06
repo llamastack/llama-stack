@@ -69,10 +69,10 @@ docker run \
   -it \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v ./run.yaml:/root/my-run.yaml \
+  -e WATSONX_API_KEY=$WATSONX_API_KEY \
+  -e WATSONX_PROJECT_ID=$WATSONX_PROJECT_ID \
+  -e WATSONX_BASE_URL=$WATSONX_BASE_URL \
   llamastack/distribution-watsonx \
   --config /root/my-run.yaml \
-  --port $LLAMA_STACK_PORT \
-  --env WATSONX_API_KEY=$WATSONX_API_KEY \
-  --env WATSONX_PROJECT_ID=$WATSONX_PROJECT_ID \
-  --env WATSONX_BASE_URL=$WATSONX_BASE_URL
+  --port $LLAMA_STACK_PORT
 ```

@@ -118,10 +118,10 @@ docker run \
   --pull always \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v ./run.yaml:/root/my-run.yaml \
+  -e NVIDIA_API_KEY=$NVIDIA_API_KEY \
   llamastack/distribution-{{ name }} \
   --config /root/my-run.yaml \
-  --port $LLAMA_STACK_PORT \
-  --env NVIDIA_API_KEY=$NVIDIA_API_KEY
+  --port $LLAMA_STACK_PORT
 ```
 
 ### Via venv
@@ -131,10 +131,10 @@ If you've set up your local development environment, you can also build the imag
 ```bash
 INFERENCE_MODEL=meta-llama/Llama-3.1-8B-Instruct
 llama stack build --distro nvidia --image-type venv
+NVIDIA_API_KEY=$NVIDIA_API_KEY \
+INFERENCE_MODEL=$INFERENCE_MODEL \
 llama stack run ./run.yaml \
-  --port 8321 \
-  --env NVIDIA_API_KEY=$NVIDIA_API_KEY \
-  --env INFERENCE_MODEL=$INFERENCE_MODEL
+  --port 8321
 ```
 
 ## Example Notebooks
