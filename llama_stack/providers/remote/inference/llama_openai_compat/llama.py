@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 from typing import Any
 
-from llama_stack.apis.inference.inference import OpenAICompletion
+from llama_stack.apis.inference.inference import OpenAICompletion, OpenAIEmbeddingsResponse
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.llama_openai_compat.config import LlamaCompatConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
@@ -55,4 +55,14 @@ class LlamaCompatInferenceAdapter(OpenAIMixin):
         prompt_logprobs: int | None = None,
         suffix: str | None = None,
     ) -> OpenAICompletion:
+        raise NotImplementedError()
+
+    async def openai_embeddings(
+        self,
+        model: str,
+        input: str | list[str],
+        encoding_format: str | None = "float",
+        dimensions: int | None = None,
+        user: str | None = None,
+    ) -> OpenAIEmbeddingsResponse:
         raise NotImplementedError()
