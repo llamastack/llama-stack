@@ -457,7 +457,7 @@ class OpenAIVectorStoreMixin(ABC):
                 content = self._chunk_to_vector_store_content(chunk)
 
                 response_data_item = VectorStoreSearchResponse(
-                    file_id=chunk.metadata.get("file_id", ""),
+                    file_id=chunk.metadata.get("document_id", ""),
                     filename=chunk.metadata.get("filename", ""),
                     score=score,
                     attributes=chunk.metadata,
@@ -608,12 +608,15 @@ class OpenAIVectorStoreMixin(ABC):
 
             content = content_from_data_and_mime_type(content_response.body, mime_type)
 
+            chunk_attributes = attributes.copy()
+            chunk_attributes["filename"] = file_response.filename
+
             chunks = make_overlapped_chunks(
                 file_id,
                 content,
                 max_chunk_size_tokens,
                 chunk_overlap_tokens,
-                attributes,
+                chunk_attributes,
             )
 
             if not chunks:

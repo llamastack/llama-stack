@@ -331,5 +331,8 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
 
         return ToolInvocationResult(
             content=result.content or [],
-            metadata=result.metadata,
+            metadata={
+                **(result.metadata or {}),
+                "_annotation_file_mapping": getattr(result, "annotation_file_mapping", None),
+            },
         )
