@@ -158,9 +158,9 @@ class ToolExecutor:
 
         citation_instruction = ""
         if unique_files:
-            citation_instruction = " Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format (e.g., 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.')."
-            citation_instruction += (
-                " Do not add extra punctuation. Use only the file IDs provided (do not invent new ones)."
+            citation_instruction = (
+                " Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format (e.g., 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'). "
+                "Do not add extra punctuation. Use only the file IDs provided (do not invent new ones)."
             )
 
         content_items.append(
@@ -170,12 +170,19 @@ class ToolExecutor:
         )
 
         # handling missing attributes for old versions
-        citation_files = {
-            (r.file_id or (r.attributes.get("document_id") if r.attributes else None)): r.filename
-            or (r.attributes.get("filename") if r.attributes else None)
-            or "unknown"
-            for r in search_results
-        }
+        citation_files = {}
+        for result in search_results:
+            file_id = result.file_id
+            if not file_id and result.attributes:
+                file_id = result.attributes.get("document_id")
+
+            filename = result.filename
+            if not filename and result.attributes:
+                filename = result.attributes.get("filename")
+            if not filename:
+                filename = "unknown"
+
+            citation_files[file_id] = filename
 
         return ToolInvocationResult(
             content=content_items,
