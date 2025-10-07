@@ -181,14 +181,10 @@ async def test_parse_registry_values_error_handling(sqlite_kvstore):
     )
 
     await sqlite_kvstore.set(
-        KEY_FORMAT.format(type="vector_db", identifier="valid_vector_db"),
-        valid_db.model_dump_json(),
+        KEY_FORMAT.format(type="vector_db", identifier="valid_vector_db"), valid_db.model_dump_json()
     )
 
-    await sqlite_kvstore.set(
-        KEY_FORMAT.format(type="vector_db", identifier="corrupted_json"),
-        "{not valid json",
-    )
+    await sqlite_kvstore.set(KEY_FORMAT.format(type="vector_db", identifier="corrupted_json"), "{not valid json")
 
     await sqlite_kvstore.set(
         KEY_FORMAT.format(type="vector_db", identifier="missing_fields"),
