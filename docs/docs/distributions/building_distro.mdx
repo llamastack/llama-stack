@@ -322,20 +322,20 @@ Now, let's start the Llama Stack Distribution Server. You will need the YAML con
 llama stack run -h
 usage: llama stack run [-h] [--port PORT] [--image-name IMAGE_NAME]
                        [--image-type {venv}] [--enable-ui]
-                       [config | template]
+                       [config | distro]
 
 Start the server for a Llama Stack Distribution. You should have already built (or downloaded) and configured the distribution.
 
 positional arguments:
-  config | template     Path to config file to use for the run or name of known template (`llama stack list` for a list). (default: None)
+  config | distro       Path to config file to use for the run or name of known distro (`llama stack list` for a list). (default: None)
 
 options:
   -h, --help            show this help message and exit
   --port PORT           Port to run the server on. It can also be passed via the env var LLAMA_STACK_PORT. (default: 8321)
   --image-name IMAGE_NAME
-                        Name of the image to run. Defaults to the current environment (default: None)
+                        [DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running. (default: None)
   --image-type {venv}
-                        Image Type used during the build. This should be venv. (default: None)
+                        [DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running. (default: None)
   --enable-ui           Start the UI server (default: False)
 ```
 
@@ -347,9 +347,6 @@ llama stack run tgi
 
 # Start using config file
 llama stack run ~/.llama/distributions/llamastack-my-local-stack/my-local-stack-run.yaml
-
-# Start using a venv
-llama stack run --image-type venv ~/.llama/distributions/llamastack-my-local-stack/my-local-stack-run.yaml
 ```
 
 ```

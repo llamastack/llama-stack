@@ -59,7 +59,7 @@ jobs:
           # Use the virtual environment created by the build step (name comes from build config)
           source ci-test/bin/activate
           uv pip list
-          nohup llama stack run tests/external/run-byoa.yaml --image-type ${{ matrix.image-type }} > server.log 2>&1 &
+          nohup llama stack run tests/external/run-byoa.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |
