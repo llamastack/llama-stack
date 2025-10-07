@@ -7,11 +7,13 @@
 import inspect
 import sys
 from typing import Any, Protocol
+import yaml
 from unittest.mock import AsyncMock, MagicMock
 
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import Inference
+from llama_stack.apis.models import ModelInput
 from llama_stack.core.datatypes import (
     Api,
     Provider,
@@ -21,6 +23,8 @@ from llama_stack.core.resolver import resolve_impls
 from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.core.routing_tables.models import ModelsRoutingTable
 from llama_stack.providers.datatypes import InlineProviderSpec, ProviderSpec
+from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.providers.inline.instrumentation.otel.otel import OTelInstrumentationProvider
 
 
 def add_protocol_methods(cls: type, protocol: type[Protocol]) -> None:
@@ -114,3 +118,52 @@ async def test_resolve_impls_basic():
     assert impl.foo == "baz"
     assert impl.__provider_id__ == "sample_provider"
     assert impl.__provider_spec__ == provider_spec
+
+
+def test_instrumentation_provider_without_config_parses():
+    cfg = StackRunConfig(
+        image_name="unit-test",
+        apis=["inference"],
+        providers={
+            "inference": [
+                Provider(
+                    provider_id="vllm",
+                    provider_type="remote::vllm",
+                    config={"url": "http://localhost:8000/v1"},
+                )
+            ]
+        },
+        instrumentation=OTelInstrumentationProvider(
+            provider="otel",
+        ),
+        models=[
+            ModelInput(model_id="meta-llama/Llama-3.2-1B-Instruct", provider_id="vllm")
+        ],
+    )
+
+    assert cfg.instrumentation is not None
+    assert getattr(cfg.instrumentation, "provider", None) == "otel"
+
+
+def test_instrumentation_yaml_without_config_parses():
+    yaml_config = """
+image_name: unit-test-yaml
+apis: [inference]
+providers:
+  inference:
+    - provider_id: vllm
+      provider_type: remote::vllm
+      config:
+        url: http://localhost:8000/v1
+instrumentation:
+  provider: otel
+models:
+  - model_id: meta-llama/Llama-3.2-1B-Instruct
+    provider_id: vllm
+"""
+
+    data = yaml.safe_load(yaml_config)
+    cfg = StackRunConfig(**data)
+
+    assert cfg.instrumentation is not None
+    assert getattr(cfg.instrumentation, "provider", None) == "otel"

@@ -36,6 +36,9 @@ class OTelInstrumentationProvider(InstrumentationProvider):
 
     def model_post_init(self, __context):
         """Initialize OpenTelemetry after Pydantic validation."""
+        # Provide default config if missing and validate type
+        if getattr(self, "config", None) is None:
+            self.config = OTelConfig()
         assert isinstance(self.config, OTelConfig)  # Type hint for IDE/linter
 
         # Warn if OTLP endpoints not configured

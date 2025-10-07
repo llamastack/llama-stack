@@ -542,8 +542,8 @@ If not specified, a default SQLite store will be used.""",
 
         cfg_cls = instantiate_class_type(entry.config_class)
         prv_cls = instantiate_class_type(entry.provider_class)
-        cfg_data = v.get("config") or {}
-        cfg = TypeAdapter(cfg_cls).validate_python(cfg_data)
+        cfg_data = v.get("config")
+        cfg = TypeAdapter(cfg_cls).validate_python(cfg_data) if cfg_data is not None else None
         return prv_cls(provider=provider_type, config=cfg)
 
 

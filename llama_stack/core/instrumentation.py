@@ -21,7 +21,7 @@ class InstrumentationProvider(BaseModel):
     """
 
     provider: str = Field(description="Provider identifier for discriminated unions")
-    config: BaseModel
+    config: BaseModel |  None = Field(default=None, description="Optional configuration for the instrumentation provider. Most support configuration via environment variables.")
 
     @abstractmethod
     def fastapi_middleware(self, app: FastAPI) -> None:
