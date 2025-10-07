@@ -7,16 +7,18 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
 class WatsonXProviderDataValidator(BaseModel):
-    url: str
-    api_key: str
-    project_id: str
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="forbid",
+    )
+    watsonx_api_key: str | None
 
 
 @json_schema_type
