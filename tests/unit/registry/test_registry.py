@@ -219,8 +219,7 @@ async def test_cached_registry_error_handling(sqlite_kvstore):
     )
 
     await sqlite_kvstore.set(
-        KEY_FORMAT.format(type="vector_db", identifier="valid_cached_db"),
-        valid_db.model_dump_json(),
+        KEY_FORMAT.format(type="vector_db", identifier="valid_cached_db"), valid_db.model_dump_json()
     )
 
     await sqlite_kvstore.set(
