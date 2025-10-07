@@ -5,6 +5,8 @@
 # the root directory of this source tree.
 
 
+from openai import NOT_GIVEN
+
 from llama_stack.apis.inference import (
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
@@ -13,7 +15,6 @@ from llama_stack.apis.inference import (
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
-from openai import NOT_GIVEN
 
 from . import NVIDIAConfig
 from .utils import _is_nvidia_hosted
@@ -38,9 +39,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, ModelRegistryHelper):
     def __init__(self, config: NVIDIAConfig) -> None:
         """Initialize the NVIDIA inference adapter with configuration."""
         # Initialize ModelRegistryHelper with empty model entries since NVIDIA uses dynamic model discovery
-        ModelRegistryHelper.__init__(
-            self, model_entries=[], allowed_models=config.allowed_models
-        )
+        ModelRegistryHelper.__init__(self, model_entries=[], allowed_models=config.allowed_models)
         self.config = config
 
     # source: https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/support-matrix.html
@@ -75,9 +74,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, ModelRegistryHelper):
 
         :return: The NVIDIA API key
         """
-        return (
-            self.config.api_key.get_secret_value() if self.config.api_key else "NO KEY"
-        )
+        return self.config.api_key.get_secret_value() if self.config.api_key else "NO KEY"
 
     def get_base_url(self) -> str:
         """
@@ -85,11 +82,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, ModelRegistryHelper):
 
         :return: The NVIDIA API base URL
         """
-        return (
-            f"{self.config.url}/v1"
-            if self.config.append_api_version
-            else self.config.url
-        )
+        return f"{self.config.url}/v1" if self.config.append_api_version else self.config.url
 
     async def openai_embeddings(
         self,
@@ -116,9 +109,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin, ModelRegistryHelper):
         response = await self.client.embeddings.create(
             model=await self._get_provider_model_id(model),
             input=input,
-            encoding_format=(
-                encoding_format if encoding_format is not None else NOT_GIVEN
-            ),
+            encoding_format=(encoding_format if encoding_format is not None else NOT_GIVEN),
             dimensions=dimensions if dimensions is not None else NOT_GIVEN,
             user=user if user is not None else NOT_GIVEN,
             extra_body=extra_body,
