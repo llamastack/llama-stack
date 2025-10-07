@@ -29,7 +29,6 @@ from llama_stack.apis.telemetry import (
     UnstructuredLogEvent,
 )
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry.trace_protocol import serialize_value
 
 logger = get_logger(__name__, category="core")
 

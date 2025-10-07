@@ -29,7 +29,6 @@ from llama_stack.models.llama.datatypes import (
     ToolDefinition,
     ToolPromptFormat,
 )
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 register_schema(ToolCall)
@@ -996,7 +995,6 @@ class ListOpenAIChatCompletionResponse(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
 class InferenceProvider(Protocol):
     """
     This protocol defines the interface that should be implemented by all inference providers.

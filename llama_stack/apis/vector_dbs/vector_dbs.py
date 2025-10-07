@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from llama_stack.apis.resource import Resource, ResourceType
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
@@ -64,7 +64,6 @@ class ListVectorDBsResponse(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
 class VectorDBs(Protocol):
     @webmethod(route="/vector-dbs", method="GET", level=LLAMA_STACK_API_V1)
     async def list_vector_dbs(self) -> ListVectorDBsResponse:

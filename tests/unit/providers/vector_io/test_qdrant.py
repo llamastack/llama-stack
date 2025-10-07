@@ -122,7 +122,6 @@ def _prepare_for_json(value: Any) -> str:
     return str(value)
 
 
-@patch("llama_stack.providers.utils.telemetry.trace_protocol._prepare_for_json", new=_prepare_for_json)
 async def test_qdrant_register_and_unregister_vector_db(
     qdrant_adapter: QdrantVectorIOAdapter,
     mock_vector_db,

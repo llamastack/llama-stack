@@ -58,14 +58,6 @@ from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_dis
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
-from llama_stack.providers.inline.telemetry.meta_reference.config import TelemetryConfig
-from llama_stack.providers.inline.telemetry.meta_reference.telemetry import (
-    TelemetryAdapter,
-)
-from llama_stack.providers.utils.telemetry.tracing import (
-    CURRENT_TRACE_CONTEXT,
-    setup_logger,
-)
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
@@ -237,9 +229,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
             try:
                 if is_streaming:
-                    gen = preserve_contexts_async_generator(
-                        sse_generator(func(**kwargs)), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
-                    )
+                    gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), [PROVIDER_DATA_VAR])
                     return StreamingResponse(gen, media_type="text/event-stream")
                 else:
                     value = func(**kwargs)
@@ -407,11 +397,6 @@ def create_app() -> StackApp:
         cors_config = process_cors_config(config.server.cors)
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
-
-    if Api.telemetry in impls:
-        setup_logger(impls[Api.telemetry])
-    else:
-        setup_logger(TelemetryAdapter(TelemetryConfig(), {}))
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)

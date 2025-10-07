@@ -12,7 +12,7 @@ from typing_extensions import runtime_checkable
 
 from llama_stack.apis.common.content_types import URL, InterleavedContent
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 
@@ -184,7 +184,6 @@ class RAGQueryConfig(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
 class RAGToolRuntime(Protocol):
     @webmethod(route="/tool-runtime/rag-tool/insert", method="POST", level=LLAMA_STACK_API_V1)
     async def insert(

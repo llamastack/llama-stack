@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
@@ -102,7 +101,6 @@ class OpenAIFileDeleteResponse(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
 class Files(Protocol):
     """Files
 

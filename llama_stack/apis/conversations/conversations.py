@@ -20,7 +20,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageWebSearchToolCall,
 )
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 Metadata = dict[str, str]
@@ -163,7 +162,6 @@ class ConversationItemDeletedResource(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
 class Conversations(Protocol):
     """Protocol for conversation management operations."""
 
