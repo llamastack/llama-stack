@@ -1,0 +1,54 @@
+---
+description: "Reference Open Telemetry Instrumentation"
+sidebar_label: Open Telemetry
+title: inline::otel
+---
+
+# inline::otel
+
+## Description
+
+Reference implementation of telemetry and observability using OpenTelemetry.
+
+When using open telemetry, please make sure to set the OTLP endpoint and protocol environment variables, or telemetry will not get exported.
+
+```sh
+OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+OTEL_EXPORTER_OTLP_ENDPOINT="https://127.0.0.1:4318"
+```
+
+For advanced environment variable configuration, refer to the [sdk documentation](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/).
+Otherwise, some basic settings can be set in the config for the otel telemetry provider.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `service_name` | `str \| None` | No |  | Service name (overridden by OTEL_SERVICE_NAME env var) |
+| `span_processor` | `batch | simple | None` | No | "batch" | Span processor type (overridden by OTEL_SPAN_PROCESSOR env var) |
+
+## Sample Configuration
+
+```yaml
+instrumentation:
+  provider: otel
+  config:
+    service_name: my service name
+    span_processor: batch
+```
+
+Note that passing a config is optional for instrumentation providers, since configuration by environment variable is usually preferable.
+
+```sh
+export OTEL_SERVICE_NAME
+
+```yaml
+instrumentation:
+  provider: otel
+```
+
+Finally, run llama stack with automatic instrumentation
+
+```sh
+opentelemetry-instrument llama stack run config.yaml
+```
