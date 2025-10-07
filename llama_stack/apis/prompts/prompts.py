@@ -94,9 +94,7 @@ class ListPromptsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Prompts(Protocol):
-    """Prompts
-
-    Protocol for prompt management operations."""
+    """Protocol for prompt management operations."""
 
     @webmethod(route="/prompts", method="GET", level=LLAMA_STACK_API_V1)
     async def list_prompts(self) -> ListPromptsResponse:
@@ -111,9 +109,7 @@ class Prompts(Protocol):
         self,
         prompt_id: str,
     ) -> ListPromptsResponse:
-        """List prompt versions.
-
-        List all versions of a specific prompt.
+        """List all versions of a specific prompt.
 
         :param prompt_id: The identifier of the prompt to list versions for.
         :returns: A ListPromptsResponse containing all versions of the prompt.
@@ -126,9 +122,7 @@ class Prompts(Protocol):
         prompt_id: str,
         version: int | None = None,
     ) -> Prompt:
-        """Get prompt.
-
-        Get a prompt by its identifier and optional version.
+        """Get a prompt by its identifier and optional version.
 
         :param prompt_id: The identifier of the prompt to get.
         :param version: The version of the prompt to get (defaults to latest).
@@ -142,9 +136,7 @@ class Prompts(Protocol):
         prompt: str,
         variables: list[str] | None = None,
     ) -> Prompt:
-        """Create prompt.
-
-        Create a new prompt.
+        """Create a new prompt.
 
         :param prompt: The prompt text content with variable placeholders.
         :param variables: List of variable names that can be used in the prompt template.
@@ -161,9 +153,7 @@ class Prompts(Protocol):
         variables: list[str] | None = None,
         set_as_default: bool = True,
     ) -> Prompt:
-        """Update prompt.
-
-        Update an existing prompt (increments version).
+        """Update an existing prompt (increments version).
 
         :param prompt_id: The identifier of the prompt to update.
         :param prompt: The updated prompt text content.
@@ -179,9 +169,7 @@ class Prompts(Protocol):
         self,
         prompt_id: str,
     ) -> None:
-        """Delete prompt.
-
-        Delete a prompt.
+        """Delete a prompt.
 
         :param prompt_id: The identifier of the prompt to delete.
         """
@@ -193,9 +181,7 @@ class Prompts(Protocol):
         prompt_id: str,
         version: int,
     ) -> Prompt:
-        """Set prompt version.
-
-        Set which version of a prompt should be the default in get_prompt (latest).
+        """Set which version of a prompt should be the default in get_prompt (latest).
 
         :param prompt_id: The identifier of the prompt.
         :param version: The version to set as default.
