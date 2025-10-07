@@ -140,14 +140,13 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         inference_api: Api.inference,
         files_api: Files | None,
     ) -> None:
+        super().__init__(files_api=files_api, kvstore=None)
         log.info(f"Initializing ChromaVectorIOAdapter with url: {config}")
         self.config = config
         self.inference_api = inference_api
         self.client = None
         self.cache = {}
-        self.kvstore: KVStore | None = None
         self.vector_db_store = None
-        self.files_api = files_api
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.kvstore)

@@ -345,14 +345,12 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         inference_api: Api.inference,
         files_api: Files | None = None,
     ) -> None:
+        super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
         self.conn = None
         self.cache = {}
-        self.files_api = files_api
-        self.kvstore: KVStore | None = None
         self.vector_db_store = None
-        self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:

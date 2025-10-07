@@ -16,7 +16,7 @@ import yaml
 from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
 from llama_stack.core.datatypes import LoggingConfig, StackRunConfig
-from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars, validate_env_pair
+from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.log import get_logger
 
@@ -55,18 +55,12 @@ class StackRun(Subcommand):
             "--image-name",
             type=str,
             default=None,
-            help="Name of the image to run. Defaults to the current environment",
-        )
-        self.parser.add_argument(
-            "--env",
-            action="append",
-            help="Environment variables to pass to the server in KEY=VALUE format. Can be specified multiple times.",
-            metavar="KEY=VALUE",
+            help="[DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running.",
         )
         self.parser.add_argument(
             "--image-type",
             type=str,
-            help="Image Type used during the build. This can be only venv.",
+            help="[DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running.",
             choices=[e.value for e in ImageType if e.value != ImageType.CONTAINER.value],
         )
         self.parser.add_argument(
@@ -75,48 +69,22 @@ class StackRun(Subcommand):
             help="Start the UI server",
         )
 
-    def _resolve_config_and_distro(self, args: argparse.Namespace) -> tuple[Path | None, str | None]:
-        """Resolve config file path and distribution name from args.config"""
-        from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-
-        if not args.config:
-            return None, None
-
-        config_file = Path(args.config)
-        has_yaml_suffix = args.config.endswith(".yaml")
-        distro_name = None
-
-        if not config_file.exists() and not has_yaml_suffix:
-            # check if this is a distribution
-            config_file = Path(REPO_ROOT) / "llama_stack" / "distributions" / args.config / "run.yaml"
-            if config_file.exists():
-                distro_name = args.config
-
-        if not config_file.exists() and not has_yaml_suffix:
-            # check if it's a build config saved to ~/.llama dir
-            config_file = Path(DISTRIBS_BASE_DIR / f"llamastack-{args.config}" / f"{args.config}-run.yaml")
-
-        if not config_file.exists():
-            self.parser.error(
-                f"File {str(config_file)} does not exist.\n\nPlease run `llama stack build` to generate (and optionally edit) a run.yaml file"
-            )
-
-        if not config_file.is_file():
-            self.parser.error(
-                f"Config file must be a valid file path, '{config_file}' is not a file: type={type(config_file)}"
-            )
-
-        return config_file, distro_name
-
     def _run_stack_run_cmd(self, args: argparse.Namespace) -> None:
         import yaml
 
         from llama_stack.core.configure import parse_and_maybe_upgrade_config
-        from llama_stack.core.utils.exec import formulate_run_args, run_command
+
+        if args.image_type or args.image_name:
+            self.parser.error(
+                "The --image-type and --image-name flags are no longer supported.\n\n"
+                "Please activate your virtual environment manually before running `llama stack run`.\n\n"
+                "For example:\n"
+                "  source /path/to/venv/bin/activate\n"
+                "  llama stack run <config>\n"
+            )
 
         if args.enable_ui:
             self._start_ui_development_server(args.port)
-        image_type, image_name = args.image_type, args.image_name
 
         if args.config:
             try:
@@ -127,10 +95,6 @@ class StackRun(Subcommand):
                 self.parser.error(str(e))
         else:
             config_file = None
-
-        # Check if config is required based on image type
-        if image_type == ImageType.VENV.value and not config_file:
-            self.parser.error("Config file is required for venv environment")
 
         if config_file:
             logger.info(f"Using run configuration: {config_file}")
@@ -146,49 +110,12 @@ class StackRun(Subcommand):
                     os.makedirs(str(config.external_providers_dir), exist_ok=True)
             except AttributeError as e:
                 self.parser.error(f"failed to parse config file '{config_file}':\n {e}")
-        else:
-            config = None
 
-        # If neither image type nor image name is provided, assume the server should be run directly
-        # using the current environment packages.
-        if not image_type and not image_name:
-            logger.info("No image type or image name provided. Assuming environment packages.")
-            self._uvicorn_run(config_file, args)
-        else:
-            run_args = formulate_run_args(image_type, image_name)
-
-            run_args.extend([str(args.port)])
-
-            if config_file:
-                run_args.extend(["--config", str(config_file)])
-
-            if args.env:
-                for env_var in args.env:
-                    if "=" not in env_var:
-                        self.parser.error(f"Environment variable '{env_var}' must be in KEY=VALUE format")
-                        return
-                    key, value = env_var.split("=", 1)  # split on first = only
-                    if not key:
-                        self.parser.error(f"Environment variable '{env_var}' has empty key")
-                        return
-                    run_args.extend(["--env", f"{key}={value}"])
-
-            run_command(run_args)
+        self._uvicorn_run(config_file, args)
 
     def _uvicorn_run(self, config_file: Path | None, args: argparse.Namespace) -> None:
         if not config_file:
             self.parser.error("Config file is required")
-
-        # Set environment variables if provided
-        if args.env:
-            for env_pair in args.env:
-                try:
-                    key, value = validate_env_pair(env_pair)
-                    logger.info(f"Setting environment variable {key} => {value}")
-                    os.environ[key] = value
-                except ValueError as e:
-                    logger.error(f"Error: {str(e)}")
-                    self.parser.error(f"Invalid environment variable format: {env_pair}")
 
         config_file = resolve_config_or_distro(str(config_file), Mode.RUN)
         with open(config_file) as fp:

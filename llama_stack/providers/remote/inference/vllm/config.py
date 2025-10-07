@@ -30,10 +30,6 @@ class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
         default=True,
         description="Whether to verify TLS certificates. Can be a boolean or a path to a CA certificate file.",
     )
-    refresh_models: bool = Field(
-        default=False,
-        description="Whether to refresh models periodically",
-    )
 
     @field_validator("tls_verify")
     @classmethod

@@ -186,7 +186,7 @@ if [[ "$STACK_CONFIG" == *"server:"* ]]; then
         echo "Llama Stack Server is already running, skipping start"
     else
         echo "=== Starting Llama Stack Server ==="
-        nohup llama stack run ci-tests --image-type venv > server.log 2>&1 &
+        nohup llama stack run ci-tests > server.log 2>&1 &
 
         echo "Waiting for Llama Stack Server to start..."
         for i in {1..30}; do

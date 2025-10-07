@@ -1,0 +1,39 @@
+{
+  "test_id": "tests/integration/vector_io/test_openai_vector_stores.py::test_openai_vector_store_file_batch_cancel[client_with_models-ollama/llama3.2:3b-instruct-fp16-None-ollama/all-minilm:l6-v2-None-384]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:11434/api/ps",
+    "headers": {},
+    "body": {},
+    "endpoint": "/api/ps",
+    "model": ""
+  },
+  "response": {
+    "body": {
+      "__type__": "ollama._types.ProcessResponse",
+      "__data__": {
+        "models": [
+          {
+            "model": "all-minilm:l6-v2",
+            "name": "all-minilm:l6-v2",
+            "digest": "1b226e2802dbb772b5fc32a58f103ca1804ef7501331012de126ab22f67475ef",
+            "expires_at": "2025-10-06T16:40:13.262640-07:00",
+            "size": 590204928,
+            "size_vram": 590204928,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "bert",
+              "families": [
+                "bert"
+              ],
+              "parameter_size": "23M",
+              "quantization_level": "F16"
+            }
+          }
+        ]
+      }
+    },
+    "is_streaming": false
+  }
+}

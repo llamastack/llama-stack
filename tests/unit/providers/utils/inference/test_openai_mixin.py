@@ -466,9 +466,15 @@ class TestOpenAIMixinModelRegistration:
         assert result is None
 
     async def test_should_refresh_models(self, mixin):
-        """Test should_refresh_models method (should always return False)"""
+        """Test should_refresh_models method returns config value"""
+        # Default config has refresh_models=False
         result = await mixin.should_refresh_models()
         assert result is False
+
+        config_with_refresh = RemoteInferenceProviderConfig(refresh_models=True)
+        mixin_with_refresh = OpenAIMixinImpl(config=config_with_refresh)
+        result_with_refresh = await mixin_with_refresh.should_refresh_models()
+        assert result_with_refresh is True
 
     async def test_register_model_error_propagation(self, mixin, mock_client_with_exception, mock_client_context):
         """Test that errors from provider API are properly propagated during registration"""

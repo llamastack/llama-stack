@@ -444,12 +444,24 @@ def _run_stack_build_command_from_build_config(
 
         cprint("Build Successful!", color="green", file=sys.stderr)
         cprint(f"You can find the newly-built distribution here: {run_config_file}", color="blue", file=sys.stderr)
-        cprint(
-            "You can run the new Llama Stack distro via: "
-            + colored(f"llama stack run {run_config_file} --image-type {build_config.image_type}", "blue"),
-            color="green",
-            file=sys.stderr,
-        )
+        if build_config.image_type == LlamaStackImageType.VENV:
+            cprint(
+                "You can run the new Llama Stack distro (after activating "
+                + colored(image_name, "cyan")
+                + ") via: "
+                + colored(f"llama stack run {run_config_file}", "blue"),
+                color="green",
+                file=sys.stderr,
+            )
+        elif build_config.image_type == LlamaStackImageType.CONTAINER:
+            cprint(
+                "You can run the container with: "
+                + colored(
+                    f"docker run -p 8321:8321 -v ~/.llama:/root/.llama localhost/{image_name} --port 8321", "blue"
+                ),
+                color="green",
+                file=sys.stderr,
+            )
         return distro_path
     else:
         return _generate_run_config(build_config, build_dir, image_name)

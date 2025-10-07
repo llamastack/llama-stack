@@ -110,6 +110,7 @@ class ChatAgent(ShieldRunnerMixin):
         persistence_store: KVStore,
         created_at: str,
         policy: list[AccessRule],
+        telemetry_enabled: bool = False,
     ):
         self.agent_id = agent_id
         self.agent_config = agent_config
@@ -120,6 +121,7 @@ class ChatAgent(ShieldRunnerMixin):
         self.tool_runtime_api = tool_runtime_api
         self.tool_groups_api = tool_groups_api
         self.created_at = created_at
+        self.telemetry_enabled = telemetry_enabled
 
         ShieldRunnerMixin.__init__(
             self,
@@ -188,28 +190,30 @@ class ChatAgent(ShieldRunnerMixin):
 
     async def create_and_execute_turn(self, request: AgentTurnCreateRequest) -> AsyncGenerator:
         turn_id = str(uuid.uuid4())
-        span = tracing.get_current_span()
-        if span:
-            span.set_attribute("session_id", request.session_id)
-            span.set_attribute("agent_id", self.agent_id)
-            span.set_attribute("request", request.model_dump_json())
-            span.set_attribute("turn_id", turn_id)
-            if self.agent_config.name:
-                span.set_attribute("agent_name", self.agent_config.name)
+        if self.telemetry_enabled:
+            span = tracing.get_current_span()
+            if span is not None:
+                span.set_attribute("session_id", request.session_id)
+                span.set_attribute("agent_id", self.agent_id)
+                span.set_attribute("request", request.model_dump_json())
+                span.set_attribute("turn_id", turn_id)
+                if self.agent_config.name:
+                    span.set_attribute("agent_name", self.agent_config.name)
 
         await self._initialize_tools(request.toolgroups)
         async for chunk in self._run_turn(request, turn_id):
             yield chunk
 
     async def resume_turn(self, request: AgentTurnResumeRequest) -> AsyncGenerator:
-        span = tracing.get_current_span()
-        if span:
-            span.set_attribute("agent_id", self.agent_id)
-            span.set_attribute("session_id", request.session_id)
-            span.set_attribute("request", request.model_dump_json())
-            span.set_attribute("turn_id", request.turn_id)
-            if self.agent_config.name:
-                span.set_attribute("agent_name", self.agent_config.name)
+        if self.telemetry_enabled:
+            span = tracing.get_current_span()
+            if span is not None:
+                span.set_attribute("agent_id", self.agent_id)
+                span.set_attribute("session_id", request.session_id)
+                span.set_attribute("request", request.model_dump_json())
+                span.set_attribute("turn_id", request.turn_id)
+                if self.agent_config.name:
+                    span.set_attribute("agent_name", self.agent_config.name)
 
         await self._initialize_tools()
         async for chunk in self._run_turn(request):
@@ -395,9 +399,12 @@ class ChatAgent(ShieldRunnerMixin):
         touchpoint: str,
     ) -> AsyncGenerator:
         async with tracing.span("run_shields") as span:
-            span.set_attribute("input", [m.model_dump_json() for m in messages])
+            if self.telemetry_enabled and span is not None:
+                span.set_attribute("input", [m.model_dump_json() for m in messages])
+                if len(shields) == 0:
+                    span.set_attribute("output", "no shields")
+
             if len(shields) == 0:
-                span.set_attribute("output", "no shields")
                 return
 
             step_id = str(uuid.uuid4())
@@ -430,7 +437,8 @@ class ChatAgent(ShieldRunnerMixin):
                         )
                     )
                 )
-                span.set_attribute("output", e.violation.model_dump_json())
+                if self.telemetry_enabled and span is not None:
+                    span.set_attribute("output", e.violation.model_dump_json())
 
                 yield CompletionMessage(
                     content=str(e),
@@ -453,7 +461,8 @@ class ChatAgent(ShieldRunnerMixin):
                     )
                 )
             )
-            span.set_attribute("output", "no violations")
+            if self.telemetry_enabled and span is not None:
+                span.set_attribute("output", "no violations")
 
     async def _run(
         self,
@@ -518,8 +527,9 @@ class ChatAgent(ShieldRunnerMixin):
             stop_reason: StopReason | None = None
 
             async with tracing.span("inference") as span:
-                if self.agent_config.name:
-                    span.set_attribute("agent_name", self.agent_config.name)
+                if self.telemetry_enabled and span is not None:
+                    if self.agent_config.name:
+                        span.set_attribute("agent_name", self.agent_config.name)
 
                 def _serialize_nested(value):
                     """Recursively serialize nested Pydantic models to dicts."""
@@ -637,18 +647,19 @@ class ChatAgent(ShieldRunnerMixin):
                     else:
                         raise ValueError(f"Unexpected delta type {type(delta)}")
 
-                span.set_attribute("stop_reason", stop_reason or StopReason.end_of_turn)
-                span.set_attribute(
-                    "input",
-                    json.dumps([json.loads(m.model_dump_json()) for m in input_messages]),
-                )
-                output_attr = json.dumps(
-                    {
-                        "content": content,
-                        "tool_calls": [json.loads(t.model_dump_json()) for t in tool_calls],
-                    }
-                )
-                span.set_attribute("output", output_attr)
+                if self.telemetry_enabled and span is not None:
+                    span.set_attribute("stop_reason", stop_reason or StopReason.end_of_turn)
+                    span.set_attribute(
+                        "input",
+                        json.dumps([json.loads(m.model_dump_json()) for m in input_messages]),
+                    )
+                    output_attr = json.dumps(
+                        {
+                            "content": content,
+                            "tool_calls": [json.loads(t.model_dump_json()) for t in tool_calls],
+                        }
+                    )
+                    span.set_attribute("output", output_attr)
 
             n_iter += 1
             await self.storage.set_num_infer_iters_in_turn(session_id, turn_id, n_iter)
@@ -756,7 +767,9 @@ class ChatAgent(ShieldRunnerMixin):
                         {
                             "tool_name": tool_call.tool_name,
                             "input": message.model_dump_json(),
-                        },
+                        }
+                        if self.telemetry_enabled
+                        else {},
                     ) as span:
                         tool_execution_start_time = datetime.now(UTC).isoformat()
                         tool_result = await self.execute_tool_call_maybe(
@@ -771,7 +784,8 @@ class ChatAgent(ShieldRunnerMixin):
                             call_id=tool_call.call_id,
                             content=tool_result.content,
                         )
-                        span.set_attribute("output", result_message.model_dump_json())
+                        if self.telemetry_enabled and span is not None:
+                            span.set_attribute("output", result_message.model_dump_json())
 
                         # Store tool execution step
                         tool_execution_step = ToolExecutionStep(
