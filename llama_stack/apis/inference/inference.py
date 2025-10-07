@@ -6,13 +6,7 @@
 
 from collections.abc import AsyncIterator
 from enum import Enum
-from typing import (
-    Annotated,
-    Any,
-    Literal,
-    Protocol,
-    runtime_checkable,
-)
+from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
@@ -355,34 +349,6 @@ class CompletionRequest(BaseModel):
     response_format: ResponseFormat | None = None
     stream: bool | None = False
     logprobs: LogProbConfig | None = None
-
-
-@json_schema_type
-class CompletionResponse(MetricResponseMixin):
-    """Response from a completion request.
-
-    :param content: The generated completion text
-    :param stop_reason: Reason why generation stopped
-    :param logprobs: Optional log probabilities for generated tokens
-    """
-
-    content: str
-    stop_reason: StopReason
-    logprobs: list[TokenLogProbs] | None = None
-
-
-@json_schema_type
-class CompletionResponseStreamChunk(MetricResponseMixin):
-    """A chunk of a streamed completion response.
-
-    :param delta: New content generated since last chunk. This can be one or more tokens.
-    :param stop_reason: Optional reason why generation stopped, if complete
-    :param logprobs: Optional log probabilities for generated tokens
-    """
-
-    delta: str
-    stop_reason: StopReason | None = None
-    logprobs: list[TokenLogProbs] | None = None
 
 
 class SystemMessageBehavior(Enum):
@@ -1010,7 +976,7 @@ class InferenceProvider(Protocol):
     async def rerank(
         self,
         model: str,
-        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
+        query: (str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam),
         items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
         max_num_results: int | None = None,
     ) -> RerankResponse:
@@ -1025,7 +991,12 @@ class InferenceProvider(Protocol):
         raise NotImplementedError("Reranking is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
 
-    @webmethod(route="/openai/v1/completions", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(
+        route="/openai/v1/completions",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
     @webmethod(route="/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_completion(
         self,
@@ -1079,7 +1050,12 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/chat/completions", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(
+        route="/openai/v1/chat/completions",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
     @webmethod(route="/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_chat_completion(
         self,
@@ -1138,7 +1114,12 @@ class InferenceProvider(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/embeddings", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(
+        route="/openai/v1/embeddings",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
     @webmethod(route="/embeddings", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_embeddings(
         self,
@@ -1172,7 +1153,12 @@ class Inference(InferenceProvider):
     - Embedding models: these models generate embeddings to be used for semantic search.
     """
 
-    @webmethod(route="/openai/v1/chat/completions", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(
+        route="/openai/v1/chat/completions",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
     @webmethod(route="/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_chat_completions(
         self,
@@ -1192,7 +1178,15 @@ class Inference(InferenceProvider):
         raise NotImplementedError("List chat completions is not implemented")
 
     @webmethod(
-        route="/openai/v1/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True
+        route="/openai/v1/chat/completions/{completion_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/chat/completions/{completion_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
     )
     @webmethod(route="/chat/completions/{completion_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_chat_completion(self, completion_id: str) -> OpenAICompletionWithInputMessages:

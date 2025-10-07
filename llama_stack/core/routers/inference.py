@@ -10,21 +10,21 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
-from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
+from openai.types.chat import (
+    ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam,
+)
+from openai.types.chat import (
+    ChatCompletionToolParam as OpenAIChatCompletionToolParam,
+)
 from pydantic import Field, TypeAdapter
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
+from llama_stack.apis.common.content_types import InterleavedContent
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.inference import (
     ChatCompletionResponse,
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
     CompletionMessage,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
     Inference,
     ListOpenAIChatCompletionResponse,
     Message,
@@ -51,7 +51,10 @@ from llama_stack.models.llama.llama3.chat_format import ChatFormat
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
-from llama_stack.providers.utils.telemetry.tracing import enqueue_event, get_current_span
+from llama_stack.providers.utils.telemetry.tracing import (
+    enqueue_event,
+    get_current_span,
+)
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -434,7 +437,7 @@ class InferenceRouter(Inference):
         prompt_tokens,
         model,
         tool_prompt_format: ToolPromptFormat | None = None,
-    ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None] | AsyncGenerator[CompletionResponseStreamChunk, None]:
+    ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None]:
         completion_text = ""
         async for chunk in response:
             complete = False
@@ -500,7 +503,7 @@ class InferenceRouter(Inference):
 
     async def count_tokens_and_compute_metrics(
         self,
-        response: ChatCompletionResponse | CompletionResponse,
+        response: ChatCompletionResponse,
         prompt_tokens,
         model,
         tool_prompt_format: ToolPromptFormat | None = None,
@@ -522,7 +525,10 @@ class InferenceRouter(Inference):
                 model=model,
             )
             for metric in completion_metrics:
-                if metric.metric in ["completion_tokens", "total_tokens"]:  # Only log completion and total tokens
+                if metric.metric in [
+                    "completion_tokens",
+                    "total_tokens",
+                ]:  # Only log completion and total tokens
                     enqueue_event(metric)
 
             # Return metrics in response
@@ -646,7 +652,7 @@ class InferenceRouter(Inference):
                     message = OpenAIAssistantMessageParam(
                         role="assistant",
                         content=content_str if content_str else None,
-                        tool_calls=assembled_tool_calls if assembled_tool_calls else None,
+                        tool_calls=(assembled_tool_calls if assembled_tool_calls else None),
                     )
                     logprobs_content = choice_data["logprobs_content_parts"]
                     final_logprobs = OpenAIChoiceLogprobs(content=logprobs_content) if logprobs_content else None

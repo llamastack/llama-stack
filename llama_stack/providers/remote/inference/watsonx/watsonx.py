@@ -13,7 +13,6 @@ from openai import AsyncOpenAI
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
-    CompletionRequest,
     GreedySamplingStrategy,
     Inference,
     OpenAIChatCompletion,
@@ -81,7 +80,7 @@ class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
             )
         return self._openai_client
 
-    async def _get_params(self, request: ChatCompletionRequest | CompletionRequest) -> dict:
+    async def _get_params(self, request: ChatCompletionRequest) -> dict:
         input_dict = {"params": {}}
         media_present = request_has_media(request)
         llama_model = self.get_llama_model(request.model)

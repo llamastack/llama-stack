@@ -12,11 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import Inference
-from llama_stack.core.datatypes import (
-    Api,
-    Provider,
-    StackRunConfig,
-)
+from llama_stack.core.datatypes import Api, Provider, StackRunConfig
 from llama_stack.core.resolver import resolve_impls
 from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.core.routing_tables.models import ModelsRoutingTable
@@ -54,7 +50,12 @@ class SampleConfig(BaseModel):
 
 
 class SampleImpl:
-    def __init__(self, config: SampleConfig, deps: dict[Api, Any], provider_spec: ProviderSpec = None):
+    def __init__(
+        self,
+        config: SampleConfig,
+        deps: dict[Api, Any],
+        provider_spec: ProviderSpec = None,
+    ):
         self.__provider_id__ = "test_provider"
         self.__provider_spec__ = provider_spec
         self.__provider_config__ = config

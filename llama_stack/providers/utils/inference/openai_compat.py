@@ -10,9 +10,7 @@ import time
 import uuid
 import warnings
 from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Iterable
-from typing import (
-    Any,
-)
+from typing import Any
 
 from openai import AsyncStream
 from openai.types.chat import (
@@ -97,8 +95,6 @@ from llama_stack.apis.inference import (
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
     CompletionMessage,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
     GreedySamplingStrategy,
     JsonSchemaResponseFormat,
     Message,
@@ -244,31 +240,6 @@ def convert_openai_completion_logprobs_stream(text: str, logprobs: float | OpenA
     return None
 
 
-def process_completion_response(
-    response: OpenAICompatCompletionResponse,
-) -> CompletionResponse:
-    choice = response.choices[0]
-    # drop suffix <eot_id> if present and return stop reason as end of turn
-    if choice.text.endswith("<|eot_id|>"):
-        return CompletionResponse(
-            stop_reason=StopReason.end_of_turn,
-            content=choice.text[: -len("<|eot_id|>")],
-            logprobs=convert_openai_completion_logprobs(choice.logprobs),
-        )
-    # drop suffix <eom_id> if present and return stop reason as end of message
-    if choice.text.endswith("<|eom_id|>"):
-        return CompletionResponse(
-            stop_reason=StopReason.end_of_message,
-            content=choice.text[: -len("<|eom_id|>")],
-            logprobs=convert_openai_completion_logprobs(choice.logprobs),
-        )
-    return CompletionResponse(
-        stop_reason=get_stop_reason(choice.finish_reason),
-        content=choice.text,
-        logprobs=convert_openai_completion_logprobs(choice.logprobs),
-    )
-
-
 def process_chat_completion_response(
     response: OpenAICompatCompletionResponse,
     request: ChatCompletionRequest,
@@ -335,40 +306,40 @@ def process_chat_completion_response(
     )
 
 
-async def process_completion_stream_response(
-    stream: AsyncGenerator[OpenAICompatCompletionResponse, None],
-) -> AsyncGenerator[CompletionResponseStreamChunk, None]:
-    stop_reason = None
+# async def process_completion_stream_response(
+#     stream: AsyncGenerator[OpenAICompatCompletionResponse, None],
+# ) -> AsyncGenerator[CompletionResponseStreamChunk, None]:
+#     stop_reason = None
 
-    async for chunk in stream:
-        choice = chunk.choices[0]
-        finish_reason = choice.finish_reason
+#     async for chunk in stream:
+#         choice = chunk.choices[0]
+#         finish_reason = choice.finish_reason
 
-        text = text_from_choice(choice)
-        if text == "<|eot_id|>":
-            stop_reason = StopReason.end_of_turn
-            text = ""
-            continue
-        elif text == "<|eom_id|>":
-            stop_reason = StopReason.end_of_message
-            text = ""
-            continue
-        yield CompletionResponseStreamChunk(
-            delta=text,
-            stop_reason=stop_reason,
-            logprobs=convert_openai_completion_logprobs_stream(text, choice.logprobs),
-        )
-        if finish_reason:
-            if finish_reason in ["stop", "eos", "eos_token"]:
-                stop_reason = StopReason.end_of_turn
-            elif finish_reason == "length":
-                stop_reason = StopReason.out_of_tokens
-            break
+#         text = text_from_choice(choice)
+#         if text == "<|eot_id|>":
+#             stop_reason = StopReason.end_of_turn
+#             text = ""
+#             continue
+#         elif text == "<|eom_id|>":
+#             stop_reason = StopReason.end_of_message
+#             text = ""
+#             continue
+#         yield CompletionResponseStreamChunk(
+#             delta=text,
+#             stop_reason=stop_reason,
+#             logprobs=convert_openai_completion_logprobs_stream(text, choice.logprobs),
+#         )
+#         if finish_reason:
+#             if finish_reason in ["stop", "eos", "eos_token"]:
+#                 stop_reason = StopReason.end_of_turn
+#             elif finish_reason == "length":
+#                 stop_reason = StopReason.out_of_tokens
+#             break
 
-    yield CompletionResponseStreamChunk(
-        delta="",
-        stop_reason=stop_reason,
-    )
+#     yield CompletionResponseStreamChunk(
+#         delta="",
+#         stop_reason=stop_reason,
+#     )
 
 
 async def process_chat_completion_stream_response(
@@ -984,7 +955,9 @@ def openai_messages_to_messages(
     return converted_messages
 
 
-def openai_content_to_content(content: str | Iterable[OpenAIChatCompletionContentPartParam] | None):
+def openai_content_to_content(
+    content: str | Iterable[OpenAIChatCompletionContentPartParam] | None,
+):
     if content is None:
         return ""
     if isinstance(content, str):
