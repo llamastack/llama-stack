@@ -69,7 +69,6 @@ from llama_stack.providers.utils.telemetry.tracing import (
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
-from .tracing import TracingMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
@@ -368,7 +367,7 @@ def create_app() -> StackApp:
     if not os.environ.get("LLAMA_STACK_DISABLE_VERSION_CHECK"):
         app.add_middleware(ClientVersionMiddleware)
 
-    impls = app.stack.impls
+    impls = app.stack.get_impls()
 
     if config.server.auth:
         logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
@@ -469,8 +468,6 @@ def create_app() -> StackApp:
 
     app.exception_handler(RequestValidationError)(global_exception_handler)
     app.exception_handler(Exception)(global_exception_handler)
-
-    app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 
