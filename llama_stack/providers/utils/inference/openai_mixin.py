@@ -484,7 +484,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         return model in self._model_cache
 
     async def should_refresh_models(self) -> bool:
-        return False
+        return self.config.refresh_models
 
     #
     # The model_dump implementations are to avoid serializing the extra fields,

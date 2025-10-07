@@ -41,9 +41,6 @@ class DatabricksInferenceAdapter(OpenAIMixin):
             ).serving_endpoints.list()  # TODO: this is not async
         ]
 
-    async def should_refresh_models(self) -> bool:
-        return False
-
     async def openai_completion(
         self,
         model: str,

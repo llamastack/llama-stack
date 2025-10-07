@@ -53,10 +53,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
                 "You must provide a URL in run.yaml (or via the VLLM_URL environment variable) to use vLLM."
             )
 
-    async def should_refresh_models(self) -> bool:
-        # Strictly respecting the refresh_models directive
-        return self.config.refresh_models
-
     async def health(self) -> HealthResponse:
         """
         Performs a health check by verifying connectivity to the remote vLLM server.

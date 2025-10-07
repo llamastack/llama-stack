@@ -63,9 +63,6 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
         # Together's /v1/models is not compatible with OpenAI's /v1/models. Together support ticket #13355 -> will not fix, use Together's own client
         return [m.id for m in await self._get_client().models.list()]
 
-    async def should_refresh_models(self) -> bool:
-        return True
-
     async def openai_embeddings(
         self,
         model: str,
