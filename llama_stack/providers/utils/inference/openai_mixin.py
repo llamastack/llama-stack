@@ -132,7 +132,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         :return: An iterable of model IDs or None if not implemented
         """
-        return [m.id async for m in self.client.models.list()]
+        client = self.client
+        async with client:
+            model_ids = [m.id async for m in client.models.list()]
+        return model_ids
 
     async def initialize(self) -> None:
         """
@@ -481,7 +484,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         return model in self._model_cache
 
     async def should_refresh_models(self) -> bool:
-        return False
+        return self.config.refresh_models
 
     #
     # The model_dump implementations are to avoid serializing the extra fields,

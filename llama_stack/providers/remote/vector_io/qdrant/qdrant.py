@@ -27,7 +27,7 @@ from llama_stack.apis.vector_io import (
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api, VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
-from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
+from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
@@ -162,14 +162,12 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         inference_api: Api.inference,
         files_api: Files | None = None,
     ) -> None:
+        super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.client: AsyncQdrantClient = None
         self.cache = {}
         self.inference_api = inference_api
-        self.files_api = files_api
         self.vector_db_store = None
-        self.kvstore: KVStore | None = None
-        self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self._qdrant_lock = asyncio.Lock()
 
     async def initialize(self) -> None:

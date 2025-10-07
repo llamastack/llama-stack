@@ -331,5 +331,8 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
 
         return ToolInvocationResult(
             content=result.content or [],
-            metadata=result.metadata,
+            metadata={
+                **(result.metadata or {}),
+                "citation_files": getattr(result, "citation_files", None),
+            },
         )

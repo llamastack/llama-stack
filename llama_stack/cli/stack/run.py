@@ -75,39 +75,6 @@ class StackRun(Subcommand):
             help="Start the UI server",
         )
 
-    def _resolve_config_and_distro(self, args: argparse.Namespace) -> tuple[Path | None, str | None]:
-        """Resolve config file path and distribution name from args.config"""
-        from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-
-        if not args.config:
-            return None, None
-
-        config_file = Path(args.config)
-        has_yaml_suffix = args.config.endswith(".yaml")
-        distro_name = None
-
-        if not config_file.exists() and not has_yaml_suffix:
-            # check if this is a distribution
-            config_file = Path(REPO_ROOT) / "llama_stack" / "distributions" / args.config / "run.yaml"
-            if config_file.exists():
-                distro_name = args.config
-
-        if not config_file.exists() and not has_yaml_suffix:
-            # check if it's a build config saved to ~/.llama dir
-            config_file = Path(DISTRIBS_BASE_DIR / f"llamastack-{args.config}" / f"{args.config}-run.yaml")
-
-        if not config_file.exists():
-            self.parser.error(
-                f"File {str(config_file)} does not exist.\n\nPlease run `llama stack build` to generate (and optionally edit) a run.yaml file"
-            )
-
-        if not config_file.is_file():
-            self.parser.error(
-                f"Config file must be a valid file path, '{config_file}' is not a file: type={type(config_file)}"
-            )
-
-        return config_file, distro_name
-
     def _run_stack_run_cmd(self, args: argparse.Namespace) -> None:
         import yaml
 

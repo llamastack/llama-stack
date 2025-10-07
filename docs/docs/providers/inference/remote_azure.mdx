@@ -22,6 +22,7 @@ https://learn.microsoft.com/en-us/azure/ai-foundry/openai/overview
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
 | `api_key` | `<class 'pydantic.types.SecretStr'>` | No |  | Azure API key for Azure |
 | `api_base` | `<class 'pydantic.networks.HttpUrl'>` | No |  | Azure API base for Azure (e.g., https://your-resource-name.openai.azure.com) |
 | `api_version` | `str \| None` | No |  | Azure API version for Azure (e.g., 2024-12-01-preview) |

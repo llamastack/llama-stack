@@ -245,3 +245,65 @@ class VectorDBsRoutingTable(CommonRoutingTableImpl, VectorDBs):
             vector_store_id=vector_store_id,
             file_id=file_id,
         )
+
+    async def openai_create_vector_store_file_batch(
+        self,
+        vector_store_id: str,
+        file_ids: list[str],
+        attributes: dict[str, Any] | None = None,
+        chunking_strategy: Any | None = None,
+    ):
+        await self.assert_action_allowed("update", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_create_vector_store_file_batch(
+            vector_store_id=vector_store_id,
+            file_ids=file_ids,
+            attributes=attributes,
+            chunking_strategy=chunking_strategy,
+        )
+
+    async def openai_retrieve_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ):
+        await self.assert_action_allowed("read", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_retrieve_vector_store_file_batch(
+            batch_id=batch_id,
+            vector_store_id=vector_store_id,
+        )
+
+    async def openai_list_files_in_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+        after: str | None = None,
+        before: str | None = None,
+        filter: str | None = None,
+        limit: int | None = 20,
+        order: str | None = "desc",
+    ):
+        await self.assert_action_allowed("read", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_list_files_in_vector_store_file_batch(
+            batch_id=batch_id,
+            vector_store_id=vector_store_id,
+            after=after,
+            before=before,
+            filter=filter,
+            limit=limit,
+            order=order,
+        )
+
+    async def openai_cancel_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ):
+        await self.assert_action_allowed("update", "vector_db", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.openai_cancel_vector_store_file_batch(
+            batch_id=batch_id,
+            vector_store_id=vector_store_id,
+        )
