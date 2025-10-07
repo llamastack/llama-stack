@@ -46,6 +46,7 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
 )
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.telemetry import tracing
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import convert_chat_choice_to_response_message, is_function_tool_call
@@ -586,14 +587,22 @@ class StreamingResponseOrchestrator:
                     never_allowed = mcp_tool.allowed_tools.never
 
             # Call list_mcp_tools
-            tool_defs = await list_mcp_tools(
-                endpoint=mcp_tool.server_url,
-                headers=mcp_tool.headers or {},
-            )
+            tool_defs = None
+            list_id = f"mcp_list_{uuid.uuid4()}"
+            attributes = {
+                "server_label": mcp_tool.server_label,
+                "server_url": mcp_tool.server_url,
+                "mcp_list_tools_id": list_id,
+            }
+            async with tracing.span("list_mcp_tools", attributes):
+                tool_defs = await list_mcp_tools(
+                    endpoint=mcp_tool.server_url,
+                    headers=mcp_tool.headers or {},
+                )
 
             # Create the MCP list tools message
             mcp_list_message = OpenAIResponseOutputMessageMCPListTools(
-                id=f"mcp_list_{uuid.uuid4()}",
+                id=list_id,
                 server_label=mcp_tool.server_label,
                 tools=[],
             )
