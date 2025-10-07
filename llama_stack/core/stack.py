@@ -359,6 +359,12 @@ class Stack:
         await refresh_registry_once(impls)
         self.impls = impls
 
+    def get_impls(self) -> dict[Api, Any]:
+        """safely access impls without raising an exception"""
+        if self.impls is None:
+            return {}
+        return self.impls
+
     def create_registry_refresh_task(self):
         assert self.impls is not None, "Must call initialize() before starting"
 
