@@ -124,9 +124,7 @@ class Models(Protocol):
         self,
         model_id: str,
     ) -> Model:
-        """Get model.
-
-        Get a model by its identifier.
+        """Get a model by its identifier.
 
         :param model_id: The identifier of the model to get.
         :returns: A Model.
@@ -142,9 +140,7 @@ class Models(Protocol):
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
     ) -> Model:
-        """Register model.
-
-        Register a model.
+        """Register a model.
 
         :param model_id: The identifier of the model to register.
         :param provider_model_id: The identifier of the model in the provider.
@@ -160,9 +156,7 @@ class Models(Protocol):
         self,
         model_id: str,
     ) -> None:
-        """Unregister model.
-
-        Unregister a model.
+        """Unregister a model.
 
         :param model_id: The identifier of the model to unregister.
         """

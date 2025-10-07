@@ -33,8 +33,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: List chat completions.
-      description: List chat completions.
+      summary: List all chat completions.
+      description: List all chat completions.
       parameters:
         - name: after
           in: query
@@ -87,10 +87,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: Create chat completions.
+      summary: >-
+        Generate an OpenAI-compatible chat completion for the given messages using
+        the specified model.
       description: >-
-        Create chat completions.
-
         Generate an OpenAI-compatible chat completion for the given messages using
         the specified model.
       parameters: []
@@ -122,11 +122,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: Get chat completion.
-      description: >-
-        Get chat completion.
-
-        Describe a chat completion by its ID.
+      summary: Describe a chat completion by its ID.
+      description: Describe a chat completion by its ID.
       parameters:
         - name: completion_id
           in: path
@@ -156,10 +153,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: Create completion.
+      summary: >-
+        Generate an OpenAI-compatible completion for the given prompt using the specified
+        model.
       description: >-
-        Create completion.
-
         Generate an OpenAI-compatible completion for the given prompt using the specified
         model.
       parameters: []
@@ -606,10 +603,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inference
-      summary: Create embeddings.
+      summary: >-
+        Generate OpenAI-compatible embeddings for the given input using the specified
+        model.
       description: >-
-        Create embeddings.
-
         Generate OpenAI-compatible embeddings for the given input using the specified
         model.
       parameters: []
@@ -642,10 +639,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: List files.
+      summary: >-
+        Returns a list of files that belong to the user's organization.
       description: >-
-        List files.
-
         Returns a list of files that belong to the user's organization.
       parameters:
         - name: after
@@ -703,12 +699,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: Upload file.
-      description: >-
-        Upload file.
-
+      summary: >-
         Upload a file that can be used across various endpoints.
-
+      description: >-
+        Upload a file that can be used across various endpoints.
 
         The file upload should be a multipart form request with:
 
@@ -758,10 +752,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: Retrieve file.
+      summary: >-
+        Returns information about a specific file.
       description: >-
-        Retrieve file.
-
         Returns information about a specific file.
       parameters:
         - name: file_id
@@ -793,8 +786,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: Delete file.
-      description: Delete file.
+      summary: Delete a file.
+      description: Delete a file.
       parameters:
         - name: file_id
           in: path
@@ -826,10 +819,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Files
-      summary: Retrieve file content.
+      summary: >-
+        Returns the contents of the specified file.
       description: >-
-        Retrieve file content.
-
         Returns the contents of the specified file.
       parameters:
         - name: file_id
@@ -862,10 +854,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inspect
-      summary: Get health status.
+      summary: >-
+        Get the current health status of the service.
       description: >-
-        Get health status.
-
         Get the current health status of the service.
       parameters: []
       deprecated: false
@@ -891,10 +882,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inspect
-      summary: List routes.
+      summary: >-
+        List all available API routes with their methods and implementing providers.
       description: >-
-        List routes.
-
         List all available API routes with their methods and implementing providers.
       parameters: []
       deprecated: false
@@ -943,11 +933,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Models
-      summary: Register model.
-      description: >-
-        Register model.
-
-        Register a model.
+      summary: Register a model.
+      description: Register a model.
       parameters: []
       requestBody:
         content:
@@ -977,11 +964,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Models
-      summary: Get model.
-      description: >-
-        Get model.
-
-        Get a model by its identifier.
+      summary: Get a model by its identifier.
+      description: Get a model by its identifier.
       parameters:
         - name: model_id
           in: path
@@ -1006,11 +990,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Models
-      summary: Unregister model.
-      description: >-
-        Unregister model.
-
-        Unregister a model.
+      summary: Unregister a model.
+      description: Unregister a model.
       parameters:
         - name: model_id
           in: path
@@ -1041,10 +1022,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Safety
-      summary: Create moderation.
+      summary: >-
+        Classifies if text and/or image inputs are potentially harmful.
       description: >-
-        Create moderation.
-
         Classifies if text and/or image inputs are potentially harmful.
       parameters: []
       requestBody:
@@ -1100,11 +1080,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Prompts
-      summary: Create prompt.
-      description: >-
-        Create prompt.
-
-        Create a new prompt.
+      summary: Create a new prompt.
+      description: Create a new prompt.
       parameters: []
       requestBody:
         content:
@@ -1134,10 +1111,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Prompts
-      summary: Get prompt.
+      summary: >-
+        Get a prompt by its identifier and optional version.
       description: >-
-        Get prompt.
-
         Get a prompt by its identifier and optional version.
       parameters:
         - name: prompt_id
@@ -1175,10 +1151,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Prompts
-      summary: Update prompt.
+      summary: >-
+        Update an existing prompt (increments version).
       description: >-
-        Update prompt.
-
         Update an existing prompt (increments version).
       parameters:
         - name: prompt_id
@@ -1210,11 +1185,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Prompts
-      summary: Delete prompt.
-      description: >-
-        Delete prompt.
-
-        Delete a prompt.
+      summary: Delete a prompt.
+      description: Delete a prompt.
       parameters:
         - name: prompt_id
           in: path
@@ -1245,10 +1217,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Prompts
-      summary: Set prompt version.
+      summary: >-
+        Set which version of a prompt should be the default in get_prompt (latest).
       description: >-
-        Set prompt version.
-
         Set which version of a prompt should be the default in get_prompt (latest).
       parameters:
         - name: prompt_id
@@ -1286,11 +1257,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Prompts
-      summary: List prompt versions.
-      description: >-
-        List prompt versions.
-
-        List all versions of a specific prompt.
+      summary: List all versions of a specific prompt.
+      description: List all versions of a specific prompt.
       parameters:
         - name: prompt_id
           in: path
@@ -1322,11 +1290,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Providers
-      summary: List providers.
-      description: >-
-        List providers.
-
-        List all available providers.
+      summary: List all available providers.
+      description: List all available providers.
       parameters: []
       deprecated: false
   /v1/providers/{provider_id}:
@@ -1351,10 +1316,9 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Providers
-      summary: Get provider.
+      summary: >-
+        Get detailed information about a specific provider.
       description: >-
-        Get provider.
-
         Get detailed information about a specific provider.
       parameters:
         - name: provider_id
@@ -1385,8 +1349,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: List all responses.
-      description: List all responses.
+      summary: List all OpenAI responses.
+      description: List all OpenAI responses.
       parameters:
         - name: after
           in: query
@@ -1437,8 +1401,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: Create a model response.
-      description: Create a model response.
+      summary: Create a new OpenAI response.
+      description: Create a new OpenAI response.
       parameters: []
       requestBody:
         content:
@@ -1480,8 +1444,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: Get a model response.
-      description: Get a model response.
+      summary: Retrieve an OpenAI response by its ID.
+      description: Retrieve an OpenAI response by its ID.
       parameters:
         - name: response_id
           in: path
@@ -1511,8 +1475,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: Delete a response.
-      description: Delete a response.
+      summary: Delete an OpenAI response by its ID.
+      description: Delete an OpenAI response by its ID.
       parameters:
         - name: response_id
           in: path
@@ -1542,8 +1506,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Agents
-      summary: List input items.
-      description: List input items.
+      summary: >-
+        List input items for a given OpenAI response.
+      description: >-
+        List input items for a given OpenAI response.
       parameters:
         - name: response_id
           in: path
@@ -1612,11 +1578,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Safety
-      summary: Run shield.
-      description: >-
-        Run shield.
-
-        Run a shield.
+      summary: Run a shield.
+      description: Run a shield.
       parameters: []
       requestBody:
         content:
@@ -3172,11 +3135,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Inspect
-      summary: Get version.
-      description: >-
-        Get version.
-
-        Get the version of the service.
+      summary: Get the version of the service.
+      description: Get the version of the service.
       parameters: []
       deprecated: false
 jsonSchemaDialect: >-
@@ -9789,16 +9749,9 @@ tags:
     x-displayName: >-
       Protocol for conversation management operations.
   - name: Files
-    description: >-
-      This API is used to upload documents that can be used with other Llama Stack
-      APIs.
-    x-displayName: Files
+    description: ''
   - name: Inference
     description: >-
-      Llama Stack Inference API for generating completions, chat completions, and
-      embeddings.
-
-
       This API provides the raw interface to the underlying models. Two kinds of models
       are supported:
 
@@ -9806,25 +9759,23 @@ tags:
 
       - Embedding models: these models generate embeddings to be used for semantic
       search.
-    x-displayName: Inference
+    x-displayName: >-
+      Llama Stack Inference API for generating completions, chat completions, and
+      embeddings.
   - name: Inspect
-    description: >-
-      APIs for inspecting the Llama Stack service, including health status, available
-      API routes with methods and implementing providers.
-    x-displayName: Inspect
+    description: ''
   - name: Models
     description: ''
   - name: Prompts
-    description: >-
+    description: ''
+    x-displayName: >-
       Protocol for prompt management operations.
-    x-displayName: Prompts
   - name: Providers
-    description: >-
+    description: ''
+    x-displayName: >-
       Providers API for inspecting, listing, and modifying providers and their configurations.
-    x-displayName: Providers
   - name: Safety
-    description: OpenAI-compatible Moderations API.
-    x-displayName: Safety
+    description: ''
   - name: Scoring
     description: ''
   - name: ScoringFunctions
