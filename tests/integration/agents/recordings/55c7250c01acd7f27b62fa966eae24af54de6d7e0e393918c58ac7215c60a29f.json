@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/agents/test_openai_responses.py::test_list_response_input_items[client_with_models-txt=ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -11,9 +12,6 @@
           "content": "What is the capital of France?"
         }
       ],
-      "response_format": {
-        "type": "text"
-      },
       "stream": true
     },
     "endpoint": "/v1/chat/completions",
@@ -24,7 +22,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {
@@ -50,7 +48,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {
@@ -76,7 +74,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {
@@ -102,7 +100,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {
@@ -128,7 +126,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {
@@ -154,7 +152,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {
@@ -180,7 +178,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {
@@ -206,7 +204,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0b3f2e4754ff",
+          "id": "rec-55c7250c01ac",
           "choices": [
             {
               "delta": {

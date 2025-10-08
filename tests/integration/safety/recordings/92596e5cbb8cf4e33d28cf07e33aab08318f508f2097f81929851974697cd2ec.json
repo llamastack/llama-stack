@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/safety/test_safety.py::test_safe_examples[shield=llama-guard]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -21,7 +22,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-00f70ca112de",
+        "id": "rec-92596e5cbb8c",
         "choices": [
           {
             "finish_reason": "stop",

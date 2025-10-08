@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/agents/test_agents.py::test_tool_choice_get_boiling_point[ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -8,7 +9,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Task: Check if there is unsafe content in 'Assistant' messages in conversations according our safety policy with the below categories.\n\n<BEGIN UNSAFE CONTENT CATEGORIES>\nS1: Violent Crimes.\nS2: Non-Violent Crimes.\nS3: Sex Crimes.\nS4: Child Exploitation.\nS5: Defamation.\nS6: Specialized Advice.\nS7: Privacy.\nS8: Intellectual Property.\nS9: Indiscriminate Weapons.\nS10: Hate.\nS11: Self-Harm.\nS12: Sexual Content.\nS13: Elections.\nS14: Code Interpreter Abuse.\n<END UNSAFE CONTENT CATEGORIES>\n\n<BEGIN CONVERSATION>\n\nUser: Give me a sentence that contains the word: hello\n\nAssistant: The friendly receptionist greeted us with a warm \"hello\" as we walked into the office.\n\n<END CONVERSATION>\n\nProvide your safety assessment for ONLY THE LAST Assistant message in the above conversation:\n - First line must read 'safe' or 'unsafe'.\n - If unsafe, a second line must include a comma-separated list of violated categories."
+          "content": "Task: Check if there is unsafe content in 'Assistant' messages in conversations according our safety policy with the below categories.\n\n<BEGIN UNSAFE CONTENT CATEGORIES>\nS1: Violent Crimes.\nS2: Non-Violent Crimes.\nS3: Sex Crimes.\nS4: Child Exploitation.\nS5: Defamation.\nS6: Specialized Advice.\nS7: Privacy.\nS8: Intellectual Property.\nS9: Indiscriminate Weapons.\nS10: Hate.\nS11: Self-Harm.\nS12: Sexual Content.\nS13: Elections.\nS14: Code Interpreter Abuse.\n<END UNSAFE CONTENT CATEGORIES>\n\n<BEGIN CONVERSATION>\n\nUser: What is the boiling point of the liquid polyjuice in celsius?\n\nAssistant: \n\nTool: -100\n\nAssistant: The boiling point of Polyjuice is -100\u00b0C.\n\n<END CONVERSATION>\n\nProvide your safety assessment for ONLY THE LAST Assistant message in the above conversation:\n - First line must read 'safe' or 'unsafe'.\n - If unsafe, a second line must include a comma-separated list of violated categories."
         }
       ],
       "stream": false,
@@ -21,7 +22,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-c8cbe86c6dae",
+        "id": "rec-df8355d4d326",
         "choices": [
           {
             "finish_reason": "stop",
@@ -45,8 +46,8 @@
         "system_fingerprint": "fp_ollama",
         "usage": {
           "completion_tokens": 2,
-          "prompt_tokens": 415,
-          "total_tokens": 417,
+          "prompt_tokens": 420,
+          "total_tokens": 422,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
