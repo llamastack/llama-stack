@@ -186,5 +186,6 @@ class BedrockInferenceAdapter(
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         raise NotImplementedError("OpenAI chat completion not supported by the Bedrock provider")

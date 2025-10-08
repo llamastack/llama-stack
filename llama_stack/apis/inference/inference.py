@@ -1106,6 +1106,7 @@ class InferenceProvider(Protocol):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Create chat completions.
 
@@ -1134,6 +1135,7 @@ class InferenceProvider(Protocol):
         :param top_logprobs: (Optional) The top log probabilities to use.
         :param top_p: (Optional) The top p to use.
         :param user: (Optional) The user to use.
+        :param kwargs: (Optional) Additional provider-specific parameters to pass through as extra_body (e.g., chat_template_kwargs for vLLM).
         :returns: An OpenAIChatCompletion.
         """
         ...

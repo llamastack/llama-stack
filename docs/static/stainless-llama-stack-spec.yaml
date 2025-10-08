@@ -5360,10 +5360,22 @@ components:
         user:
           type: string
           description: (Optional) The user to use.
+        kwargs:
+          oneOf:
+            - type: 'null'
+            - type: boolean
+            - type: number
+            - type: string
+            - type: array
+            - type: object
+          description: >-
+            (Optional) Additional provider-specific parameters to pass through as
+            extra_body (e.g., chat_template_kwargs for vLLM).
       additionalProperties: false
       required:
         - model
         - messages
+        - kwargs
       title: OpenaiChatCompletionRequest
     OpenAIChatCompletion:
       type: object

@@ -186,3 +186,47 @@ async def test_openai_chat_completion_is_async(vllm_inference_adapter):
 
         assert mock_create_client.call_count == 4  # no cheating
         assert total_time < (sleep_time * 2), f"Total time taken: {total_time}s exceeded expected max"
+
+
+async def test_extra_body_forwarding(vllm_inference_adapter):
+    """
+    Test that extra_body parameters (e.g., chat_template_kwargs) are correctly
+    forwarded to the underlying OpenAI client.
+    """
+    mock_model = Model(identifier="mock-model", provider_resource_id="mock-model", provider_id="vllm-inference")
+    vllm_inference_adapter.model_store.get_model.return_value = mock_model
+
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_client_property:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(
+            return_value=OpenAIChatCompletion(
+                id="chatcmpl-abc123",
+                created=1,
+                model="mock-model",
+                choices=[
+                    OpenAIChoice(
+                        message=OpenAIAssistantMessageParam(
+                            content="test response",
+                        ),
+                        finish_reason="stop",
+                        index=0,
+                    )
+                ],
+            )
+        )
+        mock_client_property.return_value = mock_client
+
+        # Test with chat_template_kwargs for Granite thinking mode
+        await vllm_inference_adapter.openai_chat_completion(
+            "mock-model",
+            messages=[],
+            stream=False,
+            chat_template_kwargs={"thinking": True},
+        )
+
+        # Verify that the client was called with extra_body containing chat_template_kwargs
+        mock_client.chat.completions.create.assert_called_once()
+        call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+        assert "extra_body" in call_kwargs
+        assert "chat_template_kwargs" in call_kwargs["extra_body"]
+        assert call_kwargs["extra_body"]["chat_template_kwargs"] == {"thinking": True}
