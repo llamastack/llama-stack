@@ -112,6 +112,12 @@ class SQLiteSpanProcessor(SpanProcessor):
             if parent_context:
                 parent_span_id = format_span_id(parent_context.span_id)
 
+            # Determine if this span should be marked as root:
+            # 1. If it has LOCAL_ROOT_SPAN_MARKER attribute (explicitly marked by start_trace())
+            # 2. If it has no parent (implicit root span from FastAPI instrumentation)
+            is_root_span = span.attributes.get(LOCAL_ROOT_SPAN_MARKER) or parent_span_id is None
+            root_span_id_value = span_id if is_root_span else None
+
             # Insert into traces
             cursor.execute(
                 """
@@ -126,7 +132,7 @@ class SQLiteSpanProcessor(SpanProcessor):
                 (
                     trace_id,
                     service_name,
-                    (span_id if span.attributes.get(LOCAL_ROOT_SPAN_MARKER) else None),
+                    root_span_id_value,
                     datetime.fromtimestamp(span.start_time / 1e9, UTC).isoformat(),
                     datetime.fromtimestamp(span.end_time / 1e9, UTC).isoformat(),
                 ),
