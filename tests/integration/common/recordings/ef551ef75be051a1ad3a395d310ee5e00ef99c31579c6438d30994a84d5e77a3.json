@@ -1,0 +1,58 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 2"
+        }
+      ],
+      "stream": false,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-ef551ef75be0",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "The OpenAI 2 (Meta AI) is a text generation model that can be used for various tasks such as chatbots, language translation, and content creation. Here\u2019s how you can test it:\n\n1. Go to the Meta AI GitHub repository(https://github.com Meta AI/models):\nEnter your email and agree with their terms.\n2.  Click on \"models\" tab in left hand side bar\n3. click on one of the text generation models (in this example we will be using \"T5\")\n4. Click model to go to the full version documentation (example) \n5. You can copy-paste your input prompts and see how well the OpenAI 2 responds.\n6. For more interactive experience Meta AI also has \u201cTry it\u201d tab:",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 158,
+          "prompt_tokens": 31,
+          "total_tokens": 189,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
