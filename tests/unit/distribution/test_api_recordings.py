@@ -24,7 +24,7 @@ from llama_stack.testing.api_recorder import (
     APIRecordingMode,
     ResponseStorage,
     api_recording,
-    normalize_request,
+    normalize_inference_request,
 )
 
 
@@ -74,7 +74,7 @@ class TestInferenceRecording:
     def test_request_normalization(self):
         """Test that request normalization produces consistent hashes."""
         # Test basic normalization
-        hash1 = normalize_request(
+        hash1 = normalize_inference_request(
             "POST",
             "http://localhost:11434/v1/chat/completions",
             {},
@@ -82,7 +82,7 @@ class TestInferenceRecording:
         )
 
         # Same request should produce same hash
-        hash2 = normalize_request(
+        hash2 = normalize_inference_request(
             "POST",
             "http://localhost:11434/v1/chat/completions",
             {},
@@ -92,7 +92,7 @@ class TestInferenceRecording:
         assert hash1 == hash2
 
         # Different content should produce different hash
-        hash3 = normalize_request(
+        hash3 = normalize_inference_request(
             "POST",
             "http://localhost:11434/v1/chat/completions",
             {},
@@ -108,20 +108,20 @@ class TestInferenceRecording:
     def test_request_normalization_edge_cases(self):
         """Test request normalization is precise about request content."""
         # Test that different whitespace produces different hashes (no normalization)
-        hash1 = normalize_request(
+        hash1 = normalize_inference_request(
             "POST",
             "http://test/v1/chat/completions",
             {},
             {"messages": [{"role": "user", "content": "Hello   world\n\n"}]},
         )
-        hash2 = normalize_request(
+        hash2 = normalize_inference_request(
             "POST", "http://test/v1/chat/completions", {}, {"messages": [{"role": "user", "content": "Hello world"}]}
         )
         assert hash1 != hash2  # Different whitespace should produce different hashes
 
         # Test that different float precision produces different hashes (no rounding)
-        hash3 = normalize_request("POST", "http://test/v1/chat/completions", {}, {"temperature": 0.7000001})
-        hash4 = normalize_request("POST", "http://test/v1/chat/completions", {}, {"temperature": 0.7})
+        hash3 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, {"temperature": 0.7000001})
+        hash4 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, {"temperature": 0.7})
         assert hash3 != hash4  # Different precision should produce different hashes
 
     def test_response_storage(self, temp_storage_dir):
