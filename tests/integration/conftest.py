@@ -35,6 +35,18 @@ def pytest_sessionstart(session):
     if "LLAMA_STACK_TEST_INFERENCE_MODE" not in os.environ:
         os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = "replay"
 
+    stack_config = session.config.getoption("--stack-config", default=None)
+    if stack_config and stack_config.startswith("server:"):
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "server"
+        logger.info(f"Test stack config type: server (stack_config={stack_config})")
+    else:
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "library_client"
+        logger.info(f"Test stack config type: library_client (stack_config={stack_config})")
+
+    from llama_stack.testing.inference_recorder import patch_httpx_for_test_id
+
+    patch_httpx_for_test_id()
+
 
 @pytest.fixture(autouse=True)
 def _track_test_context(request):
