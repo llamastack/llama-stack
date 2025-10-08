@@ -502,7 +502,7 @@ async def test_create_openai_response_with_multiple_messages(openai_responses_im
             assert isinstance(inference_messages[i], OpenAIDeveloperMessageParam)
 
 
-async def test_preped_previous_response_basic(openai_responses_impl, mock_responses_store):
+async def test_prepend_previous_response_basic(openai_responses_impl, mock_responses_store):
     """Test prepending a basic previous response to a new response."""
 
     input_item_message = OpenAIResponseMessage(
