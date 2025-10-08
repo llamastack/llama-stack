@@ -1,15 +1,102 @@
 # Configuring and Launching Llama Stack
 
-This guide walks you through the two primary methods for setting up and running Llama Stack: using Docker containers and configuring the server manually.
+This guide walks you through setting up and running Llama Stack, organized from the approach that needs the least infrastructure and knowledge to the most.
 
-## Method 1: Using the Starter Docker Container
+## Prerequisites
 
-The easiest way to get started with Llama Stack is using the pre-built Docker container. This approach eliminates the need for manual dependency management and provides a consistent environment across different systems.
+Before getting started with Llama Stack, you need to have Ollama running locally:
 
-### Prerequisites
+1. **Install and run Ollama**: Follow the [Ollama Getting Started guide](https://ollama.ai/download) to install Ollama on your system.
 
-- Docker installed and running on your system
-- Access to external model providers (e.g., Ollama running locally)
+2. **Verify Ollama is running** at `http://localhost:11434`:
+   ```bash
+   curl http://localhost:11434
+   ```
+
+3. **Set the Ollama URL environment variable**:
+   ```bash
+   export OLLAMA_URL=http://localhost:11434
+   ```
+
+## Method 1: Using Llama Stack CLI (Recommended for Getting Started)
+
+This is the simplest approach that requires minimal infrastructure knowledge. You'll use Python's pip package manager to install and run Llama Stack directly on your machine.
+
+### Step 1: Install Llama Stack
+
+Using pip:
+```bash
+pip install llama-stack
+```
+
+Using uv (alternative):
+```bash
+# Initialize a new project (if starting fresh)
+uv init
+
+# Add llama-stack as a dependency
+uv add llama-stack
+
+# Note: If using uv, prefix subsequent commands with 'uv run'
+# Example: uv run llama stack build --list-distros
+```
+
+### Step 2: Build and Run
+
+The quickest way to get started is to use the starter distribution with a virtual environment:
+
+```bash
+llama stack build --distro starter --image-type venv --run
+```
+
+This single command will:
+- Build a Llama Stack distribution with popular providers
+- Create a virtual environment
+- Start the server automatically
+
+### Step 3: Verify Installation
+
+Test your Llama Stack server:
+
+#### Basic HTTP Health Checks
+```bash
+# Check server health
+curl http://localhost:8321/health
+
+# List available models
+curl http://localhost:8321/v1/models
+```
+
+#### Comprehensive Verification (Recommended)
+Use the official Llama Stack client for better verification:
+
+```bash
+# List all configured providers (recommended)
+uv run --with llama-stack-client llama-stack-client providers list
+
+# Alternative if you have llama-stack-client installed
+llama-stack-client providers list
+```
+
+#### Test Chat Completion
+```bash
+# Basic HTTP test
+curl -X POST http://localhost:8321/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.1:8b",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+
+# Or using the client (more robust)
+uv run --with llama-stack-client llama-stack-client inference chat-completion \
+  --model llama3.1:8b \
+  --message "Hello!"
+```
+
+## Method 2: Using Docker or Podman
+
+For users familiar with containerization, Docker provides a consistent environment across different systems with pre-built images.
 
 ### Basic Docker Usage
 
@@ -58,30 +145,49 @@ Common environment variables you can set:
 | `TOGETHER_API_KEY` | API key for Together AI | `your_together_api_key` |
 | `OPENAI_API_KEY` | API key for OpenAI | `your_openai_api_key` |
 
-## Method 2: Manual Server Configuration and Launch
+### Verify Installation
 
-For more control over your Llama Stack deployment, you can configure and run the server manually.
+Test your Docker/Podman Llama Stack server:
 
-### Prerequisites
+#### Basic HTTP Health Checks
+```bash
+# Check server health
+curl http://localhost:8321/health
 
-1. **Install Llama Stack**:
+# List available models
+curl http://localhost:8321/v1/models
+```
 
-    Using pip:
-    ```bash
-    pip install llama-stack
-    ```
+#### Comprehensive Verification (Recommended)
+Use the official Llama Stack client for better verification:
 
-    Using uv (alternative):
-    ```bash
-    # Initialize a new project (if starting fresh)
-    uv init
+```bash
+# List all configured providers (recommended)
+uv run --with llama-stack-client llama-stack-client providers list
 
-    # Add llama-stack as a dependency
-    uv add llama-stack
+# Alternative if you have llama-stack-client installed
+llama-stack-client providers list
+```
 
-    # Note: If using uv, prefix subsequent commands with 'uv run'
-    # Example: uv run llama stack build --list-distros
-    ```
+#### Test Chat Completion
+```bash
+# Basic HTTP test
+curl -X POST http://localhost:8321/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.1:8b",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+
+# Or using the client (more robust)
+uv run --with llama-stack-client llama-stack-client inference chat-completion \
+  --model llama3.1:8b \
+  --message "Hello!"
+```
+
+## Method 3: Manual Server Configuration and Launch (Advanced)
+
+For complete control over your Llama Stack deployment, you can configure and run the server manually with custom provider selection.
 
 ### Step 1: Build a Distribution
 
