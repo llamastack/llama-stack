@@ -54,6 +54,7 @@ class LlamaCompatInferenceAdapter(OpenAIMixin):
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
         suffix: str | None = None,
+        **kwargs: Any,
     ) -> OpenAICompletion:
         raise NotImplementedError()
 

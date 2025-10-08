@@ -100,6 +100,7 @@ class PassthroughInferenceAdapter(Inference):
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
         suffix: str | None = None,
+        **kwargs: Any,
     ) -> OpenAICompletion:
         client = self._get_client()
         model_obj = await self.model_store.get_model(model)
@@ -124,6 +125,7 @@ class PassthroughInferenceAdapter(Inference):
             user=user,
             guided_choice=guided_choice,
             prompt_logprobs=prompt_logprobs,
+            **kwargs,
         )
 
         return await client.inference.openai_completion(**params)
@@ -153,6 +155,7 @@ class PassthroughInferenceAdapter(Inference):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         client = self._get_client()
         model_obj = await self.model_store.get_model(model)
@@ -181,6 +184,7 @@ class PassthroughInferenceAdapter(Inference):
             top_logprobs=top_logprobs,
             top_p=top_p,
             user=user,
+            **kwargs,
         )
 
         return await client.inference.openai_chat_completion(**params)

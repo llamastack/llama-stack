@@ -247,6 +247,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
         suffix: str | None = None,
+        **kwargs: Any,
     ) -> OpenAICompletion:
         """
         Direct OpenAI completion API call.
@@ -260,6 +261,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             extra_body["prompt_logprobs"] = prompt_logprobs
         if guided_choice:
             extra_body["guided_choice"] = guided_choice
+
+        # Merge any additional kwargs into extra_body
+        extra_body.update(kwargs)
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
         resp = await self.client.completions.create(
@@ -313,6 +317,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """
         Direct OpenAI chat completion API call.
@@ -361,7 +366,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             user=user,
         )
 
-        resp = await self.client.chat.completions.create(**params)
+        # Pass any additional provider-specific parameters as extra_body
+        extra_body = kwargs if kwargs else {}
+
+        resp = await self.client.chat.completions.create(**params, extra_body=extra_body)
 
         return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 

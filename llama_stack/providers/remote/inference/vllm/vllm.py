@@ -102,6 +102,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         max_tokens = max_tokens or self.config.max_tokens
 
@@ -136,4 +137,5 @@ class VLLMInferenceAdapter(OpenAIMixin):
             top_logprobs=top_logprobs,
             top_p=top_p,
             user=user,
+            **kwargs,
         )

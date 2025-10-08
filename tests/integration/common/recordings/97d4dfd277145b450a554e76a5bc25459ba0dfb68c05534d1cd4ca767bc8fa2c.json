@@ -1,0 +1,60 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai with temperature 0"
+        }
+      ],
+      "max_tokens": 100,
+      "stream": false,
+      "temperature": 0.7,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-97d4dfd27714",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I can provide you with some guidance on how to test the OpenAI API with a temperature of 0.\n\nOpenAI's text generation model, specifically the \"text-davinci-2\" model, has a parameter called `temperature` that controls the variability and diversity of the generated text. A lower temperature value generates more coherent and less varied text, while a higher value generates more diverse and varied text.\n\nHere's an example code snippet in Python using the Hugging Face Transformers library to test the",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 100,
+          "prompt_tokens": 33,
+          "total_tokens": 133,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
