@@ -19,6 +19,7 @@ TEST_SUBDIRS=""
 TEST_PATTERN=""
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
+COLLECT_ONLY=false
 
 # Function to display usage
 usage() {
@@ -32,6 +33,7 @@ Options:
     --inference-mode STRING  Inference mode: record or replay (default: replay)
     --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
     --pattern STRING         Regex pattern to pass to pytest -k
+    --collect-only           Collect tests only without running them (skips server startup)
     --help                   Show this help message
 
 Suites are defined in tests/integration/suites.py and define which tests to run.
@@ -81,6 +83,10 @@ while [[ $# -gt 0 ]]; do
             TEST_PATTERN="$2"
             shift 2
             ;;
+        --collect-only)
+            COLLECT_ONLY=true
+            shift
+            ;;
         --help)
             usage
             exit 0
@@ -95,13 +101,13 @@ done
 
 
 # Validate required parameters
-if [[ -z "$STACK_CONFIG" ]]; then
+if [[ -z "$STACK_CONFIG" && "$COLLECT_ONLY" == false ]]; then
     echo "Error: --stack-config is required"
     usage
     exit 1
 fi
 
-if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" ]]; then
+if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" && "$COLLECT_ONLY" == false ]]; then
     echo "Error: --test-setup is required when --test-subdirs is provided"
     usage
     exit 1
@@ -133,6 +139,10 @@ if [[ -n "$TEST_SETUP" ]]; then
     EXTRA_PARAMS="--setup=$TEST_SETUP"
 fi
 
+if [[ "$COLLECT_ONLY" == true ]]; then
+    EXTRA_PARAMS="$EXTRA_PARAMS --collect-only"
+fi
+
 # Apply setup-specific environment variables (needed for server startup and tests)
 echo "=== Applying Setup Environment Variables ==="
 
@@ -142,12 +152,14 @@ export SQLITE_STORE_DIR=$(mktemp -d)
 echo "Setting SQLITE_STORE_DIR: $SQLITE_STORE_DIR"
 
 # Determine stack config type for api_recorder test isolation
-if [[ "$STACK_CONFIG" == server:* ]]; then
-    export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
-    echo "Setting stack config type: server"
-else
-    export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
-    echo "Setting stack config type: library_client"
+if [[ "$COLLECT_ONLY" == false ]]; then
+    if [[ "$STACK_CONFIG" == server:* ]]; then
+        export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
+        echo "Setting stack config type: server"
+    else
+        export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
+        echo "Setting stack config type: library_client"
+    fi
 fi
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
@@ -162,7 +174,7 @@ cd $ROOT_DIR
 # check if "llama" and "pytest" are available. this script does not use `uv run` given
 # it can be used in a pre-release environment where we have not been able to tell
 # uv about pre-release dependencies properly (yet).
-if ! command -v llama &> /dev/null; then
+if [[ "$COLLECT_ONLY" == false ]] && ! command -v llama &> /dev/null; then
     echo "llama could not be found, ensure llama-stack is installed"
     exit 1
 fi
@@ -173,7 +185,7 @@ if ! command -v pytest &> /dev/null; then
 fi
 
 # Start Llama Stack Server if needed
-if [[ "$STACK_CONFIG" == *"server:"* ]]; then
+if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     stop_server() {
         echo "Stopping Llama Stack Server..."
         pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
@@ -266,8 +278,14 @@ fi
 
 set +e
 set -x
+
+STACK_CONFIG_ARG=""
+if [[ -n "$STACK_CONFIG" ]]; then
+    STACK_CONFIG_ARG="--stack-config=$STACK_CONFIG"
+fi
+
 pytest -s -v $PYTEST_TARGET \
-    --stack-config="$STACK_CONFIG" \
+    $STACK_CONFIG_ARG \
     --inference-mode="$INFERENCE_MODE" \
     -k "$PYTEST_PATTERN" \
     $EXTRA_PARAMS \
