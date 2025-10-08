@@ -158,6 +158,7 @@ class BedrockInferenceAdapter(
         prompt_logprobs: int | None = None,
         # for fill-in-the-middle type completion
         suffix: str | None = None,
+        **kwargs: Any,
     ) -> OpenAICompletion:
         raise NotImplementedError("OpenAI completion not supported by the Bedrock provider")
 

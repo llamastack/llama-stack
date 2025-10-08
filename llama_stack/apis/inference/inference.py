@@ -1052,6 +1052,7 @@ class InferenceProvider(Protocol):
         prompt_logprobs: int | None = None,
         # for fill-in-the-middle type completion
         suffix: str | None = None,
+        **kwargs: Any,
     ) -> OpenAICompletion:
         """Create completion.
 
@@ -1075,6 +1076,7 @@ class InferenceProvider(Protocol):
         :param top_p: (Optional) The top p to use.
         :param user: (Optional) The user to use.
         :param suffix: (Optional) The suffix that should be appended to the completion.
+        :param kwargs: (Optional) Additional provider-specific parameters to pass through as extra_body.
         :returns: An OpenAICompletion.
         """
         ...
