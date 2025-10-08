@@ -322,19 +322,30 @@ llama-stack-client providers list
 ```
 
 #### Test Chat Completion
+Verify with the client (recommended):
+
 ```bash
-# Basic HTTP test
+# Verify providers are configured correctly (recommended first step)
+uv run --with llama-stack-client llama-stack-client providers list
+
+# Test chat completion using the client
+uv run --with llama-stack-client llama-stack-client inference chat-completion \
+  --model llama3.1:8b \
+  --message "Hello!"
+
+# Alternative if you have llama-stack-client installed
+llama-stack-client providers list
+llama-stack-client inference chat-completion \
+  --model llama3.1:8b \
+  --message "Hello!"
+
+# Or using basic HTTP test
 curl -X POST http://localhost:8321/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "llama3.1:8b",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
-
-# Or using the client (more robust)
-uv run --with llama-stack-client llama-stack-client inference chat-completion \
-  --model llama3.1:8b \
-  --message "Hello!"
 ```
 
 ## Configuration Management
