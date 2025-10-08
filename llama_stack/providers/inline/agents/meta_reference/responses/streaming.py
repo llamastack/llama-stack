@@ -84,6 +84,7 @@ class StreamingResponseOrchestrator:
         text: OpenAIResponseText,
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
+        instructions: str,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -99,6 +100,8 @@ class StreamingResponseOrchestrator:
         self.final_messages: list[OpenAIMessageParam] = []
         # mapping for annotations
         self.citation_files: dict[str, str] = {}
+        # system message that is inserted into the model's context
+        self.instructions = instructions
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Initialize output messages
@@ -112,6 +115,7 @@ class StreamingResponseOrchestrator:
             status="in_progress",
             output=output_messages.copy(),
             text=self.text,
+            instructions=self.instructions,
         )
 
         yield OpenAIResponseObjectStreamResponseCreated(response=initial_response)
@@ -200,6 +204,7 @@ class StreamingResponseOrchestrator:
             status="completed",
             text=self.text,
             output=output_messages,
+            instructions=self.instructions,
         )
 
         # Emit response.completed
