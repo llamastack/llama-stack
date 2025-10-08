@@ -15,6 +15,7 @@ from llama_stack.apis.agents import (
     AgentCreateResponse,
 )
 from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.inference import Inference
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
@@ -33,6 +34,7 @@ def mock_apis():
         "safety_api": AsyncMock(spec=Safety),
         "tool_runtime_api": AsyncMock(spec=ToolRuntime),
         "tool_groups_api": AsyncMock(spec=ToolGroups),
+        "conversations_api": AsyncMock(spec=Conversations),
     }
 
 
@@ -59,7 +61,8 @@ async def agents_impl(config, mock_apis):
         mock_apis["safety_api"],
         mock_apis["tool_runtime_api"],
         mock_apis["tool_groups_api"],
-        {},
+        mock_apis["conversations_api"],
+        [],
     )
     await impl.initialize()
     yield impl

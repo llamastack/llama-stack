@@ -84,8 +84,20 @@ def mock_vector_io_api():
 
 
 @pytest.fixture
+def mock_conversations_api():
+    """Mock conversations API for testing."""
+    mock_api = AsyncMock()
+    return mock_api
+
+
+@pytest.fixture
 def openai_responses_impl(
-    mock_inference_api, mock_tool_groups_api, mock_tool_runtime_api, mock_responses_store, mock_vector_io_api
+    mock_inference_api,
+    mock_tool_groups_api,
+    mock_tool_runtime_api,
+    mock_responses_store,
+    mock_vector_io_api,
+    mock_conversations_api,
 ):
     return OpenAIResponsesImpl(
         inference_api=mock_inference_api,
@@ -93,6 +105,7 @@ def openai_responses_impl(
         tool_runtime_api=mock_tool_runtime_api,
         responses_store=mock_responses_store,
         vector_io_api=mock_vector_io_api,
+        conversations_api=mock_conversations_api,
     )
 
 
