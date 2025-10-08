@@ -57,6 +57,7 @@ class RunpodInferenceAdapter(OpenAIMixin):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ):
         """Override to add RunPod-specific stream_options requirement."""
         if stream and not stream_options:
@@ -86,4 +87,5 @@ class RunpodInferenceAdapter(OpenAIMixin):
             top_logprobs=top_logprobs,
             top_p=top_p,
             user=user,
+            **kwargs,
         )

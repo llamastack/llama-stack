@@ -278,6 +278,11 @@ def get_endpoint_operations(
                 if param_name == "self" and param_type is inspect.Parameter.empty:
                     continue
 
+                # skip **kwargs parameters - they should not appear in OpenAPI spec
+                # these are used for forwarding arbitrary extra parameters to underlying APIs
+                if parameter.kind == inspect.Parameter.VAR_KEYWORD:
+                    continue
+
                 # check if all parameters have explicit type
                 if parameter.annotation is inspect.Parameter.empty:
                     raise ValidationError(

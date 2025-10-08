@@ -201,6 +201,7 @@ class InferenceRouter(Inference):
         guided_choice: list[str] | None = None,
         prompt_logprobs: int | None = None,
         suffix: str | None = None,
+        **kwargs: Any,
     ) -> OpenAICompletion:
         logger.debug(
             f"InferenceRouter.openai_completion: {model=}, {stream=}, {prompt=}",
@@ -227,6 +228,7 @@ class InferenceRouter(Inference):
             guided_choice=guided_choice,
             prompt_logprobs=prompt_logprobs,
             suffix=suffix,
+            **kwargs,
         )
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
         if stream:
@@ -277,6 +279,7 @@ class InferenceRouter(Inference):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         logger.debug(
             f"InferenceRouter.openai_chat_completion: {model=}, {stream=}, {messages=}",
@@ -323,6 +326,7 @@ class InferenceRouter(Inference):
             top_logprobs=top_logprobs,
             top_p=top_p,
             user=user,
+            **kwargs,
         )
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
         if stream:

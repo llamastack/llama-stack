@@ -1,0 +1,58 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 0"
+        }
+      ],
+      "stream": false,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-e08e1eb2534c",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I'd be happy to help you test the OpenAI API, but I need to clarify a few things. The \"OpenAI 0\" might refer to one of the following:\n\n1. **OpenAI API v0**: This is an older version of the OpenAI API, which is no longer supported.\n2. **DALL-E or other models labeled as \"OpenAI 0\"**: These are new, highly publicized models such as DALL-E that might have been mistakenly referred to as \"OpenAI 0\".\n\nAssuming you meant to test an older version of the OpenAI API (v0), we can try this:\n\nYou'll need an API key from OpenAI. Here's how to obtain one:\n1. Go to the [OpenAI API website](https://api.openai.com/).\n2. Create an account if you don't have one already.\n3. Fill out the form with your email address, password, and other details.\n4. Wait for the activation process.\n\nSince I don't know which specific model or version of OpenAI 0 you're trying to test, it is not best to provide step by step instructions.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 238,
+          "prompt_tokens": 31,
+          "total_tokens": 269,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
