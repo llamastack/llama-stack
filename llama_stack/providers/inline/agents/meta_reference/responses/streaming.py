@@ -117,14 +117,8 @@ class StreamingResponseOrchestrator:
 
         yield OpenAIResponseObjectStreamResponseCreated(response=initial_response)
 
-        # Handle all mcp tool lists from previous response that are still valid:
-        for tool in self.ctx.tool_context.previous_tool_listings:
-            async for evt in self._reuse_mcp_list_tools(tool, output_messages):
-                yield evt
-        # Process all remaining tools (including MCP tools) and emit streaming events
-        if self.ctx.tool_context.tools_to_process:
-            async for stream_event in self._process_tools(self.ctx.tool_context.tools_to_process, output_messages):
-                yield stream_event
+        async for stream_event in self._process_tools(output_messages):
+            yield stream_event
 
         n_iter = 0
         messages = self.ctx.messages.copy()
@@ -533,7 +527,7 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
 
-    async def _process_tools(
+    async def _process_new_tools(
         self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process all tools and emit appropriate streaming events."""
@@ -648,6 +642,18 @@ class StreamingResponseOrchestrator:
             # TODO: Emit mcp_list_tools.failed event if needed
             logger.exception(f"Failed to list MCP tools from {mcp_tool.server_url}: {e}")
             raise
+
+    async def _process_tools(
+        self, output_messages: list[OpenAIResponseOutput]
+    ) -> AsyncIterator[OpenAIResponseObjectStream]:
+        # Handle all mcp tool lists from previous response that are still valid:
+        for tool in self.ctx.tool_context.previous_tool_listings:
+            async for evt in self._reuse_mcp_list_tools(tool, output_messages):
+                yield evt
+        # Process all remaining tools (including MCP tools) and emit streaming events
+        if self.ctx.tool_context.tools_to_process:
+            async for stream_event in self._process_new_tools(self.ctx.tool_context.tools_to_process, output_messages):
+                yield stream_event
 
     def _approval_required(self, tool_name: str) -> bool:
         if tool_name not in self.mcp_tool_to_server:
