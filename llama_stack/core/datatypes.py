@@ -27,8 +27,16 @@ from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.providers.datatypes import Api, ProviderSpec
-from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
-from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreConfig
+from llama_stack.providers.utils.kvstore.config import (
+    MongoDBKVStoreConfig,
+    PostgresKVStoreConfig,
+    RedisKVStoreConfig,
+    SqliteKVStoreConfig,
+)
+from llama_stack.providers.utils.sqlstore.sqlstore import (
+    PostgresSqlStoreConfig,
+    SqliteSqlStoreConfig,
+)
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
 LLAMA_STACK_RUN_CONFIG_VERSION = 2
@@ -422,14 +430,154 @@ class ServerConfig(BaseModel):
     )
 
 
+class StoreReference(BaseModel):
+    """Reference to a persistence backend with optional subsystem config."""
+
+    backend: str = Field(
+        description="Name of backend from persistence.backends",
+    )
+    namespace: str | None = Field(
+        default=None,
+        description="Key prefix for KVStore backends",
+    )
+
+
+class InferenceStoreReference(StoreReference):
+    """Inference store configuration with queue tuning."""
+
+    max_write_queue_size: int = Field(
+        default=10000,
+        description="Max queued writes for inference store",
+    )
+    num_writers: int = Field(
+        default=4,
+        description="Number of concurrent background writers",
+    )
+
+
+class StoresConfig(BaseModel):
+    """Store references configuration."""
+
+    metadata: StoreReference | None = Field(
+        default=None,
+        description="Metadata store configuration (uses KVStore backend)",
+    )
+    inference: InferenceStoreReference | None = Field(
+        default=None,
+        description="Inference store configuration (uses SqlStore backend)",
+    )
+    conversations: StoreReference | None = Field(
+        default=None,
+        description="Conversations store configuration (uses SqlStore backend)",
+    )
+
+
+class PersistenceConfig(BaseModel):
+    """Unified persistence configuration."""
+
+    backends: dict[str, Any] = Field(
+        description="Named backend configurations (e.g., 'default', 'cache')",
+    )
+    stores: StoresConfig | None = Field(
+        default=None,
+        description="Store references to backends",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_backends(cls, data: Any) -> Any:
+        """Parse backends intelligently based on which stores reference them."""
+        if not isinstance(data, dict) or "backends" not in data:
+            return data
+
+        backends_raw = data["backends"]
+        stores = data.get("stores", {})
+
+        # Determine which backends are used by which store types
+        metadata_backend = (stores.get("metadata") or {}).get("backend")
+        inference_backend = (stores.get("inference") or {}).get("backend")
+        conversations_backend = (stores.get("conversations") or {}).get("backend")
+
+        # Parse each backend based on usage context
+        parsed_backends = {}
+        for name, config in backends_raw.items():
+            if not isinstance(config, dict):
+                parsed_backends[name] = config
+                continue
+
+            # Determine backend type based on which store uses it
+            if name == metadata_backend:
+                # Metadata requires KVStore
+                parsed_backends[name] = _parse_kvstore_config(config)
+            elif name in (inference_backend, conversations_backend):
+                # Inference/conversations require SqlStore
+                parsed_backends[name] = _parse_sqlstore_config(config)
+            else:
+                # Unknown usage - try SqlStore first (for backward compat), then KVStore
+                try:
+                    parsed_backends[name] = _parse_sqlstore_config(config)
+                except ValueError:
+                    parsed_backends[name] = _parse_kvstore_config(config)
+
+        data["backends"] = parsed_backends
+        return data
+
+    @model_validator(mode="after")
+    def validate_backend_references(self) -> Self:
+        """Check all store refs point to defined backends."""
+        if not self.stores:
+            return self
+
+        stores = [
+            ("metadata", self.stores.metadata),
+            ("inference", self.stores.inference),
+            ("conversations", self.stores.conversations),
+        ]
+        for store_name, store_ref in stores:
+            if store_ref and store_ref.backend not in self.backends:
+                raise ValueError(
+                    f"Store '{store_name}' references backend '{store_ref.backend}' "
+                    f"which is not defined in persistence.backends"
+                )
+        return self
+
+
+def _parse_kvstore_config(
+    config: dict,
+) -> RedisKVStoreConfig | SqliteKVStoreConfig | PostgresKVStoreConfig | MongoDBKVStoreConfig:
+    """Parse a KVStore config from dict."""
+    type_val = config.get("type")
+    if type_val == "redis":
+        return RedisKVStoreConfig(**config)
+    elif type_val == "sqlite":
+        return SqliteKVStoreConfig(**config)
+    elif type_val == "postgres":
+        return PostgresKVStoreConfig(**config)
+    elif type_val == "mongodb":
+        return MongoDBKVStoreConfig(**config)
+    else:
+        raise ValueError(f"Unknown KVStore type: {type_val}")
+
+
+def _parse_sqlstore_config(config: dict) -> SqliteSqlStoreConfig | PostgresSqlStoreConfig:
+    """Parse a SqlStore config from dict."""
+    type_val = config.get("type")
+    if type_val == "sqlite":
+        return SqliteSqlStoreConfig(**config)
+    elif type_val == "postgres":
+        return PostgresSqlStoreConfig(**config)
+    else:
+        raise ValueError(f"Unknown SqlStore type: {type_val}")
+
+
 class InferenceStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
+    sql_store_config: SqliteSqlStoreConfig | PostgresSqlStoreConfig
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 
 class ResponsesStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
+    sql_store_config: SqliteSqlStoreConfig | PostgresSqlStoreConfig
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
@@ -460,26 +608,11 @@ One or more providers to use for each API. The same provider_type (e.g., meta-re
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )
-    metadata_store: KVStoreConfig | None = Field(
+    persistence: PersistenceConfig | None = Field(
         default=None,
         description="""
-Configuration for the persistence store used by the distribution registry. If not specified,
-a default SQLite store will be used.""",
-    )
-
-    inference_store: InferenceStoreConfig | SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the inference API. Can be either a
-InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
-If not specified, a default SQLite store will be used.""",
-    )
-
-    conversations_store: SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the conversations API.
-If not specified, a default SQLite store will be used.""",
+Unified persistence configuration for all subsystems. Define backends once and
+reference them from multiple stores. If not specified, default SQLite stores will be used.""",
     )
 
     # registry of "resources" in the distribution
@@ -516,6 +649,28 @@ If not specified, a default SQLite store will be used.""",
         if isinstance(v, str):
             return Path(v)
         return v
+
+    @model_validator(mode="after")
+    def resolve_provider_backend_references(self) -> Self:
+        """Resolve backend references in provider kvstore configs."""
+        if not self.persistence or not self.persistence.backends:
+            return self
+
+        from llama_stack.core.provider_config_resolver import resolve_provider_kvstore_references
+
+        # Convert providers to dict format for resolution
+        providers_dict = {}
+        for api, provider_list in self.providers.items():
+            providers_dict[api] = [p.model_dump() for p in provider_list]
+
+        # Resolve backend references
+        resolved_providers = resolve_provider_kvstore_references(providers_dict, self.persistence.backends)
+
+        # Convert back to Provider objects
+        for api, provider_dicts in resolved_providers.items():
+            self.providers[api] = [Provider(**provider_dict) for provider_dict in provider_dicts]
+
+        return self
 
 
 class BuildConfig(BaseModel):

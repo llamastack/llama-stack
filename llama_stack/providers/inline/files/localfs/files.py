@@ -46,7 +46,7 @@ class LocalfsFilesImpl(Files):
         storage_path.mkdir(parents=True, exist_ok=True)
 
         # Initialize SQL store for metadata
-        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.config.metadata_store), self.policy)
+        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.config.persistence), self.policy)
         await self.sql_store.create_table(
             "openai_files",
             {

@@ -15,7 +15,7 @@ class LocalfsFilesImplConfig(BaseModel):
     storage_dir: str = Field(
         description="Directory to store uploaded files",
     )
-    metadata_store: SqlStoreConfig = Field(
+    persistence: SqlStoreConfig = Field(
         description="SQL store configuration for file metadata",
     )
     ttl_secs: int = 365 * 24 * 60 * 60  # 1 year
@@ -24,7 +24,7 @@ class LocalfsFilesImplConfig(BaseModel):
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
         return {
             "storage_dir": "${env.FILES_STORAGE_DIR:=" + __distro_dir__ + "/files}",
-            "metadata_store": SqliteSqlStoreConfig.sample_run_config(
+            "persistence": SqliteSqlStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="files_metadata.db",
             ),

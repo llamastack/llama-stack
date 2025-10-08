@@ -324,7 +324,7 @@ class Stack:
                 TEST_RECORDING_CONTEXT.__enter__()
                 logger.info(f"Inference recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
 
-        dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
+        dist_registry, _ = await create_dist_registry(self.run_config.persistence, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
         impls = await resolve_impls(
             self.run_config, self.provider_registry or get_provider_registry(self.run_config), dist_registry, policy

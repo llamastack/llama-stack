@@ -21,14 +21,14 @@ from llama_stack.apis.conversations.conversations import (
     Conversations,
     Metadata,
 )
-from llama_stack.core.datatypes import AccessRule
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
+from llama_stack.core.datatypes import AccessRule, StackRunConfig
+from llama_stack.core.persistence_resolver import resolve_conversations_store_config
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.providers.utils.sqlstore.sqlstore import (
+    PostgresSqlStoreConfig,
     SqliteSqlStoreConfig,
-    SqlStoreConfig,
     sqlstore_impl,
 )
 
@@ -38,14 +38,17 @@ logger = get_logger(name=__name__, category="openai_conversations")
 class ConversationServiceConfig(BaseModel):
     """Configuration for the built-in conversation service.
 
-    :param conversations_store: SQL store configuration for conversations (defaults to SQLite)
+    :param run_config: Stack run configuration for resolving persistence
     :param policy: Access control rules
     """
 
-    conversations_store: SqlStoreConfig = SqliteSqlStoreConfig(
-        db_path=(DISTRIBS_BASE_DIR / "conversations.db").as_posix()
-    )
+    run_config: StackRunConfig
     policy: list[AccessRule] = []
+
+    @property
+    def conversations_store(self) -> SqliteSqlStoreConfig | PostgresSqlStoreConfig:
+        """Resolve conversations store from persistence config."""
+        return resolve_conversations_store_config(self.run_config.persistence)
 
 
 async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Any, Any]):

@@ -54,7 +54,7 @@ class MetaReferenceEvalImpl(
         self.benchmarks = {}
 
     async def initialize(self) -> None:
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        self.kvstore = await kvstore_impl(self.config.persistence)
         # Load existing benchmarks from kvstore
         start_key = EVAL_TASKS_PREFIX
         end_key = f"{EVAL_TASKS_PREFIX}\xff"

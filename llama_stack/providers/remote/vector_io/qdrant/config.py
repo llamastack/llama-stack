@@ -27,13 +27,13 @@ class QdrantVectorIOConfig(BaseModel):
     prefix: str | None = None
     timeout: int | None = None
     host: str | None = None
-    kvstore: KVStoreConfig
+    persistence: KVStoreConfig
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
             "api_key": "${env.QDRANT_API_KEY:=}",
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="qdrant_registry.db",
             ),

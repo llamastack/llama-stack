@@ -12,7 +12,7 @@ from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVSt
 class ReferenceBatchesImplConfig(BaseModel):
     """Configuration for the Reference Batches implementation."""
 
-    kvstore: KVStoreConfig = Field(
+    persistence: KVStoreConfig = Field(
         description="Configuration for the key-value store backend.",
     )
 
@@ -33,7 +33,7 @@ class ReferenceBatchesImplConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict:
         return {
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="batches.db",
             ),

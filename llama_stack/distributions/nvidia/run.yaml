@@ -24,9 +24,9 @@ providers:
   - provider_id: faiss
     provider_type: inline::faiss
     config:
-      kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/faiss_store.db
+      persistence:
+        backend: kvstore
+        namespace: faiss
   safety:
   - provider_id: nvidia
     provider_type: remote::nvidia
@@ -37,12 +37,13 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/agents_store.db
-      responses_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/responses_store.db
+      persistence:
+        agent_state:
+          backend: kvstore
+          namespace: agents
+        responses:
+          backend: sqlstore
+          namespace: responses
   telemetry:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -83,15 +84,22 @@ providers:
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/nvidia/files}
-      metadata_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/files_metadata.db
-metadata_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/registry.db
-inference_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/inference_store.db
+      persistence:
+        backend: kvstore
+        namespace: files
+persistence:
+  backends:
+    kvstore:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/kvstore.db
+    sqlstore:
+      type: sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/sqlstore.db
+  stores:
+    metadata:
+      backend: kvstore
+    inference:
+      backend: sqlstore
 models: []
 shields: []
 vector_dbs: []

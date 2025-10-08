@@ -15,7 +15,7 @@ from llama_stack.schema_utils import json_schema_type
 @json_schema_type
 class ChromaVectorIOConfig(BaseModel):
     db_path: str
-    kvstore: KVStoreConfig = Field(description="Config for KV store backend")
+    persistence: KVStoreConfig = Field(description="Config for KV store backend")
 
     @classmethod
     def sample_run_config(
@@ -23,7 +23,7 @@ class ChromaVectorIOConfig(BaseModel):
     ) -> dict[str, Any]:
         return {
             "db_path": db_path,
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
+            "persistence": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="chroma_inline_registry.db",
             ),
