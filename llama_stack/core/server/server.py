@@ -367,7 +367,7 @@ def create_app() -> StackApp:
     if not os.environ.get("LLAMA_STACK_DISABLE_VERSION_CHECK"):
         app.add_middleware(ClientVersionMiddleware)
 
-    impls = app.stack.get_impls()
+    impls = app.stack.impls
 
     if config.server.auth:
         logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
