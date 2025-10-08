@@ -4,6 +4,13 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+# Initialize OpenTelemetry auto-instrumentation
+# Note: This must be done before the FastAPI app is created and imported
+# https://opentelemetry.io/docs/zero-code/python/troubleshooting/#use-programmatic-auto-instrumentation
+from opentelemetry.instrumentation.auto_instrumentation import initialize
+initialize()
+
+
 import asyncio
 import concurrent.futures
 import functools
@@ -409,10 +416,10 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
+    # Only initialize llama-stack telemetry system if explicitly configured
+    # Otherwise, allow external instrumentation (e.g., opentelemetry-instrument) to work
     if Api.telemetry in impls:
         setup_logger(impls[Api.telemetry])
-    else:
-        setup_logger(TelemetryAdapter(TelemetryConfig(), {}))
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)
