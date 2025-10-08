@@ -16,9 +16,6 @@ class AzureInferenceAdapter(OpenAIMixin):
 
     provider_data_api_key_field: str = "azure_api_key"
 
-    def get_api_key(self) -> str:
-        return self.config.api_key.get_secret_value()
-
     def get_base_url(self) -> str:
         """
         Get the Azure API base URL.

@@ -39,15 +39,12 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
 
     provider_data_api_key_field: str = "together_api_key"
 
-    def get_api_key(self):
-        return self.config.api_key.get_secret_value() if self.config.api_key else None
-
     def get_base_url(self):
         return BASE_URL
 
     def _get_client(self) -> AsyncTogether:
         together_api_key = None
-        config_api_key = self.config.api_key.get_secret_value() if self.config.api_key else None
+        config_api_key = self.config.auth_credential.get_secret_value() if self.config.auth_credential else None
         if config_api_key:
             together_api_key = config_api_key
         else:

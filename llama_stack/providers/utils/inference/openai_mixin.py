@@ -40,7 +40,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     This class handles direct OpenAI API calls using the AsyncOpenAI client.
 
     This is an abstract base class that requires child classes to implement:
-    - get_api_key(): Method to retrieve the API key
     - get_base_url(): Method to retrieve the OpenAI-compatible API base URL
 
     The behavior of this class can be customized by child classes in the following ways:
@@ -87,17 +86,15 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
 
-    @abstractmethod
-    def get_api_key(self) -> str:
+    def get_api_key(self) -> str | None:
         """
         Get the API key.
 
-        This method must be implemented by child classes to provide the API key
-        for authenticating with the OpenAI API or compatible endpoints.
-
-        :return: The API key as a string
+        :return: The API key as a string, or None if not set
         """
-        pass
+        if self.config.auth_credential is None:
+            return None
+        return self.config.auth_credential.get_secret_value()
 
     @abstractmethod
     def get_base_url(self) -> str:
@@ -176,13 +173,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
                 api_key = getattr(provider_data, self.provider_data_api_key_field)
 
-            if not api_key:  # TODO: let get_api_key return None
-                raise ValueError(
-                    "API key is not set. Please provide a valid API key in the "
-                    "provider data header, e.g. x-llamastack-provider-data: "
-                    f'{{"{self.provider_data_api_key_field}": "<API_KEY>"}}, '
-                    "or in the provider config."
-                )
+        if not api_key:
+            message = "API key not provided."
+            if self.provider_data_api_key_field:
+                message += f' Please provide a valid API key in the provider data header, e.g. x-llamastack-provider-data: {{"{self.provider_data_api_key_field}": "<API_KEY>"}}.'
+            raise ValueError(message)
 
         return AsyncOpenAI(
             api_key=api_key,

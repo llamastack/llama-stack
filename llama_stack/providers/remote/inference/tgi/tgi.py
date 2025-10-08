@@ -30,7 +30,7 @@ class _HfAdapter(OpenAIMixin):
     overwrite_completion_id = True  # TGI always returns id=""
 
     def get_api_key(self):
-        return self.api_key.get_secret_value()
+        return "NO KEY REQUIRED"
 
     def get_base_url(self):
         return self.url

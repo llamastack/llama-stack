@@ -38,8 +38,10 @@ class VLLMInferenceAdapter(OpenAIMixin):
 
     provider_data_api_key_field: str = "vllm_api_token"
 
-    def get_api_key(self) -> str:
-        return self.config.api_token or ""
+    def get_api_key(self) -> str | None:
+        if self.config.auth_credential:
+            return self.config.auth_credential.get_secret_value()
+        return "NO KEY REQUIRED"
 
     def get_base_url(self) -> str:
         """Get the base URL from config."""

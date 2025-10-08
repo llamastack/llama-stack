@@ -7,7 +7,7 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -24,10 +24,6 @@ class WatsonXConfig(RemoteInferenceProviderConfig):
     url: str = Field(
         default_factory=lambda: os.getenv("WATSONX_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
         description="A base url for accessing the watsonx.ai",
-    )
-    api_key: SecretStr | None = Field(
-        default_factory=lambda: os.getenv("WATSONX_API_KEY"),
-        description="The watsonx API key",
     )
     project_id: str | None = Field(
         default_factory=lambda: os.getenv("WATSONX_PROJECT_ID"),

@@ -23,8 +23,5 @@ class FireworksInferenceAdapter(OpenAIMixin):
 
     provider_data_api_key_field: str = "fireworks_api_key"
 
-    def get_api_key(self) -> str:
-        return self.config.api_key.get_secret_value() if self.config.api_key else None  # type: ignore[return-value]
-
     def get_base_url(self) -> str:
         return "https://api.fireworks.ai/inference/v1"

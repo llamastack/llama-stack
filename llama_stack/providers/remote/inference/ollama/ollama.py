@@ -59,7 +59,7 @@ class OllamaInferenceAdapter(OpenAIMixin):
         return self._clients[loop]
 
     def get_api_key(self):
-        return "NO_KEY"
+        return "NO KEY REQUIRED"
 
     def get_base_url(self):
         return self.config.url.rstrip("/") + "/v1"

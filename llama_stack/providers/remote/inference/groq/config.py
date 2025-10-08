@@ -21,12 +21,6 @@ class GroqProviderDataValidator(BaseModel):
 
 @json_schema_type
 class GroqConfig(RemoteInferenceProviderConfig):
-    api_key: str | None = Field(
-        # The Groq client library loads the GROQ_API_KEY environment variable by default
-        default=None,
-        description="The Groq API key",
-    )
-
     url: str = Field(
         default="https://api.groq.com",
         description="The URL for the Groq AI server",
