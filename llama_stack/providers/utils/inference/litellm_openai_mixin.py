@@ -299,6 +299,7 @@ class LiteLLMOpenAIMixin(
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         # Add usage tracking for streaming when telemetry is active
         from llama_stack.providers.utils.telemetry.tracing import get_current_span
@@ -335,6 +336,7 @@ class LiteLLMOpenAIMixin(
             user=user,
             api_key=self.get_api_key(),
             api_base=self.api_base,
+            **kwargs,
         )
         return await litellm.acompletion(**params)
 
