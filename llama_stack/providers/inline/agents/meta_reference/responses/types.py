@@ -27,6 +27,7 @@ class ToolExecutionResult(BaseModel):
     sequence_number: int
     final_output_message: OpenAIResponseOutput | None = None
     final_input_message: OpenAIMessageParam | None = None
+    citation_files: dict[str, str] | None = None
 
 
 @dataclass

@@ -24,6 +24,10 @@ class RemoteInferenceProviderConfig(BaseModel):
         default=None,
         description="List of models that should be registered with the model registry. If None, all models are allowed.",
     )
+    refresh_models: bool = Field(
+        default=False,
+        description="Whether to refresh models periodically from the provider",
+    )
 
 
 # TODO: this class is more confusing than useful right now. We need to make it

@@ -293,6 +293,18 @@ class OpenAIVectorStoreMixin(ABC):
         await self._resume_incomplete_batches()
         self._last_file_batch_cleanup_time = 0
 
+    async def shutdown(self) -> None:
+        """Clean up mixin resources including background tasks."""
+        # Cancel any running file batch tasks gracefully
+        tasks_to_cancel = list(self._file_batch_tasks.items())
+        for _, task in tasks_to_cancel:
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+
     @abstractmethod
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Delete chunks from a vector store."""
@@ -587,7 +599,7 @@ class OpenAIVectorStoreMixin(ABC):
                 content = self._chunk_to_vector_store_content(chunk)
 
                 response_data_item = VectorStoreSearchResponse(
-                    file_id=chunk.metadata.get("file_id", ""),
+                    file_id=chunk.metadata.get("document_id", ""),
                     filename=chunk.metadata.get("filename", ""),
                     score=score,
                     attributes=chunk.metadata,
@@ -746,12 +758,15 @@ class OpenAIVectorStoreMixin(ABC):
 
             content = content_from_data_and_mime_type(content_response.body, mime_type)
 
+            chunk_attributes = attributes.copy()
+            chunk_attributes["filename"] = file_response.filename
+
             chunks = make_overlapped_chunks(
                 file_id,
                 content,
                 max_chunk_size_tokens,
                 chunk_overlap_tokens,
-                attributes,
+                chunk_attributes,
             )
             if not chunks:
                 vector_store_file_object.status = "failed"

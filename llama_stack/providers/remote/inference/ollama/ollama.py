@@ -72,9 +72,6 @@ class OllamaInferenceAdapter(OpenAIMixin):
                 f"Ollama Server is not running (message: {r['message']}). Make sure to start it using `ollama serve` in a separate terminal"
             )
 
-    async def should_refresh_models(self) -> bool:
-        return self.config.refresh_models
-
     async def health(self) -> HealthResponse:
         """
         Performs a health check by verifying connectivity to the Ollama server.

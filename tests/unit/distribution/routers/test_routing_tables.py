@@ -201,6 +201,12 @@ async def test_models_routing_table(cached_disk_dist_registry):
     non_existent = await table.get_object_by_identifier("model", "non-existent-model")
     assert non_existent is None
 
+    # Test has_model
+    assert await table.has_model("test_provider/test-model")
+    assert await table.has_model("test_provider/test-model-2")
+    assert not await table.has_model("non-existent-model")
+    assert not await table.has_model("test_provider/non-existent-model")
+
     await table.unregister_model(model_id="test_provider/test-model")
     await table.unregister_model(model_id="test_provider/test-model-2")
 

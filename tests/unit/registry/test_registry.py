@@ -125,8 +125,15 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
         provider_resource_id="test_vector_db_2",
         provider_id="baz",  # Same provider_id
     )
-    await cached_disk_dist_registry.register(duplicate_vector_db)
 
+    # Now we expect a ValueError to be raised for duplicate registration
+    with pytest.raises(
+        ValueError,
+        match=r"Provider 'baz' is already registered.*Unregister the existing provider first before registering it again.",
+    ):
+        await cached_disk_dist_registry.register(duplicate_vector_db)
+
+    # Verify the original registration is still intact
     result = await cached_disk_dist_registry.get("vector_db", "test_vector_db_2")
     assert result is not None
     assert result.embedding_model == original_vector_db.embedding_model  # Original values preserved

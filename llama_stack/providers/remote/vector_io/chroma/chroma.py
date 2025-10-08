@@ -167,7 +167,8 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.openai_vector_stores = await self._load_openai_vector_stores()
 
     async def shutdown(self) -> None:
-        pass
+        # Clean up mixin resources (file batch tasks)
+        await super().shutdown()
 
     async def register_vector_db(
         self,

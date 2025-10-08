@@ -225,8 +225,8 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPr
         await self.initialize_openai_vector_stores()
 
     async def shutdown(self) -> None:
-        # Cleanup if needed
-        pass
+        # Clean up mixin resources (file batch tasks)
+        await super().shutdown()
 
     async def health(self) -> HealthResponse:
         """
