@@ -1,0 +1,88 @@
+{
+  "test_id": "tests/integration/agents/test_agents.py::test_create_turn_response[ollama/llama3.2:3b-instruct-fp16-client_tools1]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant"
+        },
+        {
+          "role": "user",
+          "content": "Call get_boiling_point_with_metadata tool and answer What is the boiling point of polyjuice?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_2by867x5",
+              "type": "function",
+              "function": {
+                "name": "get_boiling_point_with_metadata",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_2by867x5",
+          "content": "Error when running tool: get_boiling_point_with_metadata() missing 1 required positional argument: 'liquid_name'"
+        }
+      ],
+      "max_tokens": 512,
+      "stream": true,
+      "temperature": 0.0001,
+      "tool_choice": "auto",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_boiling_point_with_metadata",
+            "description": "Returns the boiling point of a liquid in Celcius or Fahrenheit"
+          }
+        }
+      ],
+      "top_p": 0.9,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1aec22b89993",
+          "choices": [
+            {
+              "delta": {
+                "content": "I apologize for the mistake. The `get_boiling_point_with_metadata` tool requires a liquid name as an argument.\n\nTo answer your question, I'll need to know the liquid name you're referring to. However, I can tell you that polyjuice is not a real substance with a known boiling point. Polyjuice is actually a fictional potion from the Harry Potter series created by J.K. Rowling.\n\nIf you provide me with the actual liquid name, I'd be happy to help you find its boiling point using the `get_boiling_point_with_metadata` tool.",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      }
+    ],
+    "is_streaming": true
+  }
+}

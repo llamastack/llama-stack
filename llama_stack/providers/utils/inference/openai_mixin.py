@@ -313,6 +313,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """
         Direct OpenAI chat completion API call.
@@ -361,7 +362,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             user=user,
         )
 
-        resp = await self.client.chat.completions.create(**params)
+        # Pass any additional provider-specific parameters as extra_body
+        extra_body = kwargs if kwargs else {}
+
+        resp = await self.client.chat.completions.create(**params, extra_body=extra_body)
 
         return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
 
