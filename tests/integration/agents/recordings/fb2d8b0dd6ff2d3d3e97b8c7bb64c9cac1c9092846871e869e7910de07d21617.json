@@ -1,0 +1,88 @@
+{
+  "test_id": "tests/integration/agents/test_agents.py::test_custom_tool_infinite_loop[ollama/llama3.2:3b-instruct-fp16]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant Always respond with tool calls no matter what. "
+        },
+        {
+          "role": "user",
+          "content": "Get the boiling point of polyjuice with a tool call."
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_u7z0cep6",
+              "type": "function",
+              "function": {
+                "name": "get_boiling_point",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_u7z0cep6",
+          "content": "Error when running tool: get_boiling_point() missing 1 required positional argument: 'liquid_name'"
+        }
+      ],
+      "max_tokens": 512,
+      "stream": true,
+      "temperature": 0.0001,
+      "tool_choice": "auto",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_boiling_point",
+            "description": "Returns the boiling point of a liquid in Celcius or Fahrenheit."
+          }
+        }
+      ],
+      "top_p": 0.9,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fb2d8b0dd6ff",
+          "choices": [
+            {
+              "delta": {
+                "content": "I was unable to find any information on the boiling point of Polyjuice. It's possible that it's not a real substance or it's not well-documented.\n\nHowever, I can suggest some alternatives:\n\n* If you're looking for the boiling point of a specific liquid, please provide its name and I'll try to look it up.\n* If you have any more information about Polyjuice, such as its chemical composition or properties, I may be able to help you find the answer.\n\nPlease let me know how I can assist you further.",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      }
+    ],
+    "is_streaming": true
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/telemetry/test_openai_telemetry.py::test_openai_completion_creates_telemetry[txt=ollama/llama3.2:3b-instruct-fp16]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test OpenAI telemetry creation"
+        }
+      ],
+      "stream": false,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-3c888da935d0",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "This is an example of a simple API using Flask, a Python web framework for building small web applications.\n\nThe API has three endpoints:\n\n1. `GET /telemetry`: This endpoint will return all the available telemetry data.\n\n2. `POST /telemetry`: This endpoint will create new telemetry data.\n\n\n```python\nfrom flask import Flask, request, jsonify\n\napp = Flask(__name__)\n\n# In-memory store for telemetry data\ntelemetry_data = []\n\n@app.route('/telemetry', methods=['GET'])\ndef get_telemetry():\n    return jsonify(telemetry_data)\n\n@app.route('/telemetry', methods=['POST'])\n def create_telemetry():\n  new_telemetry= {\n        \"id\" : len(telemetry_data)+1,\n        \"name\" : request.json['name'],\n        \"description\":request.json['description']\n      }\n   telemetry_data.append(new_telemetry)\n    return jsonify({'msg': 'Telemetry created successfully'})\n\n\n@app.route('/telemetry/:id', methods=['GET'])\n def get_telemetry_id(id):\n    for item in telemetry_data:\n     if(item[\"id\"]==int(id)):\n        return jsonify(item)\n\n    return {'message':\"TELEMETRY id does not exist\"}\n\n\n@app.route('/telemetry/:id', methods=['PUT'])\n def updateTelemetryId(id):\n    for item in telemetry_data :\n        if (item['id'] == int(id)):\n            new_telemetry= {\n                \"name\":request.json['name'],\n             \"description\":request.json[\"description\"]\n           }\n         telemetry_data[item]['name']=new_telemetry[\"name\"]\n          telemetry_data[item]['description']=new_telemetry[\"description\"]\n\n            return jsonify({'message\":\"TELEMETRY data updated successfully\"})\n\n\n@app.route('/telemetry/:id', methods=['DELETE'])\ndef deleteTelemetry(id):\n    for item in telemetry_data:\n        if (item['id'] == int(id)):\n            telemetry_data.remove(item)\n            return {'message':\"item has been removed\"}\n        return {\"error\" : \"TELEMETRY id does not exist\"}\n\n@app.route('/getalltelemetry', methods=['GET'])\ndef getAllTelemetry():\n    for item in telemetry_data:\n        print(f'telemetry name:' + str(item['name']) +\"Description:\",str(item['description']))\n\nif __name__ == \"__main__\":\n app.run(debug=True)\n\n```\n\n\nTelemetry APIs Documentation\n\n1.  Get\n1.   - endpoint: \\ `/telemetry`\n1.   - HTTP Verb: GET\n1.   - purpose: To retrieve the list of all telemetry data.\n1.   - description : Returns a JSON object containing details of all telemetry data.\n\n2.  Create\n1.  endpoint: `\\ /telemetry`\n1.  HTTP Verb: POST\n1.  Purpose: to insert  new telemetry information .\n1. Descripation : Creates a new Telemetry with the specified name and description.\n\n3.  Update Telemetry\n1.  endpoint:\\ `/telemetry/:id` \\\n     -HTTP Verb: PUT \n     -description :\\ Updates details of existing telemetry with specified ID.\n     example :\\\n1     GET /telemetry/1 HTTP/1.1\n\n4.   Delete Telemetry\n1.  endpoint:\\ `/telemetry/:id`\n        -description :\\Delete a Telemetry with the specified id .\n      examples: \n\n\\ Get all Telemetry :\n\\ \\`/totalTelemery` \\\n\\ `http ://127.0.0.1:5000/v3/totaltelemetry`\n```\n\n**Explanation**\n\nThis solution utilizes Flask to handle client requests and return JSON formatted data as response.\n\nWe start by creating an app instance, followed by the `@app.route()` declaration decorator for each endpoint.\n\nIn the above code, we stored our in-memory  telemetry informations , it stores telemetry informations at memory which may not be suitable if you have large number of Telemetry information .\n\nThe next steps are handling HTTP request:\n\n*   GET Request `/api/telemetry`: The response will contain `id`, `name` and `description` details.\n*   POST `/api/telemetry`: This creates a new telemetry, stores it to local variable  :`telemetry_data`\n*     For PUT , update name or description from existing Telemtery , use request.json['key']\n*     For Delete `/telemetry/\\$id`, delete the corresponding record using id\n\nTo get started, save this code snippet in a file like `api.py`. Before running it with Python (command + R), make sure to install Flask.\n\nBefore starting , create directory structure of your desired output .\ncreate the necessary files as below :\n\n\n```\n- api/\n    |- app.py\n    |- requirements.txt\n|-venv/  ### virtual environment will be here \n```\n\n\n\nThen install dependencies by running:\n\n`pip install -r requirements`\n\nNote down the port number and ip address which is shown by flask run command , in your API Client.\n\nThis script defines three endpoints for managing telemetry data. Here are their descriptions:\n\n\n-   **GET /telemetry**: Retrieve a list of all available telemetry data.\n\n\n\n-   **POST /telemetry**: Create new telemetry information.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 1067,
+          "prompt_tokens": 30,
+          "total_tokens": 1097,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

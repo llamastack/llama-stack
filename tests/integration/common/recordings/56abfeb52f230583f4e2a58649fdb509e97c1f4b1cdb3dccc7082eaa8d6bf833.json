@@ -1,0 +1,58 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 1"
+        }
+      ],
+      "stream": false,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-56abfeb52f23",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I'd be happy to help you test the OpenAI API. Unfortunately, it looks like the OpenAI API, also known as the \"API Scratch\" environment, is no longer available for testing.\n\nHowever, I can suggest an alternative approach:\n\nYou can use the OpenAI's Discord bot or the API Gateway to get started with their API. Here are some steps you can follow:\n\n1. Create a Discord account and join the openai community server.\n2. Apply for access to the API and wait for approval (this might take a few days).\n3. Once approved, you'll receive an invite link to the API Gateway.\n4. Follow the instructions in the API Gateway to get started with the API.\n\nKeep in mind that these steps are subject to change, and it's always best to check OpenAI's official documentation for the most up-to-date information.\n\nIf you're looking for a similar testing environment, you might consider using other AI platforms or libraries that offer APIs or sandbox environments for testing. Some alternatives include:\n\n* Google Cloud AI Platform\n* Microsoft Azure Cognitive Services\n* Hugging Face Transformers\n\nLet me know if you have any further questions or need help with these alternatives!",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 241,
+          "prompt_tokens": 31,
+          "total_tokens": 272,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
