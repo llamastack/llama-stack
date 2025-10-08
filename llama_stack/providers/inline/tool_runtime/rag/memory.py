@@ -8,8 +8,6 @@ import asyncio
 import base64
 import io
 import mimetypes
-import secrets
-import string
 from typing import Any
 
 import httpx
@@ -50,10 +48,6 @@ from .config import RagToolRuntimeConfig
 from .context_retriever import generate_rag_query
 
 log = get_logger(name=__name__, category="tool_runtime")
-
-
-def make_random_string(length: int = 8):
-    return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
 async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:

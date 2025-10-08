@@ -32,7 +32,7 @@ from llama_stack.providers.utils.sqlstore.sqlstore import (
     sqlstore_impl,
 )
 
-logger = get_logger(name=__name__, category="openai::conversations")
+logger = get_logger(name=__name__, category="openai_conversations")
 
 
 class ConversationServiceConfig(BaseModel):

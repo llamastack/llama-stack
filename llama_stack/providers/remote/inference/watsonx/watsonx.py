@@ -4,240 +4,120 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
-from ibm_watsonx_ai.foundation_models import Model
-from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
-from openai import AsyncOpenAI
+import requests
 
-from llama_stack.apis.inference import (
-    ChatCompletionRequest,
-    CompletionRequest,
-    GreedySamplingStrategy,
-    Inference,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAICompletion,
-    OpenAIEmbeddingsResponse,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
-    TopKSamplingStrategy,
-    TopPSamplingStrategy,
-)
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
-from llama_stack.providers.utils.inference.openai_compat import (
-    prepare_openai_completion_params,
-)
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    chat_completion_request_to_prompt,
-    completion_request_to_prompt,
-    request_has_media,
-)
-
-from . import WatsonXConfig
-from .models import MODEL_ENTRIES
-
-logger = get_logger(name=__name__, category="inference::watsonx")
+from llama_stack.apis.inference import ChatCompletionRequest
+from llama_stack.apis.models import Model
+from llama_stack.apis.models.models import ModelType
+from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
+from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 
 
-# Note on structured output
-# WatsonX returns responses with a json embedded into a string.
-# Examples:
+class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
+    _model_cache: dict[str, Model] = {}
 
-# ChatCompletionResponse(completion_message=CompletionMessage(content='```json\n{\n
-# "first_name": "Michael",\n  "last_name": "Jordan",\n'...)
-# Not even a valid JSON, but we can still extract the JSON from the content
+    def __init__(self, config: WatsonXConfig):
+        LiteLLMOpenAIMixin.__init__(
+            self,
+            litellm_provider_name="watsonx",
+            api_key_from_config=config.api_key.get_secret_value() if config.api_key else None,
+            provider_data_api_key_field="watsonx_api_key",
+        )
+        self.available_models = None
+        self.config = config
 
-# CompletionResponse(content=' \nThe best answer is $\\boxed{\\{"name": "Michael Jordan",
-# "year_born": "1963", "year_retired": "2003"\\}}$')
-# Find the start of the boxed content
+    def get_base_url(self) -> str:
+        return self.config.url
 
+    async def _get_params(self, request: ChatCompletionRequest) -> dict[str, Any]:
+        # Get base parameters from parent
+        params = await super()._get_params(request)
 
-class WatsonXInferenceAdapter(Inference, ModelRegistryHelper):
-    def __init__(self, config: WatsonXConfig) -> None:
-        ModelRegistryHelper.__init__(self, model_entries=MODEL_ENTRIES)
-
-        logger.info(f"Initializing watsonx InferenceAdapter({config.url})...")
-        self._config = config
-        self._openai_client: AsyncOpenAI | None = None
-
-        self._project_id = self._config.project_id
-
-    def _get_client(self, model_id) -> Model:
-        config_api_key = self._config.api_key.get_secret_value() if self._config.api_key else None
-        config_url = self._config.url
-        project_id = self._config.project_id
-        credentials = {"url": config_url, "apikey": config_api_key}
-
-        return Model(model_id=model_id, credentials=credentials, project_id=project_id)
-
-    def _get_openai_client(self) -> AsyncOpenAI:
-        if not self._openai_client:
-            self._openai_client = AsyncOpenAI(
-                base_url=f"{self._config.url}/openai/v1",
-                api_key=self._config.api_key,
-            )
-        return self._openai_client
-
-    async def _get_params(self, request: ChatCompletionRequest | CompletionRequest) -> dict:
-        input_dict = {"params": {}}
-        media_present = request_has_media(request)
-        llama_model = self.get_llama_model(request.model)
-        if isinstance(request, ChatCompletionRequest):
-            input_dict["prompt"] = await chat_completion_request_to_prompt(request, llama_model)
-        else:
-            assert not media_present, "Together does not support media for Completion requests"
-            input_dict["prompt"] = await completion_request_to_prompt(request)
-        if request.sampling_params:
-            if request.sampling_params.strategy:
-                input_dict["params"][GenParams.DECODING_METHOD] = request.sampling_params.strategy.type
-            if request.sampling_params.max_tokens:
-                input_dict["params"][GenParams.MAX_NEW_TOKENS] = request.sampling_params.max_tokens
-            if request.sampling_params.repetition_penalty:
-                input_dict["params"][GenParams.REPETITION_PENALTY] = request.sampling_params.repetition_penalty
-
-            if isinstance(request.sampling_params.strategy, TopPSamplingStrategy):
-                input_dict["params"][GenParams.TOP_P] = request.sampling_params.strategy.top_p
-                input_dict["params"][GenParams.TEMPERATURE] = request.sampling_params.strategy.temperature
-            if isinstance(request.sampling_params.strategy, TopKSamplingStrategy):
-                input_dict["params"][GenParams.TOP_K] = request.sampling_params.strategy.top_k
-            if isinstance(request.sampling_params.strategy, GreedySamplingStrategy):
-                input_dict["params"][GenParams.TEMPERATURE] = 0.0
-
-        input_dict["params"][GenParams.STOP_SEQUENCES] = ["<|endoftext|>"]
-
-        params = {
-            **input_dict,
-        }
+        # Add watsonx.ai specific parameters
+        params["project_id"] = self.config.project_id
+        params["time_limit"] = self.config.timeout
         return params
 
-    async def openai_embeddings(
-        self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
-    ) -> OpenAIEmbeddingsResponse:
-        raise NotImplementedError()
+    # Copied from OpenAIMixin
+    async def check_model_availability(self, model: str) -> bool:
+        """
+        Check if a specific model is available from the provider's /v1/models.
 
-    async def openai_completion(
-        self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
-    ) -> OpenAICompletion:
-        model_obj = await self.model_store.get_model(model)
-        params = await prepare_openai_completion_params(
-            model=model_obj.provider_resource_id,
-            prompt=prompt,
-            best_of=best_of,
-            echo=echo,
-            frequency_penalty=frequency_penalty,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_tokens=max_tokens,
-            n=n,
-            presence_penalty=presence_penalty,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            top_p=top_p,
-            user=user,
-        )
-        return await self._get_openai_client().completions.create(**params)  # type: ignore
+        :param model: The model identifier to check.
+        :return: True if the model is available dynamically, False otherwise.
+        """
+        if not self._model_cache:
+            await self.list_models()
+        return model in self._model_cache
 
-    async def openai_chat_completion(
-        self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        model_obj = await self.model_store.get_model(model)
-        params = await prepare_openai_completion_params(
-            model=model_obj.provider_resource_id,
-            messages=messages,
-            frequency_penalty=frequency_penalty,
-            function_call=function_call,
-            functions=functions,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_completion_tokens=max_completion_tokens,
-            max_tokens=max_tokens,
-            n=n,
-            parallel_tool_calls=parallel_tool_calls,
-            presence_penalty=presence_penalty,
-            response_format=response_format,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_logprobs=top_logprobs,
-            top_p=top_p,
-            user=user,
-        )
-        if params.get("stream", False):
-            return self._stream_openai_chat_completion(params)
-        return await self._get_openai_client().chat.completions.create(**params)  # type: ignore
+    async def list_models(self) -> list[Model] | None:
+        self._model_cache = {}
+        models = []
+        for model_spec in self._get_model_specs():
+            functions = [f["id"] for f in model_spec.get("functions", [])]
+            # Format: {"embedding_dimension": 1536, "context_length": 8192}
 
-    async def _stream_openai_chat_completion(self, params: dict) -> AsyncGenerator:
-        # watsonx.ai sometimes adds usage data to the stream
-        include_usage = False
-        if params.get("stream_options", None):
-            include_usage = params["stream_options"].get("include_usage", False)
-        stream = await self._get_openai_client().chat.completions.create(**params)
+            # Example of an embedding model:
+            # {'model_id': 'ibm/granite-embedding-278m-multilingual',
+            # 'label': 'granite-embedding-278m-multilingual',
+            # 'model_limits': {'max_sequence_length': 512, 'embedding_dimension': 768},
+            # ...
+            provider_resource_id = f"{self.__provider_id__}/{model_spec['model_id']}"
+            if "embedding" in functions:
+                embedding_dimension = model_spec["model_limits"]["embedding_dimension"]
+                context_length = model_spec["model_limits"]["max_sequence_length"]
+                embedding_metadata = {
+                    "embedding_dimension": embedding_dimension,
+                    "context_length": context_length,
+                }
+                model = Model(
+                    identifier=model_spec["model_id"],
+                    provider_resource_id=provider_resource_id,
+                    provider_id=self.__provider_id__,
+                    metadata=embedding_metadata,
+                    model_type=ModelType.embedding,
+                )
+                self._model_cache[provider_resource_id] = model
+                models.append(model)
+            if "text_chat" in functions:
+                model = Model(
+                    identifier=model_spec["model_id"],
+                    provider_resource_id=provider_resource_id,
+                    provider_id=self.__provider_id__,
+                    metadata={},
+                    model_type=ModelType.llm,
+                )
+                # In theory, I guess it is possible that a model could be both an embedding model and a text chat model.
+                # In that case, the cache will record the generator Model object, and the list which we return will have
+                # both the generator Model object and the text chat Model object.  That's fine because the cache is
+                # only used for check_model_availability() anyway.
+                self._model_cache[provider_resource_id] = model
+                models.append(model)
+        return models
 
-        seen_finish_reason = False
-        async for chunk in stream:
-            # Final usage chunk with no choices that the user didn't request, so discard
-            if not include_usage and seen_finish_reason and len(chunk.choices) == 0:
-                break
-            yield chunk
-            for choice in chunk.choices:
-                if choice.finish_reason:
-                    seen_finish_reason = True
-                    break
+    # LiteLLM provides methods to list models for many providers, but not for watsonx.ai.
+    # So we need to implement our own method to list models by calling the watsonx.ai API.
+    def _get_model_specs(self) -> list[dict[str, Any]]:
+        """
+        Retrieves foundation model specifications from the watsonx.ai API.
+        """
+        url = f"{self.config.url}/ml/v1/foundation_model_specs?version=2023-10-25"
+        headers = {
+            # Note that there is no authorization header.  Listing models does not require authentication.
+            "Content-Type": "application/json",
+        }
+
+        response = requests.get(url, headers=headers)
+
+        # --- Process the Response ---
+        # Raise an exception for bad status codes (4xx or 5xx)
+        response.raise_for_status()
+
+        # If the request is successful, parse and return the JSON response.
+        # The response should contain a list of model specifications
+        response_data = response.json()
+        if "resources" not in response_data:
+            raise ValueError("Resources not found in response")
+        return response_data["resources"]

@@ -7,8 +7,6 @@
 import copy
 import json
 import re
-import secrets
-import string
 import uuid
 import warnings
 from collections.abc import AsyncGenerator
@@ -83,11 +81,6 @@ from llama_stack.providers.utils.telemetry import tracing
 
 from .persistence import AgentPersistence
 from .safety import SafetyException, ShieldRunnerMixin
-
-
-def make_random_string(length: int = 8):
-    return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(length))
-
 
 TOOLS_ATTACHMENT_KEY_REGEX = re.compile(r"__tools_attachment__=(\{.*?\})")
 MEMORY_QUERY_TOOL = "knowledge_search"

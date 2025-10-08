@@ -175,6 +175,8 @@ class StreamingResponseOrchestrator:
             ):
                 yield stream_event
 
+            messages = next_turn_messages
+
             if not function_tool_calls and not non_function_tool_calls:
                 break
 
@@ -187,9 +189,7 @@ class StreamingResponseOrchestrator:
                 logger.info(f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}")
                 break
 
-            messages = next_turn_messages
-
-        self.final_messages = messages.copy() + [current_response.choices[0].message]
+        self.final_messages = messages.copy()
 
         # Create final response
         final_response = OpenAIResponseObject(
@@ -232,9 +232,11 @@ class StreamingResponseOrchestrator:
                                     non_function_tool_calls.append(tool_call)
                                 else:
                                     logger.info(f"Approval denied for {tool_call.id} on {tool_call.function.name}")
+                                    next_turn_messages.pop()
                             else:
                                 logger.info(f"Requesting approval for {tool_call.id} on {tool_call.function.name}")
                                 approvals.append(tool_call)
+                                next_turn_messages.pop()
                         else:
                             non_function_tool_calls.append(tool_call)
 

@@ -4,13 +4,13 @@ apis:
 - agents
 - datasetio
 - eval
+- files
 - inference
 - safety
 - scoring
 - telemetry
 - tool_runtime
 - vector_io
-- files
 providers:
   inference:
   - provider_id: watsonx
@@ -19,8 +19,6 @@ providers:
       url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
       api_key: ${env.WATSONX_API_KEY:=}
       project_id: ${env.WATSONX_PROJECT_ID:=}
-  - provider_id: sentence-transformers
-    provider_type: inline::sentence-transformers
   vector_io:
   - provider_id: faiss
     provider_type: inline::faiss
@@ -48,7 +46,7 @@ providers:
     provider_type: inline::meta-reference
     config:
       service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
-      sinks: ${env.TELEMETRY_SINKS:=console,sqlite}
+      sinks: ${env.TELEMETRY_SINKS:=sqlite}
       sqlite_db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/trace_store.db
       otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
   eval:
@@ -109,102 +107,7 @@ metadata_store:
 inference_store:
   type: sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/inference_store.db
-models:
-- metadata: {}
-  model_id: meta-llama/llama-3-3-70b-instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-3-70b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-3.3-70B-Instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-3-70b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-2-13b-chat
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-2-13b-chat
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-2-13b
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-2-13b-chat
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-3-1-70b-instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-1-70b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-3.1-70B-Instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-1-70b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-3-1-8b-instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-1-8b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-3.1-8B-Instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-1-8b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-3-2-11b-vision-instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-11b-vision-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-3.2-11B-Vision-Instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-11b-vision-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-3-2-1b-instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-1b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-3.2-1B-Instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-1b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-3-2-3b-instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-3b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-3.2-3B-Instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-3b-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-3-2-90b-vision-instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-90b-vision-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-3.2-90B-Vision-Instruct
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-3-2-90b-vision-instruct
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/llama-guard-3-11b-vision
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-guard-3-11b-vision
-  model_type: llm
-- metadata: {}
-  model_id: meta-llama/Llama-Guard-3-11B-Vision
-  provider_id: watsonx
-  provider_model_id: meta-llama/llama-guard-3-11b-vision
-  model_type: llm
-- metadata:
-    embedding_dimension: 384
-  model_id: all-MiniLM-L6-v2
-  provider_id: sentence-transformers
-  model_type: embedding
+models: []
 shields: []
 vector_dbs: []
 datasets: []
