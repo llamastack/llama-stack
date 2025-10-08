@@ -97,6 +97,8 @@ class StreamingResponseOrchestrator:
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = {}
         # Track final messages after all tool executions
         self.final_messages: list[OpenAIMessageParam] = []
+        # mapping for annotations
+        self.citation_files: dict[str, str] = {}
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Initialize output messages
@@ -126,6 +128,7 @@ class StreamingResponseOrchestrator:
             # Text is the default response format for chat completion so don't need to pass it
             # (some providers don't support non-empty response_format when tools are present)
             response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
+            logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
             completion_result = await self.inference_api.openai_chat_completion(
                 model=self.ctx.model,
                 messages=messages,
@@ -160,7 +163,7 @@ class StreamingResponseOrchestrator:
             # Handle choices with no tool calls
             for choice in current_response.choices:
                 if not (choice.message.tool_calls and self.ctx.response_tools):
-                    output_messages.append(await convert_chat_choice_to_response_message(choice))
+                    output_messages.append(await convert_chat_choice_to_response_message(choice, self.citation_files))
 
             # Execute tool calls and coordinate results
             async for stream_event in self._coordinate_tool_execution(
@@ -211,6 +214,8 @@ class StreamingResponseOrchestrator:
 
         for choice in current_response.choices:
             next_turn_messages.append(choice.message)
+            logger.debug(f"Choice message content: {choice.message.content}")
+            logger.debug(f"Choice message tool_calls: {choice.message.tool_calls}")
 
             if choice.message.tool_calls and self.ctx.response_tools:
                 for tool_call in choice.message.tool_calls:
@@ -470,6 +475,8 @@ class StreamingResponseOrchestrator:
                     tool_call_log = result.final_output_message
                     tool_response_message = result.final_input_message
                     self.sequence_number = result.sequence_number
+                    if result.citation_files:
+                        self.citation_files.update(result.citation_files)
 
             if tool_call_log:
                 output_messages.append(tool_call_log)

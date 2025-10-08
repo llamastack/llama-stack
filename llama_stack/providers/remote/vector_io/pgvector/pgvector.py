@@ -390,6 +390,8 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         if self.conn is not None:
             self.conn.close()
             log.info("Connection to PGVector database server closed")
+        # Clean up mixin resources (file batch tasks)
+        await super().shutdown()
 
     async def register_vector_db(self, vector_db: VectorDB) -> None:
         # Persist vector DB metadata in the KV store

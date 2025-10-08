@@ -191,6 +191,8 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
 
     async def shutdown(self) -> None:
         await self.client.close()
+        # Clean up mixin resources (file batch tasks)
+        await super().shutdown()
 
     async def register_vector_db(
         self,

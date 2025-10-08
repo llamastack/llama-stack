@@ -347,6 +347,8 @@ class WeaviateVectorIOAdapter(
     async def shutdown(self) -> None:
         for client in self.client_cache.values():
             client.close()
+        # Clean up mixin resources (file batch tasks)
+        await super().shutdown()
 
     async def register_vector_db(
         self,

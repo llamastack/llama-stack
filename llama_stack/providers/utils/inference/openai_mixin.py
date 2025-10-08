@@ -474,11 +474,17 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     async def check_model_availability(self, model: str) -> bool:
         """
-        Check if a specific model is available from the provider's /v1/models.
+        Check if a specific model is available from the provider's /v1/models or pre-registered.
 
         :param model: The model identifier to check.
-        :return: True if the model is available dynamically, False otherwise.
+        :return: True if the model is available dynamically or pre-registered, False otherwise.
         """
+        # First check if the model is pre-registered in the model store
+        if hasattr(self, "model_store") and self.model_store:
+            if await self.model_store.has_model(model):
+                return True
+
+        # Then check the provider's dynamic model cache
         if not self._model_cache:
             await self.list_models()
         return model in self._model_cache

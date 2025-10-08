@@ -434,8 +434,8 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         await self.initialize_openai_vector_stores()
 
     async def shutdown(self) -> None:
-        # nothing to do since we don't maintain a persistent connection
-        pass
+        # Clean up mixin resources (file batch tasks)
+        await super().shutdown()
 
     async def list_vector_dbs(self) -> list[VectorDB]:
         return [v.vector_db for v in self.cache.values()]

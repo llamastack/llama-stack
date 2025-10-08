@@ -145,10 +145,10 @@ async def sqlite_vec_vec_index(embedding_dimension, tmp_path_factory):
 
 
 @pytest.fixture
-async def sqlite_vec_adapter(sqlite_vec_db_path, mock_inference_api, embedding_dimension):
+async def sqlite_vec_adapter(sqlite_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = SQLiteVectorIOConfig(
         db_path=sqlite_vec_db_path,
-        kvstore=SqliteKVStoreConfig(),
+        kvstore=unique_kvstore_config,
     )
     adapter = SQLiteVecVectorIOAdapter(
         config=config,
@@ -187,10 +187,10 @@ async def milvus_vec_index(milvus_vec_db_path, embedding_dimension):
 
 
 @pytest.fixture
-async def milvus_vec_adapter(milvus_vec_db_path, mock_inference_api):
+async def milvus_vec_adapter(milvus_vec_db_path, unique_kvstore_config, mock_inference_api):
     config = MilvusVectorIOConfig(
         db_path=milvus_vec_db_path,
-        kvstore=SqliteKVStoreConfig(),
+        kvstore=unique_kvstore_config,
     )
     adapter = MilvusVectorIOAdapter(
         config=config,
@@ -264,10 +264,10 @@ async def chroma_vec_index(chroma_vec_db_path, embedding_dimension):
 
 
 @pytest.fixture
-async def chroma_vec_adapter(chroma_vec_db_path, mock_inference_api, embedding_dimension):
+async def chroma_vec_adapter(chroma_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = ChromaVectorIOConfig(
         db_path=chroma_vec_db_path,
-        kvstore=SqliteKVStoreConfig(),
+        kvstore=unique_kvstore_config,
     )
     adapter = ChromaVectorIOAdapter(
         config=config,
@@ -296,12 +296,12 @@ def qdrant_vec_db_path(tmp_path_factory):
 
 
 @pytest.fixture
-async def qdrant_vec_adapter(qdrant_vec_db_path, mock_inference_api, embedding_dimension):
+async def qdrant_vec_adapter(qdrant_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
     import uuid
 
     config = QdrantVectorIOConfig(
         db_path=qdrant_vec_db_path,
-        kvstore=SqliteKVStoreConfig(),
+        kvstore=unique_kvstore_config,
     )
     adapter = QdrantVectorIOAdapter(
         config=config,
@@ -386,14 +386,14 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
 
 
 @pytest.fixture
-async def pgvector_vec_adapter(mock_inference_api, embedding_dimension):
+async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = PGVectorVectorIOConfig(
         host="localhost",
         port=5432,
         db="test_db",
         user="test_user",
         password="test_password",
-        kvstore=SqliteKVStoreConfig(),
+        kvstore=unique_kvstore_config,
     )
 
     adapter = PGVectorVectorIOAdapter(config, mock_inference_api, None)
@@ -476,7 +476,7 @@ async def weaviate_vec_index(weaviate_vec_db_path):
 
 
 @pytest.fixture
-async def weaviate_vec_adapter(weaviate_vec_db_path, mock_inference_api, embedding_dimension):
+async def weaviate_vec_adapter(weaviate_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
     import pytest_socket
     import weaviate
 
@@ -492,7 +492,7 @@ async def weaviate_vec_adapter(weaviate_vec_db_path, mock_inference_api, embeddi
     config = WeaviateVectorIOConfig(
         weaviate_cluster_url="localhost:8080",
         weaviate_api_key=None,
-        kvstore=SqliteKVStoreConfig(),
+        kvstore=unique_kvstore_config,
     )
     adapter = WeaviateVectorIOAdapter(
         config=config,
