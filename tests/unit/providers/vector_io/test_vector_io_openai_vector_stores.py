@@ -19,7 +19,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategyAuto,
     VectorStoreFileObject,
 )
-from llama_stack.providers.remote.vector_io.milvus.milvus import VECTOR_DBS_PREFIX
+from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectorIO providers. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
