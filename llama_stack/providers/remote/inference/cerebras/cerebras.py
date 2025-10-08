@@ -15,6 +15,8 @@ from .config import CerebrasImplConfig
 class CerebrasInferenceAdapter(OpenAIMixin):
     config: CerebrasImplConfig
 
+    provider_data_api_key_field: str = "cerebras_api_key"
+
     def get_api_key(self) -> str:
         return self.config.api_key.get_secret_value()
 

@@ -6,10 +6,17 @@
 
 from typing import Any
 
-from pydantic import Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
+
+
+class DatabricksProviderDataValidator(BaseModel):
+    databricks_api_token: str | None = Field(
+        default=None,
+        description="API token for Databricks models",
+    )
 
 
 @json_schema_type
