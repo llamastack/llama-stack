@@ -82,11 +82,12 @@ class VLLMInferenceAdapter(OpenAIMixin):
         Skip the check when running without authentication.
         """
         if not self.config.api_token:
-            try:
-                return model in [m.id async for m in self.client.models.list()]
-            except Exception as e:
-                log.warning(f"Failed to check model availability: {e}")
-                raise ValueError(f"Failed to check model availability: {e}") from e
+            model_ids = []
+            async for m in self.client.models.list():
+                if m.id == model:  # Found exact match
+                    return True
+                model_ids.append(m.id)
+            raise ValueError(f"Model '{model}' not found. Available models: {model_ids}")
         return True
 
     async def openai_chat_completion(
