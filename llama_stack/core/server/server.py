@@ -410,6 +410,7 @@ def create_app() -> StackApp:
 
     if Api.telemetry in impls:
         setup_logger(impls[Api.telemetry])
+        TelemetryAdapter.fastapi_middleware(app)  # hold us over until we can move to programmatic instrumentation
     else:
         setup_logger(TelemetryAdapter(TelemetryConfig(), {}))
 

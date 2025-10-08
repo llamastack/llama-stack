@@ -8,9 +8,11 @@ import datetime
 import threading
 from typing import Any
 
+from fastapi import FastAPI
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
@@ -362,3 +364,8 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                 max_depth=max_depth,
             )
         )
+
+    @staticmethod
+    def fastapi_middleware(app: FastAPI):
+        """Inject telemetry middleware into the FastAPI app"""
+        FastAPIInstrumentor.instrument_app(app)
