@@ -29,6 +29,10 @@ _current_mode: str | None = None
 _current_storage: ResponseStorage | None = None
 _original_methods: dict[str, Any] = {}
 
+# ID normalization state: maps test_id -> (id_type -> {original_id: normalized_id})
+_id_normalizers: dict[str, dict[str, dict[str, str]]] = {}
+_id_counters: dict[str, dict[str, int]] = {}  # test_id -> (id_type -> counter)
+
 # Test context uses ContextVar since it changes per-test and needs async isolation
 from contextvars import ContextVar
 
@@ -51,6 +55,85 @@ class APIRecordingMode(StrEnum):
     RECORD_IF_MISSING = "record-if-missing"
 
 
+def _get_normalized_id(original_id: str, id_type: str) -> str:
+    """Get a normalized ID using a test-specific counter.
+
+    Each unique ID within a test gets assigned a sequential number (file-1, file-2, uuid-1, etc).
+    This ensures consistency across requests within the same test while keeping IDs human-readable.
+    """
+    global _id_normalizers, _id_counters
+
+    test_id = _test_context.get()
+    if not test_id:
+        # No test context, return original ID
+        return original_id
+
+    # Initialize structures for this test if needed
+    if test_id not in _id_normalizers:
+        _id_normalizers[test_id] = {}
+        _id_counters[test_id] = {}
+
+    if id_type not in _id_normalizers[test_id]:
+        _id_normalizers[test_id][id_type] = {}
+        _id_counters[test_id][id_type] = 0
+
+    # Check if we've seen this ID before
+    if original_id in _id_normalizers[test_id][id_type]:
+        return _id_normalizers[test_id][id_type][original_id]
+
+    # New ID - assign next counter value
+    _id_counters[test_id][id_type] += 1
+    counter = _id_counters[test_id][id_type]
+    normalized_id = f"{id_type}-{counter}"
+
+    # Store mapping
+    _id_normalizers[test_id][id_type][original_id] = normalized_id
+    return normalized_id
+
+
+def _normalize_file_ids(obj: Any) -> Any:
+    """Recursively replace file IDs and vector store IDs with test-specific normalized values.
+
+    Each unique file ID or UUID gets a unique normalized value using a sequential counter
+    within each test (file-1, file-2, uuid-1, etc).
+    """
+    import re
+
+    if isinstance(obj, dict):
+        result = {}
+        for k, v in obj.items():
+            # Normalize file IDs in document_id fields
+            if k == "document_id" and isinstance(v, str) and v.startswith("file-"):
+                result[k] = _get_normalized_id(v, "file")
+            # Normalize vector database/store IDs with UUID patterns
+            elif k in ("vector_db_id", "vector_store_id", "bank_id") and isinstance(v, str):
+                # Replace UUIDs in the ID deterministically
+                def replace_uuid(match):
+                    uuid_val = match.group(0)
+                    return _get_normalized_id(uuid_val, "uuid")
+
+                normalized = re.sub(
+                    r"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}",
+                    replace_uuid,
+                    v,
+                )
+                result[k] = normalized
+            else:
+                result[k] = _normalize_file_ids(v)
+        return result
+    elif isinstance(obj, list):
+        return [_normalize_file_ids(item) for item in obj]
+    elif isinstance(obj, str):
+        # Replace file-<uuid> patterns in strings (like in text content)
+        def replace_file_id(match):
+            file_id = match.group(0)
+            return _get_normalized_id(file_id, "file")
+
+        return re.sub(r"file-[a-f0-9]{32}", replace_file_id, obj)
+    else:
+        return obj
+
+
 def normalize_inference_request(method: str, url: str, headers: dict[str, Any], body: dict[str, Any]) -> str:
     """Create a normalized hash of the request for consistent matching.
 
@@ -64,10 +147,14 @@ def normalize_inference_request(method: str, url: str, headers: dict[str, Any], 
     from urllib.parse import urlparse
 
     parsed = urlparse(url)
+
+    # Normalize file IDs in the body to ensure consistent hashing across test runs
+    normalized_body = _normalize_file_ids(body)
+
     normalized: dict[str, Any] = {
         "method": method.upper(),
         "endpoint": parsed.path,
-        "body": body,
+        "body": normalized_body,
     }
 
     # Include test_id for isolation, except for shared infrastructure endpoints
@@ -81,7 +168,10 @@ def normalize_inference_request(method: str, url: str, headers: dict[str, Any], 
 
 def normalize_tool_request(provider_name: str, tool_name: str, kwargs: dict[str, Any]) -> str:
     """Create a normalized hash of the tool request for consistent matching."""
-    normalized = {"provider": provider_name, "tool_name": tool_name, "kwargs": kwargs}
+    # Normalize file IDs and vector store IDs in kwargs
+    normalized_kwargs = _normalize_file_ids(kwargs)
+
+    normalized = {"provider": provider_name, "tool_name": tool_name, "kwargs": normalized_kwargs}
 
     # Create hash - sort_keys=True ensures deterministic ordering
     normalized_json = json.dumps(normalized, sort_keys=True)
