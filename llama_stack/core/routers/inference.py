@@ -277,6 +277,7 @@ class InferenceRouter(Inference):
         top_logprobs: int | None = None,
         top_p: float | None = None,
         user: str | None = None,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         logger.debug(
             f"InferenceRouter.openai_chat_completion: {model=}, {stream=}, {messages=}",
@@ -323,6 +324,7 @@ class InferenceRouter(Inference):
             top_logprobs=top_logprobs,
             top_p=top_p,
             user=user,
+            **kwargs,
         )
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
         if stream:
