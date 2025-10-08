@@ -129,6 +129,8 @@ def client_with_models(
     model_ids = {m.identifier for m in client.models.list()}
     model_ids.update(m.provider_resource_id for m in client.models.list())
 
+    # TODO: fix this crap where we use the first provider randomly
+    # that cannot be right. I think the test should just specify the provider_id
     if text_model_id and text_model_id not in model_ids:
         client.models.register(model_id=text_model_id, provider_id=inference_providers[0])
     if vision_model_id and vision_model_id not in model_ids:
