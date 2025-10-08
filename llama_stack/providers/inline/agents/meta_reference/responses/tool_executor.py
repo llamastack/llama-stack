@@ -94,7 +94,10 @@ class ToolExecutor:
 
         # Yield the final result
         yield ToolExecutionResult(
-            sequence_number=sequence_number, final_output_message=output_message, final_input_message=input_message
+            sequence_number=sequence_number,
+            final_output_message=output_message,
+            final_input_message=input_message,
+            citation_files=result.metadata.get("citation_files") if result and result.metadata else None,
         )
 
     async def _execute_knowledge_search_via_vector_store(
@@ -129,8 +132,6 @@ class ToolExecutor:
         for results in all_results:
             search_results.extend(results)
 
-        # Convert search results to tool result format matching memory.py
-        # Format the results as interleaved content similar to memory.py
         content_items = []
         content_items.append(
             TextContentItem(
@@ -138,20 +139,50 @@ class ToolExecutor:
             )
         )
 
+        unique_files = set()
         for i, result_item in enumerate(search_results):
             chunk_text = result_item.content[0].text if result_item.content else ""
-            metadata_text = f"document_id: {result_item.file_id}, score: {result_item.score}"
+            # Get file_id from attributes if result_item.file_id is empty
+            file_id = result_item.file_id or (
+                result_item.attributes.get("document_id") if result_item.attributes else None
+            )
+            metadata_text = f"document_id: {file_id}, score: {result_item.score}"
             if result_item.attributes:
                 metadata_text += f", attributes: {result_item.attributes}"
-            text_content = f"[{i + 1}] {metadata_text}\n{chunk_text}\n"
+
+            text_content = f"[{i + 1}] {metadata_text} (cite as <|{file_id}|>)\n{chunk_text}\n"
             content_items.append(TextContentItem(text=text_content))
+            unique_files.add(file_id)
 
         content_items.append(TextContentItem(text="END of knowledge_search tool results.\n"))
+
+        citation_instruction = ""
+        if unique_files:
+            citation_instruction = (
+                " Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format (e.g., 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'). "
+                "Do not add extra punctuation. Use only the file IDs provided (do not invent new ones)."
+            )
+
         content_items.append(
             TextContentItem(
-                text=f'The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query.\n',
+                text=f'The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query.{citation_instruction}\n',
             )
         )
+
+        # handling missing attributes for old versions
+        citation_files = {}
+        for result in search_results:
+            file_id = result.file_id
+            if not file_id and result.attributes:
+                file_id = result.attributes.get("document_id")
+
+            filename = result.filename
+            if not filename and result.attributes:
+                filename = result.attributes.get("filename")
+            if not filename:
+                filename = "unknown"
+
+            citation_files[file_id] = filename
 
         return ToolInvocationResult(
             content=content_items,
@@ -159,6 +190,7 @@ class ToolExecutor:
                 "document_ids": [r.file_id for r in search_results],
                 "chunks": [r.content[0].text if r.content else "" for r in search_results],
                 "scores": [r.score for r in search_results],
+                "citation_files": citation_files,
             },
         )
 

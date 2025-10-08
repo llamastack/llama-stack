@@ -35,6 +35,36 @@ def pytest_sessionstart(session):
     if "LLAMA_STACK_TEST_INFERENCE_MODE" not in os.environ:
         os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = "replay"
 
+    stack_config = session.config.getoption("--stack-config", default=None)
+    if stack_config and stack_config.startswith("server:"):
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "server"
+        logger.info(f"Test stack config type: server (stack_config={stack_config})")
+    else:
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "library_client"
+        logger.info(f"Test stack config type: library_client (stack_config={stack_config})")
+
+    from llama_stack.testing.inference_recorder import patch_httpx_for_test_id
+
+    patch_httpx_for_test_id()
+
+
+@pytest.fixture(autouse=True)
+def _track_test_context(request):
+    """Automatically track current test context for isolated recordings.
+
+    This fixture runs for every test and stores the test's nodeid in a contextvar
+    that the recording system can access to determine which subdirectory to use.
+    """
+    from llama_stack.testing.inference_recorder import _test_context
+
+    # Store the test nodeid (e.g., "tests/integration/responses/test_basic.py::test_foo[params]")
+    token = _test_context.set(request.node.nodeid)
+
+    yield
+
+    # Cleanup
+    _test_context.reset(token)
+
 
 def pytest_runtest_teardown(item):
     # Check if the test actually ran and passed or failed, but was not skipped or an expected failure (xfail)
@@ -137,8 +167,8 @@ def pytest_addoption(parser):
 
     parser.addoption(
         "--inference-mode",
-        help="Inference mode: { record, replay, live } (default: replay)",
-        choices=["record", "replay", "live"],
+        help="Inference mode: { record, replay, live, record-if-missing } (default: replay)",
+        choices=["record", "replay", "live", "record-if-missing"],
         default="replay",
     )
     parser.addoption(

@@ -7,16 +7,18 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
 class WatsonXProviderDataValidator(BaseModel):
-    url: str
-    api_key: str
-    project_id: str
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="forbid",
+    )
+    watsonx_api_key: str | None
 
 
 @json_schema_type
@@ -25,13 +27,17 @@ class WatsonXConfig(RemoteInferenceProviderConfig):
         default_factory=lambda: os.getenv("WATSONX_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
         description="A base url for accessing the watsonx.ai",
     )
+    # This seems like it should be required, but none of the other remote inference
+    # providers require it, so this is optional here too for consistency.
+    # The OpenAIConfig uses default=None instead, so this is following that precedent.
     api_key: SecretStr | None = Field(
-        default_factory=lambda: os.getenv("WATSONX_API_KEY"),
-        description="The watsonx API key",
+        default=None,
+        description="The watsonx.ai API key",
     )
+    # As above, this is optional here too for consistency.
     project_id: str | None = Field(
-        default_factory=lambda: os.getenv("WATSONX_PROJECT_ID"),
-        description="The Project ID key",
+        default=None,
+        description="The watsonx.ai project ID",
     )
     timeout: int = Field(
         default=60,

@@ -14,12 +14,12 @@ from llama_stack.schema_utils import json_schema_type
 
 @json_schema_type
 class DatabricksImplConfig(RemoteInferenceProviderConfig):
-    url: str = Field(
+    url: str | None = Field(
         default=None,
         description="The URL for the Databricks model serving endpoint",
     )
     api_token: SecretStr = Field(
-        default=SecretStr(None),
+        default=SecretStr(None),  # type: ignore[arg-type]
         description="The Databricks API token",
     )
 

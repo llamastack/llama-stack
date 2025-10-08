@@ -269,7 +269,7 @@ class OpenAIResponsesImpl:
             response_tools=tools,
             temperature=temperature,
             response_format=response_format,
-            inputs=input,
+            inputs=all_input,
         )
 
         # Create orchestrator and delegate streaming logic

@@ -125,21 +125,28 @@ pytest -s -v tests/integration/vector_io/ \
 
 ## Recording Modes
 
-The testing system supports three modes controlled by environment variables:
+The testing system supports four modes controlled by environment variables:
 
 ### REPLAY Mode (Default)
 Uses cached responses instead of making API calls:
 ```bash
 pytest tests/integration/
 ```
+
+### RECORD-IF-MISSING Mode (Recommended for adding new tests)
+Records only when no recording exists, otherwise replays. This is the preferred mode for iterative development:
+```bash
+pytest tests/integration/inference/test_new_feature.py --inference-mode=record-if-missing
+```
+
 ### RECORD Mode
-Captures API interactions for later replay:
+**Force-records all API interactions**, overwriting existing recordings. Use with caution as this will re-record everything:
 ```bash
 pytest tests/integration/inference/test_new_feature.py --inference-mode=record
 ```
 
 ### LIVE Mode
-Tests make real API calls (but not recorded):
+Tests make real API calls (not recorded):
 ```bash
 pytest tests/integration/ --inference-mode=live
 ```

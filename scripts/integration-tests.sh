@@ -124,12 +124,6 @@ echo ""
 echo "Checking llama packages"
 uv pip list | grep llama
 
-# Check storage and memory before tests
-echo "=== System Resources Before Tests ==="
-free -h 2>/dev/null || echo "free command not available"
-df -h
-echo ""
-
 # Set environment variables
 export LLAMA_STACK_CLIENT_TIMEOUT=300
 
@@ -144,6 +138,17 @@ echo "=== Applying Setup Environment Variables ==="
 
 # the server needs this
 export LLAMA_STACK_TEST_INFERENCE_MODE="$INFERENCE_MODE"
+export SQLITE_STORE_DIR=$(mktemp -d)
+echo "Setting SQLITE_STORE_DIR: $SQLITE_STORE_DIR"
+
+# Determine stack config type for api_recorder test isolation
+if [[ "$STACK_CONFIG" == server:* ]]; then
+    export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
+    echo "Setting stack config type: server"
+else
+    export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
+    echo "Setting stack config type: library_client"
+fi
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
 echo "Setting up environment variables:"
@@ -186,7 +191,11 @@ if [[ "$STACK_CONFIG" == *"server:"* ]]; then
         echo "Llama Stack Server is already running, skipping start"
     else
         echo "=== Starting Llama Stack Server ==="
-        nohup llama stack run ci-tests --image-type venv > server.log 2>&1 &
+        export LLAMA_STACK_LOG_WIDTH=120
+
+        # remove "server:" from STACK_CONFIG
+        stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
+        nohup llama stack run $stack_config > server.log 2>&1 &
 
         echo "Waiting for Llama Stack Server to start..."
         for i in {1..30}; do
@@ -276,12 +285,6 @@ else
     echo "❌ Tests failed"
     exit 1
 fi
-
-# Check storage and memory after tests
-echo ""
-echo "=== System Resources After Tests ==="
-free -h 2>/dev/null || echo "free command not available"
-df -h
 
 echo ""
 echo "=== Integration Tests Complete ==="

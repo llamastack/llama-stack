@@ -187,21 +187,21 @@ Configure telemetry behavior using environment variables:
 - **`OTEL_SERVICE_NAME`**: Service name for telemetry (default: empty string)
 - **`TELEMETRY_SINKS`**: Comma-separated list of sinks (default: `console,sqlite`)
 
-## Visualization with Jaeger
+### Quick Setup: Complete Telemetry Stack
 
-The `otel_trace` sink works with any service compatible with the OpenTelemetry collector. Traces and metrics use separate endpoints but can share the same collector.
-
-### Starting Jaeger
-
-Start a Jaeger instance with OTLP HTTP endpoint at 4318 and the Jaeger UI at 16686:
+Use the automated setup script to launch the complete telemetry stack (Jaeger, OpenTelemetry Collector, Prometheus, and Grafana):
 
 ```bash
-docker run --pull always --rm --name jaeger \
-  -p 16686:16686 -p 4318:4318 \
-  jaegertracing/jaeger:2.1.0
+./scripts/telemetry/setup_telemetry.sh
 ```
 
-Once running, you can visualize traces by navigating to [http://localhost:16686/](http://localhost:16686/).
+This sets up:
+- **Jaeger UI**: http://localhost:16686 (traces visualization)
+- **Prometheus**: http://localhost:9090 (metrics)
+- **Grafana**: http://localhost:3000 (dashboards with auto-configured data sources)
+- **OTEL Collector**: http://localhost:4318 (OTLP endpoint)
+
+Once running, you can visualize traces by navigating to [Grafana](http://localhost:3000/) and login with login `admin` and password `admin`.
 
 ## Querying Metrics
 

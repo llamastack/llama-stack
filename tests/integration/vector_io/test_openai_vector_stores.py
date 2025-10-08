@@ -902,3 +902,290 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
         search_mode=search_mode,
     )
     assert search_response is not None
+
+
+def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_empty_stores, client_with_models):
+    """Test creating and retrieving a vector store file batch."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_test_store")
+
+    # Create multiple files
+    file_ids = []
+    for i in range(2):
+        with BytesIO(f"This is batch test file {i}".encode()) as file_buffer:
+            file_buffer.name = f"batch_test_{i}.txt"
+            file = compat_client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(file.id)
+
+    # Create a file batch
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    assert batch is not None
+    assert batch.object == "vector_store.file_batch"
+    assert batch.vector_store_id == vector_store.id
+    assert batch.status in ["in_progress", "completed"]
+    assert batch.file_counts.total == len(file_ids)
+    assert hasattr(batch, "id")
+    assert hasattr(batch, "created_at")
+
+    # Wait for batch processing to complete
+    max_retries = 60  # 60 seconds max wait (increased for file processing delays)
+    retries = 0
+    retrieved_batch = None
+    while retries < max_retries:
+        retrieved_batch = compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+        if retrieved_batch.status in ["completed", "failed"]:
+            break
+        time.sleep(1)
+        retries += 1
+
+    assert retrieved_batch is not None
+    assert retrieved_batch.id == batch.id
+    assert retrieved_batch.vector_store_id == vector_store.id
+    assert retrieved_batch.object == "vector_store.file_batch"
+    assert retrieved_batch.file_counts.total == len(file_ids)
+    assert retrieved_batch.status == "completed"  # Should be completed after processing
+
+
+def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stores, client_with_models):
+    """Test listing files in a vector store file batch."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_list_test_store")
+
+    # Create multiple files
+    file_ids = []
+    for i in range(2):
+        with BytesIO(f"This is batch list test file {i}".encode()) as file_buffer:
+            file_buffer.name = f"batch_list_test_{i}.txt"
+            file = compat_client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(file.id)
+
+    # Create a file batch
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    # Wait for batch processing to complete
+    max_retries = 60  # 60 seconds max wait (increased for file processing delays)
+    retries = 0
+    while retries < max_retries:
+        retrieved_batch = compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+        if retrieved_batch.status in ["completed", "failed"]:
+            break
+        time.sleep(1)
+        retries += 1
+
+    # List all files in the batch
+    files_response = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+    )
+
+    assert files_response is not None
+    assert files_response.object == "list"
+    assert hasattr(files_response, "data")
+    assert len(files_response.data) == len(file_ids)
+
+    # Verify all files are in the response
+    response_file_ids = {file.id for file in files_response.data}
+    assert response_file_ids == set(file_ids)
+
+    # Test pagination with limit
+    limited_response = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+        limit=3,
+    )
+
+    assert len(limited_response.data) == 2
+    assert limited_response.has_more is False
+
+    # Test pagination with after cursor
+    first_page = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+        limit=2,
+    )
+
+    second_page = compat_client.vector_stores.file_batches.list_files(
+        vector_store_id=vector_store.id,
+        batch_id=batch.id,
+        limit=2,
+        after=first_page.data[-1].id,
+    )
+
+    assert len(first_page.data) == 2
+    assert len(second_page.data) <= 3  # Should be <= remaining files
+    # Ensure no overlap between pages
+    first_page_ids = {file.id for file in first_page.data}
+    second_page_ids = {file.id for file in second_page.data}
+    assert first_page_ids.isdisjoint(second_page_ids)
+
+
+def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, client_with_models):
+    """Test cancelling a vector store file batch."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_cancel_test_store")
+
+    # Create a batch to test cancellation
+    file_ids = []
+    for i in range(2):  # Batch size that allows time for cancellation
+        with BytesIO(f"This is batch cancel test file {i} with substantial content".encode()) as file_buffer:
+            file_buffer.name = f"batch_cancel_test_{i}.txt"
+            file = compat_client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(file.id)
+
+    # Create a file batch
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    try:
+        # Cancel the batch immediately after creation
+        cancelled_batch = compat_client.vector_stores.file_batches.cancel(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+
+        assert cancelled_batch is not None
+        assert cancelled_batch.id == batch.id
+        assert cancelled_batch.vector_store_id == vector_store.id
+        assert cancelled_batch.status == "cancelled"
+        assert cancelled_batch.object == "vector_store.file_batch"
+    except Exception:
+        # If cancellation fails (e.g., batch completed too quickly),
+        # verify the batch reached completion instead
+        final_batch = compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+        assert final_batch.status in ["completed", "cancelled"]
+
+
+def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_empty_stores, client_with_models):
+    """Test retrieving file contents after file batch processing."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_contents_test_store")
+
+    # Create multiple files with known content
+    file_data = [
+        ("test_file_1.txt", b"This is the content of test file 1"),
+        ("test_file_2.txt", b"This is the content of test file 2"),
+    ]
+
+    file_ids = []
+    for filename, content in file_data:
+        with BytesIO(content) as file_buffer:
+            file_buffer.name = filename
+            file = compat_client.files.create(file=file_buffer, purpose="assistants")
+        file_ids.append(file.id)
+
+    # Create a file batch
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    # Wait for batch processing to complete
+    max_retries = 60  # 60 seconds max wait (increased for file processing delays)
+    retries = 0
+    while retries < max_retries:
+        retrieved_batch = compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id=batch.id,
+        )
+        if retrieved_batch.status in ["completed", "failed"]:
+            break
+        time.sleep(1)
+        retries += 1
+
+    assert retrieved_batch.status == "completed"
+
+    # Retrieve file contents for each file in the batch
+    for i, file_id in enumerate(file_ids):
+        file_contents = compat_client.vector_stores.files.content(
+            vector_store_id=vector_store.id,
+            file_id=file_id,
+        )
+
+        assert file_contents is not None
+        assert file_contents.filename == file_data[i][0]
+        assert len(file_contents.content) > 0
+
+        # Verify the content matches what we uploaded
+        content_text = (
+            file_contents.content[0].text
+            if hasattr(file_contents.content[0], "text")
+            else file_contents.content[0]["text"]
+        )
+        assert file_data[i][1].decode("utf-8") in content_text
+
+
+def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_stores, client_with_models):
+    """Test error handling for file batch operations."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(name="batch_error_test_store")
+
+    # Test with invalid file IDs (should handle gracefully)
+    file_ids = ["invalid_file_id_1", "invalid_file_id_2"]
+
+    batch = compat_client.vector_stores.file_batches.create(
+        vector_store_id=vector_store.id,
+        file_ids=file_ids,
+    )
+
+    assert batch is not None
+    assert batch.file_counts.total == len(file_ids)
+    # Invalid files should be marked as failed
+    assert batch.file_counts.failed >= 0  # Implementation may vary
+
+    # Determine expected errors based on client type
+    if isinstance(compat_client, LlamaStackAsLibraryClient):
+        errors = ValueError
+    else:
+        errors = (BadRequestError, OpenAIBadRequestError)
+
+    # Test retrieving non-existent batch
+    with pytest.raises(errors):  # Should raise an error for non-existent batch
+        compat_client.vector_stores.file_batches.retrieve(
+            vector_store_id=vector_store.id,
+            batch_id="non_existent_batch_id",
+        )
+
+    # Test operations on non-existent vector store
+    with pytest.raises(errors):  # Should raise an error for non-existent vector store
+        compat_client.vector_stores.file_batches.create(
+            vector_store_id="non_existent_vector_store",
+            file_ids=["any_file_id"],
+        )

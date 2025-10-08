@@ -72,9 +72,9 @@ docker run \
   --gpu all \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v ~/.llama:/root/.llama \
+  -e INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
   llamastack/distribution-{{ name }} \
-  --port $LLAMA_STACK_PORT \
-  --env INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct
+  --port $LLAMA_STACK_PORT
 ```
 
 If you are using Llama Stack Safety / Shield APIs, use:
@@ -86,10 +86,10 @@ docker run \
   --gpu all \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v ~/.llama:/root/.llama \
+  -e INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
+  -e SAFETY_MODEL=meta-llama/Llama-Guard-3-1B \
   llamastack/distribution-{{ name }} \
-  --port $LLAMA_STACK_PORT \
-  --env INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
-  --env SAFETY_MODEL=meta-llama/Llama-Guard-3-1B
+  --port $LLAMA_STACK_PORT
 ```
 
 ### Via venv
@@ -98,16 +98,16 @@ Make sure you have done `uv pip install llama-stack` and have the Llama Stack CL
 
 ```bash
 llama stack build --distro {{ name }} --image-type venv
+INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
 llama stack run distributions/{{ name }}/run.yaml \
-  --port 8321 \
-  --env INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct
+  --port 8321
 ```
 
 If you are using Llama Stack Safety / Shield APIs, use:
 
 ```bash
+INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
+SAFETY_MODEL=meta-llama/Llama-Guard-3-1B \
 llama stack run distributions/{{ name }}/run-with-safety.yaml \
-  --port 8321 \
-  --env INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
-  --env SAFETY_MODEL=meta-llama/Llama-Guard-3-1B
+  --port 8321
 ```

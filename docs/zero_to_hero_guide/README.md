@@ -88,7 +88,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
    ...
    Build Successful!
    You can find the newly-built template here: ~/.llama/distributions/starter/starter-run.yaml
-   You can run the new Llama Stack Distro via: uv run --with llama-stack llama stack run starter --image-type venv
+   You can run the new Llama Stack Distro via: uv run --with llama-stack llama stack run starter
    ```
 
 3. **Set the ENV variables by exporting them to the terminal**:
@@ -102,12 +102,11 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 3. **Run the Llama Stack**:
    Run the stack using uv:
    ```bash
+   INFERENCE_MODEL=$INFERENCE_MODEL \
+   SAFETY_MODEL=$SAFETY_MODEL \
+   OLLAMA_URL=$OLLAMA_URL \
    uv run --with llama-stack llama stack run starter \
-      --image-type venv \
-      --port $LLAMA_STACK_PORT \
-      --env INFERENCE_MODEL=$INFERENCE_MODEL \
-      --env SAFETY_MODEL=$SAFETY_MODEL \
-      --env OLLAMA_URL=$OLLAMA_URL
+      --port $LLAMA_STACK_PORT
    ```
    Note: Every time you run a new model with `ollama run`, you will need to restart the llama stack. Otherwise it won't see the new model.
 

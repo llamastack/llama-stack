@@ -274,22 +274,6 @@ def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
     return config_dict
 
 
-def validate_env_pair(env_pair: str) -> tuple[str, str]:
-    """Validate and split an environment variable key-value pair."""
-    try:
-        key, value = env_pair.split("=", 1)
-        key = key.strip()
-        if not key:
-            raise ValueError(f"Empty key in environment variable pair: {env_pair}")
-        if not all(c.isalnum() or c == "_" for c in key):
-            raise ValueError(f"Key must contain only alphanumeric characters and underscores: {key}")
-        return key, value
-    except ValueError as e:
-        raise ValueError(
-            f"Invalid environment variable format '{env_pair}': {str(e)}. Expected format: KEY=value"
-        ) from e
-
-
 def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConfig) -> None:
     """Add internal implementations (inspect and providers) to the implementations dictionary.
 

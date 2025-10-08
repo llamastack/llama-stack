@@ -219,12 +219,9 @@ group_tools = client.tools.list_tools(toolgroup_id="search_tools")
 <TabItem value="setup" label="Setup & Configuration">
 
 1. Start by registering a Tavily API key at [Tavily](https://tavily.com/).
-2. [Optional] Provide the API key directly to the Llama Stack server
+2. [Optional] Set the API key in your environment before starting the Llama Stack server
 ```bash
 export TAVILY_SEARCH_API_KEY="your key"
-```
-```bash
---env TAVILY_SEARCH_API_KEY=${TAVILY_SEARCH_API_KEY}
 ```
 
 </TabItem>
@@ -273,9 +270,9 @@ for log in EventLogger().log(response):
 <TabItem value="setup" label="Setup & Configuration">
 
 1. Start by registering for a WolframAlpha API key at [WolframAlpha Developer Portal](https://developer.wolframalpha.com/access).
-2. Provide the API key either when starting the Llama Stack server:
+2. Provide the API key either by setting it in your environment before starting the Llama Stack server:
     ```bash
-    --env WOLFRAM_ALPHA_API_KEY=${WOLFRAM_ALPHA_API_KEY}
+    export WOLFRAM_ALPHA_API_KEY="your key"
     ```
     or from the client side:
     ```python
