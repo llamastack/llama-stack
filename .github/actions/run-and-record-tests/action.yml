@@ -54,6 +54,10 @@ runs:
           SCRIPT_ARGS="$SCRIPT_ARGS --pattern ${{ inputs.pattern }}"
         fi
 
+        echo "=== Running command ==="
+        echo "uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS"
+        echo ""
+
         uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS | tee pytest-${{ inputs.inference-mode }}.log
 
 
