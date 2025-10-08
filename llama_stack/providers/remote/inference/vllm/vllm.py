@@ -88,6 +88,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
                     return True
                 model_ids.append(m.id)
             raise ValueError(f"Model '{model}' not found. Available models: {model_ids}")
+        log.warning(f"Not checking model availability for {model} as API token may trigger OAuth workflow")
         return True
 
     async def openai_chat_completion(
