@@ -7,16 +7,18 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
 class WatsonXProviderDataValidator(BaseModel):
-    url: str
-    api_key: str
-    project_id: str
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="forbid",
+    )
+    watsonx_api_key: str | None
 
 
 @json_schema_type
@@ -26,8 +28,8 @@ class WatsonXConfig(RemoteInferenceProviderConfig):
         description="A base url for accessing the watsonx.ai",
     )
     project_id: str | None = Field(
-        default_factory=lambda: os.getenv("WATSONX_PROJECT_ID"),
-        description="The Project ID key",
+        default=None,
+        description="The watsonx.ai project ID",
     )
     timeout: int = Field(
         default=60,
