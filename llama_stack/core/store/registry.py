@@ -14,10 +14,7 @@ from llama_stack.core.datatypes import RoutableObjectWithProvider
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
-from llama_stack.providers.utils.kvstore.config import (
-    KVStoreConfig,
-    SqliteKVStoreConfig,
-)
+from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 
 logger = get_logger(__name__, category="core::registry")
 
