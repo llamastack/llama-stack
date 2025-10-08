@@ -73,7 +73,7 @@ class Inspect(Protocol):
         """
         ...
 
-    @webmethod(route="/health", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/health", method="GET", level=LLAMA_STACK_API_V1, require_authentication=False)
     async def health(self) -> HealthInfo:
         """Get health status.
 
@@ -83,7 +83,7 @@ class Inspect(Protocol):
         """
         ...
 
-    @webmethod(route="/version", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/version", method="GET", level=LLAMA_STACK_API_V1, require_authentication=False)
     async def version(self) -> VersionInfo:
         """Get version.
 

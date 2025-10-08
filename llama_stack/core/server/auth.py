@@ -27,6 +27,11 @@ class AuthenticationMiddleware:
     3. Extracts user attributes from the provider's response
     4. Makes these attributes available to the route handlers for access control
 
+    Unauthenticated Access:
+    Endpoints can opt out of authentication by setting require_authentication=False
+    in their @webmethod decorator. This is typically used for operational endpoints
+    like /health and /version to support monitoring, load balancers, and observability tools.
+
     The middleware supports multiple authentication providers through the AuthProvider interface:
     - Kubernetes: Validates tokens against the Kubernetes API server
     - Custom: Validates tokens against a custom endpoint
@@ -88,7 +93,26 @@ class AuthenticationMiddleware:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
-            # First, handle authentication
+            # Find the route and check if authentication is required
+            path = scope.get("path", "")
+            method = scope.get("method", hdrs.METH_GET)
+
+            if not hasattr(self, "route_impls"):
+                self.route_impls = initialize_route_impls(self.impls)
+
+            webmethod = None
+            try:
+                _, _, _, webmethod = find_matching_route(method, path, self.route_impls)
+            except ValueError:
+                # If no matching endpoint is found, pass here to run auth anyways
+                pass
+
+            # If webmethod explicitly sets require_authentication=False, allow without auth
+            if webmethod and webmethod.require_authentication is False:
+                logger.debug(f"Allowing unauthenticated access to endpoint: {path}")
+                return await self.app(scope, receive, send)
+
+            # Handle authentication
             headers = dict(scope.get("headers", []))
             auth_header = headers.get(b"authorization", b"").decode()
 
@@ -127,19 +151,7 @@ class AuthenticationMiddleware:
             )
 
             # Scope-based API access control
-            path = scope.get("path", "")
-            method = scope.get("method", hdrs.METH_GET)
-
-            if not hasattr(self, "route_impls"):
-                self.route_impls = initialize_route_impls(self.impls)
-
-            try:
-                _, _, _, webmethod = find_matching_route(method, path, self.route_impls)
-            except ValueError:
-                # If no matching endpoint is found, pass through to FastAPI
-                return await self.app(scope, receive, send)
-
-            if webmethod.required_scope:
+            if webmethod and webmethod.required_scope:
                 user = user_from_scope(scope)
                 if not _has_required_scope(webmethod.required_scope, user):
                     return await self._send_auth_error(

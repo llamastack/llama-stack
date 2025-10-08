@@ -61,6 +61,7 @@ class WebMethod:
     descriptive_name: str | None = None
     required_scope: str | None = None
     deprecated: bool | None = False
+    require_authentication: bool | None = True
 
 
 CallableT = TypeVar("CallableT", bound=Callable[..., Any])
@@ -77,6 +78,7 @@ def webmethod(
     descriptive_name: str | None = None,
     required_scope: str | None = None,
     deprecated: bool | None = False,
+    require_authentication: bool | None = True,
 ) -> Callable[[CallableT], CallableT]:
     """
     Decorator that supplies additional metadata to an endpoint operation function.
@@ -86,6 +88,7 @@ def webmethod(
     :param request_examples: Sample requests that the operation might take. Pass a list of objects, not JSON.
     :param response_examples: Sample responses that the operation might produce. Pass a list of objects, not JSON.
     :param required_scope: Required scope for this endpoint (e.g., 'monitoring.viewer').
+    :param require_authentication: Whether this endpoint requires authentication (default True).
     """
 
     def wrap(func: CallableT) -> CallableT:
@@ -100,6 +103,7 @@ def webmethod(
             descriptive_name=descriptive_name,
             required_scope=required_scope,
             deprecated=deprecated,
+            require_authentication=require_authentication if require_authentication is not None else True,
         )
 
         # Store all webmethods in a list to support multiple decorators
