@@ -325,6 +325,9 @@ def _normalize_response(data: dict[str, Any], request_hash: str) -> dict[str, An
     if "eval_duration" in data and data["eval_duration"] is not None:
         data["eval_duration"] = 0
 
+    # Normalize file IDs and vector store IDs to ensure consistent hashing across replays
+    data = _normalize_file_ids(data)
+
     return data
 
 
