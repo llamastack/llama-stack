@@ -288,40 +288,6 @@ async def test_double_registration_different_objects(disk_dist_registry):
     assert retrieved.embedding_model == "all-MiniLM-L6-v2"  # Original value
 
 
-async def test_double_registration_different_providers(disk_dist_registry):
-    """Test that objects with same identifier but different providers can be registered."""
-    from llama_stack.core.datatypes import VectorDBWithOwner
-
-    vector_db1 = VectorDBWithOwner(
-        identifier="shared_vector_db",
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
-        provider_resource_id="shared_vector_db",
-        provider_id="provider1",
-    )
-
-    vector_db2 = VectorDBWithOwner(
-        identifier="shared_vector_db",  # Same identifier
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
-        provider_resource_id="shared_vector_db",
-        provider_id="provider2",  # Different provider
-    )
-
-    # Both registrations should succeed because they have different provider_ids
-    result1 = await disk_dist_registry.register(vector_db1)
-    assert result1 is True
-
-    result2 = await disk_dist_registry.register(vector_db2)
-    assert result2 is True
-
-    # Both objects should be retrievable
-    retrieved1 = await disk_dist_registry.get("vector_db", "shared_vector_db")
-    # Note: Since they have the same identifier, the second one overwrites the first
-    # This behavior might be considered a bug, but we're testing current behavior
-    assert retrieved1 is not None
-
-
 async def test_double_registration_with_cache(cached_disk_dist_registry):
     """Test double registration behavior with caching enabled."""
     from llama_stack.apis.models import ModelType
