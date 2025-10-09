@@ -1,0 +1,60 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai with temperature 1"
+        }
+      ],
+      "max_tokens": 100,
+      "stream": false,
+      "temperature": 0.7,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-62312134a706",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "To test the OpenAI API with a temperature of 1, you'll need to use the `text-diffusion` model and pass in the `temperature` parameter. Here's an example using the `transformers` library:\n```python\nimport torch\nfrom transformers import AutoModelForCPT, AutoTokenizer\n\n# Load pre-trained model and tokenizer for text diffusion\nmodel_name = \"CompVis/textdiffusion\"\nmodel = AutoModelForCPT.from_pretrained(model_name)\ntokenizer",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 100,
+          "prompt_tokens": 33,
+          "total_tokens": 133,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

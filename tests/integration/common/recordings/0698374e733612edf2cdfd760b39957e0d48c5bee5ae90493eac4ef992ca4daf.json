@@ -1,0 +1,58 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 1"
+        }
+      ],
+      "stream": false,
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-0698374e7336",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "You want to test the OpenAI 1.0 model, also known as GPT-1. This was one of the first models developed by OpenAI and is an outdated version of their language model compared to more recent versions like GPT-2, GPT-3 and so on. Keep in mind that it has several limitations.\n\nYou can use it via this chat interface. I am a simulation of the environment where you can interact with a simple text-based input.\n\n\n1. Test basic functions: You can ask me simple questions such as what is your name, how are you doing,  etc. \n2. Try natural language understanding.\n3. Ask for suggestions or recommendations.\n\nFeel free to try anything and I will respond accordingly! What do you want to test first?",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 159,
+          "prompt_tokens": 31,
+          "total_tokens": 190,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/eval/test_eval.py::test_evaluate_benchmark[txt=ollama/llama3.2:3b-instruct-fp16-basic::subset_of]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the smallest country in the world?"
+        }
+      ],
+      "max_tokens": 0,
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-263ddc08771b",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "The smallest country in the world is the Vatican City, which has an area of approximately 0.44 km\u00b2 (0.17 sq mi). It is an independent city-state located within Rome, Italy, and is home to the Pope and the central government of the Catholic Church.\n\nThe Vatican City is not only the smallest country, but it also has the smallest population in the world, with around 800 inhabitants. Despite its small size, it is a sovereign state with its own government, currency, postal system, and even its own police force.\n\nIt's worth noting that there are other tiny territories and dependencies around the world that are not internationally recognized as sovereign states, such as Tokelau (a New Zealand territory with an area of 10 km\u00b2), Nauru (a small island nation with an area of 21.3 km\u00b2), and Monaco (a principality on the French Riviera with an area of 2 km\u00b2). However, the Vatican City is the only country that has been recognized as a sovereign state by the international community since 1929.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 220,
+          "prompt_tokens": 34,
+          "total_tokens": 254,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

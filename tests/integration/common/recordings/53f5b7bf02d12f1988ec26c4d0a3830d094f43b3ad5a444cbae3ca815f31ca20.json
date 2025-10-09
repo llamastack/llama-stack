@@ -1,0 +1,58 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 0"
+        }
+      ],
+      "stream": false,
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-53f5b7bf02d1",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "You're referring to the test environment for OpenAI's CLIA model!\n\nTo access the test environment, you'll need to follow these steps:\n\n1. **Sign up for an OpenAI account**: If you haven't already, create a new account on the OpenAI website.\n2. **Apply for access to the test environment**: Submit a request to gain access to the test environment through the OpenAI portal.\n3. **Read and agree to the terms of service**: Once your request is accepted, you'll need to review and agree to the terms of service for the test environment.\n\nAfter completing these steps, you should have access to the test environment, which includes the CLIA model (a multilingual conversational AI designed for customer support).\n\nIn the test environment, you can interact with the CLIA model using the interface provided by OpenAI. Keep in mind that this is a limited environment, and you might not be able to push code or test more advanced use cases.\n\nHere are some tips for testing the CLIA model:\n\n* Use simple text inputs to get started.\n* Experiment with different queries and conversations to understand how the model responds.\n* Keep an eye on the model's limitations (e.g., it may struggle with complex questions or follow-up conversations).\n* Report any issues or concerns you encounter during testing.\n\nRemember that the test environment is designed for exploration and evaluation purposes only. Any data collected from the test environment will be anonymized and used solely for improving the CLIA model and other OpenAI products.\n\nIf you have any specific questions or need help with a particular test scenario, feel free to ask!",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 327,
+          "prompt_tokens": 31,
+          "total_tokens": 358,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

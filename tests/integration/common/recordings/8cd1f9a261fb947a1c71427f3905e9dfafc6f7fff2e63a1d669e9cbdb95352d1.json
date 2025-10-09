@@ -1,0 +1,60 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai with temperature 1"
+        }
+      ],
+      "max_tokens": 100,
+      "stream": false,
+      "temperature": 0.7,
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-8cd1f9a261fb",
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "You want to test the OpenAI's text generation model using a temperature of 1.\n\nTo do this, you'll need to use the OpenAI API and create an instance of the model. Here's a simple example code snippet in Python:\n\n```python\nimport requests\nfrom transformers import AutoModelForSeq2SeqLM, Seq2SeqPipeline\n\n# Set your API key from https://www.openai.com/api-key/\nAPI_KEY = \"YOUR_API_KEY_HERE\"\n\n# Initialize the model and",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 100,
+          "prompt_tokens": 33,
+          "total_tokens": 133,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

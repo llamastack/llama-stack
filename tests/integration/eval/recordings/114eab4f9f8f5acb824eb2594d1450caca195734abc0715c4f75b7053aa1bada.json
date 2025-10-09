@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/eval/test_eval.py::test_evaluate_benchmark[txt=ollama/llama3.2:3b-instruct-fp16-basic::subset_of]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the smallest country in the world?"
+        }
+      ],
+      "max_tokens": 0,
+      "extra_body": {}
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-114eab4f9f8f",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "The smallest country in the world is the Vatican City, which covers an area of approximately 0.44 km\u00b2 (0.17 sq mi). It has a population of just over 800 people and serves as the headquarters of the Catholic Church. Despite its small size, it is recognized as a sovereign state by the international community and has its own government, currency, postal system, and even a tiny army.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 84,
+          "prompt_tokens": 34,
+          "total_tokens": 118,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
