@@ -230,6 +230,11 @@ class OpenAIResponsesImpl:
         if shields is not None:
             raise NotImplementedError("Shields parameter is not yet implemented in the meta-reference provider")
 
+        if conversation is not None and previous_response_id is not None:
+            raise ValueError(
+                "Mutually exclusive parameters: 'previous_response_id' and 'conversation'. Ensure you are only providing one of these parameters."
+            )
+
         if conversation is not None:
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)

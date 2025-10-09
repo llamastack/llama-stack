@@ -102,6 +102,18 @@ class TestConversationResponses:
             )
         assert any(word in str(exc_info.value).lower() for word in ["not found", "404"])
 
+        response = openai_client.responses.create(
+            model=text_model_id, input=[{"role": "user", "content": "First response"}]
+        )
+        with pytest.raises(Exception) as exc_info:
+            openai_client.responses.create(
+                model=text_model_id,
+                input=[{"role": "user", "content": "Hello"}],
+                conversation="conv_test123",
+                previous_response_id=response.id,
+            )
+        assert "mutually exclusive" in str(exc_info.value).lower()
+
     def test_conversation_backward_compatibility(self, openai_client, text_model_id):
         """Test that responses work without conversation parameter (backward compatibility)."""
         response = openai_client.responses.create(

@@ -330,3 +330,15 @@ class TestIntegrationWorkflow:
             )
 
         assert "not found" in str(exc_info.value)
+
+    async def test_conversation_and_previous_response_id(
+        self, responses_impl_with_conversations, mock_conversations_api, mock_responses_store
+    ):
+        with pytest.raises(ValueError) as exc_info:
+            await responses_impl_with_conversations.create_openai_response(
+                input="test", model="test", conversation="conv_123", previous_response_id="resp_123"
+            )
+
+        assert "Mutually exclusive parameters" in str(exc_info.value)
+        assert "previous_response_id" in str(exc_info.value)
+        assert "conversation" in str(exc_info.value)
