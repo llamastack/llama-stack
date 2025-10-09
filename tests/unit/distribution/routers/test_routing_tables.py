@@ -360,10 +360,10 @@ async def test_double_registration_models_positive(cached_disk_dist_registry):
     await table.initialize()
 
     # Register a model
-    await table.register_model(model_id="test-model", provider_id="test_provider")
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
 
     # Register the exact same model again - should succeed (idempotent)
-    await table.register_model(model_id="test-model", provider_id="test_provider")
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
 
     # Verify only one model exists
     models = await table.list_models()
@@ -380,7 +380,9 @@ async def test_double_registration_models_negative(cached_disk_dist_registry):
     await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
 
     # Try to register the same model with different metadata - should fail
-    with pytest.raises(ValueError, match="Provider 'test_provider' is already registered"):
+    with pytest.raises(
+        ValueError, match="Object of type 'model' and identifier 'test_provider/test-model' already exists"
+    ):
         await table.register_model(
             model_id="test-model", provider_id="test_provider", metadata={"param1": "different_value"}
         )
@@ -427,7 +429,9 @@ async def test_double_registration_scoring_functions_negative(cached_disk_dist_r
     )
 
     # Try to register the same scoring function with different description - should fail
-    with pytest.raises(ValueError, match="Provider 'test_provider' is already registered"):
+    with pytest.raises(
+        ValueError, match="Object of type 'scoring_function' and identifier 'test-scoring-fn' already exists"
+    ):
         await table.register_scoring_function(
             scoring_fn_id="test-scoring-fn",
             provider_id="test_provider",
