@@ -1,0 +1,57 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace 0"
+        }
+      ],
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-bf55997bef6c",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "It appears you are trying to communicate with a system, but I need more information. \"Test trace 0\" is a generic phrase that can have different meanings in various contexts.\n\nCould you please provide more context or clarify what you mean by \"test trace 0\"? Are you:\n\n1. Using a computer program or software that has a command line interface (CLI) and want to execute a specific command?\n2. Involved in a debugging process with a system, such as a network device or a microcontroller?\n3. Referring to a specific protocol or standard for data transmission?\n\nIf you provide more details, I'd be happy to help you troubleshoot or answer your question.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 139,
+          "prompt_tokens": 29,
+          "total_tokens": 168,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

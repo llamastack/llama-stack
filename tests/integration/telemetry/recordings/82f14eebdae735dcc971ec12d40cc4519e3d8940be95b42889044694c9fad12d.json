@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/telemetry/test_openai_telemetry.py::test_openai_completion_creates_telemetry[txt=ollama/llama3.2:3b-instruct-fp16]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test OpenAI telemetry creation"
+        }
+      ],
+      "stream": false,
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-82f14eebdae7",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "To test the telemetry creation feature of OpenAI, we can start by exploring what types of data are being collected and how they can be used to improve models.\n\n1. **Data**: Some examples of data that telemetry provides include the user's location, device information (such as IP address or serial number), browser type and version, screen resolution, operating system, and internet service provider. This type of information is useful for providing targeted advertising solutions for businesses like OpenAI.\n\n2. **Analysis Tools**: Additionally, telemetry offers analysis tools that can help identify issues in the models. For example, it provides insights on model reliability and performance problems. These are valuable features to improve the stability and user experience of these complex systems.  To explore what new updates have been made since its last public release we would need some information like changes log from OpenAI GitHub page.\n\n3. **Integration**: The telemetry API can also be integrated with other data pipelines, such as customer relationship management (CRM) software or marketing automation tools. This allows for a more comprehensive view of user behavior and interaction history with the platform.\n\nTo test the feature, you would typically need to first ensure that you have the necessary permissions and access levels to collect telemetry data for your OpenAI environment.\n\nTo start testing:\n1. Start by using OpenAI's console or API in a safe working environment.\n3. Look up available endpoints in the documentation and select one appropriate for telemetry \n4. Execute an HTTP request against it to get relevant data for this test\n5. Use a response object from the previous request call to analyze some of its possible attributes",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 323,
+          "prompt_tokens": 30,
+          "total_tokens": 353,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

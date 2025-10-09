@@ -363,6 +363,56 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         return body, field_names
 
+    def _prepare_request_body(
+        self, func: Any, body: dict, path: str, method: str, exclude_params: set[str] | None = None
+    ) -> dict:
+        """Prepare request body by converting to Pydantic models or traditional parameters.
+
+        For endpoints with a single Pydantic parameter, constructs the model from the body.
+        For traditional endpoints, converts body to match function parameters.
+
+        Args:
+            func: The function to call
+            body: The request body
+            path: The request path
+            method: The HTTP method
+            exclude_params: Parameters to exclude from conversion
+
+        Returns:
+            The prepared body dict ready to pass to the function
+        """
+        sig = inspect.signature(func)
+        params_list = [p for p in sig.parameters.values() if p.name != "self"]
+
+        # Check if the method expects a single Pydantic model parameter
+        is_pydantic_param = False
+        if len(params_list) == 1:
+            param = params_list[0]
+            param_type = param.annotation
+            try:
+                if isinstance(param_type, type) and issubclass(param_type, BaseModel):
+                    is_pydantic_param = True
+            except (TypeError, AttributeError):
+                pass
+
+        # For Pydantic models, use the raw body directly to construct the model
+        # For traditional methods, convert body to match function parameters
+        if is_pydantic_param:
+            param = params_list[0]
+            param_type = param.annotation
+            # Strip NOT_GIVENs before passing to Pydantic
+            clean_body = {k: v for k, v in body.items() if v is not NOT_GIVEN}
+
+            # If the body has a single key matching the parameter name, unwrap it
+            # This handles cases where the client passes agent_config={...} and we need
+            # to construct AgentConfig from the inner dict, not {"agent_config": {...}}
+            if len(clean_body) == 1 and param.name in clean_body:
+                clean_body = clean_body[param.name]
+
+            return {param.name: param_type(**clean_body)}
+        else:
+            return self._convert_body(path, method, body, exclude_params=exclude_params)
+
     async def _call_non_streaming(
         self,
         *,
@@ -383,7 +433,8 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         body, field_names = self._handle_file_uploads(options, body)
 
-        body = self._convert_body(path, options.method, body, exclude_params=set(field_names))
+        # Prepare body for the function call (handles both Pydantic and traditional params)
+        body = self._prepare_request_body(matched_func, body, path, options.method, exclude_params=set(field_names))
 
         trace_path = webmethod.descriptive_name or route_path
         await start_trace(trace_path, {"__location__": "library_client"})
@@ -446,7 +497,8 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         func, path_params, route_path, webmethod = find_matching_route(options.method, path, self.route_impls)
         body |= path_params
 
-        body = self._convert_body(path, options.method, body)
+        # Prepare body for the function call (handles both Pydantic and traditional params)
+        body = self._prepare_request_body(func, body, path, options.method)
 
         trace_path = webmethod.descriptive_name or route_path
         await start_trace(trace_path, {"__location__": "library_client"})

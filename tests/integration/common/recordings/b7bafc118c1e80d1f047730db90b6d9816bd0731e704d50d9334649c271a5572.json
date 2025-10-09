@@ -1,0 +1,58 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace openai 2"
+        }
+      ],
+      "stream": false,
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-b7bafc118c1e",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I don't have direct access to OpenAI's systems or data. However, I can provide you with information on how to test the GPT-2 model using a few different methods:\n\n1. **OpenAI's GPT-2 Model**: You can sign up for an OpenAI API key and use it to interact with the GPT-2 model through their API. This will allow you to send text prompts and receive responses from the model.\n2. **Hugging Face Transformers Library**: The Hugging Face library provides a pre-trained GPT-2 model that you can use in Python. You can install the library using pip: `pip install transformers`. Then, you can import the model and use it to generate text.\n3. **Google Colab Notebook**: Google Colab provides a free online platform where you can run Python code, including using the Hugging Face library to interact with GPT-2.\n\nHere's an example of how you could test the GPT-2 model using the Hugging Face library in a Google Colab notebook:\n```\n!pip install transformers\nimport torch\nfrom transformers import GPT2Model, GPT2Tokenizer\n\n# Load pre-trained GPT-2 model and tokenizer\nmodel = GPT2Model.from_pretrained('gpt2-base')\ntokenizer = GPT2Tokenizer.from_pretrained('gpt2-base')\n\n# Define a text prompt\nprompt = \"Write a short story about a cat\"\n\n# Tokenize the prompt\ninputs = tokenizer(prompt, return_tensors='pt')\n\n# Generate text using the model\noutput = model.generate(inputs['input_ids'], max_length=128)\n\n# Print the generated text\nprint(tokenizer.decode(output[0], skip_special_tokens=True))\n```\nThis code will generate a short story about a cat based on the prompt you provided. Keep in mind that this is just an example, and the output may vary depending on the specific model and configuration used.\n\nLet me know if you have any further questions or if there's anything else I can help you with!",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 417,
+          "prompt_tokens": 31,
+          "total_tokens": 448,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

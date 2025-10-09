@@ -14,22 +14,61 @@
       "__data__": {
         "models": [
           {
-            "model": "llama3.2-vision:11b",
-            "name": "llama3.2-vision:11b",
-            "digest": "6f2f9757ae97e8a3f8ea33d6adb2b11d93d9a35bef277cd2c0b1b5af8e8d0b1e",
-            "expires_at": "2025-10-08T12:40:47.430429-07:00",
-            "size": 11765236384,
-            "size_vram": 11765236384,
+            "model": "all-minilm:l6-v2",
+            "name": "all-minilm:l6-v2",
+            "digest": "1b226e2802dbb772b5fc32a58f103ca1804ef7501331012de126ab22f67475ef",
+            "expires_at": "2025-10-09T11:53:33.065351-07:00",
+            "size": 585846784,
+            "size_vram": 585846784,
             "details": {
               "parent_model": "",
               "format": "gguf",
-              "family": "mllama",
+              "family": "bert",
               "families": [
-                "mllama"
+                "bert"
               ],
-              "parameter_size": "10.7B",
-              "quantization_level": "Q4_K_M"
-            }
+              "parameter_size": "23M",
+              "quantization_level": "F16"
+            },
+            "context_length": 256
+          },
+          {
+            "model": "nomic-embed-text:latest",
+            "name": "nomic-embed-text:latest",
+            "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "expires_at": "2025-10-09T11:53:33.984879-07:00",
+            "size": 848677888,
+            "size_vram": 848677888,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "nomic-bert",
+              "families": [
+                "nomic-bert"
+              ],
+              "parameter_size": "137M",
+              "quantization_level": "F16"
+            },
+            "context_length": 8192
+          },
+          {
+            "model": "llama3.2:3b-instruct-fp16",
+            "name": "llama3.2:3b-instruct-fp16",
+            "digest": "195a8c01d91ec3cb1e0aad4624a51f2602c51fa7d96110f8ab5a20c84081804d",
+            "expires_at": "2025-10-09T11:53:30.486441-07:00",
+            "size": 7919570944,
+            "size_vram": 7919570944,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "llama",
+              "families": [
+                "llama"
+              ],
+              "parameter_size": "3.2B",
+              "quantization_level": "F16"
+            },
+            "context_length": 4096
           }
         ]
       }

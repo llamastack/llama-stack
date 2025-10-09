@@ -1,0 +1,57 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test trace 1"
+        }
+      ],
+      "extra_body": null
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-f5f56fc6c379",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "It looks like you're trying to start a conversation or test a new feature. I'd be happy to chat with you!\n\nSince we haven't discussed any specific topic yet, I can suggest some ideas to get us started:\n\n1. Would you like to talk about a particular hobby or interest?\n2. Are you looking for recommendations on books, movies, or music?\n3. Do you have a question on a specific subject that you'd like me to help with?\n\nLet me know if any of these suggestions appeal to you, or feel free to steer the conversation in a completely different direction!",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 120,
+          "prompt_tokens": 29,
+          "total_tokens": 149,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}
