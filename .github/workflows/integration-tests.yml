@@ -79,6 +79,8 @@ jobs:
 
       - name: Run tests
         uses: ./.github/actions/run-and-record-tests
+        env:
+          OPENAI_API_KEY: dummy
         with:
           stack-config: ${{ matrix.client-type == 'library' && 'ci-tests' || 'server:ci-tests' }}
           setup: ${{ matrix.config.setup }}
