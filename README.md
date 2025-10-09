@@ -27,8 +27,11 @@ MODEL="Llama-4-Scout-17B-16E-Instruct"
 # get meta url from llama.com
 llama model download --source meta --model-id $MODEL --meta-url <META_URL>
 
+# install dependencies for the distribution
+llama stack list-deps meta-reference-gpu | xargs -L1 uv pip install
+
 # start a llama stack server
-INFERENCE_MODEL=meta-llama/$MODEL llama stack build --run --template meta-reference-gpu
+INFERENCE_MODEL=meta-llama/$MODEL llama stack run meta-reference-gpu
 
 # install client to interact with the server
 pip install llama-stack-client
