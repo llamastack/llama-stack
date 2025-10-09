@@ -69,7 +69,6 @@ from llama_stack.providers.utils.telemetry.tracing import (
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
-from .tracing import TracingMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
@@ -425,6 +424,7 @@ def create_app() -> StackApp:
 
     if Api.telemetry in impls:
         setup_logger(impls[Api.telemetry])
+        TelemetryAdapter.fastapi_middleware(app)  # hold us over until we can move to programmatic instrumentation
     else:
         setup_logger(TelemetryAdapter(TelemetryConfig(), {}))
 
@@ -483,8 +483,6 @@ def create_app() -> StackApp:
 
     app.exception_handler(RequestValidationError)(global_exception_handler)
     app.exception_handler(Exception)(global_exception_handler)
-
-    app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 

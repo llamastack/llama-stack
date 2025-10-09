@@ -19,6 +19,7 @@ from llama_stack.apis.telemetry import (
     QueryCondition,
     QueryMetricsResponse,
     Span,
+    SpanStatus,
     SpanWithStatus,
     Trace,
 )
@@ -343,6 +344,11 @@ class SQLiteTraceStore(TraceStore):
                     raise ValueError(f"Span {span_id} not found")
 
                 for row in rows:
+                    # Map OpenTelemetry status codes to API enum values
+                    # OTEL has: UNSET, OK, ERROR -> Map to SpanStatus enum
+                    otel_status = row["status"].upper()
+                    status = SpanStatus.ERROR if otel_status == "ERROR" else SpanStatus.OK
+
                     span = SpanWithStatus(
                         span_id=row["span_id"],
                         trace_id=row["trace_id"],
@@ -351,7 +357,7 @@ class SQLiteTraceStore(TraceStore):
                         start_time=datetime.fromisoformat(row["start_time"]),
                         end_time=datetime.fromisoformat(row["end_time"]),
                         attributes=json.loads(row["filtered_attributes"]),
-                        status=row["status"].lower(),
+                        status=status,
                     )
 
                     spans_by_id[span.span_id] = span
