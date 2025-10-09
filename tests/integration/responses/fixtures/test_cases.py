@@ -41,32 +41,33 @@ basic_test_cases = [
         ),
         id="saturn",
     ),
-    pytest.param(
-        ResponsesTestCase(
-            input=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "input_text",
-                            "text": "what teams are playing in this image?",
-                        }
-                    ],
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "input_image",
-                            "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/LeBron_James_Layup_%28Cleveland_vs_Brooklyn_2018%29.jpg",
-                        }
-                    ],
-                },
-            ],
-            expected="brooklyn nets",
-        ),
-        id="image_input",
-    ),
+    # TODO: Add image input test case, since this test case got Nerfed by OpenAI with a refusal
+    # pytest.param(
+    #     ResponsesTestCase(
+    #         input=[
+    #             {
+    #                 "role": "user",
+    #                 "content": [
+    #                     {
+    #                         "type": "input_text",
+    #                         "text": "what teams are playing in this image?",
+    #                     }
+    #                 ],
+    #             },
+    #             {
+    #                 "role": "user",
+    #                 "content": [
+    #                     {
+    #                         "type": "input_image",
+    #                         "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/LeBron_James_Layup_%28Cleveland_vs_Brooklyn_2018%29.jpg",
+    #                     }
+    #                 ],
+    #             },
+    #         ],
+    #         expected="brooklyn nets",
+    #     ),
+    #     id="image_input",
+    # ),
 ]
 
 # Multi-turn test cases

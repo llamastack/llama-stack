@@ -59,15 +59,13 @@ def _track_test_context(request):
     This fixture runs for every test and stores the test's nodeid in a contextvar
     that the recording system can access to determine which subdirectory to use.
     """
-    from llama_stack.testing.api_recorder import _test_context
+    from llama_stack.core.testing_context import reset_test_context, set_test_context
 
-    # Store the test nodeid (e.g., "tests/integration/responses/test_basic.py::test_foo[params]")
-    token = _test_context.set(request.node.nodeid)
+    token = set_test_context(request.node.nodeid)
 
     yield
 
-    # Cleanup
-    _test_context.reset(token)
+    reset_test_context(token)
 
 
 def pytest_runtest_teardown(item):
