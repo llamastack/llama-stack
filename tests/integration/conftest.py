@@ -139,6 +139,11 @@ def pytest_addoption(parser):
     )
     parser.addoption("--env", action="append", help="Set environment variables, e.g. --env KEY=value")
     parser.addoption(
+        "--clean-artifacts",
+        action="store_true",
+        help="Clean up all artifacts (databases, logs, batch input/output files) after test execution",
+    )
+    parser.addoption(
         "--text-model",
         help="comma-separated list of text models. Fixture name: text_model_id",
     )

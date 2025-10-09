@@ -4,14 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import glob
 import inspect
 import os
 import shlex
+import shutil
 import signal
 import socket
 import subprocess
 import tempfile
 import time
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
@@ -61,7 +64,8 @@ def wait_for_server_ready(base_url: str, timeout: int = 30, process: subprocess.
     while time.time() - start_time < timeout:
         if process and process.poll() is not None:
             print(f"Server process terminated with return code: {process.returncode}")
-            print(f"Server stderr: {process.stderr.read()}")
+            if process.stderr:
+                print(f"Server stderr: {process.stderr.read()}")
             return False
 
         try:
@@ -185,7 +189,51 @@ def llama_stack_client(request):
     start_time = time.time()
     client = instantiate_llama_stack_client(request.session)
     print(f"llama_stack_client instantiated in {time.time() - start_time:.3f}s")
-    return client
+    
+    yield client
+    
+    # Cleanup artifacts after all tests complete (if --clean-artifacts flag is set)
+    # removes databases, logs, and uploaded batch input/output files
+    if request.config.getoption("--clean-artifacts"):
+        config = request.config.getoption("--stack-config") or os.environ.get("LLAMA_STACK_CONFIG", "")
+        if not config:
+            return
+        
+        image_names = []
+        if config.startswith("server:"):
+            image_names.append(config.split(":")[1])
+        elif config and not config.startswith("http") and "=" not in config:
+            from llama_stack.core.utils.config_resolution import resolve_config_or_distro, Mode
+            
+            try:
+                config_path = resolve_config_or_distro(config, Mode.RUN)
+                with open(config_path) as f:
+                    config_data = yaml.safe_load(f)
+                    image_names.append(config_data.get("image_name", Path(config).stem.replace("-run", "")))
+            except Exception:
+                if not config.endswith(".yaml"):
+                    image_names.append(config)
+        
+        for image_name in image_names:
+            dist_dir = Path.home() / ".llama" / "distributions" / image_name
+            if not dist_dir.exists():
+                continue
+            
+            artifacts = list(dist_dir.glob("*.db")) + list(dist_dir.glob("*.log"))
+            
+            # Also clean uploaded files (batch input/output files)
+            files_dir = dist_dir / "files"
+            if files_dir.exists():
+                artifacts.extend(list(files_dir.glob("*")))
+            
+            if artifacts:
+                print(f"\nCleaning {len(artifacts)} artifact(s) for '{image_name}'")
+                for artifact in artifacts:
+                    try:
+                        os.remove(artifact)
+                        print(f"  Removed: {artifact.name}")
+                    except Exception as e:
+                        print(f"  Warning: Could not remove {artifact}: {e}")
 
 
 def instantiate_llama_stack_client(session):

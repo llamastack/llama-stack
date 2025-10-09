@@ -40,6 +40,16 @@ Model parameters can be influenced by the following options:
 Each of these are comma-separated lists and can be used to generate multiple parameter combinations. Note that tests will be skipped
 if no model is specified.
 
+### Database Cleanup
+
+Tests create persistent databases and files in `~/.llama/distributions/{distro_name}/`. Use when running locally, you can use the `--clean-artifacts` flag to remove once a test finishes executing.
+
+```bash
+pytest tests/integration/ --stack-config=server:starter --clean-artifacts
+```
+
+Artifacts cleaned: `*.db`, `*.log`, and batch files in `files/` directory.
+
 ### Suites and Setups
 
 - `--suite`: single named suite that narrows which tests are collected.
