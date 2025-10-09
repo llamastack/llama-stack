@@ -104,12 +104,8 @@ async def test_register_and_unregister_vector_db(vector_io_adapter):
 
 async def test_query_unregistered_raises(vector_io_adapter, vector_provider):
     fake_emb = np.zeros(8, dtype=np.float32)
-    if vector_provider == "chroma":
-        with pytest.raises(AttributeError):
-            await vector_io_adapter.query_chunks("no_such_db", fake_emb)
-    else:
-        with pytest.raises(ValueError):
-            await vector_io_adapter.query_chunks("no_such_db", fake_emb)
+    with pytest.raises(ValueError):
+        await vector_io_adapter.query_chunks("no_such_db", fake_emb)
 
 
 async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
