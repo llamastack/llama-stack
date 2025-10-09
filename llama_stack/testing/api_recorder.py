@@ -70,7 +70,7 @@ def _normalize_numeric_literal_strings(value: str) -> str:
 
     def _replace(match: re.Match[str]) -> str:
         number = float(match.group(0))
-        return f"{number:.6f}"
+        return f"{number:.5f}"
 
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
 
@@ -85,7 +85,7 @@ def _normalize_body_for_hash(value: Any) -> Any:
     if isinstance(value, tuple):
         return tuple(_normalize_body_for_hash(item) for item in value)
     if isinstance(value, float):
-        return round(value, 6)
+        return round(value, 5)
     if isinstance(value, str):
         return _normalize_numeric_literal_strings(value)
     return value
@@ -849,7 +849,7 @@ def api_recording(mode: str, storage_dir: str | Path | None = None) -> Generator
     # Store previous state
     prev_mode = _current_mode
     prev_storage = _current_storage
-    override_token = None
+    previous_override = None
 
     try:
         _current_mode = mode
@@ -860,7 +860,7 @@ def api_recording(mode: str, storage_dir: str | Path | None = None) -> Generator
             _current_storage = ResponseStorage(Path(storage_dir))
             _id_counters.clear()
             patch_inference_clients()
-            override_token = set_id_override(_deterministic_id_override)
+            previous_override = set_id_override(_deterministic_id_override)
 
         yield
 
@@ -868,8 +868,7 @@ def api_recording(mode: str, storage_dir: str | Path | None = None) -> Generator
         # Restore previous state
         if mode in ["record", "replay", "record-if-missing"]:
             unpatch_inference_clients()
-            if override_token is not None:
-                reset_id_override(override_token)
+            reset_id_override(previous_override)
 
         _current_mode = prev_mode
         _current_storage = prev_storage

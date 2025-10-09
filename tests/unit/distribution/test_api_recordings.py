@@ -147,6 +147,28 @@ class TestInferenceRecording:
         )
         assert hash5 == hash6
 
+        body_with_close_scores = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "score: 0.662477492560699",
+                }
+            ]
+        }
+        body_with_close_scores_variation = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "score: 0.6624775971970099",
+                }
+            ]
+        }
+        hash7 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, body_with_close_scores)
+        hash8 = normalize_inference_request(
+            "POST", "http://test/v1/chat/completions", {}, body_with_close_scores_variation
+        )
+        assert hash7 == hash8
+
     def test_response_storage(self, temp_storage_dir):
         """Test the ResponseStorage class."""
         temp_storage_dir = temp_storage_dir / "test_response_storage"

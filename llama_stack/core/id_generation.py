@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from __future__ import annotations
-
 from collections.abc import Callable
 
 IdFactory = Callable[[], str]
@@ -37,8 +35,8 @@ def set_id_override(override: IdOverride) -> IdOverride | None:
     return previous
 
 
-def reset_id_override(token: IdOverride | None) -> None:
+def reset_id_override(previous: IdOverride | None) -> None:
     """Restore the previous override returned by :func:`set_id_override`."""
 
     global _id_override
-    _id_override = token
+    _id_override = previous
