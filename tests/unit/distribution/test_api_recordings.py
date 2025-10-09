@@ -122,7 +122,30 @@ class TestInferenceRecording:
         # Test that different float precision produces different hashes (no rounding)
         hash3 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, {"temperature": 0.7000001})
         hash4 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, {"temperature": 0.7})
-        assert hash3 != hash4  # Different precision should produce different hashes
+        assert hash3 == hash4  # Small float precision differences should normalize to the same hash
+
+        # String-embedded decimals with excessive precision should also normalize.
+        body_with_precise_scores = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "score: 0.7472640164649847",
+                }
+            ]
+        }
+        body_with_precise_scores_variation = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "score: 0.74726414959878",
+                }
+            ]
+        }
+        hash5 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, body_with_precise_scores)
+        hash6 = normalize_inference_request(
+            "POST", "http://test/v1/chat/completions", {}, body_with_precise_scores_variation
+        )
+        assert hash5 == hash6
 
     def test_response_storage(self, temp_storage_dir):
         """Test the ResponseStorage class."""
