@@ -115,6 +115,8 @@ test = [
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
     "requests",
+    "chromadb>=1.0.15",
+    "qdrant-client",
     "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "weaviate-client>=4.16.4",
