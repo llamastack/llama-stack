@@ -34,7 +34,7 @@ dependencies = [
     "openai>=1.107",                                  # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
-    "python-jose[cryptography]",
+    "PyJWT>=2.8.0",
     "pydantic>=2.11.9",
     "rich",
     "starlette",

@@ -5,13 +5,11 @@
 # the root directory of this source tree.
 
 import ssl
-import time
 from abc import ABC, abstractmethod
-from asyncio import Lock
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
-from jose import jwt
+import jwt
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.errors import TokenValidationError
@@ -98,9 +96,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
 
     def __init__(self, config: OAuth2TokenAuthConfig):
         self.config = config
-        self._jwks_at: float = 0.0
-        self._jwks: dict[str, str] = {}
-        self._jwks_lock = Lock()
+        self._jwks_client: jwt.PyJWKClient | None = None
 
     async def validate_token(self, token: str, scope: dict | None = None) -> User:
         if self.config.jwks:
@@ -111,21 +107,30 @@ class OAuth2TokenAuthProvider(AuthProvider):
 
     async def validate_jwt_token(self, token: str, scope: dict | None = None) -> User:
         """Validate a token using the JWT token."""
-        await self._refresh_jwks()
+        if self.config.jwks is None:
+            raise ValueError("JWKS is not configured")
 
         try:
-            header = jwt.get_unverified_header(token)
-            kid = header["kid"]
-            if kid not in self._jwks:
-                raise ValueError(f"Unknown key ID: {kid}")
-            key_data = self._jwks[kid]
-            algorithm = header.get("alg", "RS256")
+            # Initialize PyJWKClient if not already done
+            if self._jwks_client is None:
+                self._jwks_client = jwt.PyJWKClient(
+                    self.config.jwks.uri,
+                    cache_keys=True,
+                    max_cached_keys=10,
+                    lifespan=3600,  # 1 hour cache
+                )
+
+            # Get the signing key from the JWT token
+            signing_key = self._jwks_client.get_signing_key_from_jwt(token)
+
+            # Decode and verify the JWT
             claims = jwt.decode(
                 token,
-                key_data,
-                algorithms=[algorithm],
+                signing_key.key,
+                algorithms=["RS256", "HS256", "ES256"],  # Common algorithms
                 audience=self.config.audience,
                 issuer=self.config.issuer,
+                options={"verify_exp": True, "verify_aud": True, "verify_iss": True},
             )
         except Exception as exc:
             raise ValueError("Invalid JWT token") from exc
@@ -200,37 +205,6 @@ class OAuth2TokenAuthProvider(AuthProvider):
             return f"Authentication required. Please provide a valid OAuth2 Bearer token validated by {domain}"
         else:
             return "Authentication required. Please provide a valid OAuth2 Bearer token in the Authorization header"
-
-    async def _refresh_jwks(self) -> None:
-        """
-        Refresh the JWKS cache.
-
-        This is a simple cache that expires after a certain amount of time (defined by `key_recheck_period`).
-        If the cache is expired, we refresh the JWKS from the JWKS URI.
-
-        Notes: for Kubernetes which doesn't fully implement the OIDC protocol:
-            * It doesn't have user authentication flows
-            * It doesn't have refresh tokens
-        """
-        async with self._jwks_lock:
-            if self.config.jwks is None:
-                raise ValueError("JWKS is not configured")
-            if time.time() - self._jwks_at > self.config.jwks.key_recheck_period:
-                headers = {}
-                if self.config.jwks.token:
-                    headers["Authorization"] = f"Bearer {self.config.jwks.token}"
-                verify = self.config.tls_cafile.as_posix() if self.config.tls_cafile else self.config.verify_tls
-                async with httpx.AsyncClient(verify=verify) as client:
-                    res = await client.get(self.config.jwks.uri, timeout=5, headers=headers)
-                    res.raise_for_status()
-                    jwks_data = res.json()["keys"]
-                    updated = {}
-                    for k in jwks_data:
-                        kid = k["kid"]
-                        # Store the entire key object as it may be needed for different algorithms
-                        updated[kid] = k
-                    self._jwks = updated
-                    self._jwks_at = time.time()
 
 
 class CustomAuthProvider(AuthProvider):
