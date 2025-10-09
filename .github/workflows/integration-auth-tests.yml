@@ -85,7 +85,7 @@ jobs:
           cat $run_dir/run.yaml
 
           # avoid line breaks in the server log, especially because we grep it below.
-          export COLUMNS=1984
+          export LLAMA_STACK_LOG_WIDTH=200
           nohup uv run llama stack run $run_dir/run.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready

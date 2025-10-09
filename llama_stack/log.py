@@ -133,7 +133,10 @@ def strip_rich_markup(text):
 
 class CustomRichHandler(RichHandler):
     def __init__(self, *args, **kwargs):
-        kwargs["console"] = Console()
+        # Set a reasonable default width for console output, especially when redirected to files
+        console_width = int(os.environ.get("LLAMA_STACK_LOG_WIDTH", "120"))
+        # Don't force terminal codes to avoid ANSI escape codes in log files
+        kwargs["console"] = Console(width=console_width)
         super().__init__(*args, **kwargs)
 
     def emit(self, record):

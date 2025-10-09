@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_completion_non_streaming[txt=ollama/llama3.2:3b-instruct-fp16-inference:completion:sanity]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/completions",
@@ -16,13 +17,13 @@
     "body": {
       "__type__": "openai.types.completion.Completion",
       "__data__": {
-        "id": "rec-6412295819a1",
+        "id": "rec-c9f153318fe6",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
-            "text": "Blue.\n\nMy answer is \"blue\" because it's a classic completion of the traditional nursery rhyme poem:\n\n\"Roses are red, violets are blue\"\n\nThis sentiment suggests that an unseen suitor from the first half of the line has given or will give the speaker roses."
+            "text": "purple.\n\nThis is a well-known rhyming phrase commonly used as a Valentine's Day greeting or a lighthearted way to express affection. The completed sentence is often written as: \"Roses are red, violets are purple.\" This rhyme scheme helps to create a memorable and catchy phrase that can be easily repeated and shared with others."
           }
         ],
         "created": 0,
@@ -30,9 +31,9 @@
         "object": "text_completion",
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 58,
+          "completion_tokens": 73,
           "prompt_tokens": 50,
-          "total_tokens": 108,
+          "total_tokens": 123,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

@@ -14,21 +14,21 @@
       "__data__": {
         "models": [
           {
-            "model": "all-minilm:l6-v2",
-            "name": "all-minilm:l6-v2",
-            "digest": "1b226e2802dbb772b5fc32a58f103ca1804ef7501331012de126ab22f67475ef",
-            "expires_at": "2025-10-06T16:41:45.231544-07:00",
-            "size": 590204928,
-            "size_vram": 590204928,
+            "model": "llama3.2-vision:11b",
+            "name": "llama3.2-vision:11b",
+            "digest": "6f2f9757ae97e8a3f8ea33d6adb2b11d93d9a35bef277cd2c0b1b5af8e8d0b1e",
+            "expires_at": "2025-10-08T12:40:47.430429-07:00",
+            "size": 11765236384,
+            "size_vram": 11765236384,
             "details": {
               "parent_model": "",
               "format": "gguf",
-              "family": "bert",
+              "family": "mllama",
               "families": [
-                "bert"
+                "mllama"
               ],
-              "parameter_size": "23M",
-              "quantization_level": "F16"
+              "parameter_size": "10.7B",
+              "quantization_level": "Q4_K_M"
             }
           }
         ]

@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/agents/test_agents.py::test_custom_tool[ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -54,7 +55,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-c7fc52830c4c",
+          "id": "rec-36e22908b34c",
           "choices": [
             {
               "delta": {
@@ -65,7 +66,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_s1g1se8b",
+                    "id": "call_ixvkq8fh",
                     "function": {
                       "arguments": "{\"celcius\":true,\"liquid_name\":\"polyjuice\"}",
                       "name": "get_boiling_point"
@@ -90,7 +91,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-c7fc52830c4c",
+          "id": "rec-36e22908b34c",
           "choices": [
             {
               "delta": {

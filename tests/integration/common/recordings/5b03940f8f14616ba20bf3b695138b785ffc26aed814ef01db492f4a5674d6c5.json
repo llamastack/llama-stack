@@ -1,4 +1,5 @@
 {
+  "test_id": null,
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -22,14 +23,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-e2c9b07709fe",
+        "id": "rec-5b03940f8f14",
         "choices": [
           {
             "finish_reason": "length",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "To test the prompt understanding of OpenAI's text generation capabilities, I'll simulate a conversation. \n\nYou mentioned testing the model with a temperature setting of 1. The temperature parameter in OpenAI's text models controls the diversity and coherence of generated text.\n\nA temperature of 1 is considered \"colder\" than usual, meaning the model will generate more coherent but potentially less diverse text compared to higher temperatures (e.g., 0.5 or 0.7).\n\nPlease provide a prompt for",
+              "content": "You want to test the effects of a high temperature in OpenAI's GPT-4 model. \n\nTo do this, you would need to use the OpenAI API and set the `temperature` parameter to 1. Here is an example using Python:\n\n```python\nimport os\nfrom transformers import GPT2ForConditionalGeneration, GPT2Tokenizer\n\n# Set your API key from https://www.openai.com/api-key/\napi_key = \"YOUR_API_KEY\"\n\n# Initialize the model",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
