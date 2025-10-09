@@ -261,7 +261,7 @@ class TestInferenceRecording:
             with api_recording(mode=APIRecordingMode.REPLAY, storage_dir=str(temp_storage_dir)):
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
 
-                with pytest.raises(RuntimeError, match="No recorded response found"):
+                with pytest.raises(RuntimeError, match="Recording not found"):
                     await client.chat.completions.create(
                         model="llama3.2:3b", messages=[{"role": "user", "content": "This was never recorded"}]
                     )
