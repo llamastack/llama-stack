@@ -556,9 +556,9 @@ async def _patched_tool_invoke_method(
             return recording["response"]["body"]
         elif _current_mode == APIRecordingMode.REPLAY:
             raise RuntimeError(
-                f"No recorded tool result found for {provider_name}.{tool_name}\n"
-                f"Request: {kwargs}\n"
-                f"To record this response, run with LLAMA_STACK_TEST_INFERENCE_MODE=record"
+                f"Recording not found for {provider_name}.{tool_name} | Request: {kwargs}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
             )
         # If RECORD_IF_MISSING and no recording found, fall through to record
 
@@ -644,10 +644,10 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
         elif mode == APIRecordingMode.REPLAY:
             # REPLAY mode requires recording to exist
             raise RuntimeError(
-                f"No recorded response found for request hash: {request_hash}\n"
-                f"Request: {method} {url} {body}\n"
-                f"Model: {body.get('model', 'unknown')}\n"
-                f"To record this response, run with LLAMA_STACK_TEST_INFERENCE_MODE=record"
+                f"Recording not found for request hash: {request_hash}\n"
+                f"Model: {body.get('model', 'unknown')} | Request: {method} {url}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
             )
 
     if mode == APIRecordingMode.RECORD or (mode == APIRecordingMode.RECORD_IF_MISSING and not recording):
