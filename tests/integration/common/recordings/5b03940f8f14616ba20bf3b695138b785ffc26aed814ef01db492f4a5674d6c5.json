@@ -30,7 +30,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "You want to test the effects of a high temperature in OpenAI's GPT-4 model. \n\nTo do this, you would need to use the OpenAI API and set the `temperature` parameter to 1. Here is an example using Python:\n\n```python\nimport os\nfrom transformers import GPT2ForConditionalGeneration, GPT2Tokenizer\n\n# Set your API key from https://www.openai.com/api-key/\napi_key = \"YOUR_API_KEY\"\n\n# Initialize the model",
+              "content": "You want to test the performance of the OpenAI's model using a specific temperature value. \n\nPlease note that the OpenAI's model, specifically the one based on the GPT-4, is not directly accessible. However, I can guide you through a general approach to evaluate its performance with a given temperature.\n\nThe temperature parameter in the context of a language model like the one provided by OpenAI refers to how 'warm' or 'cold' the generated text will be. A lower temperature will",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
