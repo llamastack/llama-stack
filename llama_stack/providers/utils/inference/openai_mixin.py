@@ -228,15 +228,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI completion API call.
         """
-        # Handle parameters that are not supported by OpenAI API, but may be by the provider
-        #  prompt_logprobs is supported by vLLM
-        #  guided_choice is supported by vLLM
-        # TODO: test coverage
-        extra_body: dict[str, Any] = {}
-        if params.prompt_logprobs is not None and params.prompt_logprobs >= 0:
-            extra_body["prompt_logprobs"] = params.prompt_logprobs
-        if params.guided_choice:
-            extra_body["guided_choice"] = params.guided_choice
+        # Extract extra fields using Pydantic's built-in __pydantic_extra__
+        extra_body = dict(params.__pydantic_extra__ or {})
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
         completion_kwargs = await prepare_openai_completion_params(
@@ -316,6 +309,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             user=params.user,
         )
 
+        # Extract any additional provider-specific parameters using Pydantic's __pydantic_extra__
+        if extra_body := dict(params.__pydantic_extra__ or {}):
+            request_params["extra_body"] = extra_body
         resp = await self.client.chat.completions.create(**request_params)
 
         return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
