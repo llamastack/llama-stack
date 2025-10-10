@@ -228,15 +228,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI completion API call.
         """
-        # Handle parameters that are not supported by OpenAI API, but may be by the provider
-        #  prompt_logprobs is supported by vLLM
-        #  guided_choice is supported by vLLM
-        # TODO: test coverage
-        extra_body: dict[str, Any] = {}
-        if params.prompt_logprobs is not None and params.prompt_logprobs >= 0:
-            extra_body["prompt_logprobs"] = params.prompt_logprobs
-        if params.guided_choice:
-            extra_body["guided_choice"] = params.guided_choice
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
         completion_kwargs = await prepare_openai_completion_params(
@@ -259,7 +250,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             user=params.user,
             suffix=params.suffix,
         )
-        resp = await self.client.completions.create(**completion_kwargs, extra_body=extra_body)
+        if extra_body := dict(params.__pydantic_extra__ or {}):
+            completion_kwargs["extra_body"] = extra_body
+        resp = await self.client.completions.create(**completion_kwargs)
 
         return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
 
@@ -316,6 +309,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             user=params.user,
         )
 
+        if extra_body := dict(params.__pydantic_extra__ or {}):
+            request_params["extra_body"] = extra_body
         resp = await self.client.chat.completions.create(**request_params)
 
         return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
