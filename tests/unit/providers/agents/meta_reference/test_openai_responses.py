@@ -384,9 +384,10 @@ async def test_create_openai_response_with_tool_call_function_arguments_none(ope
 
     def assert_common_expectations(chunks) -> None:
         first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
-        assert first_call.kwargs["messages"][0].content == input_text
-        assert first_call.kwargs["tools"] is not None
-        assert first_call.kwargs["temperature"] == 0.1
+        first_params = first_call.args[0]
+        assert first_params.messages[0].content == input_text
+        assert first_params.tools is not None
+        assert first_params.temperature == 0.1
         assert len(chunks[0].response.output) == 0
         completed_chunk = chunks[-1]
         assert completed_chunk.type == "response.completed"
@@ -1013,7 +1014,8 @@ async def test_reuse_mcp_tool_list(
     )
     assert len(mock_inference_api.openai_chat_completion.call_args_list) == 2
     second_call = mock_inference_api.openai_chat_completion.call_args_list[1]
-    tools_seen = second_call.kwargs["tools"]
+    second_params = second_call.args[0]
+    tools_seen = second_params.tools
     assert len(tools_seen) == 1
     assert tools_seen[0]["function"]["name"] == "test_tool"
     assert tools_seen[0]["function"]["description"] == "a test tool"
