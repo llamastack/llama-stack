@@ -109,25 +109,31 @@ class OAuth2TokenAuthProvider(AuthProvider):
         """Validate a token using the JWT token."""
         if self.config.jwks is None:
             raise ValueError("JWKS is not configured")
-
         try:
-            # Initialize PyJWKClient if not already done
             if self._jwks_client is None:
+                ssl_context = None
+                if self.config.tls_cafile:
+                    ssl_context = ssl.create_default_context(cafile=self.config.tls_cafile.as_posix())
+
                 self._jwks_client = jwt.PyJWKClient(
                     self.config.jwks.uri,
                     cache_keys=True,
                     max_cached_keys=10,
-                    lifespan=3600,  # 1 hour cache
+                    lifespan=self.config.jwks.key_recheck_period,  # Use configurable period
+                    ssl_context=ssl_context,
                 )
 
             # Get the signing key from the JWT token
             signing_key = self._jwks_client.get_signing_key_from_jwt(token)
 
+            # Get the algorithm from the JWT token
+            algorithm = jwt.get_unverified_header(token)["alg"]
+
             # Decode and verify the JWT
             claims = jwt.decode(
                 token,
                 signing_key.key,
-                algorithms=["RS256", "HS256", "ES256"],  # Common algorithms
+                algorithms=[algorithm],
                 audience=self.config.audience,
                 issuer=self.config.issuer,
                 options={"verify_exp": True, "verify_aud": True, "verify_iss": True},
