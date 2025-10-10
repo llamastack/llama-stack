@@ -45,6 +45,7 @@ from llama_stack.apis.inference import (
     Inference,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
+    OpenaiChatCompletionRequest,
     OpenAIChatCompletionToolCall,
     OpenAIChoice,
     OpenAIMessageParam,
@@ -161,7 +162,7 @@ class StreamingResponseOrchestrator:
                 # (some providers don't support non-empty response_format when tools are present)
                 response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
                 logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
-                completion_result = await self.inference_api.openai_chat_completion(
+                params = OpenaiChatCompletionRequest(
                     model=self.ctx.model,
                     messages=messages,
                     tools=self.ctx.chat_tools,
@@ -169,6 +170,7 @@ class StreamingResponseOrchestrator:
                     temperature=self.ctx.temperature,
                     response_format=response_format,
                 )
+                completion_result = await self.inference_api.openai_chat_completion(params)
 
                 # Process streaming chunks and build complete response
                 completion_result_data = None
