@@ -181,6 +181,7 @@ class RunConfigSettings(BaseModel):
     default_benchmarks: list[BenchmarkInput] | None = None
     metadata_store: dict | None = None
     inference_store: dict | None = None
+    conversations_store: dict | None = None
 
     def run_config(
         self,
@@ -239,6 +240,11 @@ class RunConfigSettings(BaseModel):
             or SqliteSqlStoreConfig.sample_run_config(
                 __distro_dir__=f"~/.llama/distributions/{name}",
                 db_name="inference_store.db",
+            ),
+            "conversations_store": self.conversations_store
+            or SqliteSqlStoreConfig.sample_run_config(
+                __distro_dir__=f"~/.llama/distributions/{name}",
+                db_name="conversations.db",
             ),
             "models": [m.model_dump(exclude_none=True) for m in (self.default_models or [])],
             "shields": [s.model_dump(exclude_none=True) for s in (self.default_shields or [])],

@@ -812,6 +812,7 @@ class Agents(Protocol):
         model: str,
         instructions: str | None = None,
         previous_response_id: str | None = None,
+        conversation: str | None = None,
         store: bool | None = True,
         stream: bool | None = False,
         temperature: float | None = None,
@@ -831,6 +832,7 @@ class Agents(Protocol):
         :param input: Input message(s) to create the response.
         :param model: The underlying LLM used for completions.
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
+        :param conversation: (Optional) The ID of a conversation to add the response to. Must begin with 'conv_'. Input and output messages will be automatically added to the conversation.
         :param include: (Optional) Additional fields to include in the response.
         :param shields: (Optional) List of shields to apply during response generation. Can be shield IDs (strings) or shield specifications.
         :returns: An OpenAIResponseObject.

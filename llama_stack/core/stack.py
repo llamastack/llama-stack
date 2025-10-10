@@ -326,12 +326,17 @@ class Stack:
 
         dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
-        impls = await resolve_impls(
-            self.run_config, self.provider_registry or get_provider_registry(self.run_config), dist_registry, policy
-        )
 
-        # Add internal implementations after all other providers are resolved
-        add_internal_implementations(impls, self.run_config)
+        internal_impls = {}
+        add_internal_implementations(internal_impls, self.run_config)
+
+        impls = await resolve_impls(
+            self.run_config,
+            self.provider_registry or get_provider_registry(self.run_config),
+            dist_registry,
+            policy,
+            internal_impls,
+        )
 
         if Api.prompts in impls:
             await impls[Api.prompts].initialize()

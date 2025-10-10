@@ -224,6 +224,9 @@ metadata_store:
 inference_store:
   type: sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/inference_store.db
+conversations_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/conversations.db
 models: []
 shields:
 - shield_id: llama-guard

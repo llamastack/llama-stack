@@ -193,11 +193,14 @@ class ConversationServiceImpl(Conversations):
         await self._get_validated_conversation(conversation_id)
 
         created_items = []
-        created_at = int(time.time())
+        base_time = int(time.time())
 
-        for item in items:
+        for i, item in enumerate(items):
             item_dict = item.model_dump()
             item_id = self._get_or_generate_item_id(item, item_dict)
+
+            # make each timestamp unique to maintain order
+            created_at = base_time + i
 
             item_record = {
                 "id": item_id,

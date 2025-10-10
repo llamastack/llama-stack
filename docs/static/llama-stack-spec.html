@@ -8178,6 +8178,10 @@
                         "type": "string",
                         "description": "(Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses."
                     },
+                    "conversation": {
+                        "type": "string",
+                        "description": "(Optional) The ID of a conversation to add the response to. Must begin with 'conv_'. Input and output messages will be automatically added to the conversation."
+                    },
                     "store": {
                         "type": "boolean"
                     },
