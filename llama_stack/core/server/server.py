@@ -184,7 +184,17 @@ async def lifespan(app: StackApp):
 
 def is_streaming_request(func_name: str, request: Request, **kwargs):
     # TODO: pass the api method and punt it to the Protocol definition directly
-    return kwargs.get("stream", False)
+    # If there's a stream parameter at top level, use it
+    if "stream" in kwargs:
+        return kwargs["stream"]
+
+    # If there's a stream parameter inside a "params" parameter, e.g. openai_chat_completion() use it
+    if "params" in kwargs:
+        params = kwargs["params"]
+        if hasattr(params, "stream"):
+            return params.stream
+
+    return False
 
 
 async def maybe_await(value):

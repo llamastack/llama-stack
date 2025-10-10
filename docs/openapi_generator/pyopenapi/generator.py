@@ -23,6 +23,7 @@ from llama_stack.strong_typing.inspection import (
     is_generic_list,
     is_type_optional,
     is_type_union,
+    is_unwrapped_body_param,
     unwrap_generic_list,
     unwrap_optional_type,
     unwrap_union_types,
@@ -769,24 +770,30 @@ class Generator:
             first = next(iter(op.request_params))
             request_name, request_type = first
 
-            op_name = "".join(word.capitalize() for word in op.name.split("_"))
-            request_name = f"{op_name}Request"
-            fields = [
-                (
-                    name,
-                    type_,
-                )
-                for name, type_ in op.request_params
-            ]
-            request_type = make_dataclass(
-                request_name,
-                fields,
-                namespace={
-                    "__doc__": create_docstring_for_request(
-                        request_name, fields, doc_params
+            # Special case: if there's a single parameter with Body(embed=False) that's a BaseModel,
+            # unwrap it to show the flat structure in the OpenAPI spec
+            # Example: openai_chat_completion()
+            if (len(op.request_params) == 1 and is_unwrapped_body_param(request_type)):
+                pass
+            else:
+                op_name = "".join(word.capitalize() for word in op.name.split("_"))
+                request_name = f"{op_name}Request"
+                fields = [
+                    (
+                        name,
+                        type_,
                     )
-                },
-            )
+                    for name, type_ in op.request_params
+                ]
+                request_type = make_dataclass(
+                    request_name,
+                    fields,
+                    namespace={
+                        "__doc__": create_docstring_for_request(
+                            request_name, fields, doc_params
+                        )
+                    },
+                )
 
             requestBody = RequestBody(
                 content={
