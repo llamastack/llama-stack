@@ -3526,343 +3526,6 @@
                 },
                 "deprecated": true
             }
-        },
-        "/v1/telemetry/metrics/{metric_name}": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "A QueryMetricsResponse.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QueryMetricsResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Telemetry"
-                ],
-                "summary": "Query metrics.",
-                "description": "Query metrics.",
-                "parameters": [
-                    {
-                        "name": "metric_name",
-                        "in": "path",
-                        "description": "The name of the metric to query.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/QueryMetricsRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "deprecated": true
-            }
-        },
-        "/v1/telemetry/spans": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "A QuerySpansResponse.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuerySpansResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Telemetry"
-                ],
-                "summary": "Query spans.",
-                "description": "Query spans.",
-                "parameters": [],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/QuerySpansRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "deprecated": true
-            }
-        },
-        "/v1/telemetry/spans/export": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Telemetry"
-                ],
-                "summary": "Save spans to a dataset.",
-                "description": "Save spans to a dataset.",
-                "parameters": [],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SaveSpansToDatasetRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "deprecated": true
-            }
-        },
-        "/v1/telemetry/spans/{span_id}/tree": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "A QuerySpanTreeResponse.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuerySpanTreeResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Telemetry"
-                ],
-                "summary": "Get a span tree by its ID.",
-                "description": "Get a span tree by its ID.",
-                "parameters": [
-                    {
-                        "name": "span_id",
-                        "in": "path",
-                        "description": "The ID of the span to get the tree from.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/GetSpanTreeRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "deprecated": true
-            }
-        },
-        "/v1/telemetry/traces": {
-            "post": {
-                "responses": {
-                    "200": {
-                        "description": "A QueryTracesResponse.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QueryTracesResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Telemetry"
-                ],
-                "summary": "Query traces.",
-                "description": "Query traces.",
-                "parameters": [],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/QueryTracesRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "deprecated": true
-            }
-        },
-        "/v1/telemetry/traces/{trace_id}": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "A Trace.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Trace"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Telemetry"
-                ],
-                "summary": "Get a trace by its ID.",
-                "description": "Get a trace by its ID.",
-                "parameters": [
-                    {
-                        "name": "trace_id",
-                        "in": "path",
-                        "description": "The ID of the trace to get.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "deprecated": true
-            }
-        },
-        "/v1/telemetry/traces/{trace_id}/spans/{span_id}": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "A Span.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Span"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest400"
-                    },
-                    "429": {
-                        "$ref": "#/components/responses/TooManyRequests429"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/InternalServerError500"
-                    },
-                    "default": {
-                        "$ref": "#/components/responses/DefaultError"
-                    }
-                },
-                "tags": [
-                    "Telemetry"
-                ],
-                "summary": "Get a span by its ID.",
-                "description": "Get a span by its ID.",
-                "parameters": [
-                    {
-                        "name": "trace_id",
-                        "in": "path",
-                        "description": "The ID of the trace to get the span from.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "span_id",
-                        "in": "path",
-                        "description": "The ID of the span to get.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "deprecated": true
-            }
         }
     },
     "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
@@ -5305,7 +4968,29 @@
                                 },
                                 "mime_type": {
                                     "type": "string",
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                                    "description": "The model that was used to generate the chat completion"
+                                },
+                                "usage": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
+                                    "description": "Token usage information for the completion"
+                                },
+                                "input_messages": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/OpenAIMessageParam"
+                                    }
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                                    "description": "The model that was used to generate the chat completion"
+                                },
+                                "input_messages": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/OpenAIMessageParam"
+                                    }
+=======
                                     "description": "The MIME type of the document."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                                 }
                             },
                             "additionalProperties": false,
@@ -5730,7 +5415,62 @@
                 "title": "TextDelta",
                 "description": "A text content delta for streaming responses."
             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "OpenAIChatCompletionUsage": {
+                "type": "object",
+                "properties": {
+                    "prompt_tokens": {
+                        "type": "integer",
+                        "description": "Number of tokens in the prompt"
+                    },
+                    "completion_tokens": {
+                        "type": "integer",
+                        "description": "Number of tokens in the completion"
+                    },
+                    "total_tokens": {
+                        "type": "integer",
+                        "description": "Total tokens used (prompt + completion)"
+                    },
+                    "prompt_tokens_details": {
+                        "type": "object",
+                        "properties": {
+                            "cached_tokens": {
+                                "type": "integer",
+                                "description": "Number of tokens retrieved from cache"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "title": "OpenAIChatCompletionUsagePromptTokensDetails",
+                        "description": "Token details for prompt tokens in OpenAI chat completion usage."
+                    },
+                    "completion_tokens_details": {
+                        "type": "object",
+                        "properties": {
+                            "reasoning_tokens": {
+                                "type": "integer",
+                                "description": "Number of tokens used for reasoning (o1/o3 models)"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "title": "OpenAIChatCompletionUsageCompletionTokensDetails",
+                        "description": "Token details for output tokens in OpenAI chat completion usage."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "total_tokens"
+                ],
+                "title": "OpenAIChatCompletionUsage",
+                "description": "Usage information for OpenAI chat completion."
+            },
+            "OpenAIChoice": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIChoice": {
+=======
             "ToolCallDelta": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 "type": "object",
                 "properties": {
                     "type": {
@@ -6570,9 +6310,23 @@
                         },
                         "description": "The scoring functions to use for the evaluation."
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "model": {
+                        "type": "string",
+                        "description": "The model that was used to generate the chat completion"
+                    },
+                    "usage": {
+                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
+                        "description": "Token usage information for the completion"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "model": {
+                        "type": "string",
+                        "description": "The model that was used to generate the chat completion"
+=======
                     "benchmark_config": {
                         "$ref": "#/components/schemas/BenchmarkConfig",
                         "description": "The configuration for the benchmark."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -6615,12 +6369,26 @@
                         },
                         "description": "The generations from the evaluation."
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "model": {
+                        "type": "string",
+                        "description": "The model that was used to generate the chat completion"
+                    },
+                    "usage": {
+                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
+                        "description": "Token usage information (typically included in final chunk with stream_options)"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "model": {
+                        "type": "string",
+                        "description": "The model that was used to generate the chat completion"
+=======
                     "scores": {
                         "type": "object",
                         "additionalProperties": {
                             "$ref": "#/components/schemas/ScoringResult"
                         },
                         "description": "The scores from the evaluation."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -6721,6 +6489,27 @@
                     },
                     "status": {
                         "type": "string",
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                        "description": "The model that was used to generate the chat completion"
+                    },
+                    "usage": {
+                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
+                        "description": "Token usage information for the completion"
+                    },
+                    "input_messages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIMessageParam"
+                        }
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                        "description": "The model that was used to generate the chat completion"
+                    },
+                    "input_messages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIMessageParam"
+                        }
+=======
                         "enum": [
                             "completed",
                             "in_progress",
@@ -6729,6 +6518,7 @@
                             "cancelled"
                         ],
                         "description": "Current execution status of the job"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -6780,10 +6570,6 @@
                                 "model": {
                                     "type": "string",
                                     "description": "The model that was used to generate the chat completion"
-                                },
-                                "usage": {
-                                    "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
-                                    "description": "Token usage information for the completion"
                                 },
                                 "input_messages": {
                                     "type": "array",
@@ -6986,55 +6772,6 @@
                 "additionalProperties": false,
                 "title": "OpenAIChatCompletionToolCallFunction",
                 "description": "Function call details for OpenAI-compatible tool calls."
-            },
-            "OpenAIChatCompletionUsage": {
-                "type": "object",
-                "properties": {
-                    "prompt_tokens": {
-                        "type": "integer",
-                        "description": "Number of tokens in the prompt"
-                    },
-                    "completion_tokens": {
-                        "type": "integer",
-                        "description": "Number of tokens in the completion"
-                    },
-                    "total_tokens": {
-                        "type": "integer",
-                        "description": "Total tokens used (prompt + completion)"
-                    },
-                    "prompt_tokens_details": {
-                        "type": "object",
-                        "properties": {
-                            "cached_tokens": {
-                                "type": "integer",
-                                "description": "Number of tokens retrieved from cache"
-                            }
-                        },
-                        "additionalProperties": false,
-                        "title": "OpenAIChatCompletionUsagePromptTokensDetails",
-                        "description": "Token details for prompt tokens in OpenAI chat completion usage."
-                    },
-                    "completion_tokens_details": {
-                        "type": "object",
-                        "properties": {
-                            "reasoning_tokens": {
-                                "type": "integer",
-                                "description": "Number of tokens used for reasoning (o1/o3 models)"
-                            }
-                        },
-                        "additionalProperties": false,
-                        "title": "OpenAIChatCompletionUsageCompletionTokensDetails",
-                        "description": "Token details for output tokens in OpenAI chat completion usage."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "prompt_tokens",
-                    "completion_tokens",
-                    "total_tokens"
-                ],
-                "title": "OpenAIChatCompletionUsage",
-                "description": "Usage information for OpenAI chat completion."
             },
             "OpenAIChoice": {
                 "type": "object",
@@ -7799,10 +7536,6 @@
                     "model": {
                         "type": "string",
                         "description": "The model that was used to generate the chat completion"
-                    },
-                    "usage": {
-                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
-                        "description": "Token usage information for the completion"
                     }
                 },
                 "additionalProperties": false,
@@ -7843,10 +7576,6 @@
                     "model": {
                         "type": "string",
                         "description": "The model that was used to generate the chat completion"
-                    },
-                    "usage": {
-                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
-                        "description": "Token usage information (typically included in final chunk with stream_options)"
                     }
                 },
                 "additionalProperties": false,
@@ -7943,10 +7672,6 @@
                     "model": {
                         "type": "string",
                         "description": "The model that was used to generate the chat completion"
-                    },
-                    "usage": {
-                        "$ref": "#/components/schemas/OpenAIChatCompletionUsage",
-                        "description": "Token usage information for the completion"
                     },
                     "input_messages": {
                         "type": "array",
@@ -8121,7 +7846,175 @@
                 "title": "OpenAICompletionRequest",
                 "description": "Request parameters for OpenAI-compatible completion endpoint."
             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "OpenAIResponseInputToolFileSearch": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "file_search",
+                        "default": "file_search",
+                        "description": "Tool type identifier, always \"file_search\""
+                    },
+                    "vector_store_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of vector store identifiers to search within"
+                    },
+                    "filters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) Additional filters to apply to the search"
+                    },
+                    "max_num_results": {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "(Optional) Maximum number of search results to return (1-50)"
+                    },
+                    "ranking_options": {
+                        "type": "object",
+                        "properties": {
+                            "ranker": {
+                                "type": "string",
+                                "description": "(Optional) Name of the ranking algorithm to use"
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "default": 0.0,
+                                "description": "(Optional) Minimum relevance score threshold for results"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "description": "(Optional) Options for ranking and scoring search results"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "vector_store_ids"
+                ],
+                "title": "OpenAIResponseInputToolFileSearch",
+                "description": "File search tool configuration for OpenAI response inputs."
+            },
+            "OpenAIResponseInputToolFunction": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "function",
+                        "default": "function",
+                        "description": "Tool type identifier, always \"function\""
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the function that can be called"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "(Optional) Description of what the function does"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) JSON schema defining the function's parameters"
+                    },
+                    "strict": {
+                        "type": "boolean",
+                        "description": "(Optional) Whether to enforce strict parameter validation"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "name"
+                ],
+                "title": "OpenAIResponseInputToolFunction",
+                "description": "Function tool configuration for OpenAI response inputs."
+            },
+            "OpenAIResponseInputToolWebSearch": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "const": "web_search"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview_2025_03_11"
+                            }
+                        ],
+                        "default": "web_search",
+                        "description": "Web search tool type variant to use"
+                    },
+                    "search_context_size": {
+                        "type": "string",
+                        "default": "medium",
+                        "description": "(Optional) Size of search context, must be \"low\", \"medium\", or \"high\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "OpenAIResponseInputToolWebSearch",
+                "description": "Web search tool configuration for OpenAI response inputs."
+            },
+            "OpenAIResponseMCPApprovalRequest": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIResponseMCPApprovalRequest": {
+=======
             "OpenAICompletion": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 "type": "object",
                 "properties": {
                     "id": {
@@ -8210,9 +8103,46 @@
                         "type": "integer",
                         "description": "(Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models."
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "tools": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIResponseTool"
+                        },
+                        "description": "(Optional) An array of tools the model may call while generating a response."
+                    },
+                    "truncation": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "truncation": {
+=======
                     "user": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                         "type": "string",
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                        "description": "(Optional) Truncation strategy applied to the response"
+                    },
+                    "usage": {
+                        "$ref": "#/components/schemas/OpenAIResponseUsage",
+                        "description": "(Optional) Token usage information for the response"
+                    },
+                    "input": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIResponseInput"
+                        },
+                        "description": "List of input items that led to this response"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                        "description": "(Optional) Truncation strategy applied to the response"
+                    },
+                    "input": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIResponseInput"
+                        },
+                        "description": "List of input items that led to this response"
+=======
                         "description": "(Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -8492,6 +8422,44 @@
                 "title": "OpenAIModel",
                 "description": "A model from OpenAI."
             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "OpenAIResponseTool": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolWebSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFileSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFunction"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "ResponseShieldSpec": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "The type/identifier of the shield."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "ResponseShieldSpec",
+                "description": "Specification for a shield to apply during response generation."
+            },
+            "OpenAIResponseInputTool": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolWebSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFileSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFunction"
+=======
             "OpenAIListModelsResponse": {
                 "type": "object",
                 "properties": {
@@ -8524,10 +8492,19 @@
                             }
                         ],
                         "description": "Input (or inputs) to classify. Can be a single string, an array of strings, or an array of multi-modal input objects similar to other models."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseToolMCP"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolMCP"
+=======
                     "model": {
                         "type": "string",
                         "description": "The content moderation model you would like to use."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -8535,15 +8512,65 @@
                     "input",
                     "model"
                 ],
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "web_search": "#/components/schemas/OpenAIResponseInputToolWebSearch",
+                        "file_search": "#/components/schemas/OpenAIResponseInputToolFileSearch",
+                        "function": "#/components/schemas/OpenAIResponseInputToolFunction",
+                        "mcp": "#/components/schemas/OpenAIResponseToolMCP"
+                    }
+                }
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "web_search": "#/components/schemas/OpenAIResponseInputToolWebSearch",
+                        "file_search": "#/components/schemas/OpenAIResponseInputToolFileSearch",
+                        "function": "#/components/schemas/OpenAIResponseInputToolFunction",
+                        "mcp": "#/components/schemas/OpenAIResponseInputToolMCP"
+                    }
+                }
+=======
                 "title": "RunModerationRequest"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "OpenAIResponseToolMCP": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIResponseInputToolFileSearch": {
+=======
             "ModerationObject": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "string",
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                        "const": "mcp",
+                        "default": "mcp",
+                        "description": "Tool type identifier, always \"mcp\""
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                        "const": "file_search",
+                        "default": "file_search",
+                        "description": "Tool type identifier, always \"file_search\""
+=======
                         "description": "The unique identifier for the moderation request."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "server_label": {
+                        "type": "string",
+                        "description": "Label to identify this MCP server"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "vector_store_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of vector store identifiers to search within"
+=======
                     "model": {
                         "type": "string",
                         "description": "The model used to generate the moderation results."
@@ -8571,7 +8598,38 @@
                     "flagged": {
                         "type": "boolean",
                         "description": "Whether any of the below categories are flagged."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "allowed_tools": {
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "filters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+=======
                     "categories": {
                         "type": "object",
                         "additionalProperties": {
@@ -8620,7 +8678,48 @@
                                 },
                                 {
                                     "type": "object"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                                 }
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "tool_names": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "(Optional) List of specific tool names that are allowed"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "title": "AllowedToolsFilter",
+                                "description": "Filter configuration for restricting which MCP tools can be used."
+                            }
+                        ],
+                        "description": "(Optional) Restriction on which tools can be used from this server"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "server_label"
+                ],
+                "title": "OpenAIResponseToolMCP",
+                "description": "Model Context Protocol (MCP) tool configuration for OpenAI response object."
+            },
+            "OpenAIResponseUsage": {
+                "type": "object",
+                "properties": {
+                    "input_tokens": {
+                        "type": "integer",
+                        "description": "Number of tokens in the input"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                            ]
+                        },
+                        "description": "(Optional) Additional filters to apply to the search"
+=======
                             ]
                         }
                     }
@@ -8642,7 +8741,13 @@
                             "$ref": "#/components/schemas/OpenAIResponseObjectWithInput"
                         },
                         "description": "List of response objects with their input context"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "output_tokens": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "max_num_results": {
+=======
                     "has_more": {
                         "type": "boolean",
                         "description": "Whether there are more results available beyond this page"
@@ -8683,9 +8788,60 @@
                         "description": "Annotation type identifier, always \"url_citation\""
                     },
                     "end_index": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                         "type": "integer",
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                        "description": "Number of tokens in the output"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                        "default": 10,
+                        "description": "(Optional) Maximum number of search results to return (1-50)"
+=======
                         "description": "End position of the citation span in the content"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "total_tokens": {
+                        "type": "integer",
+                        "description": "Total tokens used (input + output)"
+                    },
+                    "input_tokens_details": {
+                        "type": "object",
+                        "properties": {
+                            "cached_tokens": {
+                                "type": "integer",
+                                "description": "Number of tokens retrieved from cache"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "description": "Detailed breakdown of input token usage"
+                    },
+                    "output_tokens_details": {
+                        "type": "object",
+                        "properties": {
+                            "reasoning_tokens": {
+                                "type": "integer",
+                                "description": "Number of tokens used for reasoning (o1/o3 models)"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "description": "Detailed breakdown of output token usage"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "ranking_options": {
+                        "type": "object",
+                        "properties": {
+                            "ranker": {
+                                "type": "string",
+                                "description": "(Optional) Name of the ranking algorithm to use"
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "default": 0.0,
+                                "description": "(Optional) Minimum relevance score threshold for results"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "description": "(Optional) Options for ranking and scoring search results"
+=======
                     "start_index": {
                         "type": "integer",
                         "description": "Start position of the citation span in the content"
@@ -8790,16 +8946,39 @@
                     },
                     "index": {
                         "type": "integer"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
                 "required": [
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "input_tokens",
+                    "output_tokens",
+                    "total_tokens"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "type",
+                    "vector_store_ids"
+=======
                     "type",
                     "file_id",
                     "index"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 ],
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                "title": "OpenAIResponseUsage",
+                "description": "Usage information for OpenAI response."
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                "title": "OpenAIResponseInputToolFileSearch",
+                "description": "File search tool configuration for OpenAI response inputs."
+=======
                 "title": "OpenAIResponseAnnotationFilePath"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "ResponseShieldSpec": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIResponseInputToolFunction": {
+=======
             "OpenAIResponseAnnotations": {
                 "oneOf": [
                     {
@@ -8826,8 +9005,58 @@
                 }
             },
             "OpenAIResponseError": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 "type": "object",
                 "properties": {
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "type": {
+                        "type": "string",
+                        "description": "The type/identifier of the shield."
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "type": {
+                        "type": "string",
+                        "const": "function",
+                        "default": "function",
+                        "description": "Tool type identifier, always \"function\""
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the function that can be called"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "(Optional) Description of what the function does"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) JSON schema defining the function's parameters"
+                    },
+                    "strict": {
+                        "type": "boolean",
+                        "description": "(Optional) Whether to enforce strict parameter validation"
+=======
                     "code": {
                         "type": "string",
                         "description": "Error code identifying the type of failure"
@@ -8835,15 +9064,56 @@
                     "message": {
                         "type": "string",
                         "description": "Human-readable error message describing the failure"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
                 "required": [
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "type"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "type",
+                    "name"
+=======
                     "code",
                     "message"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 ],
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                "title": "ResponseShieldSpec",
+                "description": "Specification for a shield to apply during response generation."
+            },
+            "OpenAIResponseInputTool": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolWebSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFileSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFunction"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolMCP"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "web_search": "#/components/schemas/OpenAIResponseInputToolWebSearch",
+                        "file_search": "#/components/schemas/OpenAIResponseInputToolFileSearch",
+                        "function": "#/components/schemas/OpenAIResponseInputToolFunction",
+                        "mcp": "#/components/schemas/OpenAIResponseInputToolMCP"
+                    }
+                }
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                "title": "OpenAIResponseInputToolFunction",
+                "description": "Function tool configuration for OpenAI response inputs."
+=======
                 "title": "OpenAIResponseError",
                 "description": "Error details for failed OpenAI response requests."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
             },
             "OpenAIResponseInput": {
                 "oneOf": [
@@ -8917,6 +9187,45 @@
                     }
                 }
             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "CreateOpenaiResponseRequest": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIResponseInputToolWebSearch": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "const": "web_search"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview_2025_03_11"
+                            }
+                        ],
+                        "default": "web_search",
+                        "description": "Web search tool type variant to use"
+                    },
+                    "search_context_size": {
+                        "type": "string",
+                        "default": "medium",
+                        "description": "(Optional) Size of search context, must be \"low\", \"medium\", or \"high\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "OpenAIResponseInputToolWebSearch",
+                "description": "Web search tool configuration for OpenAI response inputs."
+            },
+            "CreateOpenaiResponseRequest": {
+=======
             "OpenAIResponseInputMessageContentImage": {
                 "type": "object",
                 "properties": {
@@ -8958,6 +9267,7 @@
                 "description": "Image content for input messages in OpenAI response format."
             },
             "OpenAIResponseInputMessageContentText": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 "type": "object",
                 "properties": {
                     "text": {
@@ -8978,168 +9288,6 @@
                 ],
                 "title": "OpenAIResponseInputMessageContentText",
                 "description": "Text content for input messages in OpenAI response format."
-            },
-            "OpenAIResponseInputToolFileSearch": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "file_search",
-                        "default": "file_search",
-                        "description": "Tool type identifier, always \"file_search\""
-                    },
-                    "vector_store_ids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "List of vector store identifiers to search within"
-                    },
-                    "filters": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) Additional filters to apply to the search"
-                    },
-                    "max_num_results": {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "(Optional) Maximum number of search results to return (1-50)"
-                    },
-                    "ranking_options": {
-                        "type": "object",
-                        "properties": {
-                            "ranker": {
-                                "type": "string",
-                                "description": "(Optional) Name of the ranking algorithm to use"
-                            },
-                            "score_threshold": {
-                                "type": "number",
-                                "default": 0.0,
-                                "description": "(Optional) Minimum relevance score threshold for results"
-                            }
-                        },
-                        "additionalProperties": false,
-                        "description": "(Optional) Options for ranking and scoring search results"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "vector_store_ids"
-                ],
-                "title": "OpenAIResponseInputToolFileSearch",
-                "description": "File search tool configuration for OpenAI response inputs."
-            },
-            "OpenAIResponseInputToolFunction": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "function",
-                        "default": "function",
-                        "description": "Tool type identifier, always \"function\""
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the function that can be called"
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "(Optional) Description of what the function does"
-                    },
-                    "parameters": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) JSON schema defining the function's parameters"
-                    },
-                    "strict": {
-                        "type": "boolean",
-                        "description": "(Optional) Whether to enforce strict parameter validation"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "name"
-                ],
-                "title": "OpenAIResponseInputToolFunction",
-                "description": "Function tool configuration for OpenAI response inputs."
-            },
-            "OpenAIResponseInputToolWebSearch": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "oneOf": [
-                            {
-                                "type": "string",
-                                "const": "web_search"
-                            },
-                            {
-                                "type": "string",
-                                "const": "web_search_preview"
-                            },
-                            {
-                                "type": "string",
-                                "const": "web_search_preview_2025_03_11"
-                            }
-                        ],
-                        "default": "web_search",
-                        "description": "Web search tool type variant to use"
-                    },
-                    "search_context_size": {
-                        "type": "string",
-                        "default": "medium",
-                        "description": "(Optional) Size of search context, must be \"low\", \"medium\", or \"high\""
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type"
-                ],
-                "title": "OpenAIResponseInputToolWebSearch",
-                "description": "Web search tool configuration for OpenAI response inputs."
             },
             "OpenAIResponseMCPApprovalRequest": {
                 "type": "object",
@@ -9333,10 +9481,13 @@
                     "truncation": {
                         "type": "string",
                         "description": "(Optional) Truncation strategy applied to the response"
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
                     },
                     "usage": {
                         "$ref": "#/components/schemas/OpenAIResponseUsage",
                         "description": "(Optional) Token usage information for the response"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+=======
                     },
                     "input": {
                         "type": "array",
@@ -9344,6 +9495,7 @@
                             "$ref": "#/components/schemas/OpenAIResponseInput"
                         },
                         "description": "List of input items that led to this response"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -9407,13 +9559,82 @@
                     "type": {
                         "type": "string",
                         "const": "output_text",
-                        "default": "output_text"
+                        "default": "output_text",
+                        "description": "Content part type identifier, always \"output_text\""
+                    },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "text": {
+                        "type": "string",
+                        "description": "Text emitted for this content part"
                     },
                     "annotations": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/OpenAIResponseAnnotations"
+                        },
+                        "description": "Structured annotations associated with the text"
+                    },
+                    "logprobs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "oneOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "type": "number"
+                                    },
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "array"
+                                    },
+                                    {
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        },
+                        "description": "(Optional) Token log probability details"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "text",
+                    "annotations"
+                ],
+                "title": "OpenAIResponseContentPartOutputText",
+                "description": "Text content within a streamed response part."
+            },
+            "OpenAIResponseContentPartReasoningText": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "reasoning_text",
+                        "default": "reasoning_text",
+                        "description": "Content part type identifier, always \"reasoning_text\""
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "Reasoning text supplied by the model"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "text": {
+                        "type": "string"
+=======
+                    "annotations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIResponseAnnotations"
                         }
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -9422,7 +9643,14 @@
                     "type",
                     "annotations"
                 ],
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                "title": "OpenAIResponseContentPartReasoningText",
+                "description": "Reasoning text emitted as part of a streamed response."
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                "title": "OpenAIResponseContentPartOutputText"
+=======
                 "title": "OpenAIResponseOutputMessageContentOutputText"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
             },
             "OpenAIResponseOutputMessageFileSearchToolCall": {
                 "type": "object",
@@ -9444,10 +9672,27 @@
                     },
                     "type": {
                         "type": "string",
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                        "const": "refusal",
+                        "default": "refusal",
+                        "description": "Content part type identifier, always \"refusal\""
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                        "const": "refusal",
+                        "default": "refusal"
+=======
                         "const": "file_search_call",
                         "default": "file_search_call",
                         "description": "Tool call type identifier, always \"file_search_call\""
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "refusal": {
+                        "type": "string",
+                        "description": "Refusal text supplied by the model"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "refusal": {
+                        "type": "string"
+=======
                     "results": {
                         "type": "array",
                         "items": {
@@ -9508,6 +9753,7 @@
                             "description": "Search results returned by the file search operation."
                         },
                         "description": "(Optional) Search results returned by the file search operation"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -9517,15 +9763,91 @@
                     "status",
                     "type"
                 ],
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                "title": "OpenAIResponseContentPartRefusal",
+                "description": "Refusal content within a streamed response part."
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                "title": "OpenAIResponseContentPartRefusal"
+=======
                 "title": "OpenAIResponseOutputMessageFileSearchToolCall",
                 "description": "File search tool call output message for OpenAI responses."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "OpenAIResponseObjectStream": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseCreated"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseInProgress"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDone"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallInProgress"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallSearching"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallCompleted"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIResponseObjectStream": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseCreated"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDone"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallInProgress"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallSearching"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallCompleted"
+=======
             "OpenAIResponseOutputMessageFunctionToolCall": {
                 "type": "object",
                 "properties": {
                     "call_id": {
                         "type": "string",
                         "description": "Unique identifier for the function call"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
                     "name": {
                         "type": "string",
@@ -9589,9 +9911,78 @@
                         "type": "string",
                         "description": "(Optional) Error message if the MCP call failed"
                     },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseFailed"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseCompleted"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "response.created": "#/components/schemas/OpenAIResponseObjectStreamResponseCreated",
+                        "response.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseInProgress",
+                        "response.output_item.added": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded",
+                        "response.output_item.done": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone",
+                        "response.output_text.delta": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta",
+                        "response.output_text.done": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDone",
+                        "response.function_call_arguments.delta": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta",
+                        "response.function_call_arguments.done": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone",
+                        "response.web_search_call.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallInProgress",
+                        "response.web_search_call.searching": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallSearching",
+                        "response.web_search_call.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallCompleted",
+                        "response.mcp_list_tools.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsInProgress",
+                        "response.mcp_list_tools.failed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsFailed",
+                        "response.mcp_list_tools.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsCompleted",
+                        "response.mcp_call.arguments.delta": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta",
+                        "response.mcp_call.arguments.done": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDone",
+                        "response.mcp_call.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallInProgress",
+                        "response.mcp_call.failed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallFailed",
+                        "response.mcp_call.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted",
+                        "response.content_part.added": "#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded",
+                        "response.content_part.done": "#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone",
+                        "response.incomplete": "#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete",
+                        "response.failed": "#/components/schemas/OpenAIResponseObjectStreamResponseFailed",
+                        "response.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseCompleted"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseCompleted"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "response.created": "#/components/schemas/OpenAIResponseObjectStreamResponseCreated",
+                        "response.output_item.added": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded",
+                        "response.output_item.done": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone",
+                        "response.output_text.delta": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta",
+                        "response.output_text.done": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDone",
+                        "response.function_call_arguments.delta": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta",
+                        "response.function_call_arguments.done": "#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone",
+                        "response.web_search_call.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallInProgress",
+                        "response.web_search_call.searching": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallSearching",
+                        "response.web_search_call.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallCompleted",
+                        "response.mcp_list_tools.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsInProgress",
+                        "response.mcp_list_tools.failed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsFailed",
+                        "response.mcp_list_tools.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsCompleted",
+                        "response.mcp_call.arguments.delta": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta",
+                        "response.mcp_call.arguments.done": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDone",
+                        "response.mcp_call.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallInProgress",
+                        "response.mcp_call.failed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallFailed",
+                        "response.mcp_call.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted",
+                        "response.content_part.added": "#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded",
+                        "response.content_part.done": "#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone",
+                        "response.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseCompleted"
+=======
                     "output": {
                         "type": "string",
                         "description": "(Optional) Output result from the successful MCP call"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     }
                 },
                 "additionalProperties": false,
@@ -9608,9 +9999,19 @@
             "OpenAIResponseOutputMessageMCPListTools": {
                 "type": "object",
                 "properties": {
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "response": {
+                        "$ref": "#/components/schemas/OpenAIResponseObject",
+                        "description": "Completed response object"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "response": {
+                        "$ref": "#/components/schemas/OpenAIResponseObject",
+                        "description": "The completed response object"
+=======
                     "id": {
                         "type": "string",
                         "description": "Unique identifier for this MCP list tools operation"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
                     "type": {
                         "type": "string",
@@ -9686,13 +10087,81 @@
             "OpenAIResponseOutputMessageWebSearchToolCall": {
                 "type": "object",
                 "properties": {
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "content_index": {
+                        "type": "integer",
+                        "description": "Index position of the part within the content array"
+                    },
+                    "response_id": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "response_id": {
+=======
                     "id": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                         "type": "string",
                         "description": "Unique identifier for this tool call"
                     },
                     "status": {
                         "type": "string",
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                        "description": "Unique identifier of the output item containing this content part"
+                    },
+                    "output_index": {
+                        "type": "integer",
+                        "description": "Index position of the output item in the response"
+                    },
+                    "part": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartOutputText"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartReasoningText"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal",
+                                "reasoning_text": "#/components/schemas/OpenAIResponseContentPartReasoningText"
+                            }
+                        },
+                        "description": "The content part that was added"
+                    },
+                    "sequence_number": {
+                        "type": "integer",
+                        "description": "Sequential number for ordering streaming events"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                        "description": "Unique identifier of the output item containing this content part"
+                    },
+                    "part": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartOutputText"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            }
+                        },
+                        "description": "The content part that was added"
+                    },
+                    "sequence_number": {
+                        "type": "integer",
+                        "description": "Sequential number for ordering streaming events"
+=======
                         "description": "Current status of the web search operation"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     },
                     "type": {
                         "type": "string",
@@ -9703,8 +10172,22 @@
                 },
                 "additionalProperties": false,
                 "required": [
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "content_index",
+                    "response_id",
+                    "item_id",
+                    "output_index",
+                    "part",
+                    "sequence_number",
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "response_id",
+                    "item_id",
+                    "part",
+                    "sequence_number",
+=======
                     "id",
                     "status",
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                     "type"
                 ],
                 "title": "OpenAIResponseOutputMessageWebSearchToolCall",
@@ -9713,6 +10196,41 @@
             "OpenAIResponseText": {
                 "type": "object",
                 "properties": {
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "content_index": {
+                        "type": "integer",
+                        "description": "Index position of the part within the content array"
+                    },
+                    "response_id": {
+                        "type": "string",
+                        "description": "Unique identifier of the response containing this content"
+                    },
+                    "item_id": {
+                        "type": "string",
+                        "description": "Unique identifier of the output item containing this content part"
+                    },
+                    "output_index": {
+                        "type": "integer",
+                        "description": "Index position of the output item in the response"
+                    },
+                    "part": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartOutputText"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "response_id": {
+                        "type": "string",
+                        "description": "Unique identifier of the response containing this content"
+                    },
+                    "item_id": {
+                        "type": "string",
+                        "description": "Unique identifier of the output item containing this content part"
+                    },
+                    "part": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartOutputText"
+=======
                     "format": {
                         "type": "object",
                         "properties": {
@@ -9732,7 +10250,33 @@
                                     }
                                 ],
                                 "description": "Must be \"text\", \"json_schema\", or \"json_object\" to identify the format type"
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                             },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            },
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartReasoningText"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal",
+                                "reasoning_text": "#/components/schemas/OpenAIResponseContentPartReasoningText"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                            {
+                                "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
+=======
                             "name": {
                                 "type": "string",
                                 "description": "The name of the response format. Only used for json_schema."
@@ -9770,6 +10314,7 @@
                             "strict": {
                                 "type": "boolean",
                                 "description": "(Optional) Whether to strictly enforce the JSON schema. If true, the response must match the schema exactly. Only used for json_schema."
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                             }
                         },
                         "additionalProperties": false,
@@ -9782,126 +10327,6 @@
                 "additionalProperties": false,
                 "title": "OpenAIResponseText",
                 "description": "Text response configuration for OpenAI responses."
-            },
-            "OpenAIResponseTool": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseInputToolWebSearch"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseInputToolFileSearch"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseInputToolFunction"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseToolMCP"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "web_search": "#/components/schemas/OpenAIResponseInputToolWebSearch",
-                        "file_search": "#/components/schemas/OpenAIResponseInputToolFileSearch",
-                        "function": "#/components/schemas/OpenAIResponseInputToolFunction",
-                        "mcp": "#/components/schemas/OpenAIResponseToolMCP"
-                    }
-                }
-            },
-            "OpenAIResponseToolMCP": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "mcp",
-                        "default": "mcp",
-                        "description": "Tool type identifier, always \"mcp\""
-                    },
-                    "server_label": {
-                        "type": "string",
-                        "description": "Label to identify this MCP server"
-                    },
-                    "allowed_tools": {
-                        "oneOf": [
-                            {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            {
-                                "type": "object",
-                                "properties": {
-                                    "tool_names": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "description": "(Optional) List of specific tool names that are allowed"
-                                    }
-                                },
-                                "additionalProperties": false,
-                                "title": "AllowedToolsFilter",
-                                "description": "Filter configuration for restricting which MCP tools can be used."
-                            }
-                        ],
-                        "description": "(Optional) Restriction on which tools can be used from this server"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "server_label"
-                ],
-                "title": "OpenAIResponseToolMCP",
-                "description": "Model Context Protocol (MCP) tool configuration for OpenAI response object."
-            },
-            "OpenAIResponseUsage": {
-                "type": "object",
-                "properties": {
-                    "input_tokens": {
-                        "type": "integer",
-                        "description": "Number of tokens in the input"
-                    },
-                    "output_tokens": {
-                        "type": "integer",
-                        "description": "Number of tokens in the output"
-                    },
-                    "total_tokens": {
-                        "type": "integer",
-                        "description": "Total tokens used (input + output)"
-                    },
-                    "input_tokens_details": {
-                        "type": "object",
-                        "properties": {
-                            "cached_tokens": {
-                                "type": "integer",
-                                "description": "Number of tokens retrieved from cache"
-                            }
-                        },
-                        "additionalProperties": false,
-                        "description": "Detailed breakdown of input token usage"
-                    },
-                    "output_tokens_details": {
-                        "type": "object",
-                        "properties": {
-                            "reasoning_tokens": {
-                                "type": "integer",
-                                "description": "Number of tokens used for reasoning (o1/o3 models)"
-                            }
-                        },
-                        "additionalProperties": false,
-                        "description": "Detailed breakdown of output token usage"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "input_tokens",
-                    "output_tokens",
-                    "total_tokens"
-                ],
-                "title": "OpenAIResponseUsage",
-                "description": "Usage information for OpenAI response."
             },
             "ResponseShieldSpec": {
                 "type": "object",
@@ -9932,6 +10357,28 @@
                     {
                         "$ref": "#/components/schemas/OpenAIResponseInputToolMCP"
                     }
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                },
+                "additionalProperties": false,
+                "required": [
+                    "content_index",
+                    "response_id",
+                    "item_id",
+                    "output_index",
+                    "part",
+                    "sequence_number",
+                    "type"
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                },
+                "additionalProperties": false,
+                "required": [
+                    "response_id",
+                    "item_id",
+                    "part",
+                    "sequence_number",
+                    "type"
+=======
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
                 ],
                 "discriminator": {
                     "propertyName": "type",
@@ -9942,6 +10389,179 @@
                         "mcp": "#/components/schemas/OpenAIResponseInputToolMCP"
                     }
                 }
+            },
+            "OpenAIResponseInputToolFileSearch": {
+                "type": "object",
+                "properties": {
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+                    "response": {
+                        "$ref": "#/components/schemas/OpenAIResponseObject",
+                        "description": "The response object that was created"
+                    },
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+                    "response": {
+                        "$ref": "#/components/schemas/OpenAIResponseObject",
+                        "description": "The newly created response object"
+                    },
+=======
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
+                    "type": {
+                        "type": "string",
+                        "const": "file_search",
+                        "default": "file_search",
+                        "description": "Tool type identifier, always \"file_search\""
+                    },
+                    "vector_store_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of vector store identifiers to search within"
+                    },
+                    "filters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) Additional filters to apply to the search"
+                    },
+                    "max_num_results": {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "(Optional) Maximum number of search results to return (1-50)"
+                    },
+                    "ranking_options": {
+                        "type": "object",
+                        "properties": {
+                            "ranker": {
+                                "type": "string",
+                                "description": "(Optional) Name of the ranking algorithm to use"
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "default": 0.0,
+                                "description": "(Optional) Minimum relevance score threshold for results"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "description": "(Optional) Options for ranking and scoring search results"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "vector_store_ids"
+                ],
+                "title": "OpenAIResponseInputToolFileSearch",
+                "description": "File search tool configuration for OpenAI response inputs."
+            },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "OpenAIResponseObjectStreamResponseFailed": {
+                "type": "object",
+                "properties": {
+                    "response": {
+                        "$ref": "#/components/schemas/OpenAIResponseObject",
+                        "description": "Response object describing the failure"
+                    },
+                    "sequence_number": {
+                        "type": "integer",
+                        "description": "Sequential number for ordering streaming events"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "response.failed",
+                        "default": "response.failed",
+                        "description": "Event type identifier, always \"response.failed\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "response",
+                    "sequence_number",
+                    "type"
+                ],
+                "title": "OpenAIResponseObjectStreamResponseFailed",
+                "description": "Streaming event emitted when a response fails."
+            },
+            "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta": {
+=======
+            "OpenAIResponseInputToolFunction": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "function",
+                        "default": "function",
+                        "description": "Tool type identifier, always \"function\""
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the function that can be called"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "(Optional) Description of what the function does"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) JSON schema defining the function's parameters"
+                    },
+                    "strict": {
+                        "type": "boolean",
+                        "description": "(Optional) Whether to enforce strict parameter validation"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "name"
+                ],
+                "title": "OpenAIResponseInputToolFunction",
+                "description": "Function tool configuration for OpenAI response inputs."
             },
             "OpenAIResponseInputToolMCP": {
                 "type": "object",
@@ -10058,6 +10678,100 @@
                 ],
                 "title": "OpenAIResponseInputToolMCP",
                 "description": "Model Context Protocol (MCP) tool configuration for OpenAI response inputs."
+            },
+<<<<<<< dest:   548ccff36835 - ashwin: fix(mypy): fix wrong attribute access ...
+            "OpenAIResponseObjectStreamResponseInProgress": {
+                "type": "object",
+                "properties": {
+                    "response": {
+                        "$ref": "#/components/schemas/OpenAIResponseObject",
+                        "description": "Current response state while in progress"
+                    },
+                    "sequence_number": {
+                        "type": "integer",
+                        "description": "Sequential number for ordering streaming events"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "response.in_progress",
+                        "default": "response.in_progress",
+                        "description": "Event type identifier, always \"response.in_progress\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "response",
+                    "sequence_number",
+                    "type"
+                ],
+                "title": "OpenAIResponseObjectStreamResponseInProgress",
+                "description": "Streaming event indicating the response remains in progress."
+            },
+            "OpenAIResponseObjectStreamResponseIncomplete": {
+                "type": "object",
+                "properties": {
+                    "response": {
+                        "$ref": "#/components/schemas/OpenAIResponseObject",
+                        "description": "Response object describing the incomplete state"
+                    },
+                    "sequence_number": {
+                        "type": "integer",
+                        "description": "Sequential number for ordering streaming events"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "response.incomplete",
+                        "default": "response.incomplete",
+                        "description": "Event type identifier, always \"response.incomplete\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "response",
+                    "sequence_number",
+                    "type"
+                ],
+                "title": "OpenAIResponseObjectStreamResponseIncomplete",
+                "description": "Streaming event emitted when a response ends in an incomplete state."
+            },
+            "OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta": {
+||||||| base:   96886afacaf1 - gsim: fix(responses): fix regression in suppor...
+            "OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta": {
+=======
+            "OpenAIResponseInputToolWebSearch": {
+>>>>>>> source: ed4e452de001 - erichuang: chore!: remove ALL telemetry APIs
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "const": "web_search"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview_2025_03_11"
+                            }
+                        ],
+                        "default": "web_search",
+                        "description": "Web search tool type variant to use"
+                    },
+                    "search_context_size": {
+                        "type": "string",
+                        "default": "medium",
+                        "description": "(Optional) Size of search context, must be \"low\", \"medium\", or \"high\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "OpenAIResponseInputToolWebSearch",
+                "description": "Web search tool configuration for OpenAI response inputs."
             },
             "CreateOpenaiResponseRequest": {
                 "type": "object",
@@ -10180,20 +10894,9 @@
                         "type": "number",
                         "description": "(Optional) Nucleus sampling parameter used for generation"
                     },
-                    "tools": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/OpenAIResponseTool"
-                        },
-                        "description": "(Optional) An array of tools the model may call while generating a response."
-                    },
                     "truncation": {
                         "type": "string",
                         "description": "(Optional) Truncation strategy applied to the response"
-                    },
-                    "usage": {
-                        "$ref": "#/components/schemas/OpenAIResponseUsage",
-                        "description": "(Optional) Token usage information for the response"
                     }
                 },
                 "additionalProperties": false,
@@ -10216,71 +10919,10 @@
                     "type": {
                         "type": "string",
                         "const": "output_text",
-                        "default": "output_text",
-                        "description": "Content part type identifier, always \"output_text\""
+                        "default": "output_text"
                     },
                     "text": {
-                        "type": "string",
-                        "description": "Text emitted for this content part"
-                    },
-                    "annotations": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/OpenAIResponseAnnotations"
-                        },
-                        "description": "Structured annotations associated with the text"
-                    },
-                    "logprobs": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "oneOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "type": "boolean"
-                                    },
-                                    {
-                                        "type": "number"
-                                    },
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "array"
-                                    },
-                                    {
-                                        "type": "object"
-                                    }
-                                ]
-                            }
-                        },
-                        "description": "(Optional) Token log probability details"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "text",
-                    "annotations"
-                ],
-                "title": "OpenAIResponseContentPartOutputText",
-                "description": "Text content within a streamed response part."
-            },
-            "OpenAIResponseContentPartReasoningText": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "reasoning_text",
-                        "default": "reasoning_text",
-                        "description": "Content part type identifier, always \"reasoning_text\""
-                    },
-                    "text": {
-                        "type": "string",
-                        "description": "Reasoning text supplied by the model"
+                        "type": "string"
                     }
                 },
                 "additionalProperties": false,
@@ -10288,8 +10930,7 @@
                     "type",
                     "text"
                 ],
-                "title": "OpenAIResponseContentPartReasoningText",
-                "description": "Reasoning text emitted as part of a streamed response."
+                "title": "OpenAIResponseContentPartOutputText"
             },
             "OpenAIResponseContentPartRefusal": {
                 "type": "object",
@@ -10297,12 +10938,10 @@
                     "type": {
                         "type": "string",
                         "const": "refusal",
-                        "default": "refusal",
-                        "description": "Content part type identifier, always \"refusal\""
+                        "default": "refusal"
                     },
                     "refusal": {
-                        "type": "string",
-                        "description": "Refusal text supplied by the model"
+                        "type": "string"
                     }
                 },
                 "additionalProperties": false,
@@ -10310,16 +10949,12 @@
                     "type",
                     "refusal"
                 ],
-                "title": "OpenAIResponseContentPartRefusal",
-                "description": "Refusal content within a streamed response part."
+                "title": "OpenAIResponseContentPartRefusal"
             },
             "OpenAIResponseObjectStream": {
                 "oneOf": [
                     {
                         "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseCreated"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseInProgress"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded"
@@ -10379,12 +11014,6 @@
                         "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone"
                     },
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseFailed"
-                    },
-                    {
                         "$ref": "#/components/schemas/OpenAIResponseObjectStreamResponseCompleted"
                     }
                 ],
@@ -10392,7 +11021,6 @@
                     "propertyName": "type",
                     "mapping": {
                         "response.created": "#/components/schemas/OpenAIResponseObjectStreamResponseCreated",
-                        "response.in_progress": "#/components/schemas/OpenAIResponseObjectStreamResponseInProgress",
                         "response.output_item.added": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded",
                         "response.output_item.done": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone",
                         "response.output_text.delta": "#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta",
@@ -10412,8 +11040,6 @@
                         "response.mcp_call.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted",
                         "response.content_part.added": "#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded",
                         "response.content_part.done": "#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone",
-                        "response.incomplete": "#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete",
-                        "response.failed": "#/components/schemas/OpenAIResponseObjectStreamResponseFailed",
                         "response.completed": "#/components/schemas/OpenAIResponseObjectStreamResponseCompleted"
                     }
                 }
@@ -10423,7 +11049,7 @@
                 "properties": {
                     "response": {
                         "$ref": "#/components/schemas/OpenAIResponseObject",
-                        "description": "Completed response object"
+                        "description": "The completed response object"
                     },
                     "type": {
                         "type": "string",
@@ -10443,10 +11069,6 @@
             "OpenAIResponseObjectStreamResponseContentPartAdded": {
                 "type": "object",
                 "properties": {
-                    "content_index": {
-                        "type": "integer",
-                        "description": "Index position of the part within the content array"
-                    },
                     "response_id": {
                         "type": "string",
                         "description": "Unique identifier of the response containing this content"
@@ -10455,10 +11077,6 @@
                         "type": "string",
                         "description": "Unique identifier of the output item containing this content part"
                     },
-                    "output_index": {
-                        "type": "integer",
-                        "description": "Index position of the output item in the response"
-                    },
                     "part": {
                         "oneOf": [
                             {
@@ -10466,17 +11084,13 @@
                             },
                             {
                                 "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
-                            },
-                            {
-                                "$ref": "#/components/schemas/OpenAIResponseContentPartReasoningText"
                             }
                         ],
                         "discriminator": {
                             "propertyName": "type",
                             "mapping": {
                                 "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
-                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal",
-                                "reasoning_text": "#/components/schemas/OpenAIResponseContentPartReasoningText"
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
                             }
                         },
                         "description": "The content part that was added"
@@ -10494,10 +11108,8 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                    "content_index",
                     "response_id",
                     "item_id",
-                    "output_index",
                     "part",
                     "sequence_number",
                     "type"
@@ -10508,10 +11120,6 @@
             "OpenAIResponseObjectStreamResponseContentPartDone": {
                 "type": "object",
                 "properties": {
-                    "content_index": {
-                        "type": "integer",
-                        "description": "Index position of the part within the content array"
-                    },
                     "response_id": {
                         "type": "string",
                         "description": "Unique identifier of the response containing this content"
@@ -10520,10 +11128,6 @@
                         "type": "string",
                         "description": "Unique identifier of the output item containing this content part"
                     },
-                    "output_index": {
-                        "type": "integer",
-                        "description": "Index position of the output item in the response"
-                    },
                     "part": {
                         "oneOf": [
                             {
@@ -10531,17 +11135,13 @@
                             },
                             {
                                 "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
-                            },
-                            {
-                                "$ref": "#/components/schemas/OpenAIResponseContentPartReasoningText"
                             }
                         ],
                         "discriminator": {
                             "propertyName": "type",
                             "mapping": {
                                 "output_text": "#/components/schemas/OpenAIResponseContentPartOutputText",
-                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal",
-                                "reasoning_text": "#/components/schemas/OpenAIResponseContentPartReasoningText"
+                                "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
                             }
                         },
                         "description": "The completed content part"
@@ -10559,10 +11159,8 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                    "content_index",
                     "response_id",
                     "item_id",
-                    "output_index",
                     "part",
                     "sequence_number",
                     "type"
@@ -10575,7 +11173,7 @@
                 "properties": {
                     "response": {
                         "$ref": "#/components/schemas/OpenAIResponseObject",
-                        "description": "The response object that was created"
+                        "description": "The newly created response object"
                     },
                     "type": {
                         "type": "string",
@@ -10591,33 +11189,6 @@
                 ],
                 "title": "OpenAIResponseObjectStreamResponseCreated",
                 "description": "Streaming event indicating a new response has been created."
-            },
-            "OpenAIResponseObjectStreamResponseFailed": {
-                "type": "object",
-                "properties": {
-                    "response": {
-                        "$ref": "#/components/schemas/OpenAIResponseObject",
-                        "description": "Response object describing the failure"
-                    },
-                    "sequence_number": {
-                        "type": "integer",
-                        "description": "Sequential number for ordering streaming events"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "response.failed",
-                        "default": "response.failed",
-                        "description": "Event type identifier, always \"response.failed\""
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "response",
-                    "sequence_number",
-                    "type"
-                ],
-                "title": "OpenAIResponseObjectStreamResponseFailed",
-                "description": "Streaming event emitted when a response fails."
             },
             "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta": {
                 "type": "object",
@@ -10692,60 +11263,6 @@
                 ],
                 "title": "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone",
                 "description": "Streaming event for when function call arguments are completed."
-            },
-            "OpenAIResponseObjectStreamResponseInProgress": {
-                "type": "object",
-                "properties": {
-                    "response": {
-                        "$ref": "#/components/schemas/OpenAIResponseObject",
-                        "description": "Current response state while in progress"
-                    },
-                    "sequence_number": {
-                        "type": "integer",
-                        "description": "Sequential number for ordering streaming events"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "response.in_progress",
-                        "default": "response.in_progress",
-                        "description": "Event type identifier, always \"response.in_progress\""
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "response",
-                    "sequence_number",
-                    "type"
-                ],
-                "title": "OpenAIResponseObjectStreamResponseInProgress",
-                "description": "Streaming event indicating the response remains in progress."
-            },
-            "OpenAIResponseObjectStreamResponseIncomplete": {
-                "type": "object",
-                "properties": {
-                    "response": {
-                        "$ref": "#/components/schemas/OpenAIResponseObject",
-                        "description": "Response object describing the incomplete state"
-                    },
-                    "sequence_number": {
-                        "type": "integer",
-                        "description": "Sequential number for ordering streaming events"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "response.incomplete",
-                        "default": "response.incomplete",
-                        "description": "Event type identifier, always \"response.incomplete\""
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "response",
-                    "sequence_number",
-                    "type"
-                ],
-                "title": "OpenAIResponseObjectStreamResponseIncomplete",
-                "description": "Streaming event emitted when a response ends in an incomplete state."
             },
             "OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta": {
                 "type": "object",
@@ -13113,561 +13630,6 @@
                     "logger_config"
                 ],
                 "title": "SupervisedFineTuneRequest"
-            },
-            "QueryMetricsRequest": {
-                "type": "object",
-                "properties": {
-                    "start_time": {
-                        "type": "integer",
-                        "description": "The start time of the metric to query."
-                    },
-                    "end_time": {
-                        "type": "integer",
-                        "description": "The end time of the metric to query."
-                    },
-                    "granularity": {
-                        "type": "string",
-                        "description": "The granularity of the metric to query."
-                    },
-                    "query_type": {
-                        "type": "string",
-                        "enum": [
-                            "range",
-                            "instant"
-                        ],
-                        "description": "The type of query to perform."
-                    },
-                    "label_matchers": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "type": "string",
-                                    "description": "The name of the label to match"
-                                },
-                                "value": {
-                                    "type": "string",
-                                    "description": "The value to match against"
-                                },
-                                "operator": {
-                                    "type": "string",
-                                    "enum": [
-                                        "=",
-                                        "!=",
-                                        "=~",
-                                        "!~"
-                                    ],
-                                    "description": "The comparison operator to use for matching",
-                                    "default": "="
-                                }
-                            },
-                            "additionalProperties": false,
-                            "required": [
-                                "name",
-                                "value",
-                                "operator"
-                            ],
-                            "title": "MetricLabelMatcher",
-                            "description": "A matcher for filtering metrics by label values."
-                        },
-                        "description": "The label matchers to apply to the metric."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "start_time",
-                    "query_type"
-                ],
-                "title": "QueryMetricsRequest"
-            },
-            "MetricDataPoint": {
-                "type": "object",
-                "properties": {
-                    "timestamp": {
-                        "type": "integer",
-                        "description": "Unix timestamp when the metric value was recorded"
-                    },
-                    "value": {
-                        "type": "number",
-                        "description": "The numeric value of the metric at this timestamp"
-                    },
-                    "unit": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "timestamp",
-                    "value",
-                    "unit"
-                ],
-                "title": "MetricDataPoint",
-                "description": "A single data point in a metric time series."
-            },
-            "MetricLabel": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "The name of the label"
-                    },
-                    "value": {
-                        "type": "string",
-                        "description": "The value of the label"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "name",
-                    "value"
-                ],
-                "title": "MetricLabel",
-                "description": "A label associated with a metric."
-            },
-            "MetricSeries": {
-                "type": "object",
-                "properties": {
-                    "metric": {
-                        "type": "string",
-                        "description": "The name of the metric"
-                    },
-                    "labels": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/MetricLabel"
-                        },
-                        "description": "List of labels associated with this metric series"
-                    },
-                    "values": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/MetricDataPoint"
-                        },
-                        "description": "List of data points in chronological order"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "metric",
-                    "labels",
-                    "values"
-                ],
-                "title": "MetricSeries",
-                "description": "A time series of metric data points."
-            },
-            "QueryMetricsResponse": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/MetricSeries"
-                        },
-                        "description": "List of metric series matching the query criteria"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "data"
-                ],
-                "title": "QueryMetricsResponse",
-                "description": "Response containing metric time series data."
-            },
-            "QueryCondition": {
-                "type": "object",
-                "properties": {
-                    "key": {
-                        "type": "string",
-                        "description": "The attribute key to filter on"
-                    },
-                    "op": {
-                        "$ref": "#/components/schemas/QueryConditionOp",
-                        "description": "The comparison operator to apply"
-                    },
-                    "value": {
-                        "oneOf": [
-                            {
-                                "type": "null"
-                            },
-                            {
-                                "type": "boolean"
-                            },
-                            {
-                                "type": "number"
-                            },
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "array"
-                            },
-                            {
-                                "type": "object"
-                            }
-                        ],
-                        "description": "The value to compare against"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "key",
-                    "op",
-                    "value"
-                ],
-                "title": "QueryCondition",
-                "description": "A condition for filtering query results."
-            },
-            "QueryConditionOp": {
-                "type": "string",
-                "enum": [
-                    "eq",
-                    "ne",
-                    "gt",
-                    "lt"
-                ],
-                "title": "QueryConditionOp",
-                "description": "Comparison operators for query conditions."
-            },
-            "QuerySpansRequest": {
-                "type": "object",
-                "properties": {
-                    "attribute_filters": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/QueryCondition"
-                        },
-                        "description": "The attribute filters to apply to the spans."
-                    },
-                    "attributes_to_return": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "The attributes to return in the spans."
-                    },
-                    "max_depth": {
-                        "type": "integer",
-                        "description": "The maximum depth of the tree."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "attribute_filters",
-                    "attributes_to_return"
-                ],
-                "title": "QuerySpansRequest"
-            },
-            "Span": {
-                "type": "object",
-                "properties": {
-                    "span_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the span"
-                    },
-                    "trace_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the trace this span belongs to"
-                    },
-                    "parent_span_id": {
-                        "type": "string",
-                        "description": "(Optional) Unique identifier for the parent span, if this is a child span"
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "Human-readable name describing the operation this span represents"
-                    },
-                    "start_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Timestamp when the operation began"
-                    },
-                    "end_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "(Optional) Timestamp when the operation finished, if completed"
-                    },
-                    "attributes": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) Key-value pairs containing additional metadata about the span"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "span_id",
-                    "trace_id",
-                    "name",
-                    "start_time"
-                ],
-                "title": "Span",
-                "description": "A span representing a single operation within a trace."
-            },
-            "QuerySpansResponse": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Span"
-                        },
-                        "description": "List of spans matching the query criteria"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "data"
-                ],
-                "title": "QuerySpansResponse",
-                "description": "Response containing a list of spans."
-            },
-            "SaveSpansToDatasetRequest": {
-                "type": "object",
-                "properties": {
-                    "attribute_filters": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/QueryCondition"
-                        },
-                        "description": "The attribute filters to apply to the spans."
-                    },
-                    "attributes_to_save": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "The attributes to save to the dataset."
-                    },
-                    "dataset_id": {
-                        "type": "string",
-                        "description": "The ID of the dataset to save the spans to."
-                    },
-                    "max_depth": {
-                        "type": "integer",
-                        "description": "The maximum depth of the tree."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "attribute_filters",
-                    "attributes_to_save",
-                    "dataset_id"
-                ],
-                "title": "SaveSpansToDatasetRequest"
-            },
-            "GetSpanTreeRequest": {
-                "type": "object",
-                "properties": {
-                    "attributes_to_return": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "The attributes to return in the tree."
-                    },
-                    "max_depth": {
-                        "type": "integer",
-                        "description": "The maximum depth of the tree."
-                    }
-                },
-                "additionalProperties": false,
-                "title": "GetSpanTreeRequest"
-            },
-            "SpanStatus": {
-                "type": "string",
-                "enum": [
-                    "ok",
-                    "error"
-                ],
-                "title": "SpanStatus",
-                "description": "The status of a span indicating whether it completed successfully or with an error."
-            },
-            "SpanWithStatus": {
-                "type": "object",
-                "properties": {
-                    "span_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the span"
-                    },
-                    "trace_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the trace this span belongs to"
-                    },
-                    "parent_span_id": {
-                        "type": "string",
-                        "description": "(Optional) Unique identifier for the parent span, if this is a child span"
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "Human-readable name describing the operation this span represents"
-                    },
-                    "start_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Timestamp when the operation began"
-                    },
-                    "end_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "(Optional) Timestamp when the operation finished, if completed"
-                    },
-                    "attributes": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) Key-value pairs containing additional metadata about the span"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/SpanStatus",
-                        "description": "(Optional) The current status of the span"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "span_id",
-                    "trace_id",
-                    "name",
-                    "start_time"
-                ],
-                "title": "SpanWithStatus",
-                "description": "A span that includes status information."
-            },
-            "QuerySpanTreeResponse": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/SpanWithStatus"
-                        },
-                        "description": "Dictionary mapping span IDs to spans with status information"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "data"
-                ],
-                "title": "QuerySpanTreeResponse",
-                "description": "Response containing a tree structure of spans."
-            },
-            "QueryTracesRequest": {
-                "type": "object",
-                "properties": {
-                    "attribute_filters": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/QueryCondition"
-                        },
-                        "description": "The attribute filters to apply to the traces."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "The limit of traces to return."
-                    },
-                    "offset": {
-                        "type": "integer",
-                        "description": "The offset of the traces to return."
-                    },
-                    "order_by": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "The order by of the traces to return."
-                    }
-                },
-                "additionalProperties": false,
-                "title": "QueryTracesRequest"
-            },
-            "Trace": {
-                "type": "object",
-                "properties": {
-                    "trace_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the trace"
-                    },
-                    "root_span_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the root span that started this trace"
-                    },
-                    "start_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Timestamp when the trace began"
-                    },
-                    "end_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "(Optional) Timestamp when the trace finished, if completed"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "trace_id",
-                    "root_span_id",
-                    "start_time"
-                ],
-                "title": "Trace",
-                "description": "A trace representing the complete execution path of a request across multiple operations."
-            },
-            "QueryTracesResponse": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Trace"
-                        },
-                        "description": "List of traces matching the query criteria"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "data"
-                ],
-                "title": "QueryTracesResponse",
-                "description": "Response containing a list of traces."
             }
         },
         "responses": {
@@ -13785,10 +13747,6 @@
             "x-displayName": "Safety"
         },
         {
-            "name": "Telemetry",
-            "description": ""
-        },
-        {
             "name": "VectorIO",
             "description": ""
         }
@@ -13807,7 +13765,6 @@
                 "Models",
                 "PostTraining (Coming Soon)",
                 "Safety",
-                "Telemetry",
                 "VectorIO"
             ]
         }
