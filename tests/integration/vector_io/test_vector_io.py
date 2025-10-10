@@ -53,6 +53,7 @@ def test_vector_db_retrieve(client_with_empty_registry, embedding_model_id, embe
         extra_body={
             "embedding_model": embedding_model_id,
             "embedding_dimension": embedding_dimension,
+            "provider_id": "my_provider",
         },
     )
 
@@ -73,6 +74,7 @@ def test_vector_db_register(client_with_empty_registry, embedding_model_id, embe
         extra_body={
             "embedding_model": embedding_model_id,
             "embedding_dimension": embedding_dimension,
+            "provider_id": "my_provider",
         },
     )
 
@@ -109,6 +111,7 @@ def test_insert_chunks(client_with_empty_registry, embedding_model_id, embedding
         extra_body={
             "embedding_model": embedding_model_id,
             "embedding_dimension": embedding_dimension,
+            "provider_id": "my_provider",
         },
     )
 
@@ -150,6 +153,7 @@ def test_insert_chunks_with_precomputed_embeddings(client_with_empty_registry, e
         extra_body={
             "embedding_model": embedding_model_id,
             "embedding_dimension": embedding_dimension,
+            "provider_id": "my_provider",
         },
     )
 
@@ -199,6 +203,7 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
         extra_body={
             "embedding_model": embedding_model_id,
             "embedding_dimension": embedding_dimension,
+            "provider_id": "my_provider",
         },
     )
 

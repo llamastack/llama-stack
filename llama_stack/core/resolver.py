@@ -54,7 +54,6 @@ from llama_stack.providers.datatypes import (
     ScoringFunctionsProtocolPrivate,
     ShieldsProtocolPrivate,
     ToolGroupsProtocolPrivate,
-    VectorDBsProtocolPrivate,
 )
 
 logger = get_logger(name=__name__, category="core")
@@ -123,7 +122,6 @@ def additional_protocols_map() -> dict[Api, Any]:
     return {
         Api.inference: (ModelsProtocolPrivate, Models, Api.models),
         Api.tool_groups: (ToolGroupsProtocolPrivate, ToolGroups, Api.tool_groups),
-        Api.vector_io: (VectorDBsProtocolPrivate,),
         Api.safety: (ShieldsProtocolPrivate, Shields, Api.shields),
         Api.datasetio: (DatasetsProtocolPrivate, Datasets, Api.datasets),
         Api.scoring: (
