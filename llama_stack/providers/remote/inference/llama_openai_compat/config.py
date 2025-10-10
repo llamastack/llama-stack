@@ -21,11 +21,6 @@ class LlamaProviderDataValidator(BaseModel):
 
 @json_schema_type
 class LlamaCompatConfig(RemoteInferenceProviderConfig):
-    api_key: str | None = Field(
-        default=None,
-        description="The Llama API key",
-    )
-
     openai_compat_api_base: str = Field(
         default="https://api.llama.com/compat/v1/",
         description="The URL for the Llama API server",

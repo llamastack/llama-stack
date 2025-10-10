@@ -720,7 +720,7 @@ class TestOpenAIMixinProviderDataApiKey:
     ):
         """Test that ValueError is raised when provider data exists but doesn't have required key"""
         with request_provider_data_context({"x-llamastack-provider-data": json.dumps({"wrong_key": "some-value"})}):
-            with pytest.raises(ValueError, match="API key is not set"):
+            with pytest.raises(ValueError, match="API key not provided"):
                 _ = mixin_with_provider_data_field_and_none_api_key.client
 
     def test_error_message_includes_correct_field_names(self, mixin_with_provider_data_field_and_none_api_key):

@@ -27,9 +27,6 @@ class DatabricksInferenceAdapter(OpenAIMixin):
         "databricks-bge-large-en": {"embedding_dimension": 1024, "context_length": 512},
     }
 
-    def get_api_key(self) -> str:
-        return self.config.api_token.get_secret_value()
-
     def get_base_url(self) -> str:
         return f"{self.config.url}/serving-endpoints"
 

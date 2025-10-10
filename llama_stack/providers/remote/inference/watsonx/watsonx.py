@@ -22,7 +22,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         LiteLLMOpenAIMixin.__init__(
             self,
             litellm_provider_name="watsonx",
-            api_key_from_config=config.api_key.get_secret_value() if config.api_key else None,
+            api_key_from_config=config.auth_credential.get_secret_value() if config.auth_credential else None,
             provider_data_api_key_field="watsonx_api_key",
         )
         self.available_models = None

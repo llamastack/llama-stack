@@ -21,9 +21,6 @@ class LlamaCompatInferenceAdapter(OpenAIMixin):
     Llama API Inference Adapter for Llama Stack.
     """
 
-    def get_api_key(self) -> str:
-        return self.config.api_key or ""
-
     def get_base_url(self) -> str:
         """
         Get the base URL for OpenAI mixin.

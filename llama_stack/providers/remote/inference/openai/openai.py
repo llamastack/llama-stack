@@ -29,9 +29,6 @@ class OpenAIInferenceAdapter(OpenAIMixin):
         "text-embedding-3-large": {"embedding_dimension": 3072, "context_length": 8192},
     }
 
-    def get_api_key(self) -> str:
-        return self.config.api_key or ""
-
     def get_base_url(self) -> str:
         """
         Get the OpenAI API base URL.

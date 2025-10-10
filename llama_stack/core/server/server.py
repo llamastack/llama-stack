@@ -138,6 +138,13 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
         return HTTPException(status_code=httpx.codes.NOT_IMPLEMENTED, detail=f"Not implemented: {str(exc)}")
     elif isinstance(exc, AuthenticationRequiredError):
         return HTTPException(status_code=httpx.codes.UNAUTHORIZED, detail=f"Authentication required: {str(exc)}")
+    elif hasattr(exc, "status_code") and isinstance(getattr(exc, "status_code", None), int):
+        # Handle provider SDK exceptions (e.g., OpenAI's APIStatusError and subclasses)
+        # These include AuthenticationError (401), PermissionDeniedError (403), etc.
+        # This preserves the actual HTTP status code from the provider
+        status_code = exc.status_code
+        detail = str(exc)
+        return HTTPException(status_code=status_code, detail=detail)
     else:
         return HTTPException(
             status_code=httpx.codes.INTERNAL_SERVER_ERROR,
@@ -232,14 +239,25 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
         await log_request_pre_validation(request)
 
+        test_context_token = None
+
         # Use context manager with both provider data and auth attributes
         with request_provider_data_context(request.headers, user):
+            if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
+                from llama_stack.core.testing_context import (
+                    TEST_CONTEXT,
+                    reset_test_context,
+                    sync_test_context_from_provider_data,
+                )
+
+                test_context_token = sync_test_context_from_provider_data()
+
             is_streaming = is_streaming_request(func.__name__, request, **kwargs)
 
             try:
                 if is_streaming:
                     gen = preserve_contexts_async_generator(
-                        sse_generator(func(**kwargs)), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
+                        sse_generator(func(**kwargs)), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR, TEST_CONTEXT]
                     )
                     return StreamingResponse(gen, media_type="text/event-stream")
                 else:
@@ -258,6 +276,9 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                 else:
                     logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
                 raise translate_exception(e) from e
+            finally:
+                if test_context_token is not None:
+                    reset_test_context(test_context_token)
 
     sig = inspect.signature(func)
 

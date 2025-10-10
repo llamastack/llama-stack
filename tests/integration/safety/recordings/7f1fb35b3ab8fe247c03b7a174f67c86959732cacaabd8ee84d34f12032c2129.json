@@ -14,12 +14,12 @@
       "__data__": {
         "models": [
           {
-            "model": "llama-guard3:1b",
-            "name": "llama-guard3:1b",
-            "digest": "494147e06bf99e10dbe67b63a07ac81c162f18ef3341aa3390007ac828571b3b",
-            "expires_at": "2025-10-03T20:05:52.678499-07:00",
-            "size": 2350966784,
-            "size_vram": 2350966784,
+            "model": "llama3.2:3b",
+            "name": "llama3.2:3b",
+            "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+            "expires_at": "2025-10-08T16:14:05.423042-07:00",
+            "size": 3367856128,
+            "size_vram": 3367856128,
             "details": {
               "parent_model": "",
               "format": "gguf",
@@ -27,16 +27,15 @@
               "families": [
                 "llama"
               ],
-              "parameter_size": "1.5B",
-              "quantization_level": "Q8_0"
-            },
-            "context_length": 4096
+              "parameter_size": "3.2B",
+              "quantization_level": "Q4_K_M"
+            }
           },
           {
             "model": "llama3.2:3b-instruct-fp16",
             "name": "llama3.2:3b-instruct-fp16",
             "digest": "195a8c01d91ec3cb1e0aad4624a51f2602c51fa7d96110f8ab5a20c84081804d",
-            "expires_at": "2025-10-03T20:05:47.301578-07:00",
+            "expires_at": "2025-10-08T11:29:57.051880-07:00",
             "size": 7919570944,
             "size_vram": 7919570944,
             "details": {
@@ -48,8 +47,25 @@
               ],
               "parameter_size": "3.2B",
               "quantization_level": "F16"
-            },
-            "context_length": 4096
+            }
+          },
+          {
+            "model": "llama-guard3:1b",
+            "name": "llama-guard3:1b",
+            "digest": "494147e06bf99e10dbe67b63a07ac81c162f18ef3341aa3390007ac828571b3b",
+            "expires_at": "2025-10-08T11:29:49.394747-07:00",
+            "size": 2350966784,
+            "size_vram": 2350966784,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "llama",
+              "families": [
+                "llama"
+              ],
+              "parameter_size": "1.5B",
+              "quantization_level": "Q8_0"
+            }
           }
         ]
       }

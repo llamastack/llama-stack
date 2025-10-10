@@ -40,6 +40,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
+from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.vector_store import (
@@ -352,7 +353,7 @@ class OpenAIVectorStoreMixin(ABC):
         """Creates a vector store."""
         created_at = int(time.time())
         # Derive the canonical vector_db_id (allow override, else generate)
-        vector_db_id = provider_vector_db_id or f"vs_{uuid.uuid4()}"
+        vector_db_id = provider_vector_db_id or generate_object_id("vector_store", lambda: f"vs_{uuid.uuid4()}")
 
         if provider_id is None:
             raise ValueError("Provider ID is required")
@@ -986,7 +987,7 @@ class OpenAIVectorStoreMixin(ABC):
         chunking_strategy = chunking_strategy or VectorStoreChunkingStrategyAuto()
 
         created_at = int(time.time())
-        batch_id = f"batch_{uuid.uuid4()}"
+        batch_id = generate_object_id("vector_store_file_batch", lambda: f"batch_{uuid.uuid4()}")
         # File batches expire after 7 days
         expires_at = created_at + (7 * 24 * 60 * 60)
 

@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "I'm not capable of testing or interacting with the OpenAI API directly. However, I can provide some general information about the OpenAI model called \"Trace\" and how it can be used.\n\nThe Trace was a transformer-based language model developed by OpenAI in 2022. It was designed to generate text based on a given prompt, but it never gained widespread use.\n\nUnfortunately, the model is no longer available for public testing because OpenAI removed it from their model hub after some issues were raised about its quality and limitations.\n\nThat being said, there are various other models that you might be interested in using as an alternative to the Trace. Here's a list of popular models:\n\n1. **Text-Transformer**: This model is designed for text classification and generation tasks.\n2, **DALL-E 2**: A text-to-image model capable of generating images based on user-provided input prompts.\n3:**Diffusers**: An AI model that can generate raw pixel data in the form of an image.\n\nTo test these models or others available through OpenAI models hub you may need to complete a sign-up process.",
+              "content": "I'm happy to help you with testing the Discord API but I can't test for you. You can use the following code to get started:\n\n```\nimport discord\nfrom discord.ext import commands\n\n# Replace these values with your own bot token and guild ID\nTOKEN = 'your_discord_bot_token'\nGUILD_ID = 'your_guild_id'\n\n# Create a new bot instance\nbot = commands.Bot(command_prefix='!')\n\n# Event that triggers when the bot is ready\n@bot.event\nasync def on_ready():\n    # Print a message to indicate that the bot is online\n    print(f'{bot.user.name} has connected to Discord!')\n\n# Command that says 'Hello, world!'\n@bot.command(name='hello')\nasync def hello(ctx):\n    # Send a message with a greeting\n    await ctx.send(':hello: Hello, world!')\n\n# Run the bot and keep it alive until it's stopped manually\nbot.run(TOKEN)\n```\n\nMake sure to replace `'your_discord_bot_token'` and `'your_guild_id'` with the appropriate values for your Discord API credentials.\n\nTo run this code, you'll need to install the `discord.py` library using pip:\n\n```bash\npip install discord.py\n```\n\nPlease note that you can't test the API since we are not logging in and testing on a bot.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,9 +44,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 225,
+          "completion_tokens": 275,
           "prompt_tokens": 31,
-          "total_tokens": 256,
+          "total_tokens": 306,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

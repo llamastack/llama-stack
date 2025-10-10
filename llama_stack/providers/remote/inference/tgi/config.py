@@ -13,6 +13,8 @@ from llama_stack.schema_utils import json_schema_type
 
 @json_schema_type
 class TGIImplConfig(RemoteInferenceProviderConfig):
+    auth_credential: SecretStr | None = Field(default=None, exclude=True)
+
     url: str = Field(
         description="The URL for the TGI serving endpoint",
     )

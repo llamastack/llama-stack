@@ -49,7 +49,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.url})...")
 
         if _is_nvidia_hosted(self.config):
-            if not self.config.api_key:
+            if not self.config.auth_credential:
                 raise RuntimeError(
                     "API key is required for hosted NVIDIA NIM. Either provide an API key or use a self-hosted NIM."
                 )
@@ -60,7 +60,13 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
         :return: The NVIDIA API key
         """
-        return self.config.api_key.get_secret_value() if self.config.api_key else "NO KEY"
+        if self.config.auth_credential:
+            return self.config.auth_credential.get_secret_value()
+
+        if not _is_nvidia_hosted(self.config):
+            return "NO KEY REQUIRED"
+
+        return None
 
     def get_base_url(self) -> str:
         """

@@ -7,7 +7,7 @@
 import os
 from typing import Any
 
-from pydantic import Field, SecretStr
+from pydantic import Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -20,10 +20,6 @@ class CerebrasImplConfig(RemoteInferenceProviderConfig):
     base_url: str = Field(
         default=os.environ.get("CEREBRAS_BASE_URL", DEFAULT_BASE_URL),
         description="Base URL for the Cerebras API",
-    )
-    api_key: SecretStr = Field(
-        default=SecretStr(os.environ.get("CEREBRAS_API_KEY")),  # type: ignore[arg-type]
-        description="Cerebras API Key",
     )
 
     @classmethod

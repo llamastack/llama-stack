@@ -15,9 +15,6 @@ from .config import CerebrasImplConfig
 class CerebrasInferenceAdapter(OpenAIMixin):
     config: CerebrasImplConfig
 
-    def get_api_key(self) -> str:
-        return self.config.api_key.get_secret_value()
-
     def get_base_url(self) -> str:
         return urljoin(self.config.base_url, "v1")
 

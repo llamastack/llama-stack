@@ -316,13 +316,13 @@ class Stack:
     # asked for in the run config.
     async def initialize(self):
         if "LLAMA_STACK_TEST_INFERENCE_MODE" in os.environ:
-            from llama_stack.testing.inference_recorder import setup_inference_recording
+            from llama_stack.testing.api_recorder import setup_api_recording
 
             global TEST_RECORDING_CONTEXT
-            TEST_RECORDING_CONTEXT = setup_inference_recording()
+            TEST_RECORDING_CONTEXT = setup_api_recording()
             if TEST_RECORDING_CONTEXT:
                 TEST_RECORDING_CONTEXT.__enter__()
-                logger.info(f"Inference recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+                logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
 
         dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
@@ -381,7 +381,7 @@ class Stack:
             try:
                 TEST_RECORDING_CONTEXT.__exit__(None, None, None)
             except Exception as e:
-                logger.error(f"Error during inference recording cleanup: {e}")
+                logger.error(f"Error during API recording cleanup: {e}")
 
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:

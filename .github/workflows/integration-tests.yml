@@ -54,14 +54,14 @@ jobs:
         # Define (setup, suite) pairs - they are always matched and cannot be independent
         # Weekly schedule (Sun 1 AM): vllm+base
         # Input test-setup=ollama-vision: ollama-vision+vision
-        # Default (including test-setup=ollama): both ollama+base and ollama-vision+vision
+        # Default (including test-setup=ollama): ollama+base, ollama-vision+vision, gpt+responses
         config: >-
           ${{
             github.event.schedule == '1 0 * * 0'
               && fromJSON('[{"setup": "vllm", "suite": "base"}]')
             || github.event.inputs.test-setup == 'ollama-vision'
               && fromJSON('[{"setup": "ollama-vision", "suite": "vision"}]')
-            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}]')
+            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}, {"setup": "gpt", "suite": "responses"}]')
           }}
 
     steps:
@@ -79,6 +79,8 @@ jobs:
 
       - name: Run tests
         uses: ./.github/actions/run-and-record-tests
+        env:
+          OPENAI_API_KEY: dummy
         with:
           stack-config: ${{ matrix.client-type == 'library' && 'ci-tests' || 'server:ci-tests' }}
           setup: ${{ matrix.config.setup }}

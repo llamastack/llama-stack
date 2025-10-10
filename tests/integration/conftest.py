@@ -6,6 +6,7 @@
 import inspect
 import itertools
 import os
+import tempfile
 import textwrap
 import time
 from pathlib import Path
@@ -14,6 +15,7 @@ import pytest
 from dotenv import load_dotenv
 
 from llama_stack.log import get_logger
+from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 
 from .suites import SETUP_DEFINITIONS, SUITE_DEFINITIONS
 
@@ -35,6 +37,20 @@ def pytest_sessionstart(session):
     if "LLAMA_STACK_TEST_INFERENCE_MODE" not in os.environ:
         os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = "replay"
 
+    if "SQLITE_STORE_DIR" not in os.environ:
+        os.environ["SQLITE_STORE_DIR"] = tempfile.mkdtemp()
+
+    # Set test stack config type for api_recorder test isolation
+    stack_config = session.config.getoption("--stack-config", default=None)
+    if stack_config and stack_config.startswith("server:"):
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "server"
+        logger.info(f"Test stack config type: server (stack_config={stack_config})")
+    else:
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "library_client"
+        logger.info(f"Test stack config type: library_client (stack_config={stack_config})")
+
+    patch_httpx_for_test_id()
+
 
 @pytest.fixture(autouse=True)
 def _track_test_context(request):
@@ -43,15 +59,13 @@ def _track_test_context(request):
     This fixture runs for every test and stores the test's nodeid in a contextvar
     that the recording system can access to determine which subdirectory to use.
     """
-    from llama_stack.testing.inference_recorder import _test_context
+    from llama_stack.core.testing_context import reset_test_context, set_test_context
 
-    # Store the test nodeid (e.g., "tests/integration/responses/test_basic.py::test_foo[params]")
-    token = _test_context.set(request.node.nodeid)
+    token = set_test_context(request.node.nodeid)
 
     yield
 
-    # Cleanup
-    _test_context.reset(token)
+    reset_test_context(token)
 
 
 def pytest_runtest_teardown(item):
@@ -109,8 +123,12 @@ def pytest_configure(config):
         # Apply defaults if not provided explicitly
         for dest, value in setup_obj.defaults.items():
             current = getattr(config.option, dest, None)
-            if not current:
+            if current is None:
                 setattr(config.option, dest, value)
+
+    # Apply global fallback for embedding_dimension if still not set
+    if getattr(config.option, "embedding_dimension", None) is None:
+        config.option.embedding_dimension = 384
 
 
 def pytest_addoption(parser):
@@ -149,8 +167,8 @@ def pytest_addoption(parser):
     parser.addoption(
         "--embedding-dimension",
         type=int,
-        default=384,
-        help="Output dimensionality of the embedding model to use for testing. Default: 384",
+        default=None,
+        help="Output dimensionality of the embedding model to use for testing. Default: 384 (or setup-specific)",
     )
 
     parser.addoption(
@@ -224,7 +242,9 @@ def pytest_generate_tests(metafunc):
             continue
 
         params.append(fixture_name)
-        val = metafunc.config.getoption(option)
+        # Use getattr on config.option to see values set by pytest_configure fallbacks
+        dest = option.lstrip("-").replace("-", "_")
+        val = getattr(metafunc.config.option, dest, None)
 
         values = [v.strip() for v in str(val).split(",")] if val else [None]
         param_values[fixture_name] = values

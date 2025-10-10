@@ -19,6 +19,7 @@ TEST_SUBDIRS=""
 TEST_PATTERN=""
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
+COLLECT_ONLY=false
 
 # Function to display usage
 usage() {
@@ -29,9 +30,10 @@ Options:
     --stack-config STRING    Stack configuration to use (required)
     --suite STRING           Test suite to run (default: 'base')
     --setup STRING           Test setup (models, env) to use (e.g., 'ollama', 'ollama-vision', 'gpt', 'vllm')
-    --inference-mode STRING  Inference mode: record or replay (default: replay)
+    --inference-mode STRING  Inference mode: replay, record-if-missing or record (default: replay)
     --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
     --pattern STRING         Regex pattern to pass to pytest -k
+    --collect-only           Collect tests only without running them (skips server startup)
     --help                   Show this help message
 
 Suites are defined in tests/integration/suites.py and define which tests to run.
@@ -81,6 +83,10 @@ while [[ $# -gt 0 ]]; do
             TEST_PATTERN="$2"
             shift 2
             ;;
+        --collect-only)
+            COLLECT_ONLY=true
+            shift
+            ;;
         --help)
             usage
             exit 0
@@ -95,13 +101,13 @@ done
 
 
 # Validate required parameters
-if [[ -z "$STACK_CONFIG" ]]; then
+if [[ -z "$STACK_CONFIG" && "$COLLECT_ONLY" == false ]]; then
     echo "Error: --stack-config is required"
     usage
     exit 1
 fi
 
-if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" ]]; then
+if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" && "$COLLECT_ONLY" == false ]]; then
     echo "Error: --test-setup is required when --test-subdirs is provided"
     usage
     exit 1
@@ -124,12 +130,6 @@ echo ""
 echo "Checking llama packages"
 uv pip list | grep llama
 
-# Check storage and memory before tests
-echo "=== System Resources Before Tests ==="
-free -h 2>/dev/null || echo "free command not available"
-df -h
-echo ""
-
 # Set environment variables
 export LLAMA_STACK_CLIENT_TIMEOUT=300
 
@@ -139,11 +139,28 @@ if [[ -n "$TEST_SETUP" ]]; then
     EXTRA_PARAMS="--setup=$TEST_SETUP"
 fi
 
+if [[ "$COLLECT_ONLY" == true ]]; then
+    EXTRA_PARAMS="$EXTRA_PARAMS --collect-only"
+fi
+
 # Apply setup-specific environment variables (needed for server startup and tests)
 echo "=== Applying Setup Environment Variables ==="
 
 # the server needs this
 export LLAMA_STACK_TEST_INFERENCE_MODE="$INFERENCE_MODE"
+export SQLITE_STORE_DIR=$(mktemp -d)
+echo "Setting SQLITE_STORE_DIR: $SQLITE_STORE_DIR"
+
+# Determine stack config type for api_recorder test isolation
+if [[ "$COLLECT_ONLY" == false ]]; then
+    if [[ "$STACK_CONFIG" == server:* ]]; then
+        export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
+        echo "Setting stack config type: server"
+    else
+        export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
+        echo "Setting stack config type: library_client"
+    fi
+fi
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
 echo "Setting up environment variables:"
@@ -157,7 +174,7 @@ cd $ROOT_DIR
 # check if "llama" and "pytest" are available. this script does not use `uv run` given
 # it can be used in a pre-release environment where we have not been able to tell
 # uv about pre-release dependencies properly (yet).
-if ! command -v llama &> /dev/null; then
+if [[ "$COLLECT_ONLY" == false ]] && ! command -v llama &> /dev/null; then
     echo "llama could not be found, ensure llama-stack is installed"
     exit 1
 fi
@@ -168,7 +185,7 @@ if ! command -v pytest &> /dev/null; then
 fi
 
 # Start Llama Stack Server if needed
-if [[ "$STACK_CONFIG" == *"server:"* ]]; then
+if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     stop_server() {
         echo "Stopping Llama Stack Server..."
         pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
@@ -186,7 +203,11 @@ if [[ "$STACK_CONFIG" == *"server:"* ]]; then
         echo "Llama Stack Server is already running, skipping start"
     else
         echo "=== Starting Llama Stack Server ==="
-        nohup llama stack run ci-tests > server.log 2>&1 &
+        export LLAMA_STACK_LOG_WIDTH=120
+
+        # remove "server:" from STACK_CONFIG
+        stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
+        nohup llama stack run $stack_config > server.log 2>&1 &
 
         echo "Waiting for Llama Stack Server to start..."
         for i in {1..30}; do
@@ -257,8 +278,14 @@ fi
 
 set +e
 set -x
+
+STACK_CONFIG_ARG=""
+if [[ -n "$STACK_CONFIG" ]]; then
+    STACK_CONFIG_ARG="--stack-config=$STACK_CONFIG"
+fi
+
 pytest -s -v $PYTEST_TARGET \
-    --stack-config="$STACK_CONFIG" \
+    $STACK_CONFIG_ARG \
     --inference-mode="$INFERENCE_MODE" \
     -k "$PYTEST_PATTERN" \
     $EXTRA_PARAMS \
@@ -276,12 +303,6 @@ else
     echo "❌ Tests failed"
     exit 1
 fi
-
-# Check storage and memory after tests
-echo ""
-echo "=== System Resources After Tests ==="
-free -h 2>/dev/null || echo "free command not available"
-df -h
 
 echo ""
 echo "=== Integration Tests Complete ==="

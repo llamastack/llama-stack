@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -25,6 +25,8 @@ class VertexAIProviderDataValidator(BaseModel):
 
 @json_schema_type
 class VertexAIConfig(RemoteInferenceProviderConfig):
+    auth_credential: SecretStr | None = Field(default=None, exclude=True)
+
     project: str = Field(
         description="Google Cloud project ID for Vertex AI",
     )

@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestMCPToolsInChatCompletion::test_mcp_tools_in_inference[txt=ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -51,7 +52,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-cca0267555a6",
+        "id": "rec-f3bbb5229763",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -66,7 +67,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_px63ad04",
+                  "id": "call_4nzxw162",
                   "function": {
                     "arguments": "{\"operation\":\"+\",\"x\":\"5\",\"y\":\"3\"}",
                     "name": "calculate"

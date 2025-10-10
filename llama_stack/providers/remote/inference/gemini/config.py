@@ -21,11 +21,6 @@ class GeminiProviderDataValidator(BaseModel):
 
 @json_schema_type
 class GeminiConfig(RemoteInferenceProviderConfig):
-    api_key: str | None = Field(
-        default=None,
-        description="API key for Gemini models",
-    )
-
     @classmethod
     def sample_run_config(cls, api_key: str = "${env.GEMINI_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {

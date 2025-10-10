@@ -18,8 +18,9 @@ class DatabricksImplConfig(RemoteInferenceProviderConfig):
         default=None,
         description="The URL for the Databricks model serving endpoint",
     )
-    api_token: SecretStr = Field(
-        default=SecretStr(None),  # type: ignore[arg-type]
+    auth_credential: SecretStr | None = Field(
+        default=None,
+        alias="api_token",
         description="The Databricks API token",
     )
 

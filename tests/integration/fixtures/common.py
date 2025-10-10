@@ -129,6 +129,8 @@ def client_with_models(
     model_ids = {m.identifier for m in client.models.list()}
     model_ids.update(m.provider_resource_id for m in client.models.list())
 
+    # TODO: fix this crap where we use the first provider randomly
+    # that cannot be right. I think the test should just specify the provider_id
     if text_model_id and text_model_id not in model_ids:
         client.models.register(model_id=text_model_id, provider_id=inference_providers[0])
     if vision_model_id and vision_model_id not in model_ids:
@@ -183,6 +185,12 @@ def llama_stack_client(request):
     # would be forced to use llama_stack_client, which is not what we want.
     print("\ninstantiating llama_stack_client")
     start_time = time.time()
+
+    # Patch httpx to inject test ID for server-mode test isolation
+    from llama_stack.testing.api_recorder import patch_httpx_for_test_id
+
+    patch_httpx_for_test_id()
+
     client = instantiate_llama_stack_client(request.session)
     print(f"llama_stack_client instantiated in {time.time() - start_time:.3f}s")
     return client

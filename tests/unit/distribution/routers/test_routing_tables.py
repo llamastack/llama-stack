@@ -354,6 +354,111 @@ async def test_scoring_functions_routing_table(cached_disk_dist_registry):
     assert len(scoring_functions_list_after_deletion.data) == 0
 
 
+async def test_double_registration_models_positive(cached_disk_dist_registry):
+    """Test that registering the same model twice with identical data succeeds."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a model
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
+
+    # Register the exact same model again - should succeed (idempotent)
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
+
+    # Verify only one model exists
+    models = await table.list_models()
+    assert len(models.data) == 1
+    assert models.data[0].identifier == "test_provider/test-model"
+
+
+async def test_double_registration_models_negative(cached_disk_dist_registry):
+    """Test that registering the same model with different data fails."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a model with specific metadata
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
+
+    # Try to register the same model with different metadata - should fail
+    with pytest.raises(
+        ValueError, match="Object of type 'model' and identifier 'test_provider/test-model' already exists"
+    ):
+        await table.register_model(
+            model_id="test-model", provider_id="test_provider", metadata={"param1": "different_value"}
+        )
+
+
+async def test_double_registration_scoring_functions_positive(cached_disk_dist_registry):
+    """Test that registering the same scoring function twice with identical data succeeds."""
+    table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a scoring function
+    await table.register_scoring_function(
+        scoring_fn_id="test-scoring-fn",
+        provider_id="test_provider",
+        description="Test scoring function",
+        return_type=NumberType(),
+    )
+
+    # Register the exact same scoring function again - should succeed (idempotent)
+    await table.register_scoring_function(
+        scoring_fn_id="test-scoring-fn",
+        provider_id="test_provider",
+        description="Test scoring function",
+        return_type=NumberType(),
+    )
+
+    # Verify only one scoring function exists
+    scoring_functions = await table.list_scoring_functions()
+    assert len(scoring_functions.data) == 1
+    assert scoring_functions.data[0].identifier == "test-scoring-fn"
+
+
+async def test_double_registration_scoring_functions_negative(cached_disk_dist_registry):
+    """Test that registering the same scoring function with different data fails."""
+    table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a scoring function
+    await table.register_scoring_function(
+        scoring_fn_id="test-scoring-fn",
+        provider_id="test_provider",
+        description="Test scoring function",
+        return_type=NumberType(),
+    )
+
+    # Try to register the same scoring function with different description - should fail
+    with pytest.raises(
+        ValueError, match="Object of type 'scoring_function' and identifier 'test-scoring-fn' already exists"
+    ):
+        await table.register_scoring_function(
+            scoring_fn_id="test-scoring-fn",
+            provider_id="test_provider",
+            description="Different description",
+            return_type=NumberType(),
+        )
+
+
+async def test_double_registration_different_providers(cached_disk_dist_registry):
+    """Test that registering objects with same ID but different providers succeeds."""
+    impl1 = InferenceImpl()
+    impl2 = InferenceImpl()
+    table = ModelsRoutingTable({"provider1": impl1, "provider2": impl2}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register same model ID with different providers - should succeed
+    await table.register_model(model_id="shared-model", provider_id="provider1")
+    await table.register_model(model_id="shared-model", provider_id="provider2")
+
+    # Verify both models exist with different identifiers
+    models = await table.list_models()
+    assert len(models.data) == 2
+    model_ids = {m.identifier for m in models.data}
+    assert "provider1/shared-model" in model_ids
+    assert "provider2/shared-model" in model_ids
+
+
 async def test_benchmarks_routing_table(cached_disk_dist_registry):
     table = BenchmarksRoutingTable({"test_provider": BenchmarksImpl()}, cached_disk_dist_registry, {})
     await table.initialize()

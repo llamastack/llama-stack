@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestStreamingWithTools::test_streaming_tool_calls[txt=ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -38,15 +39,25 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0fad19b9d308",
+          "id": "rec-37e10e6ac4dc",
           "choices": [
             {
               "delta": {
-                "content": "{\"name\":\"get_time\",\"parameters\\\":{\\\"timezone\\\":\\\"UTC\\\"}}",
+                "content": "",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
-                "tool_calls": null
+                "tool_calls": [
+                  {
+                    "index": 0,
+                    "id": "call_c9erx268",
+                    "function": {
+                      "arguments": "{\"timezone\":\"UTC\"}",
+                      "name": "get_time"
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "finish_reason": null,
               "index": 0,
@@ -64,7 +75,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-0fad19b9d308",
+          "id": "rec-37e10e6ac4dc",
           "choices": [
             {
               "delta": {
@@ -74,7 +85,7 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "stop",
+              "finish_reason": "tool_calls",
               "index": 0,
               "logprobs": null
             }

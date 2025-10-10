@@ -94,23 +94,38 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Show what would be changed without modifying files")
     args = parser.parse_args()
 
-    recordings_dir = Path(__file__).parent.parent / "tests/integration/recordings/responses"
+    # Find all recordings directories under tests/
+    tests_dir = Path(__file__).parent.parent / "tests"
 
-    if not recordings_dir.exists():
-        print(f"Recordings directory not found: {recordings_dir}")
+    if not tests_dir.exists():
+        print(f"Tests directory not found: {tests_dir}")
         return 1
+
+    # Find all directories named "recordings" under tests/
+    recordings_dirs = sorted([p for p in tests_dir.rglob("recordings") if p.is_dir()])
+
+    if not recordings_dirs:
+        print("No recordings directories found")
+        return 1
+
+    print(f"Found {len(recordings_dirs)} recordings directories:")
+    for d in recordings_dirs:
+        print(f"  - {d.relative_to(tests_dir.parent)}")
+    print()
 
     modified_count = 0
     total_count = 0
 
-    for file_path in sorted(recordings_dir.glob("*.json")):
-        total_count += 1
-        was_modified = normalize_recording_file(file_path, dry_run=args.dry_run)
+    # Process all JSON files in all recordings directories
+    for recordings_dir in recordings_dirs:
+        for file_path in sorted(recordings_dir.rglob("*.json")):
+            total_count += 1
+            was_modified = normalize_recording_file(file_path, dry_run=args.dry_run)
 
-        if was_modified:
-            modified_count += 1
-            status = "[DRY RUN] Would normalize" if args.dry_run else "Normalized"
-            print(f"{status}: {file_path.name}")
+            if was_modified:
+                modified_count += 1
+                status = "[DRY RUN] Would normalize" if args.dry_run else "Normalized"
+                print(f"{status}: {file_path.relative_to(tests_dir.parent)}")
 
     print(f"\n{'[DRY RUN] ' if args.dry_run else ''}Summary: {modified_count}/{total_count} files modified")
     return 0

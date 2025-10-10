@@ -43,7 +43,5 @@ jobs:
         uv pip list
         uv pip show llama-stack
         command -v llama
-        llama model prompt-format -m Llama3.2-90B-Vision-Instruct
-        llama model list
         llama stack list-apis
         llama stack list-providers inference

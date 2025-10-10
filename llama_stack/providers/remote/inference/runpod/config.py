@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -18,8 +18,9 @@ class RunpodImplConfig(RemoteInferenceProviderConfig):
         default=None,
         description="The URL for the Runpod model serving endpoint",
     )
-    api_token: str | None = Field(
+    auth_credential: SecretStr | None = Field(
         default=None,
+        alias="api_token",
         description="The API token",
     )
 

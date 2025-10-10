@@ -6,11 +6,8 @@
 
 import argparse
 
-from .download import Download
-from .model import ModelParser
 from .stack import StackParser
 from .stack.utils import print_subcommand_description
-from .verify_download import VerifyDownload
 
 
 class LlamaCLIParser:
@@ -30,10 +27,7 @@ class LlamaCLIParser:
         subparsers = self.parser.add_subparsers(title="subcommands")
 
         # Add sub-commands
-        ModelParser.create(subparsers)
         StackParser.create(subparsers)
-        Download.create(subparsers)
-        VerifyDownload.create(subparsers)
 
         print_subcommand_description(self.parser, subparsers)
 
