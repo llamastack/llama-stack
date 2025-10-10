@@ -3,7 +3,13 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-from llama_stack.apis.inference.inference import OpenAICompletion, OpenAICompletionRequest, OpenAIEmbeddingsResponse
+from typing import Any
+
+from llama_stack.apis.inference.inference import (
+    OpenAICompletion,
+    OpenAICompletionRequestWithExtraBody,
+    OpenAIEmbeddingsResponse,
+)
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.llama_openai_compat.config import LlamaCompatConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
@@ -29,7 +35,7 @@ class LlamaCompatInferenceAdapter(OpenAIMixin):
 
     async def openai_completion(
         self,
-        params: OpenAICompletionRequest,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         raise NotImplementedError()
 

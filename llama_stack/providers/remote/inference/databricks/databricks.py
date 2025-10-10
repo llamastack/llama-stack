@@ -5,10 +5,11 @@
 # the root directory of this source tree.
 
 from collections.abc import Iterable
+from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
-from llama_stack.apis.inference import OpenAICompletion, OpenAICompletionRequest
+from llama_stack.apis.inference import OpenAICompletion, OpenAICompletionRequestWithExtraBody
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
@@ -39,6 +40,6 @@ class DatabricksInferenceAdapter(OpenAIMixin):
 
     async def openai_completion(
         self,
-        params: OpenAICompletionRequest,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         raise NotImplementedError()

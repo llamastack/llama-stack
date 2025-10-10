@@ -22,8 +22,8 @@ from llama_stack.apis.files import Files, OpenAIFilePurpose
 from llama_stack.apis.inference import (
     Inference,
     OpenAIAssistantMessageParam,
-    OpenAIChatCompletionRequest,
-    OpenAICompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletionRequestWithExtraBody,
     OpenAIDeveloperMessageParam,
     OpenAIMessageParam,
     OpenAISystemMessageParam,
@@ -608,7 +608,7 @@ class ReferenceBatchesImpl(Batches):
             # TODO(SECURITY): review body for security issues
             if request.url == "/v1/chat/completions":
                 request.body["messages"] = [convert_to_openai_message_param(msg) for msg in request.body["messages"]]
-                chat_params = OpenAIChatCompletionRequest(**request.body)
+                chat_params = OpenAIChatCompletionRequestWithExtraBody(**request.body)
                 chat_response = await self.inference_api.openai_chat_completion(chat_params)
 
                 # this is for mypy, we don't allow streaming so we'll get the right type
@@ -623,7 +623,7 @@ class ReferenceBatchesImpl(Batches):
                     },
                 }
             elif request.url == "/v1/completions":
-                completion_params = OpenAICompletionRequest(**request.body)
+                completion_params = OpenAICompletionRequestWithExtraBody(**request.body)
                 completion_response = await self.inference_api.openai_completion(completion_params)
 
                 # this is for mypy, we don't allow streaming so we'll get the right type

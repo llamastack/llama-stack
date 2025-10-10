@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 from collections.abc import AsyncIterator
+from typing import Any
 from urllib.parse import urljoin
 
 import httpx
@@ -14,7 +15,7 @@ from pydantic import ConfigDict
 
 from llama_stack.apis.inference import (
     OpenAIChatCompletion,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     ToolChoice,
 )
 from llama_stack.log import get_logger
@@ -93,7 +94,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
 
     async def openai_chat_completion(
         self,
-        params: OpenAIChatCompletionRequest,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         params = params.model_copy()
 
