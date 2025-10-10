@@ -63,6 +63,11 @@ class TestConversationResponses:
 
         # Verify all turns are in conversation
         conversation_items = openai_client.conversations.items.list(conversation.id)
+        print(f"DEBUG: Found {len(conversation_items.data)} messages in conversation:")
+        for i, item in enumerate(conversation_items.data):
+            if hasattr(item, "role") and hasattr(item, "content"):
+                content = item.content[0].text if item.content else "No content"
+                print(f"  {i}: {item.role} - {content}")
         assert len(conversation_items.data) >= 4  # 2 user + 2 assistant messages
 
     def test_conversation_context_loading(self, openai_client, text_model_id):
