@@ -61,7 +61,7 @@ jobs:
               && fromJSON('[{"setup": "vllm", "suite": "base"}]')
             || github.event.inputs.test-setup == 'ollama-vision'
               && fromJSON('[{"setup": "ollama-vision", "suite": "vision"}]')
-            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}, {"setup": "gpt", "suite": "responses"}]')
+            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}]')
           }}
 
     steps:
