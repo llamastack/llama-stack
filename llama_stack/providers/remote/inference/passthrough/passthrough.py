@@ -13,9 +13,9 @@ from llama_stack.apis.inference import (
     Inference,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletion,
-    OpenAICompletionRequest,
+    OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
 from llama_stack.apis.models import Model
@@ -79,7 +79,7 @@ class PassthroughInferenceAdapter(Inference):
 
     async def openai_completion(
         self,
-        params: OpenAICompletionRequest,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         client = self._get_client()
         model_obj = await self.model_store.get_model(params.model)
@@ -93,7 +93,7 @@ class PassthroughInferenceAdapter(Inference):
 
     async def openai_chat_completion(
         self,
-        params: OpenAIChatCompletionRequest,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         client = self._get_client()
         model_obj = await self.model_store.get_model(params.model)

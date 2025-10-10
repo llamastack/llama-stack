@@ -14,7 +14,7 @@ from pydantic import ConfigDict
 
 from llama_stack.apis.inference import (
     OpenAIChatCompletion,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     ToolChoice,
 )
 from llama_stack.log import get_logger
@@ -93,7 +93,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
 
     async def openai_chat_completion(
         self,
-        params: OpenAIChatCompletionRequest,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         params = params.model_copy()
 
