@@ -11,7 +11,7 @@ async def get_adapter_impl(config: BedrockConfig, _deps):
 
     assert isinstance(config, BedrockConfig), f"Unexpected config type: {type(config)}"
 
-    impl = BedrockInferenceAdapter(config)
+    impl = BedrockInferenceAdapter(config=config)
 
     await impl.initialize()
 
