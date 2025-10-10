@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TextIO
 from typing import Any, List, Optional, Union, get_type_hints, get_origin, get_args
 
+from pydantic import BaseModel
 from llama_stack.strong_typing.schema import object_to_json, StrictJsonType
 from llama_stack.core.resolver import api_protocol_map
 
@@ -205,6 +206,14 @@ def _validate_has_return_in_docstring(method) -> str | None:
 def _validate_has_params_in_docstring(method) -> str | None:
     source = inspect.getsource(method)
     sig = inspect.signature(method)
+
+    params_list = [p for p in sig.parameters.values() if p.name != "self"]
+    if len(params_list) == 1:
+        param = params_list[0]
+        param_type = param.annotation
+        if isclass(param_type) and issubclass(param_type, BaseModel):
+            return
+                
     # Only check if the method has more than one parameter
     if len(sig.parameters) > 1 and ":param" not in source:
         return "does not have a ':param' in its docstring"

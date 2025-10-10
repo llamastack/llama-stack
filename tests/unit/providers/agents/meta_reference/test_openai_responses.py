@@ -147,14 +147,17 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     # For streaming response, collect all chunks
     chunks = [chunk async for chunk in result]
 
-    mock_inference_api.openai_chat_completion.assert_called_once_with(
-        model=model,
-        messages=[OpenAIUserMessageParam(role="user", content="What is the capital of Ireland?", name=None)],
-        response_format=None,
-        tools=None,
-        stream=True,
-        temperature=0.1,
-    )
+    # Verify the inference API was called with the correct params
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]  # params is passed as first positional arg
+    assert params.model == model
+    assert params.messages == [
+        OpenAIUserMessageParam(role="user", content="What is the capital of Ireland?", name=None)
+    ]
+    assert params.response_format is None
+    assert params.tools is None
+    assert params.stream is True
+    assert params.temperature == 0.1
 
     # Should have content part events for text streaming
     # Expected: response.created, response.in_progress, content_part.added, output_text.delta, content_part.done, response.completed
@@ -240,13 +243,15 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
 
         # Verify
         first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
-        assert first_call.kwargs["messages"][0].content == "What is the capital of Ireland?"
-        assert first_call.kwargs["tools"] is not None
-        assert first_call.kwargs["temperature"] == 0.1
+        first_params = first_call.args[0]
+        assert first_params.messages[0].content == "What is the capital of Ireland?"
+        assert first_params.tools is not None
+        assert first_params.temperature == 0.1
 
         second_call = mock_inference_api.openai_chat_completion.call_args_list[1]
-        assert second_call.kwargs["messages"][-1].content == "Dublin"
-        assert second_call.kwargs["temperature"] == 0.1
+        second_params = second_call.args[0]
+        assert second_params.messages[-1].content == "Dublin"
+        assert second_params.temperature == 0.1
 
         openai_responses_impl.tool_groups_api.get_tool.assert_called_once_with("web_search")
         openai_responses_impl.tool_runtime_api.invoke_tool.assert_called_once_with(
@@ -332,9 +337,10 @@ async def test_create_openai_response_with_tool_call_type_none(openai_responses_
 
     # Verify inference API was called correctly (after iterating over result)
     first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
-    assert first_call.kwargs["messages"][0].content == input_text
-    assert first_call.kwargs["tools"] is not None
-    assert first_call.kwargs["temperature"] == 0.1
+    first_params = first_call.args[0]
+    assert first_params.messages[0].content == input_text
+    assert first_params.tools is not None
+    assert first_params.temperature == 0.1
 
     # Check response.created event (should have empty output)
     assert len(chunks[0].response.output) == 0
@@ -496,7 +502,9 @@ async def test_create_openai_response_with_multiple_messages(openai_responses_im
 
     # Verify the the correct messages were sent to the inference API i.e.
     # All of the responses message were convered to the chat completion message objects
-    inference_messages = mock_inference_api.openai_chat_completion.call_args_list[0].kwargs["messages"]
+    call_args = mock_inference_api.openai_chat_completion.call_args_list[0]
+    params = call_args.args[0]
+    inference_messages = params.messages
     for i, m in enumerate(input_messages):
         if isinstance(m.content, str):
             assert inference_messages[i].content == m.content
@@ -664,7 +672,8 @@ async def test_create_openai_response_with_instructions(openai_responses_impl, m
     # Verify
     mock_inference_api.openai_chat_completion.assert_called_once()
     call_args = mock_inference_api.openai_chat_completion.call_args
-    sent_messages = call_args.kwargs["messages"]
+    params = call_args.args[0]
+    sent_messages = params.messages
 
     # Check that instructions were prepended as a system message
     assert len(sent_messages) == 2
@@ -702,7 +711,8 @@ async def test_create_openai_response_with_instructions_and_multiple_messages(
     # Verify
     mock_inference_api.openai_chat_completion.assert_called_once()
     call_args = mock_inference_api.openai_chat_completion.call_args
-    sent_messages = call_args.kwargs["messages"]
+    params = call_args.args[0]
+    sent_messages = params.messages
 
     # Check that instructions were prepended as a system message
     assert len(sent_messages) == 4  # 1 system + 3 input messages
@@ -762,7 +772,8 @@ async def test_create_openai_response_with_instructions_and_previous_response(
     # Verify
     mock_inference_api.openai_chat_completion.assert_called_once()
     call_args = mock_inference_api.openai_chat_completion.call_args
-    sent_messages = call_args.kwargs["messages"]
+    params = call_args.args[0]
+    sent_messages = params.messages
 
     # Check that instructions were prepended as a system message
     assert len(sent_messages) == 4, sent_messages
@@ -1049,8 +1060,9 @@ async def test_create_openai_response_with_text_format(
 
     # Verify
     first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
-    assert first_call.kwargs["messages"][0].content == input_text
-    assert first_call.kwargs["response_format"] == response_format
+    first_params = first_call.args[0]
+    assert first_params.messages[0].content == input_text
+    assert first_params.response_format == response_format
 
 
 async def test_create_openai_response_with_invalid_text_format(openai_responses_impl, mock_inference_api):
