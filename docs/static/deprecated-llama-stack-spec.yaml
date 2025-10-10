@@ -5671,6 +5671,8 @@ components:
         - model
         - messages
       title: OpenaiChatCompletionRequest
+      description: >-
+        Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletion:
       type: object
       properties:
@@ -5824,7 +5826,7 @@ components:
         - model
         - input_messages
       title: OpenAICompletionWithInputMessages
-    OpenaiCompletionRequest:
+    OpenAICompletionRequest:
       type: object
       properties:
         model:
@@ -5912,20 +5914,37 @@ components:
         user:
           type: string
           description: (Optional) The user to use.
-        guided_choice:
-          type: array
-          items:
-            type: string
-        prompt_logprobs:
-          type: integer
         suffix:
           type: string
           description: >-
             (Optional) The suffix that should be appended to the completion.
+        guided_choice:
+          type: array
+          items:
+            type: string
+          description: >-
+            (Optional) vLLM-specific parameter for guided generation with a list of
+            choices.
+        prompt_logprobs:
+          type: integer
+          description: >-
+            (Optional) vLLM-specific parameter for number of log probabilities to
+            return for prompt tokens.
       additionalProperties: false
       required:
         - model
         - prompt
+      title: OpenAICompletionRequest
+      description: >-
+        Request parameters for OpenAI-compatible completion endpoint.
+    OpenaiCompletionRequest:
+      type: object
+      properties:
+        params:
+          $ref: '#/components/schemas/OpenAICompletionRequest'
+      additionalProperties: false
+      required:
+        - params
       title: OpenaiCompletionRequest
     OpenAICompletion:
       type: object

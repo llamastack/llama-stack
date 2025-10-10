@@ -22,6 +22,8 @@ from llama_stack.apis.files import Files, OpenAIFilePurpose
 from llama_stack.apis.inference import (
     Inference,
     OpenAIAssistantMessageParam,
+    OpenaiChatCompletionRequest,
+    OpenAICompletionRequest,
     OpenAIDeveloperMessageParam,
     OpenAIMessageParam,
     OpenAISystemMessageParam,
@@ -601,7 +603,8 @@ class ReferenceBatchesImpl(Batches):
             # TODO(SECURITY): review body for security issues
             if request.url == "/v1/chat/completions":
                 request.body["messages"] = [convert_to_openai_message_param(msg) for msg in request.body["messages"]]
-                chat_response = await self.inference_api.openai_chat_completion(**request.body)
+                params = OpenaiChatCompletionRequest(**request.body)
+                chat_response = await self.inference_api.openai_chat_completion(params)
 
                 # this is for mypy, we don't allow streaming so we'll get the right type
                 assert hasattr(chat_response, "model_dump_json"), "Chat response must have model_dump_json method"
@@ -615,7 +618,8 @@ class ReferenceBatchesImpl(Batches):
                     },
                 }
             else:  # /v1/completions
-                completion_response = await self.inference_api.openai_completion(**request.body)
+                params = OpenAICompletionRequest(**request.body)
+                completion_response = await self.inference_api.openai_completion(params)
 
                 # this is for mypy, we don't allow streaming so we'll get the right type
                 assert hasattr(completion_response, "model_dump_json"), (
