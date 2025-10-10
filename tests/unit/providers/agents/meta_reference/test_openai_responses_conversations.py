@@ -18,7 +18,6 @@ from llama_stack.apis.common.errors import (
     InvalidConversationIdError,
 )
 from llama_stack.apis.conversations.conversations import (
-    Conversation,
     ConversationItemList,
 )
 
@@ -60,7 +59,7 @@ class TestConversationValidation:
         conv_id = "conv_nonexistent"
 
         # Mock conversation not found
-        mock_conversations_api.get_conversation.side_effect = ConversationNotFoundError("conv_nonexistent")
+        mock_conversations_api.list.side_effect = ConversationNotFoundError("conv_nonexistent")
 
         with pytest.raises(ConversationNotFoundError):
             await responses_impl_with_conversations.create_openai_response(
@@ -252,10 +251,6 @@ class TestIntegrationWorkflow:
         self, responses_impl_with_conversations, mock_conversations_api
     ):
         """Test creating a response with a valid conversation parameter."""
-        mock_conversations_api.get_conversation.return_value = Conversation(
-            id="conv_test123", created_at=1234567890, metadata={}, object="conversation"
-        )
-
         mock_conversations_api.list.return_value = ConversationItemList(
             data=[], first_id=None, has_more=False, last_id=None, object="list"
         )
@@ -296,8 +291,6 @@ class TestIntegrationWorkflow:
         assert response is not None
         assert response.id == "resp_test123"
 
-        mock_conversations_api.get_conversation.assert_called_once_with(conversation_id)
-
         mock_conversations_api.list.assert_called_once_with(conversation_id, order="asc")
 
         # Note: conversation sync happens in the streaming response flow,
@@ -316,7 +309,7 @@ class TestIntegrationWorkflow:
         self, responses_impl_with_conversations, mock_conversations_api
     ):
         """Test creating a response with a non-existent conversation."""
-        mock_conversations_api.get_conversation.side_effect = ConversationNotFoundError("conv_nonexistent")
+        mock_conversations_api.list.side_effect = ConversationNotFoundError("conv_nonexistent")
 
         with pytest.raises(ConversationNotFoundError) as exc_info:
             await responses_impl_with_conversations.create_openai_response(
