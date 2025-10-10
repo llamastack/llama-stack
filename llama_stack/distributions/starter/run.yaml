@@ -129,6 +129,19 @@ providers:
       kvstore:
         type: sqlite
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/pgvector_registry.db
+  - provider_id: ${env.MONGODB_CONNECTION_STRING:+mongodb_atlas}
+    provider_type: remote::mongodb
+    config:
+      connection_string: ${env.MONGODB_CONNECTION_STRING}
+      database_name: llama_stack
+      index_name: vector_index
+      path_field: embedding
+      similarity_metric: cosine
+      max_pool_size: 100
+      timeout_ms: 30000
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/mongodb_registry.db
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs

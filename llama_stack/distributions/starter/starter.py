@@ -28,6 +28,9 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
 )
 from llama_stack.providers.registry.inference import available_providers
 from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
+from llama_stack.providers.remote.vector_io.mongodb.config import (
+    MongoDBVectorIOConfig,
+)
 from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
@@ -113,6 +116,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::milvus"),
             BuildProvider(provider_type="remote::chromadb"),
             BuildProvider(provider_type="remote::pgvector"),
+            BuildProvider(provider_type="remote::mongodb"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
         "safety": [
@@ -222,6 +226,13 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                                 password="${env.PGVECTOR_PASSWORD:=}",
                             ),
                         ),
+                        Provider(
+                            provider_id="${env.MONGODB_CONNECTION_STRING:+mongodb_atlas}",
+                            provider_type="remote::mongodb",
+                            config=MongoDBVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}",
+                            ),
+                        ),
                     ],
                     "files": [files_provider],
                 },
@@ -294,6 +305,14 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "AZURE_API_TYPE": (
                 "azure",
                 "Azure API Type",
+            ),
+            "MONGODB_CONNECTION_STRING": (
+                "",
+                "MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/)",
+            ),
+            "MONGODB_DATABASE_NAME": (
+                "llama_stack",
+                "MongoDB database name",
             ),
         },
     )
