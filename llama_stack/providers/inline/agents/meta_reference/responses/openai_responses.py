@@ -15,15 +15,12 @@ from llama_stack.apis.agents.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
-    OpenAIResponseContentPartRefusal,
     OpenAIResponseInput,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
     OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
-    OpenAIResponseObjectStreamResponseCompleted,
-    OpenAIResponseObjectStreamResponseCreated,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
 )
@@ -294,30 +291,6 @@ class OpenAIResponsesImpl:
                 raise ValueError("The response stream never reached a terminal state")
             return final_response
 
-    async def _create_refusal_response_events(
-        self, refusal_content: OpenAIResponseContentPartRefusal, response_id: str, created_at: int, model: str
-    ) -> AsyncIterator[OpenAIResponseObjectStream]:
-        """Create and yield refusal response events following the established streaming pattern."""
-        # Create initial response and yield created event
-        initial_response = OpenAIResponseObject(
-            id=response_id,
-            created_at=created_at,
-            model=model,
-            status="in_progress",
-            output=[],
-        )
-        yield OpenAIResponseObjectStreamResponseCreated(response=initial_response)
-
-        # Create completed refusal response using OpenAIResponseContentPartRefusal
-        refusal_response = OpenAIResponseObject(
-            id=response_id,
-            created_at=created_at,
-            model=model,
-            status="completed",
-            output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
-        )
-        yield OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
-
     async def _create_streaming_response(
         self,
         input: str | list[OpenAIResponseInput],
@@ -368,7 +341,6 @@ class OpenAIResponsesImpl:
             shield_ids=shield_ids,
         )
 
-        # Output safety validation hook - delegated to streaming orchestrator for real-time validation
         # Stream the response
         final_response = None
         failed_response = None

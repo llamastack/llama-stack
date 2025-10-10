@@ -37,6 +37,7 @@ def responses_impl_with_conversations(
     mock_responses_store,
     mock_vector_io_api,
     mock_conversations_api,
+    mock_safety_api,
 ):
     """Create OpenAIResponsesImpl instance with conversations API."""
     return OpenAIResponsesImpl(
@@ -46,6 +47,7 @@ def responses_impl_with_conversations(
         responses_store=mock_responses_store,
         vector_io_api=mock_vector_io_api,
         conversations_api=mock_conversations_api,
+        safety_api=mock_safety_api,
     )
 
 
