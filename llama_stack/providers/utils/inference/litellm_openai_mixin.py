@@ -16,9 +16,9 @@ from llama_stack.apis.inference import (
     JsonSchemaResponseFormat,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletion,
-    OpenAICompletionRequest,
+    OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
@@ -226,7 +226,7 @@ class LiteLLMOpenAIMixin(
 
     async def openai_completion(
         self,
-        params: OpenAICompletionRequest,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         model_obj = await self.model_store.get_model(params.model)
 
@@ -248,8 +248,6 @@ class LiteLLMOpenAIMixin(
             temperature=params.temperature,
             top_p=params.top_p,
             user=params.user,
-            guided_choice=params.guided_choice,
-            prompt_logprobs=params.prompt_logprobs,
             suffix=params.suffix,
             api_key=self.get_api_key(),
             api_base=self.api_base,
@@ -258,7 +256,7 @@ class LiteLLMOpenAIMixin(
 
     async def openai_chat_completion(
         self,
-        params: OpenAIChatCompletionRequest,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         # Add usage tracking for streaming when telemetry is active
         from llama_stack.providers.utils.telemetry.tracing import get_current_span

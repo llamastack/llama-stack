@@ -32,13 +32,13 @@ from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
     OpenAICompletion,
-    OpenAICompletionRequest,
+    OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
@@ -183,7 +183,7 @@ class InferenceRouter(Inference):
 
     async def openai_completion(
         self,
-        params: Annotated[OpenAICompletionRequest, Body(...)],
+        params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAICompletion:
         logger.debug(
             f"InferenceRouter.openai_completion: model={params.model}, stream={params.stream}, prompt={params.prompt}",
@@ -218,7 +218,7 @@ class InferenceRouter(Inference):
 
     async def openai_chat_completion(
         self,
-        params: Annotated[OpenAIChatCompletionRequest, Body(...)],
+        params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         logger.debug(
             f"InferenceRouter.openai_chat_completion: model={params.model}, stream={params.stream}, messages={params.messages}",
@@ -317,7 +317,7 @@ class InferenceRouter(Inference):
         raise NotImplementedError("Get chat completion is not supported: inference store is not configured.")
 
     async def _nonstream_openai_chat_completion(
-        self, provider: Inference, params: OpenAIChatCompletionRequest
+        self, provider: Inference, params: OpenAIChatCompletionRequestWithExtraBody
     ) -> OpenAIChatCompletion:
         response = await provider.openai_chat_completion(params)
         for choice in response.choices:

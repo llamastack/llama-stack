@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 import pytest
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.inference import Model, OpenAIChatCompletionRequest, OpenAIUserMessageParam
+from llama_stack.apis.inference import Model, OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
 from llama_stack.apis.models import ModelType
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
@@ -271,7 +271,7 @@ class TestOpenAIMixinImagePreprocessing:
             with patch("llama_stack.providers.utils.inference.openai_mixin.localize_image_content") as mock_localize:
                 mock_localize.return_value = (b"fake_image_data", "jpeg")
 
-                params = OpenAIChatCompletionRequest(model="test-model", messages=[message])
+                params = OpenAIChatCompletionRequestWithExtraBody(model="test-model", messages=[message])
                 await mixin.openai_chat_completion(params)
 
             mock_localize.assert_called_once_with("http://example.com/image.jpg")
@@ -304,7 +304,7 @@ class TestOpenAIMixinImagePreprocessing:
 
         with patch.object(type(mixin), "client", new_callable=PropertyMock, return_value=mock_client):
             with patch("llama_stack.providers.utils.inference.openai_mixin.localize_image_content") as mock_localize:
-                params = OpenAIChatCompletionRequest(model="test-model", messages=[message])
+                params = OpenAIChatCompletionRequestWithExtraBody(model="test-model", messages=[message])
                 await mixin.openai_chat_completion(params)
 
             mock_localize.assert_not_called()

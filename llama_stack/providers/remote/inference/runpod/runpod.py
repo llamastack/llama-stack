@@ -9,7 +9,7 @@ from collections.abc import AsyncIterator
 from llama_stack.apis.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
 )
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
@@ -31,7 +31,7 @@ class RunpodInferenceAdapter(OpenAIMixin):
 
     async def openai_chat_completion(
         self,
-        params: OpenAIChatCompletionRequest,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Override to add RunPod-specific stream_options requirement."""
         params = params.model_copy()
