@@ -17,12 +17,13 @@ from llama_stack.apis.inference import (
     Model,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequest,
     OpenAICompletion,
+    OpenAICompletionRequest,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
-    OpenAIResponseFormatParam,
 )
 from llama_stack.apis.models import ModelType
 from llama_stack.core.request_headers import NeedsRequestProviderData
@@ -222,26 +223,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     async def openai_completion(
         self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
+        params: OpenAICompletionRequest,
     ) -> OpenAICompletion:
         """
         Direct OpenAI completion API call.
@@ -251,67 +233,45 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         #  guided_choice is supported by vLLM
         # TODO: test coverage
         extra_body: dict[str, Any] = {}
-        if prompt_logprobs is not None and prompt_logprobs >= 0:
-            extra_body["prompt_logprobs"] = prompt_logprobs
-        if guided_choice:
-            extra_body["guided_choice"] = guided_choice
+        if params.prompt_logprobs is not None and params.prompt_logprobs >= 0:
+            extra_body["prompt_logprobs"] = params.prompt_logprobs
+        if params.guided_choice:
+            extra_body["guided_choice"] = params.guided_choice
 
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
-        resp = await self.client.completions.create(
-            **await prepare_openai_completion_params(
-                model=await self._get_provider_model_id(model),
-                prompt=prompt,
-                best_of=best_of,
-                echo=echo,
-                frequency_penalty=frequency_penalty,
-                logit_bias=logit_bias,
-                logprobs=logprobs,
-                max_tokens=max_tokens,
-                n=n,
-                presence_penalty=presence_penalty,
-                seed=seed,
-                stop=stop,
-                stream=stream,
-                stream_options=stream_options,
-                temperature=temperature,
-                top_p=top_p,
-                user=user,
-                suffix=suffix,
-            ),
-            extra_body=extra_body,
+        completion_kwargs = await prepare_openai_completion_params(
+            model=await self._get_provider_model_id(params.model),
+            prompt=params.prompt,
+            best_of=params.best_of,
+            echo=params.echo,
+            frequency_penalty=params.frequency_penalty,
+            logit_bias=params.logit_bias,
+            logprobs=params.logprobs,
+            max_tokens=params.max_tokens,
+            n=params.n,
+            presence_penalty=params.presence_penalty,
+            seed=params.seed,
+            stop=params.stop,
+            stream=params.stream,
+            stream_options=params.stream_options,
+            temperature=params.temperature,
+            top_p=params.top_p,
+            user=params.user,
+            suffix=params.suffix,
         )
+        resp = await self.client.completions.create(**completion_kwargs, extra_body=extra_body)
 
-        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
+        return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
 
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: OpenAIChatCompletionRequest,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """
         Direct OpenAI chat completion API call.
         """
+        messages = params.messages
+
         if self.download_images:
 
             async def _localize_image_url(m: OpenAIMessageParam) -> OpenAIMessageParam:
@@ -330,35 +290,35 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
             messages = [await _localize_image_url(m) for m in messages]
 
-        params = await prepare_openai_completion_params(
-            model=await self._get_provider_model_id(model),
+        request_params = await prepare_openai_completion_params(
+            model=await self._get_provider_model_id(params.model),
             messages=messages,
-            frequency_penalty=frequency_penalty,
-            function_call=function_call,
-            functions=functions,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_completion_tokens=max_completion_tokens,
-            max_tokens=max_tokens,
-            n=n,
-            parallel_tool_calls=parallel_tool_calls,
-            presence_penalty=presence_penalty,
-            response_format=response_format,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_logprobs=top_logprobs,
-            top_p=top_p,
-            user=user,
+            frequency_penalty=params.frequency_penalty,
+            function_call=params.function_call,
+            functions=params.functions,
+            logit_bias=params.logit_bias,
+            logprobs=params.logprobs,
+            max_completion_tokens=params.max_completion_tokens,
+            max_tokens=params.max_tokens,
+            n=params.n,
+            parallel_tool_calls=params.parallel_tool_calls,
+            presence_penalty=params.presence_penalty,
+            response_format=params.response_format,
+            seed=params.seed,
+            stop=params.stop,
+            stream=params.stream,
+            stream_options=params.stream_options,
+            temperature=params.temperature,
+            tool_choice=params.tool_choice,
+            tools=params.tools,
+            top_logprobs=params.top_logprobs,
+            top_p=params.top_p,
+            user=params.user,
         )
 
-        resp = await self.client.chat.completions.create(**params)
+        resp = await self.client.chat.completions.create(**request_params)
 
-        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
+        return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
 
     async def openai_embeddings(
         self,

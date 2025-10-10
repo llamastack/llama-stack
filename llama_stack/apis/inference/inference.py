@@ -14,7 +14,8 @@ from typing import (
     runtime_checkable,
 )
 
-from pydantic import BaseModel, Field, field_validator
+from fastapi import Body
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import TypedDict
 
 from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
@@ -1035,6 +1036,118 @@ class ListOpenAIChatCompletionResponse(BaseModel):
     object: Literal["list"] = "list"
 
 
+@json_schema_type
+class OpenAICompletionRequest(BaseModel):
+    """Request parameters for OpenAI-compatible completion endpoint.
+
+    :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
+    :param prompt: The prompt to generate a completion for.
+    :param best_of: (Optional) The number of completions to generate.
+    :param echo: (Optional) Whether to echo the prompt.
+    :param frequency_penalty: (Optional) The penalty for repeated tokens.
+    :param logit_bias: (Optional) The logit bias to use.
+    :param logprobs: (Optional) The log probabilities to use.
+    :param max_tokens: (Optional) The maximum number of tokens to generate.
+    :param n: (Optional) The number of completions to generate.
+    :param presence_penalty: (Optional) The penalty for repeated tokens.
+    :param seed: (Optional) The seed to use.
+    :param stop: (Optional) The stop tokens to use.
+    :param stream: (Optional) Whether to stream the response.
+    :param stream_options: (Optional) The stream options to use.
+    :param temperature: (Optional) The temperature to use.
+    :param top_p: (Optional) The top p to use.
+    :param user: (Optional) The user to use.
+    :param suffix: (Optional) The suffix that should be appended to the completion.
+    :param guided_choice: (Optional) vLLM-specific parameter for guided generation with a list of choices.
+    :param prompt_logprobs: (Optional) vLLM-specific parameter for number of log probabilities to return for prompt tokens.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    # Standard OpenAI completion parameters
+    model: str
+    prompt: str | list[str] | list[int] | list[list[int]]
+    best_of: int | None = None
+    echo: bool | None = None
+    frequency_penalty: float | None = None
+    logit_bias: dict[str, float] | None = None
+    logprobs: bool | None = None
+    max_tokens: int | None = None
+    n: int | None = None
+    presence_penalty: float | None = None
+    seed: int | None = None
+    stop: str | list[str] | None = None
+    stream: bool | None = None
+    stream_options: dict[str, Any] | None = None
+    temperature: float | None = None
+    top_p: float | None = None
+    user: str | None = None
+
+    # vLLM-specific parameters (documented here but also allowed via extra fields)
+    guided_choice: list[str] | None = None
+    prompt_logprobs: int | None = None
+
+    # for fill-in-the-middle type completion
+    suffix: str | None = None
+
+
+@json_schema_type
+class OpenAIChatCompletionRequest(BaseModel):
+    """Request parameters for OpenAI-compatible chat completion endpoint.
+
+    :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
+    :param messages: List of messages in the conversation.
+    :param frequency_penalty: (Optional) The penalty for repeated tokens.
+    :param function_call: (Optional) The function call to use.
+    :param functions: (Optional) List of functions to use.
+    :param logit_bias: (Optional) The logit bias to use.
+    :param logprobs: (Optional) The log probabilities to use.
+    :param max_completion_tokens: (Optional) The maximum number of tokens to generate.
+    :param max_tokens: (Optional) The maximum number of tokens to generate.
+    :param n: (Optional) The number of completions to generate.
+    :param parallel_tool_calls: (Optional) Whether to parallelize tool calls.
+    :param presence_penalty: (Optional) The penalty for repeated tokens.
+    :param response_format: (Optional) The response format to use.
+    :param seed: (Optional) The seed to use.
+    :param stop: (Optional) The stop tokens to use.
+    :param stream: (Optional) Whether to stream the response.
+    :param stream_options: (Optional) The stream options to use.
+    :param temperature: (Optional) The temperature to use.
+    :param tool_choice: (Optional) The tool choice to use.
+    :param tools: (Optional) The tools to use.
+    :param top_logprobs: (Optional) The top log probabilities to use.
+    :param top_p: (Optional) The top p to use.
+    :param user: (Optional) The user to use.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    # Standard OpenAI chat completion parameters
+    model: str
+    messages: Annotated[list[OpenAIMessageParam], Field(..., min_length=1)]
+    frequency_penalty: float | None = None
+    function_call: str | dict[str, Any] | None = None
+    functions: list[dict[str, Any]] | None = None
+    logit_bias: dict[str, float] | None = None
+    logprobs: bool | None = None
+    max_completion_tokens: int | None = None
+    max_tokens: int | None = None
+    n: int | None = None
+    parallel_tool_calls: bool | None = None
+    presence_penalty: float | None = None
+    response_format: OpenAIResponseFormatParam | None = None
+    seed: int | None = None
+    stop: str | list[str] | None = None
+    stream: bool | None = None
+    stream_options: dict[str, Any] | None = None
+    temperature: float | None = None
+    tool_choice: str | dict[str, Any] | None = None
+    tools: list[dict[str, Any]] | None = None
+    top_logprobs: int | None = None
+    top_p: float | None = None
+    user: str | None = None
+
+
 @runtime_checkable
 @trace_protocol
 class InferenceProvider(Protocol):
@@ -1069,52 +1182,11 @@ class InferenceProvider(Protocol):
     @webmethod(route="/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_completion(
         self,
-        # Standard OpenAI completion parameters
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        # vLLM-specific parameters
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        # for fill-in-the-middle type completion
-        suffix: str | None = None,
+        params: Annotated[OpenAICompletionRequest, Body(...)],
     ) -> OpenAICompletion:
         """Create completion.
 
         Generate an OpenAI-compatible completion for the given prompt using the specified model.
-
-        :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param prompt: The prompt to generate a completion for.
-        :param best_of: (Optional) The number of completions to generate.
-        :param echo: (Optional) Whether to echo the prompt.
-        :param frequency_penalty: (Optional) The penalty for repeated tokens.
-        :param logit_bias: (Optional) The logit bias to use.
-        :param logprobs: (Optional) The log probabilities to use.
-        :param max_tokens: (Optional) The maximum number of tokens to generate.
-        :param n: (Optional) The number of completions to generate.
-        :param presence_penalty: (Optional) The penalty for repeated tokens.
-        :param seed: (Optional) The seed to use.
-        :param stop: (Optional) The stop tokens to use.
-        :param stream: (Optional) Whether to stream the response.
-        :param stream_options: (Optional) The stream options to use.
-        :param temperature: (Optional) The temperature to use.
-        :param top_p: (Optional) The top p to use.
-        :param user: (Optional) The user to use.
-        :param suffix: (Optional) The suffix that should be appended to the completion.
         :returns: An OpenAICompletion.
         """
         ...
@@ -1123,57 +1195,11 @@ class InferenceProvider(Protocol):
     @webmethod(route="/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIChatCompletionRequest, Body(...)],
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Create chat completions.
 
         Generate an OpenAI-compatible chat completion for the given messages using the specified model.
-
-        :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param messages: List of messages in the conversation.
-        :param frequency_penalty: (Optional) The penalty for repeated tokens.
-        :param function_call: (Optional) The function call to use.
-        :param functions: (Optional) List of functions to use.
-        :param logit_bias: (Optional) The logit bias to use.
-        :param logprobs: (Optional) The log probabilities to use.
-        :param max_completion_tokens: (Optional) The maximum number of tokens to generate.
-        :param max_tokens: (Optional) The maximum number of tokens to generate.
-        :param n: (Optional) The number of completions to generate.
-        :param parallel_tool_calls: (Optional) Whether to parallelize tool calls.
-        :param presence_penalty: (Optional) The penalty for repeated tokens.
-        :param response_format: (Optional) The response format to use.
-        :param seed: (Optional) The seed to use.
-        :param stop: (Optional) The stop tokens to use.
-        :param stream: (Optional) Whether to stream the response.
-        :param stream_options: (Optional) The stream options to use.
-        :param temperature: (Optional) The temperature to use.
-        :param tool_choice: (Optional) The tool choice to use.
-        :param tools: (Optional) The tools to use.
-        :param top_logprobs: (Optional) The top log probabilities to use.
-        :param top_p: (Optional) The top p to use.
-        :param user: (Optional) The user to use.
         :returns: An OpenAIChatCompletion.
         """
         ...

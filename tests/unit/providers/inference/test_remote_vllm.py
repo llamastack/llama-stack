@@ -13,6 +13,7 @@ import pytest
 from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
+    OpenAIChatCompletionRequest,
     OpenAIChoice,
     ToolChoice,
 )
@@ -56,13 +57,14 @@ async def test_old_vllm_tool_choice(vllm_inference_adapter):
         mock_client_property.return_value = mock_client
 
         # No tools but auto tool choice
-        await vllm_inference_adapter.openai_chat_completion(
-            "mock-model",
-            [],
+        params = OpenAIChatCompletionRequest(
+            model="mock-model",
+            messages=[{"role": "user", "content": "test"}],
             stream=False,
             tools=None,
             tool_choice=ToolChoice.auto.value,
         )
+        await vllm_inference_adapter.openai_chat_completion(params)
         mock_client.chat.completions.create.assert_called()
         call_args = mock_client.chat.completions.create.call_args
         # Ensure tool_choice gets converted to none for older vLLM versions
@@ -171,9 +173,12 @@ async def test_openai_chat_completion_is_async(vllm_inference_adapter):
         )
 
     async def do_inference():
-        await vllm_inference_adapter.openai_chat_completion(
-            "mock-model", messages=["one fish", "two fish"], stream=False
+        params = OpenAIChatCompletionRequest(
+            model="mock-model",
+            messages=[{"role": "user", "content": "one fish two fish"}],
+            stream=False,
         )
+        await vllm_inference_adapter.openai_chat_completion(params)
 
     with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
         mock_client = MagicMock()

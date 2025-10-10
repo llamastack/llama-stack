@@ -6,21 +6,20 @@
 
 import json
 from collections.abc import AsyncIterator
-from typing import Any
 
 from botocore.client import BaseClient
 
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     Inference,
+    OpenAIChatCompletionRequest,
+    OpenAICompletionRequest,
     OpenAIEmbeddingsResponse,
 )
 from llama_stack.apis.inference.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
 )
 from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client
@@ -135,56 +134,12 @@ class BedrockInferenceAdapter(
 
     async def openai_completion(
         self,
-        # Standard OpenAI completion parameters
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        # vLLM-specific parameters
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        # for fill-in-the-middle type completion
-        suffix: str | None = None,
+        params: OpenAICompletionRequest,
     ) -> OpenAICompletion:
         raise NotImplementedError("OpenAI completion not supported by the Bedrock provider")
 
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: OpenAIChatCompletionRequest,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         raise NotImplementedError("OpenAI chat completion not supported by the Bedrock provider")

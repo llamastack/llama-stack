@@ -1098,7 +1098,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiChatCompletionRequest'
+              $ref: '#/components/schemas/OpenAIChatCompletionRequest'
         required: true
       deprecated: true
   /v1/openai/v1/chat/completions/{completion_id}:
@@ -1167,7 +1167,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCompletionRequest'
+              $ref: '#/components/schemas/OpenAICompletionRequest'
         required: true
       deprecated: true
   /v1/openai/v1/embeddings:
@@ -5575,7 +5575,7 @@ components:
       title: OpenAIResponseFormatText
       description: >-
         Text response format for OpenAI-compatible chat completion requests.
-    OpenaiChatCompletionRequest:
+    OpenAIChatCompletionRequest:
       type: object
       properties:
         model:
@@ -5717,7 +5717,9 @@ components:
       required:
         - model
         - messages
-      title: OpenaiChatCompletionRequest
+      title: OpenAIChatCompletionRequest
+      description: >-
+        Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletion:
       type: object
       properties:
@@ -5883,7 +5885,7 @@ components:
         - model
         - input_messages
       title: OpenAICompletionWithInputMessages
-    OpenaiCompletionRequest:
+    OpenAICompletionRequest:
       type: object
       properties:
         model:
@@ -5975,8 +5977,14 @@ components:
           type: array
           items:
             type: string
+          description: >-
+            (Optional) vLLM-specific parameter for guided generation with a list of
+            choices.
         prompt_logprobs:
           type: integer
+          description: >-
+            (Optional) vLLM-specific parameter for number of log probabilities to
+            return for prompt tokens.
         suffix:
           type: string
           description: >-
@@ -5985,7 +5993,9 @@ components:
       required:
         - model
         - prompt
-      title: OpenaiCompletionRequest
+      title: OpenAICompletionRequest
+      description: >-
+        Request parameters for OpenAI-compatible completion endpoint.
     OpenAICompletion:
       type: object
       properties:

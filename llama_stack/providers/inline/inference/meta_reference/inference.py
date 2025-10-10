@@ -6,16 +6,16 @@
 
 import asyncio
 from collections.abc import AsyncIterator
-from typing import Any
 
 from llama_stack.apis.inference import (
     InferenceProvider,
+    OpenAIChatCompletionRequest,
+    OpenAICompletionRequest,
 )
 from llama_stack.apis.inference.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
+    OpenAICompletion,
 )
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.log import get_logger
@@ -65,7 +65,10 @@ class MetaReferenceInferenceImpl(
         if self.config.create_distributed_process_group:
             self.generator.stop()
 
-    async def openai_completion(self, *args, **kwargs):
+    async def openai_completion(
+        self,
+        params: OpenAICompletionRequest,
+    ) -> OpenAICompletion:
         raise NotImplementedError("OpenAI completion not supported by meta reference provider")
 
     async def should_refresh_models(self) -> bool:
@@ -150,28 +153,6 @@ class MetaReferenceInferenceImpl(
 
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: OpenAIChatCompletionRequest,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         raise NotImplementedError("OpenAI chat completion not supported by meta-reference inference provider")

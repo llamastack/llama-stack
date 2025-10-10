@@ -10,7 +10,13 @@ from string import Template
 from typing import Any
 
 from llama_stack.apis.common.content_types import ImageContentItem, TextContentItem
-from llama_stack.apis.inference import Inference, Message, UserMessage
+from llama_stack.apis.inference import (
+    Inference,
+    Message,
+    OpenAIChatCompletionRequest,
+    OpenAIUserMessageParam,
+    UserMessage,
+)
 from llama_stack.apis.safety import (
     RunShieldResponse,
     Safety,
@@ -290,20 +296,21 @@ class LlamaGuardShield:
         else:
             shield_input_message = self.build_text_shield_input(messages)
 
-        response = await self.inference_api.openai_chat_completion(
+        params = OpenAIChatCompletionRequest(
             model=self.model,
             messages=[shield_input_message],
             stream=False,
             temperature=0.0,  # default is 1, which is too high for safety
         )
+        response = await self.inference_api.openai_chat_completion(params)
         content = response.choices[0].message.content
         content = content.strip()
         return self.get_shield_response(content)
 
-    def build_text_shield_input(self, messages: list[Message]) -> UserMessage:
-        return UserMessage(content=self.build_prompt(messages))
+    def build_text_shield_input(self, messages: list[Message]) -> OpenAIUserMessageParam:
+        return OpenAIUserMessageParam(role="user", content=self.build_prompt(messages))
 
-    def build_vision_shield_input(self, messages: list[Message]) -> UserMessage:
+    def build_vision_shield_input(self, messages: list[Message]) -> OpenAIUserMessageParam:
         conversation = []
         most_recent_img = None
 
@@ -335,7 +342,7 @@ class LlamaGuardShield:
             prompt.append(most_recent_img)
         prompt.append(self.build_prompt(conversation[::-1]))
 
-        return UserMessage(content=prompt)
+        return OpenAIUserMessageParam(role="user", content=prompt)
 
     def build_prompt(self, messages: list[Message]) -> str:
         categories = self.get_safety_categories()
@@ -377,11 +384,12 @@ class LlamaGuardShield:
         # TODO: Add Image based support for OpenAI Moderations
         shield_input_message = self.build_text_shield_input(messages)
 
-        response = await self.inference_api.openai_chat_completion(
+        params = OpenAIChatCompletionRequest(
             model=self.model,
             messages=[shield_input_message],
             stream=False,
         )
+        response = await self.inference_api.openai_chat_completion(params)
         content = response.choices[0].message.content
         content = content.strip()
         return self.get_moderation_object(content)

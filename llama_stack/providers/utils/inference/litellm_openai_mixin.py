@@ -7,7 +7,6 @@
 import base64
 import struct
 from collections.abc import AsyncIterator
-from typing import Any
 
 import litellm
 
@@ -17,12 +16,12 @@ from llama_stack.apis.inference import (
     JsonSchemaResponseFormat,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequest,
     OpenAICompletion,
+    OpenAICompletionRequest,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
     ToolChoice,
 )
 from llama_stack.core.request_headers import NeedsRequestProviderData
@@ -227,116 +226,80 @@ class LiteLLMOpenAIMixin(
 
     async def openai_completion(
         self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
+        params: OpenAICompletionRequest,
     ) -> OpenAICompletion:
-        model_obj = await self.model_store.get_model(model)
-        params = await prepare_openai_completion_params(
+        model_obj = await self.model_store.get_model(params.model)
+
+        request_params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(model_obj.provider_resource_id),
-            prompt=prompt,
-            best_of=best_of,
-            echo=echo,
-            frequency_penalty=frequency_penalty,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_tokens=max_tokens,
-            n=n,
-            presence_penalty=presence_penalty,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            top_p=top_p,
-            user=user,
-            guided_choice=guided_choice,
-            prompt_logprobs=prompt_logprobs,
+            prompt=params.prompt,
+            best_of=params.best_of,
+            echo=params.echo,
+            frequency_penalty=params.frequency_penalty,
+            logit_bias=params.logit_bias,
+            logprobs=params.logprobs,
+            max_tokens=params.max_tokens,
+            n=params.n,
+            presence_penalty=params.presence_penalty,
+            seed=params.seed,
+            stop=params.stop,
+            stream=params.stream,
+            stream_options=params.stream_options,
+            temperature=params.temperature,
+            top_p=params.top_p,
+            user=params.user,
+            guided_choice=params.guided_choice,
+            prompt_logprobs=params.prompt_logprobs,
+            suffix=params.suffix,
             api_key=self.get_api_key(),
             api_base=self.api_base,
         )
-        return await litellm.atext_completion(**params)
+        return await litellm.atext_completion(**request_params)
 
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: OpenAIChatCompletionRequest,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         # Add usage tracking for streaming when telemetry is active
         from llama_stack.providers.utils.telemetry.tracing import get_current_span
 
-        if stream and get_current_span() is not None:
+        stream_options = params.stream_options
+        if params.stream and get_current_span() is not None:
             if stream_options is None:
                 stream_options = {"include_usage": True}
             elif "include_usage" not in stream_options:
                 stream_options = {**stream_options, "include_usage": True}
-        model_obj = await self.model_store.get_model(model)
-        params = await prepare_openai_completion_params(
+
+        model_obj = await self.model_store.get_model(params.model)
+
+        request_params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(model_obj.provider_resource_id),
-            messages=messages,
-            frequency_penalty=frequency_penalty,
-            function_call=function_call,
-            functions=functions,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_completion_tokens=max_completion_tokens,
-            max_tokens=max_tokens,
-            n=n,
-            parallel_tool_calls=parallel_tool_calls,
-            presence_penalty=presence_penalty,
-            response_format=response_format,
-            seed=seed,
-            stop=stop,
-            stream=stream,
+            messages=params.messages,
+            frequency_penalty=params.frequency_penalty,
+            function_call=params.function_call,
+            functions=params.functions,
+            logit_bias=params.logit_bias,
+            logprobs=params.logprobs,
+            max_completion_tokens=params.max_completion_tokens,
+            max_tokens=params.max_tokens,
+            n=params.n,
+            parallel_tool_calls=params.parallel_tool_calls,
+            presence_penalty=params.presence_penalty,
+            response_format=params.response_format,
+            seed=params.seed,
+            stop=params.stop,
+            stream=params.stream,
             stream_options=stream_options,
-            temperature=temperature,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_logprobs=top_logprobs,
-            top_p=top_p,
-            user=user,
+            temperature=params.temperature,
+            tool_choice=params.tool_choice,
+            tools=params.tools,
+            top_logprobs=params.top_logprobs,
+            top_p=params.top_p,
+            user=params.user,
             api_key=self.get_api_key(),
             api_base=self.api_base,
         )
-        return await litellm.acompletion(**params)
+        return await litellm.acompletion(**request_params)
 
     async def check_model_availability(self, model: str) -> bool:
         """
