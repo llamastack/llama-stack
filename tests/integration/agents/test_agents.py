@@ -12,12 +12,8 @@ import requests
 from llama_stack_client import Agent, AgentEventLogger, Document
 from llama_stack_client.types.shared_params.agent_config import AgentConfig, ToolConfig
 
-from llama_stack.apis.agents.agents import (
-    AgentConfig as Server__AgentConfig,
-)
-from llama_stack.apis.agents.agents import (
-    ToolChoice,
-)
+from llama_stack.apis.agents.agents import AgentConfig as Server__AgentConfig
+from llama_stack.apis.inference import ToolChoice
 
 
 def get_boiling_point(liquid_name: str, celcius: bool = True) -> int:
@@ -187,7 +183,7 @@ def test_tool_config(agent_config):
         temperature=1.0,
         top_p=0.9,
         max_output_tokens=512,
-        toolgroups=[],
+        tools=[],
         enable_session_persistence=False,
     )
     agent_config = AgentConfig(

@@ -15,7 +15,6 @@ from llama_stack.apis.agents import (
     Agents,
     AgentSessionCreateResponse,
     AgentStepResponse,
-    AgentToolGroup,
     AgentTurnCreateRequest,
     AgentTurnResumeRequest,
     Document,
@@ -32,9 +31,9 @@ from llama_stack.apis.agents.openai_responses import OpenAIResponseText
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.inference import (
     Inference,
-    ToolConfig,
     OpenAIMessageParam,
     OpenAIToolMessageParam,
+    ToolConfig,
 )
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
@@ -156,7 +155,7 @@ class MetaReferenceAgentsImpl(Agents):
         agent_id: str,
         session_id: str,
         messages: list[OpenAIMessageParam],
-        toolgroups: list[AgentToolGroup] | None = None,
+        tools: list[OpenAIResponseInputTool] | None = None,
         documents: list[Document] | None = None,
         stream: bool | None = False,
         tool_config: ToolConfig | None = None,
@@ -166,7 +165,7 @@ class MetaReferenceAgentsImpl(Agents):
             session_id=session_id,
             messages=messages,
             stream=True,
-            toolgroups=toolgroups,
+            tools=tools,
             documents=documents,
             tool_config=tool_config,
         )

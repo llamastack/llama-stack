@@ -15576,8 +15576,20 @@
             "AgentConfig": {
                 "type": "object",
                 "properties": {
-                    "sampling_params": {
-                        "$ref": "#/components/schemas/SamplingParams"
+                    "max_output_tokens": {
+                        "type": "integer"
+                    },
+                    "temperature": {
+                        "type": "number"
+                    },
+                    "top_p": {
+                        "type": "number"
+                    },
+                    "stop": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "input_shields": {
                         "type": "array",
@@ -15591,39 +15603,24 @@
                             "type": "string"
                         }
                     },
-                    "toolgroups": {
+                    "tools": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/AgentTool"
+                            "$ref": "#/components/schemas/OpenAIResponseInputTool"
                         }
                     },
                     "client_tools": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolDef"
+                            "oneOf": [
+                                {
+                                    "$ref": "#/components/schemas/OpenAIResponseInputTool"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/ToolDef"
+                                }
+                            ]
                         }
-                    },
-                    "tool_choice": {
-                        "type": "string",
-                        "enum": [
-                            "auto",
-                            "required",
-                            "none"
-                        ],
-                        "title": "ToolChoice",
-                        "description": "Whether tool use is required or automatic. This is a hint to the model which may not be followed. It depends on the Instruction Following capabilities of the model.",
-                        "deprecated": true
-                    },
-                    "tool_prompt_format": {
-                        "type": "string",
-                        "enum": [
-                            "json",
-                            "function_tag",
-                            "python_list"
-                        ],
-                        "title": "ToolPromptFormat",
-                        "description": "Prompt format for calling custom / zero shot tools.",
-                        "deprecated": true
                     },
                     "tool_config": {
                         "$ref": "#/components/schemas/ToolConfig"
@@ -15650,7 +15647,7 @@
                         "description": "Optional flag indicating whether session data has to be persisted"
                     },
                     "response_format": {
-                        "$ref": "#/components/schemas/ResponseFormat",
+                        "$ref": "#/components/schemas/OpenAIResponseFormatParam",
                         "description": "Optional response format configuration"
                     }
                 },
@@ -15661,232 +15658,6 @@
                 ],
                 "title": "AgentConfig",
                 "description": "Configuration for an agent."
-            },
-            "AgentTool": {
-                "oneOf": [
-                    {
-                        "type": "string"
-                    },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "args": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "oneOf": [
-                                        {
-                                            "type": "null"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "type": "number"
-                                        },
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "array"
-                                        },
-                                        {
-                                            "type": "object"
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        "additionalProperties": false,
-                        "required": [
-                            "name",
-                            "args"
-                        ],
-                        "title": "AgentToolGroupWithArgs"
-                    }
-                ]
-            },
-            "GrammarResponseFormat": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "json_schema",
-                            "grammar"
-                        ],
-                        "description": "Must be \"grammar\" to identify this format type",
-                        "const": "grammar",
-                        "default": "grammar"
-                    },
-                    "bnf": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "The BNF grammar specification the response should conform to"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "bnf"
-                ],
-                "title": "GrammarResponseFormat",
-                "description": "Configuration for grammar-guided response generation."
-            },
-            "GreedySamplingStrategy": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "greedy",
-                        "default": "greedy",
-                        "description": "Must be \"greedy\" to identify this sampling strategy"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type"
-                ],
-                "title": "GreedySamplingStrategy",
-                "description": "Greedy sampling strategy that selects the highest probability token at each step."
-            },
-            "JsonSchemaResponseFormat": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "json_schema",
-                            "grammar"
-                        ],
-                        "description": "Must be \"json_schema\" to identify this format type",
-                        "const": "json_schema",
-                        "default": "json_schema"
-                    },
-                    "json_schema": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "The JSON schema the response should conform to. In a Python SDK, this is often a `pydantic` model."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "json_schema"
-                ],
-                "title": "JsonSchemaResponseFormat",
-                "description": "Configuration for JSON schema-guided response generation."
-            },
-            "ResponseFormat": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/JsonSchemaResponseFormat"
-                    },
-                    {
-                        "$ref": "#/components/schemas/GrammarResponseFormat"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "json_schema": "#/components/schemas/JsonSchemaResponseFormat",
-                        "grammar": "#/components/schemas/GrammarResponseFormat"
-                    }
-                }
-            },
-            "SamplingParams": {
-                "type": "object",
-                "properties": {
-                    "strategy": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/GreedySamplingStrategy"
-                            },
-                            {
-                                "$ref": "#/components/schemas/TopPSamplingStrategy"
-                            },
-                            {
-                                "$ref": "#/components/schemas/TopKSamplingStrategy"
-                            }
-                        ],
-                        "discriminator": {
-                            "propertyName": "type",
-                            "mapping": {
-                                "greedy": "#/components/schemas/GreedySamplingStrategy",
-                                "top_p": "#/components/schemas/TopPSamplingStrategy",
-                                "top_k": "#/components/schemas/TopKSamplingStrategy"
-                            }
-                        },
-                        "description": "The sampling strategy."
-                    },
-                    "max_tokens": {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length."
-                    },
-                    "repetition_penalty": {
-                        "type": "number",
-                        "default": 1.0,
-                        "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
-                    },
-                    "stop": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "strategy"
-                ],
-                "title": "SamplingParams",
-                "description": "Sampling parameters."
             },
             "ToolConfig": {
                 "type": "object",
@@ -15932,54 +15703,6 @@
                 "additionalProperties": false,
                 "title": "ToolConfig",
                 "description": "Configuration for tool use."
-            },
-            "TopKSamplingStrategy": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "top_k",
-                        "default": "top_k",
-                        "description": "Must be \"top_k\" to identify this sampling strategy"
-                    },
-                    "top_k": {
-                        "type": "integer",
-                        "description": "Number of top tokens to consider for sampling. Must be at least 1"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "top_k"
-                ],
-                "title": "TopKSamplingStrategy",
-                "description": "Top-k sampling strategy that restricts sampling to the k most likely tokens."
-            },
-            "TopPSamplingStrategy": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "top_p",
-                        "default": "top_p",
-                        "description": "Must be \"top_p\" to identify this sampling strategy"
-                    },
-                    "temperature": {
-                        "type": "number",
-                        "description": "Controls randomness in sampling. Higher values increase randomness"
-                    },
-                    "top_p": {
-                        "type": "number",
-                        "default": 0.95,
-                        "description": "Cumulative probability threshold for nucleus sampling. Defaults to 0.95"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type"
-                ],
-                "title": "TopPSamplingStrategy",
-                "description": "Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p."
             },
             "CreateAgentRequest": {
                 "type": "object",
@@ -16100,8 +15823,11 @@
                         "default": "inference"
                     },
                     "model_response": {
-                        "$ref": "#/components/schemas/CompletionMessage",
+                        "$ref": "#/components/schemas/OpenAIAssistantMessageParam",
                         "description": "The response from the LLM."
+                    },
+                    "finish_reason": {
+                        "type": "string"
                     }
                 },
                 "additionalProperties": false,
@@ -16153,7 +15879,17 @@
                         "description": "The IDs of the vector databases to retrieve context from."
                     },
                     "inserted_context": {
-                        "$ref": "#/components/schemas/InterleavedContent",
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
+                                }
+                            }
+                        ],
                         "description": "The context retrieved from the vector databases."
                     }
                 },
@@ -16287,14 +16023,14 @@
                     "tool_calls": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolCall"
+                            "$ref": "#/components/schemas/OpenAIChatCompletionToolCall"
                         },
                         "description": "The tool calls to execute."
                     },
                     "tool_responses": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolResponse"
+                            "$ref": "#/components/schemas/OpenAIToolMessageParam"
                         },
                         "description": "The tool responses from the tool calls."
                     }
@@ -16310,71 +16046,6 @@
                 "title": "ToolExecutionStep",
                 "description": "A tool execution step in an agent turn."
             },
-            "ToolResponse": {
-                "type": "object",
-                "properties": {
-                    "call_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the tool call this response is for"
-                    },
-                    "tool_name": {
-                        "oneOf": [
-                            {
-                                "type": "string",
-                                "enum": [
-                                    "brave_search",
-                                    "wolfram_alpha",
-                                    "photogen",
-                                    "code_interpreter"
-                                ],
-                                "title": "BuiltinTool"
-                            },
-                            {
-                                "type": "string"
-                            }
-                        ],
-                        "description": "Name of the tool that was invoked"
-                    },
-                    "content": {
-                        "$ref": "#/components/schemas/InterleavedContent",
-                        "description": "The response content from the tool"
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) Additional metadata about the tool response"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "call_id",
-                    "tool_name",
-                    "content"
-                ],
-                "title": "ToolResponse",
-                "description": "Response from a tool invocation."
-            },
             "Turn": {
                 "type": "object",
                 "properties": {
@@ -16389,14 +16060,7 @@
                     "input_messages": {
                         "type": "array",
                         "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/UserMessage"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/ToolResponseMessage"
-                                }
-                            ]
+                            "$ref": "#/components/schemas/OpenAIMessageParam"
                         },
                         "description": "List of messages that initiated this turn"
                     },
@@ -16430,8 +16094,11 @@
                         "description": "Ordered list of processing steps executed during this turn"
                     },
                     "output_message": {
-                        "$ref": "#/components/schemas/CompletionMessage",
+                        "$ref": "#/components/schemas/OpenAIAssistantMessageParam",
                         "description": "The model's generated response containing content and metadata"
+                    },
+                    "finish_reason": {
+                        "type": "string"
                     },
                     "output_attachments": {
                         "type": "array",
@@ -16444,12 +16111,9 @@
                                             "type": "string"
                                         },
                                         {
-                                            "$ref": "#/components/schemas/InterleavedContentItem"
-                                        },
-                                        {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/InterleavedContentItem"
+                                                "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
                                             }
                                         },
                                         {
@@ -16502,14 +16166,7 @@
                     "messages": {
                         "type": "array",
                         "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/UserMessage"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/ToolResponseMessage"
-                                }
-                            ]
+                            "$ref": "#/components/schemas/OpenAIMessageParam"
                         },
                         "description": "List of messages to start the turn with."
                     },
@@ -16528,12 +16185,9 @@
                                             "type": "string"
                                         },
                                         {
-                                            "$ref": "#/components/schemas/InterleavedContentItem"
-                                        },
-                                        {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/InterleavedContentItem"
+                                                "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
                                             }
                                         },
                                         {
@@ -16557,12 +16211,12 @@
                         },
                         "description": "(Optional) List of documents to create the turn with."
                     },
-                    "toolgroups": {
+                    "tools": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/AgentTool"
+                            "$ref": "#/components/schemas/OpenAIResponseInputTool"
                         },
-                        "description": "(Optional) List of toolgroups to create the turn with, will be used in addition to the agent's config toolgroups for the request."
+                        "description": "(Optional) List of tools to create the turn with, will be used in addition to the agent's config tools for the request."
                     },
                     "tool_config": {
                         "$ref": "#/components/schemas/ToolConfig",
@@ -17015,7 +16669,7 @@
                     "tool_responses": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolResponse"
+                            "$ref": "#/components/schemas/OpenAIToolMessageParam"
                         },
                         "description": "The tool call responses to resume the turn with."
                     },
@@ -17285,6 +16939,23 @@
                 "title": "BenchmarkConfig",
                 "description": "A benchmark configuration for evaluation."
             },
+            "GreedySamplingStrategy": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "greedy",
+                        "default": "greedy",
+                        "description": "Must be \"greedy\" to identify this sampling strategy"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "GreedySamplingStrategy",
+                "description": "Greedy sampling strategy that selects the highest probability token at each step."
+            },
             "ModelCandidate": {
                 "type": "object",
                 "properties": {
@@ -17314,6 +16985,104 @@
                 ],
                 "title": "ModelCandidate",
                 "description": "A model candidate for evaluation."
+            },
+            "SamplingParams": {
+                "type": "object",
+                "properties": {
+                    "strategy": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/GreedySamplingStrategy"
+                            },
+                            {
+                                "$ref": "#/components/schemas/TopPSamplingStrategy"
+                            },
+                            {
+                                "$ref": "#/components/schemas/TopKSamplingStrategy"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "greedy": "#/components/schemas/GreedySamplingStrategy",
+                                "top_p": "#/components/schemas/TopPSamplingStrategy",
+                                "top_k": "#/components/schemas/TopKSamplingStrategy"
+                            }
+                        },
+                        "description": "The sampling strategy."
+                    },
+                    "max_tokens": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length."
+                    },
+                    "repetition_penalty": {
+                        "type": "number",
+                        "default": 1.0,
+                        "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
+                    },
+                    "stop": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "strategy"
+                ],
+                "title": "SamplingParams",
+                "description": "Sampling parameters."
+            },
+            "TopKSamplingStrategy": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "top_k",
+                        "default": "top_k",
+                        "description": "Must be \"top_k\" to identify this sampling strategy"
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "description": "Number of top tokens to consider for sampling. Must be at least 1"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "top_k"
+                ],
+                "title": "TopKSamplingStrategy",
+                "description": "Top-k sampling strategy that restricts sampling to the k most likely tokens."
+            },
+            "TopPSamplingStrategy": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "top_p",
+                        "default": "top_p",
+                        "description": "Must be \"top_p\" to identify this sampling strategy"
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "description": "Controls randomness in sampling. Higher values increase randomness"
+                    },
+                    "top_p": {
+                        "type": "number",
+                        "default": 0.95,
+                        "description": "Cumulative probability threshold for nucleus sampling. Defaults to 0.95"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "TopPSamplingStrategy",
+                "description": "Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p."
             },
             "EvaluateRowsRequest": {
                 "type": "object",

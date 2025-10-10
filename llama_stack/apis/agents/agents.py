@@ -20,9 +20,7 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
     OpenAIToolMessageParam,
-    ToolChoice,
     ToolConfig,
-    ToolPromptFormat,
 )
 from llama_stack.apis.safety import SafetyViolation
 from llama_stack.apis.tools import ToolDef
@@ -107,7 +105,6 @@ class StepType(StrEnum):
     memory_retrieval = "memory_retrieval"
 
 
-@json_schema_type
 @json_schema_type
 class InferenceStep(StepCommon):
     """An inference step in an agent turn.
@@ -208,15 +205,6 @@ class Session(BaseModel):
     started_at: datetime
 
 
-class AgentToolGroupWithArgs(BaseModel):
-    name: str
-    args: dict[str, Any]
-
-
-AgentToolGroup = str | AgentToolGroupWithArgs
-register_schema(AgentToolGroup, name="AgentTool")
-
-
 class AgentConfigCommon(BaseModel):
     max_output_tokens: int | None = None
     temperature: float | None = None
@@ -225,7 +213,7 @@ class AgentConfigCommon(BaseModel):
 
     input_shields: list[str] | None = Field(default_factory=list)
     output_shields: list[str] | None = Field(default_factory=list)
-    toolgroups: list[AgentToolGroup] | None = Field(default_factory=list)
+    tools: list[OpenAIResponseInputTool] | None = Field(default_factory=list)
     client_tools: list[OpenAIResponseInputTool | ToolDef] | None = Field(default_factory=list)
     tool_config: ToolConfig | None = Field(default=None)
 
@@ -419,7 +407,7 @@ class AgentTurnCreateRequest(AgentConfigOverridablePerTurn):
     :param session_id: Unique identifier for the conversation session
     :param messages: List of messages to start the turn with
     :param documents: (Optional) List of documents to provide to the agent
-    :param toolgroups: (Optional) List of tool groups to make available for this turn
+    :param tools: (Optional) List of tools to make available for this turn
     :param stream: (Optional) Whether to stream the response
     :param tool_config: (Optional) Tool configuration to override agent defaults
     """
@@ -430,7 +418,7 @@ class AgentTurnCreateRequest(AgentConfigOverridablePerTurn):
     messages: list[OpenAIMessageParam]
 
     documents: list[Document] | None = None
-    toolgroups: list[AgentToolGroup] | None = Field(default_factory=lambda: [])
+    tools: list[OpenAIResponseInputTool] | None = Field(default_factory=lambda: [])
 
     stream: bool | None = False
     tool_config: ToolConfig | None = None
@@ -524,7 +512,7 @@ class Agents(Protocol):
         messages: list[OpenAIMessageParam],
         stream: bool | None = False,
         documents: list[Document] | None = None,
-        toolgroups: list[AgentToolGroup] | None = None,
+        tools: list[OpenAIResponseInputTool] | None = None,
         tool_config: ToolConfig | None = None,
     ) -> Turn | AsyncIterator[AgentTurnResponseStreamChunk]:
         """Create a new turn for an agent.
@@ -534,7 +522,7 @@ class Agents(Protocol):
         :param messages: List of messages to start the turn with.
         :param stream: (Optional) If True, generate an SSE event stream of the response. Defaults to False.
         :param documents: (Optional) List of documents to create the turn with.
-        :param toolgroups: (Optional) List of toolgroups to create the turn with, will be used in addition to the agent's config toolgroups for the request.
+        :param tools: (Optional) List of tools to create the turn with, will be used in addition to the agent's config tools for the request.
         :param tool_config: (Optional) The tool configuration to create the turn with, will be used to override the agent's tool_config.
         :returns: If stream=False, returns a Turn object.
                   If stream=True, returns an SSE event stream of AgentTurnResponseStreamChunk.

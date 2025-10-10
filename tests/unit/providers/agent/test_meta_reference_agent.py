@@ -74,7 +74,13 @@ def sample_agent_config():
         max_output_tokens=0,
         input_shields=["string"],
         output_shields=["string"],
-        toolgroups=["mcp::my_mcp_server"],
+        tools=[
+            {
+                "type": "mcp",
+                "server_label": "my_mcp_server",
+                "server_url": "http://example.com/mcp",
+            }
+        ],
         client_tools=[
             {
                 "type": "function",

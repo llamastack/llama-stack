@@ -100,8 +100,6 @@ def convert_to_pydantic(annotation: Any, value: Any) -> Any:
         return TypeAdapter(annotation).validate_python(value)
 
     except Exception as e:
-        # TODO: this is workardound for having Union[str, AgentToolGroup] in API schema.
-        # We should get rid of any non-discriminated unions in the API schema.
         if origin is Union:
             for union_type in get_args(annotation):
                 try:

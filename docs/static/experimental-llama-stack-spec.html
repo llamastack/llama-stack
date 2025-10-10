@@ -2424,8 +2424,20 @@
             "AgentConfig": {
                 "type": "object",
                 "properties": {
-                    "sampling_params": {
-                        "$ref": "#/components/schemas/SamplingParams"
+                    "max_output_tokens": {
+                        "type": "integer"
+                    },
+                    "temperature": {
+                        "type": "number"
+                    },
+                    "top_p": {
+                        "type": "number"
+                    },
+                    "stop": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "input_shields": {
                         "type": "array",
@@ -2439,39 +2451,24 @@
                             "type": "string"
                         }
                     },
-                    "toolgroups": {
+                    "tools": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/AgentTool"
+                            "$ref": "#/components/schemas/OpenAIResponseInputTool"
                         }
                     },
                     "client_tools": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolDef"
+                            "oneOf": [
+                                {
+                                    "$ref": "#/components/schemas/OpenAIResponseInputTool"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/ToolDef"
+                                }
+                            ]
                         }
-                    },
-                    "tool_choice": {
-                        "type": "string",
-                        "enum": [
-                            "auto",
-                            "required",
-                            "none"
-                        ],
-                        "title": "ToolChoice",
-                        "description": "Whether tool use is required or automatic. This is a hint to the model which may not be followed. It depends on the Instruction Following capabilities of the model.",
-                        "deprecated": true
-                    },
-                    "tool_prompt_format": {
-                        "type": "string",
-                        "enum": [
-                            "json",
-                            "function_tag",
-                            "python_list"
-                        ],
-                        "title": "ToolPromptFormat",
-                        "description": "Prompt format for calling custom / zero shot tools.",
-                        "deprecated": true
                     },
                     "tool_config": {
                         "$ref": "#/components/schemas/ToolConfig"
@@ -2498,7 +2495,7 @@
                         "description": "Optional flag indicating whether session data has to be persisted"
                     },
                     "response_format": {
-                        "$ref": "#/components/schemas/ResponseFormat",
+                        "$ref": "#/components/schemas/OpenAIResponseFormatParam",
                         "description": "Optional response format configuration"
                     }
                 },
@@ -2510,66 +2507,22 @@
                 "title": "AgentConfig",
                 "description": "Configuration for an agent."
             },
-            "AgentTool": {
-                "oneOf": [
-                    {
-                        "type": "string"
-                    },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "args": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "oneOf": [
-                                        {
-                                            "type": "null"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "type": "number"
-                                        },
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "array"
-                                        },
-                                        {
-                                            "type": "object"
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        "additionalProperties": false,
-                        "required": [
-                            "name",
-                            "args"
-                        ],
-                        "title": "AgentToolGroupWithArgs"
-                    }
-                ]
-            },
-            "GrammarResponseFormat": {
+            "OpenAIJSONSchema": {
                 "type": "object",
                 "properties": {
-                    "type": {
+                    "name": {
                         "type": "string",
-                        "enum": [
-                            "json_schema",
-                            "grammar"
-                        ],
-                        "description": "Must be \"grammar\" to identify this format type",
-                        "const": "grammar",
-                        "default": "grammar"
+                        "description": "Name of the schema"
                     },
-                    "bnf": {
+                    "description": {
+                        "type": "string",
+                        "description": "(Optional) Description of the schema"
+                    },
+                    "strict": {
+                        "type": "boolean",
+                        "description": "(Optional) Whether to enforce strict adherence to the schema"
+                    },
+                    "schema": {
                         "type": "object",
                         "additionalProperties": {
                             "oneOf": [
@@ -2593,72 +2546,45 @@
                                 }
                             ]
                         },
-                        "description": "The BNF grammar specification the response should conform to"
+                        "description": "(Optional) The JSON schema definition"
                     }
                 },
                 "additionalProperties": false,
                 "required": [
-                    "type",
-                    "bnf"
+                    "name"
                 ],
-                "title": "GrammarResponseFormat",
-                "description": "Configuration for grammar-guided response generation."
+                "title": "OpenAIJSONSchema",
+                "description": "JSON schema specification for OpenAI-compatible structured response format."
             },
-            "GreedySamplingStrategy": {
+            "OpenAIResponseFormatJSONObject": {
                 "type": "object",
                 "properties": {
                     "type": {
                         "type": "string",
-                        "const": "greedy",
-                        "default": "greedy",
-                        "description": "Must be \"greedy\" to identify this sampling strategy"
+                        "const": "json_object",
+                        "default": "json_object",
+                        "description": "Must be \"json_object\" to indicate generic JSON object response format"
                     }
                 },
                 "additionalProperties": false,
                 "required": [
                     "type"
                 ],
-                "title": "GreedySamplingStrategy",
-                "description": "Greedy sampling strategy that selects the highest probability token at each step."
+                "title": "OpenAIResponseFormatJSONObject",
+                "description": "JSON object response format for OpenAI-compatible chat completion requests."
             },
-            "JsonSchemaResponseFormat": {
+            "OpenAIResponseFormatJSONSchema": {
                 "type": "object",
                 "properties": {
                     "type": {
                         "type": "string",
-                        "enum": [
-                            "json_schema",
-                            "grammar"
-                        ],
-                        "description": "Must be \"json_schema\" to identify this format type",
                         "const": "json_schema",
-                        "default": "json_schema"
+                        "default": "json_schema",
+                        "description": "Must be \"json_schema\" to indicate structured JSON response format"
                     },
                     "json_schema": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "The JSON schema the response should conform to. In a Python SDK, this is often a `pydantic` model."
+                        "$ref": "#/components/schemas/OpenAIJSONSchema",
+                        "description": "The JSON schema specification for the response"
                     }
                 },
                 "additionalProperties": false,
@@ -2666,75 +2592,349 @@
                     "type",
                     "json_schema"
                 ],
-                "title": "JsonSchemaResponseFormat",
-                "description": "Configuration for JSON schema-guided response generation."
+                "title": "OpenAIResponseFormatJSONSchema",
+                "description": "JSON schema response format for OpenAI-compatible chat completion requests."
             },
-            "ResponseFormat": {
+            "OpenAIResponseFormatParam": {
                 "oneOf": [
                     {
-                        "$ref": "#/components/schemas/JsonSchemaResponseFormat"
+                        "$ref": "#/components/schemas/OpenAIResponseFormatText"
                     },
                     {
-                        "$ref": "#/components/schemas/GrammarResponseFormat"
+                        "$ref": "#/components/schemas/OpenAIResponseFormatJSONSchema"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseFormatJSONObject"
                     }
                 ],
                 "discriminator": {
                     "propertyName": "type",
                     "mapping": {
-                        "json_schema": "#/components/schemas/JsonSchemaResponseFormat",
-                        "grammar": "#/components/schemas/GrammarResponseFormat"
+                        "text": "#/components/schemas/OpenAIResponseFormatText",
+                        "json_schema": "#/components/schemas/OpenAIResponseFormatJSONSchema",
+                        "json_object": "#/components/schemas/OpenAIResponseFormatJSONObject"
                     }
                 }
             },
-            "SamplingParams": {
+            "OpenAIResponseFormatText": {
                 "type": "object",
                 "properties": {
-                    "strategy": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/GreedySamplingStrategy"
-                            },
-                            {
-                                "$ref": "#/components/schemas/TopPSamplingStrategy"
-                            },
-                            {
-                                "$ref": "#/components/schemas/TopKSamplingStrategy"
-                            }
-                        ],
-                        "discriminator": {
-                            "propertyName": "type",
-                            "mapping": {
-                                "greedy": "#/components/schemas/GreedySamplingStrategy",
-                                "top_p": "#/components/schemas/TopPSamplingStrategy",
-                                "top_k": "#/components/schemas/TopKSamplingStrategy"
-                            }
-                        },
-                        "description": "The sampling strategy."
-                    },
-                    "max_tokens": {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length."
-                    },
-                    "repetition_penalty": {
-                        "type": "number",
-                        "default": 1.0,
-                        "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
-                    },
-                    "stop": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence."
+                    "type": {
+                        "type": "string",
+                        "const": "text",
+                        "default": "text",
+                        "description": "Must be \"text\" to indicate plain text response format"
                     }
                 },
                 "additionalProperties": false,
                 "required": [
-                    "strategy"
+                    "type"
                 ],
-                "title": "SamplingParams",
-                "description": "Sampling parameters."
+                "title": "OpenAIResponseFormatText",
+                "description": "Text response format for OpenAI-compatible chat completion requests."
+            },
+            "OpenAIResponseInputTool": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolWebSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFileSearch"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolFunction"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputToolMCP"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "web_search": "#/components/schemas/OpenAIResponseInputToolWebSearch",
+                        "file_search": "#/components/schemas/OpenAIResponseInputToolFileSearch",
+                        "function": "#/components/schemas/OpenAIResponseInputToolFunction",
+                        "mcp": "#/components/schemas/OpenAIResponseInputToolMCP"
+                    }
+                }
+            },
+            "OpenAIResponseInputToolFileSearch": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "file_search",
+                        "default": "file_search",
+                        "description": "Tool type identifier, always \"file_search\""
+                    },
+                    "vector_store_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of vector store identifiers to search within"
+                    },
+                    "filters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) Additional filters to apply to the search"
+                    },
+                    "max_num_results": {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "(Optional) Maximum number of search results to return (1-50)"
+                    },
+                    "ranking_options": {
+                        "type": "object",
+                        "properties": {
+                            "ranker": {
+                                "type": "string",
+                                "description": "(Optional) Name of the ranking algorithm to use"
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "default": 0.0,
+                                "description": "(Optional) Minimum relevance score threshold for results"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "description": "(Optional) Options for ranking and scoring search results"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "vector_store_ids"
+                ],
+                "title": "OpenAIResponseInputToolFileSearch",
+                "description": "File search tool configuration for OpenAI response inputs."
+            },
+            "OpenAIResponseInputToolFunction": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "function",
+                        "default": "function",
+                        "description": "Tool type identifier, always \"function\""
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the function that can be called"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "(Optional) Description of what the function does"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) JSON schema defining the function's parameters"
+                    },
+                    "strict": {
+                        "type": "boolean",
+                        "description": "(Optional) Whether to enforce strict parameter validation"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "name"
+                ],
+                "title": "OpenAIResponseInputToolFunction",
+                "description": "Function tool configuration for OpenAI response inputs."
+            },
+            "OpenAIResponseInputToolMCP": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "mcp",
+                        "default": "mcp",
+                        "description": "Tool type identifier, always \"mcp\""
+                    },
+                    "server_label": {
+                        "type": "string",
+                        "description": "Label to identify this MCP server"
+                    },
+                    "server_url": {
+                        "type": "string",
+                        "description": "URL endpoint of the MCP server"
+                    },
+                    "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "(Optional) HTTP headers to include when connecting to the server"
+                    },
+                    "require_approval": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "const": "always"
+                            },
+                            {
+                                "type": "string",
+                                "const": "never"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "always": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "(Optional) List of tool names that always require approval"
+                                    },
+                                    "never": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "(Optional) List of tool names that never require approval"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "title": "ApprovalFilter",
+                                "description": "Filter configuration for MCP tool approval requirements."
+                            }
+                        ],
+                        "default": "never",
+                        "description": "Approval requirement for tool calls (\"always\", \"never\", or filter)"
+                    },
+                    "allowed_tools": {
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "tool_names": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "(Optional) List of specific tool names that are allowed"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "title": "AllowedToolsFilter",
+                                "description": "Filter configuration for restricting which MCP tools can be used."
+                            }
+                        ],
+                        "description": "(Optional) Restriction on which tools can be used from this server"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "server_label",
+                    "server_url",
+                    "require_approval"
+                ],
+                "title": "OpenAIResponseInputToolMCP",
+                "description": "Model Context Protocol (MCP) tool configuration for OpenAI response inputs."
+            },
+            "OpenAIResponseInputToolWebSearch": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "const": "web_search"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview"
+                            },
+                            {
+                                "type": "string",
+                                "const": "web_search_preview_2025_03_11"
+                            }
+                        ],
+                        "default": "web_search",
+                        "description": "Web search tool type variant to use"
+                    },
+                    "search_context_size": {
+                        "type": "string",
+                        "default": "medium",
+                        "description": "(Optional) Size of search context, must be \"low\", \"medium\", or \"high\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "OpenAIResponseInputToolWebSearch",
+                "description": "Web search tool configuration for OpenAI response inputs."
             },
             "ToolConfig": {
                 "type": "object",
@@ -2882,54 +3082,6 @@
                 "title": "ToolDef",
                 "description": "Tool definition used in runtime contexts."
             },
-            "TopKSamplingStrategy": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "top_k",
-                        "default": "top_k",
-                        "description": "Must be \"top_k\" to identify this sampling strategy"
-                    },
-                    "top_k": {
-                        "type": "integer",
-                        "description": "Number of top tokens to consider for sampling. Must be at least 1"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "top_k"
-                ],
-                "title": "TopKSamplingStrategy",
-                "description": "Top-k sampling strategy that restricts sampling to the k most likely tokens."
-            },
-            "TopPSamplingStrategy": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "top_p",
-                        "default": "top_p",
-                        "description": "Must be \"top_p\" to identify this sampling strategy"
-                    },
-                    "temperature": {
-                        "type": "number",
-                        "description": "Controls randomness in sampling. Higher values increase randomness"
-                    },
-                    "top_p": {
-                        "type": "number",
-                        "default": 0.95,
-                        "description": "Cumulative probability threshold for nucleus sampling. Defaults to 0.95"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type"
-                ],
-                "title": "TopPSamplingStrategy",
-                "description": "Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p."
-            },
             "CreateAgentRequest": {
                 "type": "object",
                 "properties": {
@@ -3014,79 +3166,6 @@
                 "title": "AgentSessionCreateResponse",
                 "description": "Response returned when creating a new agent session."
             },
-            "CompletionMessage": {
-                "type": "object",
-                "properties": {
-                    "role": {
-                        "type": "string",
-                        "const": "assistant",
-                        "default": "assistant",
-                        "description": "Must be \"assistant\" to identify this as the model's response"
-                    },
-                    "content": {
-                        "$ref": "#/components/schemas/InterleavedContent",
-                        "description": "The content of the model's response"
-                    },
-                    "stop_reason": {
-                        "type": "string",
-                        "enum": [
-                            "end_of_turn",
-                            "end_of_message",
-                            "out_of_tokens"
-                        ],
-                        "description": "Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`: The model finished generating the entire response. - `StopReason.end_of_message`: The model finished generating but generated a partial response -- usually, a tool call. The user may call the tool and continue the conversation with the tool's response. - `StopReason.out_of_tokens`: The model ran out of token budget."
-                    },
-                    "tool_calls": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ToolCall"
-                        },
-                        "description": "List of tool calls. Each tool call is a ToolCall object."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "role",
-                    "content",
-                    "stop_reason"
-                ],
-                "title": "CompletionMessage",
-                "description": "A message containing the model's (assistant) response in a chat conversation."
-            },
-            "ImageContentItem": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "image",
-                        "default": "image",
-                        "description": "Discriminator type of the content item. Always \"image\""
-                    },
-                    "image": {
-                        "type": "object",
-                        "properties": {
-                            "url": {
-                                "$ref": "#/components/schemas/URL",
-                                "description": "A URL of the image or data URL in the format of data:image/{type};base64,{data}. Note that URL could have length limits."
-                            },
-                            "data": {
-                                "type": "string",
-                                "contentEncoding": "base64",
-                                "description": "base64 encoded image data as string"
-                            }
-                        },
-                        "additionalProperties": false,
-                        "description": "Image as a base64 encoded string or an URL"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "image"
-                ],
-                "title": "ImageContentItem",
-                "description": "A image content item"
-            },
             "InferenceStep": {
                 "type": "object",
                 "properties": {
@@ -3122,8 +3201,11 @@
                         "default": "inference"
                     },
                     "model_response": {
-                        "$ref": "#/components/schemas/CompletionMessage",
+                        "$ref": "#/components/schemas/OpenAIAssistantMessageParam",
                         "description": "The response from the LLM."
+                    },
+                    "finish_reason": {
+                        "type": "string"
                     }
                 },
                 "additionalProperties": false,
@@ -3135,39 +3217,6 @@
                 ],
                 "title": "InferenceStep",
                 "description": "An inference step in an agent turn."
-            },
-            "InterleavedContent": {
-                "oneOf": [
-                    {
-                        "type": "string"
-                    },
-                    {
-                        "$ref": "#/components/schemas/InterleavedContentItem"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/InterleavedContentItem"
-                        }
-                    }
-                ]
-            },
-            "InterleavedContentItem": {
-                "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/ImageContentItem"
-                    },
-                    {
-                        "$ref": "#/components/schemas/TextContentItem"
-                    }
-                ],
-                "discriminator": {
-                    "propertyName": "type",
-                    "mapping": {
-                        "image": "#/components/schemas/ImageContentItem",
-                        "text": "#/components/schemas/TextContentItem"
-                    }
-                }
             },
             "MemoryRetrievalStep": {
                 "type": "object",
@@ -3208,7 +3257,17 @@
                         "description": "The IDs of the vector databases to retrieve context from."
                     },
                     "inserted_context": {
-                        "$ref": "#/components/schemas/InterleavedContent",
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
+                                }
+                            }
+                        ],
                         "description": "The context retrieved from the vector databases."
                     }
                 },
@@ -3222,6 +3281,386 @@
                 ],
                 "title": "MemoryRetrievalStep",
                 "description": "A memory retrieval step in an agent turn."
+            },
+            "OpenAIAssistantMessageParam": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "const": "assistant",
+                        "default": "assistant",
+                        "description": "Must be \"assistant\" to identify this as the model's response"
+                    },
+                    "content": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartTextParam"
+                                }
+                            }
+                        ],
+                        "description": "The content of the model's response"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "(Optional) The name of the assistant message participant."
+                    },
+                    "tool_calls": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIChatCompletionToolCall"
+                        },
+                        "description": "List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "role"
+                ],
+                "title": "OpenAIAssistantMessageParam",
+                "description": "A message containing the model's (assistant) response in an OpenAI-compatible chat completion request."
+            },
+            "OpenAIChatCompletionContentPartImageParam": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "image_url",
+                        "default": "image_url",
+                        "description": "Must be \"image_url\" to identify this as image content"
+                    },
+                    "image_url": {
+                        "$ref": "#/components/schemas/OpenAIImageURL",
+                        "description": "Image URL specification and processing details"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "image_url"
+                ],
+                "title": "OpenAIChatCompletionContentPartImageParam",
+                "description": "Image content part for OpenAI-compatible chat completion messages."
+            },
+            "OpenAIChatCompletionContentPartParam": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIChatCompletionContentPartTextParam"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIChatCompletionContentPartImageParam"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIFile"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "text": "#/components/schemas/OpenAIChatCompletionContentPartTextParam",
+                        "image_url": "#/components/schemas/OpenAIChatCompletionContentPartImageParam",
+                        "file": "#/components/schemas/OpenAIFile"
+                    }
+                }
+            },
+            "OpenAIChatCompletionContentPartTextParam": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "text",
+                        "default": "text",
+                        "description": "Must be \"text\" to identify this as text content"
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "The text content of the message"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "text"
+                ],
+                "title": "OpenAIChatCompletionContentPartTextParam",
+                "description": "Text content part for OpenAI-compatible chat completion messages."
+            },
+            "OpenAIChatCompletionToolCall": {
+                "type": "object",
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "description": "(Optional) Index of the tool call in the list"
+                    },
+                    "id": {
+                        "type": "string",
+                        "description": "(Optional) Unique identifier for the tool call"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "function",
+                        "default": "function",
+                        "description": "Must be \"function\" to identify this as a function call"
+                    },
+                    "function": {
+                        "$ref": "#/components/schemas/OpenAIChatCompletionToolCallFunction",
+                        "description": "(Optional) Function call details"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "OpenAIChatCompletionToolCall",
+                "description": "Tool call specification for OpenAI-compatible chat completion responses."
+            },
+            "OpenAIChatCompletionToolCallFunction": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "(Optional) Name of the function to call"
+                    },
+                    "arguments": {
+                        "type": "string",
+                        "description": "(Optional) Arguments to pass to the function as a JSON string"
+                    }
+                },
+                "additionalProperties": false,
+                "title": "OpenAIChatCompletionToolCallFunction",
+                "description": "Function call details for OpenAI-compatible tool calls."
+            },
+            "OpenAIDeveloperMessageParam": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "const": "developer",
+                        "default": "developer",
+                        "description": "Must be \"developer\" to identify this as a developer message"
+                    },
+                    "content": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartTextParam"
+                                }
+                            }
+                        ],
+                        "description": "The content of the developer message"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "(Optional) The name of the developer message participant."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "role",
+                    "content"
+                ],
+                "title": "OpenAIDeveloperMessageParam",
+                "description": "A message from the developer in an OpenAI-compatible chat completion request."
+            },
+            "OpenAIFile": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "file",
+                        "default": "file"
+                    },
+                    "file": {
+                        "$ref": "#/components/schemas/OpenAIFileFile"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "file"
+                ],
+                "title": "OpenAIFile"
+            },
+            "OpenAIFileFile": {
+                "type": "object",
+                "properties": {
+                    "file_data": {
+                        "type": "string"
+                    },
+                    "file_id": {
+                        "type": "string"
+                    },
+                    "filename": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false,
+                "title": "OpenAIFileFile"
+            },
+            "OpenAIImageURL": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "URL of the image to include in the message"
+                    },
+                    "detail": {
+                        "type": "string",
+                        "description": "(Optional) Level of detail for image processing. Can be \"low\", \"high\", or \"auto\""
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "url"
+                ],
+                "title": "OpenAIImageURL",
+                "description": "Image URL specification for OpenAI-compatible chat completion messages."
+            },
+            "OpenAIMessageParam": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIUserMessageParam"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAISystemMessageParam"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIAssistantMessageParam"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIToolMessageParam"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIDeveloperMessageParam"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "role",
+                    "mapping": {
+                        "user": "#/components/schemas/OpenAIUserMessageParam",
+                        "system": "#/components/schemas/OpenAISystemMessageParam",
+                        "assistant": "#/components/schemas/OpenAIAssistantMessageParam",
+                        "tool": "#/components/schemas/OpenAIToolMessageParam",
+                        "developer": "#/components/schemas/OpenAIDeveloperMessageParam"
+                    }
+                }
+            },
+            "OpenAISystemMessageParam": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "const": "system",
+                        "default": "system",
+                        "description": "Must be \"system\" to identify this as a system message"
+                    },
+                    "content": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartTextParam"
+                                }
+                            }
+                        ],
+                        "description": "The content of the \"system prompt\". If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages (for example, for formatting tool definitions)."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "(Optional) The name of the system message participant."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "role",
+                    "content"
+                ],
+                "title": "OpenAISystemMessageParam",
+                "description": "A system message providing instructions or context to the model."
+            },
+            "OpenAIToolMessageParam": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "const": "tool",
+                        "default": "tool",
+                        "description": "Must be \"tool\" to identify this as a tool response"
+                    },
+                    "tool_call_id": {
+                        "type": "string",
+                        "description": "Unique identifier for the tool call this response is for"
+                    },
+                    "content": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartTextParam"
+                                }
+                            }
+                        ],
+                        "description": "The response content from the tool"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "role",
+                    "tool_call_id",
+                    "content"
+                ],
+                "title": "OpenAIToolMessageParam",
+                "description": "A message representing the result of a tool invocation in an OpenAI-compatible chat completion request."
+            },
+            "OpenAIUserMessageParam": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "const": "user",
+                        "default": "user",
+                        "description": "Must be \"user\" to identify this as a user message"
+                    },
+                    "content": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
+                                }
+                            }
+                        ],
+                        "description": "The content of the message, which can include text and other media"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "(Optional) The name of the user message participant."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "role",
+                    "content"
+                ],
+                "title": "OpenAIUserMessageParam",
+                "description": "A message from the user in an OpenAI-compatible chat completion request."
             },
             "SafetyViolation": {
                 "type": "object",
@@ -3351,63 +3790,6 @@
                 "title": "ShieldCallStep",
                 "description": "A shield call step in an agent turn."
             },
-            "TextContentItem": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "text",
-                        "default": "text",
-                        "description": "Discriminator type of the content item. Always \"text\""
-                    },
-                    "text": {
-                        "type": "string",
-                        "description": "Text content"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "text"
-                ],
-                "title": "TextContentItem",
-                "description": "A text content item"
-            },
-            "ToolCall": {
-                "type": "object",
-                "properties": {
-                    "call_id": {
-                        "type": "string"
-                    },
-                    "tool_name": {
-                        "oneOf": [
-                            {
-                                "type": "string",
-                                "enum": [
-                                    "brave_search",
-                                    "wolfram_alpha",
-                                    "photogen",
-                                    "code_interpreter"
-                                ],
-                                "title": "BuiltinTool"
-                            },
-                            {
-                                "type": "string"
-                            }
-                        ]
-                    },
-                    "arguments": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "call_id",
-                    "tool_name",
-                    "arguments"
-                ],
-                "title": "ToolCall"
-            },
             "ToolExecutionStep": {
                 "type": "object",
                 "properties": {
@@ -3445,14 +3827,14 @@
                     "tool_calls": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolCall"
+                            "$ref": "#/components/schemas/OpenAIChatCompletionToolCall"
                         },
                         "description": "The tool calls to execute."
                     },
                     "tool_responses": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolResponse"
+                            "$ref": "#/components/schemas/OpenAIToolMessageParam"
                         },
                         "description": "The tool responses from the tool calls."
                     }
@@ -3468,98 +3850,6 @@
                 "title": "ToolExecutionStep",
                 "description": "A tool execution step in an agent turn."
             },
-            "ToolResponse": {
-                "type": "object",
-                "properties": {
-                    "call_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the tool call this response is for"
-                    },
-                    "tool_name": {
-                        "oneOf": [
-                            {
-                                "type": "string",
-                                "enum": [
-                                    "brave_search",
-                                    "wolfram_alpha",
-                                    "photogen",
-                                    "code_interpreter"
-                                ],
-                                "title": "BuiltinTool"
-                            },
-                            {
-                                "type": "string"
-                            }
-                        ],
-                        "description": "Name of the tool that was invoked"
-                    },
-                    "content": {
-                        "$ref": "#/components/schemas/InterleavedContent",
-                        "description": "The response content from the tool"
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) Additional metadata about the tool response"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "call_id",
-                    "tool_name",
-                    "content"
-                ],
-                "title": "ToolResponse",
-                "description": "Response from a tool invocation."
-            },
-            "ToolResponseMessage": {
-                "type": "object",
-                "properties": {
-                    "role": {
-                        "type": "string",
-                        "const": "tool",
-                        "default": "tool",
-                        "description": "Must be \"tool\" to identify this as a tool response"
-                    },
-                    "call_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the tool call this response is for"
-                    },
-                    "content": {
-                        "$ref": "#/components/schemas/InterleavedContent",
-                        "description": "The response content from the tool"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "role",
-                    "call_id",
-                    "content"
-                ],
-                "title": "ToolResponseMessage",
-                "description": "A message representing the result of a tool invocation."
-            },
             "Turn": {
                 "type": "object",
                 "properties": {
@@ -3574,14 +3864,7 @@
                     "input_messages": {
                         "type": "array",
                         "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/UserMessage"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/ToolResponseMessage"
-                                }
-                            ]
+                            "$ref": "#/components/schemas/OpenAIMessageParam"
                         },
                         "description": "List of messages that initiated this turn"
                     },
@@ -3615,8 +3898,11 @@
                         "description": "Ordered list of processing steps executed during this turn"
                     },
                     "output_message": {
-                        "$ref": "#/components/schemas/CompletionMessage",
+                        "$ref": "#/components/schemas/OpenAIAssistantMessageParam",
                         "description": "The model's generated response containing content and metadata"
+                    },
+                    "finish_reason": {
+                        "type": "string"
                     },
                     "output_attachments": {
                         "type": "array",
@@ -3629,12 +3915,9 @@
                                             "type": "string"
                                         },
                                         {
-                                            "$ref": "#/components/schemas/InterleavedContentItem"
-                                        },
-                                        {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/InterleavedContentItem"
+                                                "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
                                             }
                                         },
                                         {
@@ -3696,32 +3979,6 @@
                 "title": "URL",
                 "description": "A URL reference to external content."
             },
-            "UserMessage": {
-                "type": "object",
-                "properties": {
-                    "role": {
-                        "type": "string",
-                        "const": "user",
-                        "default": "user",
-                        "description": "Must be \"user\" to identify this as a user message"
-                    },
-                    "content": {
-                        "$ref": "#/components/schemas/InterleavedContent",
-                        "description": "The content of the message, which can include text and other media"
-                    },
-                    "context": {
-                        "$ref": "#/components/schemas/InterleavedContent",
-                        "description": "(Optional) This field is used internally by Llama Stack to pass RAG context. This field may be removed in the API in the future."
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "role",
-                    "content"
-                ],
-                "title": "UserMessage",
-                "description": "A message from the user in a chat conversation."
-            },
             "ViolationLevel": {
                 "type": "string",
                 "enum": [
@@ -3738,14 +3995,7 @@
                     "messages": {
                         "type": "array",
                         "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/UserMessage"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/ToolResponseMessage"
-                                }
-                            ]
+                            "$ref": "#/components/schemas/OpenAIMessageParam"
                         },
                         "description": "List of messages to start the turn with."
                     },
@@ -3764,12 +4014,9 @@
                                             "type": "string"
                                         },
                                         {
-                                            "$ref": "#/components/schemas/InterleavedContentItem"
-                                        },
-                                        {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/InterleavedContentItem"
+                                                "$ref": "#/components/schemas/OpenAIChatCompletionContentPartParam"
                                             }
                                         },
                                         {
@@ -3793,12 +4040,12 @@
                         },
                         "description": "(Optional) List of documents to create the turn with."
                     },
-                    "toolgroups": {
+                    "tools": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/AgentTool"
+                            "$ref": "#/components/schemas/OpenAIResponseInputTool"
                         },
-                        "description": "(Optional) List of toolgroups to create the turn with, will be used in addition to the agent's config toolgroups for the request."
+                        "description": "(Optional) List of tools to create the turn with, will be used in addition to the agent's config tools for the request."
                     },
                     "tool_config": {
                         "$ref": "#/components/schemas/ToolConfig",
@@ -4205,6 +4452,41 @@
                 "title": "TextDelta",
                 "description": "A text content delta for streaming responses."
             },
+            "ToolCall": {
+                "type": "object",
+                "properties": {
+                    "call_id": {
+                        "type": "string"
+                    },
+                    "tool_name": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "brave_search",
+                                    "wolfram_alpha",
+                                    "photogen",
+                                    "code_interpreter"
+                                ],
+                                "title": "BuiltinTool"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "arguments": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "call_id",
+                    "tool_name",
+                    "arguments"
+                ],
+                "title": "ToolCall"
+            },
             "ToolCallDelta": {
                 "type": "object",
                 "properties": {
@@ -4251,7 +4533,7 @@
                     "tool_responses": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ToolResponse"
+                            "$ref": "#/components/schemas/OpenAIToolMessageParam"
                         },
                         "description": "The tool call responses to resume the turn with."
                     },
@@ -4558,6 +4840,90 @@
                 "title": "BenchmarkConfig",
                 "description": "A benchmark configuration for evaluation."
             },
+            "GreedySamplingStrategy": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "greedy",
+                        "default": "greedy",
+                        "description": "Must be \"greedy\" to identify this sampling strategy"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "GreedySamplingStrategy",
+                "description": "Greedy sampling strategy that selects the highest probability token at each step."
+            },
+            "ImageContentItem": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "image",
+                        "default": "image",
+                        "description": "Discriminator type of the content item. Always \"image\""
+                    },
+                    "image": {
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "$ref": "#/components/schemas/URL",
+                                "description": "A URL of the image or data URL in the format of data:image/{type};base64,{data}. Note that URL could have length limits."
+                            },
+                            "data": {
+                                "type": "string",
+                                "contentEncoding": "base64",
+                                "description": "base64 encoded image data as string"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "description": "Image as a base64 encoded string or an URL"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "image"
+                ],
+                "title": "ImageContentItem",
+                "description": "A image content item"
+            },
+            "InterleavedContent": {
+                "oneOf": [
+                    {
+                        "type": "string"
+                    },
+                    {
+                        "$ref": "#/components/schemas/InterleavedContentItem"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/InterleavedContentItem"
+                        }
+                    }
+                ]
+            },
+            "InterleavedContentItem": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/ImageContentItem"
+                    },
+                    {
+                        "$ref": "#/components/schemas/TextContentItem"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "image": "#/components/schemas/ImageContentItem",
+                        "text": "#/components/schemas/TextContentItem"
+                    }
+                }
+            },
             "LLMAsJudgeScoringFnParams": {
                 "type": "object",
                 "properties": {
@@ -4663,6 +5029,56 @@
                 "title": "RegexParserScoringFnParams",
                 "description": "Parameters for regex parser scoring function configuration."
             },
+            "SamplingParams": {
+                "type": "object",
+                "properties": {
+                    "strategy": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/GreedySamplingStrategy"
+                            },
+                            {
+                                "$ref": "#/components/schemas/TopPSamplingStrategy"
+                            },
+                            {
+                                "$ref": "#/components/schemas/TopKSamplingStrategy"
+                            }
+                        ],
+                        "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                                "greedy": "#/components/schemas/GreedySamplingStrategy",
+                                "top_p": "#/components/schemas/TopPSamplingStrategy",
+                                "top_k": "#/components/schemas/TopKSamplingStrategy"
+                            }
+                        },
+                        "description": "The sampling strategy."
+                    },
+                    "max_tokens": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length."
+                    },
+                    "repetition_penalty": {
+                        "type": "number",
+                        "default": 1.0,
+                        "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
+                    },
+                    "stop": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "strategy"
+                ],
+                "title": "SamplingParams",
+                "description": "Sampling parameters."
+            },
             "ScoringFnParams": {
                 "oneOf": [
                     {
@@ -4715,6 +5131,76 @@
                 ],
                 "title": "SystemMessage",
                 "description": "A system message providing instructions or context to the model."
+            },
+            "TextContentItem": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "text",
+                        "default": "text",
+                        "description": "Discriminator type of the content item. Always \"text\""
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "Text content"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "text"
+                ],
+                "title": "TextContentItem",
+                "description": "A text content item"
+            },
+            "TopKSamplingStrategy": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "top_k",
+                        "default": "top_k",
+                        "description": "Must be \"top_k\" to identify this sampling strategy"
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "description": "Number of top tokens to consider for sampling. Must be at least 1"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "top_k"
+                ],
+                "title": "TopKSamplingStrategy",
+                "description": "Top-k sampling strategy that restricts sampling to the k most likely tokens."
+            },
+            "TopPSamplingStrategy": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "top_p",
+                        "default": "top_p",
+                        "description": "Must be \"top_p\" to identify this sampling strategy"
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "description": "Controls randomness in sampling. Higher values increase randomness"
+                    },
+                    "top_p": {
+                        "type": "number",
+                        "default": 0.95,
+                        "description": "Cumulative probability threshold for nucleus sampling. Defaults to 0.95"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "TopPSamplingStrategy",
+                "description": "Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p."
             },
             "EvaluateRowsRequest": {
                 "type": "object",
@@ -4923,69 +5409,6 @@
                 ],
                 "title": "Job",
                 "description": "A job execution instance with status tracking."
-            },
-            "OpenAIChatCompletionContentPartImageParam": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "image_url",
-                        "default": "image_url",
-                        "description": "Must be \"image_url\" to identify this as image content"
-                    },
-                    "image_url": {
-                        "$ref": "#/components/schemas/OpenAIImageURL",
-                        "description": "Image URL specification and processing details"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "image_url"
-                ],
-                "title": "OpenAIChatCompletionContentPartImageParam",
-                "description": "Image content part for OpenAI-compatible chat completion messages."
-            },
-            "OpenAIChatCompletionContentPartTextParam": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "text",
-                        "default": "text",
-                        "description": "Must be \"text\" to identify this as text content"
-                    },
-                    "text": {
-                        "type": "string",
-                        "description": "The text content of the message"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "text"
-                ],
-                "title": "OpenAIChatCompletionContentPartTextParam",
-                "description": "Text content part for OpenAI-compatible chat completion messages."
-            },
-            "OpenAIImageURL": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "URL of the image to include in the message"
-                    },
-                    "detail": {
-                        "type": "string",
-                        "description": "(Optional) Level of detail for image processing. Can be \"low\", \"high\", or \"auto\""
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "url"
-                ],
-                "title": "OpenAIImageURL",
-                "description": "Image URL specification for OpenAI-compatible chat completion messages."
             },
             "RerankRequest": {
                 "type": "object",
