@@ -139,7 +139,13 @@ def test_openai_create_vector_store(compat_client_with_empty_stores, client_with
 
     # Create a vector store
     vector_store = client.vector_stores.create(
-        name="Vs_test_vector_store", metadata={"purpose": "testing", "environment": "integration"}
+        name="Vs_test_vector_store",
+        metadata={"purpose": "testing", "environment": "integration"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     assert vector_store is not None
@@ -159,8 +165,24 @@ def test_openai_list_vector_stores(compat_client_with_empty_stores, client_with_
     client = compat_client_with_empty_stores
 
     # Create a few vector stores
-    store1 = client.vector_stores.create(name="store1", metadata={"type": "test"})
-    store2 = client.vector_stores.create(name="store2", metadata={"type": "test"})
+    store1 = client.vector_stores.create(
+        name="store1",
+        metadata={"type": "test"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
+    store2 = client.vector_stores.create(
+        name="store2",
+        metadata={"type": "test"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # List vector stores
     response = client.vector_stores.list()
@@ -186,7 +208,15 @@ def test_openai_retrieve_vector_store(compat_client_with_empty_stores, client_wi
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    created_store = client.vector_stores.create(name="retrieve_test_store", metadata={"purpose": "retrieval_test"})
+    created_store = client.vector_stores.create(
+        name="retrieve_test_store",
+        metadata={"purpose": "retrieval_test"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Retrieve the store
     retrieved_store = client.vector_stores.retrieve(vector_store_id=created_store.id)
@@ -205,7 +235,15 @@ def test_openai_update_vector_store(compat_client_with_empty_stores, client_with
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    created_store = client.vector_stores.create(name="original_name", metadata={"version": "1.0"})
+    created_store = client.vector_stores.create(
+        name="original_name",
+        metadata={"version": "1.0"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
     time.sleep(1)
     # Modify the store
     modified_store = client.vector_stores.update(
@@ -228,7 +266,15 @@ def test_openai_delete_vector_store(compat_client_with_empty_stores, client_with
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    created_store = client.vector_stores.create(name="delete_test_store", metadata={"purpose": "deletion_test"})
+    created_store = client.vector_stores.create(
+        name="delete_test_store",
+        metadata={"purpose": "deletion_test"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Delete the store
     delete_response = client.vector_stores.delete(vector_store_id=created_store.id)
@@ -250,7 +296,15 @@ def test_openai_vector_store_search_empty(compat_client_with_empty_stores, clien
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = client.vector_stores.create(name="search_test_store", metadata={"purpose": "search_testing"})
+    vector_store = client.vector_stores.create(
+        name="search_test_store",
+        metadata={"purpose": "search_testing"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Search the empty store
     search_response = client.vector_stores.search(
@@ -272,7 +326,15 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
     llama_client = client_with_models
 
     # Create a vector store using OpenAI API
-    vector_store = compat_client.vector_stores.create(name="chunks_test_store", metadata={"purpose": "chunks_testing"})
+    vector_store = compat_client.vector_stores.create(
+        name="chunks_test_store",
+        metadata={"purpose": "chunks_testing"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Insert chunks using the native LlamaStack API (since OpenAI API doesn't have direct chunk insertion)
     llama_client.vector_io.insert(
@@ -326,7 +388,13 @@ def test_openai_vector_store_search_relevance(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name=f"relevance_test_{expected_doc_id}", metadata={"purpose": "relevance_testing"}
+        name=f"relevance_test_{expected_doc_id}",
+        metadata={"purpose": "relevance_testing"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     # Insert chunks using native API
@@ -365,7 +433,13 @@ def test_openai_vector_store_search_with_ranking_options(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name="ranking_test_store", metadata={"purpose": "ranking_testing"}
+        name="ranking_test_store",
+        metadata={"purpose": "ranking_testing"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     # Insert chunks
@@ -402,7 +476,13 @@ def test_openai_vector_store_search_with_high_score_filter(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name="high_score_filter_test", metadata={"purpose": "high_score_filtering"}
+        name="high_score_filter_test",
+        metadata={"purpose": "high_score_filtering"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     # Insert chunks
@@ -457,7 +537,13 @@ def test_openai_vector_store_search_with_max_num_results(
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
-        name="max_num_results_test_store", metadata={"purpose": "max_num_results_testing"}
+        name="max_num_results_test_store",
+        metadata={"purpose": "max_num_results_testing"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     # Insert chunks
@@ -484,7 +570,14 @@ def test_openai_vector_store_attach_file(compat_client_with_empty_stores, client
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create a file
     test_content = b"The secret string is foobazbar."
@@ -547,6 +640,11 @@ def test_openai_vector_store_attach_files_on_creation(compat_client_with_empty_s
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         file_ids=file_ids,
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     assert vector_store.file_counts.completed == len(valid_file_ids)
@@ -585,7 +683,14 @@ def test_openai_vector_store_list_files(compat_client_with_empty_stores, client_
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create some files and attach them to the vector store
     file_ids = []
@@ -660,7 +765,14 @@ def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_sto
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create a file
     test_content = b"This is a test file"
@@ -675,6 +787,11 @@ def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_sto
         vector_store_id=vector_store.id,
         file_id=file.id,
         attributes=attributes,
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     assert file_attach_response.status == "completed"
@@ -704,7 +821,14 @@ def test_openai_vector_store_delete_file(compat_client_with_empty_stores, client
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create some files and attach them to the vector store
     file_ids = []
@@ -756,7 +880,14 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create a file
     test_content = b"The secret string is foobazbar."
@@ -794,7 +925,14 @@ def test_openai_vector_store_update_file(compat_client_with_empty_stores, client
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create a file
     test_content = b"This is a test file"
@@ -848,6 +986,11 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
 
     vector_store = compat_client.vector_stores.create(
         name="test_store_with_files",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
     assert vector_store.file_counts.completed == 0
     assert vector_store.file_counts.total == 0
@@ -887,6 +1030,11 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
     vector_store = llama_stack_client.vector_stores.create(
         name=f"search_mode_test_{search_mode}",
         metadata={"purpose": "search_mode_testing"},
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     client_with_models.vector_io.insert(
@@ -911,7 +1059,14 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="batch_test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="batch_test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create multiple files
     file_ids = []
@@ -964,7 +1119,14 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="batch_list_test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="batch_list_test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create multiple files
     file_ids = []
@@ -1047,7 +1209,14 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="batch_cancel_test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="batch_cancel_test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create a batch to test cancellation
     file_ids = []
@@ -1092,7 +1261,14 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="batch_contents_test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="batch_contents_test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Create multiple files with known content
     file_data = [
@@ -1155,7 +1331,14 @@ def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(name="batch_error_test_store")
+    vector_store = compat_client.vector_stores.create(
+        name="batch_error_test_store",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
+    )
 
     # Test with invalid file IDs (should handle gracefully)
     file_ids = ["invalid_file_id_1", "invalid_file_id_2"]
