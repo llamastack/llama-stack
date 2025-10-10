@@ -24,6 +24,8 @@ class RunpodInferenceAdapter(OpenAIMixin):
 
     config: RunpodImplConfig
 
+    provider_data_api_key_field: str = "runpod_api_token"
+
     def get_api_key(self) -> str:
         """Get API key for OpenAI client."""
         return self.config.api_token
