@@ -816,6 +816,42 @@ class OpenAIChoice(BaseModel):
     logprobs: OpenAIChoiceLogprobs | None = None
 
 
+class OpenAIChatCompletionUsageCompletionTokensDetails(BaseModel):
+    """Token details for output tokens in OpenAI chat completion usage.
+
+    :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
+    """
+
+    reasoning_tokens: int | None = None
+
+
+class OpenAIChatCompletionUsagePromptTokensDetails(BaseModel):
+    """Token details for prompt tokens in OpenAI chat completion usage.
+
+    :param cached_tokens: Number of tokens retrieved from cache
+    """
+
+    cached_tokens: int | None = None
+
+
+@json_schema_type
+class OpenAIChatCompletionUsage(BaseModel):
+    """Usage information for OpenAI chat completion.
+
+    :param prompt_tokens: Number of tokens in the prompt
+    :param completion_tokens: Number of tokens in the completion
+    :param total_tokens: Total tokens used (prompt + completion)
+    :param input_tokens_details: Detailed breakdown of input token usage
+    :param output_tokens_details: Detailed breakdown of output token usage
+    """
+
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    prompt_tokens_details: OpenAIChatCompletionUsagePromptTokensDetails | None = None
+    completion_tokens_details: OpenAIChatCompletionUsageCompletionTokensDetails | None = None
+
+
 @json_schema_type
 class OpenAIChatCompletion(BaseModel):
     """Response from an OpenAI-compatible chat completion request.
@@ -825,6 +861,7 @@ class OpenAIChatCompletion(BaseModel):
     :param object: The object type, which will be "chat.completion"
     :param created: The Unix timestamp in seconds when the chat completion was created
     :param model: The model that was used to generate the chat completion
+    :param usage: Token usage information for the completion
     """
 
     id: str
@@ -832,6 +869,7 @@ class OpenAIChatCompletion(BaseModel):
     object: Literal["chat.completion"] = "chat.completion"
     created: int
     model: str
+    usage: OpenAIChatCompletionUsage | None = None
 
 
 @json_schema_type
@@ -843,6 +881,7 @@ class OpenAIChatCompletionChunk(BaseModel):
     :param object: The object type, which will be "chat.completion.chunk"
     :param created: The Unix timestamp in seconds when the chat completion was created
     :param model: The model that was used to generate the chat completion
+    :param usage: Token usage information (typically included in final chunk with stream_options)
     """
 
     id: str
@@ -850,6 +889,7 @@ class OpenAIChatCompletionChunk(BaseModel):
     object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
     created: int
     model: str
+    usage: OpenAIChatCompletionUsage | None = None
 
 
 @json_schema_type

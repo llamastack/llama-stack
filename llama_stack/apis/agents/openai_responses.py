@@ -346,6 +346,42 @@ class OpenAIResponseText(BaseModel):
     format: OpenAIResponseTextFormat | None = None
 
 
+class OpenAIResponseUsageOutputTokensDetails(BaseModel):
+    """Token details for output tokens in OpenAI response usage.
+
+    :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
+    """
+
+    reasoning_tokens: int | None = None
+
+
+class OpenAIResponseUsageInputTokensDetails(BaseModel):
+    """Token details for input tokens in OpenAI response usage.
+
+    :param cached_tokens: Number of tokens retrieved from cache
+    """
+
+    cached_tokens: int | None = None
+
+
+@json_schema_type
+class OpenAIResponseUsage(BaseModel):
+    """Usage information for OpenAI response.
+
+    :param input_tokens: Number of tokens in the input
+    :param output_tokens: Number of tokens in the output
+    :param total_tokens: Total tokens used (input + output)
+    :param input_tokens_details: Detailed breakdown of input token usage
+    :param output_tokens_details: Detailed breakdown of output token usage
+    """
+
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    input_tokens_details: OpenAIResponseUsageInputTokensDetails | None = None
+    output_tokens_details: OpenAIResponseUsageOutputTokensDetails | None = None
+
+
 @json_schema_type
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
@@ -363,6 +399,7 @@ class OpenAIResponseObject(BaseModel):
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
     :param truncation: (Optional) Truncation strategy applied to the response
+    :param usage: (Optional) Token usage information for the response
     """
 
     created_at: int
@@ -380,6 +417,7 @@ class OpenAIResponseObject(BaseModel):
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
     truncation: str | None = None
+    usage: OpenAIResponseUsage | None = None
 
 
 @json_schema_type

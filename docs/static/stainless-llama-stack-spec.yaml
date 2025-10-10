@@ -4693,6 +4693,10 @@ components:
                 type: string
                 description: >-
                   The model that was used to generate the chat completion
+              usage:
+                $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+                description: >-
+                  Token usage information for the completion
               input_messages:
                 type: array
                 items:
@@ -4859,6 +4863,49 @@ components:
       title: OpenAIChatCompletionToolCallFunction
       description: >-
         Function call details for OpenAI-compatible tool calls.
+    OpenAIChatCompletionUsage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+          description: Number of tokens in the prompt
+        completion_tokens:
+          type: integer
+          description: Number of tokens in the completion
+        total_tokens:
+          type: integer
+          description: Total tokens used (prompt + completion)
+        prompt_tokens_details:
+          type: object
+          properties:
+            cached_tokens:
+              type: integer
+              description: Number of tokens retrieved from cache
+          additionalProperties: false
+          title: >-
+            OpenAIChatCompletionUsagePromptTokensDetails
+          description: >-
+            Token details for prompt tokens in OpenAI chat completion usage.
+        completion_tokens_details:
+          type: object
+          properties:
+            reasoning_tokens:
+              type: integer
+              description: >-
+                Number of tokens used for reasoning (o1/o3 models)
+          additionalProperties: false
+          title: >-
+            OpenAIChatCompletionUsageCompletionTokensDetails
+          description: >-
+            Token details for output tokens in OpenAI chat completion usage.
+      additionalProperties: false
+      required:
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+      title: OpenAIChatCompletionUsage
+      description: >-
+        Usage information for OpenAI chat completion.
     OpenAIChoice:
       type: object
       properties:
@@ -5390,6 +5437,10 @@ components:
           type: string
           description: >-
             The model that was used to generate the chat completion
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+          description: >-
+            Token usage information for the completion
       additionalProperties: false
       required:
         - id
@@ -5425,6 +5476,10 @@ components:
           type: string
           description: >-
             The model that was used to generate the chat completion
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+          description: >-
+            Token usage information (typically included in final chunk with stream_options)
       additionalProperties: false
       required:
         - id
@@ -5505,6 +5560,10 @@ components:
           type: string
           description: >-
             The model that was used to generate the chat completion
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+          description: >-
+            Token usage information for the completion
         input_messages:
           type: array
           items:
@@ -7145,6 +7204,10 @@ components:
           type: string
           description: >-
             (Optional) Truncation strategy applied to the response
+        usage:
+          $ref: '#/components/schemas/OpenAIResponseUsage'
+          description: >-
+            (Optional) Token usage information for the response
         input:
           type: array
           items:
@@ -7236,6 +7299,42 @@ components:
       title: OpenAIResponseText
       description: >-
         Text response configuration for OpenAI responses.
+    OpenAIResponseUsage:
+      type: object
+      properties:
+        input_tokens:
+          type: integer
+          description: Number of tokens in the input
+        output_tokens:
+          type: integer
+          description: Number of tokens in the output
+        total_tokens:
+          type: integer
+          description: Total tokens used (input + output)
+        input_tokens_details:
+          type: object
+          properties:
+            cached_tokens:
+              type: integer
+              description: Number of tokens retrieved from cache
+          additionalProperties: false
+          description: Detailed breakdown of input token usage
+        output_tokens_details:
+          type: object
+          properties:
+            reasoning_tokens:
+              type: integer
+              description: >-
+                Number of tokens used for reasoning (o1/o3 models)
+          additionalProperties: false
+          description: Detailed breakdown of output token usage
+      additionalProperties: false
+      required:
+        - input_tokens
+        - output_tokens
+        - total_tokens
+      title: OpenAIResponseUsage
+      description: Usage information for OpenAI response.
     ResponseShieldSpec:
       type: object
       properties:
@@ -7562,6 +7661,10 @@ components:
           type: string
           description: >-
             (Optional) Truncation strategy applied to the response
+        usage:
+          $ref: '#/components/schemas/OpenAIResponseUsage'
+          description: >-
+            (Optional) Token usage information for the response
       additionalProperties: false
       required:
         - created_at
