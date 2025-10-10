@@ -33,7 +33,7 @@ from llama_stack.apis.agents.openai_responses import (
 from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartTextParam,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIDeveloperMessageParam,
     OpenAIJSONSchema,
     OpenAIResponseFormatJSONObject,
@@ -162,7 +162,7 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     chunks = [chunk async for chunk in result]
 
     mock_inference_api.openai_chat_completion.assert_called_once_with(
-        OpenAIChatCompletionRequest(
+        OpenAIChatCompletionRequestWithExtraBody(
             model=model,
             messages=[OpenAIUserMessageParam(role="user", content="What is the capital of Ireland?", name=None)],
             response_format=None,

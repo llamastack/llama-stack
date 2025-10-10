@@ -153,7 +153,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OpenAIChatCompletionRequest"
+                                "$ref": "#/components/schemas/OpenAIChatCompletionRequestWithExtraBody"
                             }
                         }
                     },
@@ -243,7 +243,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OpenAICompletionRequest"
+                                "$ref": "#/components/schemas/OpenAICompletionRequestWithExtraBody"
                             }
                         }
                     },
@@ -5018,7 +5018,7 @@
                 "title": "OpenAIResponseFormatText",
                 "description": "Text response format for OpenAI-compatible chat completion requests."
             },
-            "OpenAIChatCompletionRequest": {
+            "OpenAIChatCompletionRequestWithExtraBody": {
                 "type": "object",
                 "properties": {
                     "model": {
@@ -5265,7 +5265,7 @@
                     "model",
                     "messages"
                 ],
-                "title": "OpenAIChatCompletionRequest",
+                "title": "OpenAIChatCompletionRequestWithExtraBody",
                 "description": "Request parameters for OpenAI-compatible chat completion endpoint."
             },
             "OpenAIChatCompletion": {
@@ -5462,7 +5462,7 @@
                 ],
                 "title": "OpenAICompletionWithInputMessages"
             },
-            "OpenAICompletionRequest": {
+            "OpenAICompletionRequestWithExtraBody": {
                 "type": "object",
                 "properties": {
                     "model": {
@@ -5593,17 +5593,6 @@
                         "type": "string",
                         "description": "(Optional) The user to use."
                     },
-                    "guided_choice": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "(Optional) vLLM-specific parameter for guided generation with a list of choices."
-                    },
-                    "prompt_logprobs": {
-                        "type": "integer",
-                        "description": "(Optional) vLLM-specific parameter for number of log probabilities to return for prompt tokens."
-                    },
                     "suffix": {
                         "type": "string",
                         "description": "(Optional) The suffix that should be appended to the completion."
@@ -5614,7 +5603,7 @@
                     "model",
                     "prompt"
                 ],
-                "title": "OpenAICompletionRequest",
+                "title": "OpenAICompletionRequestWithExtraBody",
                 "description": "Request parameters for OpenAI-compatible completion endpoint."
             },
             "OpenAICompletion": {

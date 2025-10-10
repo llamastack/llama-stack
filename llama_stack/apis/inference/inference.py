@@ -15,7 +15,7 @@ from typing import (
 )
 
 from fastapi import Body
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
 from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
@@ -1036,8 +1036,9 @@ class ListOpenAIChatCompletionResponse(BaseModel):
     object: Literal["list"] = "list"
 
 
+# extra_body can be accessed via .model_extra
 @json_schema_type
-class OpenAICompletionRequest(BaseModel):
+class OpenAICompletionRequestWithExtraBody(BaseModel, extra="allow"):
     """Request parameters for OpenAI-compatible completion endpoint.
 
     :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
@@ -1058,11 +1059,7 @@ class OpenAICompletionRequest(BaseModel):
     :param top_p: (Optional) The top p to use.
     :param user: (Optional) The user to use.
     :param suffix: (Optional) The suffix that should be appended to the completion.
-    :param guided_choice: (Optional) vLLM-specific parameter for guided generation with a list of choices.
-    :param prompt_logprobs: (Optional) vLLM-specific parameter for number of log probabilities to return for prompt tokens.
     """
-
-    model_config = ConfigDict(extra="allow")
 
     # Standard OpenAI completion parameters
     model: str
@@ -1082,17 +1079,12 @@ class OpenAICompletionRequest(BaseModel):
     temperature: float | None = None
     top_p: float | None = None
     user: str | None = None
-
-    # vLLM-specific parameters (documented here but also allowed via extra fields)
-    guided_choice: list[str] | None = None
-    prompt_logprobs: int | None = None
-
-    # for fill-in-the-middle type completion
     suffix: str | None = None
 
 
+# extra_body can be accessed via .model_extra
 @json_schema_type
-class OpenAIChatCompletionRequest(BaseModel):
+class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     """Request parameters for OpenAI-compatible chat completion endpoint.
 
     :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
@@ -1119,8 +1111,6 @@ class OpenAIChatCompletionRequest(BaseModel):
     :param top_p: (Optional) The top p to use.
     :param user: (Optional) The user to use.
     """
-
-    model_config = ConfigDict(extra="allow")
 
     # Standard OpenAI chat completion parameters
     model: str
@@ -1182,7 +1172,7 @@ class InferenceProvider(Protocol):
     @webmethod(route="/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_completion(
         self,
-        params: Annotated[OpenAICompletionRequest, Body(...)],
+        params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAICompletion:
         """Create completion.
 
@@ -1195,7 +1185,7 @@ class InferenceProvider(Protocol):
     @webmethod(route="/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_chat_completion(
         self,
-        params: Annotated[OpenAIChatCompletionRequest, Body(...)],
+        params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Create chat completions.
 

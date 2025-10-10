@@ -9,8 +9,8 @@ from collections.abc import AsyncIterator
 
 from llama_stack.apis.inference import (
     InferenceProvider,
-    OpenAIChatCompletionRequest,
-    OpenAICompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletionRequestWithExtraBody,
 )
 from llama_stack.apis.inference.inference import (
     OpenAIChatCompletion,
@@ -67,7 +67,7 @@ class MetaReferenceInferenceImpl(
 
     async def openai_completion(
         self,
-        params: OpenAICompletionRequest,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         raise NotImplementedError("OpenAI completion not supported by meta reference provider")
 
@@ -153,6 +153,6 @@ class MetaReferenceInferenceImpl(
 
     async def openai_chat_completion(
         self,
-        params: OpenAIChatCompletionRequest,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         raise NotImplementedError("OpenAI chat completion not supported by meta-reference inference provider")

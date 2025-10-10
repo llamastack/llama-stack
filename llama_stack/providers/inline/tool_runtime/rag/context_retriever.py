@@ -8,7 +8,7 @@
 from jinja2 import Template
 
 from llama_stack.apis.common.content_types import InterleavedContent
-from llama_stack.apis.inference import OpenAIChatCompletionRequest, OpenAIUserMessageParam
+from llama_stack.apis.inference import OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
 from llama_stack.apis.tools.rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
@@ -65,7 +65,7 @@ async def llm_rag_query_generator(
 
     model = config.model
     message = OpenAIUserMessageParam(content=rendered_content)
-    params = OpenAIChatCompletionRequest(
+    params = OpenAIChatCompletionRequestWithExtraBody(
         model=model,
         messages=[message],
         stream=False,
