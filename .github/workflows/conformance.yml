@@ -43,9 +43,9 @@ jobs:
       # Check if we should skip conformance testing due to breaking changes
       - name: Check if conformance test should be skipped
         id: skip-check
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-
           # Skip if title contains "!:" indicating breaking change (like "feat!:")
           if [[ "$PR_TITLE" == *"!:"* ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
