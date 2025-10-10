@@ -5,41 +5,21 @@
 # the root directory of this source tree.
 from typing import Any
 
-from llama_stack.apis.inference.inference import OpenAICompletion
+from llama_stack.apis.inference.inference import OpenAICompletion, OpenAIEmbeddingsResponse
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.llama_openai_compat.config import LlamaCompatConfig
-from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 logger = get_logger(name=__name__, category="inference::llama_openai_compat")
 
 
-class LlamaCompatInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
+class LlamaCompatInferenceAdapter(OpenAIMixin):
+    config: LlamaCompatConfig
+
+    provider_data_api_key_field: str = "llama_api_key"
     """
     Llama API Inference Adapter for Llama Stack.
-
-    Note: The inheritance order is important here. OpenAIMixin must come before
-    LiteLLMOpenAIMixin to ensure that OpenAIMixin.check_model_availability()
-    is used instead of ModelRegistryHelper.check_model_availability().
-
-    - OpenAIMixin.check_model_availability() queries the Llama API to check if a model exists
-    - ModelRegistryHelper.check_model_availability() (inherited by LiteLLMOpenAIMixin) just returns False and shows a warning
     """
-
-    _config: LlamaCompatConfig
-
-    def __init__(self, config: LlamaCompatConfig):
-        LiteLLMOpenAIMixin.__init__(
-            self,
-            litellm_provider_name="meta_llama",
-            api_key_from_config=config.api_key,
-            provider_data_api_key_field="llama_api_key",
-            openai_compat_api_base=config.openai_compat_api_base,
-        )
-        self.config = config
-
-    # Delegate the client data handling get_api_key method to LiteLLMOpenAIMixin
-    get_api_key = LiteLLMOpenAIMixin.get_api_key
 
     def get_base_url(self) -> str:
         """
@@ -48,12 +28,6 @@ class LlamaCompatInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         :return: The Llama API base URL
         """
         return self.config.openai_compat_api_base
-
-    async def initialize(self):
-        await super().initialize()
-
-    async def shutdown(self):
-        await super().shutdown()
 
     async def openai_completion(
         self,
@@ -78,4 +52,14 @@ class LlamaCompatInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         prompt_logprobs: int | None = None,
         suffix: str | None = None,
     ) -> OpenAICompletion:
+        raise NotImplementedError()
+
+    async def openai_embeddings(
+        self,
+        model: str,
+        input: str | list[str],
+        encoding_format: str | None = "float",
+        dimensions: int | None = None,
+        user: str | None = None,
+    ) -> OpenAIEmbeddingsResponse:
         raise NotImplementedError()

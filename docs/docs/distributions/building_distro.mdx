@@ -289,10 +289,10 @@ After this step is successful, you should be able to find the built container im
 docker run -d \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v ~/.llama:/root/.llama \
+  -e INFERENCE_MODEL=$INFERENCE_MODEL \
+  -e OLLAMA_URL=http://host.docker.internal:11434 \
   localhost/distribution-ollama:dev \
-  --port $LLAMA_STACK_PORT \
-  --env INFERENCE_MODEL=$INFERENCE_MODEL \
-  --env OLLAMA_URL=http://host.docker.internal:11434
+  --port $LLAMA_STACK_PORT
 ```
 
 Here are the docker flags and their uses:
@@ -305,11 +305,11 @@ Here are the docker flags and their uses:
 
 * `localhost/distribution-ollama:dev`: The name and tag of the container image to run
 
+* `-e INFERENCE_MODEL=$INFERENCE_MODEL`: Sets the INFERENCE_MODEL environment variable in the container
+
+* `-e OLLAMA_URL=http://host.docker.internal:11434`: Sets the OLLAMA_URL environment variable in the container
+
 * `--port $LLAMA_STACK_PORT`: Port number for the server to listen on
-
-* `--env INFERENCE_MODEL=$INFERENCE_MODEL`: Sets the model to use for inference
-
-* `--env OLLAMA_URL=http://host.docker.internal:11434`: Configures the URL for the Ollama service
 
 </TabItem>
 </Tabs>
@@ -320,23 +320,22 @@ Now, let's start the Llama Stack Distribution Server. You will need the YAML con
 
 ```
 llama stack run -h
-usage: llama stack run [-h] [--port PORT] [--image-name IMAGE_NAME] [--env KEY=VALUE]
+usage: llama stack run [-h] [--port PORT] [--image-name IMAGE_NAME]
                        [--image-type {venv}] [--enable-ui]
-                       [config | template]
+                       [config | distro]
 
 Start the server for a Llama Stack Distribution. You should have already built (or downloaded) and configured the distribution.
 
 positional arguments:
-  config | template     Path to config file to use for the run or name of known template (`llama stack list` for a list). (default: None)
+  config | distro       Path to config file to use for the run or name of known distro (`llama stack list` for a list). (default: None)
 
 options:
   -h, --help            show this help message and exit
   --port PORT           Port to run the server on. It can also be passed via the env var LLAMA_STACK_PORT. (default: 8321)
   --image-name IMAGE_NAME
-                        Name of the image to run. Defaults to the current environment (default: None)
-  --env KEY=VALUE       Environment variables to pass to the server in KEY=VALUE format. Can be specified multiple times. (default: None)
+                        [DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running. (default: None)
   --image-type {venv}
-                        Image Type used during the build. This should be venv. (default: None)
+                        [DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running. (default: None)
   --enable-ui           Start the UI server (default: False)
 ```
 
@@ -348,9 +347,6 @@ llama stack run tgi
 
 # Start using config file
 llama stack run ~/.llama/distributions/llamastack-my-local-stack/my-local-stack-run.yaml
-
-# Start using a venv
-llama stack run --image-type venv ~/.llama/distributions/llamastack-my-local-stack/my-local-stack-run.yaml
 ```
 
 ```

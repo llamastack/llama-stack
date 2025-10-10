@@ -8,6 +8,7 @@
 import pytest
 
 from llama_stack.apis.agents.openai_responses import (
+    OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
@@ -35,6 +36,7 @@ from llama_stack.apis.inference import (
     OpenAIUserMessageParam,
 )
 from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
+    _extract_citations_from_text,
     convert_chat_choice_to_response_message,
     convert_response_content_to_chat_content,
     convert_response_input_to_chat_messages,
@@ -340,3 +342,26 @@ class TestIsFunctionToolCall:
 
         result = is_function_tool_call(tool_call, tools)
         assert result is False
+
+
+class TestExtractCitationsFromText:
+    def test_extract_citations_and_annotations(self):
+        text = "Start [not-a-file]. New source <|file-abc123|>. "
+        text += "Other source <|file-def456|>? Repeat source <|file-abc123|>! No citation."
+        file_mapping = {"file-abc123": "doc1.pdf", "file-def456": "doc2.txt"}
+
+        annotations, cleaned_text = _extract_citations_from_text(text, file_mapping)
+
+        expected_annotations = [
+            OpenAIResponseAnnotationFileCitation(file_id="file-abc123", filename="doc1.pdf", index=30),
+            OpenAIResponseAnnotationFileCitation(file_id="file-def456", filename="doc2.txt", index=44),
+            OpenAIResponseAnnotationFileCitation(file_id="file-abc123", filename="doc1.pdf", index=59),
+        ]
+        expected_clean_text = "Start [not-a-file]. New source. Other source? Repeat source! No citation."
+
+        assert cleaned_text == expected_clean_text
+        assert annotations == expected_annotations
+        # OpenAI cites at the end of the sentence
+        assert cleaned_text[expected_annotations[0].index] == "."
+        assert cleaned_text[expected_annotations[1].index] == "?"
+        assert cleaned_text[expected_annotations[2].index] == "!"

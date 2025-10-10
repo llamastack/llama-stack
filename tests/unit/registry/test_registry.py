@@ -9,6 +9,7 @@ import pytest
 
 from llama_stack.apis.inference import Model
 from llama_stack.apis.vector_dbs import VectorDB
+from llama_stack.core.datatypes import VectorDBWithOwner
 from llama_stack.core.store.registry import (
     KEY_FORMAT,
     CachedDiskDistributionRegistry,
@@ -116,7 +117,7 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
         provider_resource_id="test_vector_db_2",
         provider_id="baz",
     )
-    await cached_disk_dist_registry.register(original_vector_db)
+    assert await cached_disk_dist_registry.register(original_vector_db)
 
     duplicate_vector_db = VectorDB(
         identifier="test_vector_db_2",
@@ -125,7 +126,8 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
         provider_resource_id="test_vector_db_2",
         provider_id="baz",  # Same provider_id
     )
-    await cached_disk_dist_registry.register(duplicate_vector_db)
+    with pytest.raises(ValueError, match="Object of type 'vector_db' and identifier 'test_vector_db_2' already exists"):
+        await cached_disk_dist_registry.register(duplicate_vector_db)
 
     result = await cached_disk_dist_registry.get("vector_db", "test_vector_db_2")
     assert result is not None
@@ -229,3 +231,98 @@ async def test_cached_registry_error_handling(sqlite_kvstore):
 
     invalid_obj = await cached_registry.get("vector_db", "invalid_cached_db")
     assert invalid_obj is None
+
+
+async def test_double_registration_identical_objects(disk_dist_registry):
+    """Test that registering identical objects succeeds (idempotent)."""
+    vector_db = VectorDBWithOwner(
+        identifier="test_vector_db",
+        embedding_model="all-MiniLM-L6-v2",
+        embedding_dimension=384,
+        provider_resource_id="test_vector_db",
+        provider_id="test-provider",
+    )
+
+    # First registration should succeed
+    result1 = await disk_dist_registry.register(vector_db)
+    assert result1 is True
+
+    # Second registration of identical object should also succeed (idempotent)
+    result2 = await disk_dist_registry.register(vector_db)
+    assert result2 is True
+
+    # Verify object exists and is unchanged
+    retrieved = await disk_dist_registry.get("vector_db", "test_vector_db")
+    assert retrieved is not None
+    assert retrieved.identifier == vector_db.identifier
+    assert retrieved.embedding_model == vector_db.embedding_model
+
+
+async def test_double_registration_different_objects(disk_dist_registry):
+    """Test that registering different objects with same identifier fails."""
+    vector_db1 = VectorDBWithOwner(
+        identifier="test_vector_db",
+        embedding_model="all-MiniLM-L6-v2",
+        embedding_dimension=384,
+        provider_resource_id="test_vector_db",
+        provider_id="test-provider",
+    )
+
+    vector_db2 = VectorDBWithOwner(
+        identifier="test_vector_db",  # Same identifier
+        embedding_model="different-model",  # Different embedding model
+        embedding_dimension=384,
+        provider_resource_id="test_vector_db",
+        provider_id="test-provider",
+    )
+
+    # First registration should succeed
+    result1 = await disk_dist_registry.register(vector_db1)
+    assert result1 is True
+
+    # Second registration with different data should fail
+    with pytest.raises(ValueError, match="Object of type 'vector_db' and identifier 'test_vector_db' already exists"):
+        await disk_dist_registry.register(vector_db2)
+
+    # Verify original object is unchanged
+    retrieved = await disk_dist_registry.get("vector_db", "test_vector_db")
+    assert retrieved is not None
+    assert retrieved.embedding_model == "all-MiniLM-L6-v2"  # Original value
+
+
+async def test_double_registration_with_cache(cached_disk_dist_registry):
+    """Test double registration behavior with caching enabled."""
+    from llama_stack.apis.models import ModelType
+    from llama_stack.core.datatypes import ModelWithOwner
+
+    model1 = ModelWithOwner(
+        identifier="test_model",
+        provider_resource_id="test_model",
+        provider_id="test-provider",
+        model_type=ModelType.llm,
+    )
+
+    model2 = ModelWithOwner(
+        identifier="test_model",  # Same identifier
+        provider_resource_id="test_model",
+        provider_id="test-provider",
+        model_type=ModelType.embedding,  # Different type
+    )
+
+    # First registration should succeed and populate cache
+    result1 = await cached_disk_dist_registry.register(model1)
+    assert result1 is True
+
+    # Verify in cache
+    cached_model = cached_disk_dist_registry.get_cached("model", "test_model")
+    assert cached_model is not None
+    assert cached_model.model_type == ModelType.llm
+
+    # Second registration with different data should fail
+    with pytest.raises(ValueError, match="Object of type 'model' and identifier 'test_model' already exists"):
+        await cached_disk_dist_registry.register(model2)
+
+    # Cache should still contain original model
+    cached_model_after = cached_disk_dist_registry.get_cached("model", "test_model")
+    assert cached_model_after is not None
+    assert cached_model_after.model_type == ModelType.llm

@@ -33,7 +33,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             try:
                 models = await provider.list_models()
             except Exception as e:
-                logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
+                logger.debug(f"Model refresh failed for provider {provider_id}: {e}")
                 continue
 
             self.listed_providers.add(provider_id)
@@ -66,6 +66,19 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         if model.provider_id not in self.impls_by_provider_id:
             raise ValueError(f"Provider {model.provider_id} not found in the routing table")
         return self.impls_by_provider_id[model.provider_id]
+
+    async def has_model(self, model_id: str) -> bool:
+        """
+        Check if a model exists in the routing table.
+
+        :param model_id: The model identifier to check
+        :return: True if the model exists, False otherwise
+        """
+        try:
+            await lookup_model(self, model_id)
+            return True
+        except ModelNotFoundError:
+            return False
 
     async def register_model(
         self,

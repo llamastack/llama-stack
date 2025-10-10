@@ -16,10 +16,19 @@
 
 set -Eeuo pipefail
 
-CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if command -v podman &> /dev/null; then
+  CONTAINER_RUNTIME="podman"
+elif command -v docker &> /dev/null; then
+  CONTAINER_RUNTIME="docker"
+else
+  echo "🚨 Neither Podman nor Docker could be found"
+  echo "Install Docker: https://docs.docker.com/get-docker/ or Podman: https://podman.io/getting-started/installation"
+  exit 1
+fi
 
-echo "🚀 Setting up telemetry stack for Llama Stack using Podman..."
+echo "🚀 Setting up telemetry stack for Llama Stack using $CONTAINER_RUNTIME..."
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if ! command -v "$CONTAINER_RUNTIME" &> /dev/null; then
   echo "🚨 $CONTAINER_RUNTIME could not be found"

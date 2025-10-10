@@ -25,7 +25,7 @@ pip install -U llama_stack
 
 MODEL="Llama-4-Scout-17B-16E-Instruct"
 # get meta url from llama.com
-llama model download --source meta --model-id $MODEL --meta-url <META_URL>
+huggingface-cli download meta-llama/$MODEL --local-dir ~/.llama/$MODEL
 
 # start a llama stack server
 INFERENCE_MODEL=meta-llama/$MODEL llama stack build --run --template meta-reference-gpu

@@ -68,7 +68,9 @@ recordings/
 Direct API calls with no recording or replay:
 
 ```python
-with inference_recording(mode=InferenceMode.LIVE):
+from llama_stack.testing.api_recorder import api_recording, APIRecordingMode
+
+with api_recording(mode=APIRecordingMode.LIVE):
     response = await client.chat.completions.create(...)
 ```
 
@@ -79,7 +81,7 @@ Use for initial development and debugging against real APIs.
 Captures API interactions while passing through real responses:
 
 ```python
-with inference_recording(mode=InferenceMode.RECORD, storage_dir="./recordings"):
+with api_recording(mode=APIRecordingMode.RECORD, storage_dir="./recordings"):
     response = await client.chat.completions.create(...)
     # Real API call made, response captured AND returned
 ```
@@ -96,7 +98,7 @@ The recording process:
 Returns stored responses instead of making API calls:
 
 ```python
-with inference_recording(mode=InferenceMode.REPLAY, storage_dir="./recordings"):
+with api_recording(mode=APIRecordingMode.REPLAY, storage_dir="./recordings"):
     response = await client.chat.completions.create(...)
     # No API call made, cached response returned instantly
 ```

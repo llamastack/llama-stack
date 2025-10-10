@@ -150,6 +150,7 @@ async def resolve_impls(
     provider_registry: ProviderRegistry,
     dist_registry: DistributionRegistry,
     policy: list[AccessRule],
+    internal_impls: dict[Api, Any] | None = None,
 ) -> dict[Api, Any]:
     """
     Resolves provider implementations by:
@@ -172,7 +173,7 @@ async def resolve_impls(
 
     sorted_providers = sort_providers_by_deps(providers_with_specs, run_config)
 
-    return await instantiate_providers(sorted_providers, router_apis, dist_registry, run_config, policy)
+    return await instantiate_providers(sorted_providers, router_apis, dist_registry, run_config, policy, internal_impls)
 
 
 def specs_for_autorouted_apis(apis_to_serve: list[str] | set[str]) -> dict[str, dict[str, ProviderWithSpec]]:
@@ -280,9 +281,10 @@ async def instantiate_providers(
     dist_registry: DistributionRegistry,
     run_config: StackRunConfig,
     policy: list[AccessRule],
+    internal_impls: dict[Api, Any] | None = None,
 ) -> dict[Api, Any]:
     """Instantiates providers asynchronously while managing dependencies."""
-    impls: dict[Api, Any] = {}
+    impls: dict[Api, Any] = internal_impls.copy() if internal_impls else {}
     inner_impls_by_provider_id: dict[str, dict[str, Any]] = {f"inner-{x.value}": {} for x in router_apis}
     for api_str, provider in sorted_providers:
         # Skip providers that are not enabled

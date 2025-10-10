@@ -21,11 +21,6 @@ class AnthropicProviderDataValidator(BaseModel):
 
 @json_schema_type
 class AnthropicConfig(RemoteInferenceProviderConfig):
-    api_key: str | None = Field(
-        default=None,
-        description="API key for Anthropic models",
-    )
-
     @classmethod
     def sample_run_config(cls, api_key: str = "${env.ANTHROPIC_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {

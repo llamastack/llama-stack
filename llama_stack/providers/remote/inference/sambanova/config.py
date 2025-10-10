@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -24,10 +24,6 @@ class SambaNovaImplConfig(RemoteInferenceProviderConfig):
     url: str = Field(
         default="https://api.sambanova.ai/v1",
         description="The URL for the SambaNova AI server",
-    )
-    api_key: SecretStr | None = Field(
-        default=None,
-        description="The SambaNova cloud API Key",
     )
 
     @classmethod

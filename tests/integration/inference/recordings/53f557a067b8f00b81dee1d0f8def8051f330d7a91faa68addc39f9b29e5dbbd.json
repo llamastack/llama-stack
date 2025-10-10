@@ -1,7 +1,8 @@
 {
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_inference_store_tool_calls[client_with_models-txt=ollama/llama3.2:3b-instruct-fp16-False]",
   "request": {
     "method": "POST",
-    "url": "http://0.0.0.0:11434/v1/v1/completions",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
       "model": "llama3.2:3b-instruct-fp16",
@@ -31,14 +32,14 @@
         }
       ]
     },
-    "endpoint": "/v1/completions",
+    "endpoint": "/v1/chat/completions",
     "model": "llama3.2:3b-instruct-fp16"
   },
   "response": {
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-35db283fef1d",
+        "id": "rec-53f557a067b8",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -53,7 +54,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_99dd5wna",
+                  "id": "call_5jhuk3h6",
                   "function": {
                     "arguments": "{\"city\":\"Tokyo\"}",
                     "name": "get_weather"
@@ -71,9 +72,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 15,
+          "completion_tokens": 14,
           "prompt_tokens": 177,
-          "total_tokens": 192,
+          "total_tokens": 191,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

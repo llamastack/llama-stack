@@ -25,14 +25,13 @@ classifiers = [
 ]
 dependencies = [
     "aiohttp",
-    "fastapi>=0.115.0,<1.0",                  # server
-    "fire",                                   # for MCP in LLS client
+    "fastapi>=0.115.0,<1.0",                          # server
+    "fire",                                           # for MCP in LLS client
     "httpx",
-    "huggingface-hub>=0.34.0,<1.0",
     "jinja2>=3.1.6",
     "jsonschema",
     "llama-stack-client>=0.2.23",
-    "openai>=1.107",                                # for expires_after support
+    "openai>=1.107",                                  # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
     "python-jose[cryptography]",
@@ -43,13 +42,13 @@ dependencies = [
     "tiktoken",
     "pillow",
     "h11>=0.16.0",
-    "python-multipart>=0.0.20",               # For fastapi Form
-    "uvicorn>=0.34.0",                        # server
-    "opentelemetry-sdk>=1.30.0",              # server
+    "python-multipart>=0.0.20",                       # For fastapi Form
+    "uvicorn>=0.34.0",                                # server
+    "opentelemetry-sdk>=1.30.0",                      # server
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
-    "aiosqlite>=0.21.0",                      # server - for metadata store
-    "asyncpg",                                # for metadata store
-    "sqlalchemy[asyncio]>=2.0.41",           # server - for conversations
+    "aiosqlite>=0.21.0",                              # server - for metadata store
+    "asyncpg",                                        # for metadata store
+    "sqlalchemy[asyncio]>=2.0.41",                    # server - for conversations
 ]
 
 [project.optional-dependencies]
@@ -68,14 +67,14 @@ dev = [
     "pytest-cov",
     "pytest-html",
     "pytest-json-report",
-    "pytest-socket", # For blocking network access in unit tests
-    "nbval", # For notebook testing
+    "pytest-socket",       # For blocking network access in unit tests
+    "nbval",               # For notebook testing
     "black",
     "ruff",
     "types-requests",
     "types-setuptools",
     "pre-commit",
-    "ruamel.yaml", # needed for openapi generator
+    "ruamel.yaml",         # needed for openapi generator
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -87,19 +86,14 @@ unit = [
     "pypdf",
     "mcp",
     "chardet",
-    "qdrant-client",
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
     "blobfile",
     "faiss-cpu",
-    "pymilvus>=2.6.1",
-    "milvus-lite>=2.5.0",
     "litellm",
     "together",
     "coverage",
-    "chromadb>=1.0.15",
     "moto[s3]>=5.1.10",
-    "weaviate-client>=4.16.4",
 ]
 # These are the core dependencies required for running integration tests. They are shared across all
 # providers. If a provider requires additional dependencies, please add them to your environment
@@ -120,6 +114,8 @@ test = [
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
     "requests",
+    "chromadb>=1.0.15",
+    "qdrant-client",
     "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "weaviate-client>=4.16.4",
@@ -144,9 +140,7 @@ docs = [
     "requests",
 ]
 codegen = ["rich", "pydantic>=2.11.9", "jinja2>=3.1.6"]
-benchmark = [
-    "locust>=2.39.1",
-]
+benchmark = ["locust>=2.39.1"]
 
 [project.urls]
 Homepage = "https://github.com/llamastack/llama-stack"
@@ -245,7 +239,6 @@ follow_imports = "silent"
 # to exclude the entire directory.
 exclude = [
     # As we fix more and more of these, we should remove them from the list
-    "^llama_stack/cli/download\\.py$",
     "^llama_stack.core/build\\.py$",
     "^llama_stack.core/client\\.py$",
     "^llama_stack.core/request_headers\\.py$",
@@ -278,14 +271,10 @@ exclude = [
     "^llama_stack/providers/remote/datasetio/huggingface/",
     "^llama_stack/providers/remote/datasetio/nvidia/",
     "^llama_stack/providers/remote/inference/bedrock/",
-    "^llama_stack/providers/remote/inference/cerebras/",
-    "^llama_stack/providers/remote/inference/databricks/",
-    "^llama_stack/providers/remote/inference/fireworks/",
     "^llama_stack/providers/remote/inference/nvidia/",
     "^llama_stack/providers/remote/inference/passthrough/",
     "^llama_stack/providers/remote/inference/runpod/",
     "^llama_stack/providers/remote/inference/tgi/",
-    "^llama_stack/providers/remote/inference/together/",
     "^llama_stack/providers/remote/inference/watsonx/",
     "^llama_stack/providers/remote/safety/bedrock/",
     "^llama_stack/providers/remote/safety/nvidia/",
@@ -339,6 +328,4 @@ classmethod-decorators = ["classmethod", "pydantic.field_validator"]
 [tool.pytest.ini_options]
 addopts = ["--durations=10"]
 asyncio_mode = "auto"
-markers = [
-    "allow_network: Allow network access for specific unit tests",
-]
+markers = ["allow_network: Allow network access for specific unit tests"]

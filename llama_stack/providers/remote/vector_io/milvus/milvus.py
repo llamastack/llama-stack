@@ -309,14 +309,12 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         inference_api: Inference,
         files_api: Files | None,
     ) -> None:
+        super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.cache = {}
         self.client = None
         self.inference_api = inference_api
-        self.files_api = files_api
-        self.kvstore: KVStore | None = None
         self.vector_db_store = None
-        self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:
@@ -351,6 +349,8 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
 
     async def shutdown(self) -> None:
         self.client.close()
+        # Clean up mixin resources (file batch tasks)
+        await super().shutdown()
 
     async def register_vector_db(
         self,

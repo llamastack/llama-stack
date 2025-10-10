@@ -39,7 +39,7 @@ class Setup(BaseModel):
 
     name: str
     description: str
-    defaults: dict[str, str] = Field(default_factory=dict)
+    defaults: dict[str, str | int] = Field(default_factory=dict)
     env: dict[str, str] = Field(default_factory=dict)
 
 
@@ -88,6 +88,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
+            "embedding_dimension": 1536,
         },
     ),
     "tgi": Setup(
@@ -129,6 +130,27 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "fireworks/accounts/fireworks/models/llama-v3p1-8b-instruct",
             "embedding_model": "fireworks/accounts/fireworks/models/qwen3-embedding-8b",
+        },
+    ),
+    "anthropic": Setup(
+        name="anthropic",
+        description="Anthropic Claude models",
+        defaults={
+            "text_model": "anthropic/claude-3-5-haiku-20241022",
+        },
+    ),
+    "llama-api": Setup(
+        name="llama-openai-compat",
+        description="Llama models from https://api.llama.com",
+        defaults={
+            "text_model": "llama_openai_compat/Llama-3.3-8B-Instruct",
+        },
+    ),
+    "groq": Setup(
+        name="groq",
+        description="Groq models",
+        defaults={
+            "text_model": "groq/llama-3.3-70b-versatile",
         },
     ),
 }

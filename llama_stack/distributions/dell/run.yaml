@@ -97,6 +97,9 @@ metadata_store:
 inference_store:
   type: sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/inference_store.db
+conversations_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/conversations.db
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}

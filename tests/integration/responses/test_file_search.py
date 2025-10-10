@@ -47,12 +47,14 @@ def test_response_text_format(compat_client, text_model_id, text_format):
 
 
 @pytest.fixture
-def vector_store_with_filtered_files(compat_client, text_model_id, tmp_path_factory):
-    """Create a vector store with multiple files that have different attributes for filtering tests."""
+def vector_store_with_filtered_files(compat_client, embedding_model_id, embedding_dimension, tmp_path_factory):
+    # """Create a vector store with multiple files that have different attributes for filtering tests."""
     if isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
+        pytest.skip("upload_file() is not yet supported in library client somehow?")
 
-    vector_store = new_vector_store(compat_client, "test_vector_store_with_filters")
+    vector_store = new_vector_store(
+        compat_client, "test_vector_store_with_filters", embedding_model_id, embedding_dimension
+    )
     tmp_path = tmp_path_factory.mktemp("filter_test_files")
 
     # Create multiple files with different attributes

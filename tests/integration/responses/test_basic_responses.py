@@ -23,6 +23,14 @@ def test_response_non_streaming_basic(compat_client, text_model_id, case):
     assert len(output_text) > 0
     assert case.expected.lower() in output_text
 
+    # Verify usage is reported
+    assert response.usage is not None, "Response should include usage information"
+    assert response.usage.input_tokens > 0, "Input tokens should be greater than 0"
+    assert response.usage.output_tokens > 0, "Output tokens should be greater than 0"
+    assert response.usage.total_tokens == response.usage.input_tokens + response.usage.output_tokens, (
+        "Total tokens should equal input + output tokens"
+    )
+
     retrieved_response = compat_client.responses.retrieve(response_id=response.id)
     assert retrieved_response.output_text == response.output_text
 
@@ -72,6 +80,15 @@ def test_response_streaming_basic(compat_client, text_model_id, case):
             output_text = chunk.response.output_text.lower().strip()
             assert len(output_text) > 0, "Response should have content"
             assert case.expected.lower() in output_text, f"Expected '{case.expected}' in response"
+
+            # Verify usage is reported in final response
+            assert chunk.response.usage is not None, "Completed response should include usage information"
+            assert chunk.response.usage.input_tokens > 0, "Input tokens should be greater than 0"
+            assert chunk.response.usage.output_tokens > 0, "Output tokens should be greater than 0"
+            assert (
+                chunk.response.usage.total_tokens
+                == chunk.response.usage.input_tokens + chunk.response.usage.output_tokens
+            ), "Total tokens should equal input + output tokens"
 
     # Use validator for common checks
     validator = StreamingValidator(events)

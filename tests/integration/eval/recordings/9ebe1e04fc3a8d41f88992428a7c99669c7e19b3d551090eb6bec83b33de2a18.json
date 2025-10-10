@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/eval/test_eval.py::test_evaluate_benchmark[txt=ollama/llama3.2:3b-instruct-fp16-basic::subset_of]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -8,7 +9,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "What is the currency of Japan?"
+          "content": "Who is the CEO of Meta?"
         }
       ],
       "max_tokens": 0
@@ -20,14 +21,14 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-92a9a916ef02",
+        "id": "rec-9ebe1e04fc3a",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "The currency of Japan is the Japanese yen (\u00a5). It is represented by the symbol \u00a5. In some contexts, it's also abbreviated as \"JPY\" or written as \"yen\". The Bank of Japan is responsible for managing the country's monetary policy and issuing new yen banknotes and coins.",
+              "content": "Mark Zuckerberg is the founder, chairman and CEO of Meta, which he originally founded as Facebook in 2004.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -43,9 +44,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 61,
+          "completion_tokens": 24,
           "prompt_tokens": 32,
-          "total_tokens": 93,
+          "total_tokens": 56,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

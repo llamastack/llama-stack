@@ -7,10 +7,11 @@
 import base64
 import uuid
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
 from openai import NOT_GIVEN, AsyncOpenAI
+from pydantic import BaseModel, ConfigDict
 
 from llama_stack.apis.inference import (
     Model,
@@ -26,27 +27,39 @@ from llama_stack.apis.inference import (
 from llama_stack.apis.models import ModelType
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import ModelsProtocolPrivate
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
+class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     """
     Mixin class that provides OpenAI-specific functionality for inference providers.
     This class handles direct OpenAI API calls using the AsyncOpenAI client.
 
     This is an abstract base class that requires child classes to implement:
-    - get_api_key(): Method to retrieve the API key
     - get_base_url(): Method to retrieve the OpenAI-compatible API base URL
+
+    The behavior of this class can be customized by child classes in the following ways:
+    - overwrite_completion_id: If True, overwrites the 'id' field in OpenAI responses
+    - download_images: If True, downloads images and converts to base64 for providers that require it
+    - embedding_model_metadata: A dictionary mapping model IDs to their embedding metadata
+    - provider_data_api_key_field: Optional field name in provider data to look for API key
+    - list_provider_model_ids: Method to list available models from the provider
+    - get_extra_client_params: Method to provide extra parameters to the AsyncOpenAI client
 
     Expected Dependencies:
     - self.model_store: Injected by the Llama Stack distribution system at runtime.
       This provides model registry functionality for looking up registered models.
       The model_store is set in routing_tables/common.py during provider initialization.
     """
+
+    # Allow extra fields so the routing infra can inject model_store, __provider_id__, etc.
+    model_config = ConfigDict(extra="allow")
+
+    config: RemoteInferenceProviderConfig
 
     # Allow subclasses to control whether to overwrite the 'id' field in OpenAI responses
     # is overwritten with a client-side generated id.
@@ -73,20 +86,15 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
 
-    # automatically set by the resolver when instantiating the provider
-    __provider_id__: str
-
-    @abstractmethod
-    def get_api_key(self) -> str:
+    def get_api_key(self) -> str | None:
         """
         Get the API key.
 
-        This method must be implemented by child classes to provide the API key
-        for authenticating with the OpenAI API or compatible endpoints.
-
-        :return: The API key as a string
+        :return: The API key as a string, or None if not set
         """
-        pass
+        if self.config.auth_credential is None:
+            return None
+        return self.config.auth_credential.get_secret_value()
 
     @abstractmethod
     def get_base_url(self) -> str:
@@ -111,6 +119,41 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
         """
         return {}
 
+    async def list_provider_model_ids(self) -> Iterable[str]:
+        """
+        List available models from the provider.
+
+        Child classes can override this method to provide a custom implementation
+        for listing models. The default implementation uses the AsyncOpenAI client
+        to list models from the OpenAI-compatible endpoint.
+
+        :return: An iterable of model IDs or None if not implemented
+        """
+        client = self.client
+        async with client:
+            model_ids = [m.id async for m in client.models.list()]
+        return model_ids
+
+    async def initialize(self) -> None:
+        """
+        Initialize the OpenAI mixin.
+
+        This method provides a default implementation that does nothing.
+        Subclasses can override this method to perform initialization tasks
+        such as setting up clients, validating configurations, etc.
+        """
+        pass
+
+    async def shutdown(self) -> None:
+        """
+        Shutdown the OpenAI mixin.
+
+        This method provides a default implementation that does nothing.
+        Subclasses can override this method to perform cleanup tasks
+        such as closing connections, releasing resources, etc.
+        """
+        pass
+
     @property
     def client(self) -> AsyncOpenAI:
         """
@@ -130,13 +173,11 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
             if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
                 api_key = getattr(provider_data, self.provider_data_api_key_field)
 
-            if not api_key:  # TODO: let get_api_key return None
-                raise ValueError(
-                    "API key is not set. Please provide a valid API key in the "
-                    "provider data header, e.g. x-llamastack-provider-data: "
-                    f'{{"{self.provider_data_api_key_field}": "<API_KEY>"}}, '
-                    "or in the provider config."
-                )
+        if not api_key:
+            message = "API key not provided."
+            if self.provider_data_api_key_field:
+                message += f' Please provide a valid API key in the provider data header, e.g. x-llamastack-provider-data: {{"{self.provider_data_api_key_field}": "<API_KEY>"}}.'
+            raise ValueError(message)
 
         return AsyncOpenAI(
             api_key=api_key,
@@ -371,7 +412,7 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
 
     async def register_model(self, model: Model) -> Model:
         if not await self.check_model_availability(model.provider_model_id):
-            raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")
+            raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")  # type: ignore[attr-defined]
         return model
 
     async def unregister_model(self, model_id: str) -> None:
@@ -387,41 +428,87 @@ class OpenAIMixin(ModelsProtocolPrivate, NeedsRequestProviderData, ABC):
         """
         self._model_cache = {}
 
-        async for m in self.client.models.list():
-            if self.allowed_models and m.id not in self.allowed_models:
-                logger.info(f"Skipping model {m.id} as it is not in the allowed models list")
+        try:
+            iterable = await self.list_provider_model_ids()
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__}.list_provider_model_ids() failed with: {e}")
+            raise
+        if not hasattr(iterable, "__iter__"):
+            raise TypeError(
+                f"Failed to list models: {self.__class__.__name__}.list_provider_model_ids() must return an iterable of "
+                f"strings, but returned {type(iterable).__name__}"
+            )
+
+        provider_models_ids = list(iterable)
+        logger.info(f"{self.__class__.__name__}.list_provider_model_ids() returned {len(provider_models_ids)} models")
+
+        for provider_model_id in provider_models_ids:
+            if not isinstance(provider_model_id, str):
+                raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
+            if self.allowed_models and provider_model_id not in self.allowed_models:
+                logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
                 continue
-            if metadata := self.embedding_model_metadata.get(m.id):
-                # This is an embedding model - augment with metadata
+            if metadata := self.embedding_model_metadata.get(provider_model_id):
                 model = Model(
                     provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=m.id,
-                    identifier=m.id,
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
                     model_type=ModelType.embedding,
                     metadata=metadata,
                 )
             else:
-                # This is an LLM
                 model = Model(
                     provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=m.id,
-                    identifier=m.id,
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
                     model_type=ModelType.llm,
                 )
-            self._model_cache[m.id] = model
+            self._model_cache[provider_model_id] = model
 
         return list(self._model_cache.values())
 
     async def check_model_availability(self, model: str) -> bool:
         """
-        Check if a specific model is available from the provider's /v1/models.
+        Check if a specific model is available from the provider's /v1/models or pre-registered.
 
         :param model: The model identifier to check.
-        :return: True if the model is available dynamically, False otherwise.
+        :return: True if the model is available dynamically or pre-registered, False otherwise.
         """
+        # First check if the model is pre-registered in the model store
+        if hasattr(self, "model_store") and self.model_store:
+            if await self.model_store.has_model(model):
+                return True
+
+        # Then check the provider's dynamic model cache
         if not self._model_cache:
             await self.list_models()
         return model in self._model_cache
 
     async def should_refresh_models(self) -> bool:
-        return False
+        return self.config.refresh_models
+
+    #
+    # The model_dump implementations are to avoid serializing the extra fields,
+    # e.g. model_store, which are not pydantic.
+    #
+
+    def _filter_fields(self, **kwargs):
+        """Helper to exclude extra fields from serialization."""
+        # Exclude any extra fields stored in __pydantic_extra__
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            exclude = kwargs.get("exclude", set())
+            if not isinstance(exclude, set):
+                exclude = set(exclude) if exclude else set()
+            exclude.update(self.__pydantic_extra__.keys())
+            kwargs["exclude"] = exclude
+        return kwargs
+
+    def model_dump(self, **kwargs):
+        """Override to exclude extra fields from serialization."""
+        kwargs = self._filter_fields(**kwargs)
+        return super().model_dump(**kwargs)
+
+    def model_dump_json(self, **kwargs):
+        """Override to exclude extra fields from JSON serialization."""
+        kwargs = self._filter_fields(**kwargs)
+        return super().model_dump_json(**kwargs)

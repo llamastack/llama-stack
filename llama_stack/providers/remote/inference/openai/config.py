@@ -21,10 +21,6 @@ class OpenAIProviderDataValidator(BaseModel):
 
 @json_schema_type
 class OpenAIConfig(RemoteInferenceProviderConfig):
-    api_key: str | None = Field(
-        default=None,
-        description="API key for OpenAI models",
-    )
     base_url: str = Field(
         default="https://api.openai.com/v1",
         description="Base URL for OpenAI API",

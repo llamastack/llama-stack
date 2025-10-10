@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.apis.common.errors import UnsupportedModelError
 from llama_stack.apis.models import ModelType
@@ -23,6 +23,15 @@ class RemoteInferenceProviderConfig(BaseModel):
     allowed_models: list[str] | None = Field(  # TODO: make this non-optional and give a list() default
         default=None,
         description="List of models that should be registered with the model registry. If None, all models are allowed.",
+    )
+    refresh_models: bool = Field(
+        default=False,
+        description="Whether to refresh models periodically from the provider",
+    )
+    auth_credential: SecretStr | None = Field(
+        default=None,
+        description="Authentication credential for the provider",
+        alias="api_key",
     )
 
 

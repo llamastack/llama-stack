@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/agents/test_agents.py::test_create_turn_response[ollama/llama3.2:3b-instruct-fp16-client_tools1]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -54,7 +55,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-b57525af4982",
+          "id": "rec-697a25dd7f0f",
           "choices": [
             {
               "delta": {
@@ -65,7 +66,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_gefseirj",
+                    "id": "call_pojpzwm8",
                     "function": {
                       "arguments": "{\"celcius\":false,\"liquid_name\":\"polyjuice\"}",
                       "name": "get_boiling_point_with_metadata"
@@ -90,7 +91,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-b57525af4982",
+          "id": "rec-697a25dd7f0f",
           "choices": [
             {
               "delta": {

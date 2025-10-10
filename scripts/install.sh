@@ -221,8 +221,8 @@ fi
 cmd=( run -d "${PLATFORM_OPTS[@]}" --name llama-stack \
       --network llama-net \
       -p "${PORT}:${PORT}" \
-      "${SERVER_IMAGE}" --port "${PORT}" \
-      --env OLLAMA_URL="http://ollama-server:${OLLAMA_PORT}")
+      -e OLLAMA_URL="http://ollama-server:${OLLAMA_PORT}" \
+      "${SERVER_IMAGE}" --port "${PORT}")
 
 log "🦙 Starting Llama Stack..."
 if ! execute_with_log $ENGINE "${cmd[@]}"; then

@@ -23,6 +23,7 @@ from llama_stack.apis.files import (
     OpenAIFilePurpose,
 )
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.id_generation import generate_object_id
 from llama_stack.providers.utils.files.form_data import parse_expires_after
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
@@ -198,7 +199,7 @@ class S3FilesImpl(Files):
         purpose: Annotated[OpenAIFilePurpose, Form()],
         expires_after: Annotated[ExpiresAfter | None, Depends(parse_expires_after)] = None,
     ) -> OpenAIFileObject:
-        file_id = f"file-{uuid.uuid4().hex}"
+        file_id = generate_object_id("file", lambda: f"file-{uuid.uuid4().hex}")
 
         filename = getattr(file, "filename", None) or "uploaded_file"
 

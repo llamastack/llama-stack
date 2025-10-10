@@ -22,6 +22,7 @@ from llama_stack.apis.files import (
     OpenAIFilePurpose,
 )
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.files.form_data import parse_expires_after
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
@@ -65,7 +66,7 @@ class LocalfsFilesImpl(Files):
 
     def _generate_file_id(self) -> str:
         """Generate a unique file ID for OpenAI API."""
-        return f"file-{uuid.uuid4().hex}"
+        return generate_object_id("file", lambda: f"file-{uuid.uuid4().hex}")
 
     def _get_file_path(self, file_id: str) -> Path:
         """Get the filesystem path for a file ID."""
@@ -95,7 +96,9 @@ class LocalfsFilesImpl(Files):
             raise RuntimeError("Files provider not initialized")
 
         if expires_after is not None:
-            raise NotImplementedError("File expiration is not supported by this provider")
+            logger.warning(
+                f"File expiration is not supported by this provider, ignoring expires_after: {expires_after}"
+            )
 
         file_id = self._generate_file_id()
         file_path = self._get_file_path(file_id)

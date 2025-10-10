@@ -76,6 +76,8 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
         fields_info = {}
         if hasattr(config_class, "model_fields"):
             for field_name, field in config_class.model_fields.items():
+                if getattr(field, "exclude", False):
+                    continue
                 field_type = str(field.annotation) if field.annotation else "Any"
 
                 # this string replace is ridiculous
@@ -106,7 +108,10 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
                     "default": default_value,
                     "required": field.default is None and not field.is_required,
                 }
-                fields_info[field_name] = field_info
+
+                # Use alias if available, otherwise use the field name
+                display_name = field.alias if field.alias else field_name
+                fields_info[display_name] = field_info
 
         if accepts_extra_config:
             config_description = "Additional configuration options that will be forwarded to the underlying provider"

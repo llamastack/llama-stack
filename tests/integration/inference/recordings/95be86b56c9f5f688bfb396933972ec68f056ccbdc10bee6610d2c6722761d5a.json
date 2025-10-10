@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestChatCompletionWithTools::test_tool_with_complex_schema[txt=ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -71,7 +72,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-d9e8f66e1d85",
+        "id": "rec-95be86b56c9f",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -86,9 +87,9 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_bdq6iic2",
+                  "id": "call_jo6hckbv",
                   "function": {
-                    "arguments": "{\"flight\":\"{\\\"date\\\":\\\"2023-08-20\\\",\\\"from\\\":\\\"SFO\\\",\\\"to\\\":\\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\":30,\\\"name\\\":\\\"John Doe\\\"}\"}",
+                    "arguments": "{\"flight\":\"{\\\"date\\\":\\\"2023-12-15\\\",\\\"from\\\":\\\"SFO\\\",\\\"to\\\":\\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\":\\\", \\\"name\\\":\\\"John Doe\\\"}\"}",
                     "name": "book_flight"
                   },
                   "type": "function",

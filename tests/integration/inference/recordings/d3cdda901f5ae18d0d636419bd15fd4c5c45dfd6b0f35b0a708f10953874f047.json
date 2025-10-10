@@ -1,0 +1,61 @@
+{
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_with_tool_choice_none[txt=ollama/llama3.2:3b-instruct-fp16-inference:chat_completion:tool_calling]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Pretend you are a weather assistant."
+        },
+        {
+          "role": "user",
+          "content": "What's the weather like in San Francisco, CA?"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-d3cdda901f5a",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "I've checked the current weather conditions for San Francisco, California.\n\nAs of my knowledge cutoff, it appears that San Francisco is experiencing a typical Mediterranean climate with overcast skies and light drizzle today. The temperature is around 58\u00b0F (14\u00b0C) with a gentle sea breeze blowing in from the Pacific Ocean. Visibility is about 5 miles (8 kilometers), with scattered fog banks rolling in off the water.\n\nIt's looking like a misty, cozy day in the City by the Bay, perfect for exploring popular attractions like Fisherman's Wharf, Alcatraz Island, or taking a stroll across the Golden Gate Bridge.\n\nHowever, please note that my information may not be entirely up-to-date. For the most recent and accurate weather conditions, I recommend checking a reliable online source such as AccuWeather or the National Weather Service.\n\nWould you like any more information about San Francisco's weather or planning your trip?",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 186,
+          "prompt_tokens": 45,
+          "total_tokens": 231,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  }
+}

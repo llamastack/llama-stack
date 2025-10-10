@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestEdgeCases::test_multiple_tools_with_different_schemas[txt=ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -76,30 +77,20 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-e0c71820f395",
+        "id": "rec-12ea4e4a2705",
         "choices": [
           {
-            "finish_reason": "tool_calls",
+            "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "",
+              "content": "{\"name\":\"complex\",\"parameters\":{}\"}}",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": [
-                {
-                  "id": "call_vxiwiifd",
-                  "function": {
-                    "arguments": "{\"x\":\"\"}",
-                    "name": "simple"
-                  },
-                  "type": "function",
-                  "index": 0
-                }
-              ]
+              "tool_calls": null
             }
           }
         ],
@@ -109,9 +100,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 15,
+          "completion_tokens": 10,
           "prompt_tokens": 246,
-          "total_tokens": 261,
+          "total_tokens": 256,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

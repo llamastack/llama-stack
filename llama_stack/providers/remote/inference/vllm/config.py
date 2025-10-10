@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -22,17 +22,14 @@ class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
         default=4096,
         description="Maximum number of tokens to generate.",
     )
-    api_token: str | None = Field(
-        default="fake",
+    auth_credential: SecretStr | None = Field(
+        default=None,
+        alias="api_token",
         description="The API token",
     )
     tls_verify: bool | str = Field(
         default=True,
         description="Whether to verify TLS certificates. Can be a boolean or a path to a CA certificate file.",
-    )
-    refresh_models: bool = Field(
-        default=False,
-        description="Whether to refresh models periodically",
     )
 
     @field_validator("tls_verify")

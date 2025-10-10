@@ -1,4 +1,5 @@
 {
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestEdgeCases::test_tool_without_schema[txt=ollama/llama3.2:3b-instruct-fp16]",
   "request": {
     "method": "POST",
     "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
@@ -32,7 +33,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-c4991de37dfb",
+        "id": "rec-a1e4350b0157",
         "choices": [
           {
             "finish_reason": "tool_calls",
@@ -47,7 +48,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_wbx3rwxz",
+                  "id": "call_mw3hh7mz",
                   "function": {
                     "arguments": "{}",
                     "name": "no_args_tool"

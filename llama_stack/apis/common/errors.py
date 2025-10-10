@@ -86,3 +86,18 @@ class TokenValidationError(ValueError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class ConversationNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced conversation"""
+
+    def __init__(self, conversation_id: str) -> None:
+        super().__init__(conversation_id, "Conversation", "client.conversations.list()")
+
+
+class InvalidConversationIdError(ValueError):
+    """raised when a conversation ID has an invalid format"""
+
+    def __init__(self, conversation_id: str) -> None:
+        message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
+        super().__init__(message)
