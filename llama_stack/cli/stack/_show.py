@@ -15,9 +15,9 @@ import yaml
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
-from termcolor import colored, cprint
+from termcolor import cprint
 
-from llama_stack.cli.stack.utils import ImageType, available_templates_specs, generate_run_config
+from llama_stack.cli.stack.utils import ImageType, available_templates_specs
 from llama_stack.core.build import get_provider_dependencies
 from llama_stack.core.datatypes import (
     BuildConfig,
@@ -25,10 +25,7 @@ from llama_stack.core.datatypes import (
     DistributionSpec,
 )
 from llama_stack.core.distribution import get_provider_registry
-from llama_stack.core.external import load_external_apis
 from llama_stack.core.stack import replace_env_vars
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-from llama_stack.core.utils.exec import run_command
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
 
@@ -242,6 +239,15 @@ def run_stack_show_command(args: argparse.Namespace) -> None:
     name = env_name or args.distro or args.config  # the config should be the last option if `--env-name` was specified
     normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(build_config)
     normal_deps += SERVER_DEPENDENCIES
+
+    # Add external API dependencies
+    if build_config.external_apis_dir:
+        from llama_stack.core.external import load_external_apis
+
+        external_apis = load_external_apis(build_config)
+        if external_apis:
+            for _, api_spec in external_apis.items():
+                normal_deps.extend(api_spec.pip_packages)
 
     # Format and output based on requested format
     if args.format == "json":
