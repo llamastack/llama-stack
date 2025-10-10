@@ -284,6 +284,7 @@ class OpenAIResponsesImpl:
             text=text,
             max_infer_iters=max_infer_iters,
             tool_executor=self.tool_executor,
+            instructions=instructions,
         )
 
         # Stream the response

@@ -297,3 +297,53 @@ def test_function_call_output_response_with_none_arguments(openai_client, client
     assert response.output[0].type == "function_call"
     assert response.output[0].arguments == "{}"
     _ = response.output[0].call_id
+
+
+def test_response_with_instructions(openai_client, client_with_models, text_model_id):
+    """Test instructions parameter in the responses object."""
+    if isinstance(client_with_models, LlamaStackAsLibraryClient):
+        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
+
+    client = openai_client
+
+    messages = [
+        {
+            "role": "user",
+            "content": "What is the capital of France?",
+        }
+    ]
+
+    # First create a response without instructions parameter
+    response_w_o_instructions = client.responses.create(
+        model=text_model_id,
+        input=messages,
+        stream=False,
+    )
+
+    # Verify we have None in the instructions field
+    assert response_w_o_instructions.instructions is None
+
+    # Next create a response and pass instructions parameter
+    instructions = "You are a helpful assistant."
+    response_with_instructions = client.responses.create(
+        model=text_model_id,
+        instructions=instructions,
+        input=messages,
+        stream=False,
+    )
+
+    # Verify we have a valid instructions field
+    assert response_with_instructions.instructions == instructions
+
+    # Finally test instructions parameter with a previous response id
+    instructions2 = "You are a helpful assistant and speak in pirate language."
+    response_with_instructions2 = client.responses.create(
+        model=text_model_id,
+        instructions=instructions2,
+        input=messages,
+        previous_response_id=response_with_instructions.id,
+        stream=False,
+    )
+
+    # Verify instructions from previous response was not carried over to the next response
+    assert response_with_instructions2.instructions == instructions2
