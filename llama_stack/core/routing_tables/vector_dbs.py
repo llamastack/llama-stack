@@ -70,9 +70,6 @@ class VectorDBsRoutingTable(CommonRoutingTableImpl, VectorDBs):
             raise ValueError(f"Model {embedding_model} does not have an embedding dimension")
 
         provider = self.impls_by_provider_id[provider_id]
-        logger.warning(
-            "VectorDB is being deprecated in future releases in favor of VectorStore. Please migrate your usage accordingly."
-        )
         vector_store = await provider.openai_create_vector_store(
             name=vector_db_name or vector_db_id,
             embedding_model=embedding_model,
