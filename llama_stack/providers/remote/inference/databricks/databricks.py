@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from collections.abc import Iterable
+from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
@@ -40,5 +41,6 @@ class DatabricksInferenceAdapter(OpenAIMixin):
     async def openai_completion(
         self,
         params: OpenAICompletionRequest,
+        **kwargs: Any,
     ) -> OpenAICompletion:
         raise NotImplementedError()

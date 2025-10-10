@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 from collections.abc import AsyncIterator
+from typing import Any
 from urllib.parse import urljoin
 
 import httpx
@@ -94,6 +95,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
     async def openai_chat_completion(
         self,
         params: OpenAIChatCompletionRequest,
+        **kwargs: Any,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         params = params.model_copy()
 
@@ -108,4 +110,4 @@ class VLLMInferenceAdapter(OpenAIMixin):
         if not params.tools and params.tool_choice is not None:
             params.tool_choice = ToolChoice.none.value
 
-        return await super().openai_chat_completion(params)
+        return await super().openai_chat_completion(params, **kwargs)

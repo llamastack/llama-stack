@@ -1058,8 +1058,6 @@ class OpenAICompletionRequest(BaseModel):
     :param top_p: (Optional) The top p to use.
     :param user: (Optional) The user to use.
     :param suffix: (Optional) The suffix that should be appended to the completion.
-    :param guided_choice: (Optional) vLLM-specific parameter for guided generation with a list of choices.
-    :param prompt_logprobs: (Optional) vLLM-specific parameter for number of log probabilities to return for prompt tokens.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -1082,12 +1080,6 @@ class OpenAICompletionRequest(BaseModel):
     temperature: float | None = None
     top_p: float | None = None
     user: str | None = None
-
-    # vLLM-specific parameters (documented here but also allowed via extra fields)
-    guided_choice: list[str] | None = None
-    prompt_logprobs: int | None = None
-
-    # for fill-in-the-middle type completion
     suffix: str | None = None
 
 

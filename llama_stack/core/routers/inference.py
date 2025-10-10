@@ -194,12 +194,13 @@ class InferenceRouter(Inference):
         params.model = model_obj.identifier
 
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
+        extra_body = dict(params.__pydantic_extra__ or {})
         if params.stream:
-            return await provider.openai_completion(params)
+            return await provider.openai_completion(params, **extra_body)
             # TODO: Metrics do NOT work with openai_completion stream=True due to the fact
             # that we do not return an AsyncIterator, our tests expect a stream of chunks we cannot intercept currently.
 
-        response = await provider.openai_completion(params)
+        response = await provider.openai_completion(params, **extra_body)
         if self.telemetry:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
@@ -246,7 +247,8 @@ class InferenceRouter(Inference):
 
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
         if params.stream:
-            response_stream = await provider.openai_chat_completion(params)
+            extra_body = dict(params.__pydantic_extra__ or {})
+            response_stream = await provider.openai_chat_completion(params, **extra_body)
 
             # For streaming, the provider returns AsyncIterator[OpenAIChatCompletionChunk]
             # We need to add metrics to each chunk and store the final completion
@@ -319,7 +321,8 @@ class InferenceRouter(Inference):
     async def _nonstream_openai_chat_completion(
         self, provider: Inference, params: OpenAIChatCompletionRequest
     ) -> OpenAIChatCompletion:
-        response = await provider.openai_chat_completion(params)
+        extra_body = dict(params.__pydantic_extra__ or {})
+        response = await provider.openai_chat_completion(params, **extra_body)
         for choice in response.choices:
             # some providers return an empty list for no tool calls in non-streaming responses
             # but the OpenAI API returns None. So, set tool_calls to None if it's empty
