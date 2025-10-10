@@ -83,7 +83,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
         """
         Skip the check when running without authentication.
         """
-        if not self.config.api_token:
+        if not self.config.auth_credential:
             model_ids = []
             async for m in self.client.models.list():
                 if m.id == model:  # Found exact match
