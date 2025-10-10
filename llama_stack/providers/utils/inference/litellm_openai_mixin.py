@@ -230,6 +230,9 @@ class LiteLLMOpenAIMixin(
     ) -> OpenAICompletion:
         model_obj = await self.model_store.get_model(params.model)
 
+        # Extract extra fields
+        extra_body = dict(params.__pydantic_extra__ or {})
+
         request_params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(model_obj.provider_resource_id),
             prompt=params.prompt,
@@ -253,6 +256,7 @@ class LiteLLMOpenAIMixin(
             suffix=params.suffix,
             api_key=self.get_api_key(),
             api_base=self.api_base,
+            **extra_body,
         )
         return await litellm.atext_completion(**request_params)
 
@@ -271,6 +275,9 @@ class LiteLLMOpenAIMixin(
                 stream_options = {**stream_options, "include_usage": True}
 
         model_obj = await self.model_store.get_model(params.model)
+
+        # Extract extra fields
+        extra_body = dict(params.__pydantic_extra__ or {})
 
         request_params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(model_obj.provider_resource_id),
@@ -298,6 +305,7 @@ class LiteLLMOpenAIMixin(
             user=params.user,
             api_key=self.get_api_key(),
             api_base=self.api_base,
+            **extra_body,
         )
         return await litellm.acompletion(**request_params)
 
