@@ -345,18 +345,24 @@ class OpenAIResponsesImpl:
                 failed_response = stream_chunk.response
             yield stream_chunk
 
-        # Store the response if requested
-        if store and final_response and failed_response is None:
-            await self._store_response(
-                response=final_response,
-                input=all_input,
-                messages=orchestrator.final_messages,
-            )
+            # Store and sync immediately after yielding terminal events
+            # This ensures the storage/syncing happens even if the consumer breaks early
+            if (
+                stream_chunk.type in {"response.completed", "response.incomplete"}
+                and store
+                and final_response
+                and failed_response is None
+            ):
+                await self._store_response(
+                    response=final_response,
+                    input=all_input,
+                    messages=orchestrator.final_messages,
+                )
 
-        if conversation and final_response:
-            # for Conversations, we need to use the original_input if it's available, otherwise use input
-            sync_input = original_input if original_input is not None else input
-            await self._sync_response_to_conversation(conversation, sync_input, final_response)
+            if stream_chunk.type in {"response.completed", "response.incomplete"} and conversation and final_response:
+                # for Conversations, we need to use the original_input if it's available, otherwise use input
+                sync_input = original_input if original_input is not None else input
+                await self._sync_response_to_conversation(conversation, sync_input, final_response)
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)
