@@ -107,6 +107,9 @@ metadata_store:
 inference_store:
   type: sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/inference_store.db
+conversations_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/watsonx}/conversations.db
 models: []
 shields: []
 vector_dbs: []
