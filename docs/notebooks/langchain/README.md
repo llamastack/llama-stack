@@ -27,8 +27,16 @@ pip install llama-stack-client langchain langchain-core langchain-community beau
 ### Start Llama Stack Server
 Before running either version, ensure your Llama Stack server is running:
 ```bash
+# Start your ollama server if you choose to run ollama locally
+ollama serve
+# In a separate terminal, you can tab the model you need
+ollama pull llama3.2:3b # or any other model you need
+# Set your OLLAMA_URL environment variable to the ollama server url
+OLLAMA_URL=http://localhost:11434
 # Start Llama Stack server (example)
-llama stack run your-config --port 8321
+uv run --with llama-stack \
+  llama stack build --distro starter \
+  --image-type venv --run
 ```
 
 ---
