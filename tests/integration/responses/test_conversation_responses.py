@@ -25,7 +25,7 @@ class TestConversationResponses:
         assert response.id.startswith("resp_")
         assert len(response.output_text.strip()) > 0
 
-        # Verify conversation was synced
+        # Verify conversation was synced properly
         conversation_items = openai_client.conversations.items.list(conversation.id)
         assert len(conversation_items.data) >= 2
 
