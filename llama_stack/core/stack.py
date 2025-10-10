@@ -102,6 +102,12 @@ TEST_RECORDING_CONTEXT = None
 
 
 async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
+    """Register resources from the run config with their respective providers.
+
+    This function attempts to register each resource (models, shields, etc.) with its provider.
+    If a registration fails, it logs the error and continues with other resources rather than
+    crashing the entire stack.
+    """
     for rsrc, api, register_method, list_method in RESOURCES:
         objects = getattr(run_config, rsrc)
         if api not in impls:
@@ -116,20 +122,31 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
                     continue
                 logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            try:
+                # we want to maintain the type information in arguments to method.
+                # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
+                # we use model_dump() to find all the attrs and then getattr to get the still typed value.
+                await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            except Exception as e:
+                # Log the error but continue with other resources
+                logger.error(
+                    f"Failed to register {rsrc} {obj} for provider {obj.provider_id if hasattr(obj, 'provider_id') else 'unknown'}: {e}"
+                )
+                continue
 
-        method = getattr(impls[api], list_method)
-        response = await method()
+        try:
+            method = getattr(impls[api], list_method)
+            response = await method()
 
-        objects_to_process = response.data if hasattr(response, "data") else response
+            objects_to_process = response.data if hasattr(response, "data") else response
 
-        for obj in objects_to_process:
-            logger.debug(
-                f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
-            )
+            for obj in objects_to_process:
+                logger.debug(
+                    f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
+                )
+        except Exception as e:
+            # Log the error but continue with other resource types
+            logger.error(f"Failed to list {rsrc}: {e}")
 
 
 class EnvVarError(Exception):
