@@ -38,38 +38,21 @@ class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
     }
 
 
-class OpenAIMixinWithRerankImpl(OpenAIMixin):
+class OpenAIMixinWithRerankImpl(OpenAIMixinImpl):
     """Test implementation with rerank model list"""
 
-    rerank_model_list = ["rerank-model-1", "rerank-model-2"]
-
-    def __init__(self):
-        self.__provider_id__ = "test-provider"
-
-    def get_api_key(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
-
-    def get_base_url(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
+    rerank_model_list: list[str] = ["rerank-model-1", "rerank-model-2"]
 
 
-class OpenAIMixinWithEmbeddingsAndRerankImpl(OpenAIMixin):
+class OpenAIMixinWithEmbeddingsAndRerankImpl(OpenAIMixinImpl):
     """Test implementation with both embedding model metadata and rerank model list"""
 
-    embedding_model_metadata = {
+    embedding_model_metadata: dict[str, dict[str, int]] = {
         "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
         "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
     }
 
-    rerank_model_list = ["rerank-model-1", "rerank-model-2"]
-
-    __provider_id__ = "test-provider"
-
-    def get_api_key(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
-
-    def get_base_url(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
+    rerank_model_list: list[str] = ["rerank-model-1", "rerank-model-2"]
 
 
 @pytest.fixture
@@ -99,13 +82,15 @@ def mixin_with_embeddings():
 @pytest.fixture
 def mixin_with_rerank():
     """Create a test instance of OpenAIMixin with rerank model list"""
-    return OpenAIMixinWithRerankImpl()
+    config = RemoteInferenceProviderConfig()
+    return OpenAIMixinWithRerankImpl(config=config)
 
 
 @pytest.fixture
 def mixin_with_embeddings_and_rerank():
     """Create a test instance of OpenAIMixin with both embedding model metadata and rerank model list"""
-    return OpenAIMixinWithEmbeddingsAndRerankImpl()
+    config = RemoteInferenceProviderConfig()
+    return OpenAIMixinWithEmbeddingsAndRerankImpl(config=config)
 
 
 @pytest.fixture

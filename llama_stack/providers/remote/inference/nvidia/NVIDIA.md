@@ -191,7 +191,7 @@ print(f"VLM Response: {vlm_response.choices[0].message.content}")
 The following example shows how to rerank documents using an NVIDIA NIM.
 
 ```python
-rerank_response = client.inference.rerank(
+rerank_response = client.alpha.inference.rerank(
     model="nvidia/llama-3.2-nv-rerankqa-1b-v2",
     query="query",
     items=[
