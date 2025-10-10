@@ -15,7 +15,7 @@ from typing import (
 )
 
 from fastapi import Body
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
 from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
