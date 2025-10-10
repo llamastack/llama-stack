@@ -17,7 +17,6 @@ from llama_stack.apis.datatypes import Api
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.apis.shields.shields import Shield
 from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroup
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.core.datatypes import RegistryEntrySource
 from llama_stack.core.routing_tables.benchmarks import BenchmarksRoutingTable
 from llama_stack.core.routing_tables.datasets import DatasetsRoutingTable
@@ -142,31 +141,6 @@ class ToolGroupsImpl(Impl):
                     },
                 )
             ]
-        )
-
-
-class VectorDBImpl(Impl):
-    def __init__(self):
-        super().__init__(Api.vector_io)
-
-    async def register_vector_db(self, vector_db: VectorDB):
-        return vector_db
-
-    async def unregister_vector_db(self, vector_db_id: str):
-        return vector_db_id
-
-    async def openai_create_vector_store(self, **kwargs):
-        import time
-        import uuid
-
-        from llama_stack.apis.vector_io.vector_io import VectorStoreFileCounts, VectorStoreObject
-
-        vector_store_id = kwargs.get("provider_vector_db_id") or f"vs_{uuid.uuid4()}"
-        return VectorStoreObject(
-            id=vector_store_id,
-            name=kwargs.get("name", vector_store_id),
-            created_at=int(time.time()),
-            file_counts=VectorStoreFileCounts(completed=0, cancelled=0, failed=0, in_progress=0, total=0),
         )
 
 
