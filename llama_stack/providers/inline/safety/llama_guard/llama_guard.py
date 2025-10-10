@@ -13,7 +13,7 @@ from llama_stack.apis.common.content_types import ImageContentItem, TextContentI
 from llama_stack.apis.inference import (
     Inference,
     Message,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIUserMessageParam,
     UserMessage,
 )
@@ -296,7 +296,7 @@ class LlamaGuardShield:
         else:
             shield_input_message = self.build_text_shield_input(messages)
 
-        params = OpenAIChatCompletionRequest(
+        params = OpenAIChatCompletionRequestWithExtraBody(
             model=self.model,
             messages=[shield_input_message],
             stream=False,
@@ -384,7 +384,7 @@ class LlamaGuardShield:
         # TODO: Add Image based support for OpenAI Moderations
         shield_input_message = self.build_text_shield_input(messages)
 
-        params = OpenAIChatCompletionRequest(
+        params = OpenAIChatCompletionRequestWithExtraBody(
             model=self.model,
             messages=[shield_input_message],
             stream=False,

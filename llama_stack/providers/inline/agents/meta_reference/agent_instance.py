@@ -49,7 +49,7 @@ from llama_stack.apis.inference import (
     Inference,
     Message,
     OpenAIAssistantMessageParam,
-    OpenAIChatCompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIDeveloperMessageParam,
     OpenAIMessageParam,
     OpenAISystemMessageParam,
@@ -583,7 +583,7 @@ class ChatAgent(ShieldRunnerMixin):
                 max_tokens = getattr(sampling_params, "max_tokens", None)
 
                 # Use OpenAI chat completion
-                params = OpenAIChatCompletionRequest(
+                params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.agent_config.model,
                     messages=openai_messages,
                     tools=openai_tools if openai_tools else None,

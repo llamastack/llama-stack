@@ -12,8 +12,8 @@ from botocore.client import BaseClient
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     Inference,
-    OpenAIChatCompletionRequest,
-    OpenAICompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
 from llama_stack.apis.inference.inference import (
@@ -134,12 +134,12 @@ class BedrockInferenceAdapter(
 
     async def openai_completion(
         self,
-        params: OpenAICompletionRequest,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         raise NotImplementedError("OpenAI completion not supported by the Bedrock provider")
 
     async def openai_chat_completion(
         self,
-        params: OpenAIChatCompletionRequest,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         raise NotImplementedError("OpenAI chat completion not supported by the Bedrock provider")
