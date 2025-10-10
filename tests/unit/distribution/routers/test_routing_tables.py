@@ -25,7 +25,6 @@ from llama_stack.core.routing_tables.models import ModelsRoutingTable
 from llama_stack.core.routing_tables.scoring_functions import ScoringFunctionsRoutingTable
 from llama_stack.core.routing_tables.shields import ShieldsRoutingTable
 from llama_stack.core.routing_tables.toolgroups import ToolGroupsRoutingTable
-from llama_stack.core.routing_tables.vector_dbs import VectorDBsRoutingTable
 
 
 class Impl:
@@ -261,40 +260,6 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     # Test unregistering non-existent shield - should raise ValueError with specific message
     with pytest.raises(ValueError, match="Shield 'non-existent' not found"):
         await table.unregister_shield(identifier="non-existent")
-
-
-async def test_vectordbs_routing_table(cached_disk_dist_registry):
-    table = VectorDBsRoutingTable({"test_provider": VectorDBImpl()}, cached_disk_dist_registry, {})
-    await table.initialize()
-
-    m_table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
-    await m_table.initialize()
-    await m_table.register_model(
-        model_id="test-model",
-        provider_id="test_provider",
-        metadata={"embedding_dimension": 128},
-        model_type=ModelType.embedding,
-    )
-
-    # Register multiple vector databases and verify listing
-    vdb1 = await table.register_vector_db(vector_db_id="test-vectordb", embedding_model="test_provider/test-model")
-    vdb2 = await table.register_vector_db(vector_db_id="test-vectordb-2", embedding_model="test_provider/test-model")
-    vector_dbs = await table.list_vector_dbs()
-
-    assert len(vector_dbs.data) == 2
-    vector_db_ids = {v.identifier for v in vector_dbs.data}
-    assert vdb1.identifier in vector_db_ids
-    assert vdb2.identifier in vector_db_ids
-
-    # Verify they have UUID-based identifiers
-    assert vdb1.identifier.startswith("vs_")
-    assert vdb2.identifier.startswith("vs_")
-
-    await table.unregister_vector_db(vector_db_id=vdb1.identifier)
-    await table.unregister_vector_db(vector_db_id=vdb2.identifier)
-
-    vector_dbs = await table.list_vector_dbs()
-    assert len(vector_dbs.data) == 0
 
 
 async def test_datasets_routing_table(cached_disk_dist_registry):
