@@ -769,24 +769,30 @@ class Generator:
             first = next(iter(op.request_params))
             request_name, request_type = first
 
-            op_name = "".join(word.capitalize() for word in op.name.split("_"))
-            request_name = f"{op_name}Request"
-            fields = [
-                (
-                    name,
-                    type_,
-                )
-                for name, type_ in op.request_params
-            ]
-            request_type = make_dataclass(
-                request_name,
-                fields,
-                namespace={
-                    "__doc__": create_docstring_for_request(
-                        request_name, fields, doc_params
+            # HACK ALERT
+            # Special case: if there's a single parameter named "params" that's already a BaseModel,
+            # unwrap it to show the flat structure in the OpenAPI spec (matches FastAPI's embed=False behavior)
+            if len(op.request_params) == 1 and request_name == "params" and inspect.isclass(request_type) and issubclass(request_type, BaseModel):
+                pass 
+            else:
+                op_name = "".join(word.capitalize() for word in op.name.split("_"))
+                request_name = f"{op_name}Request"
+                fields = [
+                    (
+                        name,
+                        type_,
                     )
-                },
-            )
+                    for name, type_ in op.request_params
+                ]
+                request_type = make_dataclass(
+                    request_name,
+                    fields,
+                    namespace={
+                        "__doc__": create_docstring_for_request(
+                            request_name, fields, doc_params
+                        )
+                    },
+                )
 
             requestBody = RequestBody(
                 content={
