@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from openai.types.chat.chat_completion_chunk import (
@@ -20,6 +20,7 @@ from llama_stack.apis.agents.openai_responses import (
     ListOpenAIResponseInputItem,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputToolFunction,
+    OpenAIResponseInputToolMCP,
     OpenAIResponseInputToolWebSearch,
     OpenAIResponseMessage,
     OpenAIResponseOutputMessageContentOutputText,
@@ -38,7 +39,7 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
 )
-from llama_stack.apis.tools.tools import ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
+from llama_stack.apis.tools.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.datatypes import ResponsesStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
@@ -961,6 +962,57 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
     # Verify the response itself is correct
     assert result.model == model
     assert result.status == "completed"
+
+
+@patch("llama_stack.providers.utils.tools.mcp.list_mcp_tools")
+async def test_reuse_mcp_tool_list(
+    mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api
+):
+    """Test that mcp_list_tools can be reused where appropriate."""
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+    mock_list_mcp_tools.return_value = ListToolDefsResponse(
+        data=[ToolDef(name="test_tool", description="a test tool", input_schema={}, output_schema={})]
+    )
+
+    res1 = await openai_responses_impl.create_openai_response(
+        input="What is 2+2?",
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        store=True,
+        tools=[
+            OpenAIResponseInputToolFunction(name="fake", parameters=None),
+            OpenAIResponseInputToolMCP(server_label="alabel", server_url="aurl"),
+        ],
+    )
+    args = mock_responses_store.store_response_object.call_args
+    data = args.kwargs["response_object"].model_dump()
+    data["input"] = [input_item.model_dump() for input_item in args.kwargs["input"]]
+    data["messages"] = [msg.model_dump() for msg in args.kwargs["messages"]]
+    stored = _OpenAIResponseObjectWithInputAndMessages(**data)
+    mock_responses_store.get_response_object.return_value = stored
+
+    res2 = await openai_responses_impl.create_openai_response(
+        previous_response_id=res1.id,
+        input="Now what is 3+3?",
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        store=True,
+        tools=[
+            OpenAIResponseInputToolMCP(server_label="alabel", server_url="aurl"),
+        ],
+    )
+    assert len(mock_inference_api.openai_chat_completion.call_args_list) == 2
+    second_call = mock_inference_api.openai_chat_completion.call_args_list[1]
+    tools_seen = second_call.kwargs["tools"]
+    assert len(tools_seen) == 1
+    assert tools_seen[0]["function"]["name"] == "test_tool"
+    assert tools_seen[0]["function"]["description"] == "a test tool"
+
+    assert mock_list_mcp_tools.call_count == 1
+    listings = [obj for obj in res2.output if obj.type == "mcp_list_tools"]
+    assert len(listings) == 1
+    assert listings[0].server_label == "alabel"
+    assert len(listings[0].tools) == 1
+    assert listings[0].tools[0].name == "test_tool"
 
 
 @pytest.mark.parametrize(

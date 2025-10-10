@@ -39,7 +39,7 @@ from llama_stack.providers.utils.responses.responses_store import (
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
-from .types import ChatCompletionContext
+from .types import ChatCompletionContext, ToolContext
 from .utils import (
     convert_response_input_to_chat_messages,
     convert_response_text_to_chat_response_format,
@@ -91,13 +91,15 @@ class OpenAIResponsesImpl:
     async def _process_input_with_previous_response(
         self,
         input: str | list[OpenAIResponseInput],
+        tools: list[OpenAIResponseInputTool] | None,
         previous_response_id: str | None,
     ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam]]:
         """Process input with optional previous response context.
 
         Returns:
-            tuple: (all_input for storage, messages for chat completion)
+            tuple: (all_input for storage, messages for chat completion, tool context)
         """
+        tool_context = ToolContext(tools)
         if previous_response_id:
             previous_response: _OpenAIResponseObjectWithInputAndMessages = (
                 await self.responses_store.get_response_object(previous_response_id)
@@ -113,11 +115,13 @@ class OpenAIResponsesImpl:
             else:
                 # Backward compatibility: reconstruct from inputs
                 messages = await convert_response_input_to_chat_messages(all_input)
+
+            tool_context.recover_tools_from_previous_response(previous_response)
         else:
             all_input = input
             messages = await convert_response_input_to_chat_messages(input)
 
-        return all_input, messages
+        return all_input, messages, tool_context
 
     async def _prepend_instructions(self, messages, instructions):
         if instructions:
@@ -273,7 +277,9 @@ class OpenAIResponsesImpl:
         max_infer_iters: int | None = 10,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Input preprocessing
-        all_input, messages = await self._process_input_with_previous_response(input, previous_response_id)
+        all_input, messages, tool_context = await self._process_input_with_previous_response(
+            input, tools, previous_response_id
+        )
         await self._prepend_instructions(messages, instructions)
 
         # Structured outputs
@@ -285,6 +291,7 @@ class OpenAIResponsesImpl:
             response_tools=tools,
             temperature=temperature,
             response_format=response_format,
+            tool_context=tool_context,
             inputs=all_input,
         )
 
