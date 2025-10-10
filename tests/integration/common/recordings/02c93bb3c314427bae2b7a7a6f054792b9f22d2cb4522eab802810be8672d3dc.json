@@ -12,28 +12,10 @@
     "body": {
       "__type__": "ollama._types.ProcessResponse",
       "__data__": {
-        "models": [
-          {
-            "model": "llama3.2-vision:11b",
-            "name": "llama3.2-vision:11b",
-            "digest": "6f2f9757ae97e8a3f8ea33d6adb2b11d93d9a35bef277cd2c0b1b5af8e8d0b1e",
-            "expires_at": "2025-10-08T12:40:47.430429-07:00",
-            "size": 11765236384,
-            "size_vram": 11765236384,
-            "details": {
-              "parent_model": "",
-              "format": "gguf",
-              "family": "mllama",
-              "families": [
-                "mllama"
-              ],
-              "parameter_size": "10.7B",
-              "quantization_level": "Q4_K_M"
-            }
-          }
-        ]
+        "models": []
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }
