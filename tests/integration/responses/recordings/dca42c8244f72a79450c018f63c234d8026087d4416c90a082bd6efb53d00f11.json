@@ -12,7 +12,10 @@
           "content": "Which planet do humans live on?"
         }
       ],
-      "stream": true
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
     },
     "endpoint": "/v1/chat/completions",
     "model": "gpt-4o"
@@ -22,7 +25,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -41,15 +44,15 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "eQtIB22UP5y"
+          "obfuscation": "uWM4CTrTBdhbyI"
         }
       },
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -68,15 +71,15 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "xVnzycGrGY"
+          "obfuscation": "JuK3luIjXIAR0"
         }
       },
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -95,15 +98,15 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "iCxzQ9UFRl"
+          "obfuscation": "mKYRNnis1mCZ4"
         }
       },
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -122,15 +125,15 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "lVzetb7n"
+          "obfuscation": "SrAIMLQQ8Gj"
         }
       },
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -149,15 +152,15 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "Oi2xzNkyQQ"
+          "obfuscation": "2fzicdQg1s2C8"
         }
       },
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -176,15 +179,15 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "SBQnBFp"
+          "obfuscation": "saIKgW0kJK"
         }
       },
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -203,15 +206,15 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "CtftBIpiBh2x"
+          "obfuscation": "y4Bq9fWigLsde0J"
         }
       },
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-8dd4f0615edf",
+          "id": "rec-dca42c8244f7",
           "choices": [
             {
               "delta": {
@@ -230,9 +233,37 @@
           "model": "gpt-4o-2024-08-06",
           "object": "chat.completion.chunk",
           "service_tier": "default",
-          "system_fingerprint": "fp_f33640a400",
+          "system_fingerprint": "fp_cbf1785567",
           "usage": null,
-          "obfuscation": "xN1HF2a"
+          "obfuscation": "5VaLcoYLcc"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-dca42c8244f7",
+          "choices": [],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_cbf1785567",
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 14,
+            "total_tokens": 20,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 0
+            }
+          },
+          "obfuscation": ""
         }
       }
     ],
