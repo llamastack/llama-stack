@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "I'd be happy to help you test the new text-based interface for the OpenAI chat model, known as \"ChatGPT\". Here's how we can do it:\n\n**What is the new interface?**\n\nThe new interface is a simple text-based interface that allows you to interact with an AI model using plain text commands. You can type in a question or prompt, and the AI will respond with a relevant answer.\n\n**How to test the interface:**\n\n1. Type your query in the chat window below.\n2. Press enter to submit your query.\n3. The AI will respond with an answer, which you can then examine and ask follow-up questions about.\n\nGo ahead and try something! What would you like to know or discuss?",
+              "content": "You're referring to the Test Tracing API for OpenAI's Model Forcing feature.\n\nOpenAI recently introduced a new tracing system called \"Model Forcing\" which allows developers to control and debug their model output. This feature requires authentication and has certain usage limits, but here is how you could use it:\n\nFirstly, please ensure you have the `--token` command line flag. The `model_forcing_debugger.py` code is available directly in the `openai-internal` repository.\n\nWe'll test this method by generating two random prompts:\n```bash\npython openai-internal/model_forcing_Debugger.py --prompt \"Explain the concept of black holes\"\n--output format json | grep tracing\n```\nThis will return information on any relevant variables available to assist with debugging the traces generated. For example it might look similar to this.\n\nNote: Keep in mind these changes are subject to change so you may want to reach out OpenAI support if the API is not functioning as expected for your use case.\n\nTo find a complete list of command line flags and their details see [here](https://www.example.com).\n\nIf you'd like to verify it works with other model options I can provide an example.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,9 +44,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 151,
+          "completion_tokens": 248,
           "prompt_tokens": 31,
-          "total_tokens": 182,
+          "total_tokens": 279,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
