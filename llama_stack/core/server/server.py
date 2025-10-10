@@ -138,6 +138,13 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
         return HTTPException(status_code=httpx.codes.NOT_IMPLEMENTED, detail=f"Not implemented: {str(exc)}")
     elif isinstance(exc, AuthenticationRequiredError):
         return HTTPException(status_code=httpx.codes.UNAUTHORIZED, detail=f"Authentication required: {str(exc)}")
+    elif hasattr(exc, "status_code") and isinstance(getattr(exc, "status_code", None), int):
+        # Handle provider SDK exceptions (e.g., OpenAI's APIStatusError and subclasses)
+        # These include AuthenticationError (401), PermissionDeniedError (403), etc.
+        # This preserves the actual HTTP status code from the provider
+        status_code = exc.status_code
+        detail = str(exc)
+        return HTTPException(status_code=status_code, detail=detail)
     else:
         return HTTPException(
             status_code=httpx.codes.INTERNAL_SERVER_ERROR,
