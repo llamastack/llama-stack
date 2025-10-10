@@ -40,25 +40,25 @@ class MongoDBVectorIOConfig(BaseModel):
     max_pool_size: int = Field(default=100, description="Maximum connection pool size")
     timeout_ms: int = Field(default=30000, description="Connection timeout in milliseconds")
 
-    # KV store for metadata
+    # KV store configuration
     kvstore: KVStoreConfig = Field(description="Config for KV store backend for metadata storage")
 
     @classmethod
     def sample_run_config(
         cls,
         __distro_dir__: str,
-        connection_string: str = "${env.MONGODB_CONNECTION_STRING}",
-        database_name: str = "llama_stack",
+        connection_string: str = "${env.MONGODB_CONNECTION_STRING:=}",
+        database_name: str = "${env.MONGODB_DATABASE_NAME:=llama_stack}",
         **kwargs: Any,
     ) -> dict[str, Any]:
         return {
             "connection_string": connection_string,
             "database_name": database_name,
-            "index_name": "vector_index",
-            "path_field": "embedding",
-            "similarity_metric": "cosine",
-            "max_pool_size": 100,
-            "timeout_ms": 30000,
+            "index_name": "${env.MONGODB_INDEX_NAME:=vector_index}",
+            "path_field": "${env.MONGODB_PATH_FIELD:=embedding}",
+            "similarity_metric": "${env.MONGODB_SIMILARITY_METRIC:=cosine}",
+            "max_pool_size": "${env.MONGODB_MAX_POOL_SIZE:=100}",
+            "timeout_ms": "${env.MONGODB_TIMEOUT_MS:=30000}",
             "kvstore": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=__distro_dir__,
                 db_name="mongodb_registry.db",
