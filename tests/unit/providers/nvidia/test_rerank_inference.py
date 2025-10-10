@@ -58,7 +58,7 @@ def create_adapter(config=None, rerank_endpoints=None):
     if config is None:
         config = NVIDIAConfig(api_key="test-key")
 
-    adapter = NVIDIAInferenceAdapter(config)
+    adapter = NVIDIAInferenceAdapter(config=config)
 
     class MockModel:
         provider_resource_id = "test-model"

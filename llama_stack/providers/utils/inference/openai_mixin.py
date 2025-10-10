@@ -414,12 +414,12 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                     model_type=ModelType.embedding,
                     metadata=metadata,
                 )
-            elif m.id in self.rerank_model_list:
+            elif provider_model_id in self.rerank_model_list:
                 # This is a rerank model
                 model = Model(
                     provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=m.id,
-                    identifier=m.id,
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
                     model_type=ModelType.rerank,
                 )
             else:

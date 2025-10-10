@@ -53,7 +53,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         "snowflake/arctic-embed-l": {"embedding_dimension": 512, "context_length": 1024},
     }
 
-    rerank_model_list = [
+    rerank_model_list: list[str] = [
         "nv-rerank-qa-mistral-4b:1",
         "nvidia/nv-rerankqa-mistral-4b-v3",
         "nvidia/llama-3.2-nv-rerankqa-1b-v2",
@@ -133,7 +133,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
         ranking_url = self.get_base_url()
 
-        if _is_nvidia_hosted(self._config) and provider_model_id in self._rerank_model_endpoints:
+        if _is_nvidia_hosted(self.config) and provider_model_id in self._rerank_model_endpoints:
             ranking_url = self._rerank_model_endpoints[provider_model_id]
 
         logger.debug(f"Using rerank endpoint: {ranking_url} for model: {provider_model_id}")
