@@ -1,0 +1,268 @@
+---
+description: |
+  [MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-vector-search) is a remote vector database provider for Llama Stack. It
+  uses MongoDB Atlas Vector Search to store and query vectors in the cloud.
+  That means you get enterprise-grade vector search with MongoDB's scalability and reliability.
+
+  ## Features
+
+  - Cloud-native vector search with MongoDB Atlas
+  - Fully integrated with Llama Stack
+  - Enterprise-grade security and scalability
+  - Supports multiple search modes: vector, keyword, and hybrid search
+  - Built-in metadata filtering and text search capabilities
+  - Automatic index management
+
+  ## Search Modes
+
+  MongoDB Atlas Vector Search supports three different search modes:
+
+  ### Vector Search
+  Vector search uses MongoDB's `$vectorSearch` aggregation stage to perform semantic similarity search using embedding vectors.
+
+  ```python
+  # Vector search example
+  search_response = client.vector_stores.search(
+      vector_store_id=vector_store.id,
+      query="What is machine learning?",
+      search_mode="vector",
+      max_num_results=5,
+  )
+  ```
+
+  ### Keyword Search
+  Keyword search uses MongoDB's text search capabilities with full-text indexes to find chunks containing specific terms.
+
+  ```python
+  # Keyword search example
+  search_response = client.vector_stores.search(
+      vector_store_id=vector_store.id,
+      query="Python programming language",
+      search_mode="keyword",
+      max_num_results=5,
+  )
+  ```
+
+  ### Hybrid Search
+  Hybrid search combines both vector and keyword search methods using configurable reranking algorithms.
+
+  ```python
+  # Hybrid search with RRF ranker (default)
+  search_response = client.vector_stores.search(
+      vector_store_id=vector_store.id,
+      query="neural networks in Python",
+      search_mode="hybrid",
+      max_num_results=5,
+  )
+
+  # Hybrid search with weighted ranker
+  search_response = client.vector_stores.search(
+      vector_store_id=vector_store.id,
+      query="neural networks in Python",
+      search_mode="hybrid",
+      max_num_results=5,
+      ranking_options={
+          "ranker": {
+              "type": "weighted",
+              "alpha": 0.7,  # 70% vector search, 30% keyword search
+          }
+      },
+  )
+  ```
+
+  ## Usage
+
+  To use MongoDB Atlas in your Llama Stack project, follow these steps:
+
+  1. Create a MongoDB Atlas cluster with Vector Search enabled
+  2. Install the necessary dependencies
+  3. Configure your Llama Stack project to use MongoDB
+  4. Start storing and querying vectors
+
+  ## Configuration
+
+  ### Environment Variables
+  Set up the following environment variable for your MongoDB Atlas connection:
+
+  ```bash
+  export MONGODB_CONNECTION_STRING="mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority&appName=llama-stack"
+  ```
+
+  ### Configuration Example
+
+  ```yaml
+  vector_io:
+    - provider_id: mongodb_atlas
+      provider_type: remote::mongodb
+      config:
+        connection_string: "${env.MONGODB_CONNECTION_STRING}"
+        database_name: "llama_stack"
+        index_name: "vector_index"
+        similarity_metric: "cosine"
+  ```
+
+  ## Installation
+
+  You can install the MongoDB Python driver using pip:
+
+  ```bash
+  pip install pymongo
+  ```
+
+  ## Documentation
+
+  See [MongoDB Atlas Vector Search documentation](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/) for more details about MongoDB Atlas Vector Search.
+
+  For general MongoDB documentation, visit [MongoDB Documentation](https://docs.mongodb.com/).
+sidebar_label: Remote - Mongodb
+title: remote::mongodb
+---
+
+# remote::mongodb
+
+## Description
+
+
+[MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-vector-search) is a remote vector database provider for Llama Stack. It
+uses MongoDB Atlas Vector Search to store and query vectors in the cloud.
+That means you get enterprise-grade vector search with MongoDB's scalability and reliability.
+
+## Features
+
+- Cloud-native vector search with MongoDB Atlas
+- Fully integrated with Llama Stack
+- Enterprise-grade security and scalability
+- Supports multiple search modes: vector, keyword, and hybrid search
+- Built-in metadata filtering and text search capabilities
+- Automatic index management
+
+## Search Modes
+
+MongoDB Atlas Vector Search supports three different search modes:
+
+### Vector Search
+Vector search uses MongoDB's `$vectorSearch` aggregation stage to perform semantic similarity search using embedding vectors.
+
+```python
+# Vector search example
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="What is machine learning?",
+    search_mode="vector",
+    max_num_results=5,
+)
+```
+
+### Keyword Search
+Keyword search uses MongoDB's text search capabilities with full-text indexes to find chunks containing specific terms.
+
+```python
+# Keyword search example
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="Python programming language",
+    search_mode="keyword",
+    max_num_results=5,
+)
+```
+
+### Hybrid Search
+Hybrid search combines both vector and keyword search methods using configurable reranking algorithms.
+
+```python
+# Hybrid search with RRF ranker (default)
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="neural networks in Python",
+    search_mode="hybrid",
+    max_num_results=5,
+)
+
+# Hybrid search with weighted ranker
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="neural networks in Python",
+    search_mode="hybrid",
+    max_num_results=5,
+    ranking_options={
+        "ranker": {
+            "type": "weighted",
+            "alpha": 0.7,  # 70% vector search, 30% keyword search
+        }
+    },
+)
+```
+
+## Usage
+
+To use MongoDB Atlas in your Llama Stack project, follow these steps:
+
+1. Create a MongoDB Atlas cluster with Vector Search enabled
+2. Install the necessary dependencies
+3. Configure your Llama Stack project to use MongoDB
+4. Start storing and querying vectors
+
+## Configuration
+
+### Environment Variables
+Set up the following environment variable for your MongoDB Atlas connection:
+
+```bash
+export MONGODB_CONNECTION_STRING="mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority&appName=llama-stack"
+```
+
+### Configuration Example
+
+```yaml
+vector_io:
+  - provider_id: mongodb_atlas
+    provider_type: remote::mongodb
+    config:
+      connection_string: "${env.MONGODB_CONNECTION_STRING}"
+      database_name: "llama_stack"
+      index_name: "vector_index"
+      similarity_metric: "cosine"
+```
+
+## Installation
+
+You can install the MongoDB Python driver using pip:
+
+```bash
+pip install pymongo
+```
+
+## Documentation
+
+See [MongoDB Atlas Vector Search documentation](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/) for more details about MongoDB Atlas Vector Search.
+
+For general MongoDB documentation, visit [MongoDB Documentation](https://docs.mongodb.com/).
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `connection_string` | `<class 'str'>` | No |  | MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/) |
+| `database_name` | `<class 'str'>` | No | llama_stack | Database name to use for vector collections |
+| `index_name` | `<class 'str'>` | No | vector_index | Name of the vector search index |
+| `path_field` | `<class 'str'>` | No | embedding | Field name for storing embeddings |
+| `similarity_metric` | `<class 'str'>` | No | cosine | Similarity metric: cosine, euclidean, or dotProduct |
+| `max_pool_size` | `<class 'int'>` | No | 100 | Maximum connection pool size |
+| `timeout_ms` | `<class 'int'>` | No | 30000 | Connection timeout in milliseconds |
+| `kvstore` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig` | No | sqlite | Config for KV store backend for metadata storage |
+
+## Sample Configuration
+
+```yaml
+connection_string: ${env.MONGODB_CONNECTION_STRING}
+database_name: llama_stack
+index_name: vector_index
+path_field: embedding
+similarity_metric: cosine
+max_pool_size: 100
+timeout_ms: 30000
+kvstore:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/mongodb_registry.db
+```

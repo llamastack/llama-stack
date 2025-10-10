@@ -825,4 +825,130 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
 Please refer to the remote provider documentation.
 """,
         ),
+        RemoteProviderSpec(
+            api=Api.vector_io,
+            adapter_type="mongodb",
+            provider_type="remote::mongodb",
+            pip_packages=["pymongo>=4.0.0"],
+            module="llama_stack.providers.remote.vector_io.mongodb",
+            config_class="llama_stack.providers.remote.vector_io.mongodb.MongoDBVectorIOConfig",
+            api_dependencies=[Api.inference],
+            optional_api_dependencies=[Api.files],
+            description="""
+[MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-vector-search) is a remote vector database provider for Llama Stack. It
+uses MongoDB Atlas Vector Search to store and query vectors in the cloud.
+That means you get enterprise-grade vector search with MongoDB's scalability and reliability.
+
+## Features
+
+- Cloud-native vector search with MongoDB Atlas
+- Fully integrated with Llama Stack
+- Enterprise-grade security and scalability
+- Supports multiple search modes: vector, keyword, and hybrid search
+- Built-in metadata filtering and text search capabilities
+- Automatic index management
+
+## Search Modes
+
+MongoDB Atlas Vector Search supports three different search modes:
+
+### Vector Search
+Vector search uses MongoDB's `$vectorSearch` aggregation stage to perform semantic similarity search using embedding vectors.
+
+```python
+# Vector search example
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="What is machine learning?",
+    search_mode="vector",
+    max_num_results=5,
+)
+```
+
+### Keyword Search
+Keyword search uses MongoDB's text search capabilities with full-text indexes to find chunks containing specific terms.
+
+```python
+# Keyword search example
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="Python programming language",
+    search_mode="keyword",
+    max_num_results=5,
+)
+```
+
+### Hybrid Search
+Hybrid search combines both vector and keyword search methods using configurable reranking algorithms.
+
+```python
+# Hybrid search with RRF ranker (default)
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="neural networks in Python",
+    search_mode="hybrid",
+    max_num_results=5,
+)
+
+# Hybrid search with weighted ranker
+search_response = client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="neural networks in Python",
+    search_mode="hybrid",
+    max_num_results=5,
+    ranking_options={
+        "ranker": {
+            "type": "weighted",
+            "alpha": 0.7,  # 70% vector search, 30% keyword search
+        }
+    },
+)
+```
+
+## Usage
+
+To use MongoDB Atlas in your Llama Stack project, follow these steps:
+
+1. Create a MongoDB Atlas cluster with Vector Search enabled
+2. Install the necessary dependencies
+3. Configure your Llama Stack project to use MongoDB
+4. Start storing and querying vectors
+
+## Configuration
+
+### Environment Variables
+Set up the following environment variable for your MongoDB Atlas connection:
+
+```bash
+export MONGODB_CONNECTION_STRING="mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority&appName=llama-stack"
+```
+
+### Configuration Example
+
+```yaml
+vector_io:
+  - provider_id: mongodb_atlas
+    provider_type: remote::mongodb
+    config:
+      connection_string: "${env.MONGODB_CONNECTION_STRING}"
+      database_name: "llama_stack"
+      index_name: "vector_index"
+      similarity_metric: "cosine"
+```
+
+## Installation
+
+You can install the MongoDB Python driver using pip:
+
+```bash
+pip install pymongo
+```
+
+## Documentation
+
+See [MongoDB Atlas Vector Search documentation](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/) for more details about MongoDB Atlas Vector Search.
+
+For general MongoDB documentation, visit [MongoDB Documentation](https://docs.mongodb.com/).
+""",
+        ),
     ]
