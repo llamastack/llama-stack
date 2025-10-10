@@ -297,3 +297,38 @@ def test_function_call_output_response_with_none_arguments(openai_client, client
     assert response.output[0].type == "function_call"
     assert response.output[0].arguments == "{}"
     _ = response.output[0].call_id
+
+
+def test_response_with_max_output_tokens(compat_client, text_model_id):
+    """Test that the `max_output_tokens` parameter is used."""
+    if not isinstance(compat_client, OpenAI):
+        pytest.skip("This test requires the OpenAI client.")
+
+    response = compat_client.responses.create(
+        model=text_model_id,
+        input=[
+            {
+                "role": "user",
+                "content": "what's the current time? You MUST call the `get_current_time` function to find out.",
+            }
+        ],
+        max_output_tokens=15,
+        stream=False,
+    )
+
+    assert response.id is not None
+    assert response.model == text_model_id
+
+    assert hasattr(response, "max_output_tokens")
+    assert response.max_output_tokens == 15
+
+    output_text = ""
+    for item in response.output:
+        if item.type == "message" and item.role == "assistant":
+            if item.content and item.content.type == "text":
+                output_text = item.content.text
+                break
+
+    assert output_text, "Assistant response content should not be empty"
+
+    assert len(output_text.split()) < 30
