@@ -13,6 +13,7 @@ import pytest
 from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
+    OpenAIChatCompletionRequestParams,
     OpenAIChoice,
     ToolChoice,
 )
@@ -56,13 +57,14 @@ async def test_old_vllm_tool_choice(vllm_inference_adapter):
         mock_client_property.return_value = mock_client
 
         # No tools but auto tool choice
-        await vllm_inference_adapter.openai_chat_completion(
-            "mock-model",
-            [],
+        params = OpenAIChatCompletionRequestParams(
+            model="mock-model",
+            messages=[{"role": "user", "content": "test"}],
             stream=False,
             tools=None,
             tool_choice=ToolChoice.auto.value,
         )
+        await vllm_inference_adapter.openai_chat_completion(params)
         mock_client.chat.completions.create.assert_called()
         call_args = mock_client.chat.completions.create.call_args
         # Ensure tool_choice gets converted to none for older vLLM versions
@@ -171,9 +173,12 @@ async def test_openai_chat_completion_is_async(vllm_inference_adapter):
         )
 
     async def do_inference():
-        await vllm_inference_adapter.openai_chat_completion(
-            "mock-model", messages=["one fish", "two fish"], stream=False
+        params = OpenAIChatCompletionRequestParams(
+            model="mock-model",
+            messages=[{"role": "user", "content": "one fish two fish"}],
+            stream=False,
         )
+        await vllm_inference_adapter.openai_chat_completion(params)
 
     with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_create_client:
         mock_client = MagicMock()
@@ -186,3 +191,48 @@ async def test_openai_chat_completion_is_async(vllm_inference_adapter):
 
         assert mock_create_client.call_count == 4  # no cheating
         assert total_time < (sleep_time * 2), f"Total time taken: {total_time}s exceeded expected max"
+
+
+async def test_extra_body_forwarding(vllm_inference_adapter):
+    """
+    Test that extra_body parameters (e.g., chat_template_kwargs) are correctly
+    forwarded to the underlying OpenAI client.
+    """
+    mock_model = Model(identifier="mock-model", provider_resource_id="mock-model", provider_id="vllm-inference")
+    vllm_inference_adapter.model_store.get_model.return_value = mock_model
+
+    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_client_property:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(
+            return_value=OpenAIChatCompletion(
+                id="chatcmpl-abc123",
+                created=1,
+                model="mock-model",
+                choices=[
+                    OpenAIChoice(
+                        message=OpenAIAssistantMessageParam(
+                            content="test response",
+                        ),
+                        finish_reason="stop",
+                        index=0,
+                    )
+                ],
+            )
+        )
+        mock_client_property.return_value = mock_client
+
+        # Test with chat_template_kwargs for Granite thinking mode
+        params = OpenAIChatCompletionRequestParams(
+            model="mock-model",
+            messages=[{"role": "user", "content": "test"}],
+            stream=False,
+            chat_template_kwargs={"thinking": True},
+        )
+        await vllm_inference_adapter.openai_chat_completion(params)
+
+        # Verify that the client was called with extra_body containing chat_template_kwargs
+        mock_client.chat.completions.create.assert_called_once()
+        call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+        assert "extra_body" in call_kwargs
+        assert "chat_template_kwargs" in call_kwargs["extra_body"]
+        assert call_kwargs["extra_body"]["chat_template_kwargs"] == {"thinking": True}

@@ -7343,6 +7343,233 @@
                 "title": "OpenAIUserMessageParam",
                 "description": "A message from the user in an OpenAI-compatible chat completion request."
             },
+            "OpenAIChatCompletionRequestParams": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OpenAIMessageParam"
+                        }
+                    },
+                    "frequency_penalty": {
+                        "type": "number"
+                    },
+                    "function_call": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "oneOf": [
+                                        {
+                                            "type": "null"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        },
+                                        {
+                                            "type": "number"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "array"
+                                        },
+                                        {
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "functions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "oneOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "type": "number"
+                                    },
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "array"
+                                    },
+                                    {
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "logit_bias": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "number"
+                        }
+                    },
+                    "logprobs": {
+                        "type": "boolean"
+                    },
+                    "max_completion_tokens": {
+                        "type": "integer"
+                    },
+                    "max_tokens": {
+                        "type": "integer"
+                    },
+                    "n": {
+                        "type": "integer"
+                    },
+                    "parallel_tool_calls": {
+                        "type": "boolean"
+                    },
+                    "presence_penalty": {
+                        "type": "number"
+                    },
+                    "response_format": {
+                        "$ref": "#/components/schemas/OpenAIResponseFormatParam"
+                    },
+                    "seed": {
+                        "type": "integer"
+                    },
+                    "stop": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    },
+                    "stream": {
+                        "type": "boolean"
+                    },
+                    "stream_options": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        }
+                    },
+                    "temperature": {
+                        "type": "number"
+                    },
+                    "tool_choice": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "oneOf": [
+                                        {
+                                            "type": "null"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        },
+                                        {
+                                            "type": "number"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "array"
+                                        },
+                                        {
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "tools": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "oneOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "type": "number"
+                                    },
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "array"
+                                    },
+                                    {
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "top_logprobs": {
+                        "type": "integer"
+                    },
+                    "top_p": {
+                        "type": "number"
+                    },
+                    "user": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "model",
+                    "messages"
+                ],
+                "title": "OpenAIChatCompletionRequestParams",
+                "description": "Request parameters for OpenAI-compatible chat completion endpoint.\nThis model uses extra=\"allow\" to capture provider-specific parameters\nwhich are passed through as extra_body."
+            },
             "OpenAIJSONSchema": {
                 "type": "object",
                 "properties": {
@@ -7472,249 +7699,14 @@
             "OpenaiChatCompletionRequest": {
                 "type": "object",
                 "properties": {
-                    "model": {
-                        "type": "string",
-                        "description": "The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint."
-                    },
-                    "messages": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/OpenAIMessageParam"
-                        },
-                        "description": "List of messages in the conversation."
-                    },
-                    "frequency_penalty": {
-                        "type": "number",
-                        "description": "(Optional) The penalty for repeated tokens."
-                    },
-                    "function_call": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "oneOf": [
-                                        {
-                                            "type": "null"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "type": "number"
-                                        },
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "array"
-                                        },
-                                        {
-                                            "type": "object"
-                                        }
-                                    ]
-                                }
-                            }
-                        ],
-                        "description": "(Optional) The function call to use."
-                    },
-                    "functions": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "oneOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "type": "boolean"
-                                    },
-                                    {
-                                        "type": "number"
-                                    },
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "array"
-                                    },
-                                    {
-                                        "type": "object"
-                                    }
-                                ]
-                            }
-                        },
-                        "description": "(Optional) List of functions to use."
-                    },
-                    "logit_bias": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "number"
-                        },
-                        "description": "(Optional) The logit bias to use."
-                    },
-                    "logprobs": {
-                        "type": "boolean",
-                        "description": "(Optional) The log probabilities to use."
-                    },
-                    "max_completion_tokens": {
-                        "type": "integer",
-                        "description": "(Optional) The maximum number of tokens to generate."
-                    },
-                    "max_tokens": {
-                        "type": "integer",
-                        "description": "(Optional) The maximum number of tokens to generate."
-                    },
-                    "n": {
-                        "type": "integer",
-                        "description": "(Optional) The number of completions to generate."
-                    },
-                    "parallel_tool_calls": {
-                        "type": "boolean",
-                        "description": "(Optional) Whether to parallelize tool calls."
-                    },
-                    "presence_penalty": {
-                        "type": "number",
-                        "description": "(Optional) The penalty for repeated tokens."
-                    },
-                    "response_format": {
-                        "$ref": "#/components/schemas/OpenAIResponseFormatParam",
-                        "description": "(Optional) The response format to use."
-                    },
-                    "seed": {
-                        "type": "integer",
-                        "description": "(Optional) The seed to use."
-                    },
-                    "stop": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            }
-                        ],
-                        "description": "(Optional) The stop tokens to use."
-                    },
-                    "stream": {
-                        "type": "boolean",
-                        "description": "(Optional) Whether to stream the response."
-                    },
-                    "stream_options": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "oneOf": [
-                                {
-                                    "type": "null"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "array"
-                                },
-                                {
-                                    "type": "object"
-                                }
-                            ]
-                        },
-                        "description": "(Optional) The stream options to use."
-                    },
-                    "temperature": {
-                        "type": "number",
-                        "description": "(Optional) The temperature to use."
-                    },
-                    "tool_choice": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "oneOf": [
-                                        {
-                                            "type": "null"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "type": "number"
-                                        },
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "array"
-                                        },
-                                        {
-                                            "type": "object"
-                                        }
-                                    ]
-                                }
-                            }
-                        ],
-                        "description": "(Optional) The tool choice to use."
-                    },
-                    "tools": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "oneOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "type": "boolean"
-                                    },
-                                    {
-                                        "type": "number"
-                                    },
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "array"
-                                    },
-                                    {
-                                        "type": "object"
-                                    }
-                                ]
-                            }
-                        },
-                        "description": "(Optional) The tools to use."
-                    },
-                    "top_logprobs": {
-                        "type": "integer",
-                        "description": "(Optional) The top log probabilities to use."
-                    },
-                    "top_p": {
-                        "type": "number",
-                        "description": "(Optional) The top p to use."
-                    },
-                    "user": {
-                        "type": "string",
-                        "description": "(Optional) The user to use."
+                    "params": {
+                        "$ref": "#/components/schemas/OpenAIChatCompletionRequestParams",
+                        "description": "Request parameters including model, messages, and optional parameters. Use params.get_extra_body() to extract provider-specific parameters (e.g., chat_template_kwargs for vLLM)."
                     }
                 },
                 "additionalProperties": false,
                 "required": [
-                    "model",
-                    "messages"
+                    "params"
                 ],
                 "title": "OpenaiChatCompletionRequest"
             },
@@ -7900,12 +7892,11 @@
                 ],
                 "title": "OpenAICompletionWithInputMessages"
             },
-            "OpenaiCompletionRequest": {
+            "OpenAICompletionRequestParams": {
                 "type": "object",
                 "properties": {
                     "model": {
-                        "type": "string",
-                        "description": "The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint."
+                        "type": "string"
                     },
                     "prompt": {
                         "oneOf": [
@@ -7933,47 +7924,37 @@
                                     }
                                 }
                             }
-                        ],
-                        "description": "The prompt to generate a completion for."
+                        ]
                     },
                     "best_of": {
-                        "type": "integer",
-                        "description": "(Optional) The number of completions to generate."
+                        "type": "integer"
                     },
                     "echo": {
-                        "type": "boolean",
-                        "description": "(Optional) Whether to echo the prompt."
+                        "type": "boolean"
                     },
                     "frequency_penalty": {
-                        "type": "number",
-                        "description": "(Optional) The penalty for repeated tokens."
+                        "type": "number"
                     },
                     "logit_bias": {
                         "type": "object",
                         "additionalProperties": {
                             "type": "number"
-                        },
-                        "description": "(Optional) The logit bias to use."
+                        }
                     },
                     "logprobs": {
-                        "type": "boolean",
-                        "description": "(Optional) The log probabilities to use."
+                        "type": "boolean"
                     },
                     "max_tokens": {
-                        "type": "integer",
-                        "description": "(Optional) The maximum number of tokens to generate."
+                        "type": "integer"
                     },
                     "n": {
-                        "type": "integer",
-                        "description": "(Optional) The number of completions to generate."
+                        "type": "integer"
                     },
                     "presence_penalty": {
-                        "type": "number",
-                        "description": "(Optional) The penalty for repeated tokens."
+                        "type": "number"
                     },
                     "seed": {
-                        "type": "integer",
-                        "description": "(Optional) The seed to use."
+                        "type": "integer"
                     },
                     "stop": {
                         "oneOf": [
@@ -7986,12 +7967,10 @@
                                     "type": "string"
                                 }
                             }
-                        ],
-                        "description": "(Optional) The stop tokens to use."
+                        ]
                     },
                     "stream": {
-                        "type": "boolean",
-                        "description": "(Optional) Whether to stream the response."
+                        "type": "boolean"
                     },
                     "stream_options": {
                         "type": "object",
@@ -8016,20 +7995,19 @@
                                     "type": "object"
                                 }
                             ]
-                        },
-                        "description": "(Optional) The stream options to use."
+                        }
                     },
                     "temperature": {
-                        "type": "number",
-                        "description": "(Optional) The temperature to use."
+                        "type": "number"
                     },
                     "top_p": {
-                        "type": "number",
-                        "description": "(Optional) The top p to use."
+                        "type": "number"
                     },
                     "user": {
-                        "type": "string",
-                        "description": "(Optional) The user to use."
+                        "type": "string"
+                    },
+                    "suffix": {
+                        "type": "string"
                     },
                     "guided_choice": {
                         "type": "array",
@@ -8039,16 +8017,27 @@
                     },
                     "prompt_logprobs": {
                         "type": "integer"
-                    },
-                    "suffix": {
-                        "type": "string",
-                        "description": "(Optional) The suffix that should be appended to the completion."
                     }
                 },
                 "additionalProperties": false,
                 "required": [
                     "model",
                     "prompt"
+                ],
+                "title": "OpenAICompletionRequestParams",
+                "description": "Request parameters for OpenAI-compatible completion endpoint.\nThis model uses extra=\"allow\" to capture provider-specific parameters\n(like vLLM's guided_choice) which are passed through as extra_body."
+            },
+            "OpenaiCompletionRequest": {
+                "type": "object",
+                "properties": {
+                    "params": {
+                        "$ref": "#/components/schemas/OpenAICompletionRequestParams",
+                        "description": "Request parameters including model, prompt, and optional parameters. Use params.get_extra_body() to extract provider-specific parameters."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "params"
                 ],
                 "title": "OpenaiCompletionRequest"
             },
