@@ -53,33 +53,19 @@ def responses_impl_with_conversations(
 class TestConversationValidation:
     """Test conversation ID validation logic."""
 
-    async def test_conversation_existence_check_valid(self, responses_impl_with_conversations, mock_conversations_api):
-        """Test conversation existence check for valid conversation."""
-        conv_id = "conv_valid123"
-
-        # Mock successful conversation retrieval
-        mock_conversations_api.get_conversation.return_value = Conversation(
-            id=conv_id, created_at=1234567890, metadata={}, object="conversation"
-        )
-
-        result = await responses_impl_with_conversations._check_conversation_exists(conv_id)
-
-        assert result is True
-        mock_conversations_api.get_conversation.assert_called_once_with(conv_id)
-
-    async def test_conversation_existence_check_invalid(
+    async def test_nonexistent_conversation_raises_error(
         self, responses_impl_with_conversations, mock_conversations_api
     ):
-        """Test conversation existence check for non-existent conversation."""
+        """Test that ConversationNotFoundError is raised for non-existent conversation."""
         conv_id = "conv_nonexistent"
 
         # Mock conversation not found
         mock_conversations_api.get_conversation.side_effect = ConversationNotFoundError("conv_nonexistent")
 
-        result = await responses_impl_with_conversations._check_conversation_exists(conv_id)
-
-        assert result is False
-        mock_conversations_api.get_conversation.assert_called_once_with(conv_id)
+        with pytest.raises(ConversationNotFoundError):
+            await responses_impl_with_conversations.create_openai_response(
+                input="Hello", model="test-model", conversation=conv_id, stream=False
+            )
 
 
 class TestConversationContextLoading:
@@ -137,12 +123,8 @@ class TestConversationContextLoading:
 
         mock_conversations_api.list.side_effect = Exception("API Error")
 
-        result = await responses_impl_with_conversations._load_conversation_context(conv_id, input_text)
-
-        assert len(result) == 1
-        assert isinstance(result[0], OpenAIResponseMessage)
-        assert result[0].role == "user"
-        assert result[0].content == input_text
+        with pytest.raises(Exception, match="API Error"):
+            await responses_impl_with_conversations._load_conversation_context(conv_id, input_text)
 
     async def test_load_conversation_context_with_list_input(
         self, responses_impl_with_conversations, mock_conversations_api
@@ -236,19 +218,30 @@ class TestMessageSyncing:
     async def test_sync_response_to_conversation_api_error(
         self, responses_impl_with_conversations, mock_conversations_api
     ):
-        """Test syncing when conversations API call fails."""
-        conv_id = "conv_test123"
-
+        mock_conversations_api.add_items.side_effect = Exception("API Error")
         mock_response = OpenAIResponseObject(
             id="resp_123", created_at=1234567890, model="test-model", object="response", output=[], status="completed"
         )
 
-        # Mock API error
-        mock_conversations_api.add_items.side_effect = Exception("API Error")
-
-        # Should not raise exception (graceful failure)
-        result = await responses_impl_with_conversations._sync_response_to_conversation(conv_id, "Hello", mock_response)
+        result = await responses_impl_with_conversations._sync_response_to_conversation(
+            "conv_test123", "Hello", mock_response
+        )
         assert result is None
+
+    async def test_sync_unsupported_types(self, responses_impl_with_conversations):
+        mock_response = OpenAIResponseObject(
+            id="resp_123", created_at=1234567890, model="test-model", object="response", output=[], status="completed"
+        )
+
+        with pytest.raises(NotImplementedError, match="Unsupported input item type"):
+            await responses_impl_with_conversations._sync_response_to_conversation(
+                "conv_123", [{"not": "message"}], mock_response
+            )
+
+        with pytest.raises(NotImplementedError, match="Unsupported message role: system"):
+            await responses_impl_with_conversations._sync_response_to_conversation(
+                "conv_123", [OpenAIResponseMessage(role="system", content="test")], mock_response
+            )
 
 
 class TestIntegrationWorkflow:
