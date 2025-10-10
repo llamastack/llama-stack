@@ -248,8 +248,6 @@ class LiteLLMOpenAIMixin(
             temperature=params.temperature,
             top_p=params.top_p,
             user=params.user,
-            guided_choice=params.guided_choice,
-            prompt_logprobs=params.prompt_logprobs,
             suffix=params.suffix,
             api_key=self.get_api_key(),
             api_base=self.api_base,

@@ -15,6 +15,8 @@ from pydantic import ConfigDict
 from llama_stack.apis.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionRequest,
+    OpenAICompletion,
+    OpenAICompletionRequest,
     ToolChoice,
 )
 from llama_stack.log import get_logger
@@ -91,6 +93,14 @@ class VLLMInferenceAdapter(OpenAIMixin):
         log.warning(f"Not checking model availability for {model} as API token may trigger OAuth workflow")
         return True
 
+    async def openai_completion(
+        self,
+        params: OpenAICompletionRequest,
+    ) -> OpenAICompletion:
+        # Extract vLLM-specific parameters from extra fields and pass as kwargs
+        extra_body = dict(params.__pydantic_extra__ or {})
+        return await super().openai_completion(params, **extra_body)
+
     async def openai_chat_completion(
         self,
         params: OpenAIChatCompletionRequest,
@@ -108,4 +118,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
         if not params.tools and params.tool_choice is not None:
             params.tool_choice = ToolChoice.none.value
 
-        return await super().openai_chat_completion(params)
+        # Extract vLLM-specific parameters from extra fields and pass as kwargs
+        extra_body = dict(params.__pydantic_extra__ or {})
+        return await super().openai_chat_completion(params, **extra_body)
