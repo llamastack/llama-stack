@@ -112,8 +112,17 @@ class OAuth2TokenAuthProvider(AuthProvider):
         try:
             if self._jwks_client is None:
                 ssl_context = None
-                if self.config.tls_cafile:
-                    ssl_context = ssl.create_default_context(cafile=self.config.tls_cafile.as_posix())
+                if not self.config.verify_tls:
+                    # Disable SSL verification if verify_tls is False
+                    ssl_context = ssl.create_default_context()
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
+                elif self.config.tls_cafile:
+                    # Use custom CA file if provided
+                    ssl_context = ssl.create_default_context(
+                        cafile=self.config.tls_cafile.as_posix(),
+                    )
+                # If verify_tls is True and no tls_cafile, ssl_context remains None (use system defaults)
 
                 self._jwks_client = jwt.PyJWKClient(
                     self.config.jwks.uri,
