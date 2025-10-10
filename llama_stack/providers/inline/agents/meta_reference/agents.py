@@ -33,9 +33,8 @@ from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.inference import (
     Inference,
     ToolConfig,
-    ToolResponse,
-    ToolResponseMessage,
-    UserMessage,
+    OpenAIMessageParam,
+    OpenAIToolMessageParam,
 )
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
@@ -156,7 +155,7 @@ class MetaReferenceAgentsImpl(Agents):
         self,
         agent_id: str,
         session_id: str,
-        messages: list[UserMessage | ToolResponseMessage],
+        messages: list[OpenAIMessageParam],
         toolgroups: list[AgentToolGroup] | None = None,
         documents: list[Document] | None = None,
         stream: bool | None = False,
@@ -189,7 +188,7 @@ class MetaReferenceAgentsImpl(Agents):
         agent_id: str,
         session_id: str,
         turn_id: str,
-        tool_responses: list[ToolResponse],
+        tool_responses: list[OpenAIToolMessageParam],
         stream: bool | None = False,
     ) -> AsyncGenerator:
         request = AgentTurnResumeRequest(

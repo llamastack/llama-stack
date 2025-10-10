@@ -69,30 +69,26 @@ async def agents_impl(config, mock_apis):
 @pytest.fixture
 def sample_agent_config():
     return AgentConfig(
-        sampling_params={
-            "strategy": {"type": "greedy"},
-            "max_tokens": 0,
-            "repetition_penalty": 1.0,
-        },
+        temperature=0.0,
+        top_p=1.0,
+        max_output_tokens=0,
         input_shields=["string"],
         output_shields=["string"],
         toolgroups=["mcp::my_mcp_server"],
         client_tools=[
             {
+                "type": "function",
                 "name": "client_tool",
                 "description": "Client Tool",
-                "parameters": [
-                    {
-                        "name": "string",
-                        "parameter_type": "string",
-                        "description": "string",
-                        "required": True,
-                        "default": None,
-                    }
-                ],
-                "metadata": {
-                    "property1": None,
-                    "property2": None,
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "string": {
+                            "type": "string",
+                            "description": "string",
+                        }
+                    },
+                    "required": ["string"],
                 },
             }
         ],

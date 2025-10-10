@@ -62,14 +62,9 @@ def agent_config(llama_stack_client, text_model_id):
     agent_config = dict(
         model=text_model_id,
         instructions="You are a helpful assistant",
-        sampling_params={
-            "strategy": {
-                "type": "top_p",
-                "temperature": 0.0001,
-                "top_p": 0.9,
-            },
-            "max_tokens": 512,
-        },
+        temperature=0.0001,
+        top_p=0.9,
+        max_output_tokens=512,
         tools=[],
         input_shields=available_shields,
         output_shields=available_shields,
@@ -83,14 +78,9 @@ def agent_config_without_safety(text_model_id):
     agent_config = dict(
         model=text_model_id,
         instructions="You are a helpful assistant",
-        sampling_params={
-            "strategy": {
-                "type": "top_p",
-                "temperature": 0.0001,
-                "top_p": 0.9,
-            },
-            "max_tokens": 512,
-        },
+        temperature=0.0001,
+        top_p=0.9,
+        max_output_tokens=512,
         tools=[],
         enable_session_persistence=False,
     )
@@ -194,14 +184,9 @@ def test_tool_config(agent_config):
     common_params = dict(
         model="meta-llama/Llama-3.2-3B-Instruct",
         instructions="You are a helpful assistant",
-        sampling_params={
-            "strategy": {
-                "type": "top_p",
-                "temperature": 1.0,
-                "top_p": 0.9,
-            },
-            "max_tokens": 512,
-        },
+        temperature=1.0,
+        top_p=0.9,
+        max_output_tokens=512,
         toolgroups=[],
         enable_session_persistence=False,
     )
@@ -212,39 +197,24 @@ def test_tool_config(agent_config):
 
     agent_config = AgentConfig(
         **common_params,
-        tool_choice="auto",
+        tool_config=ToolConfig(tool_choice="auto"),
     )
     server_config = Server__AgentConfig(**agent_config)
     assert server_config.tool_config.tool_choice == ToolChoice.auto
 
     agent_config = AgentConfig(
         **common_params,
-        tool_choice="auto",
-        tool_config=ToolConfig(
-            tool_choice="auto",
-        ),
+        tool_config=ToolConfig(tool_choice="auto"),
     )
     server_config = Server__AgentConfig(**agent_config)
     assert server_config.tool_config.tool_choice == ToolChoice.auto
 
     agent_config = AgentConfig(
         **common_params,
-        tool_config=ToolConfig(
-            tool_choice="required",
-        ),
+        tool_config=ToolConfig(tool_choice="required"),
     )
     server_config = Server__AgentConfig(**agent_config)
     assert server_config.tool_config.tool_choice == ToolChoice.required
-
-    agent_config = AgentConfig(
-        **common_params,
-        tool_choice="required",
-        tool_config=ToolConfig(
-            tool_choice="auto",
-        ),
-    )
-    with pytest.raises(ValueError, match="tool_choice is deprecated"):
-        Server__AgentConfig(**agent_config)
 
 
 def test_builtin_tool_web_search(llama_stack_client, agent_config):

@@ -7,7 +7,7 @@
 import pytest
 
 from llama_stack.apis.agents import AgentConfig, Turn
-from llama_stack.apis.inference import SamplingParams, UserMessage
+from llama_stack.apis.inference import OpenAIUserMessageParam
 from llama_stack.providers.datatypes import Api
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
@@ -16,7 +16,7 @@ from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 @pytest.fixture
 def sample_messages():
     return [
-        UserMessage(content="What's the weather like today?"),
+        OpenAIUserMessageParam(content="What's the weather like today?"),
     ]
 
 
@@ -36,7 +36,9 @@ def common_params(inference_model):
         model=inference_model,
         instructions="You are a helpful assistant.",
         enable_session_persistence=True,
-        sampling_params=SamplingParams(temperature=0.7, top_p=0.95),
+        temperature=0.7,
+        top_p=0.95,
+        max_output_tokens=256,
         input_shields=[],
         output_shields=[],
         tools=[],
