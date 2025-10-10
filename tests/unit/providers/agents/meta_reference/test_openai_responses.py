@@ -167,6 +167,9 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
         tools=None,
         stream=True,
         temperature=0.1,
+        stream_options={
+            "include_usage": True,
+        },
     )
 
     # Should have content part events for text streaming
