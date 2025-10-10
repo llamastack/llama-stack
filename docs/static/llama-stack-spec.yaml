@@ -167,7 +167,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCompletionRequest'
+              $ref: '#/components/schemas/OpenAICompletionRequest'
         required: true
       deprecated: false
   /v1/conversations:
@@ -3920,6 +3920,8 @@ components:
         - model
         - messages
       title: OpenaiChatCompletionRequest
+      description: >-
+        Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletion:
       type: object
       properties:
@@ -4073,7 +4075,7 @@ components:
         - model
         - input_messages
       title: OpenAICompletionWithInputMessages
-    OpenaiCompletionRequest:
+    OpenAICompletionRequest:
       type: object
       properties:
         model:
@@ -4165,8 +4167,14 @@ components:
           type: array
           items:
             type: string
+          description: >-
+            (Optional) vLLM-specific parameter for guided generation with a list of
+            choices.
         prompt_logprobs:
           type: integer
+          description: >-
+            (Optional) vLLM-specific parameter for number of log probabilities to
+            return for prompt tokens.
         suffix:
           type: string
           description: >-
@@ -4175,7 +4183,9 @@ components:
       required:
         - model
         - prompt
-      title: OpenaiCompletionRequest
+      title: OpenAICompletionRequest
+      description: >-
+        Request parameters for OpenAI-compatible completion endpoint.
     OpenAICompletion:
       type: object
       properties:
