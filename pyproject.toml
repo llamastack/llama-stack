@@ -34,7 +34,7 @@ dependencies = [
     "openai>=1.107",                                  # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
-    "PyJWT>=2.8.0",
+    "pyjwt[crypto]>=2.8.0",                           # Pull crypto to support RS256 for jwt.
     "pydantic>=2.11.9",
     "rich",
     "starlette",
