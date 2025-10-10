@@ -234,6 +234,7 @@ class OpenAIResponsesImpl:
                 "Mutually exclusive parameters: 'previous_response_id' and 'conversation'. Ensure you are only providing one of these parameters."
             )
 
+        original_input = input  # needed for syncing to Conversations
         if conversation is not None:
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
@@ -243,6 +244,7 @@ class OpenAIResponsesImpl:
 
         stream_gen = self._create_streaming_response(
             input=input,
+            original_input=original_input,
             model=model,
             instructions=instructions,
             previous_response_id=previous_response_id,
@@ -289,6 +291,7 @@ class OpenAIResponsesImpl:
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
+        original_input: str | list[OpenAIResponseInput] | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
         conversation: str | None = None,
@@ -350,7 +353,9 @@ class OpenAIResponsesImpl:
             )
 
         if conversation and final_response:
-            await self._sync_response_to_conversation(conversation, all_input, final_response)
+            # for Conversations, we need to use the original_input if it's available, otherwise use input
+            sync_input = original_input if original_input is not None else input
+            await self._sync_response_to_conversation(conversation, sync_input, final_response)
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)
@@ -431,8 +436,4 @@ class OpenAIResponsesImpl:
         if conversation_items:
             adapter = TypeAdapter(list[ConversationItem])
             validated_items = adapter.validate_python(conversation_items)
-            try:
-                await self.conversations_api.add_items(conversation_id, validated_items)
-            except Exception as e:
-                logger.error(f"Failed to sync response {response.id} to conversation {conversation_id}: {e}")
-                # don't fail response creation if conversation sync fails
+            await self.conversations_api.add_items(conversation_id, validated_items)

@@ -223,10 +223,11 @@ class TestMessageSyncing:
             id="resp_123", created_at=1234567890, model="test-model", object="response", output=[], status="completed"
         )
 
-        result = await responses_impl_with_conversations._sync_response_to_conversation(
-            "conv_test123", "Hello", mock_response
-        )
-        assert result is None
+        # matching the behavior of OpenAI here
+        with pytest.raises(Exception, match="API Error"):
+            await responses_impl_with_conversations._sync_response_to_conversation(
+                "conv_test123", "Hello", mock_response
+            )
 
     async def test_sync_unsupported_types(self, responses_impl_with_conversations):
         mock_response = OpenAIResponseObject(
