@@ -14,8 +14,8 @@ from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.inference import (
     Inference,
-    OpenAIChatCompletionRequest,
-    OpenAICompletionRequest,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletionRequestWithExtraBody,
     OpenAISystemMessageParam,
     OpenAIUserMessageParam,
     UserMessage,
@@ -175,7 +175,7 @@ class MetaReferenceEvalImpl(
                     sampling_params["stop"] = candidate.sampling_params.stop
 
                 input_content = json.loads(x[ColumnName.completion_input.value])
-                params = OpenAICompletionRequest(
+                params = OpenAICompletionRequestWithExtraBody(
                     model=candidate.model,
                     prompt=input_content,
                     **sampling_params,
@@ -195,7 +195,7 @@ class MetaReferenceEvalImpl(
                 messages += [OpenAISystemMessageParam(**x) for x in chat_completion_input_json if x["role"] == "system"]
 
                 messages += input_messages
-                params = OpenAIChatCompletionRequest(
+                params = OpenAIChatCompletionRequestWithExtraBody(
                     model=candidate.model,
                     messages=messages,
                     **sampling_params,
