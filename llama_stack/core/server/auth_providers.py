@@ -124,11 +124,19 @@ class OAuth2TokenAuthProvider(AuthProvider):
                     )
                 # If verify_tls is True and no tls_cafile, ssl_context remains None (use system defaults)
 
+                # Prepare headers for JWKS request - this is needed for Kubernetes to authenticate
+                # to the JWK endpoint
+                headers = {}
+                if self.config.jwks.token:
+                    headers["Authorization"] = f"Bearer {self.config.jwks.token}"
+
+                # Create PyJWKClient with SSL context if supported
                 self._jwks_client = jwt.PyJWKClient(
                     self.config.jwks.uri,
                     cache_keys=True,
                     max_cached_keys=10,
                     lifespan=self.config.jwks.key_recheck_period,  # Use configurable period
+                    headers=headers,
                     ssl_context=ssl_context,
                 )
 
