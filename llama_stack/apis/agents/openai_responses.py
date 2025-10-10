@@ -131,8 +131,20 @@ class OpenAIResponseOutputMessageContentOutputText(BaseModel):
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
 
 
+@json_schema_type
+class OpenAIResponseContentPartRefusal(BaseModel):
+    """Refusal content within a streamed response part.
+
+    :param type: Content part type identifier, always "refusal"
+    :param refusal: Refusal text supplied by the model
+    """
+
+    type: Literal["refusal"] = "refusal"
+    refusal: str
+
+
 OpenAIResponseOutputMessageContent = Annotated[
-    OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseOutputMessageContent, name="OpenAIResponseOutputMessageContent")
@@ -876,18 +888,6 @@ class OpenAIResponseContentPartOutputText(BaseModel):
     text: str
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
     logprobs: list[dict[str, Any]] | None = None
-
-
-@json_schema_type
-class OpenAIResponseContentPartRefusal(BaseModel):
-    """Refusal content within a streamed response part.
-
-    :param type: Content part type identifier, always "refusal"
-    :param refusal: Refusal text supplied by the model
-    """
-
-    type: Literal["refusal"] = "refusal"
-    refusal: str
 
 
 @json_schema_type

@@ -5670,6 +5670,7 @@
                     }
                 }
             },
+<<<<<<< HEAD
             "OpenAIResponseInputFunctionToolCallOutput": {
                 "type": "object",
                 "properties": {
@@ -5689,16 +5690,38 @@
                     },
                     "status": {
                         "type": "string"
+=======
+            "OpenAIResponseContentPartRefusal": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "refusal",
+                        "default": "refusal",
+                        "description": "Content part type identifier, always \"refusal\""
+                    },
+                    "refusal": {
+                        "type": "string",
+                        "description": "Refusal text supplied by the model"
+>>>>>>> 181046f9 (feat: Add responses and safety impl extra_body)
                     }
                 },
                 "additionalProperties": false,
                 "required": [
+<<<<<<< HEAD
                     "call_id",
                     "output",
                     "type"
                 ],
                 "title": "OpenAIResponseInputFunctionToolCallOutput",
                 "description": "This represents the output of a function call that gets passed back to the model."
+=======
+                    "type",
+                    "refusal"
+                ],
+                "title": "OpenAIResponseContentPartRefusal",
+                "description": "Refusal content within a streamed response part."
+>>>>>>> 181046f9 (feat: Add responses and safety impl extra_body)
             },
             "OpenAIResponseInputMessageContent": {
                 "oneOf": [
@@ -5905,6 +5928,23 @@
                 "description": "Corresponds to the various Message types in the Responses API. They are all under one type because the Responses API gives them all the same \"type\" value, and there is no way to tell them apart in certain scenarios."
             },
             "OpenAIResponseOutputMessageContent": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                        "output_text": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText",
+                        "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                    }
+                }
+            },
+            "OpenAIResponseOutputMessageContentOutputText": {
                 "type": "object",
                 "properties": {
                     "text": {
@@ -8227,28 +8267,6 @@
                 ],
                 "title": "OpenAIResponseContentPartReasoningText",
                 "description": "Reasoning text emitted as part of a streamed response."
-            },
-            "OpenAIResponseContentPartRefusal": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "const": "refusal",
-                        "default": "refusal",
-                        "description": "Content part type identifier, always \"refusal\""
-                    },
-                    "refusal": {
-                        "type": "string",
-                        "description": "Refusal text supplied by the model"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "refusal"
-                ],
-                "title": "OpenAIResponseContentPartRefusal",
-                "description": "Refusal content within a streamed response part."
             },
             "OpenAIResponseObjectStream": {
                 "oneOf": [

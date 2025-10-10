@@ -4,9 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import re
 import uuid
 
+from llama_stack.apis.agents.agents import ResponseShieldSpec
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInput,
@@ -26,6 +28,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseText,
 )
 from llama_stack.apis.inference import (
+    Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
@@ -45,6 +48,7 @@ from llama_stack.apis.inference import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
 )
+from llama_stack.apis.safety import Safety
 
 
 async def convert_chat_choice_to_response_message(
@@ -240,7 +244,8 @@ async def convert_response_text_to_chat_response_format(
     raise ValueError(f"Unsupported text format: {text.format}")
 
 
-async def get_message_type_by_role(role: str):
+async def get_message_type_by_role(role: str) -> type[OpenAIMessageParam] | None:
+    """Get the appropriate OpenAI message parameter type for a given role."""
     role_to_type = {
         "user": OpenAIUserMessageParam,
         "system": OpenAISystemMessageParam,
@@ -307,3 +312,54 @@ def is_function_tool_call(
         if t.type == "function" and t.name == tool_call.function.name:
             return True
     return False
+
+
+async def run_multiple_shields(safety_api: Safety, messages: list[Message], shield_ids: list[str]) -> None:
+    """Run multiple shields against messages and raise SafetyException for violations."""
+    if not shield_ids or not messages:
+        return
+    shield_tasks = [
+        safety_api.run_shield(shield_id=shield_id, messages=messages, params={}) for shield_id in shield_ids
+    ]
+
+    responses = await asyncio.gather(*shield_tasks)
+
+    for response in responses:
+        if response.violation and response.violation.violation_level.name == "ERROR":
+            from ..safety import SafetyException
+
+            raise SafetyException(response.violation)
+
+
+def extract_shield_ids(shields: list | None) -> list[str]:
+    """Extract shield IDs from shields parameter, handling both string IDs and ResponseShieldSpec objects."""
+    if not shields:
+        return []
+
+    shield_ids = []
+    for shield in shields:
+        if isinstance(shield, str):
+            shield_ids.append(shield)
+        elif isinstance(shield, ResponseShieldSpec):
+            shield_ids.append(shield.type)
+        else:
+            raise ValueError(f"Unknown shield format: {shield}, expected str or ResponseShieldSpec")
+
+    return shield_ids
+
+
+def extract_text_content(content: str | list | None) -> str | None:
+    """Extract text content from OpenAI message content (string or complex structure)."""
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        # Handle complex content - extract text parts only
+        text_parts = []
+        for part in content:
+            if hasattr(part, "text"):
+                text_parts.append(part.text)
+            elif hasattr(part, "type") and part.type == "refusal":
+                # Skip refusal parts - don't validate them again
+                continue
+        return " ".join(text_parts) if text_parts else None
+    return None
