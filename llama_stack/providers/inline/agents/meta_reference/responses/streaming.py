@@ -147,20 +147,6 @@ class StreamingResponseOrchestrator:
                 refusal=e.violation.user_message or "Content blocked by safety shields"
             )
 
-    async def _create_input_refusal_response_events(
-        self, refusal_content: OpenAIResponseContentPartRefusal
-    ) -> AsyncIterator[OpenAIResponseObjectStream]:
-        """Create refusal response events for input safety violations."""
-        # Create the refusal content part explicitly with the correct structure
-        refusal_response = OpenAIResponseObject(
-            id=self.response_id,
-            created_at=self.created_at,
-            model=self.ctx.model,
-            status="completed",
-            output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
-        )
-        yield OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
-
     async def _check_output_stream_chunk_safety(self, accumulated_text: str) -> str | None:
         """Check accumulated streaming text content against shields. Returns violation message if blocked."""
         if not self.shield_ids or not accumulated_text:
@@ -237,8 +223,7 @@ class StreamingResponseOrchestrator:
             input_refusal = await self._check_input_safety(self.ctx.messages)
             if input_refusal:
                 # Return refusal response immediately
-                async for refusal_event in self._create_input_refusal_response_events(input_refusal):
-                    yield refusal_event
+                yield await self._create_refusal_response(input_refusal.refusal)
                 return
 
         async for stream_event in self._process_tools(output_messages):
