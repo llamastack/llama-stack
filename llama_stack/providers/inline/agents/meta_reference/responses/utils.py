@@ -48,7 +48,10 @@ from llama_stack.apis.inference import (
 
 
 async def convert_chat_choice_to_response_message(
-    choice: OpenAIChoice, citation_files: dict[str, str] | None = None
+    choice: OpenAIChoice,
+    citation_files: dict[str, str] | None = None,
+    *,
+    message_id: str | None = None,
 ) -> OpenAIResponseMessage:
     """Convert an OpenAI Chat Completion choice into an OpenAI Response output message."""
     output_content = ""
@@ -64,7 +67,7 @@ async def convert_chat_choice_to_response_message(
     annotations, clean_text = _extract_citations_from_text(output_content, citation_files or {})
 
     return OpenAIResponseMessage(
-        id=f"msg_{uuid.uuid4()}",
+        id=message_id or f"msg_{uuid.uuid4()}",
         content=[OpenAIResponseOutputMessageContentOutputText(text=clean_text, annotations=annotations)],
         status="completed",
         role="assistant",

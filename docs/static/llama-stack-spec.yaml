@@ -6137,13 +6137,57 @@ components:
           type: string
           const: output_text
           default: output_text
+          description: >-
+            Content part type identifier, always "output_text"
         text:
           type: string
+          description: Text emitted for this content part
+        annotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseAnnotations'
+          description: >-
+            Structured annotations associated with the text
+        logprobs:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: 'null'
+                - type: boolean
+                - type: number
+                - type: string
+                - type: array
+                - type: object
+          description: (Optional) Token log probability details
       additionalProperties: false
       required:
         - type
         - text
+        - annotations
       title: OpenAIResponseContentPartOutputText
+      description: >-
+        Text content within a streamed response part.
+    OpenAIResponseContentPartReasoningText:
+      type: object
+      properties:
+        type:
+          type: string
+          const: reasoning_text
+          default: reasoning_text
+          description: >-
+            Content part type identifier, always "reasoning_text"
+        text:
+          type: string
+          description: Reasoning text supplied by the model
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: OpenAIResponseContentPartReasoningText
+      description: >-
+        Reasoning text emitted as part of a streamed response.
     OpenAIResponseContentPartRefusal:
       type: object
       properties:
@@ -6151,16 +6195,22 @@ components:
           type: string
           const: refusal
           default: refusal
+          description: >-
+            Content part type identifier, always "refusal"
         refusal:
           type: string
+          description: Refusal text supplied by the model
       additionalProperties: false
       required:
         - type
         - refusal
       title: OpenAIResponseContentPartRefusal
+      description: >-
+        Refusal content within a streamed response part.
     OpenAIResponseObjectStream:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseInProgress'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta'
@@ -6180,11 +6230,14 @@ components:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
       discriminator:
         propertyName: type
         mapping:
           response.created: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
+          response.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseInProgress'
           response.output_item.added: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded'
           response.output_item.done: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone'
           response.output_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta'
@@ -6204,13 +6257,15 @@ components:
           response.mcp_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
           response.content_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
           response.content_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+          response.incomplete: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
+          response.failed: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
           response.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
     "OpenAIResponseObjectStreamResponseCompleted":
       type: object
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
-          description: The completed response object
+          description: Completed response object
         type:
           type: string
           const: response.completed
@@ -6228,6 +6283,10 @@ components:
     "OpenAIResponseObjectStreamResponseContentPartAdded":
       type: object
       properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the part within the content array
         response_id:
           type: string
           description: >-
@@ -6236,15 +6295,21 @@ components:
           type: string
           description: >-
             Unique identifier of the output item containing this content part
+        output_index:
+          type: integer
+          description: >-
+            Index position of the output item in the response
         part:
           oneOf:
             - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
             - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+            - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           discriminator:
             propertyName: type
             mapping:
               output_text: '#/components/schemas/OpenAIResponseContentPartOutputText'
               refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+              reasoning_text: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           description: The content part that was added
         sequence_number:
           type: integer
@@ -6258,8 +6323,10 @@ components:
             Event type identifier, always "response.content_part.added"
       additionalProperties: false
       required:
+        - content_index
         - response_id
         - item_id
+        - output_index
         - part
         - sequence_number
         - type
@@ -6270,6 +6337,10 @@ components:
     "OpenAIResponseObjectStreamResponseContentPartDone":
       type: object
       properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the part within the content array
         response_id:
           type: string
           description: >-
@@ -6278,15 +6349,21 @@ components:
           type: string
           description: >-
             Unique identifier of the output item containing this content part
+        output_index:
+          type: integer
+          description: >-
+            Index position of the output item in the response
         part:
           oneOf:
             - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
             - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+            - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           discriminator:
             propertyName: type
             mapping:
               output_text: '#/components/schemas/OpenAIResponseContentPartOutputText'
               refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+              reasoning_text: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           description: The completed content part
         sequence_number:
           type: integer
@@ -6300,8 +6377,10 @@ components:
             Event type identifier, always "response.content_part.done"
       additionalProperties: false
       required:
+        - content_index
         - response_id
         - item_id
+        - output_index
         - part
         - sequence_number
         - type
@@ -6314,7 +6393,7 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
-          description: The newly created response object
+          description: The response object that was created
         type:
           type: string
           const: response.created
@@ -6329,6 +6408,30 @@ components:
         OpenAIResponseObjectStreamResponseCreated
       description: >-
         Streaming event indicating a new response has been created.
+    OpenAIResponseObjectStreamResponseFailed:
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: Response object describing the failure
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.failed
+          default: response.failed
+          description: >-
+            Event type identifier, always "response.failed"
+      additionalProperties: false
+      required:
+        - response
+        - sequence_number
+        - type
+      title: OpenAIResponseObjectStreamResponseFailed
+      description: >-
+        Streaming event emitted when a response fails.
     "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta":
       type: object
       properties:
@@ -6401,6 +6504,57 @@ components:
         OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone
       description: >-
         Streaming event for when function call arguments are completed.
+    "OpenAIResponseObjectStreamResponseInProgress":
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: Current response state while in progress
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.in_progress
+          default: response.in_progress
+          description: >-
+            Event type identifier, always "response.in_progress"
+      additionalProperties: false
+      required:
+        - response
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseInProgress
+      description: >-
+        Streaming event indicating the response remains in progress.
+    "OpenAIResponseObjectStreamResponseIncomplete":
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: >-
+            Response object describing the incomplete state
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.incomplete
+          default: response.incomplete
+          description: >-
+            Event type identifier, always "response.incomplete"
+      additionalProperties: false
+      required:
+        - response
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseIncomplete
+      description: >-
+        Streaming event emitted when a response ends in an incomplete state.
     "OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta":
       type: object
       properties:

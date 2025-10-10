@@ -16,18 +16,19 @@ class StreamingValidator:
 
     def assert_basic_event_sequence(self):
         """Verify basic created -> completed event sequence."""
-        assert len(self.chunks) >= 2, f"Expected at least 2 chunks (created + completed), got {len(self.chunks)}"
+        assert len(self.chunks) >= 2, f"Expected at least 2 chunks (created + terminal), got {len(self.chunks)}"
         assert self.chunks[0].type == "response.created", (
             f"First chunk should be response.created, got {self.chunks[0].type}"
         )
-        assert self.chunks[-1].type == "response.completed", (
-            f"Last chunk should be response.completed, got {self.chunks[-1].type}"
+        assert any(t in self.event_types for t in ["response.completed", "response.incomplete", "response.failed"]), (
+            "Expected a terminal response event (completed, incomplete, or failed)"
         )
 
-        # Verify event order
+        terminal_types = ["response.completed", "response.incomplete", "response.failed"]
+        terminal_indices = [self.event_types.index(t) for t in terminal_types if t in self.event_types]
+        assert terminal_indices, "Expected at least one terminal event index"
         created_index = self.event_types.index("response.created")
-        completed_index = self.event_types.index("response.completed")
-        assert created_index < completed_index, "response.created should come before response.completed"
+        assert created_index < min(terminal_indices), "response.created should precede terminal events"
 
     def assert_response_consistency(self):
         """Verify response ID consistency across events."""
@@ -137,8 +138,23 @@ class StreamingValidator:
         for chunk in self.chunks:
             if chunk.type == "response.created":
                 assert chunk.response.status == "in_progress"
+            elif chunk.type == "response.in_progress":
+                assert chunk.response.status == "in_progress"
+                assert isinstance(chunk.sequence_number, int)
+            elif chunk.type == "response.incomplete":
+                assert chunk.response.status == "incomplete"
+                assert isinstance(chunk.sequence_number, int)
+            elif chunk.type == "response.failed":
+                assert chunk.response.status == "failed"
+                assert isinstance(chunk.sequence_number, int)
+                assert chunk.response.error is not None
             elif chunk.type == "response.completed":
                 assert chunk.response.status == "completed"
+            elif chunk.type in {"response.content_part.added", "response.content_part.done"}:
+                assert chunk.item_id, "Content part events should have non-empty item_id"
+                assert isinstance(chunk.content_index, int)
+                assert isinstance(chunk.output_index, int)
+                assert chunk.response_id, "Content part events should include response_id"
             elif hasattr(chunk, "item_id"):
                 assert chunk.item_id, "Events with item_id should have non-empty item_id"
             elif hasattr(chunk, "sequence_number"):

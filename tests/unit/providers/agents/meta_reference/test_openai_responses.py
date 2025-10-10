@@ -156,9 +156,10 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     )
 
     # Should have content part events for text streaming
-    # Expected: response.created, content_part.added, output_text.delta, content_part.done, response.completed
-    assert len(chunks) >= 4
+    # Expected: response.created, response.in_progress, content_part.added, output_text.delta, content_part.done, response.completed
+    assert len(chunks) >= 5
     assert chunks[0].type == "response.created"
+    assert any(chunk.type == "response.in_progress" for chunk in chunks)
 
     # Check for content part events
     content_part_added_events = [c for c in chunks if c.type == "response.content_part.added"]
@@ -169,6 +170,14 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     assert len(content_part_done_events) >= 1, "Should have content_part.done event for text"
     assert len(text_delta_events) >= 1, "Should have text delta events"
 
+    added_event = content_part_added_events[0]
+    done_event = content_part_done_events[0]
+    assert added_event.content_index == 0
+    assert done_event.content_index == 0
+    assert added_event.output_index == done_event.output_index == 0
+    assert added_event.item_id == done_event.item_id
+    assert added_event.response_id == done_event.response_id
+
     # Verify final event is completion
     assert chunks[-1].type == "response.completed"
 
@@ -177,6 +186,8 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     assert final_response.model == model
     assert len(final_response.output) == 1
     assert isinstance(final_response.output[0], OpenAIResponseMessage)
+    assert final_response.output[0].id == added_event.item_id
+    assert final_response.id == added_event.response_id
 
     openai_responses_impl.responses_store.store_response_object.assert_called_once()
     assert final_response.output[0].content[0].text == "Dublin"
@@ -303,9 +314,20 @@ async def test_create_openai_response_with_tool_call_type_none(openai_responses_
     chunks = [chunk async for chunk in result]
 
     # Verify event types
-    # Should have: response.created, output_item.added, function_call_arguments.delta,
-    # function_call_arguments.done, output_item.done, response.completed
-    assert len(chunks) == 6
+    # Should have: response.created, response.in_progress, output_item.added,
+    # function_call_arguments.delta, function_call_arguments.done, output_item.done, response.completed
+    assert len(chunks) == 7
+
+    event_types = [chunk.type for chunk in chunks]
+    assert event_types == [
+        "response.created",
+        "response.in_progress",
+        "response.output_item.added",
+        "response.function_call_arguments.delta",
+        "response.function_call_arguments.done",
+        "response.output_item.done",
+        "response.completed",
+    ]
 
     # Verify inference API was called correctly (after iterating over result)
     first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
@@ -314,25 +336,19 @@ async def test_create_openai_response_with_tool_call_type_none(openai_responses_
     assert first_call.kwargs["temperature"] == 0.1
 
     # Check response.created event (should have empty output)
-    assert chunks[0].type == "response.created"
     assert len(chunks[0].response.output) == 0
 
-    # Check streaming events
-    assert chunks[1].type == "response.output_item.added"
-    assert chunks[2].type == "response.function_call_arguments.delta"
-    assert chunks[3].type == "response.function_call_arguments.done"
-    assert chunks[4].type == "response.output_item.done"
-
     # Check response.completed event (should have the tool call)
-    assert chunks[5].type == "response.completed"
-    assert len(chunks[5].response.output) == 1
-    assert chunks[5].response.output[0].type == "function_call"
-    assert chunks[5].response.output[0].name == "get_weather"
+    completed_chunk = chunks[-1]
+    assert completed_chunk.type == "response.completed"
+    assert len(completed_chunk.response.output) == 1
+    assert completed_chunk.response.output[0].type == "function_call"
+    assert completed_chunk.response.output[0].name == "get_weather"
 
 
 async def test_create_openai_response_with_tool_call_function_arguments_none(openai_responses_impl, mock_inference_api):
-    """Test creating an OpenAI response with a tool call response that has a function that does not accept arguments, or arguments set to None when they are not mandatory."""
-    # Setup
+    """Test creating an OpenAI response with tool calls that omit arguments."""
+
     input_text = "What is the time right now?"
     model = "meta-llama/Llama-3.1-8B-Instruct"
 
@@ -359,9 +375,21 @@ async def test_create_openai_response_with_tool_call_function_arguments_none(ope
             object="chat.completion.chunk",
         )
 
-    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
+    def assert_common_expectations(chunks) -> None:
+        first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
+        assert first_call.kwargs["messages"][0].content == input_text
+        assert first_call.kwargs["tools"] is not None
+        assert first_call.kwargs["temperature"] == 0.1
+        assert len(chunks[0].response.output) == 0
+        completed_chunk = chunks[-1]
+        assert completed_chunk.type == "response.completed"
+        assert len(completed_chunk.response.output) == 1
+        assert completed_chunk.response.output[0].type == "function_call"
+        assert completed_chunk.response.output[0].name == "get_current_time"
+        assert completed_chunk.response.output[0].arguments == "{}"
 
     # Function does not accept arguments
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
     result = await openai_responses_impl.create_openai_response(
         input=input_text,
         model=model,
@@ -369,46 +397,23 @@ async def test_create_openai_response_with_tool_call_function_arguments_none(ope
         temperature=0.1,
         tools=[
             OpenAIResponseInputToolFunction(
-                name="get_current_time",
-                description="Get current time for system's timezone",
-                parameters={},
+                name="get_current_time", description="Get current time for system's timezone", parameters={}
             )
         ],
     )
-
-    # Check that we got the content from our mocked tool execution result
     chunks = [chunk async for chunk in result]
-
-    # Verify event types
-    # Should have: response.created, output_item.added, function_call_arguments.delta,
-    # function_call_arguments.done, output_item.done, response.completed
-    assert len(chunks) == 5
-
-    # Verify inference API was called correctly (after iterating over result)
-    first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
-    assert first_call.kwargs["messages"][0].content == input_text
-    assert first_call.kwargs["tools"] is not None
-    assert first_call.kwargs["temperature"] == 0.1
-
-    # Check response.created event (should have empty output)
-    assert chunks[0].type == "response.created"
-    assert len(chunks[0].response.output) == 0
-
-    # Check streaming events
-    assert chunks[1].type == "response.output_item.added"
-    assert chunks[2].type == "response.function_call_arguments.done"
-    assert chunks[3].type == "response.output_item.done"
-
-    # Check response.completed event (should have the tool call with arguments set to "{}")
-    assert chunks[4].type == "response.completed"
-    assert len(chunks[4].response.output) == 1
-    assert chunks[4].response.output[0].type == "function_call"
-    assert chunks[4].response.output[0].name == "get_current_time"
-    assert chunks[4].response.output[0].arguments == "{}"
-
-    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
+    assert [chunk.type for chunk in chunks] == [
+        "response.created",
+        "response.in_progress",
+        "response.output_item.added",
+        "response.function_call_arguments.done",
+        "response.output_item.done",
+        "response.completed",
+    ]
+    assert_common_expectations(chunks)
 
     # Function accepts optional arguments
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
     result = await openai_responses_impl.create_openai_response(
         input=input_text,
         model=model,
@@ -418,42 +423,47 @@ async def test_create_openai_response_with_tool_call_function_arguments_none(ope
             OpenAIResponseInputToolFunction(
                 name="get_current_time",
                 description="Get current time for system's timezone",
-                parameters={
-                    "timezone": "string",
-                },
+                parameters={"timezone": "string"},
             )
         ],
     )
-
-    # Check that we got the content from our mocked tool execution result
     chunks = [chunk async for chunk in result]
+    assert [chunk.type for chunk in chunks] == [
+        "response.created",
+        "response.in_progress",
+        "response.output_item.added",
+        "response.function_call_arguments.done",
+        "response.output_item.done",
+        "response.completed",
+    ]
+    assert_common_expectations(chunks)
 
-    # Verify event types
-    # Should have: response.created, output_item.added, function_call_arguments.delta,
-    # function_call_arguments.done, output_item.done, response.completed
-    assert len(chunks) == 5
-
-    # Verify inference API was called correctly (after iterating over result)
-    first_call = mock_inference_api.openai_chat_completion.call_args_list[0]
-    assert first_call.kwargs["messages"][0].content == input_text
-    assert first_call.kwargs["tools"] is not None
-    assert first_call.kwargs["temperature"] == 0.1
-
-    # Check response.created event (should have empty output)
-    assert chunks[0].type == "response.created"
-    assert len(chunks[0].response.output) == 0
-
-    # Check streaming events
-    assert chunks[1].type == "response.output_item.added"
-    assert chunks[2].type == "response.function_call_arguments.done"
-    assert chunks[3].type == "response.output_item.done"
-
-    # Check response.completed event (should have the tool call with arguments set to "{}")
-    assert chunks[4].type == "response.completed"
-    assert len(chunks[4].response.output) == 1
-    assert chunks[4].response.output[0].type == "function_call"
-    assert chunks[4].response.output[0].name == "get_current_time"
-    assert chunks[4].response.output[0].arguments == "{}"
+    # Function accepts optional arguments with additional optional fields
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=True,
+        temperature=0.1,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_current_time",
+                description="Get current time for system's timezone",
+                parameters={"timezone": "string", "location": "string"},
+            )
+        ],
+    )
+    chunks = [chunk async for chunk in result]
+    assert [chunk.type for chunk in chunks] == [
+        "response.created",
+        "response.in_progress",
+        "response.output_item.added",
+        "response.function_call_arguments.done",
+        "response.output_item.done",
+        "response.completed",
+    ]
+    assert_common_expectations(chunks)
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
 
 
 async def test_create_openai_response_with_multiple_messages(openai_responses_impl, mock_inference_api):

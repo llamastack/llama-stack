@@ -232,17 +232,33 @@ class OpenAIResponsesImpl:
         if stream:
             return stream_gen
         else:
-            response = None
-            async for stream_chunk in stream_gen:
-                if stream_chunk.type == "response.completed":
-                    if response is not None:
-                        raise ValueError("The response stream completed multiple times! Earlier response: {response}")
-                    response = stream_chunk.response
-                    # don't leave the generator half complete!
+            final_response = None
+            final_event_type = None
+            failed_response = None
 
-            if response is None:
-                raise ValueError("The response stream never completed")
-            return response
+            async for stream_chunk in stream_gen:
+                if stream_chunk.type in {"response.completed", "response.incomplete"}:
+                    if final_response is not None:
+                        raise ValueError(
+                            "The response stream produced multiple terminal responses! "
+                            f"Earlier response from {final_event_type}"
+                        )
+                    final_response = stream_chunk.response
+                    final_event_type = stream_chunk.type
+                elif stream_chunk.type == "response.failed":
+                    failed_response = stream_chunk.response
+
+            if failed_response is not None:
+                error_message = (
+                    failed_response.error.message
+                    if failed_response and failed_response.error
+                    else "Response stream failed without error details"
+                )
+                raise RuntimeError(f"OpenAI response failed: {error_message}")
+
+            if final_response is None:
+                raise ValueError("The response stream never reached a terminal state")
+            return final_response
 
     async def _create_streaming_response(
         self,
@@ -288,13 +304,16 @@ class OpenAIResponsesImpl:
 
         # Stream the response
         final_response = None
+        failed_response = None
         async for stream_chunk in orchestrator.create_response():
-            if stream_chunk.type == "response.completed":
+            if stream_chunk.type in {"response.completed", "response.incomplete"}:
                 final_response = stream_chunk.response
+            elif stream_chunk.type == "response.failed":
+                failed_response = stream_chunk.response
             yield stream_chunk
 
         # Store the response if requested
-        if store and final_response:
+        if store and final_response and failed_response is None:
             await self._store_response(
                 response=final_response,
                 input=all_input,

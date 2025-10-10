@@ -13,6 +13,7 @@ from llama_stack.apis.agents.openai_responses import (
     ApprovalFilter,
     MCPListToolsTool,
     OpenAIResponseContentPartOutputText,
+    OpenAIResponseError,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolMCP,
     OpenAIResponseMCPApprovalRequest,
@@ -22,8 +23,11 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObjectStreamResponseContentPartAdded,
     OpenAIResponseObjectStreamResponseContentPartDone,
     OpenAIResponseObjectStreamResponseCreated,
+    OpenAIResponseObjectStreamResponseFailed,
     OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta,
     OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone,
+    OpenAIResponseObjectStreamResponseIncomplete,
+    OpenAIResponseObjectStreamResponseInProgress,
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta,
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDone,
     OpenAIResponseObjectStreamResponseMcpListToolsCompleted,
@@ -100,21 +104,46 @@ class StreamingResponseOrchestrator:
         # mapping for annotations
         self.citation_files: dict[str, str] = {}
 
-    async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
-        # Initialize output messages
-        output_messages: list[OpenAIResponseOutput] = []
-        # Create initial response and emit response.created immediately
-        initial_response = OpenAIResponseObject(
+    def _clone_outputs(self, outputs: list[OpenAIResponseOutput]) -> list[OpenAIResponseOutput]:
+        cloned: list[OpenAIResponseOutput] = []
+        for item in outputs:
+            if hasattr(item, "model_copy"):
+                cloned.append(item.model_copy(deep=True))
+            else:
+                cloned.append(item)
+        return cloned
+
+    def _snapshot_response(
+        self,
+        status: str,
+        outputs: list[OpenAIResponseOutput],
+        *,
+        error: OpenAIResponseError | None = None,
+    ) -> OpenAIResponseObject:
+        return OpenAIResponseObject(
             created_at=self.created_at,
             id=self.response_id,
             model=self.ctx.model,
             object="response",
-            status="in_progress",
-            output=output_messages.copy(),
+            status=status,
+            output=self._clone_outputs(outputs),
             text=self.text,
+            error=error,
         )
 
-        yield OpenAIResponseObjectStreamResponseCreated(response=initial_response)
+    async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
+        output_messages: list[OpenAIResponseOutput] = []
+
+        # Emit response.created followed by response.in_progress to align with OpenAI streaming
+        yield OpenAIResponseObjectStreamResponseCreated(
+            response=self._snapshot_response("in_progress", output_messages)
+        )
+
+        self.sequence_number += 1
+        yield OpenAIResponseObjectStreamResponseInProgress(
+            response=self._snapshot_response("in_progress", output_messages),
+            sequence_number=self.sequence_number,
+        )
 
         # Process all tools (including MCP tools) and emit streaming events
         if self.ctx.response_tools:
@@ -123,87 +152,114 @@ class StreamingResponseOrchestrator:
 
         n_iter = 0
         messages = self.ctx.messages.copy()
+        final_status = "completed"
+        last_completion_result: ChatCompletionResult | None = None
 
-        while True:
-            # Text is the default response format for chat completion so don't need to pass it
-            # (some providers don't support non-empty response_format when tools are present)
-            response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
-            logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
-            completion_result = await self.inference_api.openai_chat_completion(
-                model=self.ctx.model,
-                messages=messages,
-                tools=self.ctx.chat_tools,
-                stream=True,
-                temperature=self.ctx.temperature,
-                response_format=response_format,
-            )
+        try:
+            while True:
+                # Text is the default response format for chat completion so don't need to pass it
+                # (some providers don't support non-empty response_format when tools are present)
+                response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
+                logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
+                completion_result = await self.inference_api.openai_chat_completion(
+                    model=self.ctx.model,
+                    messages=messages,
+                    tools=self.ctx.chat_tools,
+                    stream=True,
+                    temperature=self.ctx.temperature,
+                    response_format=response_format,
+                )
 
-            # Process streaming chunks and build complete response
-            completion_result_data = None
-            async for stream_event_or_result in self._process_streaming_chunks(completion_result, output_messages):
-                if isinstance(stream_event_or_result, ChatCompletionResult):
-                    completion_result_data = stream_event_or_result
-                else:
-                    yield stream_event_or_result
-            if not completion_result_data:
-                raise ValueError("Streaming chunk processor failed to return completion data")
-            current_response = self._build_chat_completion(completion_result_data)
+                # Process streaming chunks and build complete response
+                completion_result_data = None
+                async for stream_event_or_result in self._process_streaming_chunks(completion_result, output_messages):
+                    if isinstance(stream_event_or_result, ChatCompletionResult):
+                        completion_result_data = stream_event_or_result
+                    else:
+                        yield stream_event_or_result
+                if not completion_result_data:
+                    raise ValueError("Streaming chunk processor failed to return completion data")
+                last_completion_result = completion_result_data
+                current_response = self._build_chat_completion(completion_result_data)
 
-            function_tool_calls, non_function_tool_calls, approvals, next_turn_messages = self._separate_tool_calls(
-                current_response, messages
-            )
+                (
+                    function_tool_calls,
+                    non_function_tool_calls,
+                    approvals,
+                    next_turn_messages,
+                ) = self._separate_tool_calls(current_response, messages)
 
-            # add any approval requests required
-            for tool_call in approvals:
-                async for evt in self._add_mcp_approval_request(
-                    tool_call.function.name, tool_call.function.arguments, output_messages
+                # add any approval requests required
+                for tool_call in approvals:
+                    async for evt in self._add_mcp_approval_request(
+                        tool_call.function.name, tool_call.function.arguments, output_messages
+                    ):
+                        yield evt
+
+                # Handle choices with no tool calls
+                for choice in current_response.choices:
+                    if not (choice.message.tool_calls and self.ctx.response_tools):
+                        output_messages.append(
+                            await convert_chat_choice_to_response_message(
+                                choice,
+                                self.citation_files,
+                                message_id=completion_result_data.message_item_id,
+                            )
+                        )
+
+                # Execute tool calls and coordinate results
+                async for stream_event in self._coordinate_tool_execution(
+                    function_tool_calls,
+                    non_function_tool_calls,
+                    completion_result_data,
+                    output_messages,
+                    next_turn_messages,
                 ):
-                    yield evt
+                    yield stream_event
 
-            # Handle choices with no tool calls
-            for choice in current_response.choices:
-                if not (choice.message.tool_calls and self.ctx.response_tools):
-                    output_messages.append(await convert_chat_choice_to_response_message(choice, self.citation_files))
+                messages = next_turn_messages
 
-            # Execute tool calls and coordinate results
-            async for stream_event in self._coordinate_tool_execution(
-                function_tool_calls,
-                non_function_tool_calls,
-                completion_result_data,
-                output_messages,
-                next_turn_messages,
-            ):
-                yield stream_event
+                if not function_tool_calls and not non_function_tool_calls:
+                    break
 
-            messages = next_turn_messages
+                if function_tool_calls:
+                    logger.info("Exiting inference loop since there is a function (client-side) tool call")
+                    break
 
-            if not function_tool_calls and not non_function_tool_calls:
-                break
+                n_iter += 1
+                if n_iter >= self.max_infer_iters:
+                    logger.info(
+                        f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}"
+                    )
+                    final_status = "incomplete"
+                    break
 
-            if function_tool_calls:
-                logger.info("Exiting inference loop since there is a function (client-side) tool call")
-                break
+            if last_completion_result and last_completion_result.finish_reason == "length":
+                final_status = "incomplete"
 
-            n_iter += 1
-            if n_iter >= self.max_infer_iters:
-                logger.info(f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}")
-                break
+        except Exception as exc:  # noqa: BLE001
+            self.final_messages = messages.copy()
+            self.sequence_number += 1
+            error = OpenAIResponseError(code="internal_error", message=str(exc))
+            failure_response = self._snapshot_response("failed", output_messages, error=error)
+            yield OpenAIResponseObjectStreamResponseFailed(
+                response=failure_response,
+                sequence_number=self.sequence_number,
+            )
+            return
 
         self.final_messages = messages.copy()
 
-        # Create final response
-        final_response = OpenAIResponseObject(
-            created_at=self.created_at,
-            id=self.response_id,
-            model=self.ctx.model,
-            object="response",
-            status="completed",
-            text=self.text,
-            output=output_messages,
-        )
-
-        # Emit response.completed
-        yield OpenAIResponseObjectStreamResponseCompleted(response=final_response)
+        if final_status == "incomplete":
+            self.sequence_number += 1
+            final_response = self._snapshot_response("incomplete", output_messages)
+            yield OpenAIResponseObjectStreamResponseIncomplete(
+                response=final_response,
+                sequence_number=self.sequence_number,
+            )
+        else:
+            final_response = self._snapshot_response("completed", output_messages)
+            yield OpenAIResponseObjectStreamResponseCompleted(response=final_response)
 
     def _separate_tool_calls(self, current_response, messages) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
@@ -260,6 +316,8 @@ class StreamingResponseOrchestrator:
         tool_call_item_ids: dict[int, str] = {}
         # Track content parts for streaming events
         content_part_emitted = False
+        content_index = 0
+        message_output_index = len(output_messages)
 
         async for chunk in completion_result:
             chat_response_id = chunk.id
@@ -273,8 +331,10 @@ class StreamingResponseOrchestrator:
                         content_part_emitted = True
                         self.sequence_number += 1
                         yield OpenAIResponseObjectStreamResponseContentPartAdded(
+                            content_index=content_index,
                             response_id=self.response_id,
                             item_id=message_item_id,
+                            output_index=message_output_index,
                             part=OpenAIResponseContentPartOutputText(
                                 text="",  # Will be filled incrementally via text deltas
                             ),
@@ -282,10 +342,10 @@ class StreamingResponseOrchestrator:
                         )
                     self.sequence_number += 1
                     yield OpenAIResponseObjectStreamResponseOutputTextDelta(
-                        content_index=0,
+                        content_index=content_index,
                         delta=chunk_choice.delta.content,
                         item_id=message_item_id,
-                        output_index=0,
+                        output_index=message_output_index,
                         sequence_number=self.sequence_number,
                     )
 
@@ -385,8 +445,10 @@ class StreamingResponseOrchestrator:
             final_text = "".join(chat_response_content)
             self.sequence_number += 1
             yield OpenAIResponseObjectStreamResponseContentPartDone(
+                content_index=content_index,
                 response_id=self.response_id,
                 item_id=message_item_id,
+                output_index=message_output_index,
                 part=OpenAIResponseContentPartOutputText(
                     text=final_text,
                 ),
