@@ -239,7 +239,6 @@ class OpenAIResponsesImpl:
                 raise InvalidConversationIdError(conversation)
 
             # Check conversation exists (raises ConversationNotFoundError if not)
-            _ = await self.conversations_api.get_conversation(conversation)
             input = await self._load_conversation_context(conversation, input)
 
         stream_gen = self._create_streaming_response(
