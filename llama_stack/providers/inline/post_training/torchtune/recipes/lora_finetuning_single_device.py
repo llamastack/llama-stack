@@ -104,9 +104,10 @@ class LoraFinetuningSingleDevice:
             if not any(p.exists() for p in paths):
                 checkpoint_dir = checkpoint_dir / "original"
 
+            hf_repo = model.huggingface_repo or f"meta-llama/{model.descriptor()}"
             assert checkpoint_dir.exists(), (
                 f"Could not find checkpoints in: {model_local_dir(model.descriptor())}. "
-                f"Please download model using `llama download --model-id {model.descriptor()}`"
+                f"Please download the model using `huggingface-cli download {hf_repo} --local-dir ~/.llama/{model.descriptor()}`"
             )
             return str(checkpoint_dir)
 
