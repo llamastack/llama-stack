@@ -13,10 +13,12 @@ from llama_stack.apis.agents.openai_responses import (
     ApprovalFilter,
     MCPListToolsTool,
     OpenAIResponseContentPartOutputText,
+    OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolMCP,
     OpenAIResponseMCPApprovalRequest,
+    OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     OpenAIResponseObjectStreamResponseCompleted,
@@ -45,7 +47,9 @@ from llama_stack.apis.agents.openai_responses import (
     WebSearchToolTypes,
 )
 from llama_stack.apis.inference import (
+    CompletionMessage,
     Inference,
+    Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -53,12 +57,18 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletionToolCall,
     OpenAIChoice,
     OpenAIMessageParam,
+    StopReason,
 )
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.telemetry import tracing
 
+from ..safety import SafetyException
 from .types import ChatCompletionContext, ChatCompletionResult
-from .utils import convert_chat_choice_to_response_message, is_function_tool_call
+from .utils import (
+    convert_chat_choice_to_response_message,
+    is_function_tool_call,
+    run_multiple_shields,
+)
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
 
@@ -94,6 +104,8 @@ class StreamingResponseOrchestrator:
         text: OpenAIResponseText,
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
+        safety_api,
+        shield_ids: list[str] | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -102,6 +114,8 @@ class StreamingResponseOrchestrator:
         self.text = text
         self.max_infer_iters = max_infer_iters
         self.tool_executor = tool_executor
+        self.safety_api = safety_api
+        self.shield_ids = shield_ids or []
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = ctx.tool_context.previous_tools or {}
@@ -111,6 +125,46 @@ class StreamingResponseOrchestrator:
         self.citation_files: dict[str, str] = {}
         # Track accumulated usage across all inference calls
         self.accumulated_usage: OpenAIResponseUsage | None = None
+        # Track if we've sent a refusal response
+        self.violation_detected = False
+
+    async def _check_input_safety(self, messages: list[Message]) -> OpenAIResponseContentPartRefusal | None:
+        """Validate input messages against shields. Returns refusal content if violation found."""
+        try:
+            await run_multiple_shields(self.safety_api, messages, self.shield_ids)
+        except SafetyException as e:
+            logger.info(f"Input shield violation: {e.violation.user_message}")
+            return OpenAIResponseContentPartRefusal(
+                refusal=e.violation.user_message or "Content blocked by safety shields"
+            )
+
+    async def _check_output_stream_chunk_safety(self, accumulated_text: str) -> str | None:
+        """Check accumulated streaming text content against shields. Returns violation message if blocked."""
+        if not self.shield_ids or not accumulated_text:
+            return None
+
+        messages = [CompletionMessage(content=accumulated_text, stop_reason=StopReason.end_of_turn)]
+
+        try:
+            await run_multiple_shields(self.safety_api, messages, self.shield_ids)
+        except SafetyException as e:
+            logger.info(f"Output shield violation: {e.violation.user_message}")
+            return e.violation.user_message or "Generated content blocked by safety shields"
+
+    async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
+        """Create a refusal response to replace streaming content."""
+        refusal_content = OpenAIResponseContentPartRefusal(refusal=violation_message)
+
+        # Create a completed refusal response
+        refusal_response = OpenAIResponseObject(
+            id=self.response_id,
+            created_at=self.created_at,
+            model=self.ctx.model,
+            status="completed",
+            output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+        )
+
+        return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
 
     def _clone_outputs(self, outputs: list[OpenAIResponseOutput]) -> list[OpenAIResponseOutput]:
         cloned: list[OpenAIResponseOutput] = []
@@ -155,6 +209,14 @@ class StreamingResponseOrchestrator:
             sequence_number=self.sequence_number,
         )
 
+        # Input safety validation - check messages before processing
+        if self.shield_ids:
+            input_refusal = await self._check_input_safety(self.ctx.messages)
+            if input_refusal:
+                # Return refusal response immediately
+                yield await self._create_refusal_response(input_refusal.refusal)
+                return
+
         async for stream_event in self._process_tools(output_messages):
             yield stream_event
 
@@ -189,6 +251,11 @@ class StreamingResponseOrchestrator:
                         completion_result_data = stream_event_or_result
                     else:
                         yield stream_event_or_result
+
+                # If violation detected, skip the rest of processing since we already sent refusal
+                if self.violation_detected:
+                    return
+
                 if not completion_result_data:
                     raise ValueError("Streaming chunk processor failed to return completion data")
                 last_completion_result = completion_result_data
@@ -476,6 +543,15 @@ class StreamingResponseOrchestrator:
                                 response_tool_call.function.arguments = (
                                     response_tool_call.function.arguments or ""
                                 ) + tool_call.function.arguments
+
+            # Safety check after processing all choices in this chunk
+            if chat_response_content:
+                accumulated_text = "".join(chat_response_content)
+                violation_message = await self._check_output_stream_chunk_safety(accumulated_text)
+                if violation_message:
+                    yield await self._create_refusal_response(violation_message)
+                    self.violation_detected = True
+                    return
 
         # Emit arguments.done events for completed tool calls (differentiate between MCP and function calls)
         for tool_call_index in sorted(chat_response_tool_calls.keys()):
