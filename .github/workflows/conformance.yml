@@ -40,6 +40,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+        with:
+          python-version: "3.12"
+
       # Check if we should skip conformance testing due to breaking changes
       - name: Check if conformance test should be skipped
         id: skip-check
@@ -136,6 +141,11 @@ jobs:
         if: steps.skip-check.outputs.skip != 'true'
         run: |
           oasdiff breaking --fail-on ERR $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
+
+      # never skip this, instead if a breaking change is properly identified -- we should regenerate our snapshot.
+      - name: Run Pydantic Model Test
+        run: |
+          uv run --no-sync ./scripts/snapshot-test.sh tests/api/test_pydantic_models.py
 
       # Report when test is skipped
       - name: Report skip reason
