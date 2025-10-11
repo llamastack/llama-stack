@@ -6712,6 +6712,7 @@ components:
       enum:
         - llm
         - embedding
+        - rerank
       title: ModelType
       description: >-
         Enumeration of supported model types in Llama Stack.
@@ -13080,7 +13081,8 @@ components:
         model:
           type: string
           description: >-
-            The identifier of the reranking model to use.
+            The identifier of the reranking model to use. The model must be a reranking
+            model registered with Llama Stack and available via the /models endpoint.
         query:
           oneOf:
             - type: string
@@ -14168,13 +14170,16 @@ tags:
       embeddings.
 
 
-      This API provides the raw interface to the underlying models. Two kinds of models
-      are supported:
+      This API provides the raw interface to the underlying models. Three kinds of
+      models are supported:
 
       - LLM models: these models generate "raw" and "chat" (conversational) completions.
 
       - Embedding models: these models generate embeddings to be used for semantic
       search.
+
+      - Rerank models (Experimental): these models reorder the documents based on
+      their relevance to a query.
     x-displayName: Inference
   - name: Inspect
     description: >-
