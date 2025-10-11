@@ -998,11 +998,8 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
 
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
-    OpenAIResponseOutputMessageWebSearchToolCall
-    | OpenAIResponseOutputMessageFileSearchToolCall
-    | OpenAIResponseOutputMessageFunctionToolCall
+    OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
-    | OpenAIResponseMCPApprovalRequest
     | OpenAIResponseMCPApprovalResponse
     |
     # Fallback to the generic message type as a last resort
