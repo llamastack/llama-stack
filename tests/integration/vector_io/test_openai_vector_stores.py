@@ -1070,7 +1070,6 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
 def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_empty_stores, client_with_models):
     """Test creating and retrieving a vector store file batch."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    pytest.skip("file_batches functionality not yet exposed through client interface")
 
     compat_client = compat_client_with_empty_stores
 
@@ -1136,7 +1135,6 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
 def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stores, client_with_models):
     """Test listing files in a vector store file batch."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    pytest.skip("file_batches functionality not yet exposed through client interface")
 
     compat_client = compat_client_with_empty_stores
 
@@ -1232,7 +1230,6 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
 def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, client_with_models):
     """Test cancelling a vector store file batch."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    pytest.skip("file_batches functionality not yet exposed through client interface")
 
     compat_client = compat_client_with_empty_stores
 
@@ -1290,7 +1287,6 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
 def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_empty_stores, client_with_models):
     """Test retrieving file contents after file batch processing."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    pytest.skip("file_batches functionality not yet exposed through client interface")
 
     compat_client = compat_client_with_empty_stores
 
@@ -1366,7 +1362,6 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
 def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_stores, client_with_models):
     """Test error handling for file batch operations."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    pytest.skip("file_batches functionality not yet exposed through client interface")
 
     compat_client = compat_client_with_empty_stores
 
