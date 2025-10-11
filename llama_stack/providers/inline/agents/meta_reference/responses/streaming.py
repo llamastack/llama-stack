@@ -13,6 +13,8 @@ from llama_stack.apis.agents.openai_responses import (
     ApprovalFilter,
     MCPListToolsTool,
     OpenAIResponseContentPartOutputText,
+    OpenAIResponseContentPartReasoningText,
+    OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolMCP,
@@ -35,6 +37,10 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObjectStreamResponseOutputItemAdded,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseObjectStreamResponseOutputTextDelta,
+    OpenAIResponseObjectStreamResponseReasoningTextDelta,
+    OpenAIResponseObjectStreamResponseReasoningTextDone,
+    OpenAIResponseObjectStreamResponseRefusalDelta,
+    OpenAIResponseObjectStreamResponseRefusalDone,
     OpenAIResponseOutput,
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPListTools,
@@ -353,6 +359,128 @@ class StreamingResponseOrchestrator:
                 ),
             )
 
+    async def _handle_reasoning_content_chunk(
+        self,
+        reasoning_content: str,
+        reasoning_part_emitted: bool,
+        reasoning_content_index: int,
+        message_item_id: str,
+        message_output_index: int,
+    ) -> AsyncIterator[OpenAIResponseObjectStream]:
+        # Emit content_part.added event for first reasoning chunk
+        if not reasoning_part_emitted:
+            self.sequence_number += 1
+            yield OpenAIResponseObjectStreamResponseContentPartAdded(
+                content_index=reasoning_content_index,
+                response_id=self.response_id,
+                item_id=message_item_id,
+                output_index=message_output_index,
+                part=OpenAIResponseContentPartReasoningText(
+                    text="",  # Will be filled incrementally via reasoning deltas
+                ),
+                sequence_number=self.sequence_number,
+            )
+        # Emit reasoning_text.delta event
+        self.sequence_number += 1
+        yield OpenAIResponseObjectStreamResponseReasoningTextDelta(
+            content_index=reasoning_content_index,
+            delta=reasoning_content,
+            item_id=message_item_id,
+            output_index=message_output_index,
+            sequence_number=self.sequence_number,
+        )
+
+    async def _handle_refusal_content_chunk(
+        self,
+        refusal_content: str,
+        refusal_part_emitted: bool,
+        refusal_content_index: int,
+        message_item_id: str,
+        message_output_index: int,
+    ) -> AsyncIterator[OpenAIResponseObjectStream]:
+        # Emit content_part.added event for first refusal chunk
+        if not refusal_part_emitted:
+            self.sequence_number += 1
+            yield OpenAIResponseObjectStreamResponseContentPartAdded(
+                content_index=refusal_content_index,
+                response_id=self.response_id,
+                item_id=message_item_id,
+                output_index=message_output_index,
+                part=OpenAIResponseContentPartRefusal(
+                    refusal="",  # Will be filled incrementally via refusal deltas
+                ),
+                sequence_number=self.sequence_number,
+            )
+        # Emit refusal.delta event
+        self.sequence_number += 1
+        yield OpenAIResponseObjectStreamResponseRefusalDelta(
+            content_index=refusal_content_index,
+            delta=refusal_content,
+            item_id=message_item_id,
+            output_index=message_output_index,
+            sequence_number=self.sequence_number,
+        )
+
+    async def _emit_reasoning_done_events(
+        self,
+        reasoning_text_accumulated: list[str],
+        reasoning_content_index: int,
+        message_item_id: str,
+        message_output_index: int,
+    ) -> AsyncIterator[OpenAIResponseObjectStream]:
+        final_reasoning_text = "".join(reasoning_text_accumulated)
+        # Emit reasoning_text.done event
+        self.sequence_number += 1
+        yield OpenAIResponseObjectStreamResponseReasoningTextDone(
+            content_index=reasoning_content_index,
+            text=final_reasoning_text,
+            item_id=message_item_id,
+            output_index=message_output_index,
+            sequence_number=self.sequence_number,
+        )
+        # Emit content_part.done for reasoning
+        self.sequence_number += 1
+        yield OpenAIResponseObjectStreamResponseContentPartDone(
+            content_index=reasoning_content_index,
+            response_id=self.response_id,
+            item_id=message_item_id,
+            output_index=message_output_index,
+            part=OpenAIResponseContentPartReasoningText(
+                text=final_reasoning_text,
+            ),
+            sequence_number=self.sequence_number,
+        )
+
+    async def _emit_refusal_done_events(
+        self,
+        refusal_text_accumulated: list[str],
+        refusal_content_index: int,
+        message_item_id: str,
+        message_output_index: int,
+    ) -> AsyncIterator[OpenAIResponseObjectStream]:
+        final_refusal_text = "".join(refusal_text_accumulated)
+        # Emit refusal.done event
+        self.sequence_number += 1
+        yield OpenAIResponseObjectStreamResponseRefusalDone(
+            content_index=refusal_content_index,
+            refusal=final_refusal_text,
+            item_id=message_item_id,
+            output_index=message_output_index,
+            sequence_number=self.sequence_number,
+        )
+        # Emit content_part.done for refusal
+        self.sequence_number += 1
+        yield OpenAIResponseObjectStreamResponseContentPartDone(
+            content_index=refusal_content_index,
+            response_id=self.response_id,
+            item_id=message_item_id,
+            output_index=message_output_index,
+            part=OpenAIResponseContentPartRefusal(
+                refusal=final_refusal_text,
+            ),
+            sequence_number=self.sequence_number,
+        )
+
     async def _process_streaming_chunks(
         self, completion_result, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream | ChatCompletionResult]:
@@ -371,8 +499,14 @@ class StreamingResponseOrchestrator:
         tool_call_item_ids: dict[int, str] = {}
         # Track content parts for streaming events
         content_part_emitted = False
+        reasoning_part_emitted = False
+        refusal_part_emitted = False
         content_index = 0
+        reasoning_content_index = 1  # reasoning is a separate content part
+        refusal_content_index = 2  # refusal is a separate content part
         message_output_index = len(output_messages)
+        reasoning_text_accumulated = []
+        refusal_text_accumulated = []
 
         async for chunk in completion_result:
             chat_response_id = chunk.id
@@ -412,6 +546,32 @@ class StreamingResponseOrchestrator:
                 chat_response_content.append(chunk_choice.delta.content or "")
                 if chunk_choice.finish_reason:
                     chunk_finish_reason = chunk_choice.finish_reason
+
+                # Handle reasoning content if present (non-standard field for o1/o3 models)
+                if hasattr(chunk_choice.delta, "reasoning_content") and chunk_choice.delta.reasoning_content:
+                    async for event in self._handle_reasoning_content_chunk(
+                        reasoning_content=chunk_choice.delta.reasoning_content,
+                        reasoning_part_emitted=reasoning_part_emitted,
+                        reasoning_content_index=reasoning_content_index,
+                        message_item_id=message_item_id,
+                        message_output_index=message_output_index,
+                    ):
+                        yield event
+                    reasoning_part_emitted = True
+                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning_content)
+
+                # Handle refusal content if present
+                if chunk_choice.delta.refusal:
+                    async for event in self._handle_refusal_content_chunk(
+                        refusal_content=chunk_choice.delta.refusal,
+                        refusal_part_emitted=refusal_part_emitted,
+                        refusal_content_index=refusal_content_index,
+                        message_item_id=message_item_id,
+                        message_output_index=message_output_index,
+                    ):
+                        yield event
+                    refusal_part_emitted = True
+                    refusal_text_accumulated.append(chunk_choice.delta.refusal)
 
                 # Aggregate tool call arguments across chunks
                 if chunk_choice.delta.tool_calls:
@@ -513,6 +673,26 @@ class StreamingResponseOrchestrator:
                 ),
                 sequence_number=self.sequence_number,
             )
+
+        # Emit reasoning done events if reasoning content was streamed
+        if reasoning_part_emitted:
+            async for event in self._emit_reasoning_done_events(
+                reasoning_text_accumulated=reasoning_text_accumulated,
+                reasoning_content_index=reasoning_content_index,
+                message_item_id=message_item_id,
+                message_output_index=message_output_index,
+            ):
+                yield event
+
+        # Emit refusal done events if refusal content was streamed
+        if refusal_part_emitted:
+            async for event in self._emit_refusal_done_events(
+                refusal_text_accumulated=refusal_text_accumulated,
+                refusal_content_index=refusal_content_index,
+                message_item_id=message_item_id,
+                message_output_index=message_output_index,
+            ):
+                yield event
 
         # Clear content when there are tool calls (OpenAI spec behavior)
         if chat_response_tool_calls:

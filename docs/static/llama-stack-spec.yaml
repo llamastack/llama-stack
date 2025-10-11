@@ -4062,6 +4062,11 @@ components:
           items:
             $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
           description: (Optional) The tool calls of the delta
+        reasoning_content:
+          type: string
+          description: >-
+            (Optional) The reasoning content from the model (non-standard, for o1/o3
+            models)
       additionalProperties: false
       title: OpenAIChoiceDelta
       description: >-
@@ -6340,6 +6345,26 @@ components:
       title: OpenAIResponseContentPartOutputText
       description: >-
         Text content within a streamed response part.
+    "OpenAIResponseContentPartReasoningSummary":
+      type: object
+      properties:
+        type:
+          type: string
+          const: summary_text
+          default: summary_text
+          description: >-
+            Content part type identifier, always "summary_text"
+        text:
+          type: string
+          description: Summary text
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: >-
+        OpenAIResponseContentPartReasoningSummary
+      description: >-
+        Reasoning summary part in a streamed response.
     OpenAIResponseContentPartReasoningText:
       type: object
       properties:
@@ -6401,6 +6426,18 @@ components:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallInProgress'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallSearching'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallCompleted'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
@@ -6428,6 +6465,18 @@ components:
           response.mcp_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
           response.content_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
           response.content_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+          response.reasoning_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDelta'
+          response.reasoning_text.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDone'
+          response.reasoning_summary_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded'
+          response.reasoning_summary_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartDone'
+          response.reasoning_summary_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta'
+          response.reasoning_summary_text.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDone'
+          response.refusal.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDelta'
+          response.refusal.done: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDone'
+          response.output_text.annotation.added: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded'
+          response.file_search_call.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallInProgress'
+          response.file_search_call.searching: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallSearching'
+          response.file_search_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallCompleted'
           response.incomplete: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
           response.failed: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
           response.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
@@ -6603,6 +6652,99 @@ components:
       title: OpenAIResponseObjectStreamResponseFailed
       description: >-
         Streaming event emitted when a response fails.
+    "OpenAIResponseObjectStreamResponseFileSearchCallCompleted":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.completed
+          default: response.file_search_call.completed
+          description: >-
+            Event type identifier, always "response.file_search_call.completed"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallCompleted
+      description: >-
+        Streaming event for completed file search calls.
+    "OpenAIResponseObjectStreamResponseFileSearchCallInProgress":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.in_progress
+          default: response.file_search_call.in_progress
+          description: >-
+            Event type identifier, always "response.file_search_call.in_progress"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallInProgress
+      description: >-
+        Streaming event for file search calls in progress.
+    "OpenAIResponseObjectStreamResponseFileSearchCallSearching":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.searching
+          default: response.file_search_call.searching
+          description: >-
+            Event type identifier, always "response.file_search_call.searching"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallSearching
+      description: >-
+        Streaming event for file search currently searching.
     "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta":
       type: object
       properties:
@@ -6995,6 +7137,62 @@ components:
         OpenAIResponseObjectStreamResponseOutputItemDone
       description: >-
         Streaming event for when an output item is completed.
+    "OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the item to which the annotation is being added
+        output_index:
+          type: integer
+          description: >-
+            Index position of the output item in the response's output array
+        content_index:
+          type: integer
+          description: >-
+            Index position of the content part within the output item
+        annotation_index:
+          type: integer
+          description: >-
+            Index of the annotation within the content part
+        annotation:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+          discriminator:
+            propertyName: type
+            mapping:
+              file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+          description: The annotation object being added
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.output_text.annotation.added
+          default: response.output_text.annotation.added
+          description: >-
+            Event type identifier, always "response.output_text.annotation.added"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - content_index
+        - annotation_index
+        - annotation
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded
+      description: >-
+        Streaming event for when an annotation is added to output text.
     "OpenAIResponseObjectStreamResponseOutputTextDelta":
       type: object
       properties:
@@ -7074,6 +7272,314 @@ components:
         OpenAIResponseObjectStreamResponseOutputTextDone
       description: >-
         Streaming event for when text output is completed.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        part:
+          $ref: '#/components/schemas/OpenAIResponseContentPartReasoningSummary'
+          description: The summary part that was added
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_part.added
+          default: response.reasoning_summary_part.added
+          description: >-
+            Event type identifier, always "response.reasoning_summary_part.added"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - part
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded
+      description: >-
+        Streaming event for when a new reasoning summary part is added.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryPartDone":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        part:
+          $ref: '#/components/schemas/OpenAIResponseContentPartReasoningSummary'
+          description: The completed summary part
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_part.done
+          default: response.reasoning_summary_part.done
+          description: >-
+            Event type identifier, always "response.reasoning_summary_part.done"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - part
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryPartDone
+      description: >-
+        Streaming event for when a reasoning summary part is completed.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta":
+      type: object
+      properties:
+        delta:
+          type: string
+          description: Incremental summary text being added
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_text.delta
+          default: response.reasoning_summary_text.delta
+          description: >-
+            Event type identifier, always "response.reasoning_summary_text.delta"
+      additionalProperties: false
+      required:
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta
+      description: >-
+        Streaming event for incremental reasoning summary text updates.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryTextDone":
+      type: object
+      properties:
+        text:
+          type: string
+          description: Final complete summary text
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_text.done
+          default: response.reasoning_summary_text.done
+          description: >-
+            Event type identifier, always "response.reasoning_summary_text.done"
+      additionalProperties: false
+      required:
+        - text
+        - item_id
+        - output_index
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryTextDone
+      description: >-
+        Streaming event for when reasoning summary text is completed.
+    "OpenAIResponseObjectStreamResponseReasoningTextDelta":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the reasoning content part
+        delta:
+          type: string
+          description: Incremental reasoning text being added
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the output item being updated
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.reasoning_text.delta
+          default: response.reasoning_text.delta
+          description: >-
+            Event type identifier, always "response.reasoning_text.delta"
+      additionalProperties: false
+      required:
+        - content_index
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningTextDelta
+      description: >-
+        Streaming event for incremental reasoning text updates.
+    "OpenAIResponseObjectStreamResponseReasoningTextDone":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the reasoning content part
+        text:
+          type: string
+          description: Final complete reasoning text
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.reasoning_text.done
+          default: response.reasoning_text.done
+          description: >-
+            Event type identifier, always "response.reasoning_text.done"
+      additionalProperties: false
+      required:
+        - content_index
+        - text
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningTextDone
+      description: >-
+        Streaming event for when reasoning text is completed.
+    "OpenAIResponseObjectStreamResponseRefusalDelta":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position of the content part
+        delta:
+          type: string
+          description: Incremental refusal text being added
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.refusal.delta
+          default: response.refusal.delta
+          description: >-
+            Event type identifier, always "response.refusal.delta"
+      additionalProperties: false
+      required:
+        - content_index
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseRefusalDelta
+      description: >-
+        Streaming event for incremental refusal text updates.
+    "OpenAIResponseObjectStreamResponseRefusalDone":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position of the content part
+        refusal:
+          type: string
+          description: Final complete refusal text
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.refusal.done
+          default: response.refusal.done
+          description: >-
+            Event type identifier, always "response.refusal.done"
+      additionalProperties: false
+      required:
+        - content_index
+        - refusal
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseRefusalDone
+      description: >-
+        Streaming event for when refusal text is completed.
     "OpenAIResponseObjectStreamResponseWebSearchCallCompleted":
       type: object
       properties:

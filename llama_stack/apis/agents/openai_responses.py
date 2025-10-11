@@ -953,6 +953,248 @@ class OpenAIResponseObjectStreamResponseContentPartDone(BaseModel):
     type: Literal["response.content_part.done"] = "response.content_part.done"
 
 
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningTextDelta(BaseModel):
+    """Streaming event for incremental reasoning text updates.
+
+    :param content_index: Index position of the reasoning content part
+    :param delta: Incremental reasoning text being added
+    :param item_id: Unique identifier of the output item being updated
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.reasoning_text.delta"
+    """
+
+    content_index: int
+    delta: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.reasoning_text.delta"] = "response.reasoning_text.delta"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningTextDone(BaseModel):
+    """Streaming event for when reasoning text is completed.
+
+    :param content_index: Index position of the reasoning content part
+    :param text: Final complete reasoning text
+    :param item_id: Unique identifier of the completed output item
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.reasoning_text.done"
+    """
+
+    content_index: int
+    text: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.reasoning_text.done"] = "response.reasoning_text.done"
+
+
+@json_schema_type
+class OpenAIResponseContentPartReasoningSummary(BaseModel):
+    """Reasoning summary part in a streamed response.
+
+    :param type: Content part type identifier, always "summary_text"
+    :param text: Summary text
+    """
+
+    type: Literal["summary_text"] = "summary_text"
+    text: str
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(BaseModel):
+    """Streaming event for when a new reasoning summary part is added.
+
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param part: The summary part that was added
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_part.added"
+    """
+
+    item_id: str
+    output_index: int
+    part: OpenAIResponseContentPartReasoningSummary
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_part.added"] = "response.reasoning_summary_part.added"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryPartDone(BaseModel):
+    """Streaming event for when a reasoning summary part is completed.
+
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param part: The completed summary part
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_part.done"
+    """
+
+    item_id: str
+    output_index: int
+    part: OpenAIResponseContentPartReasoningSummary
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_part.done"] = "response.reasoning_summary_part.done"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(BaseModel):
+    """Streaming event for incremental reasoning summary text updates.
+
+    :param delta: Incremental summary text being added
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_text.delta"
+    """
+
+    delta: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_text.delta"] = "response.reasoning_summary_text.delta"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(BaseModel):
+    """Streaming event for when reasoning summary text is completed.
+
+    :param text: Final complete summary text
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_text.done"
+    """
+
+    text: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_text.done"] = "response.reasoning_summary_text.done"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseRefusalDelta(BaseModel):
+    """Streaming event for incremental refusal text updates.
+
+    :param content_index: Index position of the content part
+    :param delta: Incremental refusal text being added
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.refusal.delta"
+    """
+
+    content_index: int
+    delta: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.refusal.delta"] = "response.refusal.delta"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseRefusalDone(BaseModel):
+    """Streaming event for when refusal text is completed.
+
+    :param content_index: Index position of the content part
+    :param refusal: Final complete refusal text
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.refusal.done"
+    """
+
+    content_index: int
+    refusal: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.refusal.done"] = "response.refusal.done"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded(BaseModel):
+    """Streaming event for when an annotation is added to output text.
+
+    :param item_id: Unique identifier of the item to which the annotation is being added
+    :param output_index: Index position of the output item in the response's output array
+    :param content_index: Index position of the content part within the output item
+    :param annotation_index: Index of the annotation within the content part
+    :param annotation: The annotation object being added
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.output_text.annotation.added"
+    """
+
+    item_id: str
+    output_index: int
+    content_index: int
+    annotation_index: int
+    annotation: OpenAIResponseAnnotations
+    sequence_number: int
+    type: Literal["response.output_text.annotation.added"] = "response.output_text.annotation.added"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseFileSearchCallInProgress(BaseModel):
+    """Streaming event for file search calls in progress.
+
+    :param item_id: Unique identifier of the file search call
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.file_search_call.in_progress"
+    """
+
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.file_search_call.in_progress"] = "response.file_search_call.in_progress"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseFileSearchCallSearching(BaseModel):
+    """Streaming event for file search currently searching.
+
+    :param item_id: Unique identifier of the file search call
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.file_search_call.searching"
+    """
+
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.file_search_call.searching"] = "response.file_search_call.searching"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseFileSearchCallCompleted(BaseModel):
+    """Streaming event for completed file search calls.
+
+    :param item_id: Unique identifier of the completed file search call
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.file_search_call.completed"
+    """
+
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.file_search_call.completed"] = "response.file_search_call.completed"
+
+
 OpenAIResponseObjectStream = Annotated[
     OpenAIResponseObjectStreamResponseCreated
     | OpenAIResponseObjectStreamResponseInProgress
@@ -975,6 +1217,18 @@ OpenAIResponseObjectStream = Annotated[
     | OpenAIResponseObjectStreamResponseMcpCallCompleted
     | OpenAIResponseObjectStreamResponseContentPartAdded
     | OpenAIResponseObjectStreamResponseContentPartDone
+    | OpenAIResponseObjectStreamResponseReasoningTextDelta
+    | OpenAIResponseObjectStreamResponseReasoningTextDone
+    | OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded
+    | OpenAIResponseObjectStreamResponseReasoningSummaryPartDone
+    | OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta
+    | OpenAIResponseObjectStreamResponseReasoningSummaryTextDone
+    | OpenAIResponseObjectStreamResponseRefusalDelta
+    | OpenAIResponseObjectStreamResponseRefusalDone
+    | OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded
+    | OpenAIResponseObjectStreamResponseFileSearchCallInProgress
+    | OpenAIResponseObjectStreamResponseFileSearchCallSearching
+    | OpenAIResponseObjectStreamResponseFileSearchCallCompleted
     | OpenAIResponseObjectStreamResponseIncomplete
     | OpenAIResponseObjectStreamResponseFailed
     | OpenAIResponseObjectStreamResponseCompleted,

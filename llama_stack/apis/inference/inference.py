@@ -776,12 +776,14 @@ class OpenAIChoiceDelta(BaseModel):
     :param refusal: (Optional) The refusal of the delta
     :param role: (Optional) The role of the delta
     :param tool_calls: (Optional) The tool calls of the delta
+    :param reasoning_content: (Optional) The reasoning content from the model (non-standard, for o1/o3 models)
     """
 
     content: str | None = None
     refusal: str | None = None
     role: str | None = None
     tool_calls: list[OpenAIChatCompletionToolCall] | None = None
+    reasoning_content: str | None = None
 
 
 @json_schema_type
