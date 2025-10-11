@@ -11,6 +11,9 @@ from collections.abc import AsyncIterator
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolMCP,
+    OpenAIResponseObjectStreamResponseFileSearchCallCompleted,
+    OpenAIResponseObjectStreamResponseFileSearchCallInProgress,
+    OpenAIResponseObjectStreamResponseFileSearchCallSearching,
     OpenAIResponseObjectStreamResponseMcpCallCompleted,
     OpenAIResponseObjectStreamResponseMcpCallFailed,
     OpenAIResponseObjectStreamResponseMcpCallInProgress,
@@ -221,7 +224,13 @@ class ToolExecutor:
                 output_index=output_index,
                 sequence_number=sequence_number,
             )
-        # Note: knowledge_search and other custom tools don't have specific streaming events in OpenAI spec
+        elif function_name == "knowledge_search":
+            sequence_number += 1
+            progress_event = OpenAIResponseObjectStreamResponseFileSearchCallInProgress(
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
+            )
 
         if progress_event:
             yield ToolExecutionResult(stream_event=progress_event, sequence_number=sequence_number)
@@ -230,6 +239,16 @@ class ToolExecutor:
         if function_name == "web_search":
             sequence_number += 1
             searching_event = OpenAIResponseObjectStreamResponseWebSearchCallSearching(
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
+            )
+            yield ToolExecutionResult(stream_event=searching_event, sequence_number=sequence_number)
+
+        # For file search, emit searching event
+        if function_name == "knowledge_search":
+            sequence_number += 1
+            searching_event = OpenAIResponseObjectStreamResponseFileSearchCallSearching(
                 item_id=item_id,
                 output_index=output_index,
                 sequence_number=sequence_number,
@@ -322,7 +341,13 @@ class ToolExecutor:
                 output_index=output_index,
                 sequence_number=sequence_number,
             )
-        # Note: knowledge_search and other custom tools don't have specific completion events in OpenAI spec
+        elif function_name == "knowledge_search":
+            sequence_number += 1
+            completion_event = OpenAIResponseObjectStreamResponseFileSearchCallCompleted(
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
+            )
 
         if completion_event:
             yield ToolExecutionResult(stream_event=completion_event, sequence_number=sequence_number)
