@@ -9,7 +9,8 @@ from io import BytesIO
 
 import pytest
 from llama_stack_client import BadRequestError, NotFoundError
-from openai import BadRequestError as OpenAIBadRequestError, NotFoundError as OpenAINotFoundError
+from openai import BadRequestError as OpenAIBadRequestError
+from openai import NotFoundError as OpenAINotFoundError
 
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
@@ -132,7 +133,9 @@ def compat_client_with_empty_stores(compat_client):
     clear_files()
 
 
-def test_openai_create_vector_store(compat_client_with_empty_stores, client_with_models):
+def test_openai_create_vector_store(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test creating a vector store using OpenAI API."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
     client = compat_client_with_empty_stores
@@ -142,8 +145,8 @@ def test_openai_create_vector_store(compat_client_with_empty_stores, client_with
         name="Vs_test_vector_store",
         metadata={"purpose": "testing", "environment": "integration"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -158,7 +161,9 @@ def test_openai_create_vector_store(compat_client_with_empty_stores, client_with
     assert hasattr(vector_store, "created_at")
 
 
-def test_openai_list_vector_stores(compat_client_with_empty_stores, client_with_models):
+def test_openai_list_vector_stores(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test listing vector stores using OpenAI API."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -169,8 +174,8 @@ def test_openai_list_vector_stores(compat_client_with_empty_stores, client_with_
         name="store1",
         metadata={"type": "test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -178,8 +183,8 @@ def test_openai_list_vector_stores(compat_client_with_empty_stores, client_with_
         name="store2",
         metadata={"type": "test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -201,7 +206,9 @@ def test_openai_list_vector_stores(compat_client_with_empty_stores, client_with_
     assert len(limited_response.data) == 1
 
 
-def test_openai_retrieve_vector_store(compat_client_with_empty_stores, client_with_models):
+def test_openai_retrieve_vector_store(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test retrieving a specific vector store using OpenAI API."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -212,8 +219,8 @@ def test_openai_retrieve_vector_store(compat_client_with_empty_stores, client_wi
         name="retrieve_test_store",
         metadata={"purpose": "retrieval_test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -228,7 +235,9 @@ def test_openai_retrieve_vector_store(compat_client_with_empty_stores, client_wi
     assert retrieved_store.object == "vector_store"
 
 
-def test_openai_update_vector_store(compat_client_with_empty_stores, client_with_models):
+def test_openai_update_vector_store(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test modifying a vector store using OpenAI API."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -239,8 +248,8 @@ def test_openai_update_vector_store(compat_client_with_empty_stores, client_with
         name="original_name",
         metadata={"version": "1.0"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -259,7 +268,9 @@ def test_openai_update_vector_store(compat_client_with_empty_stores, client_with
     assert modified_store.last_active_at > created_store.last_active_at
 
 
-def test_openai_delete_vector_store(compat_client_with_empty_stores, client_with_models):
+def test_openai_delete_vector_store(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test deleting a vector store using OpenAI API."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -270,8 +281,8 @@ def test_openai_delete_vector_store(compat_client_with_empty_stores, client_with
         name="delete_test_store",
         metadata={"purpose": "deletion_test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -289,7 +300,9 @@ def test_openai_delete_vector_store(compat_client_with_empty_stores, client_with
         client.vector_stores.retrieve(vector_store_id=created_store.id)
 
 
-def test_openai_vector_store_search_empty(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_search_empty(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test searching an empty vector store using OpenAI API."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -300,8 +313,8 @@ def test_openai_vector_store_search_empty(compat_client_with_empty_stores, clien
         name="search_test_store",
         metadata={"purpose": "search_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -318,7 +331,9 @@ def test_openai_vector_store_search_empty(compat_client_with_empty_stores, clien
     assert search_response.has_more is False
 
 
-def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client_with_models, sample_chunks):
+def test_openai_vector_store_with_chunks(
+    compat_client_with_empty_stores, client_with_models, sample_chunks, embedding_model_id, embedding_dimension
+):
     """Test vector store functionality with actual chunks using both OpenAI and native APIs."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -330,8 +345,8 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
         name="chunks_test_store",
         metadata={"purpose": "chunks_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -376,7 +391,12 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
     ],
 )
 def test_openai_vector_store_search_relevance(
-    compat_client_with_empty_stores, client_with_models, sample_chunks, test_case
+    compat_client_with_empty_stores,
+    client_with_models,
+    sample_chunks,
+    test_case,
+    embedding_model_id,
+    embedding_dimension,
 ):
     """Test that OpenAI vector store search returns relevant results for different queries."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
@@ -391,8 +411,8 @@ def test_openai_vector_store_search_relevance(
         name=f"relevance_test_{expected_doc_id}",
         metadata={"purpose": "relevance_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -423,7 +443,7 @@ def test_openai_vector_store_search_relevance(
 
 
 def test_openai_vector_store_search_with_ranking_options(
-    compat_client_with_empty_stores, client_with_models, sample_chunks
+    compat_client_with_empty_stores, client_with_models, sample_chunks, embedding_model_id, embedding_dimension
 ):
     """Test OpenAI vector store search with ranking options."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
@@ -436,8 +456,8 @@ def test_openai_vector_store_search_with_ranking_options(
         name="ranking_test_store",
         metadata={"purpose": "ranking_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -466,7 +486,7 @@ def test_openai_vector_store_search_with_ranking_options(
 
 
 def test_openai_vector_store_search_with_high_score_filter(
-    compat_client_with_empty_stores, client_with_models, sample_chunks
+    compat_client_with_empty_stores, client_with_models, sample_chunks, embedding_model_id, embedding_dimension
 ):
     """Test that searching with text very similar to a document and high score threshold returns only that document."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
@@ -479,8 +499,8 @@ def test_openai_vector_store_search_with_high_score_filter(
         name="high_score_filter_test",
         metadata={"purpose": "high_score_filtering"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -527,7 +547,7 @@ def test_openai_vector_store_search_with_high_score_filter(
 
 
 def test_openai_vector_store_search_with_max_num_results(
-    compat_client_with_empty_stores, client_with_models, sample_chunks
+    compat_client_with_empty_stores, client_with_models, sample_chunks, embedding_model_id, embedding_dimension
 ):
     """Test OpenAI vector store search with max_num_results."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
@@ -540,8 +560,8 @@ def test_openai_vector_store_search_with_max_num_results(
         name="max_num_results_test_store",
         metadata={"purpose": "max_num_results_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -563,7 +583,9 @@ def test_openai_vector_store_search_with_max_num_results(
     assert len(search_response.data) == 2
 
 
-def test_openai_vector_store_attach_file(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_attach_file(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store attach file."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -573,8 +595,8 @@ def test_openai_vector_store_attach_file(compat_client_with_empty_stores, client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -618,7 +640,9 @@ def test_openai_vector_store_attach_file(compat_client_with_empty_stores, client
     assert "foobazbar" in top_content.lower()
 
 
-def test_openai_vector_store_attach_files_on_creation(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_attach_files_on_creation(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store attach files on creation."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -641,8 +665,8 @@ def test_openai_vector_store_attach_files_on_creation(compat_client_with_empty_s
         name="test_store",
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -676,7 +700,9 @@ def test_openai_vector_store_attach_files_on_creation(compat_client_with_empty_s
     assert updated_vector_store.file_counts.failed == 0
 
 
-def test_openai_vector_store_list_files(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_list_files(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store list files."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -686,8 +712,8 @@ def test_openai_vector_store_list_files(compat_client_with_empty_stores, client_
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -744,7 +770,9 @@ def test_openai_vector_store_list_files(compat_client_with_empty_stores, client_
     assert updated_vector_store.file_counts.in_progress == 0
 
 
-def test_openai_vector_store_list_files_invalid_vector_store(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_list_files_invalid_vector_store(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store list files with invalid vector store ID."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -758,7 +786,9 @@ def test_openai_vector_store_list_files_invalid_vector_store(compat_client_with_
         compat_client.vector_stores.files.list(vector_store_id="abc123")
 
 
-def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_retrieve_file_contents(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store retrieve file contents."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -768,8 +798,8 @@ def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_sto
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -788,8 +818,8 @@ def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_sto
         file_id=file.id,
         attributes=attributes,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -814,7 +844,9 @@ def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_sto
     assert file_contents.attributes == attributes
 
 
-def test_openai_vector_store_delete_file(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_delete_file(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store delete file."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -824,8 +856,8 @@ def test_openai_vector_store_delete_file(compat_client_with_empty_stores, client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -873,7 +905,9 @@ def test_openai_vector_store_delete_file(compat_client_with_empty_stores, client
     assert updated_vector_store.file_counts.in_progress == 0
 
 
-def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_delete_file_removes_from_vector_store(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store delete file removes from vector store."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -883,8 +917,8 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -918,7 +952,9 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
     assert not search_response.data
 
 
-def test_openai_vector_store_update_file(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_update_file(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test OpenAI vector store update file."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -928,8 +964,8 @@ def test_openai_vector_store_update_file(compat_client_with_empty_stores, client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -968,7 +1004,9 @@ def test_openai_vector_store_update_file(compat_client_with_empty_stores, client
     assert retrieved_file.attributes["foo"] == "baz"
 
 
-def test_create_vector_store_files_duplicate_vector_store_name(compat_client_with_empty_stores, client_with_models):
+def test_create_vector_store_files_duplicate_vector_store_name(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """
     This test confirms that client.vector_stores.create() creates a unique ID
     """
@@ -987,8 +1025,8 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
     vector_store = compat_client.vector_stores.create(
         name="test_store_with_files",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1001,8 +1039,8 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
     vector_store2 = compat_client.vector_stores.create(
         name="test_store_with_files",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1014,8 +1052,8 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
         vector_store_id=vector_store.id,
         file_id=file_ids[0],
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1026,8 +1064,8 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
         vector_store_id=vector_store.id,
         file_id=file_ids[1],
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1038,7 +1076,9 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
 
 
 @pytest.mark.parametrize("search_mode", ["vector", "keyword", "hybrid"])
-def test_openai_vector_store_search_modes(llama_stack_client, client_with_models, sample_chunks, search_mode):
+def test_openai_vector_store_search_modes(
+    llama_stack_client, client_with_models, sample_chunks, search_mode, embedding_model_id, embedding_dimension
+):
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
     skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_models, search_mode)
 
@@ -1046,8 +1086,8 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
         name=f"search_mode_test_{search_mode}",
         metadata={"purpose": "search_mode_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1067,7 +1107,9 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
     assert search_response is not None
 
 
-def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_file_batch_create_and_retrieve(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test creating and retrieving a vector store file batch."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -1077,8 +1119,8 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
     vector_store = compat_client.vector_stores.create(
         name="batch_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1096,8 +1138,8 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1132,7 +1174,9 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
     assert retrieved_batch.status == "completed"  # Should be completed after processing
 
 
-def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_file_batch_list_files(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test listing files in a vector store file batch."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -1142,8 +1186,8 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
     vector_store = compat_client.vector_stores.create(
         name="batch_list_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1161,8 +1205,8 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1227,7 +1271,9 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
     assert first_page_ids.isdisjoint(second_page_ids)
 
 
-def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_file_batch_cancel(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test cancelling a vector store file batch."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -1237,8 +1283,8 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
     vector_store = compat_client.vector_stores.create(
         name="batch_cancel_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1256,8 +1302,8 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1284,7 +1330,9 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
         assert final_batch.status in ["completed", "cancelled"]
 
 
-def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_file_batch_retrieve_contents(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test retrieving file contents after file batch processing."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -1294,8 +1342,8 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
     vector_store = compat_client.vector_stores.create(
         name="batch_contents_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1318,8 +1366,8 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1359,7 +1407,9 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
         assert file_data[i][1].decode("utf-8") in content_text
 
 
-def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_stores, client_with_models):
+def test_openai_vector_store_file_batch_error_handling(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
     """Test error handling for file batch operations."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
@@ -1369,8 +1419,8 @@ def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_
     vector_store = compat_client.vector_stores.create(
         name="batch_error_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
@@ -1382,8 +1432,8 @@ def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_dimension": 384,
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": embedding_dimension,
             "provider_id": "my_provider",
         },
     )
