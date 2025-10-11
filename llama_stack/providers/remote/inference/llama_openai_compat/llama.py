@@ -7,6 +7,7 @@
 from llama_stack.apis.inference.inference import (
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
 from llama_stack.log import get_logger
@@ -40,10 +41,6 @@ class LlamaCompatInferenceAdapter(OpenAIMixin):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         raise NotImplementedError()

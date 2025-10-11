@@ -9,6 +9,7 @@ from openai import NOT_GIVEN
 
 from llama_stack.apis.inference import (
     OpenAIEmbeddingData,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
 )
@@ -78,11 +79,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         """
         OpenAI-compatible embeddings for NVIDIA NIM.
@@ -99,11 +96,11 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         )
 
         response = await self.client.embeddings.create(
-            model=await self._get_provider_model_id(model),
-            input=input,
-            encoding_format=encoding_format if encoding_format is not None else NOT_GIVEN,
-            dimensions=dimensions if dimensions is not None else NOT_GIVEN,
-            user=user if user is not None else NOT_GIVEN,
+            model=await self._get_provider_model_id(params.model),
+            input=params.input,
+            encoding_format=params.encoding_format if params.encoding_format is not None else NOT_GIVEN,
+            dimensions=params.dimensions if params.dimensions is not None else NOT_GIVEN,
+            user=params.user if params.user is not None else NOT_GIVEN,
             extra_body=extra_body,
         )
 

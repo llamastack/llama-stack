@@ -10,7 +10,10 @@ from collections.abc import Iterable
 from huggingface_hub import AsyncInferenceClient, HfApi
 from pydantic import SecretStr
 
-from llama_stack.apis.inference import OpenAIEmbeddingsResponse
+from llama_stack.apis.inference import (
+    OpenAIEmbeddingsRequestWithExtraBody,
+    OpenAIEmbeddingsResponse,
+)
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
@@ -40,11 +43,7 @@ class _HfAdapter(OpenAIMixin):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         raise NotImplementedError()
 

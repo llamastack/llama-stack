@@ -617,7 +617,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiEmbeddingsRequest'
+              $ref: '#/components/schemas/OpenAIEmbeddingsRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/files:
@@ -2413,13 +2413,16 @@ paths:
       tags:
         - VectorIO
       summary: Creates a vector store.
-      description: Creates a vector store.
+      description: >-
+        Creates a vector store.
+
+        Generate an OpenAI-compatible vector store with the given parameters.
       parameters: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCreateVectorStoreRequest'
+              $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/vector_stores/{vector_store_id}:
@@ -2545,7 +2548,11 @@ paths:
       tags:
         - VectorIO
       summary: Create a vector store file batch.
-      description: Create a vector store file batch.
+      description: >-
+        Create a vector store file batch.
+
+        Generate an OpenAI-compatible vector store file batch for the given vector
+        store.
       parameters:
         - name: vector_store_id
           in: path
@@ -2558,7 +2565,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCreateVectorStoreFileBatchRequest'
+              $ref: '#/components/schemas/OpenAICreateVectorStoreFileBatchRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}:
@@ -4797,7 +4804,7 @@ components:
         - deleted
       title: ConversationItemDeletedResource
       description: Response for deleted conversation item.
-    OpenaiEmbeddingsRequest:
+    OpenAIEmbeddingsRequestWithExtraBody:
       type: object
       properties:
         model:
@@ -4816,6 +4823,7 @@ components:
             multiple inputs in a single request, pass an array of strings.
         encoding_format:
           type: string
+          default: float
           description: >-
             (Optional) The format to return the embeddings in. Can be either "float"
             or "base64". Defaults to "float".
@@ -4833,7 +4841,9 @@ components:
       required:
         - model
         - input
-      title: OpenaiEmbeddingsRequest
+      title: OpenAIEmbeddingsRequestWithExtraBody
+      description: >-
+        Request parameters for OpenAI-compatible embeddings endpoint.
     OpenAIEmbeddingData:
       type: object
       properties:
@@ -9612,19 +9622,18 @@ components:
         - metadata
       title: VectorStoreObject
       description: OpenAI Vector Store object.
-    OpenaiCreateVectorStoreRequest:
+    "OpenAICreateVectorStoreRequestWithExtraBody":
       type: object
       properties:
         name:
           type: string
-          description: A name for the vector store.
+          description: (Optional) A name for the vector store
         file_ids:
           type: array
           items:
             type: string
           description: >-
-            A list of File IDs that the vector store should use. Useful for tools
-            like `file_search` that can access files.
+            List of file IDs to include in the vector store
         expires_after:
           type: object
           additionalProperties:
@@ -9636,7 +9645,7 @@ components:
               - type: array
               - type: object
           description: >-
-            The expiration policy for a vector store.
+            (Optional) Expiration policy for the vector store
         chunking_strategy:
           type: object
           additionalProperties:
@@ -9648,8 +9657,7 @@ components:
               - type: array
               - type: object
           description: >-
-            The chunking strategy used to chunk the file(s). If not set, will use
-            the `auto` strategy.
+            (Optional) Strategy for splitting files into chunks
         metadata:
           type: object
           additionalProperties:
@@ -9661,21 +9669,25 @@ components:
               - type: array
               - type: object
           description: >-
-            Set of 16 key-value pairs that can be attached to an object.
+            Set of key-value pairs that can be attached to the vector store
         embedding_model:
           type: string
           description: >-
-            The embedding model to use for this vector store.
+            (Optional) The embedding model to use for this vector store
         embedding_dimension:
           type: integer
+          default: 384
           description: >-
-            The dimension of the embedding vectors (default: 384).
+            (Optional) The dimension of the embedding vectors (default: 384)
         provider_id:
           type: string
           description: >-
-            The ID of the provider to use for this vector store.
+            (Optional) The ID of the provider to use for this vector store
       additionalProperties: false
-      title: OpenaiCreateVectorStoreRequest
+      title: >-
+        OpenAICreateVectorStoreRequestWithExtraBody
+      description: >-
+        Request to create a vector store with extra_body support.
     OpenaiUpdateVectorStoreRequest:
       type: object
       properties:
@@ -9796,7 +9808,7 @@ components:
       title: VectorStoreChunkingStrategyStaticConfig
       description: >-
         Configuration for static chunking strategy.
-    OpenaiCreateVectorStoreFileBatchRequest:
+    "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
       type: object
       properties:
         file_ids:
@@ -9804,7 +9816,7 @@ components:
           items:
             type: string
           description: >-
-            A list of File IDs that the vector store should use.
+            A list of File IDs that the vector store should use
         attributes:
           type: object
           additionalProperties:
@@ -9816,16 +9828,19 @@ components:
               - type: array
               - type: object
           description: >-
-            (Optional) Key-value attributes to store with the files.
+            (Optional) Key-value attributes to store with the files
         chunking_strategy:
           $ref: '#/components/schemas/VectorStoreChunkingStrategy'
           description: >-
             (Optional) The chunking strategy used to chunk the file(s). Defaults to
-            auto.
+            auto
       additionalProperties: false
       required:
         - file_ids
-      title: OpenaiCreateVectorStoreFileBatchRequest
+      title: >-
+        OpenAICreateVectorStoreFileBatchRequestWithExtraBody
+      description: >-
+        Request to create a vector store file batch with extra_body support.
     VectorStoreFileBatchObject:
       type: object
       properties:
