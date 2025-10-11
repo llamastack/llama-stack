@@ -33,7 +33,6 @@ from llama_stack.apis.shields import Shields
 from llama_stack.apis.synthetic_data_generation import SyntheticDataGeneration
 from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
-from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, StackRunConfig
@@ -53,7 +52,6 @@ logger = get_logger(name=__name__, category="core")
 
 class LlamaStack(
     Providers,
-    VectorDBs,
     Inference,
     Agents,
     Safety,
@@ -83,7 +81,6 @@ class LlamaStack(
 RESOURCES = [
     ("models", Api.models, "register_model", "list_models"),
     ("shields", Api.shields, "register_shield", "list_shields"),
-    ("vector_dbs", Api.vector_dbs, "register_vector_db", "list_vector_dbs"),
     ("datasets", Api.datasets, "register_dataset", "list_datasets"),
     (
         "scoring_fns",

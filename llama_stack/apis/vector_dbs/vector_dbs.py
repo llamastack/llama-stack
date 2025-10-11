@@ -4,14 +4,12 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import Literal
 
 from pydantic import BaseModel
 
 from llama_stack.apis.resource import Resource, ResourceType
-from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
-from llama_stack.schema_utils import json_schema_type, webmethod
+from llama_stack.schema_utils import json_schema_type
 
 
 @json_schema_type
@@ -61,57 +59,3 @@ class ListVectorDBsResponse(BaseModel):
     """
 
     data: list[VectorDB]
-
-
-@runtime_checkable
-@trace_protocol
-class VectorDBs(Protocol):
-    @webmethod(route="/vector-dbs", method="GET", level=LLAMA_STACK_API_V1)
-    async def list_vector_dbs(self) -> ListVectorDBsResponse:
-        """List all vector databases.
-
-        :returns: A ListVectorDBsResponse.
-        """
-        ...
-
-    @webmethod(route="/vector-dbs/{vector_db_id:path}", method="GET", level=LLAMA_STACK_API_V1)
-    async def get_vector_db(
-        self,
-        vector_db_id: str,
-    ) -> VectorDB:
-        """Get a vector database by its identifier.
-
-        :param vector_db_id: The identifier of the vector database to get.
-        :returns: A VectorDB.
-        """
-        ...
-
-    @webmethod(route="/vector-dbs", method="POST", level=LLAMA_STACK_API_V1)
-    async def register_vector_db(
-        self,
-        vector_db_id: str,
-        embedding_model: str,
-        embedding_dimension: int | None = 384,
-        provider_id: str | None = None,
-        vector_db_name: str | None = None,
-        provider_vector_db_id: str | None = None,
-    ) -> VectorDB:
-        """Register a vector database.
-
-        :param vector_db_id: The identifier of the vector database to register.
-        :param embedding_model: The embedding model to use.
-        :param embedding_dimension: The dimension of the embedding model.
-        :param provider_id: The identifier of the provider.
-        :param vector_db_name: The name of the vector database.
-        :param provider_vector_db_id: The identifier of the vector database in the provider.
-        :returns: A VectorDB.
-        """
-        ...
-
-    @webmethod(route="/vector-dbs/{vector_db_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
-    async def unregister_vector_db(self, vector_db_id: str) -> None:
-        """Unregister a vector database.
-
-        :param vector_db_id: The identifier of the vector database to unregister.
-        """
-        ...

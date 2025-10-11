@@ -48,10 +48,6 @@ def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
             router_api=Api.safety,
         ),
         AutoRoutedApiInfo(
-            routing_table_api=Api.vector_dbs,
-            router_api=Api.vector_io,
-        ),
-        AutoRoutedApiInfo(
             routing_table_api=Api.datasets,
             router_api=Api.datasetio,
         ),

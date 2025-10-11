@@ -32,7 +32,6 @@ def available_providers() -> list[ProviderSpec]:
                 Api.inference,
                 Api.safety,
                 Api.vector_io,
-                Api.vector_dbs,
                 Api.tool_runtime,
                 Api.tool_groups,
                 Api.conversations,
