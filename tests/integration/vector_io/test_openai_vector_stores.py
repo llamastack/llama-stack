@@ -142,7 +142,7 @@ def test_openai_create_vector_store(compat_client_with_empty_stores, client_with
         name="Vs_test_vector_store",
         metadata={"purpose": "testing", "environment": "integration"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -169,7 +169,7 @@ def test_openai_list_vector_stores(compat_client_with_empty_stores, client_with_
         name="store1",
         metadata={"type": "test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -178,7 +178,7 @@ def test_openai_list_vector_stores(compat_client_with_empty_stores, client_with_
         name="store2",
         metadata={"type": "test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -212,7 +212,7 @@ def test_openai_retrieve_vector_store(compat_client_with_empty_stores, client_wi
         name="retrieve_test_store",
         metadata={"purpose": "retrieval_test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -239,7 +239,7 @@ def test_openai_update_vector_store(compat_client_with_empty_stores, client_with
         name="original_name",
         metadata={"version": "1.0"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -270,7 +270,7 @@ def test_openai_delete_vector_store(compat_client_with_empty_stores, client_with
         name="delete_test_store",
         metadata={"purpose": "deletion_test"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -300,7 +300,7 @@ def test_openai_vector_store_search_empty(compat_client_with_empty_stores, clien
         name="search_test_store",
         metadata={"purpose": "search_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -330,7 +330,7 @@ def test_openai_vector_store_with_chunks(compat_client_with_empty_stores, client
         name="chunks_test_store",
         metadata={"purpose": "chunks_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -391,7 +391,7 @@ def test_openai_vector_store_search_relevance(
         name=f"relevance_test_{expected_doc_id}",
         metadata={"purpose": "relevance_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -436,7 +436,7 @@ def test_openai_vector_store_search_with_ranking_options(
         name="ranking_test_store",
         metadata={"purpose": "ranking_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -479,7 +479,7 @@ def test_openai_vector_store_search_with_high_score_filter(
         name="high_score_filter_test",
         metadata={"purpose": "high_score_filtering"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -540,7 +540,7 @@ def test_openai_vector_store_search_with_max_num_results(
         name="max_num_results_test_store",
         metadata={"purpose": "max_num_results_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -573,7 +573,7 @@ def test_openai_vector_store_attach_file(compat_client_with_empty_stores, client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -641,7 +641,7 @@ def test_openai_vector_store_attach_files_on_creation(compat_client_with_empty_s
         name="test_store",
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -686,7 +686,7 @@ def test_openai_vector_store_list_files(compat_client_with_empty_stores, client_
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -768,7 +768,7 @@ def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_sto
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -788,7 +788,7 @@ def test_openai_vector_store_retrieve_file_contents(compat_client_with_empty_sto
         file_id=file.id,
         attributes=attributes,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -824,7 +824,7 @@ def test_openai_vector_store_delete_file(compat_client_with_empty_stores, client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -883,7 +883,7 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(compat_client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -928,7 +928,7 @@ def test_openai_vector_store_update_file(compat_client_with_empty_stores, client
     vector_store = compat_client.vector_stores.create(
         name="test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -987,7 +987,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
     vector_store = compat_client.vector_stores.create(
         name="test_store_with_files",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1001,7 +1001,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
     vector_store2 = compat_client.vector_stores.create(
         name="test_store_with_files",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1014,7 +1014,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
         vector_store_id=vector_store.id,
         file_id=file_ids[0],
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1026,7 +1026,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
         vector_store_id=vector_store.id,
         file_id=file_ids[1],
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1046,7 +1046,7 @@ def test_openai_vector_store_search_modes(llama_stack_client, client_with_models
         name=f"search_mode_test_{search_mode}",
         metadata={"purpose": "search_mode_testing"},
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1077,7 +1077,7 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
     vector_store = compat_client.vector_stores.create(
         name="batch_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1096,7 +1096,7 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1142,7 +1142,7 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
     vector_store = compat_client.vector_stores.create(
         name="batch_list_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1161,7 +1161,7 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1237,7 +1237,7 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
     vector_store = compat_client.vector_stores.create(
         name="batch_cancel_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1256,7 +1256,7 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1294,7 +1294,7 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
     vector_store = compat_client.vector_stores.create(
         name="batch_contents_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1318,7 +1318,7 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1369,7 +1369,7 @@ def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_
     vector_store = compat_client.vector_stores.create(
         name="batch_error_test_store",
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
@@ -1382,7 +1382,7 @@ def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_
         vector_store_id=vector_store.id,
         file_ids=file_ids,
         extra_body={
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "all-MiniLM-L6-v2",
             "embedding_dimension": 384,
             "provider_id": "my_provider",
         },
