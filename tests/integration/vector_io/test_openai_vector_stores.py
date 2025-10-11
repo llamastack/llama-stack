@@ -1000,6 +1000,11 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
 
     vector_store2 = compat_client.vector_stores.create(
         name="test_store_with_files",
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     vector_stores_list = compat_client.vector_stores.list()
@@ -1008,6 +1013,11 @@ def test_create_vector_store_files_duplicate_vector_store_name(compat_client_wit
     created_file = compat_client.vector_stores.files.create(
         vector_store_id=vector_store.id,
         file_id=file_ids[0],
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
     assert created_file.status == "completed"
 
@@ -1080,6 +1090,11 @@ def test_openai_vector_store_file_batch_create_and_retrieve(compat_client_with_e
     batch = compat_client.vector_stores.file_batches.create(
         vector_store_id=vector_store.id,
         file_ids=file_ids,
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     assert batch is not None
@@ -1140,6 +1155,11 @@ def test_openai_vector_store_file_batch_list_files(compat_client_with_empty_stor
     batch = compat_client.vector_stores.file_batches.create(
         vector_store_id=vector_store.id,
         file_ids=file_ids,
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     # Wait for batch processing to complete
@@ -1230,6 +1250,11 @@ def test_openai_vector_store_file_batch_cancel(compat_client_with_empty_stores, 
     batch = compat_client.vector_stores.file_batches.create(
         vector_store_id=vector_store.id,
         file_ids=file_ids,
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     try:
@@ -1287,6 +1312,11 @@ def test_openai_vector_store_file_batch_retrieve_contents(compat_client_with_emp
     batch = compat_client.vector_stores.file_batches.create(
         vector_store_id=vector_store.id,
         file_ids=file_ids,
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     # Wait for batch processing to complete
@@ -1346,6 +1376,11 @@ def test_openai_vector_store_file_batch_error_handling(compat_client_with_empty_
     batch = compat_client.vector_stores.file_batches.create(
         vector_store_id=vector_store.id,
         file_ids=file_ids,
+        extra_body={
+            "embedding_model": "inline::sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_dimension": 384,
+            "provider_id": "my_provider",
+        },
     )
 
     assert batch is not None
