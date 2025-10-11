@@ -57,7 +57,11 @@ runs:
         echo "Building Llama Stack"
 
         LLAMA_STACK_DIR=. \
-          uv run --no-sync llama stack build --template ci-tests --image-type venv
+          uv run --no-sync llama stack show --distro ci-tests --format json | jq -r '.pip_dependencies[]' | uv pip install -r -
+
+        # Install special dependencies (those with --extra-index-url, --no-deps, etc.)
+        LLAMA_STACK_DIR=. \
+          uv run --no-sync llama stack show --distro ci-tests --format json | jq -r '.special_pip_dependencies[]' | xargs --no-run-if-empty -L1 uv pip install
 
     - name: Configure git for commits
       shell: bash

@@ -169,7 +169,15 @@ docker run \
 Ensure you have configured the starter distribution using the environment variables explained above.
 
 ```bash
-uv run --with llama-stack llama stack build --distro starter --image-type venv --run
+# Install dependencies for the starter distribution (simple approach)
+uv run --with llama-stack llama stack show --distro starter | sh
+
+# Alternative: install dependencies separately using JSON format
+uv run --with llama-stack llama stack show --distro starter --format json | jq -r '.pip_dependencies[]' | uv pip install -r -
+uv run --with llama-stack llama stack show --distro starter --format json | jq -r '.special_pip_dependencies[]' | xargs -L1 uv pip install
+
+# Run the server
+uv run --with llama-stack llama stack run starter
 ```
 
 ## Example Usage
