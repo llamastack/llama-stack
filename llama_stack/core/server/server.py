@@ -53,6 +53,11 @@ from llama_stack.core.stack import (
     cast_image_name_to_string,
     replace_env_vars,
 )
+from llama_stack.core.testing_context import (
+    TEST_CONTEXT,
+    reset_test_context,
+    sync_test_context_from_provider_data,
+)
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
@@ -254,12 +259,6 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
         # Use context manager with both provider data and auth attributes
         with request_provider_data_context(request.headers, user):
             if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
-                from llama_stack.core.testing_context import (
-                    TEST_CONTEXT,
-                    reset_test_context,
-                    sync_test_context_from_provider_data,
-                )
-
                 test_context_token = sync_test_context_from_provider_data()
 
             is_streaming = is_streaming_request(func.__name__, request, **kwargs)

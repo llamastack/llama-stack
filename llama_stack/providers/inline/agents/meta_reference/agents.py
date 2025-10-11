@@ -91,7 +91,9 @@ class MetaReferenceAgentsImpl(Agents):
             tool_runtime_api=self.tool_runtime_api,
             responses_store=self.responses_store,
             vector_io_api=self.vector_io_api,
+            safety_api=self.safety_api,
             conversations_api=self.conversations_api,
+            safety_api=self.safety_api,
         )
 
     async def create_agent(

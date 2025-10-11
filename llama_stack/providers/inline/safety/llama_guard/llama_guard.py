@@ -253,11 +253,16 @@ class LlamaGuardShield:
         self.safety_categories = safety_categories
 
     def check_unsafe_response(self, response: str) -> str | None:
+        # Check for "unsafe\n<code>" format
         match = re.match(r"^unsafe\n(.*)$", response)
         if match:
             # extracts the unsafe code
             extracted = match.group(1)
             return extracted
+
+        # Check for direct category code format (e.g., "S1", "S2", etc.)
+        if re.match(r"^S\d+$", response):
+            return response
 
         return None
 
