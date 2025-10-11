@@ -21,6 +21,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
+    OpenAIResponsePromptParam,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
 )
@@ -34,6 +35,8 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     OpenAISystemMessageParam,
 )
+from llama_stack.apis.prompts import Prompts
+from llama_stack.apis.prompts.prompts import Prompt
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.log import get_logger
@@ -67,6 +70,7 @@ class OpenAIResponsesImpl:
         responses_store: ResponsesStore,
         vector_io_api: VectorIO,  # VectorIO
         conversations_api: Conversations,
+        prompts_api: Prompts,
     ):
         self.inference_api = inference_api
         self.tool_groups_api = tool_groups_api
@@ -79,6 +83,7 @@ class OpenAIResponsesImpl:
             tool_runtime_api=tool_runtime_api,
             vector_io_api=vector_io_api,
         )
+        self.prompts_api = prompts_api
 
     async def _prepend_previous_response(
         self,
@@ -133,6 +138,41 @@ class OpenAIResponsesImpl:
     async def _prepend_instructions(self, messages, instructions):
         if instructions:
             messages.insert(0, OpenAISystemMessageParam(content=instructions))
+
+    async def _prepend_prompt(
+        self, messages: list[OpenAIMessageParam], prompt_params: OpenAIResponsePromptParam
+    ) -> Prompt:
+        if not prompt_params or not prompt_params.id:
+            return None
+
+        try:
+            # Check if prompt exists in Llama Stack and retrieve it
+            prompt_version = int(prompt_params.version) if prompt_params.version else None
+            cur_prompt = await self.prompts_api.get_prompt(prompt_params.id, prompt_version)
+            if cur_prompt and cur_prompt.prompt:
+                cur_prompt_text = cur_prompt.prompt
+                cur_prompt_variables = cur_prompt.variables
+
+                final_prompt_text = cur_prompt_text
+                if prompt_params.variables:
+                    # check if the variables are valid
+                    for name in prompt_params.variables.keys():
+                        if name not in cur_prompt_variables:
+                            raise ValueError(f"Variable {name} not found in prompt {prompt_params.id}")
+
+                    # replace the variables in the prompt text
+                    for name, value in prompt_params.variables.items():
+                        final_prompt_text = final_prompt_text.replace(f"{{{{ {name} }}}}", str(value))
+
+                messages.insert(0, OpenAISystemMessageParam(content=final_prompt_text))
+                logger.info(f"Prompt {prompt_params.id} found and applied\nFinal prompt text: {final_prompt_text}")
+                return cur_prompt
+
+        except ValueError:
+            logger.warning(
+                f"Prompt {prompt_params.id} with version {prompt_params.version} not found, skipping prompt prepending"
+            )
+            return None
 
     async def get_openai_response(
         self,
@@ -210,6 +250,7 @@ class OpenAIResponsesImpl:
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
+        prompt: OpenAIResponsePromptParam | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
         conversation: str | None = None,
@@ -247,6 +288,7 @@ class OpenAIResponsesImpl:
             input=input,
             original_input=original_input,
             model=model,
+            prompt=prompt,
             instructions=instructions,
             previous_response_id=previous_response_id,
             conversation=conversation,
@@ -293,6 +335,7 @@ class OpenAIResponsesImpl:
         input: str | list[OpenAIResponseInput],
         model: str,
         original_input: str | list[OpenAIResponseInput] | None = None,
+        prompt: OpenAIResponsePromptParam | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
         conversation: str | None = None,
@@ -306,6 +349,10 @@ class OpenAIResponsesImpl:
         all_input, messages, tool_context = await self._process_input_with_previous_response(
             input, tools, previous_response_id
         )
+
+        # Prepend reusable prompt (if provided)
+        prompt_obj = await self._prepend_prompt(messages, prompt)
+
         await self._prepend_instructions(messages, instructions)
 
         # Structured outputs
@@ -330,6 +377,7 @@ class OpenAIResponsesImpl:
             ctx=ctx,
             response_id=response_id,
             created_at=created_at,
+            prompt=prompt_obj,
             text=text,
             max_infer_iters=max_infer_iters,
             tool_executor=self.tool_executor,
