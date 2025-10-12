@@ -159,7 +159,6 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     import threading
     import time
 
-    import httpx
     import uvicorn
     from mcp.server.fastmcp import FastMCP
     from mcp.server.sse import SseServerTransport
@@ -167,7 +166,14 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     from starlette.responses import Response
     from starlette.routing import Mount, Route
 
+    from llama_stack.log import get_logger
+
     server = FastMCP("FastMCP Test Server", log_level="WARNING")
+
+    # Silence verbose MCP server logs
+    import logging  # allow-direct-logging
+
+    logging.getLogger("mcp.server.lowlevel.server").setLevel(logging.WARNING)
 
     tools = tools or default_tools()
 
@@ -211,6 +217,7 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
             return sock.getsockname()[1]
 
     port = get_open_port()
+    logger = get_logger(__name__, category="tests::mcp")
 
     # make uvicorn logs be less verbose
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="warning")
@@ -218,35 +225,50 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     app.state.uvicorn_server = server_instance
 
     def run_server():
-        server_instance.run()
+        try:
+            logger.debug(f"Starting MCP server on port {port}")
+            server_instance.run()
+            logger.debug(f"MCP server on port {port} has stopped")
+        except Exception as e:
+            logger.error(f"MCP server failed to start on port {port}: {e}")
+            raise
 
     # Start the server in a new thread
     server_thread = threading.Thread(target=run_server, daemon=True)
+    logger.debug(f"Starting MCP server thread on port {port}")
     server_thread.start()
 
-    # Polling until the server is ready
-    timeout = 10
+    # Wait for the server thread to be running
+    # Note: We can't use a simple HTTP GET health check on /sse because it's an SSE endpoint
+    # that expects a long-lived connection, not a simple request/response
+    timeout = 2
     start_time = time.time()
 
     server_url = f"http://localhost:{port}/sse"
+    logger.debug(f"Waiting for MCP server thread to start on port {port}")
+
     while time.time() - start_time < timeout:
-        try:
-            response = httpx.get(server_url)
-            if response.status_code in [200, 401]:
-                break
-        except httpx.RequestError:
-            pass
-        time.sleep(0.1)
+        if server_thread.is_alive():
+            # Give the server a moment to bind to the port
+            time.sleep(0.1)
+            logger.debug(f"MCP server is ready on port {port}")
+            break
+        time.sleep(0.05)
+    else:
+        # If we exit the loop due to timeout
+        logger.error(f"MCP server thread failed to start within {timeout} seconds on port {port}")
 
     try:
         yield {"server_url": server_url}
     finally:
+        logger.debug(f"Shutting down MCP server on port {port}")
         server_instance.should_exit = True
         time.sleep(0.5)
 
         # Force shutdown if still running
         if server_thread.is_alive():
             try:
+                logger.debug("Force shutting down server thread")
                 if hasattr(server_instance, "servers") and server_instance.servers:
                     for srv in server_instance.servers:
                         srv.close()
@@ -254,9 +276,9 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
                 # Wait for graceful shutdown
                 server_thread.join(timeout=3)
                 if server_thread.is_alive():
-                    print("Warning: Server thread still alive after shutdown attempt")
+                    logger.warning("Server thread still alive after shutdown attempt")
             except Exception as e:
-                print(f"Error during server shutdown: {e}")
+                logger.error(f"Error during server shutdown: {e}")
 
         # CRITICAL: Reset SSE global state to prevent event loop contamination
         # Reset the SSE AppStatus singleton that stores anyio.Event objects

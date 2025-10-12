@@ -12,7 +12,14 @@ from llama_stack.apis.agents import Agents, StepType
 from llama_stack.apis.benchmarks import Benchmark
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.inference import Inference, SystemMessage, UserMessage
+from llama_stack.apis.inference import (
+    Inference,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletionRequestWithExtraBody,
+    OpenAISystemMessageParam,
+    OpenAIUserMessageParam,
+    UserMessage,
+)
 from llama_stack.apis.scoring import Scoring
 from llama_stack.providers.datatypes import BenchmarksProtocolPrivate
 from llama_stack.providers.inline.agents.meta_reference.agent_instance import (
@@ -159,31 +166,42 @@ class MetaReferenceEvalImpl(
     ) -> list[dict[str, Any]]:
         candidate = benchmark_config.eval_candidate
         assert candidate.sampling_params.max_tokens is not None, "SamplingParams.max_tokens must be provided"
+        sampling_params = {"max_tokens": candidate.sampling_params.max_tokens}
 
         generations = []
         for x in tqdm(input_rows):
             if ColumnName.completion_input.value in x:
+                if candidate.sampling_params.stop:
+                    sampling_params["stop"] = candidate.sampling_params.stop
+
                 input_content = json.loads(x[ColumnName.completion_input.value])
-                response = await self.inference_api.completion(
+                params = OpenAICompletionRequestWithExtraBody(
                     model=candidate.model,
-                    content=input_content,
-                    sampling_params=candidate.sampling_params,
+                    prompt=input_content,
+                    **sampling_params,
                 )
-                generations.append({ColumnName.generated_answer.value: response.completion_message.content})
+                response = await self.inference_api.openai_completion(params)
+                generations.append({ColumnName.generated_answer.value: response.choices[0].text})
             elif ColumnName.chat_completion_input.value in x:
                 chat_completion_input_json = json.loads(x[ColumnName.chat_completion_input.value])
-                input_messages = [UserMessage(**x) for x in chat_completion_input_json if x["role"] == "user"]
+                input_messages = [
+                    OpenAIUserMessageParam(**x) for x in chat_completion_input_json if x["role"] == "user"
+                ]
+
                 messages = []
                 if candidate.system_message:
                     messages.append(candidate.system_message)
-                messages += [SystemMessage(**x) for x in chat_completion_input_json if x["role"] == "system"]
+
+                messages += [OpenAISystemMessageParam(**x) for x in chat_completion_input_json if x["role"] == "system"]
+
                 messages += input_messages
-                response = await self.inference_api.chat_completion(
-                    model_id=candidate.model,
+                params = OpenAIChatCompletionRequestWithExtraBody(
+                    model=candidate.model,
                     messages=messages,
-                    sampling_params=candidate.sampling_params,
+                    **sampling_params,
                 )
-                generations.append({ColumnName.generated_answer.value: response.completion_message.content})
+                response = await self.inference_api.openai_chat_completion(params)
+                generations.append({ColumnName.generated_answer.value: response.choices[0].message.content})
             else:
                 raise ValueError("Invalid input row")
 

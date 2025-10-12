@@ -1,0 +1,27 @@
+---
+description: "SambaNova inference provider for running models on SambaNova's dataflow architecture."
+sidebar_label: Remote - Sambanova
+title: remote::sambanova
+---
+
+# remote::sambanova
+
+## Description
+
+SambaNova inference provider for running models on SambaNova's dataflow architecture.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+| `url` | `<class 'str'>` | No | https://api.sambanova.ai/v1 | The URL for the SambaNova AI server |
+
+## Sample Configuration
+
+```yaml
+url: https://api.sambanova.ai/v1
+api_key: ${env.SAMBANOVA_API_KEY:=}
+```

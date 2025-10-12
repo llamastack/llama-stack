@@ -220,17 +220,18 @@ class ToolUtils:
 
     @staticmethod
     def encode_tool_call(t: ToolCall, tool_prompt_format: ToolPromptFormat) -> str:
+        args = json.loads(t.arguments)
         if t.tool_name == BuiltinTool.brave_search:
-            q = t.arguments["query"]
+            q = args["query"]
             return f'brave_search.call(query="{q}")'
         elif t.tool_name == BuiltinTool.wolfram_alpha:
-            q = t.arguments["query"]
+            q = args["query"]
             return f'wolfram_alpha.call(query="{q}")'
         elif t.tool_name == BuiltinTool.photogen:
-            q = t.arguments["query"]
+            q = args["query"]
             return f'photogen.call(query="{q}")'
         elif t.tool_name == BuiltinTool.code_interpreter:
-            return t.arguments["code"]
+            return args["code"]
         else:
             fname = t.tool_name
 
@@ -239,12 +240,11 @@ class ToolUtils:
                     {
                         "type": "function",
                         "name": fname,
-                        "parameters": t.arguments,
+                        "parameters": args,
                     }
                 )
             elif tool_prompt_format == ToolPromptFormat.function_tag:
-                args = json.dumps(t.arguments)
-                return f"<function={fname}>{args}</function>"
+                return f"<function={fname}>{t.arguments}</function>"
 
             elif tool_prompt_format == ToolPromptFormat.python_list:
 
@@ -260,7 +260,7 @@ class ToolUtils:
                     else:
                         raise ValueError(f"Unsupported type: {type(value)}")
 
-                args_str = ", ".join(f"{k}={format_value(v)}" for k, v in t.arguments.items())
+                args_str = ", ".join(f"{k}={format_value(v)}" for k, v in args.items())
                 return f"[{fname}({args_str})]"
             else:
                 raise ValueError(f"Unsupported tool prompt format: {tool_prompt_format}")

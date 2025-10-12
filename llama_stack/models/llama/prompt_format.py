@@ -11,19 +11,13 @@
 # top-level folder for each specific model found within the models/ directory at
 # the top-level of this source tree.
 
-import json
 import textwrap
-from pathlib import Path
 
 from pydantic import BaseModel, Field
 
 from llama_stack.models.llama.datatypes import (
     RawContent,
-    RawMediaItem,
     RawMessage,
-    RawTextItem,
-    StopReason,
-    ToolCall,
     ToolPromptFormat,
 )
 from llama_stack.models.llama.llama4.tokenizer import Tokenizer
@@ -175,59 +169,11 @@ def llama3_1_builtin_code_interpreter_dialog(tool_prompt_format=ToolPromptFormat
     return messages
 
 
-def llama3_1_builtin_tool_call_with_image_dialog(
-    tool_prompt_format=ToolPromptFormat.json,
-):
-    this_dir = Path(__file__).parent
-    with open(this_dir / "llama3/dog.jpg", "rb") as f:
-        img = f.read()
-
-    interface = LLama31Interface(tool_prompt_format)
-
-    messages = interface.system_messages(**system_message_builtin_tools_only())
-    messages += interface.user_message(content=[RawMediaItem(data=img), RawTextItem(text="What is this dog breed?")])
-    messages += interface.assistant_response_messages(
-        "Based on the description of the dog in the image, it appears to be a small breed dog, possibly a terrier mix",
-        StopReason.end_of_turn,
-    )
-    messages += interface.user_message("Search the web for some food recommendations for the indentified breed")
-    return messages
-
-
 def llama3_1_custom_tool_call_dialog(tool_prompt_format=ToolPromptFormat.json):
     interface = LLama31Interface(tool_prompt_format)
 
     messages = interface.system_messages(**system_message_custom_tools_only())
     messages += interface.user_message(content="Use tools to get latest trending songs")
-    return messages
-
-
-def llama3_1_e2e_tool_call_dialog(tool_prompt_format=ToolPromptFormat.json):
-    tool_response = json.dumps(["great song1", "awesome song2", "cool song3"])
-    interface = LLama31Interface(tool_prompt_format)
-
-    messages = interface.system_messages(**system_message_custom_tools_only())
-    messages += interface.user_message(content="Use tools to get latest trending songs")
-    messages.append(
-        RawMessage(
-            role="assistant",
-            content="",
-            stop_reason=StopReason.end_of_message,
-            tool_calls=[
-                ToolCall(
-                    call_id="call_id",
-                    tool_name="trending_songs",
-                    arguments={"n": "10", "genre": "latest"},
-                )
-            ],
-        ),
-    )
-    messages.append(
-        RawMessage(
-            role="assistant",
-            content=tool_response,
-        )
-    )
     return messages
 
 

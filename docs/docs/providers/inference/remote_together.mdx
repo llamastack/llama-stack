@@ -1,0 +1,27 @@
+---
+description: "Together AI inference provider for open-source models and collaborative AI development."
+sidebar_label: Remote - Together
+title: remote::together
+---
+
+# remote::together
+
+## Description
+
+Together AI inference provider for open-source models and collaborative AI development.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+| `url` | `<class 'str'>` | No | https://api.together.xyz/v1 | The URL for the Together AI server |
+
+## Sample Configuration
+
+```yaml
+url: https://api.together.xyz/v1
+api_key: ${env.TOGETHER_API_KEY:=}
+```

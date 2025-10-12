@@ -22,7 +22,7 @@ from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from ..sqlstore.sqlstore import SqlStoreConfig, SqlStoreType, sqlstore_impl
 
-logger = get_logger(name=__name__, category="inference_store")
+logger = get_logger(name=__name__, category="inference")
 
 
 class InferenceStore:
@@ -54,7 +54,7 @@ class InferenceStore:
 
     async def initialize(self):
         """Create the necessary tables if they don't exist."""
-        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.sql_store_config))
+        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.sql_store_config), self.policy)
         await self.sql_store.create_table(
             "chat_completions",
             {
@@ -202,7 +202,6 @@ class InferenceStore:
             order_by=[("created", order.value)],
             cursor=("id", after) if after else None,
             limit=limit,
-            policy=self.policy,
         )
 
         data = [
@@ -229,7 +228,6 @@ class InferenceStore:
         row = await self.sql_store.fetch_one(
             table="chat_completions",
             where={"id": completion_id},
-            policy=self.policy,
         )
 
         if not row:

@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -30,10 +31,7 @@ class AzureProviderDataValidator(BaseModel):
 
 
 @json_schema_type
-class AzureConfig(BaseModel):
-    api_key: SecretStr = Field(
-        description="Azure API key for Azure",
-    )
+class AzureConfig(RemoteInferenceProviderConfig):
     api_base: HttpUrl = Field(
         description="Azure API base for Azure (e.g., https://your-resource-name.openai.azure.com)",
     )

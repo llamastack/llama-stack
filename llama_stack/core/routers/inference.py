@@ -10,50 +10,40 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
+from fastapi import Body
 from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
-from pydantic import Field, TypeAdapter
+from pydantic import TypeAdapter
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
-    InterleavedContentItem,
 )
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.inference import (
-    BatchChatCompletionResponse,
-    BatchCompletionResponse,
     ChatCompletionResponse,
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
     CompletionMessage,
     CompletionResponse,
     CompletionResponseStreamChunk,
-    EmbeddingsResponse,
-    EmbeddingTaskType,
     Inference,
     ListOpenAIChatCompletionResponse,
-    LogProbConfig,
     Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
     OpenAICompletion,
+    OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
-    OpenAIResponseFormatParam,
     Order,
-    ResponseFormat,
-    SamplingParams,
     StopReason,
-    TextTruncation,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
     ToolPromptFormat,
 )
 from llama_stack.apis.models import Model, ModelType
@@ -191,243 +181,25 @@ class InferenceRouter(Inference):
             raise ModelTypeError(model_id, model.model_type, expected_model_type)
         return model
 
-    async def chat_completion(
-        self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = None,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> ChatCompletionResponse | AsyncIterator[ChatCompletionResponseStreamChunk]:
-        logger.debug(
-            f"InferenceRouter.chat_completion: {model_id=}, {stream=}, {messages=}, {tools=}, {tool_config=}, {response_format=}",
-        )
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        model = await self._get_model(model_id, ModelType.llm)
-        if tool_config:
-            if tool_choice and tool_choice != tool_config.tool_choice:
-                raise ValueError("tool_choice and tool_config.tool_choice must match")
-            if tool_prompt_format and tool_prompt_format != tool_config.tool_prompt_format:
-                raise ValueError("tool_prompt_format and tool_config.tool_prompt_format must match")
-        else:
-            params = {}
-            if tool_choice:
-                params["tool_choice"] = tool_choice
-            if tool_prompt_format:
-                params["tool_prompt_format"] = tool_prompt_format
-            tool_config = ToolConfig(**params)
-
-        tools = tools or []
-        if tool_config.tool_choice == ToolChoice.none:
-            tools = []
-        elif tool_config.tool_choice == ToolChoice.auto:
-            pass
-        elif tool_config.tool_choice == ToolChoice.required:
-            pass
-        else:
-            # verify tool_choice is one of the tools
-            tool_names = [t.tool_name if isinstance(t.tool_name, str) else t.tool_name.value for t in tools]
-            if tool_config.tool_choice not in tool_names:
-                raise ValueError(f"Tool choice {tool_config.tool_choice} is not one of the tools: {tool_names}")
-
-        params = dict(
-            model_id=model_id,
-            messages=messages,
-            sampling_params=sampling_params,
-            tools=tools,
-            tool_choice=tool_choice,
-            tool_prompt_format=tool_prompt_format,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-            tool_config=tool_config,
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        prompt_tokens = await self._count_tokens(messages, tool_config.tool_prompt_format)
-
-        if stream:
-            response_stream = await provider.chat_completion(**params)
-            return self.stream_tokens_and_compute_metrics(
-                response=response_stream,
-                prompt_tokens=prompt_tokens,
-                model=model,
-                tool_prompt_format=tool_config.tool_prompt_format,
-            )
-
-        response = await provider.chat_completion(**params)
-        metrics = await self.count_tokens_and_compute_metrics(
-            response=response,
-            prompt_tokens=prompt_tokens,
-            model=model,
-            tool_prompt_format=tool_config.tool_prompt_format,
-        )
-        # these metrics will show up in the client response.
-        response.metrics = (
-            metrics if not hasattr(response, "metrics") or response.metrics is None else response.metrics + metrics
-        )
-        return response
-
-    async def batch_chat_completion(
-        self,
-        model_id: str,
-        messages_batch: list[list[Message]],
-        tools: list[ToolDefinition] | None = None,
-        tool_config: ToolConfig | None = None,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchChatCompletionResponse:
-        logger.debug(
-            f"InferenceRouter.batch_chat_completion: {model_id=}, {len(messages_batch)=}, {sampling_params=}, {response_format=}, {logprobs=}",
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.batch_chat_completion(
-            model_id=model_id,
-            messages_batch=messages_batch,
-            tools=tools,
-            tool_config=tool_config,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            logprobs=logprobs,
-        )
-
-    async def completion(
-        self,
-        model_id: str,
-        content: InterleavedContent,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> AsyncGenerator:
-        if sampling_params is None:
-            sampling_params = SamplingParams()
-        logger.debug(
-            f"InferenceRouter.completion: {model_id=}, {stream=}, {content=}, {sampling_params=}, {response_format=}",
-        )
-        model = await self._get_model(model_id, ModelType.llm)
-        provider = await self.routing_table.get_provider_impl(model_id)
-        params = dict(
-            model_id=model_id,
-            content=content,
-            sampling_params=sampling_params,
-            response_format=response_format,
-            stream=stream,
-            logprobs=logprobs,
-        )
-
-        prompt_tokens = await self._count_tokens(content)
-        response = await provider.completion(**params)
-        if stream:
-            return self.stream_tokens_and_compute_metrics(
-                response=response,
-                prompt_tokens=prompt_tokens,
-                model=model,
-            )
-
-        metrics = await self.count_tokens_and_compute_metrics(
-            response=response, prompt_tokens=prompt_tokens, model=model
-        )
-        response.metrics = metrics if response.metrics is None else response.metrics + metrics
-
-        return response
-
-    async def batch_completion(
-        self,
-        model_id: str,
-        content_batch: list[InterleavedContent],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        logprobs: LogProbConfig | None = None,
-    ) -> BatchCompletionResponse:
-        logger.debug(
-            f"InferenceRouter.batch_completion: {model_id=}, {len(content_batch)=}, {sampling_params=}, {response_format=}, {logprobs=}",
-        )
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.batch_completion(model_id, content_batch, sampling_params, response_format, logprobs)
-
-    async def embeddings(
-        self,
-        model_id: str,
-        contents: list[str] | list[InterleavedContentItem],
-        text_truncation: TextTruncation | None = TextTruncation.none,
-        output_dimension: int | None = None,
-        task_type: EmbeddingTaskType | None = None,
-    ) -> EmbeddingsResponse:
-        logger.debug(f"InferenceRouter.embeddings: {model_id}")
-        await self._get_model(model_id, ModelType.embedding)
-        provider = await self.routing_table.get_provider_impl(model_id)
-        return await provider.embeddings(
-            model_id=model_id,
-            contents=contents,
-            text_truncation=text_truncation,
-            output_dimension=output_dimension,
-            task_type=task_type,
-        )
-
     async def openai_completion(
         self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
+        params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAICompletion:
         logger.debug(
-            f"InferenceRouter.openai_completion: {model=}, {stream=}, {prompt=}",
+            f"InferenceRouter.openai_completion: model={params.model}, stream={params.stream}, prompt={params.prompt}",
         )
-        model_obj = await self._get_model(model, ModelType.llm)
-        params = dict(
-            model=model_obj.identifier,
-            prompt=prompt,
-            best_of=best_of,
-            echo=echo,
-            frequency_penalty=frequency_penalty,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_tokens=max_tokens,
-            n=n,
-            presence_penalty=presence_penalty,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            top_p=top_p,
-            user=user,
-            guided_choice=guided_choice,
-            prompt_logprobs=prompt_logprobs,
-            suffix=suffix,
-        )
+        model_obj = await self._get_model(params.model, ModelType.llm)
+
+        # Update params with the resolved model identifier
+        params.model = model_obj.identifier
+
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
-        if stream:
-            return await provider.openai_completion(**params)
+        if params.stream:
+            return await provider.openai_completion(params)
             # TODO: Metrics do NOT work with openai_completion stream=True due to the fact
             # that we do not return an AsyncIterator, our tests expect a stream of chunks we cannot intercept currently.
-            # response_stream = await provider.openai_completion(**params)
 
-        response = await provider.openai_completion(**params)
+        response = await provider.openai_completion(params)
         if self.telemetry:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
@@ -446,93 +218,49 @@ class InferenceRouter(Inference):
 
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: Annotated[list[OpenAIMessageParam], Field(..., min_length=1)],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         logger.debug(
-            f"InferenceRouter.openai_chat_completion: {model=}, {stream=}, {messages=}",
+            f"InferenceRouter.openai_chat_completion: model={params.model}, stream={params.stream}, messages={params.messages}",
         )
-        model_obj = await self._get_model(model, ModelType.llm)
+        model_obj = await self._get_model(params.model, ModelType.llm)
 
         # Use the OpenAI client for a bit of extra input validation without
         # exposing the OpenAI client itself as part of our API surface
-        if tool_choice:
-            TypeAdapter(OpenAIChatCompletionToolChoiceOptionParam).validate_python(tool_choice)
-            if tools is None:
+        if params.tool_choice:
+            TypeAdapter(OpenAIChatCompletionToolChoiceOptionParam).validate_python(params.tool_choice)
+            if params.tools is None:
                 raise ValueError("'tool_choice' is only allowed when 'tools' is also provided")
-        if tools:
-            for tool in tools:
+        if params.tools:
+            for tool in params.tools:
                 TypeAdapter(OpenAIChatCompletionToolParam).validate_python(tool)
 
         # Some providers make tool calls even when tool_choice is "none"
         # so just clear them both out to avoid unexpected tool calls
-        if tool_choice == "none" and tools is not None:
-            tool_choice = None
-            tools = None
+        if params.tool_choice == "none" and params.tools is not None:
+            params.tool_choice = None
+            params.tools = None
 
-        params = dict(
-            model=model_obj.identifier,
-            messages=messages,
-            frequency_penalty=frequency_penalty,
-            function_call=function_call,
-            functions=functions,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_completion_tokens=max_completion_tokens,
-            max_tokens=max_tokens,
-            n=n,
-            parallel_tool_calls=parallel_tool_calls,
-            presence_penalty=presence_penalty,
-            response_format=response_format,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_logprobs=top_logprobs,
-            top_p=top_p,
-            user=user,
-        )
+        # Update params with the resolved model identifier
+        params.model = model_obj.identifier
+
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
-        if stream:
-            response_stream = await provider.openai_chat_completion(**params)
+        if params.stream:
+            response_stream = await provider.openai_chat_completion(params)
 
             # For streaming, the provider returns AsyncIterator[OpenAIChatCompletionChunk]
             # We need to add metrics to each chunk and store the final completion
             return self.stream_tokens_and_compute_metrics_openai_chat(
                 response=response_stream,
                 model=model_obj,
-                messages=messages,
+                messages=params.messages,
             )
 
         response = await self._nonstream_openai_chat_completion(provider, params)
 
         # Store the response with the ID that will be returned to the client
         if self.store:
-            asyncio.create_task(self.store.store_chat_completion(response, messages))
+            asyncio.create_task(self.store.store_chat_completion(response, params.messages))
 
         if self.telemetry:
             metrics = self._construct_metrics(
@@ -588,8 +316,10 @@ class InferenceRouter(Inference):
             return await self.store.get_chat_completion(completion_id)
         raise NotImplementedError("Get chat completion is not supported: inference store is not configured.")
 
-    async def _nonstream_openai_chat_completion(self, provider: Inference, params: dict) -> OpenAIChatCompletion:
-        response = await provider.openai_chat_completion(**params)
+    async def _nonstream_openai_chat_completion(
+        self, provider: Inference, params: OpenAIChatCompletionRequestWithExtraBody
+    ) -> OpenAIChatCompletion:
+        response = await provider.openai_chat_completion(params)
         for choice in response.choices:
             # some providers return an empty list for no tool calls in non-streaming responses
             # but the OpenAI API returns None. So, set tool_calls to None if it's empty
@@ -803,7 +533,7 @@ class InferenceRouter(Inference):
                         completion_text += "".join(choice_data["content_parts"])
 
                     # Add metrics to the chunk
-                    if self.telemetry and chunk.usage:
+                    if self.telemetry and hasattr(chunk, "usage") and chunk.usage:
                         metrics = self._construct_metrics(
                             prompt_tokens=chunk.usage.prompt_tokens,
                             completion_tokens=chunk.usage.completion_tokens,

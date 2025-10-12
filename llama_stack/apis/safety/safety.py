@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import Message
 from llama_stack.apis.shields import Shield
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -95,16 +96,23 @@ class ShieldStore(Protocol):
 @runtime_checkable
 @trace_protocol
 class Safety(Protocol):
+    """Safety
+
+    OpenAI-compatible Moderations API.
+    """
+
     shield_store: ShieldStore
 
-    @webmethod(route="/safety/run-shield", method="POST")
+    @webmethod(route="/safety/run-shield", method="POST", level=LLAMA_STACK_API_V1)
     async def run_shield(
         self,
         shield_id: str,
         messages: list[Message],
         params: dict[str, Any],
     ) -> RunShieldResponse:
-        """Run a shield.
+        """Run shield.
+
+        Run a shield.
 
         :param shield_id: The identifier of the shield to run.
         :param messages: The messages to run the shield on.
@@ -113,9 +121,12 @@ class Safety(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/moderations", method="POST")
+    @webmethod(route="/openai/v1/moderations", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/moderations", method="POST", level=LLAMA_STACK_API_V1)
     async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
-        """Classifies if text and/or image inputs are potentially harmful.
+        """Create moderation.
+
+        Classifies if text and/or image inputs are potentially harmful.
         :param input: Input (or inputs) to classify.
         Can be a single string, an array of strings, or an array of multi-modal input objects similar to other models.
         :param model: The content moderation model you would like to use.

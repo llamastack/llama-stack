@@ -1,0 +1,217 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  /* Llama Stack Original Theme - Based on llamastack.github.io */
+  --ifm-color-primary: #4a4a68;
+  --ifm-color-primary-dark: #3a3a52;
+  --ifm-color-primary-darker: #332735;
+  --ifm-color-primary-darkest: #2b2129;
+  --ifm-color-primary-light: #5a5a7e;
+  --ifm-color-primary-lighter: #6a6a94;
+  --ifm-color-primary-lightest: #8080aa;
+
+  /* Additional theme colors */
+  --ifm-color-secondary: #1b263c;
+  --ifm-color-info: #2980b9;
+  --ifm-color-success: #16a085;
+  --ifm-color-warning: #f39c12;
+  --ifm-color-danger: #e74c3c;
+
+  /* Background colors */
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #f8f9fa;
+
+  /* Code and syntax highlighting */
+  --ifm-code-font-size: 95%;
+  --ifm-pre-background: #1b263c;
+  --ifm-pre-color: #e1e5e9;
+  --docusaurus-highlighted-code-line-bg: rgba(51, 39, 53, 0.1);
+
+  /* Link colors */
+  --ifm-link-color: var(--ifm-color-primary);
+  --ifm-link-hover-color: var(--ifm-color-primary-darker);
+
+  /* Navbar */
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.95);
+  --ifm-navbar-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* Hero section gradient - matching original theme */
+  --hero-gradient: linear-gradient(90deg, #332735 0%, #1b263c 100%);
+
+  /* OpenAPI method colors */
+  --openapi-code-blue: #2980b9;
+  --openapi-code-green: #16a085;
+  --openapi-code-orange: #f39c12;
+  --openapi-code-red: #e74c3c;
+  --openapi-code-purple: #332735;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  /* Dark theme primary colors - lighter versions of original theme */
+  --ifm-color-primary: #8080aa;
+  --ifm-color-primary-dark: #6a6a94;
+  --ifm-color-primary-darker: #5a5a7e;
+  --ifm-color-primary-darkest: #4a4a68;
+  --ifm-color-primary-light: #9090ba;
+  --ifm-color-primary-lighter: #a0a0ca;
+  --ifm-color-primary-lightest: #b0b0da;
+
+  /* Dark theme background colors */
+  --ifm-background-color: #1a1a1a;
+  --ifm-background-surface-color: #2a2a2a;
+
+  /* Dark theme navbar */
+  --ifm-navbar-background-color: rgba(26, 26, 26, 0.95);
+
+  /* Dark theme code highlighting */
+  --docusaurus-highlighted-code-line-bg: rgba(51, 39, 53, 0.3);
+
+  /* Dark theme text colors */
+  --ifm-font-color-base: #e1e5e9;
+  --ifm-font-color-secondary: #a0a6ac;
+}
+
+/* Sidebar Method labels */
+.api-method>.menu__link {
+  align-items: center;
+  justify-content: start;
+}
+
+.api-method>.menu__link::before {
+  width: 50px;
+  height: 20px;
+  font-size: 12px;
+  line-height: 20px;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: 0.25rem;
+  border: 1px solid;
+  margin-right: var(--ifm-spacing-horizontal);
+  text-align: center;
+  flex-shrink: 0;
+  border-color: transparent;
+  color: white;
+}
+
+.get>.menu__link::before {
+  content: "get";
+  background-color: var(--ifm-color-primary);
+}
+
+.put>.menu__link::before {
+  content: "put";
+  background-color: var(--openapi-code-blue);
+}
+
+.post>.menu__link::before {
+  content: "post";
+  background-color: var(--openapi-code-green);
+}
+
+.delete>.menu__link::before {
+  content: "del";
+  background-color: var(--openapi-code-red);
+}
+
+.patch>.menu__link::before {
+  content: "patch";
+  background-color: var(--openapi-code-orange);
+}
+
+.footer--dark {
+  --ifm-footer-link-color: #ffffff;
+  --ifm-footer-title-color: #ffffff;
+}
+
+.footer--dark .footer__link-item {
+  color: #ffffff;
+}
+
+.footer--dark .footer__title {
+  color: #ffffff;
+}
+
+/* OpenAPI theme fixes for light mode readability */
+/* Version badge fixes */
+.openapi__version-badge,
+.theme-doc-version-badge,
+[class*="version-badge"],
+[class*="versionBadge"] {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+/* OpenAPI method badges in light mode */
+.openapi__method-badge,
+[class*="method-badge"] {
+  color: #ffffff !important;
+}
+
+/* Button fixes for light mode */
+.openapi__button,
+.theme-api-docs-demo-panel button,
+[class*="api-docs"] button,
+button[class*="button"],
+.openapi-explorer__response-schema button,
+.openapi-tabs__operation button {
+  color: #ffffff !important;
+}
+
+.openapi__button:hover,
+.theme-api-docs-demo-panel button:hover,
+[class*="api-docs"] button:hover,
+button[class*="button"]:hover,
+.openapi-explorer__response-schema button:hover,
+.openapi-tabs__operation button:hover {
+  color: #ffffff !important;
+}
+
+/* Navigation buttons (Next/Previous) */
+.pagination-nav__link,
+.pagination-nav__label {
+  color: #333333 !important;
+}
+
+.pagination-nav__link--next,
+.pagination-nav__link--prev {
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.pagination-nav__link--next:hover,
+.pagination-nav__link--prev:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* Deprecated endpoint styling */
+.menu__list-item--deprecated .menu__link {
+  text-decoration: line-through !important;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.menu__list-item--deprecated .menu__link:hover {
+  opacity: 0.9;
+}
+
+/* Deprecated endpoint badges - slightly muted */
+.menu__list-item--deprecated.api-method > .menu__link::before {
+  opacity: 0.7;
+  border-style: dashed !important;
+}
+
+/* Dark theme adjustments for deprecated endpoints */
+[data-theme='dark'] .menu__list-item--deprecated .menu__link {
+  opacity: 0.6;
+}
+
+[data-theme='dark'] .menu__list-item--deprecated .menu__link:hover {
+  opacity: 0.8;
+}

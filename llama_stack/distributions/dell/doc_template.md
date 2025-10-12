@@ -115,13 +115,13 @@ docker run -it \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
   # NOTE: mount the llama-stack directory if testing local changes else not needed
-  -v /home/hjshah/git/llama-stack:/app/llama-stack-source \
+  -v $HOME/git/llama-stack:/app/llama-stack-source \
   # localhost/distribution-dell:dev if building / testing locally
+  -e INFERENCE_MODEL=$INFERENCE_MODEL \
+  -e DEH_URL=$DEH_URL \
+  -e CHROMA_URL=$CHROMA_URL \
   llamastack/distribution-{{ name }}\
-  --port $LLAMA_STACK_PORT  \
-  --env INFERENCE_MODEL=$INFERENCE_MODEL \
-  --env DEH_URL=$DEH_URL \
-  --env CHROMA_URL=$CHROMA_URL
+  --port $LLAMA_STACK_PORT
 
 ```
 
@@ -142,14 +142,14 @@ docker run \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
   -v ./llama_stack/distributions/tgi/run-with-safety.yaml:/root/my-run.yaml \
+  -e INFERENCE_MODEL=$INFERENCE_MODEL \
+  -e DEH_URL=$DEH_URL \
+  -e SAFETY_MODEL=$SAFETY_MODEL \
+  -e DEH_SAFETY_URL=$DEH_SAFETY_URL \
+  -e CHROMA_URL=$CHROMA_URL \
   llamastack/distribution-{{ name }} \
   --config /root/my-run.yaml \
-  --port $LLAMA_STACK_PORT \
-  --env INFERENCE_MODEL=$INFERENCE_MODEL \
-  --env DEH_URL=$DEH_URL \
-  --env SAFETY_MODEL=$SAFETY_MODEL \
-  --env DEH_SAFETY_URL=$DEH_SAFETY_URL \
-  --env CHROMA_URL=$CHROMA_URL
+  --port $LLAMA_STACK_PORT
 ```
 
 ### Via Conda
@@ -158,21 +158,21 @@ Make sure you have done `pip install llama-stack` and have the Llama Stack CLI a
 
 ```bash
 llama stack build --distro {{ name }} --image-type conda
-llama stack run {{ name }}
-  --port $LLAMA_STACK_PORT \
-  --env INFERENCE_MODEL=$INFERENCE_MODEL \
-  --env DEH_URL=$DEH_URL \
-  --env CHROMA_URL=$CHROMA_URL
+INFERENCE_MODEL=$INFERENCE_MODEL \
+DEH_URL=$DEH_URL \
+CHROMA_URL=$CHROMA_URL \
+llama stack run {{ name }} \
+  --port $LLAMA_STACK_PORT
 ```
 
 If you are using Llama Stack Safety / Shield APIs, use:
 
 ```bash
+INFERENCE_MODEL=$INFERENCE_MODEL \
+DEH_URL=$DEH_URL \
+SAFETY_MODEL=$SAFETY_MODEL \
+DEH_SAFETY_URL=$DEH_SAFETY_URL \
+CHROMA_URL=$CHROMA_URL \
 llama stack run ./run-with-safety.yaml \
-  --port $LLAMA_STACK_PORT \
-  --env INFERENCE_MODEL=$INFERENCE_MODEL \
-  --env DEH_URL=$DEH_URL \
-  --env SAFETY_MODEL=$SAFETY_MODEL \
-  --env DEH_SAFETY_URL=$DEH_SAFETY_URL \
-  --env CHROMA_URL=$CHROMA_URL
+  --port $LLAMA_STACK_PORT
 ```

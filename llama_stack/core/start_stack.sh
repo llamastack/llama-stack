@@ -25,7 +25,7 @@ error_handler() {
 trap 'error_handler ${LINENO}' ERR
 
 if [ $# -lt 3 ]; then
-  echo "Usage: $0 <env_type> <env_path_or_name> <port> [--config <yaml_config>] [--env KEY=VALUE]..."
+  echo "Usage: $0 <env_type> <env_path_or_name> <port> [--config <yaml_config>]"
   exit 1
 fi
 
@@ -43,7 +43,6 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 # Initialize variables
 yaml_config=""
-env_vars=""
 other_args=""
 
 # Process remaining arguments
@@ -55,15 +54,6 @@ while [[ $# -gt 0 ]]; do
         shift 2
       else
         echo -e "${RED}Error: $1 requires a CONFIG argument${NC}" >&2
-        exit 1
-      fi
-      ;;
-    --env)
-      if [[ -n "$2" ]]; then
-        env_vars="$env_vars --env $2"
-        shift 2
-      else
-        echo -e "${RED}Error: --env requires a KEY=VALUE argument${NC}" >&2
         exit 1
       fi
       ;;
@@ -116,10 +106,9 @@ if [[ "$env_type" == "venv" ]]; then
         yaml_config_arg=""
     fi
 
-    $PYTHON_BINARY -m llama_stack.core.server.server \
+    llama stack run \
     $yaml_config_arg \
     --port "$port" \
-    $env_vars \
     $other_args
 elif [[ "$env_type" == "container" ]]; then
     echo -e "${RED}Warning: Llama Stack no longer supports running Containers via the 'llama stack run' command.${NC}"

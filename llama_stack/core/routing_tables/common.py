@@ -9,7 +9,6 @@ from typing import Any
 from llama_stack.apis.common.errors import ModelNotFoundError
 from llama_stack.apis.models import Model
 from llama_stack.apis.resource import ResourceType
-from llama_stack.apis.scoring_functions import ScoringFn
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import (
@@ -17,6 +16,7 @@ from llama_stack.core.datatypes import (
     RoutableObject,
     RoutableObjectWithProvider,
     RoutedProtocol,
+    ScoringFnWithOwner,
 )
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.core.store import DistributionRegistry
@@ -114,7 +114,7 @@ class CommonRoutingTableImpl(RoutingTable):
             elif api == Api.scoring:
                 p.scoring_function_store = self
                 scoring_functions = await p.list_scoring_functions()
-                await add_objects(scoring_functions, pid, ScoringFn)
+                await add_objects(scoring_functions, pid, ScoringFnWithOwner)
             elif api == Api.eval:
                 p.benchmark_store = self
             elif api == Api.tool_runtime:
@@ -134,15 +134,12 @@ class CommonRoutingTableImpl(RoutingTable):
         from .scoring_functions import ScoringFunctionsRoutingTable
         from .shields import ShieldsRoutingTable
         from .toolgroups import ToolGroupsRoutingTable
-        from .vector_dbs import VectorDBsRoutingTable
 
         def apiname_object():
             if isinstance(self, ModelsRoutingTable):
                 return ("Inference", "model")
             elif isinstance(self, ShieldsRoutingTable):
                 return ("Safety", "shield")
-            elif isinstance(self, VectorDBsRoutingTable):
-                return ("VectorIO", "vector_db")
             elif isinstance(self, DatasetsRoutingTable):
                 return ("DatasetIO", "dataset")
             elif isinstance(self, ScoringFunctionsRoutingTable):

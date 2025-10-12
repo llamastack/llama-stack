@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -19,12 +20,7 @@ class AnthropicProviderDataValidator(BaseModel):
 
 
 @json_schema_type
-class AnthropicConfig(BaseModel):
-    api_key: str | None = Field(
-        default=None,
-        description="API key for Anthropic models",
-    )
-
+class AnthropicConfig(RemoteInferenceProviderConfig):
     @classmethod
     def sample_run_config(cls, api_key: str = "${env.ANTHROPIC_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {

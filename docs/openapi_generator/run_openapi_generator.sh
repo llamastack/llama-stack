@@ -29,4 +29,4 @@ fi
 
 stack_dir=$(dirname $(dirname $THIS_DIR))
 PYTHONPATH=$PYTHONPATH:$stack_dir \
-  python -m docs.openapi_generator.generate $(dirname $THIS_DIR)/_static
+  python -m docs.openapi_generator.generate $(dirname $THIS_DIR)/static

@@ -14,8 +14,8 @@ from typing import Any
 import yaml
 
 from llama_stack.apis.agents import Agents
-from llama_stack.apis.batch_inference import BatchInference
 from llama_stack.apis.benchmarks import Benchmarks
+from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.eval import Eval
@@ -33,8 +33,8 @@ from llama_stack.apis.shields import Shields
 from llama_stack.apis.synthetic_data_generation import SyntheticDataGeneration
 from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
-from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, StackRunConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
@@ -52,9 +52,7 @@ logger = get_logger(name=__name__, category="core")
 
 class LlamaStack(
     Providers,
-    VectorDBs,
     Inference,
-    BatchInference,
     Agents,
     Safety,
     SyntheticDataGeneration,
@@ -75,6 +73,7 @@ class LlamaStack(
     RAGToolRuntime,
     Files,
     Prompts,
+    Conversations,
 ):
     pass
 
@@ -82,7 +81,6 @@ class LlamaStack(
 RESOURCES = [
     ("models", Api.models, "register_model", "list_models"),
     ("shields", Api.shields, "register_shield", "list_shields"),
-    ("vector_dbs", Api.vector_dbs, "register_vector_db", "list_vector_dbs"),
     ("datasets", Api.datasets, "register_dataset", "list_datasets"),
     (
         "scoring_fns",
@@ -273,22 +271,6 @@ def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
     return config_dict
 
 
-def validate_env_pair(env_pair: str) -> tuple[str, str]:
-    """Validate and split an environment variable key-value pair."""
-    try:
-        key, value = env_pair.split("=", 1)
-        key = key.strip()
-        if not key:
-            raise ValueError(f"Empty key in environment variable pair: {env_pair}")
-        if not all(c.isalnum() or c == "_" for c in key):
-            raise ValueError(f"Key must contain only alphanumeric characters and underscores: {key}")
-        return key, value
-    except ValueError as e:
-        raise ValueError(
-            f"Invalid environment variable format '{env_pair}': {str(e)}. Expected format: KEY=value"
-        ) from e
-
-
 def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConfig) -> None:
     """Add internal implementations (inspect and providers) to the implementations dictionary.
 
@@ -314,6 +296,12 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     )
     impls[Api.prompts] = prompts_impl
 
+    conversations_impl = ConversationServiceImpl(
+        ConversationServiceConfig(run_config=run_config),
+        deps=impls,
+    )
+    impls[Api.conversations] = conversations_impl
+
 
 class Stack:
     def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
@@ -325,25 +313,32 @@ class Stack:
     # asked for in the run config.
     async def initialize(self):
         if "LLAMA_STACK_TEST_INFERENCE_MODE" in os.environ:
-            from llama_stack.testing.inference_recorder import setup_inference_recording
+            from llama_stack.testing.api_recorder import setup_api_recording
 
             global TEST_RECORDING_CONTEXT
-            TEST_RECORDING_CONTEXT = setup_inference_recording()
+            TEST_RECORDING_CONTEXT = setup_api_recording()
             if TEST_RECORDING_CONTEXT:
                 TEST_RECORDING_CONTEXT.__enter__()
-                logger.info(f"Inference recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+                logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
 
         dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
-        impls = await resolve_impls(
-            self.run_config, self.provider_registry or get_provider_registry(self.run_config), dist_registry, policy
-        )
 
-        # Add internal implementations after all other providers are resolved
-        add_internal_implementations(impls, self.run_config)
+        internal_impls = {}
+        add_internal_implementations(internal_impls, self.run_config)
+
+        impls = await resolve_impls(
+            self.run_config,
+            self.provider_registry or get_provider_registry(self.run_config),
+            dist_registry,
+            policy,
+            internal_impls,
+        )
 
         if Api.prompts in impls:
             await impls[Api.prompts].initialize()
+        if Api.conversations in impls:
+            await impls[Api.conversations].initialize()
 
         await register_resources(self.run_config, impls)
 
@@ -388,7 +383,7 @@ class Stack:
             try:
                 TEST_RECORDING_CONTEXT.__exit__(None, None, None)
             except Exception as e:
-                logger.error(f"Error during inference recording cleanup: {e}")
+                logger.error(f"Error during API recording cleanup: {e}")
 
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:

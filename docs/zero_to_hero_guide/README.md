@@ -88,7 +88,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
    ...
    Build Successful!
    You can find the newly-built template here: ~/.llama/distributions/starter/starter-run.yaml
-   You can run the new Llama Stack Distro via: uv run --with llama-stack llama stack run starter --image-type venv
+   You can run the new Llama Stack Distro via: uv run --with llama-stack llama stack run starter
    ```
 
 3. **Set the ENV variables by exporting them to the terminal**:
@@ -102,12 +102,11 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 3. **Run the Llama Stack**:
    Run the stack using uv:
    ```bash
+   INFERENCE_MODEL=$INFERENCE_MODEL \
+   SAFETY_MODEL=$SAFETY_MODEL \
+   OLLAMA_URL=$OLLAMA_URL \
    uv run --with llama-stack llama stack run starter \
-      --image-type venv \
-      --port $LLAMA_STACK_PORT \
-      --env INFERENCE_MODEL=$INFERENCE_MODEL \
-      --env SAFETY_MODEL=$SAFETY_MODEL \
-      --env OLLAMA_URL=$OLLAMA_URL
+      --port $LLAMA_STACK_PORT
    ```
    Note: Every time you run a new model with `ollama run`, you will need to restart the llama stack. Otherwise it won't see the new model.
 
@@ -131,14 +130,37 @@ After setting up the server, open a new terminal window and configure the llama-
    ```
    **Expected Output:**
    ```bash
-   ChatCompletionResponse(
-       completion_message=CompletionMessage(
-           content='Here is a 2-sentence poem about the moon:\n\nSilver crescent shining bright in the night,\nA beacon of wonder, full of gentle light.',
-           role='assistant',
-           stop_reason='end_of_turn',
-           tool_calls=[]
-       ),
-       logprobs=None
+   OpenAIChatCompletion(
+      id='chatcmpl-950',
+      choices=[
+         OpenAIChatCompletionChoice(
+               finish_reason='stop',
+               index=0,
+               message=OpenAIChatCompletionChoiceMessageOpenAIAssistantMessageParam(
+                  role='assistant',
+                  content='...The moon casts silver threads through the velvet night, a silent bard of shadows, ancient and bright.',
+                  name=None,
+                  tool_calls=None,
+                  refusal=None,
+                  annotations=None,
+                  audio=None,
+                  function_call=None
+               ),
+               logprobs=None
+         )
+      ],
+      created=1759240813,
+      model='meta-llama/Llama-3.2-3B-Instruct',
+      object='chat.completion',
+      service_tier=None,
+      system_fingerprint='fp_ollama',
+      usage={
+         'completion_tokens': 479,
+         'prompt_tokens': 19,
+         'total_tokens': 498,
+         'completion_tokens_details': None,
+         'prompt_tokens_details': None
+      },
    )
    ```
 
@@ -147,21 +169,16 @@ After setting up the server, open a new terminal window and configure the llama-
 After setting up the server, open a new terminal window and verify it's working by sending a `POST` request using `curl`:
 
 ```bash
-curl http://localhost:$LLAMA_STACK_PORT/alpha/inference/chat-completion
+curl http://localhost:$LLAMA_STACK_PORT/v1/chat/completions
 -H "Content-Type: application/json"
 -d @- <<EOF
 {
-    "model_id": "$INFERENCE_MODEL",
+    "model": "$INFERENCE_MODEL",
     "messages": [
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Write me a 2-sentence poem about the moon"}
     ],
-    "sampling_params": {
-      "strategy": {
-         "type": "top_p",
-         "temperatrue": 0.7,
-         "top_p": 0.95,
-      },
+      "temperature": 0.7,
       "seed": 42,
       "max_tokens": 512
    }
@@ -174,13 +191,9 @@ You can check the available models with the command `uv run --with llama-stack-c
 **Expected Output:**
 ```json
 {
-  "completion_message": {
-    "role": "assistant",
-    "content": "The moon glows softly in the midnight sky,\nA beacon of wonder, as it catches the eye.",
-    "stop_reason": "out_of_tokens",
-    "tool_calls": []
-  },
-  "logprobs": null
+    ...
+    "content": "... The moon glows softly in the midnight sky,\nA beacon of wonder, as it catches the eye.",
+    ...
 }
 ```
 
@@ -213,17 +226,17 @@ if INFERENCE_MODEL is None:
 # Initialize the clien
 client = LlamaStackClient(base_url="http://localhost:8321")
 
-# Create a chat completion reques
-response = client.inference.chat_completion(
+# Create a chat completion request
+response = client.chat.completions.create(
     messages=[
         {"role": "system", "content": "You are a friendly assistant."},
         {"role": "user", "content": "Write a two-sentence poem about llama."},
     ],
-    model_id=INFERENCE_MODEL,
+    model=INFERENCE_MODEL,
 )
 
 # Print the response
-print(response.completion_message.content)
+print(response.choices[0].message.content)
 ```
 
 ### 3. Run the Python Script

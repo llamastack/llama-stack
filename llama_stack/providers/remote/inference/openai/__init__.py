@@ -4,18 +4,12 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from pydantic import BaseModel
-
 from .config import OpenAIConfig
-
-
-class OpenAIProviderDataValidator(BaseModel):
-    openai_api_key: str | None = None
 
 
 async def get_adapter_impl(config: OpenAIConfig, _deps):
     from .openai import OpenAIInferenceAdapter
 
-    impl = OpenAIInferenceAdapter(config)
+    impl = OpenAIInferenceAdapter(config=config)
     await impl.initialize()
     return impl

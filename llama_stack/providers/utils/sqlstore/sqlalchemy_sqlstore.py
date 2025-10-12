@@ -3,7 +3,7 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
 from sqlalchemy import (
@@ -116,7 +116,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         async with engine.begin() as conn:
             await conn.run_sync(self.metadata.create_all, tables=[sqlalchemy_table], checkfirst=True)
 
-    async def insert(self, table: str, data: Mapping[str, Any]) -> None:
+    async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
         async with self.async_session() as session:
             await session.execute(self.metadata.tables[table].insert(), data)
             await session.commit()

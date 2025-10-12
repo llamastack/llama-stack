@@ -1,0 +1,366 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--hero-gradient);
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.heroBanner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.heroContent {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroLogo {
+  height: 48px;
+  width: auto;
+  margin-bottom: 1.5rem;
+}
+
+.heroTitle {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.heroSubtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+  line-height: 1.5;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.heroBanner .getStartedButton {
+  background: white;
+  color: #332735;
+  border: 2px solid white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.heroBanner .getStartedButton:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #2b2129;
+  border-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.heroBanner .apiButton {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.heroBanner .apiButton:hover {
+  background: white;
+  border-color: white;
+  color: #332735;
+  transform: translateY(-2px);
+}
+
+/* Quick Start Section */
+.quickStart {
+  padding: 4rem 0;
+  background: var(--ifm-background-color);
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.sectionDescription {
+  font-size: 1rem;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.codeBlock {
+  background: var(--ifm-color-gray-900);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.codeBlock pre {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.codeBlock code {
+  color: var(--ifm-color-gray-100);
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Features */
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--ifm-color-gray-50);
+  border: 1px solid var(--ifm-color-gray-200);
+  transition: all 0.2s ease;
+}
+
+.feature:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary-lighter);
+}
+
+.featureIcon {
+  font-size: 2rem;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ifm-color-primary-lightest);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.feature h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.feature p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-600);
+  line-height: 1.5;
+}
+
+/* Ecosystem Section */
+.ecosystem {
+  padding: 4rem 0;
+  background: var(--ifm-background-color);
+}
+
+.ecosystemCard {
+  padding: 2rem;
+  border-radius: 12px;
+  background: var(--ifm-color-gray-50);
+  border: 1px solid var(--ifm-color-gray-200);
+  text-align: center;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.ecosystemCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary-lighter);
+}
+
+.ecosystemIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.ecosystemCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.ecosystemCard p {
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.linkGroup a {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.linkGroup a:hover {
+  background: var(--ifm-color-primary-lightest);
+  color: var(--ifm-color-primary-darker);
+}
+
+/* Community Section */
+.community {
+  padding: 3rem 0;
+  background: var(--ifm-color-gray-50);
+  border-top: 1px solid var(--ifm-color-gray-200);
+}
+
+.communityContent {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.communityLinks {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.communityButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  color: var(--ifm-color-primary) !important;
+  border-color: var(--ifm-color-primary) !important;
+}
+
+.communityButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  background: var(--ifm-color-primary) !important;
+  color: white !important;
+  border-color: var(--ifm-color-primary) !important;
+}
+
+.communityIcon {
+  font-size: 1.2rem;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 3rem 2rem;
+  }
+
+  .heroTitle {
+    font-size: 2.2rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .quickStart {
+    padding: 3rem 0;
+  }
+
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+
+  .communityLinks {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .communityButton {
+    width: 200px;
+    justify-content: center;
+  }
+
+  .ecosystem {
+    padding: 3rem 0;
+  }
+
+  .ecosystemCard {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .heroLogo {
+    height: 40px;
+  }
+
+  .heroTitle {
+    font-size: 1.8rem;
+  }
+
+  .codeBlock {
+    padding: 1rem;
+  }
+
+  .codeBlock code {
+    font-size: 0.8rem;
+  }
+
+  .feature {
+    padding: 0.75rem;
+  }
+
+  .ecosystemCard {
+    padding: 1.25rem;
+  }
+
+  .ecosystemIcon {
+    font-size: 2.5rem;
+  }
+}

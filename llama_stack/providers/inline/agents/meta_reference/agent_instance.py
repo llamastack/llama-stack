@@ -7,8 +7,6 @@
 import copy
 import json
 import re
-import secrets
-import string
 import uuid
 import warnings
 from collections.abc import AsyncGenerator
@@ -50,11 +48,17 @@ from llama_stack.apis.inference import (
     CompletionMessage,
     Inference,
     Message,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIDeveloperMessageParam,
+    OpenAIMessageParam,
+    OpenAISystemMessageParam,
+    OpenAIToolMessageParam,
+    OpenAIUserMessageParam,
     SamplingParams,
     StopReason,
     SystemMessage,
     ToolDefinition,
-    ToolParamDefinition,
     ToolResponse,
     ToolResponseMessage,
     UserMessage,
@@ -68,16 +72,16 @@ from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     ToolCall,
 )
+from llama_stack.providers.utils.inference.openai_compat import (
+    convert_message_to_openai_dict_new,
+    convert_openai_chat_completion_stream,
+    convert_tooldef_to_openai_tool,
+)
 from llama_stack.providers.utils.kvstore import KVStore
 from llama_stack.providers.utils.telemetry import tracing
 
 from .persistence import AgentPersistence
 from .safety import SafetyException, ShieldRunnerMixin
-
-
-def make_random_string(length: int = 8):
-    return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(length))
-
 
 TOOLS_ATTACHMENT_KEY_REGEX = re.compile(r"__tools_attachment__=(\{.*?\})")
 MEMORY_QUERY_TOOL = "knowledge_search"
@@ -100,6 +104,7 @@ class ChatAgent(ShieldRunnerMixin):
         persistence_store: KVStore,
         created_at: str,
         policy: list[AccessRule],
+        telemetry_enabled: bool = False,
     ):
         self.agent_id = agent_id
         self.agent_config = agent_config
@@ -110,6 +115,7 @@ class ChatAgent(ShieldRunnerMixin):
         self.tool_runtime_api = tool_runtime_api
         self.tool_groups_api = tool_groups_api
         self.created_at = created_at
+        self.telemetry_enabled = telemetry_enabled
 
         ShieldRunnerMixin.__init__(
             self,
@@ -177,29 +183,31 @@ class ChatAgent(ShieldRunnerMixin):
         return messages
 
     async def create_and_execute_turn(self, request: AgentTurnCreateRequest) -> AsyncGenerator:
-        span = tracing.get_current_span()
-        if span:
-            span.set_attribute("session_id", request.session_id)
-            span.set_attribute("agent_id", self.agent_id)
-            span.set_attribute("request", request.model_dump_json())
-            turn_id = str(uuid.uuid4())
-            span.set_attribute("turn_id", turn_id)
-            if self.agent_config.name:
-                span.set_attribute("agent_name", self.agent_config.name)
+        turn_id = str(uuid.uuid4())
+        if self.telemetry_enabled:
+            span = tracing.get_current_span()
+            if span is not None:
+                span.set_attribute("session_id", request.session_id)
+                span.set_attribute("agent_id", self.agent_id)
+                span.set_attribute("request", request.model_dump_json())
+                span.set_attribute("turn_id", turn_id)
+                if self.agent_config.name:
+                    span.set_attribute("agent_name", self.agent_config.name)
 
         await self._initialize_tools(request.toolgroups)
         async for chunk in self._run_turn(request, turn_id):
             yield chunk
 
     async def resume_turn(self, request: AgentTurnResumeRequest) -> AsyncGenerator:
-        span = tracing.get_current_span()
-        if span:
-            span.set_attribute("agent_id", self.agent_id)
-            span.set_attribute("session_id", request.session_id)
-            span.set_attribute("request", request.model_dump_json())
-            span.set_attribute("turn_id", request.turn_id)
-            if self.agent_config.name:
-                span.set_attribute("agent_name", self.agent_config.name)
+        if self.telemetry_enabled:
+            span = tracing.get_current_span()
+            if span is not None:
+                span.set_attribute("agent_id", self.agent_id)
+                span.set_attribute("session_id", request.session_id)
+                span.set_attribute("request", request.model_dump_json())
+                span.set_attribute("turn_id", request.turn_id)
+                if self.agent_config.name:
+                    span.set_attribute("agent_name", self.agent_config.name)
 
         await self._initialize_tools()
         async for chunk in self._run_turn(request):
@@ -385,9 +393,12 @@ class ChatAgent(ShieldRunnerMixin):
         touchpoint: str,
     ) -> AsyncGenerator:
         async with tracing.span("run_shields") as span:
-            span.set_attribute("input", [m.model_dump_json() for m in messages])
+            if self.telemetry_enabled and span is not None:
+                span.set_attribute("input", [m.model_dump_json() for m in messages])
+                if len(shields) == 0:
+                    span.set_attribute("output", "no shields")
+
             if len(shields) == 0:
-                span.set_attribute("output", "no shields")
                 return
 
             step_id = str(uuid.uuid4())
@@ -420,7 +431,8 @@ class ChatAgent(ShieldRunnerMixin):
                         )
                     )
                 )
-                span.set_attribute("output", e.violation.model_dump_json())
+                if self.telemetry_enabled and span is not None:
+                    span.set_attribute("output", e.violation.model_dump_json())
 
                 yield CompletionMessage(
                     content=str(e),
@@ -443,7 +455,8 @@ class ChatAgent(ShieldRunnerMixin):
                     )
                 )
             )
-            span.set_attribute("output", "no violations")
+            if self.telemetry_enabled and span is not None:
+                span.set_attribute("output", "no violations")
 
     async def _run(
         self,
@@ -505,26 +518,95 @@ class ChatAgent(ShieldRunnerMixin):
 
             tool_calls = []
             content = ""
-            stop_reason = None
+            stop_reason: StopReason | None = None
 
             async with tracing.span("inference") as span:
-                if self.agent_config.name:
-                    span.set_attribute("agent_name", self.agent_config.name)
-                async for chunk in await self.inference_api.chat_completion(
-                    self.agent_config.model,
-                    input_messages,
-                    tools=self.tool_defs,
-                    tool_prompt_format=self.agent_config.tool_config.tool_prompt_format,
+                if self.telemetry_enabled and span is not None:
+                    if self.agent_config.name:
+                        span.set_attribute("agent_name", self.agent_config.name)
+
+                def _serialize_nested(value):
+                    """Recursively serialize nested Pydantic models to dicts."""
+                    from pydantic import BaseModel
+
+                    if isinstance(value, BaseModel):
+                        return value.model_dump(mode="json")
+                    elif isinstance(value, dict):
+                        return {k: _serialize_nested(v) for k, v in value.items()}
+                    elif isinstance(value, list):
+                        return [_serialize_nested(item) for item in value]
+                    else:
+                        return value
+
+                def _add_type(openai_msg: dict) -> OpenAIMessageParam:
+                    # Serialize any nested Pydantic models to plain dicts
+                    openai_msg = _serialize_nested(openai_msg)
+
+                    role = openai_msg.get("role")
+                    if role == "user":
+                        return OpenAIUserMessageParam(**openai_msg)
+                    elif role == "system":
+                        return OpenAISystemMessageParam(**openai_msg)
+                    elif role == "assistant":
+                        return OpenAIAssistantMessageParam(**openai_msg)
+                    elif role == "tool":
+                        return OpenAIToolMessageParam(**openai_msg)
+                    elif role == "developer":
+                        return OpenAIDeveloperMessageParam(**openai_msg)
+                    else:
+                        raise ValueError(f"Unknown message role: {role}")
+
+                # Convert messages to OpenAI format
+                openai_messages: list[OpenAIMessageParam] = [
+                    _add_type(await convert_message_to_openai_dict_new(message)) for message in input_messages
+                ]
+
+                # Convert tool definitions to OpenAI format
+                openai_tools = [convert_tooldef_to_openai_tool(x) for x in (self.tool_defs or [])]
+
+                # Extract tool_choice from tool_config for OpenAI compatibility
+                # Note: tool_choice can only be provided when tools are also provided
+                tool_choice = None
+                if openai_tools and self.agent_config.tool_config and self.agent_config.tool_config.tool_choice:
+                    tc = self.agent_config.tool_config.tool_choice
+                    tool_choice_str = tc.value if hasattr(tc, "value") else str(tc)
+                    # Convert tool_choice to OpenAI format
+                    if tool_choice_str in ("auto", "none", "required"):
+                        tool_choice = tool_choice_str
+                    else:
+                        # It's a specific tool name, wrap it in the proper format
+                        tool_choice = {"type": "function", "function": {"name": tool_choice_str}}
+
+                # Convert sampling params to OpenAI format (temperature, top_p, max_tokens)
+                temperature = getattr(getattr(sampling_params, "strategy", None), "temperature", None)
+                top_p = getattr(getattr(sampling_params, "strategy", None), "top_p", None)
+                max_tokens = getattr(sampling_params, "max_tokens", None)
+
+                # Use OpenAI chat completion
+                params = OpenAIChatCompletionRequestWithExtraBody(
+                    model=self.agent_config.model,
+                    messages=openai_messages,
+                    tools=openai_tools if openai_tools else None,
+                    tool_choice=tool_choice,
                     response_format=self.agent_config.response_format,
+                    temperature=temperature,
+                    top_p=top_p,
+                    max_tokens=max_tokens,
                     stream=True,
-                    sampling_params=sampling_params,
-                    tool_config=self.agent_config.tool_config,
-                ):
+                )
+                openai_stream = await self.inference_api.openai_chat_completion(params)
+
+                # Convert OpenAI stream back to Llama Stack format
+                response_stream = convert_openai_chat_completion_stream(
+                    openai_stream, enable_incremental_tool_calls=True
+                )
+
+                async for chunk in response_stream:
                     event = chunk.event
                     if event.event_type == ChatCompletionResponseEventType.start:
                         continue
                     elif event.event_type == ChatCompletionResponseEventType.complete:
-                        stop_reason = StopReason.end_of_turn
+                        stop_reason = event.stop_reason or StopReason.end_of_turn
                         continue
 
                     delta = event.delta
@@ -533,7 +615,7 @@ class ChatAgent(ShieldRunnerMixin):
                             tool_calls.append(delta.tool_call)
                         elif delta.parse_status == ToolCallParseStatus.failed:
                             # If we cannot parse the tools, set the content to the unparsed raw text
-                            content = delta.tool_call
+                            content = str(delta.tool_call)
                         if stream:
                             yield AgentTurnResponseStreamChunk(
                                 event=AgentTurnResponseEvent(
@@ -560,20 +642,19 @@ class ChatAgent(ShieldRunnerMixin):
                     else:
                         raise ValueError(f"Unexpected delta type {type(delta)}")
 
-                    if event.stop_reason is not None:
-                        stop_reason = event.stop_reason
-                span.set_attribute("stop_reason", stop_reason)
-                span.set_attribute(
-                    "input",
-                    json.dumps([json.loads(m.model_dump_json()) for m in input_messages]),
-                )
-                output_attr = json.dumps(
-                    {
-                        "content": content,
-                        "tool_calls": [json.loads(t.model_dump_json()) for t in tool_calls],
-                    }
-                )
-                span.set_attribute("output", output_attr)
+                if self.telemetry_enabled and span is not None:
+                    span.set_attribute("stop_reason", stop_reason or StopReason.end_of_turn)
+                    span.set_attribute(
+                        "input",
+                        json.dumps([json.loads(m.model_dump_json()) for m in input_messages]),
+                    )
+                    output_attr = json.dumps(
+                        {
+                            "content": content,
+                            "tool_calls": [json.loads(t.model_dump_json()) for t in tool_calls],
+                        }
+                    )
+                    span.set_attribute("output", output_attr)
 
             n_iter += 1
             await self.storage.set_num_infer_iters_in_turn(session_id, turn_id, n_iter)
@@ -681,7 +762,9 @@ class ChatAgent(ShieldRunnerMixin):
                         {
                             "tool_name": tool_call.tool_name,
                             "input": message.model_dump_json(),
-                        },
+                        }
+                        if self.telemetry_enabled
+                        else {},
                     ) as span:
                         tool_execution_start_time = datetime.now(UTC).isoformat()
                         tool_result = await self.execute_tool_call_maybe(
@@ -696,7 +779,8 @@ class ChatAgent(ShieldRunnerMixin):
                             call_id=tool_call.call_id,
                             content=tool_result.content,
                         )
-                        span.set_attribute("output", result_message.model_dump_json())
+                        if self.telemetry_enabled and span is not None:
+                            span.set_attribute("output", result_message.model_dump_json())
 
                         # Store tool execution step
                         tool_execution_step = ToolExecutionStep(
@@ -790,18 +874,12 @@ class ChatAgent(ShieldRunnerMixin):
         for tool_def in self.agent_config.client_tools:
             if tool_name_to_def.get(tool_def.name, None):
                 raise ValueError(f"Tool {tool_def.name} already exists")
+
+            # Use input_schema from ToolDef directly
             tool_name_to_def[tool_def.name] = ToolDefinition(
                 tool_name=tool_def.name,
                 description=tool_def.description,
-                parameters={
-                    param.name: ToolParamDefinition(
-                        param_type=param.parameter_type,
-                        description=param.description,
-                        required=param.required,
-                        default=param.default,
-                    )
-                    for param in tool_def.parameters
-                },
+                input_schema=tool_def.input_schema,
             )
         for toolgroup_name_with_maybe_tool_name in agent_config_toolgroups:
             toolgroup_name, input_tool_name = self._parse_toolgroup_name(toolgroup_name_with_maybe_tool_name)
@@ -811,42 +889,34 @@ class ChatAgent(ShieldRunnerMixin):
                     [t.identifier for t in (await self.tool_groups_api.list_tool_groups()).data]
                 )
                 raise ValueError(f"Toolgroup {toolgroup_name} not found, available toolgroups: {available_tool_groups}")
-            if input_tool_name is not None and not any(tool.identifier == input_tool_name for tool in tools.data):
+            if input_tool_name is not None and not any(tool.name == input_tool_name for tool in tools.data):
                 raise ValueError(
-                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.identifier for tool in tools.data])}"
+                    f"Tool {input_tool_name} not found in toolgroup {toolgroup_name}. Available tools: {', '.join([tool.name for tool in tools.data])}"
                 )
 
             for tool_def in tools.data:
                 if toolgroup_name.startswith("builtin") and toolgroup_name != RAG_TOOL_GROUP:
-                    identifier: str | BuiltinTool | None = tool_def.identifier
+                    identifier: str | BuiltinTool | None = tool_def.name
                     if identifier == "web_search":
                         identifier = BuiltinTool.brave_search
                     else:
                         identifier = BuiltinTool(identifier)
                 else:
                     # add if tool_name is unspecified or the tool_def identifier is the same as the tool_name
-                    if input_tool_name in (None, tool_def.identifier):
-                        identifier = tool_def.identifier
+                    if input_tool_name in (None, tool_def.name):
+                        identifier = tool_def.name
                     else:
                         identifier = None
 
                 if tool_name_to_def.get(identifier, None):
                     raise ValueError(f"Tool {identifier} already exists")
                 if identifier:
-                    tool_name_to_def[tool_def.identifier] = ToolDefinition(
+                    tool_name_to_def[identifier] = ToolDefinition(
                         tool_name=identifier,
                         description=tool_def.description,
-                        parameters={
-                            param.name: ToolParamDefinition(
-                                param_type=param.parameter_type,
-                                description=param.description,
-                                required=param.required,
-                                default=param.default,
-                            )
-                            for param in tool_def.parameters
-                        },
+                        input_schema=tool_def.input_schema,
                     )
-                    tool_name_to_args[tool_def.identifier] = toolgroup_to_args.get(toolgroup_name, {})
+                    tool_name_to_args[identifier] = toolgroup_to_args.get(toolgroup_name, {})
 
         self.tool_defs, self.tool_name_to_args = (
             list(tool_name_to_def.values()),
@@ -890,12 +960,18 @@ class ChatAgent(ShieldRunnerMixin):
             tool_name_str = tool_name
 
         logger.info(f"executing tool call: {tool_name_str} with args: {tool_call.arguments}")
+
+        try:
+            args = json.loads(tool_call.arguments)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse arguments for tool call: {tool_call.arguments}") from e
+
         result = await self.tool_runtime_api.invoke_tool(
             tool_name=tool_name_str,
             kwargs={
                 "session_id": session_id,
                 # get the arguments generated by the model and augment with toolgroup arg overrides for the agent
-                **tool_call.arguments,
+                **args,
                 **self.tool_name_to_args.get(tool_name_str, {}),
             },
         )
@@ -920,7 +996,7 @@ async def get_raw_document_text(document: Document) -> str:
             DeprecationWarning,
             stacklevel=2,
         )
-    elif not (document.mime_type.startswith("text/") or document.mime_type == "application/yaml"):
+    elif not (document.mime_type.startswith("text/") or document.mime_type in ("application/yaml", "application/json")):
         raise ValueError(f"Unexpected document mime type: {document.mime_type}")
 
     if isinstance(document.content, URL):

@@ -20,7 +20,6 @@ from pydantic import BaseModel
 from llama_stack.apis.common.content_types import (
     URL,
     InterleavedContent,
-    TextContentItem,
 )
 from llama_stack.apis.tools import RAGDocument
 from llama_stack.apis.vector_dbs import VectorDB
@@ -50,6 +49,7 @@ class ChunkForDeletion(BaseModel):
 # Constants for reranker types
 RERANKER_TYPE_RRF = "rrf"
 RERANKER_TYPE_WEIGHTED = "weighted"
+RERANKER_TYPE_NORMALIZED = "normalized"
 
 
 def parse_pdf(data: bytes) -> str:
@@ -126,26 +126,6 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
     else:
         log.error("Could not extract content from data_url properly.")
         return ""
-
-
-def concat_interleaved_content(content: list[InterleavedContent]) -> InterleavedContent:
-    """concatenate interleaved content into a single list. ensure that 'str's are converted to TextContentItem when in a list"""
-
-    ret = []
-
-    def _process(c):
-        if isinstance(c, str):
-            ret.append(TextContentItem(text=c))
-        elif isinstance(c, list):
-            for item in c:
-                _process(item)
-        else:
-            ret.append(c)
-
-    for c in content:
-        _process(c)
-
-    return ret
 
 
 async def content_from_doc(doc: RAGDocument) -> str:
@@ -325,6 +305,8 @@ class VectorDBWithIndex:
                 weights = ranker.get("params", {}).get("weights", [0.5, 0.5])
                 reranker_type = RERANKER_TYPE_WEIGHTED
                 reranker_params = {"alpha": weights[0] if len(weights) > 0 else 0.5}
+            elif strategy == "normalized":
+                reranker_type = RERANKER_TYPE_NORMALIZED
             else:
                 reranker_type = RERANKER_TYPE_RRF
                 k_value = ranker.get("params", {}).get("k", 60.0)

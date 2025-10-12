@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
 from llama_stack.core.access_control.access_control import default_policy, is_action_allowed
@@ -38,6 +38,18 @@ SQL_OPTIMIZED_POLICY = [
 ]
 
 
+def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: User | None) -> Mapping[str, Any]:
+    """Add access control attributes to a data item."""
+    enhanced = dict(item)
+    if current_user:
+        enhanced["owner_principal"] = current_user.principal
+        enhanced["access_attributes"] = current_user.attributes
+    else:
+        enhanced["owner_principal"] = None
+        enhanced["access_attributes"] = None
+    return enhanced
+
+
 class SqlRecord(ProtectedResource):
     def __init__(self, record_id: str, table_name: str, owner: User):
         self.type = f"sql_record::{table_name}"
@@ -53,13 +65,15 @@ class AuthorizedSqlStore:
     access control policies, user attribute capture, and SQL filtering optimization.
     """
 
-    def __init__(self, sql_store: SqlStore):
+    def __init__(self, sql_store: SqlStore, policy: list[AccessRule]):
         """
         Initialize the authorization layer.
 
         :param sql_store: Base SqlStore implementation to wrap
+        :param policy: Access control policy to use for authorization
         """
         self.sql_store = sql_store
+        self.policy = policy
         self._detect_database_type()
         self._validate_sql_optimized_policy()
 
@@ -100,31 +114,26 @@ class AuthorizedSqlStore:
         await self.sql_store.add_column_if_not_exists(table, "access_attributes", ColumnType.JSON)
         await self.sql_store.add_column_if_not_exists(table, "owner_principal", ColumnType.STRING)
 
-    async def insert(self, table: str, data: Mapping[str, Any]) -> None:
-        """Insert a row with automatic access control attribute capture."""
-        enhanced_data = dict(data)
-
+    async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
+        """Insert a row or batch of rows with automatic access control attribute capture."""
         current_user = get_authenticated_user()
-        if current_user:
-            enhanced_data["owner_principal"] = current_user.principal
-            enhanced_data["access_attributes"] = current_user.attributes
+        enhanced_data: Mapping[str, Any] | Sequence[Mapping[str, Any]]
+        if isinstance(data, Mapping):
+            enhanced_data = _enhance_item_with_access_control(data, current_user)
         else:
-            enhanced_data["owner_principal"] = None
-            enhanced_data["access_attributes"] = None
-
+            enhanced_data = [_enhance_item_with_access_control(item, current_user) for item in data]
         await self.sql_store.insert(table, enhanced_data)
 
     async def fetch_all(
         self,
         table: str,
-        policy: list[AccessRule],
         where: Mapping[str, Any] | None = None,
         limit: int | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
     ) -> PaginatedResponse:
         """Fetch all rows with automatic access control filtering."""
-        access_where = self._build_access_control_where_clause(policy)
+        access_where = self._build_access_control_where_clause(self.policy)
         rows = await self.sql_store.fetch_all(
             table=table,
             where=where,
@@ -146,7 +155,7 @@ class AuthorizedSqlStore:
                 str(record_id), table, User(principal=stored_owner_principal, attributes=stored_access_attrs)
             )
 
-            if is_action_allowed(policy, Action.READ, sql_record, current_user):
+            if is_action_allowed(self.policy, Action.READ, sql_record, current_user):
                 filtered_rows.append(row)
 
         return PaginatedResponse(
@@ -157,14 +166,12 @@ class AuthorizedSqlStore:
     async def fetch_one(
         self,
         table: str,
-        policy: list[AccessRule],
         where: Mapping[str, Any] | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
     ) -> dict[str, Any] | None:
         """Fetch one row with automatic access control checking."""
         results = await self.fetch_all(
             table=table,
-            policy=policy,
             where=where,
             limit=1,
             order_by=order_by,

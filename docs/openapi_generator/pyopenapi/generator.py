@@ -5,11 +5,16 @@
 # the root directory of this source tree.
 
 import hashlib
+import inspect
 import ipaddress
+import os
 import types
 import typing
 from dataclasses import make_dataclass
-from typing import Any, Dict, Set, Union
+from pathlib import Path
+from typing import Annotated, Any, Dict, get_args, get_origin, Set, Union
+
+from fastapi import UploadFile
 
 from llama_stack.apis.datatypes import Error
 from llama_stack.strong_typing.core import JsonType
@@ -18,6 +23,7 @@ from llama_stack.strong_typing.inspection import (
     is_generic_list,
     is_type_optional,
     is_type_union,
+    is_unwrapped_body_param,
     unwrap_generic_list,
     unwrap_optional_type,
     unwrap_union_types,
@@ -30,10 +36,8 @@ from llama_stack.strong_typing.schema import (
     Schema,
     SchemaOptions,
 )
-from typing import get_origin, get_args
-from typing import Annotated
-from fastapi import UploadFile
 from llama_stack.strong_typing.serialization import json_dump_string, object_to_json
+from pydantic import BaseModel
 
 from .operations import (
     EndpointOperation,
@@ -47,6 +51,7 @@ from .specification import (
     Document,
     Example,
     ExampleRef,
+    ExtraBodyParameter,
     MediaType,
     Operation,
     Parameter,
@@ -545,11 +550,88 @@ class Generator:
 
         return extra_tags
 
+    def _get_api_group_for_operation(self, op) -> str | None:
+        """
+        Determine the API group for an operation based on its route path.
+
+        Args:
+            op: The endpoint operation
+
+        Returns:
+            The API group name derived from the route, or None if unable to determine
+        """
+        if not hasattr(op, 'webmethod') or not op.webmethod or not hasattr(op.webmethod, 'route'):
+            return None
+
+        route = op.webmethod.route
+        if not route or not route.startswith('/'):
+            return None
+
+        # Extract API group from route path
+        # Examples: /v1/agents/list -> agents-api
+        #          /v1/responses -> responses-api
+        #          /v1/models -> models-api
+        path_parts = route.strip('/').split('/')
+
+        if len(path_parts) < 2:
+            return None
+
+        # Skip version prefix (v1, v1alpha, v1beta, etc.)
+        if path_parts[0].startswith('v1'):
+            if len(path_parts) < 2:
+                return None
+            api_segment = path_parts[1]
+        else:
+            api_segment = path_parts[0]
+
+        # Convert to supplementary file naming convention
+        # agents -> agents-api, responses -> responses-api, etc.
+        return f"{api_segment}-api"
+
+    def _load_supplemental_content(self, api_group: str | None) -> str:
+        """
+        Load supplemental content for an API group based on stability level.
+
+        Follows this resolution order:
+        1. docs/supplementary/{stability}/{api_group}.md
+        2. docs/supplementary/shared/{api_group}.md (fallback)
+        3. Empty string if no files found
+
+        Args:
+            api_group: The API group name (e.g., "agents-responses-api"), or None if no mapping exists
+
+        Returns:
+            The supplemental content as markdown string, or empty string if not found
+        """
+        if not api_group:
+            return ""
+
+        base_path = Path(__file__).parent.parent.parent / "supplementary"
+
+        # Try stability-specific content first if stability filter is set
+        if self.options.stability_filter:
+            stability_path = base_path / self.options.stability_filter / f"{api_group}.md"
+            if stability_path.exists():
+                try:
+                    return stability_path.read_text(encoding="utf-8")
+                except Exception as e:
+                    print(f"Warning: Could not read stability-specific supplemental content from {stability_path}: {e}")
+
+        # Fall back to shared content
+        shared_path = base_path / "shared" / f"{api_group}.md"
+        if shared_path.exists():
+            try:
+                return shared_path.read_text(encoding="utf-8")
+            except Exception as e:
+                print(f"Warning: Could not read shared supplemental content from {shared_path}: {e}")
+
+        # No supplemental content found
+        return ""
+
     def _build_operation(self, op: EndpointOperation) -> Operation:
         if op.defining_class.__name__ in [
             "SyntheticDataGeneration",
             "PostTraining",
-            "BatchInference",
         ]:
             op.defining_class.__name__ = f"{op.defining_class.__name__} (Coming Soon)"
             print(op.defining_class.__name__)
@@ -597,6 +679,27 @@ class Generator:
         # parameters passed anywhere
         parameters = path_parameters + query_parameters
 
+        # Build extra body parameters documentation
+        extra_body_parameters = []
+        for param_name, param_type, description in op.extra_body_params:
+            if is_type_optional(param_type):
+                inner_type: type = unwrap_optional_type(param_type)
+                required = False
+            else:
+                inner_type = param_type
+                required = True
+
+            # Use description from ExtraBodyField if available, otherwise from docstring
+            param_description = description or doc_params.get(param_name)
+
+            extra_body_param = ExtraBodyParameter(
+                name=param_name,
+                schema=self.schema_builder.classdef_to_ref(inner_type),
+                description=param_description,
+                required=required,
+            )
+            extra_body_parameters.append(extra_body_param)
+
         webmethod = getattr(op.func_ref, "__webmethod__", None)
         raw_bytes_request_body = False
         if webmethod:
@@ -624,40 +727,41 @@ class Generator:
         # data passed in request body as multipart/form-data
         elif op.multipart_params:
             builder = ContentBuilder(self.schema_builder)
-            
+
             # Create schema properties for multipart form fields
             properties = {}
             required_fields = []
-            
+
             for name, param_type in op.multipart_params:
                 if get_origin(param_type) is Annotated:
                     base_type = get_args(param_type)[0]
                 else:
                     base_type = param_type
+
+                # Check if the type is optional
+                is_optional = is_type_optional(base_type)
+                if is_optional:
+                    base_type = unwrap_optional_type(base_type)
+
                 if base_type is UploadFile:
                     # File upload
-                    properties[name] = {
-                        "type": "string",
-                        "format": "binary"
-                    }
+                    properties[name] = {"type": "string", "format": "binary"}
                 else:
-                    # Form field
+                    # All other types - generate schema reference
+                    # This includes enums, BaseModels, and simple types
                     properties[name] = self.schema_builder.classdef_to_ref(base_type)
-                
-                required_fields.append(name)
-            
+
+                if not is_optional:
+                    required_fields.append(name)
+
             multipart_schema = {
                 "type": "object",
                 "properties": properties,
-                "required": required_fields
+                "required": required_fields,
             }
-            
+
             requestBody = RequestBody(
-                content={
-                    "multipart/form-data": {
-                        "schema": multipart_schema
-                    }
-                },
+                content={"multipart/form-data": {"schema": multipart_schema}},
                 required=True,
             )
         # data passed in payload as JSON and mapped to request parameters
@@ -666,24 +770,30 @@ class Generator:
             first = next(iter(op.request_params))
             request_name, request_type = first
 
-            op_name = "".join(word.capitalize() for word in op.name.split("_"))
-            request_name = f"{op_name}Request"
-            fields = [
-                (
-                    name,
-                    type_,
-                )
-                for name, type_ in op.request_params
-            ]
-            request_type = make_dataclass(
-                request_name,
-                fields,
-                namespace={
-                    "__doc__": create_docstring_for_request(
-                        request_name, fields, doc_params
+            # Special case: if there's a single parameter with Body(embed=False) that's a BaseModel,
+            # unwrap it to show the flat structure in the OpenAPI spec
+            # Example: openai_chat_completion()
+            if (len(op.request_params) == 1 and is_unwrapped_body_param(request_type)):
+                pass
+            else:
+                op_name = "".join(word.capitalize() for word in op.name.split("_"))
+                request_name = f"{op_name}Request"
+                fields = [
+                    (
+                        name,
+                        type_,
                     )
-                },
-            )
+                    for name, type_ in op.request_params
+                ]
+                request_type = make_dataclass(
+                    request_name,
+                    fields,
+                    namespace={
+                        "__doc__": create_docstring_for_request(
+                            request_name, fields, doc_params
+                        )
+                    },
+                )
 
             requestBody = RequestBody(
                 content={
@@ -796,29 +906,144 @@ class Generator:
         else:
             callbacks = None
 
-        description = "\n".join(
+        # Build base description from docstring
+        base_description = "\n".join(
             filter(None, [doc_string.short_description, doc_string.long_description])
         )
 
+        # Individual endpoints get clean descriptions only
+        description = base_description
+
         return Operation(
-            tags=[getattr(op.defining_class, "API_NAMESPACE", op.defining_class.__name__)],
-            summary=None,
-            # summary=doc_string.short_description,
+            tags=[
+                getattr(op.defining_class, "API_NAMESPACE", op.defining_class.__name__)
+            ],
+            summary=doc_string.short_description,
             description=description,
             parameters=parameters,
             requestBody=requestBody,
             responses=responses,
             callbacks=callbacks,
-            deprecated=True if "DEPRECATED" in op.func_name else None,
+            deprecated=getattr(op.webmethod, "deprecated", False)
+            or "DEPRECATED" in op.func_name,
             security=[] if op.public else None,
+            extraBodyParameters=extra_body_parameters if extra_body_parameters else None,
         )
+
+    def _get_api_stability_priority(self, api_level: str) -> int:
+        """
+        Return sorting priority for API stability levels.
+        Lower numbers = higher priority (appear first)
+
+        :param api_level: The API level (e.g., "v1", "v1beta", "v1alpha")
+        :return: Priority number for sorting
+        """
+        stability_order = {
+            "v1": 0,  # Stable - highest priority
+            "v1beta": 1,  # Beta - medium priority
+            "v1alpha": 2,  # Alpha - lowest priority
+        }
+        return stability_order.get(api_level, 999)  # Unknown levels go last
 
     def generate(self) -> Document:
         paths: Dict[str, PathItem] = {}
         endpoint_classes: Set[type] = set()
-        for op in get_endpoint_operations(
-            self.endpoint, use_examples=self.options.use_examples
-        ):
+
+        # Collect all operations and filter by stability if specified
+        operations = list(
+            get_endpoint_operations(
+                self.endpoint, use_examples=self.options.use_examples
+            )
+        )
+
+        # Filter operations by stability level if requested
+        if self.options.stability_filter:
+            filtered_operations = []
+            for op in operations:
+                deprecated = (
+                    getattr(op.webmethod, "deprecated", False)
+                    or "DEPRECATED" in op.func_name
+                )
+                stability_level = op.webmethod.level
+
+                if self.options.stability_filter == "stable":
+                    # Include v1 non-deprecated endpoints
+                    if stability_level == "v1" and not deprecated:
+                        filtered_operations.append(op)
+                elif self.options.stability_filter == "experimental":
+                    # Include v1alpha and v1beta endpoints (deprecated or not)
+                    if stability_level in ["v1alpha", "v1beta"]:
+                        filtered_operations.append(op)
+                elif self.options.stability_filter == "deprecated":
+                    # Include only deprecated endpoints
+                    if deprecated:
+                        filtered_operations.append(op)
+                elif self.options.stability_filter == "stainless":
+                    # Include both stable (v1 non-deprecated) and experimental (v1alpha, v1beta) endpoints
+                    if (stability_level == "v1" and not deprecated) or stability_level in ["v1alpha", "v1beta"]:
+                        filtered_operations.append(op)
+
+            operations = filtered_operations
+            print(
+                f"Filtered to {len(operations)} operations for stability level: {self.options.stability_filter}"
+            )
+
+        # Sort operations by multiple criteria for consistent ordering:
+        # 1. Stability level with deprecation handling (global priority):
+        #    - Active stable (v1) comes first
+        #    - Beta (v1beta) comes next
+        #    - Alpha (v1alpha) comes next
+        #    - Deprecated stable (v1 deprecated) comes last
+        # 2. Route path (group related endpoints within same stability level)
+        # 3. HTTP method (GET, POST, PUT, DELETE, PATCH)
+        # 4. Operation name (alphabetical)
+        def sort_key(op):
+            http_method_order = {
+                HTTPMethod.GET: 0,
+                HTTPMethod.POST: 1,
+                HTTPMethod.PUT: 2,
+                HTTPMethod.DELETE: 3,
+                HTTPMethod.PATCH: 4,
+            }
+
+            # Enhanced stability priority for migration pattern support
+            deprecated = getattr(op.webmethod, "deprecated", False)
+            stability_priority = self._get_api_stability_priority(op.webmethod.level)
+
+            # Deprecated versions should appear after everything else
+            # This ensures deprecated stable endpoints come last globally
+            if deprecated:
+                stability_priority += 10  # Push deprecated endpoints to the end
+
+            return (
+                stability_priority,  # Global stability handling comes first
+                op.get_route(
+                    op.webmethod
+                ),  # Group by route path within stability level
+                http_method_order.get(op.http_method, 999),
+                op.func_name,
+            )
+
+        operations.sort(key=sort_key)
+
+        # Debug output for migration pattern tracking
+        migration_routes = {}
+        for op in operations:
+            route_key = (op.get_route(op.webmethod), op.http_method)
+            if route_key not in migration_routes:
+                migration_routes[route_key] = []
+            migration_routes[route_key].append(
+                (op.webmethod.level, getattr(op.webmethod, "deprecated", False))
+            )
+
+        for route_key, versions in migration_routes.items():
+            if len(versions) > 1:
+                print(f"Migration pattern detected for {route_key[1]} {route_key[0]}:")
+                for level, deprecated in versions:
+                    status = "DEPRECATED" if deprecated else "ACTIVE"
+                    print(f"  - {level} ({status})")
+
+        for op in operations:
             endpoint_classes.add(op.defining_class)
 
             operation = self._build_operation(op)
@@ -836,7 +1061,7 @@ class Generator:
             else:
                 raise NotImplementedError(f"unknown HTTP method: {op.http_method}")
 
-            route = op.get_route()
+            route = op.get_route(op.webmethod)
             route = route.replace(":path", "")
             print(f"route: {route}")
             if route in paths:
@@ -849,10 +1074,22 @@ class Generator:
             doc_string = parse_type(cls)
             if hasattr(cls, "API_NAMESPACE") and cls.API_NAMESPACE != cls.__name__:
                 continue
+
+            # Add supplemental content to tag pages
+            api_group = f"{cls.__name__.lower()}-api"
+            supplemental_content = self._load_supplemental_content(api_group)
+
+            tag_description = doc_string.long_description or ""
+            if supplemental_content:
+                if tag_description:
+                    tag_description = f"{tag_description}\n\n{supplemental_content}"
+                else:
+                    tag_description = supplemental_content
+
             operation_tags.append(
                 Tag(
                     name=cls.__name__,
-                    description=doc_string.long_description,
+                    description=tag_description,
                     displayName=doc_string.short_description,
                 )
             )

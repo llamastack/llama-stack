@@ -1,0 +1,27 @@
+---
+description: "OpenAI inference provider for accessing GPT models and other OpenAI services."
+sidebar_label: Remote - Openai
+title: remote::openai
+---
+
+# remote::openai
+
+## Description
+
+OpenAI inference provider for accessing GPT models and other OpenAI services.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+| `base_url` | `<class 'str'>` | No | https://api.openai.com/v1 | Base URL for OpenAI API |
+
+## Sample Configuration
+
+```yaml
+api_key: ${env.OPENAI_API_KEY:=}
+base_url: ${env.OPENAI_BASE_URL:=https://api.openai.com/v1}
+```

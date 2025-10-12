@@ -25,7 +25,7 @@ from llama_stack.providers.datatypes import (
 logger = get_logger(name=__name__, category="core")
 
 
-INTERNAL_APIS = {Api.inspect, Api.providers, Api.prompts}
+INTERNAL_APIS = {Api.inspect, Api.providers, Api.prompts, Api.conversations}
 
 
 def stack_apis() -> list[Api]:
@@ -46,10 +46,6 @@ def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
         AutoRoutedApiInfo(
             routing_table_api=Api.shields,
             router_api=Api.safety,
-        ),
-        AutoRoutedApiInfo(
-            routing_table_api=Api.vector_dbs,
-            router_api=Api.vector_io,
         ),
         AutoRoutedApiInfo(
             routing_table_api=Api.datasets,
@@ -243,6 +239,7 @@ def get_external_providers_from_module(
                     spec = module.get_provider_spec()
                 else:
                     # pass in a partially filled out provider spec to satisfy the registry -- knowing we will be overwriting it later upon build and run
+                    # in the case we are building we CANNOT import this module of course because it has not been installed.
                     spec = ProviderSpec(
                         api=Api(provider_api),
                         provider_type=provider.provider_type,
@@ -251,9 +248,20 @@ def get_external_providers_from_module(
                         config_class="",
                     )
                 provider_type = provider.provider_type
-                # in the case we are building we CANNOT import this module of course because it has not been installed.
-                # return a partially filled out spec that the build script will populate.
-                registry[Api(provider_api)][provider_type] = spec
+                if isinstance(spec, list):
+                    # optionally allow people to pass inline and remote provider specs as a returned list.
+                    # with the old method, users could pass in directories of specs using overlapping code
+                    # we want to ensure we preserve that flexibility in this method.
+                    logger.info(
+                        f"Detected a list of external provider specs from {provider.module} adding all to the registry"
+                    )
+                    for provider_spec in spec:
+                        if provider_spec.provider_type != provider.provider_type:
+                            continue
+                        logger.info(f"Adding {provider.provider_type} to registry")
+                        registry[Api(provider_api)][provider.provider_type] = provider_spec
+                else:
+                    registry[Api(provider_api)][provider_type] = spec
             except ModuleNotFoundError as exc:
                 raise ValueError(
                     "get_provider_spec not found. If specifying an external provider via `module` in the Provider spec, the Provider must have the `provider.get_provider_spec` module available"

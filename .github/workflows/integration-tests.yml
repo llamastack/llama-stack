@@ -42,18 +42,27 @@ jobs:
 
   run-replay-mode-tests:
     runs-on: ubuntu-latest
-    name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.setup, matrix.python-version, matrix.client-version, matrix.suite) }}
+    name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.config.setup, matrix.python-version, matrix.client-version, matrix.config.suite) }}
 
     strategy:
       fail-fast: false
       matrix:
         client-type: [library, server]
-        # Use vllm on weekly schedule, otherwise use test-setup input (defaults to ollama)
-        setup: ${{ (github.event.schedule == '1 0 * * 0') && fromJSON('["vllm"]') || fromJSON(format('["{0}"]', github.event.inputs.test-setup || 'ollama')) }}
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        suite: [base, vision]
+        # Define (setup, suite) pairs - they are always matched and cannot be independent
+        # Weekly schedule (Sun 1 AM): vllm+base
+        # Input test-setup=ollama-vision: ollama-vision+vision
+        # Default (including test-setup=ollama): ollama+base, ollama-vision+vision, gpt+responses
+        config: >-
+          ${{
+            github.event.schedule == '1 0 * * 0'
+              && fromJSON('[{"setup": "vllm", "suite": "base"}]')
+            || github.event.inputs.test-setup == 'ollama-vision'
+              && fromJSON('[{"setup": "ollama-vision", "suite": "vision"}]')
+            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}]')
+          }}
 
     steps:
       - name: Checkout repository
@@ -64,14 +73,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
-          setup: ${{ matrix.setup }}
-          suite: ${{ matrix.suite }}
+          setup: ${{ matrix.config.setup }}
+          suite: ${{ matrix.config.suite }}
           inference-mode: 'replay'
 
       - name: Run tests
         uses: ./.github/actions/run-and-record-tests
+        env:
+          OPENAI_API_KEY: dummy
         with:
           stack-config: ${{ matrix.client-type == 'library' && 'ci-tests' || 'server:ci-tests' }}
-          setup: ${{ matrix.setup }}
+          setup: ${{ matrix.config.setup }}
           inference-mode: 'replay'
-          suite: ${{ matrix.suite }}
+          suite: ${{ matrix.config.suite }}

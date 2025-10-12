@@ -11,6 +11,7 @@ from llama_stack.providers.datatypes import (
     ProviderSpec,
     RemoteProviderSpec,
 )
+from llama_stack.providers.registry.vector_io import DEFAULT_VECTOR_IO_DEPS
 
 
 def available_providers() -> list[ProviderSpec]:
@@ -18,9 +19,8 @@ def available_providers() -> list[ProviderSpec]:
         InlineProviderSpec(
             api=Api.tool_runtime,
             provider_type="inline::rag-runtime",
-            pip_packages=[
-                "chardet",
-                "pypdf",
+            pip_packages=DEFAULT_VECTOR_IO_DEPS
+            + [
                 "tqdm",
                 "numpy",
                 "scikit-learn",

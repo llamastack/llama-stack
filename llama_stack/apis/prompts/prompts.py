@@ -10,6 +10,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -93,9 +94,11 @@ class ListPromptsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Prompts(Protocol):
-    """Protocol for prompt management operations."""
+    """Prompts
 
-    @webmethod(route="/prompts", method="GET")
+    Protocol for prompt management operations."""
+
+    @webmethod(route="/prompts", method="GET", level=LLAMA_STACK_API_V1)
     async def list_prompts(self) -> ListPromptsResponse:
         """List all prompts.
 
@@ -103,25 +106,29 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}/versions", method="GET")
+    @webmethod(route="/prompts/{prompt_id}/versions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_prompt_versions(
         self,
         prompt_id: str,
     ) -> ListPromptsResponse:
-        """List all versions of a specific prompt.
+        """List prompt versions.
+
+        List all versions of a specific prompt.
 
         :param prompt_id: The identifier of the prompt to list versions for.
         :returns: A ListPromptsResponse containing all versions of the prompt.
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}", method="GET")
+    @webmethod(route="/prompts/{prompt_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_prompt(
         self,
         prompt_id: str,
         version: int | None = None,
     ) -> Prompt:
-        """Get a prompt by its identifier and optional version.
+        """Get prompt.
+
+        Get a prompt by its identifier and optional version.
 
         :param prompt_id: The identifier of the prompt to get.
         :param version: The version of the prompt to get (defaults to latest).
@@ -129,13 +136,15 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts", method="POST")
+    @webmethod(route="/prompts", method="POST", level=LLAMA_STACK_API_V1)
     async def create_prompt(
         self,
         prompt: str,
         variables: list[str] | None = None,
     ) -> Prompt:
-        """Create a new prompt.
+        """Create prompt.
+
+        Create a new prompt.
 
         :param prompt: The prompt text content with variable placeholders.
         :param variables: List of variable names that can be used in the prompt template.
@@ -143,7 +152,7 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}", method="PUT")
+    @webmethod(route="/prompts/{prompt_id}", method="PUT", level=LLAMA_STACK_API_V1)
     async def update_prompt(
         self,
         prompt_id: str,
@@ -152,7 +161,9 @@ class Prompts(Protocol):
         variables: list[str] | None = None,
         set_as_default: bool = True,
     ) -> Prompt:
-        """Update an existing prompt (increments version).
+        """Update prompt.
+
+        Update an existing prompt (increments version).
 
         :param prompt_id: The identifier of the prompt to update.
         :param prompt: The updated prompt text content.
@@ -163,24 +174,28 @@ class Prompts(Protocol):
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}", method="DELETE")
+    @webmethod(route="/prompts/{prompt_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def delete_prompt(
         self,
         prompt_id: str,
     ) -> None:
-        """Delete a prompt.
+        """Delete prompt.
+
+        Delete a prompt.
 
         :param prompt_id: The identifier of the prompt to delete.
         """
         ...
 
-    @webmethod(route="/prompts/{prompt_id}/set-default-version", method="PUT")
+    @webmethod(route="/prompts/{prompt_id}/set-default-version", method="PUT", level=LLAMA_STACK_API_V1)
     async def set_default_version(
         self,
         prompt_id: str,
         version: int,
     ) -> Prompt:
-        """Set which version of a prompt should be the default in get_prompt (latest).
+        """Set prompt version.
+
+        Set which version of a prompt should be the default in get_prompt (latest).
 
         :param prompt_id: The identifier of the prompt.
         :param version: The version to set as default.

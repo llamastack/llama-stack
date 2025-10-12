@@ -18,7 +18,7 @@ def model_checkpoint_dir(model_id) -> str:
 
     assert checkpoint_dir.exists(), (
         f"Could not find checkpoints in: {model_local_dir(model_id)}. "
-        f"If you try to use the native llama model, Please download model using `llama download --model-id {model_id}`"
-        f"Otherwise, please save you model checkpoint under {model_local_dir(model_id)}"
+        f"If you try to use the native llama model, please download the model using `llama-model download --source meta --model-id {model_id}` (see https://github.com/meta-llama/llama-models). "
+        f"Otherwise, please save your model checkpoint under {model_local_dir(model_id)}"
     )
     return str(checkpoint_dir)

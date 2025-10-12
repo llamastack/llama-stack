@@ -84,13 +84,16 @@ jobs:
           yq eval '.server.auth.provider_config.jwks.token = "${{ env.TOKEN }}"' -i $run_dir/run.yaml
           cat $run_dir/run.yaml
 
-          nohup uv run llama stack run $run_dir/run.yaml --image-type venv > server.log 2>&1 &
+          # avoid line breaks in the server log, especially because we grep it below.
+          export LLAMA_STACK_LOG_WIDTH=200
+          nohup uv run llama stack run $run_dir/run.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |
           echo "Waiting for Llama Stack server..."
           for i in {1..30}; do
-            if curl -s -L -H "Authorization: Bearer $(cat llama-stack-auth-token)" http://localhost:8321/v1/health | grep -q "OK"; then
+            # Note: /v1/health does not require authentication
+            if curl -s -L http://localhost:8321/v1/health | grep -q "OK"; then
               echo "Llama Stack server is up!"
               if grep -q "Enabling authentication with provider: ${{ matrix.auth-provider }}" server.log; then
                 echo "Llama Stack server is configured to use ${{ matrix.auth-provider }} auth"
@@ -109,4 +112,27 @@ jobs:
 
       - name: Test auth
         run: |
-          curl -s -L -H "Authorization: Bearer $(cat llama-stack-auth-token)" http://127.0.0.1:8321/v1/providers|jq
+          echo "Testing /v1/version without token (should succeed)..."
+          if curl -s -L -o /dev/null -w "%{http_code}" http://127.0.0.1:8321/v1/version | grep -q "200"; then
+            echo "/v1/version accessible without token (200)"
+          else
+            echo "/v1/version returned non-200 status without token"
+            exit 1
+          fi
+
+          echo "Testing /v1/providers without token (should fail with 401)..."
+          if curl -s -L -o /dev/null -w "%{http_code}" http://127.0.0.1:8321/v1/providers | grep -q "401"; then
+            echo "/v1/providers blocked without token (401)"
+          else
+            echo "/v1/providers did not return 401 without token"
+            exit 1
+          fi
+
+          echo "Testing /v1/providers with valid token (should succeed)..."
+          curl -s -L -H "Authorization: Bearer $(cat llama-stack-auth-token)" http://127.0.0.1:8321/v1/providers | jq
+          if [ $? -eq 0 ]; then
+            echo "/v1/providers accessible with valid token"
+          else
+            echo "/v1/providers failed with valid token"
+            exit 1
+          fi

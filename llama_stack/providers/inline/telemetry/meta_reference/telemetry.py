@@ -130,11 +130,9 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         trace.get_tracer_provider().force_flush()
 
     async def log_event(self, event: Event, ttl_seconds: int = 604800) -> None:
-        logger.debug(f"DEBUG: log_event called with event type: {type(event).__name__}")
         if isinstance(event, UnstructuredLogEvent):
             self._log_unstructured(event, ttl_seconds)
         elif isinstance(event, MetricEvent):
-            logger.debug("DEBUG: Routing MetricEvent to _log_metric")
             self._log_metric(event)
         elif isinstance(event, StructuredLogEvent):
             self._log_structured(event, ttl_seconds)
@@ -224,10 +222,6 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         return _GLOBAL_STORAGE["gauges"][name]
 
     def _log_metric(self, event: MetricEvent) -> None:
-        # Always log to console if console sink is enabled (debug)
-        if TelemetrySink.CONSOLE in self.config.sinks:
-            logger.debug(f"METRIC: {event.metric}={event.value} {event.unit} {event.attributes}")
-
         # Add metric as an event to the current span
         try:
             with self._lock:

@@ -10,7 +10,7 @@ from typing import Annotated, Any
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
-from fastapi import File, Form, Response, UploadFile
+from fastapi import Depends, File, Form, Response, UploadFile
 
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
@@ -23,6 +23,8 @@ from llama_stack.apis.files import (
     OpenAIFilePurpose,
 )
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.id_generation import generate_object_id
+from llama_stack.providers.utils.files.form_data import parse_expires_after
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.providers.utils.sqlstore.sqlstore import sqlstore_impl
@@ -137,7 +139,7 @@ class S3FilesImpl(Files):
         where: dict[str, str | dict] = {"id": file_id}
         if not return_expired:
             where["expires_at"] = {">": self._now()}
-        if not (row := await self.sql_store.fetch_one("openai_files", policy=self.policy, where=where)):
+        if not (row := await self.sql_store.fetch_one("openai_files", where=where)):
             raise ResourceNotFoundError(file_id, "File", "files.list()")
         return row
 
@@ -164,7 +166,7 @@ class S3FilesImpl(Files):
         self._client = _create_s3_client(self._config)
         await _create_bucket_if_not_exists(self._client, self._config)
 
-        self._sql_store = AuthorizedSqlStore(sqlstore_impl(self._config.metadata_store))
+        self._sql_store = AuthorizedSqlStore(sqlstore_impl(self._config.metadata_store), self.policy)
         await self._sql_store.create_table(
             "openai_files",
             {
@@ -195,22 +197,13 @@ class S3FilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
-        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
+        expires_after: Annotated[ExpiresAfter | None, Depends(parse_expires_after)] = None,
     ) -> OpenAIFileObject:
-        file_id = f"file-{uuid.uuid4().hex}"
+        file_id = generate_object_id("file", lambda: f"file-{uuid.uuid4().hex}")
 
         filename = getattr(file, "filename", None) or "uploaded_file"
 
         created_at = self._now()
-
-        expires_after = None
-        if expires_after_anchor is not None or expires_after_seconds is not None:
-            # we use ExpiresAfter to validate input
-            expires_after = ExpiresAfter(
-                anchor=expires_after_anchor,  # type: ignore[arg-type]
-                seconds=expires_after_seconds,  # type: ignore[arg-type]
-            )
 
         # the default is no expiration.
         # to implement no expiration we set an expiration beyond the max.
@@ -268,7 +261,6 @@ class S3FilesImpl(Files):
 
         paginated_result = await self.sql_store.fetch_all(
             table="openai_files",
-            policy=self.policy,
             where=where_conditions,
             order_by=[("created_at", order.value)],
             cursor=("id", after) if after else None,

@@ -59,7 +59,7 @@ jobs:
           # Use the virtual environment created by the build step (name comes from build config)
           source ramalama-stack-test/bin/activate
           uv pip list
-          nohup llama stack run tests/external/ramalama-stack/run.yaml --image-type ${{ matrix.image-type }} > server.log 2>&1 &
+          nohup llama stack run tests/external/ramalama-stack/run.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |

@@ -9,8 +9,12 @@ from datetime import datetime
 
 import aiosqlite
 
+from llama_stack.log import get_logger
+
 from ..api import KVStore
 from ..config import SqliteKVStoreConfig
+
+logger = get_logger(name=__name__, category="providers::utils")
 
 
 class SqliteKVStoreImpl(KVStore):
@@ -50,6 +54,9 @@ class SqliteKVStoreImpl(KVStore):
                 if row is None:
                     return None
                 value, expiration = row
+                if not isinstance(value, str):
+                    logger.warning(f"Expected string value for key {key}, got {type(value)}, returning None")
+                    return None
                 return value
 
     async def delete(self, key: str) -> None:

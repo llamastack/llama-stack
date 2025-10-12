@@ -86,6 +86,9 @@ inference_store:
   db: ${env.POSTGRES_DB:=llamastack}
   user: ${env.POSTGRES_USER:=llamastack}
   password: ${env.POSTGRES_PASSWORD:=llamastack}
+conversations_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/postgres-demo}/conversations.db
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}

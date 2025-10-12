@@ -10,6 +10,6 @@ from .config import AzureConfig
 async def get_adapter_impl(config: AzureConfig, _deps):
     from .azure import AzureInferenceAdapter
 
-    impl = AzureInferenceAdapter(config)
+    impl = AzureInferenceAdapter(config=config)
     await impl.initialize()
     return impl

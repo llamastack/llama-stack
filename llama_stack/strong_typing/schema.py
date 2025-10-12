@@ -92,7 +92,12 @@ def get_class_property_docstrings(
     :returns: A dictionary mapping property names to descriptions.
     """
 
-    result = {}
+    result: Dict[str, str] = {}
+    # Only try to get MRO if data_type is actually a class
+    # Special types like Literal, Union, etc. don't have MRO
+    if not inspect.isclass(data_type):
+        return result
+
     for base in inspect.getmro(data_type):
         docstr = docstring.parse_type(base)
         for param in docstr.params.values():
@@ -479,12 +484,19 @@ class JsonSchemaGenerator:
                 }
             return ret
         elif origin_type is Literal:
-            if len(typing.get_args(typ)) != 1:
-                raise ValueError(f"Literal type {typ} has {len(typing.get_args(typ))} arguments")
-            (literal_value,) = typing.get_args(typ)  # unpack value of literal type
-            schema = self.type_to_schema(type(literal_value))
-            schema["const"] = literal_value
-            return schema
+            literal_args = typing.get_args(typ)
+            if len(literal_args) == 1:
+                (literal_value,) = literal_args
+                schema = self.type_to_schema(type(literal_value))
+                schema["const"] = literal_value
+                return schema
+            elif len(literal_args) > 1:
+                first_value = literal_args[0]
+                schema = self.type_to_schema(type(first_value))
+                schema["enum"] = list(literal_args)
+                return schema
+            else:
+                return {"enum": []}
         elif origin_type is type:
             (concrete_type,) = typing.get_args(typ)  # unpack single tuple element
             return {"const": self.type_to_schema(concrete_type, force_expand=True)}

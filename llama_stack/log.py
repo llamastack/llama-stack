@@ -30,8 +30,21 @@ CATEGORIES = [
     "tools",
     "client",
     "telemetry",
+    "openai",
     "openai_responses",
+    "openai_conversations",
+    "testing",
+    "providers",
+    "models",
+    "files",
+    "vector_io",
+    "tool_runtime",
+    "cli",
+    "post_training",
+    "scoring",
+    "tests",
 ]
+UNCATEGORIZED = "uncategorized"
 
 # Initialize category levels with default level
 _category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
@@ -121,7 +134,10 @@ def strip_rich_markup(text):
 
 class CustomRichHandler(RichHandler):
     def __init__(self, *args, **kwargs):
-        kwargs["console"] = Console(width=150)
+        # Set a reasonable default width for console output, especially when redirected to files
+        console_width = int(os.environ.get("LLAMA_STACK_LOG_WIDTH", "120"))
+        # Don't force terminal codes to avoid ANSI escape codes in log files
+        kwargs["console"] = Console(width=console_width)
         super().__init__(*args, **kwargs)
 
     def emit(self, record):
@@ -165,7 +181,7 @@ def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None
 
         def filter(self, record):
             if not hasattr(record, "category"):
-                record.category = "uncategorized"  # Default to 'uncategorized' if no category found
+                record.category = UNCATEGORIZED  # Default to 'uncategorized' if no category found
             return True
 
     # Determine the root logger's level (default to WARNING if not specified)
@@ -247,7 +263,20 @@ def get_logger(
         _category_levels.update(parse_yaml_config(config))
 
     logger = logging.getLogger(name)
-    logger.setLevel(_category_levels.get(category, DEFAULT_LOG_LEVEL))
+    if category in _category_levels:
+        log_level = _category_levels[category]
+    else:
+        root_category = category.split("::")[0]
+        if root_category in _category_levels:
+            log_level = _category_levels[root_category]
+        else:
+            if category != UNCATEGORIZED:
+                raise ValueError(
+                    f"Unknown logging category: {category}. To resolve, choose a valid category from the CATEGORIES list "
+                    f"or add it to the CATEGORIES list. Available categories: {CATEGORIES}"
+                )
+            log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
+    logger.setLevel(log_level)
     return logging.LoggerAdapter(logger, {"category": category})
 
 

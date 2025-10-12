@@ -21,7 +21,9 @@ async def get_provider_impl(config: MetaReferenceAgentsImplConfig, deps: dict[Ap
         deps[Api.safety],
         deps[Api.tool_runtime],
         deps[Api.tool_groups],
+        deps[Api.conversations],
         policy,
+        Api.telemetry in deps,
     )
     await impl.initialize()
     return impl

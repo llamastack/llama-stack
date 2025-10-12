@@ -4,31 +4,18 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import GeminiConfig
-from .models import MODEL_ENTRIES
 
 
-class GeminiInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
-    def __init__(self, config: GeminiConfig) -> None:
-        LiteLLMOpenAIMixin.__init__(
-            self,
-            MODEL_ENTRIES,
-            litellm_provider_name="gemini",
-            api_key_from_config=config.api_key,
-            provider_data_api_key_field="gemini_api_key",
-        )
-        self.config = config
+class GeminiInferenceAdapter(OpenAIMixin):
+    config: GeminiConfig
 
-    get_api_key = LiteLLMOpenAIMixin.get_api_key
+    provider_data_api_key_field: str = "gemini_api_key"
+    embedding_model_metadata: dict[str, dict[str, int]] = {
+        "text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
+    }
 
     def get_base_url(self):
         return "https://generativelanguage.googleapis.com/v1beta/openai/"
-
-    async def initialize(self) -> None:
-        await super().initialize()
-
-    async def shutdown(self) -> None:
-        await super().shutdown()

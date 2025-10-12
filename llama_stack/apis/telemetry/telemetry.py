@@ -16,6 +16,7 @@ from typing import (
 
 from pydantic import BaseModel, Field
 
+from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 from llama_stack.models.llama.datatypes import Primitive
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
@@ -412,7 +413,7 @@ class QueryMetricsResponse(BaseModel):
 
 @runtime_checkable
 class Telemetry(Protocol):
-    @webmethod(route="/telemetry/events", method="POST")
+    @webmethod(route="/telemetry/events", method="POST", level=LLAMA_STACK_API_V1)
     async def log_event(
         self,
         event: Event,
@@ -425,7 +426,14 @@ class Telemetry(Protocol):
         """
         ...
 
-    @webmethod(route="/telemetry/traces", method="POST", required_scope=REQUIRED_SCOPE)
+    @webmethod(
+        route="/telemetry/traces",
+        method="POST",
+        required_scope=REQUIRED_SCOPE,
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(route="/telemetry/traces", method="POST", required_scope=REQUIRED_SCOPE, level=LLAMA_STACK_API_V1ALPHA)
     async def query_traces(
         self,
         attribute_filters: list[QueryCondition] | None = None,
@@ -443,7 +451,19 @@ class Telemetry(Protocol):
         """
         ...
 
-    @webmethod(route="/telemetry/traces/{trace_id:path}", method="GET", required_scope=REQUIRED_SCOPE)
+    @webmethod(
+        route="/telemetry/traces/{trace_id:path}",
+        method="GET",
+        required_scope=REQUIRED_SCOPE,
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/telemetry/traces/{trace_id:path}",
+        method="GET",
+        required_scope=REQUIRED_SCOPE,
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def get_trace(self, trace_id: str) -> Trace:
         """Get a trace by its ID.
 
@@ -453,7 +473,17 @@ class Telemetry(Protocol):
         ...
 
     @webmethod(
-        route="/telemetry/traces/{trace_id:path}/spans/{span_id:path}", method="GET", required_scope=REQUIRED_SCOPE
+        route="/telemetry/traces/{trace_id:path}/spans/{span_id:path}",
+        method="GET",
+        required_scope=REQUIRED_SCOPE,
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/telemetry/traces/{trace_id:path}/spans/{span_id:path}",
+        method="GET",
+        required_scope=REQUIRED_SCOPE,
+        level=LLAMA_STACK_API_V1ALPHA,
     )
     async def get_span(self, trace_id: str, span_id: str) -> Span:
         """Get a span by its ID.
@@ -464,7 +494,19 @@ class Telemetry(Protocol):
         """
         ...
 
-    @webmethod(route="/telemetry/spans/{span_id:path}/tree", method="POST", required_scope=REQUIRED_SCOPE)
+    @webmethod(
+        route="/telemetry/spans/{span_id:path}/tree",
+        method="POST",
+        deprecated=True,
+        required_scope=REQUIRED_SCOPE,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/telemetry/spans/{span_id:path}/tree",
+        method="POST",
+        required_scope=REQUIRED_SCOPE,
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def get_span_tree(
         self,
         span_id: str,
@@ -480,7 +522,14 @@ class Telemetry(Protocol):
         """
         ...
 
-    @webmethod(route="/telemetry/spans", method="POST", required_scope=REQUIRED_SCOPE)
+    @webmethod(
+        route="/telemetry/spans",
+        method="POST",
+        required_scope=REQUIRED_SCOPE,
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(route="/telemetry/spans", method="POST", required_scope=REQUIRED_SCOPE, level=LLAMA_STACK_API_V1ALPHA)
     async def query_spans(
         self,
         attribute_filters: list[QueryCondition],
@@ -496,7 +545,8 @@ class Telemetry(Protocol):
         """
         ...
 
-    @webmethod(route="/telemetry/spans/export", method="POST")
+    @webmethod(route="/telemetry/spans/export", method="POST", deprecated=True, level=LLAMA_STACK_API_V1)
+    @webmethod(route="/telemetry/spans/export", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def save_spans_to_dataset(
         self,
         attribute_filters: list[QueryCondition],
@@ -513,7 +563,19 @@ class Telemetry(Protocol):
         """
         ...
 
-    @webmethod(route="/telemetry/metrics/{metric_name}", method="POST", required_scope=REQUIRED_SCOPE)
+    @webmethod(
+        route="/telemetry/metrics/{metric_name}",
+        method="POST",
+        required_scope=REQUIRED_SCOPE,
+        deprecated=True,
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/telemetry/metrics/{metric_name}",
+        method="POST",
+        required_scope=REQUIRED_SCOPE,
+        level=LLAMA_STACK_API_V1ALPHA,
+    )
     async def query_metrics(
         self,
         metric_name: str,

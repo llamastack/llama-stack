@@ -96,7 +96,6 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar telemetry: Observability and system monitoring
     :cvar models: Model metadata and management
     :cvar shields: Safety shield implementations
-    :cvar vector_dbs: Vector database management
     :cvar datasets: Dataset creation and management
     :cvar scoring_functions: Scoring function definitions
     :cvar benchmarks: Benchmark suite management
@@ -122,13 +121,13 @@ class Api(Enum, metaclass=DynamicApiMeta):
 
     models = "models"
     shields = "shields"
-    vector_dbs = "vector_dbs"
     datasets = "datasets"
     scoring_functions = "scoring_functions"
     benchmarks = "benchmarks"
     tool_groups = "tool_groups"
     files = "files"
     prompts = "prompts"
+    conversations = "conversations"
 
     # built-in API
     inspect = "inspect"

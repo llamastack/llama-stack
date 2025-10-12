@@ -1,0 +1,30 @@
+---
+description: "NVIDIA inference provider for accessing NVIDIA NIM models and AI services."
+sidebar_label: Remote - Nvidia
+title: remote::nvidia
+---
+
+# remote::nvidia
+
+## Description
+
+NVIDIA inference provider for accessing NVIDIA NIM models and AI services.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+| `url` | `<class 'str'>` | No | https://integrate.api.nvidia.com | A base url for accessing the NVIDIA NIM |
+| `timeout` | `<class 'int'>` | No | 60 | Timeout for the HTTP requests |
+| `append_api_version` | `<class 'bool'>` | No | True | When set to false, the API version will not be appended to the base_url. By default, it is true. |
+
+## Sample Configuration
+
+```yaml
+url: ${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com}
+api_key: ${env.NVIDIA_API_KEY:=}
+append_api_version: ${env.NVIDIA_APPEND_API_VERSION:=True}
+```

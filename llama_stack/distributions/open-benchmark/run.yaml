@@ -81,7 +81,7 @@ providers:
     provider_type: inline::meta-reference
     config:
       service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
-      sinks: ${env.TELEMETRY_SINKS:=console,sqlite}
+      sinks: ${env.TELEMETRY_SINKS:=sqlite}
       sqlite_db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/trace_store.db
       otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
   eval:
@@ -134,6 +134,9 @@ metadata_store:
 inference_store:
   type: sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/inference_store.db
+conversations_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/conversations.db
 models:
 - metadata: {}
   model_id: gpt-4o
