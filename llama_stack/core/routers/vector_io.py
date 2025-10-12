@@ -135,6 +135,8 @@ class VectorIORouter(VectorIO):
         logger.debug(f"VectorIORouter.openai_create_vector_store: name={params.name}, provider_id={provider_id}")
 
         # If no embedding model is provided, use the first available one
+        # TODO: this branch will soon be deleted so you _must_ provide the embedding_model when 
+        # creating a vector store
         if embedding_model is None:
             embedding_model_info = await self._get_first_embedding_model()
             if embedding_model_info is None:
@@ -153,7 +155,14 @@ class VectorIORouter(VectorIO):
         )
         provider = await self.routing_table.get_provider_impl(registered_vector_db.identifier)
 
-        # Pass params as-is to provider - it will extract what it needs from model_extra
+        # Update model_extra with registered values so provider uses the already-registered vector_db
+        if params.model_extra is None:
+            params.model_extra = {}
+        params.model_extra["provider_vector_db_id"] = registered_vector_db.provider_resource_id
+        params.model_extra["provider_id"] = registered_vector_db.provider_id
+        params.model_extra["embedding_model"] = embedding_model
+        params.model_extra["embedding_dimension"] = embedding_dimension
+
         return await provider.openai_create_vector_store(params)
 
     async def openai_list_vector_stores(

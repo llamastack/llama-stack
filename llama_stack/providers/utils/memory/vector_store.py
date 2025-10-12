@@ -21,6 +21,7 @@ from llama_stack.apis.common.content_types import (
     URL,
     InterleavedContent,
 )
+from llama_stack.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
 from llama_stack.apis.tools import RAGDocument
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
@@ -274,10 +275,11 @@ class VectorDBWithIndex:
                 _validate_embedding(c.embedding, i, self.vector_db.embedding_dimension)
 
         if chunks_to_embed:
-            resp = await self.inference_api.openai_embeddings(
-                self.vector_db.embedding_model,
-                [c.content for c in chunks_to_embed],
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model=self.vector_db.embedding_model,
+                input=[c.content for c in chunks_to_embed],
             )
+            resp = await self.inference_api.openai_embeddings(params)
             for c, data in zip(chunks_to_embed, resp.data, strict=False):
                 c.embedding = data.embedding
 
@@ -316,7 +318,11 @@ class VectorDBWithIndex:
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
 
-        embeddings_response = await self.inference_api.openai_embeddings(self.vector_db.embedding_model, [query_string])
+        params = OpenAIEmbeddingsRequestWithExtraBody(
+            model=self.vector_db.embedding_model,
+            input=[query_string],
+        )
+        embeddings_response = await self.inference_api.openai_embeddings(params)
         query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(

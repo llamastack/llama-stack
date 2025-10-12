@@ -10,8 +10,9 @@ import mimetypes
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Body
 from pydantic import TypeAdapter
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
@@ -342,7 +343,7 @@ class OpenAIVectorStoreMixin(ABC):
 
     async def openai_create_vector_store(
         self,
-        params: OpenAICreateVectorStoreRequestWithExtraBody,
+        params: Annotated[OpenAICreateVectorStoreRequestWithExtraBody, Body(...)],
     ) -> VectorStoreObject:
         """Creates a vector store."""
         created_at = int(time.time())
@@ -978,7 +979,7 @@ class OpenAIVectorStoreMixin(ABC):
     async def openai_create_vector_store_file_batch(
         self,
         vector_store_id: str,
-        params: OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
+        params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         """Create a vector store file batch."""
         if vector_store_id not in self.openai_vector_stores:
