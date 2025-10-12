@@ -491,11 +491,13 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
 class OpenAICreateVectorStoreFileBatchRequestWithExtraBody(BaseModel, extra="allow"):
     """Request to create a vector store file batch with extra_body support.
 
+    :param vector_store_id: The ID of the vector store to create the file batch for
     :param file_ids: A list of File IDs that the vector store should use
     :param attributes: (Optional) Key-value attributes to store with the files
     :param chunking_strategy: (Optional) The chunking strategy used to chunk the file(s). Defaults to auto
     """
 
+    vector_store_id: str
     file_ids: list[str]
     attributes: dict[str, Any] | None = None
     chunking_strategy: VectorStoreChunkingStrategy | None = None
@@ -847,13 +849,11 @@ class VectorIO(Protocol):
     )
     async def openai_create_vector_store_file_batch(
         self,
-        vector_store_id: str,
         params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         """Create a vector store file batch.
 
         Generate an OpenAI-compatible vector store file batch for the given vector store.
-        :param vector_store_id: The ID of the vector store to create the file batch for.
         :returns: A VectorStoreFileBatchObject representing the created file batch.
         """
         ...

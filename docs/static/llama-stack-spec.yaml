@@ -2553,14 +2553,7 @@ paths:
 
         Generate an OpenAI-compatible vector store file batch for the given vector
         store.
-      parameters:
-        - name: vector_store_id
-          in: path
-          description: >-
-            The ID of the vector store to create the file batch for.
-          required: true
-          schema:
-            type: string
+      parameters: []
       requestBody:
         content:
           application/json:
@@ -9670,19 +9663,6 @@ components:
               - type: object
           description: >-
             Set of key-value pairs that can be attached to the vector store
-        embedding_model:
-          type: string
-          description: >-
-            (Optional) The embedding model to use for this vector store
-        embedding_dimension:
-          type: integer
-          default: 384
-          description: >-
-            (Optional) The dimension of the embedding vectors (default: 384)
-        provider_id:
-          type: string
-          description: >-
-            (Optional) The ID of the provider to use for this vector store
       additionalProperties: false
       title: >-
         OpenAICreateVectorStoreRequestWithExtraBody
@@ -9811,6 +9791,10 @@ components:
     "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
       type: object
       properties:
+        vector_store_id:
+          type: string
+          description: >-
+            The ID of the vector store to create the file batch for
         file_ids:
           type: array
           items:
@@ -9836,6 +9820,7 @@ components:
             auto
       additionalProperties: false
       required:
+        - vector_store_id
         - file_ids
       title: >-
         OpenAICreateVectorStoreFileBatchRequestWithExtraBody

@@ -135,7 +135,7 @@ class VectorIORouter(VectorIO):
         logger.debug(f"VectorIORouter.openai_create_vector_store: name={params.name}, provider_id={provider_id}")
 
         # If no embedding model is provided, use the first available one
-        # TODO: this branch will soon be deleted so you _must_ provide the embedding_model when 
+        # TODO: this branch will soon be deleted so you _must_ provide the embedding_model when
         # creating a vector store
         if embedding_model is None:
             embedding_model_info = await self._get_first_embedding_model()
@@ -383,17 +383,13 @@ class VectorIORouter(VectorIO):
 
     async def openai_create_vector_store_file_batch(
         self,
-        vector_store_id: str,
         params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         logger.debug(
-            f"VectorIORouter.openai_create_vector_store_file_batch: {vector_store_id}, {len(params.file_ids)} files"
+            f"VectorIORouter.openai_create_vector_store_file_batch: {params.vector_store_id}, {len(params.file_ids)} files"
         )
-        provider = await self.routing_table.get_provider_impl(vector_store_id)
-        return await provider.openai_create_vector_store_file_batch(
-            vector_store_id=vector_store_id,
-            params=params,
-        )
+        provider = await self.routing_table.get_provider_impl(params.vector_store_id)
+        return await provider.openai_create_vector_store_file_batch(params)
 
     async def openai_retrieve_vector_store_file_batch(
         self,
