@@ -477,9 +477,6 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
     :param expires_after: (Optional) Expiration policy for the vector store
     :param chunking_strategy: (Optional) Strategy for splitting files into chunks
     :param metadata: Set of key-value pairs that can be attached to the vector store
-    :param embedding_model: (Optional) The embedding model to use for this vector store
-    :param embedding_dimension: (Optional) The dimension of the embedding vectors (default: 384)
-    :param provider_id: (Optional) The ID of the provider to use for this vector store
     """
 
     name: str | None = None
@@ -487,9 +484,6 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
     expires_after: dict[str, Any] | None = None
     chunking_strategy: dict[str, Any] | None = None
     metadata: dict[str, Any] | None = None
-    embedding_model: str | None = None
-    embedding_dimension: int | None = 384
-    provider_id: str | None = None
 
 
 # extra_body can be accessed via .model_extra

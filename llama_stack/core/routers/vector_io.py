@@ -126,11 +126,15 @@ class VectorIORouter(VectorIO):
         self,
         params: Annotated[OpenAICreateVectorStoreRequestWithExtraBody, Body(...)],
     ) -> VectorStoreObject:
-        logger.debug(f"VectorIORouter.openai_create_vector_store: name={params.name}, provider_id={params.provider_id}")
+        # Extract llama-stack-specific parameters from extra_body
+        extra = params.model_extra or {}
+        embedding_model = extra.get("embedding_model")
+        embedding_dimension = extra.get("embedding_dimension", 384)
+        provider_id = extra.get("provider_id")
+
+        logger.debug(f"VectorIORouter.openai_create_vector_store: name={params.name}, provider_id={provider_id}")
 
         # If no embedding model is provided, use the first available one
-        embedding_model = params.embedding_model
-        embedding_dimension = params.embedding_dimension
         if embedding_model is None:
             embedding_model_info = await self._get_first_embedding_model()
             if embedding_model_info is None:
@@ -143,22 +147,13 @@ class VectorIORouter(VectorIO):
             vector_db_id=vector_db_id,
             embedding_model=embedding_model,
             embedding_dimension=embedding_dimension,
-            provider_id=params.provider_id,
+            provider_id=provider_id,
             provider_vector_db_id=vector_db_id,
             vector_db_name=params.name,
         )
         provider = await self.routing_table.get_provider_impl(registered_vector_db.identifier)
 
-        # Update params with resolved values
-        params.embedding_model = embedding_model
-        params.embedding_dimension = embedding_dimension
-        params.provider_id = registered_vector_db.provider_id
-
-        # Add provider_vector_db_id to extra_body if not already there
-        if params.model_extra is None:
-            params.model_extra = {}
-        params.model_extra["provider_vector_db_id"] = registered_vector_db.provider_resource_id
-
+        # Pass params as-is to provider - it will extract what it needs from model_extra
         return await provider.openai_create_vector_store(params)
 
     async def openai_list_vector_stores(

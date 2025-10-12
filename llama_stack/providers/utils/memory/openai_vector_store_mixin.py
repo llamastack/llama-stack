@@ -347,30 +347,32 @@ class OpenAIVectorStoreMixin(ABC):
         """Creates a vector store."""
         created_at = int(time.time())
 
-        # Extract provider_vector_db_id from extra_body if present
-        provider_vector_db_id = None
-        if params.model_extra and "provider_vector_db_id" in params.model_extra:
-            provider_vector_db_id = params.model_extra["provider_vector_db_id"]
+        # Extract llama-stack-specific parameters from extra_body
+        extra = params.model_extra or {}
+        provider_vector_db_id = extra.get("provider_vector_db_id")
+        embedding_model = extra.get("embedding_model")
+        embedding_dimension = extra.get("embedding_dimension", 384)
+        provider_id = extra.get("provider_id")
 
         # Derive the canonical vector_db_id (allow override, else generate)
         vector_db_id = provider_vector_db_id or generate_object_id("vector_store", lambda: f"vs_{uuid.uuid4()}")
 
-        if params.provider_id is None:
+        if provider_id is None:
             raise ValueError("Provider ID is required")
 
-        if params.embedding_model is None:
+        if embedding_model is None:
             raise ValueError("Embedding model is required")
 
         # Embedding dimension is required (defaulted to 384 if not provided)
-        if params.embedding_dimension is None:
+        if embedding_dimension is None:
             raise ValueError("Embedding dimension is required")
 
         # Register the VectorDB backing this vector store
         vector_db = VectorDB(
             identifier=vector_db_id,
-            embedding_dimension=params.embedding_dimension,
-            embedding_model=params.embedding_model,
-            provider_id=params.provider_id,
+            embedding_dimension=embedding_dimension,
+            embedding_model=embedding_model,
+            provider_id=provider_id,
             provider_resource_id=vector_db_id,
             vector_db_name=params.name,
         )
@@ -404,8 +406,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Add provider information to metadata if provided
         metadata = params.metadata or {}
-        if params.provider_id:
-            metadata["provider_id"] = params.provider_id
+        if provider_id:
+            metadata["provider_id"] = provider_id
         if provider_vector_db_id:
             metadata["provider_vector_db_id"] = provider_vector_db_id
         store_info["metadata"] = metadata
