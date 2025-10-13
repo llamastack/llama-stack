@@ -242,3 +242,17 @@ def test_provider_auto_selection_single_provider(client_with_empty_registry, emb
         name="test_auto_provider", extra_body={"embedding_model": embedding_model_id}
     )
     assert vs.id is not None
+
+
+def test_provider_id_override(client_with_empty_registry, embedding_model_id):
+    providers = [p for p in client_with_empty_registry.providers.list() if p.api == "vector_io"]
+    if len(providers) != 1:
+        pytest.skip(f"Test requires exactly one vector_io provider, found {len(providers)}")
+
+    provider_id = providers[0].provider_id
+
+    vs = client_with_empty_registry.vector_stores.create(
+        name="test_provider_override", extra_body={"embedding_model": embedding_model_id, "provider_id": provider_id}
+    )
+    assert vs.id is not None
+    assert vs.metadata.get("provider_id") == provider_id
