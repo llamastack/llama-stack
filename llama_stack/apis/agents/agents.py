@@ -218,8 +218,8 @@ register_schema(AgentToolGroup, name="AgentTool")
 class AgentConfigCommon(BaseModel):
     sampling_params: SamplingParams | None = Field(default_factory=SamplingParams)
 
-    input_guardrails: list[str] | None = Field(default_factory=lambda: [])
-    output_guardrails: list[str] | None = Field(default_factory=lambda: [])
+    input_shields: list[str] | None = Field(default_factory=lambda: [])
+    output_shields: list[str] | None = Field(default_factory=lambda: [])
     toolgroups: list[AgentToolGroup] | None = Field(default_factory=lambda: [])
     client_tools: list[ToolDef] | None = Field(default_factory=lambda: [])
     tool_choice: ToolChoice | None = Field(default=None, deprecated="use tool_config instead")
