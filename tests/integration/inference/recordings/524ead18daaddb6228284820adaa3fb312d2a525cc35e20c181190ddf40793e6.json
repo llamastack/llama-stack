@@ -1,0 +1,92 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestOpenAICompatibility::test_openai_format_preserves_complex_schemas[openai_client-txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Process this data"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "process_data",
+            "description": "Process structured data",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/$defs/DataObject"
+                }
+              },
+              "$defs": {
+                "DataObject": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-524ead18daad",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user wants me to process the data. Let me check the available tools. There's a function called process_data that takes an object with a 'data' parameter. The data is an array of numbers. But the user hasn't provided any specific data yet. They just said \"Process this data.\" Hmm, maybe they expect me to prompt them for the data first. Wait, maybe there's a misunderstanding. Did they include the data in the conversation history? Let me look back. The user's message is \"Process this data.\" No data provided. Oh, maybe they made a mistake and forgot to include it. I need to ask them to provide the data so I can proceed. Let me confirm if there's any data mentioned. No, the current input is just the instruction. So I should ask the user to supply the data array of numbers to process.\n</think>\n\nPlease provide the structured data you'd like me to process. For example, an array of numbers like `[1, 2, 3]`.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 212,
+          "prompt_tokens": 180,
+          "total_tokens": 392,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
