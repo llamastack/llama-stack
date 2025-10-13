@@ -1500,11 +1500,11 @@ components:
       properties:
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
-        input_shields:
+        input_guardrails:
           type: array
           items:
             type: string
-        output_shields:
+        output_guardrails:
           type: array
           items:
             type: string

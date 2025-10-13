@@ -338,7 +338,7 @@ class MetaReferenceAgentsImpl(Agents):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
-        shields: list | None = None,
+        guardrails: list | None = None,
     ) -> OpenAIResponseObject:
         return await self.openai_responses_impl.create_openai_response(
             input,
@@ -353,7 +353,7 @@ class MetaReferenceAgentsImpl(Agents):
             tools,
             include,
             max_infer_iters,
-            shields,
+            guardrails,
         )
 
     async def list_openai_responses(

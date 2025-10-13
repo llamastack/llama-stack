@@ -8,7 +8,7 @@ import asyncio
 import re
 import uuid
 
-from llama_stack.apis.agents.agents import ResponseShieldSpec
+from llama_stack.apis.agents.agents import ResponseGuardrailSpec
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInput,
@@ -28,7 +28,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseText,
 )
 from llama_stack.apis.inference import (
-    Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
@@ -314,38 +313,58 @@ def is_function_tool_call(
     return False
 
 
-async def run_multiple_shields(safety_api: Safety, messages: list[Message], shield_ids: list[str]) -> None:
-    """Run multiple shields against messages and raise SafetyException for violations."""
-    if not shield_ids or not messages:
+async def run_multiple_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> None:
+    """Run multiple guardrails against messages and raise SafetyException for violations."""
+    if not guardrail_ids or not messages:
         return
-    shield_tasks = [
-        safety_api.run_shield(shield_id=shield_id, messages=messages, params={}) for shield_id in shield_ids
-    ]
 
-    responses = await asyncio.gather(*shield_tasks)
+    # Look up shields to get their provider_resource_id (actual model ID)
+    model_ids = []
+    shields_list = await safety_api.routing_table.list_shields()
+
+    for guardrail_id in guardrail_ids:
+        # Find the shield with this identifier
+        matching_shields = [shield for shield in shields_list.data if shield.identifier == guardrail_id]
+        if matching_shields:
+            model_id = matching_shields[0].provider_resource_id
+            model_ids.append(model_id)
+        else:
+            # If no shield found, raise an error
+            raise ValueError(f"No shield found with identifier '{guardrail_id}'")
+
+    guardrail_tasks = [safety_api.run_moderation(messages, model=model_id) for model_id in model_ids]
+
+    responses = await asyncio.gather(*guardrail_tasks)
 
     for response in responses:
-        if response.violation and response.violation.violation_level.name == "ERROR":
+        if response.flagged:
+            from llama_stack.apis.safety import SafetyViolation, ViolationLevel
+
             from ..safety import SafetyException
 
-            raise SafetyException(response.violation)
+            violation = SafetyViolation(
+                violation_level=ViolationLevel.ERROR,
+                user_message="Content flagged by moderation",
+                metadata={"categories": response.categories},
+            )
+            raise SafetyException(violation)
 
 
-def extract_shield_ids(shields: list | None) -> list[str]:
-    """Extract shield IDs from shields parameter, handling both string IDs and ResponseShieldSpec objects."""
-    if not shields:
+def extract_guardrail_ids(guardrails: list | None) -> list[str]:
+    """Extract guardrail IDs from guardrails parameter, handling both string IDs and ResponseGuardrailSpec objects."""
+    if not guardrails:
         return []
 
-    shield_ids = []
-    for shield in shields:
-        if isinstance(shield, str):
-            shield_ids.append(shield)
-        elif isinstance(shield, ResponseShieldSpec):
-            shield_ids.append(shield.type)
+    guardrail_ids = []
+    for guardrail in guardrails:
+        if isinstance(guardrail, str):
+            guardrail_ids.append(guardrail)
+        elif isinstance(guardrail, ResponseGuardrailSpec):
+            guardrail_ids.append(guardrail.type)
         else:
-            raise ValueError(f"Unknown shield format: {shield}, expected str or ResponseShieldSpec")
+            raise ValueError(f"Unknown guardrail format: {guardrail}, expected str or ResponseGuardrailSpec")
 
-    return shield_ids
+    return guardrail_ids
 
 
 def extract_text_content(content: str | list | None) -> str | None:

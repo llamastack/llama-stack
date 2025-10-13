@@ -49,7 +49,7 @@ from .types import ChatCompletionContext, ToolContext
 from .utils import (
     convert_response_input_to_chat_messages,
     convert_response_text_to_chat_response_format,
-    extract_shield_ids,
+    extract_guardrail_ids,
 )
 
 logger = get_logger(name=__name__, category="openai_responses")
@@ -236,12 +236,12 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
-        shields: list | None = None,
+        guardrails: list | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
 
-        shield_ids = extract_shield_ids(shields) if shields else []
+        guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
 
         if conversation is not None:
             if previous_response_id is not None:
@@ -263,7 +263,7 @@ class OpenAIResponsesImpl:
             text=text,
             tools=tools,
             max_infer_iters=max_infer_iters,
-            shield_ids=shield_ids,
+            guardrail_ids=guardrail_ids,
         )
 
         if stream:
@@ -309,7 +309,7 @@ class OpenAIResponsesImpl:
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         max_infer_iters: int | None = 10,
-        shield_ids: list[str] | None = None,
+        guardrail_ids: list[str] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Input preprocessing
         all_input, messages, tool_context = await self._process_input_with_previous_response(
@@ -345,7 +345,7 @@ class OpenAIResponsesImpl:
             max_infer_iters=max_infer_iters,
             tool_executor=self.tool_executor,
             safety_api=self.safety_api,
-            shield_ids=shield_ids,
+            guardrail_ids=guardrail_ids,
         )
 
         # Stream the response

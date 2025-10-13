@@ -56,9 +56,7 @@ from llama_stack.apis.agents.openai_responses import (
     WebSearchToolTypes,
 )
 from llama_stack.apis.inference import (
-    CompletionMessage,
     Inference,
-    Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -66,9 +64,10 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletionToolCall,
     OpenAIChoice,
     OpenAIMessageParam,
-    StopReason,
+    OpenAIUserMessageParam,
 )
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.telemetry import tracing
 
 from ..safety import SafetyException
@@ -76,7 +75,7 @@ from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
     convert_chat_choice_to_response_message,
     is_function_tool_call,
-    run_multiple_shields,
+    run_multiple_guardrails,
 )
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
@@ -114,7 +113,7 @@ class StreamingResponseOrchestrator:
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
         safety_api,
-        shield_ids: list[str] | None = None,
+        guardrail_ids: list[str] | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -124,7 +123,7 @@ class StreamingResponseOrchestrator:
         self.max_infer_iters = max_infer_iters
         self.tool_executor = tool_executor
         self.safety_api = safety_api
-        self.shield_ids = shield_ids or []
+        self.guardrail_ids = guardrail_ids or []
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = ctx.tool_context.previous_tools or {}
@@ -137,28 +136,33 @@ class StreamingResponseOrchestrator:
         # Track if we've sent a refusal response
         self.violation_detected = False
 
-    async def _check_input_safety(self, messages: list[Message]) -> OpenAIResponseContentPartRefusal | None:
-        """Validate input messages against shields. Returns refusal content if violation found."""
+    async def _check_input_safety(
+        self, messages: list[OpenAIUserMessageParam]
+    ) -> OpenAIResponseContentPartRefusal | None:
+        """Validate input messages against guardrails. Returns refusal content if violation found."""
+        combined_text = interleaved_content_as_str([msg.content for msg in messages])
+
+        if not combined_text:
+            return None
+
         try:
-            await run_multiple_shields(self.safety_api, messages, self.shield_ids)
+            await run_multiple_guardrails(self.safety_api, combined_text, self.guardrail_ids)
         except SafetyException as e:
-            logger.info(f"Input shield violation: {e.violation.user_message}")
+            logger.info(f"Input guardrail violation: {e.violation.user_message}")
             return OpenAIResponseContentPartRefusal(
-                refusal=e.violation.user_message or "Content blocked by safety shields"
+                refusal=e.violation.user_message or "Content blocked by safety guardrails"
             )
 
     async def _check_output_stream_chunk_safety(self, accumulated_text: str) -> str | None:
-        """Check accumulated streaming text content against shields. Returns violation message if blocked."""
-        if not self.shield_ids or not accumulated_text:
+        """Check accumulated streaming text content against guardrails. Returns violation message if blocked."""
+        if not self.guardrail_ids or not accumulated_text:
             return None
 
-        messages = [CompletionMessage(content=accumulated_text, stop_reason=StopReason.end_of_turn)]
-
         try:
-            await run_multiple_shields(self.safety_api, messages, self.shield_ids)
+            await run_multiple_guardrails(self.safety_api, accumulated_text, self.guardrail_ids)
         except SafetyException as e:
-            logger.info(f"Output shield violation: {e.violation.user_message}")
-            return e.violation.user_message or "Generated content blocked by safety shields"
+            logger.info(f"Output guardrail violation: {e.violation.user_message}")
+            return e.violation.user_message or "Generated content blocked by safety guardrails"
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""
@@ -219,7 +223,7 @@ class StreamingResponseOrchestrator:
         )
 
         # Input safety validation - check messages before processing
-        if self.shield_ids:
+        if self.guardrail_ids:
             input_refusal = await self._check_input_safety(self.ctx.messages)
             if input_refusal:
                 # Return refusal response immediately

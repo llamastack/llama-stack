@@ -1451,16 +1451,16 @@ paths:
         required: true
       deprecated: false
       x-llama-stack-extra-body-params:
-        - name: shields
+        - name: guardrails
           schema:
             type: array
             items:
               oneOf:
                 - type: string
-                - $ref: '#/components/schemas/ResponseShieldSpec'
+                - $ref: '#/components/schemas/ResponseGuardrailSpec'
           description: >-
-            List of shields to apply during response generation. Shields provide safety
-            and content moderation.
+            List of guardrails to apply during response generation. Guardrails provide
+            safety and content moderation.
           required: false
   /v1/responses/{response_id}:
     get:
@@ -7186,18 +7186,18 @@ components:
         - total_tokens
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
-    ResponseShieldSpec:
+    ResponseGuardrailSpec:
       type: object
       properties:
         type:
           type: string
-          description: The type/identifier of the shield.
+          description: The type/identifier of the guardrail.
       additionalProperties: false
       required:
         - type
-      title: ResponseShieldSpec
+      title: ResponseGuardrailSpec
       description: >-
-        Specification for a shield to apply during response generation.
+        Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
@@ -11478,11 +11478,11 @@ components:
       properties:
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
-        input_shields:
+        input_guardrails:
           type: array
           items:
             type: string
-        output_shields:
+        output_guardrails:
           type: array
           items:
             type: string
