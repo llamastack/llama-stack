@@ -69,7 +69,6 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.telemetry import tracing
 
-from ..safety import SafetyException
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
     convert_chat_choice_to_response_message,
@@ -140,11 +139,10 @@ class StreamingResponseOrchestrator:
         if not self.guardrail_ids or not text:
             return None
 
-        try:
-            await run_multiple_guardrails(self.safety_api, text, self.guardrail_ids)
-        except SafetyException as e:
-            logger.info(f"{context.capitalize()} guardrail violation: {e.violation.user_message}")
-            return e.violation.user_message or f"{context.capitalize()} blocked by safety guardrails"
+        violation_message = await run_multiple_guardrails(self.safety_api, text, self.guardrail_ids)
+        if violation_message:
+            logger.info(f"{context.capitalize()} guardrail violation: {violation_message}")
+            return violation_message
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""

@@ -47,9 +47,7 @@ from llama_stack.apis.inference import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
 )
-from llama_stack.apis.safety import Safety, SafetyViolation, ViolationLevel
-
-from ..safety import SafetyException
+from llama_stack.apis.safety import Safety
 
 
 async def convert_chat_choice_to_response_message(
@@ -315,10 +313,10 @@ def is_function_tool_call(
     return False
 
 
-async def run_multiple_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> None:
-    """Run multiple guardrails against messages and raise SafetyException for violations."""
+async def run_multiple_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> str | None:
+    """Run multiple guardrails against messages and return violation message if blocked."""
     if not guardrail_ids or not messages:
-        return
+        return None
 
     # Look up shields to get their provider_resource_id (actual model ID)
     model_ids = []
@@ -335,19 +333,21 @@ async def run_multiple_guardrails(safety_api: Safety, messages: str, guardrail_i
             raise ValueError(f"No shield found with identifier '{guardrail_id}'")
 
     guardrail_tasks = [safety_api.run_moderation(messages, model=model_id) for model_id in model_ids]
-
     responses = await asyncio.gather(*guardrail_tasks)
 
     for response in responses:
-        # Check if any of the results are flagged
         for result in response.results:
             if result.flagged:
-                violation = SafetyViolation(
-                    violation_level=ViolationLevel.ERROR,
-                    user_message="Content flagged by moderation",
-                    metadata={"categories": result.categories},
-                )
-                raise SafetyException(violation)
+                message = result.user_message or "Content blocked by safety guardrails"
+                flagged_categories = [cat for cat, flagged in result.categories.items() if flagged]
+                violation_type = result.metadata.get("violation_type", []) if result.metadata else []
+
+                if flagged_categories:
+                    message += f" (flagged for: {', '.join(flagged_categories)})"
+                if violation_type:
+                    message += f" (violation type: {', '.join(violation_type)})"
+
+                return message
 
 
 def extract_guardrail_ids(guardrails: list | None) -> list[str]:
