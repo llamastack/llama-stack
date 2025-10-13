@@ -8,12 +8,11 @@ from typing import Any
 
 import requests
 
-from llama_stack.apis.inference import Message
+from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.apis.safety import ModerationObject, RunShieldResponse, Safety, SafetyViolation, ViolationLevel
 from llama_stack.apis.shields import Shield
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import ShieldsProtocolPrivate
-from llama_stack.providers.utils.inference.openai_compat import convert_message_to_openai_dict_new
 
 from .config import NVIDIASafetyConfig
 
@@ -44,7 +43,7 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
         pass
 
     async def run_shield(
-        self, shield_id: str, messages: list[Message], params: dict[str, Any] | None = None
+        self, shield_id: str, messages: list[OpenAIMessageParam], params: dict[str, Any] | None = None
     ) -> RunShieldResponse:
         """
         Run a safety shield check against the provided messages.
@@ -118,7 +117,7 @@ class NeMoGuardrails:
         response.raise_for_status()
         return response.json()
 
-    async def run(self, messages: list[Message]) -> RunShieldResponse:
+    async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         """
         Queries the /v1/guardrails/checks endpoint of the NeMo guardrails deployed API.
 
@@ -132,10 +131,9 @@ class NeMoGuardrails:
         Raises:
             requests.HTTPError: If the POST request fails.
         """
-        request_messages = [await convert_message_to_openai_dict_new(message) for message in messages]
         request_data = {
             "model": self.model,
-            "messages": request_messages,
+            "messages": [{"role": message.role, "content": message.content} for message in messages],
             "temperature": self.temperature,
             "top_p": 1,
             "frequency_penalty": 0,

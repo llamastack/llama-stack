@@ -7594,227 +7594,6 @@ components:
       title: ListOpenAIResponseInputItem
       description: >-
         List container for OpenAI response input items.
-    CompletionMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: assistant
-          default: assistant
-          description: >-
-            Must be "assistant" to identify this as the model's response
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The content of the model's response
-        stop_reason:
-          type: string
-          enum:
-            - end_of_turn
-            - end_of_message
-            - out_of_tokens
-          description: >-
-            Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`:
-            The model finished generating the entire response. - `StopReason.end_of_message`:
-            The model finished generating but generated a partial response -- usually,
-            a tool call. The user may call the tool and continue the conversation
-            with the tool's response. - `StopReason.out_of_tokens`: The model ran
-            out of token budget.
-        tool_calls:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolCall'
-          description: >-
-            List of tool calls. Each tool call is a ToolCall object.
-      additionalProperties: false
-      required:
-        - role
-        - content
-        - stop_reason
-      title: CompletionMessage
-      description: >-
-        A message containing the model's (assistant) response in a chat conversation.
-    ImageContentItem:
-      type: object
-      properties:
-        type:
-          type: string
-          const: image
-          default: image
-          description: >-
-            Discriminator type of the content item. Always "image"
-        image:
-          type: object
-          properties:
-            url:
-              $ref: '#/components/schemas/URL'
-              description: >-
-                A URL of the image or data URL in the format of data:image/{type};base64,{data}.
-                Note that URL could have length limits.
-            data:
-              type: string
-              contentEncoding: base64
-              description: base64 encoded image data as string
-          additionalProperties: false
-          description: >-
-            Image as a base64 encoded string or an URL
-      additionalProperties: false
-      required:
-        - type
-        - image
-      title: ImageContentItem
-      description: A image content item
-    InterleavedContent:
-      oneOf:
-        - type: string
-        - $ref: '#/components/schemas/InterleavedContentItem'
-        - type: array
-          items:
-            $ref: '#/components/schemas/InterleavedContentItem'
-    InterleavedContentItem:
-      oneOf:
-        - $ref: '#/components/schemas/ImageContentItem'
-        - $ref: '#/components/schemas/TextContentItem'
-      discriminator:
-        propertyName: type
-        mapping:
-          image: '#/components/schemas/ImageContentItem'
-          text: '#/components/schemas/TextContentItem'
-    Message:
-      oneOf:
-        - $ref: '#/components/schemas/UserMessage'
-        - $ref: '#/components/schemas/SystemMessage'
-        - $ref: '#/components/schemas/ToolResponseMessage'
-        - $ref: '#/components/schemas/CompletionMessage'
-      discriminator:
-        propertyName: role
-        mapping:
-          user: '#/components/schemas/UserMessage'
-          system: '#/components/schemas/SystemMessage'
-          tool: '#/components/schemas/ToolResponseMessage'
-          assistant: '#/components/schemas/CompletionMessage'
-    SystemMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: system
-          default: system
-          description: >-
-            Must be "system" to identify this as a system message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the "system prompt". If multiple system messages are provided,
-            they are concatenated. The underlying Llama Stack code may also add other
-            system messages (for example, for formatting tool definitions).
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: SystemMessage
-      description: >-
-        A system message providing instructions or context to the model.
-    TextContentItem:
-      type: object
-      properties:
-        type:
-          type: string
-          const: text
-          default: text
-          description: >-
-            Discriminator type of the content item. Always "text"
-        text:
-          type: string
-          description: Text content
-      additionalProperties: false
-      required:
-        - type
-        - text
-      title: TextContentItem
-      description: A text content item
-    ToolCall:
-      type: object
-      properties:
-        call_id:
-          type: string
-        tool_name:
-          oneOf:
-            - type: string
-              enum:
-                - brave_search
-                - wolfram_alpha
-                - photogen
-                - code_interpreter
-              title: BuiltinTool
-            - type: string
-        arguments:
-          type: string
-      additionalProperties: false
-      required:
-        - call_id
-        - tool_name
-        - arguments
-      title: ToolCall
-    ToolResponseMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: tool
-          default: tool
-          description: >-
-            Must be "tool" to identify this as a tool response
-        call_id:
-          type: string
-          description: >-
-            Unique identifier for the tool call this response is for
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The response content from the tool
-      additionalProperties: false
-      required:
-        - role
-        - call_id
-        - content
-      title: ToolResponseMessage
-      description: >-
-        A message representing the result of a tool invocation.
-    URL:
-      type: object
-      properties:
-        uri:
-          type: string
-          description: The URL string pointing to the resource
-      additionalProperties: false
-      required:
-        - uri
-      title: URL
-      description: A URL reference to external content.
-    UserMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: user
-          default: user
-          description: >-
-            Must be "user" to identify this as a user message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the message, which can include text and other media
-        context:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            (Optional) This field is used internally by Llama Stack to pass RAG context.
-            This field may be removed in the API in the future.
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: UserMessage
-      description: >-
-        A message from the user in a chat conversation.
     RunShieldRequest:
       type: object
       properties:
@@ -7824,7 +7603,7 @@ components:
         messages:
           type: array
           items:
-            $ref: '#/components/schemas/Message'
+            $ref: '#/components/schemas/OpenAIMessageParam'
           description: The messages to run the shield on.
         params:
           type: object
@@ -8491,6 +8270,227 @@ components:
       required:
         - shield_id
       title: RegisterShieldRequest
+    CompletionMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: assistant
+          default: assistant
+          description: >-
+            Must be "assistant" to identify this as the model's response
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: The content of the model's response
+        stop_reason:
+          type: string
+          enum:
+            - end_of_turn
+            - end_of_message
+            - out_of_tokens
+          description: >-
+            Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`:
+            The model finished generating the entire response. - `StopReason.end_of_message`:
+            The model finished generating but generated a partial response -- usually,
+            a tool call. The user may call the tool and continue the conversation
+            with the tool's response. - `StopReason.out_of_tokens`: The model ran
+            out of token budget.
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          description: >-
+            List of tool calls. Each tool call is a ToolCall object.
+      additionalProperties: false
+      required:
+        - role
+        - content
+        - stop_reason
+      title: CompletionMessage
+      description: >-
+        A message containing the model's (assistant) response in a chat conversation.
+    ImageContentItem:
+      type: object
+      properties:
+        type:
+          type: string
+          const: image
+          default: image
+          description: >-
+            Discriminator type of the content item. Always "image"
+        image:
+          type: object
+          properties:
+            url:
+              $ref: '#/components/schemas/URL'
+              description: >-
+                A URL of the image or data URL in the format of data:image/{type};base64,{data}.
+                Note that URL could have length limits.
+            data:
+              type: string
+              contentEncoding: base64
+              description: base64 encoded image data as string
+          additionalProperties: false
+          description: >-
+            Image as a base64 encoded string or an URL
+      additionalProperties: false
+      required:
+        - type
+        - image
+      title: ImageContentItem
+      description: A image content item
+    InterleavedContent:
+      oneOf:
+        - type: string
+        - $ref: '#/components/schemas/InterleavedContentItem'
+        - type: array
+          items:
+            $ref: '#/components/schemas/InterleavedContentItem'
+    InterleavedContentItem:
+      oneOf:
+        - $ref: '#/components/schemas/ImageContentItem'
+        - $ref: '#/components/schemas/TextContentItem'
+      discriminator:
+        propertyName: type
+        mapping:
+          image: '#/components/schemas/ImageContentItem'
+          text: '#/components/schemas/TextContentItem'
+    Message:
+      oneOf:
+        - $ref: '#/components/schemas/UserMessage'
+        - $ref: '#/components/schemas/SystemMessage'
+        - $ref: '#/components/schemas/ToolResponseMessage'
+        - $ref: '#/components/schemas/CompletionMessage'
+      discriminator:
+        propertyName: role
+        mapping:
+          user: '#/components/schemas/UserMessage'
+          system: '#/components/schemas/SystemMessage'
+          tool: '#/components/schemas/ToolResponseMessage'
+          assistant: '#/components/schemas/CompletionMessage'
+    SystemMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: system
+          default: system
+          description: >-
+            Must be "system" to identify this as a system message
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            The content of the "system prompt". If multiple system messages are provided,
+            they are concatenated. The underlying Llama Stack code may also add other
+            system messages (for example, for formatting tool definitions).
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: SystemMessage
+      description: >-
+        A system message providing instructions or context to the model.
+    TextContentItem:
+      type: object
+      properties:
+        type:
+          type: string
+          const: text
+          default: text
+          description: >-
+            Discriminator type of the content item. Always "text"
+        text:
+          type: string
+          description: Text content
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: TextContentItem
+      description: A text content item
+    ToolCall:
+      type: object
+      properties:
+        call_id:
+          type: string
+        tool_name:
+          oneOf:
+            - type: string
+              enum:
+                - brave_search
+                - wolfram_alpha
+                - photogen
+                - code_interpreter
+              title: BuiltinTool
+            - type: string
+        arguments:
+          type: string
+      additionalProperties: false
+      required:
+        - call_id
+        - tool_name
+        - arguments
+      title: ToolCall
+    ToolResponseMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: tool
+          default: tool
+          description: >-
+            Must be "tool" to identify this as a tool response
+        call_id:
+          type: string
+          description: >-
+            Unique identifier for the tool call this response is for
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: The response content from the tool
+      additionalProperties: false
+      required:
+        - role
+        - call_id
+        - content
+      title: ToolResponseMessage
+      description: >-
+        A message representing the result of a tool invocation.
+    URL:
+      type: object
+      properties:
+        uri:
+          type: string
+          description: The URL string pointing to the resource
+      additionalProperties: false
+      required:
+        - uri
+      title: URL
+      description: A URL reference to external content.
+    UserMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: user
+          default: user
+          description: >-
+            Must be "user" to identify this as a user message
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            The content of the message, which can include text and other media
+        context:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            (Optional) This field is used internally by Llama Stack to pass RAG context.
+            This field may be removed in the API in the future.
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: UserMessage
+      description: >-
+        A message from the user in a chat conversation.
     SyntheticDataGenerateRequest:
       type: object
       properties:
