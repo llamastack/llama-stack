@@ -117,7 +117,9 @@ async def test_apply_guardrails_with_violation(mock_safety_api, mock_inference_a
     guardrail_ids = ["llama-guard"]
 
     # Mock moderation to return flagged content
-    flagged_result = ModerationObjectResults(flagged=True, categories={"violence": True})
+    flagged_result = ModerationObjectResults(
+        flagged=True, categories={"violence": True}, user_message="Content flagged by moderation"
+    )
     mock_moderation_object = ModerationObject(id="test-mod-id", model="llama-guard-model", results=[flagged_result])
     mock_safety_api.run_moderation.return_value = mock_moderation_object
 
@@ -136,7 +138,7 @@ async def test_apply_guardrails_with_violation(mock_safety_api, mock_inference_a
 
     result = await orchestrator._apply_guardrails(text)
 
-    assert result == "Content flagged by moderation"
+    assert result == "Content flagged by moderation (flagged for: violence)"
 
 
 async def test_apply_guardrails_empty_inputs(mock_safety_api, mock_inference_api, mock_context):
