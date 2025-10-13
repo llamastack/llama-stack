@@ -353,13 +353,11 @@ class OpenAIVectorStoreMixin(ABC):
         provider_vector_db_id = extra.get("provider_vector_db_id")
         embedding_model = extra.get("embedding_model")
         embedding_dimension = extra.get("embedding_dimension", 384)
-        provider_id = extra.get("provider_id")
+        # use provider_id from router or default to this provider's own ID (need for --stack-config)
+        provider_id = extra.get("provider_id") or getattr(self, "__provider_id__", None)
 
         # Derive the canonical vector_db_id (allow override, else generate)
         vector_db_id = provider_vector_db_id or generate_object_id("vector_store", lambda: f"vs_{uuid.uuid4()}")
-
-        if provider_id is None:
-            raise ValueError("Provider ID is required")
 
         if embedding_model is None:
             raise ValueError("Embedding model is required")
@@ -369,6 +367,9 @@ class OpenAIVectorStoreMixin(ABC):
             raise ValueError("Embedding dimension is required")
 
         # Register the VectorDB backing this vector store
+        if provider_id is None:
+            raise ValueError("Provider ID is required but was not provided")
+
         vector_db = VectorDB(
             identifier=vector_db_id,
             embedding_dimension=embedding_dimension,

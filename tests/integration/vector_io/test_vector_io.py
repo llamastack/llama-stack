@@ -224,3 +224,21 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
     assert len(response.chunks) > 0
     assert response.chunks[0].metadata["document_id"] == "doc1"
     assert response.chunks[0].metadata["source"] == "precomputed"
+
+
+def test_auto_extract_embedding_dimension(client_with_empty_registry, embedding_model_id):
+    vs = client_with_empty_registry.vector_stores.create(
+        name="test_auto_extract", extra_body={"embedding_model": embedding_model_id}
+    )
+    assert vs.id is not None
+
+
+def test_provider_auto_selection_single_provider(client_with_empty_registry, embedding_model_id):
+    providers = [p for p in client_with_empty_registry.providers.list() if p.api == "vector_io"]
+    if len(providers) != 1:
+        pytest.skip(f"Test requires exactly one vector_io provider, found {len(providers)}")
+
+    vs = client_with_empty_registry.vector_stores.create(
+        name="test_auto_provider", extra_body={"embedding_model": embedding_model_id}
+    )
+    assert vs.id is not None
