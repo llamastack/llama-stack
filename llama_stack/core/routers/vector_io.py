@@ -55,30 +55,18 @@ class VectorIORouter(VectorIO):
         logger.debug("VectorIORouter.shutdown")
         pass
 
-    async def _get_first_embedding_model(self) -> tuple[str, int] | None:
-        """Get the first available embedding model identifier."""
-        try:
-            # Get all models from the routing table
-            all_models = await self.routing_table.get_all_with_type("model")
+    async def _get_embedding_model_dimension(self, embedding_model_id: str) -> int:
+        """Get the embedding dimension for a specific embedding model."""
+        all_models = await self.routing_table.get_all_with_type("model")
 
-            # Filter for embedding models
-            embedding_models = [
-                model
-                for model in all_models
-                if hasattr(model, "model_type") and model.model_type == ModelType.embedding
-            ]
-
-            if embedding_models:
-                dimension = embedding_models[0].metadata.get("embedding_dimension", None)
+        for model in all_models:
+            if model.identifier == embedding_model_id and model.model_type == ModelType.embedding:
+                dimension = model.metadata.get("embedding_dimension")
                 if dimension is None:
-                    raise ValueError(f"Embedding model {embedding_models[0].identifier} has no embedding dimension")
-                return embedding_models[0].identifier, dimension
-            else:
-                logger.warning("No embedding models found in the routing table")
-                return None
-        except Exception as e:
-            logger.error(f"Error getting embedding models: {e}")
-            return None
+                    raise ValueError(f"Embedding model '{embedding_model_id}' has no embedding_dimension in metadata")
+                return int(dimension)
+
+        raise ValueError(f"Embedding model '{embedding_model_id}' not found or not an embedding model")
 
     async def register_vector_db(
         self,
@@ -134,15 +122,24 @@ class VectorIORouter(VectorIO):
 
         logger.debug(f"VectorIORouter.openai_create_vector_store: name={params.name}, provider_id={provider_id}")
 
-        # If no embedding model is provided, use the first available one
-        # TODO: this branch will soon be deleted so you _must_ provide the embedding_model when
-        # creating a vector store
+        # Require explicit embedding model specification
         if embedding_model is None:
-            embedding_model_info = await self._get_first_embedding_model()
-            if embedding_model_info is None:
-                raise ValueError("No embedding model provided and no embedding models available in the system")
-            embedding_model, embedding_dimension = embedding_model_info
-            logger.info(f"No embedding model specified, using first available: {embedding_model}")
+            raise ValueError("embedding_model is required in extra_body when creating a vector store")
+
+        # Always extract embedding dimension from the model registry
+        embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
+
+        # Auto-select provider if not specified
+        if provider_id is None:
+            if len(self.routing_table.impls_by_provider_id) == 1:
+                provider_id = list(self.routing_table.impls_by_provider_id.keys())[0]
+                logger.info(f"No provider_id specified, using the only available vector_io provider: {provider_id}")
+            else:
+                available_providers = list(self.routing_table.impls_by_provider_id.keys())
+                raise ValueError(
+                    f"Multiple vector_io providers available. Please specify provider_id in extra_body. "
+                    f"Available providers: {available_providers}"
+                )
 
         vector_db_id = f"vs_{uuid.uuid4()}"
         registered_vector_db = await self.routing_table.register_vector_db(
