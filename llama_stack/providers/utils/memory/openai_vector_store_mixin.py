@@ -353,7 +353,7 @@ class OpenAIVectorStoreMixin(ABC):
         provider_vector_db_id = extra.get("provider_vector_db_id")
         embedding_model = extra.get("embedding_model")
         embedding_dimension = extra.get("embedding_dimension", 384)
-        # use provider_id from router or default to this provider's own ID (need for --stack-config)
+        # use provider_id set by router; fallback to provider's own ID when used directly via --stack-config
         provider_id = extra.get("provider_id") or getattr(self, "__provider_id__", None)
 
         # Derive the canonical vector_db_id (allow override, else generate)
