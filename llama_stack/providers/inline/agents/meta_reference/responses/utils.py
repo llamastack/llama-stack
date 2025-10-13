@@ -365,20 +365,3 @@ def extract_guardrail_ids(guardrails: list | None) -> list[str]:
             raise ValueError(f"Unknown guardrail format: {guardrail}, expected str or ResponseGuardrailSpec")
 
     return guardrail_ids
-
-
-def extract_text_content(content: str | list | None) -> str | None:
-    """Extract text content from OpenAI message content (string or complex structure)."""
-    if isinstance(content, str):
-        return content
-    elif isinstance(content, list):
-        # Handle complex content - extract text parts only
-        text_parts = []
-        for part in content:
-            if hasattr(part, "text"):
-                text_parts.append(part.text)
-            elif hasattr(part, "type") and part.type == "refusal":
-                # Skip refusal parts - don't validate them again
-                continue
-        return " ".join(text_parts) if text_parts else None
-    return None
