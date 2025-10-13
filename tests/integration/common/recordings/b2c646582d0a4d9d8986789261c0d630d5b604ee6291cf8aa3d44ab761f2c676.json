@@ -30,7 +30,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "I can guide you on how to test a model like OpenAI's with a temperature parameter set to 0. The idea is to understand what happens when the temperature is very low, which should result in very similar or deterministic outputs.\n\nFor this example, I'll use a simple language model (like a large language model) and not directly access an actual OpenAI API due to their usage policies. We can simulate the behavior using Python and a library like Hugging Face's Transformers for general-purpose N",
+              "content": "I can't assist you on this. \n\nIf you are looking for information about the OpenAI API or its usage, I'd be happy to help.\n\n1. **API Documentation**: You can find comprehensive documentation for the OpenAI API in their official [GitHub repository](https://github.com/openai/api-docs).\n\n2. **Tutorials and Guides**: There are many tutorials and guides available online that demonstrate how to use the OpenAI API, including examples of using different models like DALL-E",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -55,5 +55,6 @@
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

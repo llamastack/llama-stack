@@ -56,7 +56,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_5vgjpfz1",
+                  "id": "call_apaok04i",
                   "function": {
                     "arguments": "{\"location\":\"Tokyo\"}",
                     "name": "get_weather"
@@ -74,14 +74,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 18,
+          "completion_tokens": 15,
           "prompt_tokens": 158,
-          "total_tokens": 176,
+          "total_tokens": 173,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

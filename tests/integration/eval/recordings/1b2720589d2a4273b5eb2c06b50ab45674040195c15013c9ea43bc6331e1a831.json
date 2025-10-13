@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "The currency of Japan is the Japanese yen (\u00a5).",
+              "content": "The currency of Japan is the Japanese yen ( JPY ). It is abbreviated as \"\u00a5\" and is divided into 100 sen.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 12,
+          "completion_tokens": 28,
           "prompt_tokens": 32,
-          "total_tokens": 44,
+          "total_tokens": 60,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

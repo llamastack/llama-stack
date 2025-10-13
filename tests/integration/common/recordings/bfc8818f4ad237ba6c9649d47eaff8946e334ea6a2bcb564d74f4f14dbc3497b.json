@@ -27,7 +27,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "It appears you've entered a test phrase. Is there anything else I can help you with?",
+              "content": "It seems like you're trying to test a system or a specific functionality with \"trace 1\". However, I don't have enough context to provide a meaningful response.\n\nCould you please provide more information about what you're trying to test? Are you testing a software application, a hardware device, or something else?\n\nIf you're looking for general guidance on how to test a system using tracing, here are some general steps:\n\n1. Identify the purpose of the test: Determine what specific functionality or process you want to test.\n2. Choose a tracing tool: Select a suitable tracing tool that can capture and analyze the traffic or behavior of interest.\n3. Configure the tool: Configure the tracing tool to collect relevant data, such as protocol packets, API calls, or system events.\n4. Run the test: Send traffic or initiate the process you're testing through the system.\n5. Analyze results: Examine the collected data to identify any errors, performance issues, or other anomalies.\n\nIf you have a specific system or application in mind, please provide more details so I can offer more targeted guidance.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -43,14 +43,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 20,
+          "completion_tokens": 222,
           "prompt_tokens": 29,
-          "total_tokens": 49,
+          "total_tokens": 251,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }
