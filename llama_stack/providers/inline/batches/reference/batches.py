@@ -25,6 +25,7 @@ from llama_stack.apis.inference import (
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletionRequestWithExtraBody,
     OpenAIDeveloperMessageParam,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIMessageParam,
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
@@ -640,7 +641,9 @@ class ReferenceBatchesImpl(Batches):
                     },
                 }
             else:  # /v1/embeddings
-                embeddings_response = await self.inference_api.openai_embeddings(**request.body)
+                embeddings_response = await self.inference_api.openai_embeddings(
+                    OpenAIEmbeddingsRequestWithExtraBody(**request.body)
+                )
                 assert hasattr(embeddings_response, "model_dump_json"), (
                     "Embeddings response must have model_dump_json method"
                 )
