@@ -271,7 +271,7 @@ Available Models:
             pip_packages=["litellm"],
             module="llama_stack.providers.remote.inference.watsonx",
             config_class="llama_stack.providers.remote.inference.watsonx.WatsonXConfig",
-            provider_data_validator="llama_stack.providers.remote.inference.watsonx.WatsonXProviderDataValidator",
+            provider_data_validator="llama_stack.providers.remote.inference.watsonx.config.WatsonXProviderDataValidator",
             description="IBM WatsonX inference provider for accessing AI models on IBM's WatsonX platform.",
         ),
         RemoteProviderSpec(
