@@ -513,6 +513,14 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         # Strip NOT_GIVENs to use the defaults in signature
         body = {k: v for k, v in body.items() if v is not NOT_GIVEN}
 
+        # Check if there's an unwrapped body parameter among multiple parameters
+        # (e.g., path param + body param like: vector_store_id: str, params: Annotated[Model, Body(...)])
+        unwrapped_body_param = None
+        for param in params_list:
+            if is_unwrapped_body_param(param.annotation):
+                unwrapped_body_param = param
+                break
+
         # Convert parameters to Pydantic models where needed
         converted_body = {}
         for param_name, param in sig.parameters.items():
@@ -522,5 +530,11 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     converted_body[param_name] = value
                 else:
                     converted_body[param_name] = convert_to_pydantic(param.annotation, value)
+            elif unwrapped_body_param and param.name == unwrapped_body_param.name:
+                # This is the unwrapped body param - construct it from remaining body keys
+                base_type = get_args(param.annotation)[0]
+                # Extract only the keys that aren't already used by other params
+                remaining_keys = {k: v for k, v in body.items() if k not in converted_body}
+                converted_body[param.name] = base_type(**remaining_keys)
 
         return converted_body

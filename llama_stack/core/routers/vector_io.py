@@ -383,13 +383,14 @@ class VectorIORouter(VectorIO):
 
     async def openai_create_vector_store_file_batch(
         self,
+        vector_store_id: str,
         params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         logger.debug(
-            f"VectorIORouter.openai_create_vector_store_file_batch: {params.vector_store_id}, {len(params.file_ids)} files"
+            f"VectorIORouter.openai_create_vector_store_file_batch: {vector_store_id}, {len(params.file_ids)} files"
         )
-        provider = await self.routing_table.get_provider_impl(params.vector_store_id)
-        return await provider.openai_create_vector_store_file_batch(params)
+        provider = await self.routing_table.get_provider_impl(vector_store_id)
+        return await provider.openai_create_vector_store_file_batch(vector_store_id, params)
 
     async def openai_retrieve_vector_store_file_batch(
         self,

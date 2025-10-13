@@ -978,10 +978,10 @@ class OpenAIVectorStoreMixin(ABC):
 
     async def openai_create_vector_store_file_batch(
         self,
+        vector_store_id: str,
         params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         """Create a vector store file batch."""
-        vector_store_id = params.vector_store_id
         if vector_store_id not in self.openai_vector_stores:
             raise VectorStoreNotFoundError(vector_store_id)
 

@@ -2553,7 +2553,14 @@ paths:
 
         Generate an OpenAI-compatible vector store file batch for the given vector
         store.
-      parameters: []
+      parameters:
+        - name: vector_store_id
+          in: path
+          description: >-
+            The ID of the vector store to create the file batch for.
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -9791,10 +9798,6 @@ components:
     "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
       type: object
       properties:
-        vector_store_id:
-          type: string
-          description: >-
-            The ID of the vector store to create the file batch for
         file_ids:
           type: array
           items:
@@ -9820,7 +9823,6 @@ components:
             auto
       additionalProperties: false
       required:
-        - vector_store_id
         - file_ids
       title: >-
         OpenAICreateVectorStoreFileBatchRequestWithExtraBody
