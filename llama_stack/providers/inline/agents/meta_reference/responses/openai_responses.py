@@ -100,6 +100,7 @@ class OpenAIResponsesImpl:
         input: str | list[OpenAIResponseInput],
         tools: list[OpenAIResponseInputTool] | None,
         previous_response_id: str | None,
+        conversation: str | None,
     ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam]]:
         """Process input with optional previous response context.
 
@@ -125,14 +126,19 @@ class OpenAIResponsesImpl:
 
             tool_context.recover_tools_from_previous_response(previous_response)
         else:
-            all_input = input
-            messages = await convert_response_input_to_chat_messages(input)
+            if conversation is not None:
+                conversation_items = await self.conversations_api.list(conversation, order="asc")
+                all_input = conversation_items.data
+                if isinstance(input, str):
+                    all_input.append(OpenAIResponseMessage(role="user", content=input))
+                elif isinstance(input, list):
+                    all_input.extend(input)
+            else:
+                all_input = input
+
+            messages = await convert_response_input_to_chat_messages(all_input)
 
         return all_input, messages, tool_context
-
-    async def _prepend_instructions(self, messages, instructions):
-        if instructions:
-            messages.insert(0, OpenAISystemMessageParam(content=instructions))
 
     async def get_openai_response(
         self,
@@ -229,27 +235,21 @@ class OpenAIResponsesImpl:
         if shields is not None:
             raise NotImplementedError("Shields parameter is not yet implemented in the meta-reference provider")
 
-        if conversation is not None and previous_response_id is not None:
-            raise ValueError(
-                "Mutually exclusive parameters: 'previous_response_id' and 'conversation'. Ensure you are only providing one of these parameters."
-            )
-
-        original_input = input  # needed for syncing to Conversations
         if conversation is not None:
+            if previous_response_id is not None:
+                raise ValueError(
+                    "Mutually exclusive parameters: 'previous_response_id' and 'conversation'. Ensure you are only providing one of these parameters."
+                )
+
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
 
-            # Check conversation exists (raises ConversationNotFoundError if not)
-            _ = await self.conversations_api.get_conversation(conversation)
-            input = await self._load_conversation_context(conversation, input)
-
         stream_gen = self._create_streaming_response(
             input=input,
-            original_input=original_input,
+            conversation=conversation,
             model=model,
             instructions=instructions,
             previous_response_id=previous_response_id,
-            conversation=conversation,
             store=store,
             temperature=temperature,
             text=text,
@@ -292,7 +292,6 @@ class OpenAIResponsesImpl:
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
-        original_input: str | list[OpenAIResponseInput] | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
         conversation: str | None = None,
@@ -304,9 +303,11 @@ class OpenAIResponsesImpl:
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Input preprocessing
         all_input, messages, tool_context = await self._process_input_with_previous_response(
-            input, tools, previous_response_id
+            input, tools, previous_response_id, conversation
         )
-        await self._prepend_instructions(messages, instructions)
+
+        if instructions:
+            messages.insert(0, OpenAISystemMessageParam(content=instructions))
 
         # Structured outputs
         response_format = await convert_response_text_to_chat_response_format(text)
@@ -338,12 +339,18 @@ class OpenAIResponsesImpl:
         # Stream the response
         final_response = None
         failed_response = None
+
+        output_items = []
         async for stream_chunk in orchestrator.create_response():
             if stream_chunk.type in {"response.completed", "response.incomplete"}:
                 final_response = stream_chunk.response
             elif stream_chunk.type == "response.failed":
                 failed_response = stream_chunk.response
             yield stream_chunk
+
+            if stream_chunk.type == "response.output_item.done":
+                item = stream_chunk.item
+                output_items.append(item)
 
             # Store and sync immediately after yielding terminal events
             # This ensures the storage/syncing happens even if the consumer breaks early
@@ -353,6 +360,7 @@ class OpenAIResponsesImpl:
                 and final_response
                 and failed_response is None
             ):
+                # TODO: we really should work off of output_items instead of "final_messages"
                 await self._store_response(
                     response=final_response,
                     input=all_input,
@@ -360,87 +368,29 @@ class OpenAIResponsesImpl:
                 )
 
             if stream_chunk.type in {"response.completed", "response.incomplete"} and conversation and final_response:
-                # for Conversations, we need to use the original_input if it's available, otherwise use input
-                sync_input = original_input if original_input is not None else input
-                await self._sync_response_to_conversation(conversation, sync_input, final_response)
+                # if we are starting the conversation, you will have "input" available
+                # we need to persist that. all else would be recorded via output_items
+                await self._sync_response_to_conversation(conversation, input, output_items)
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)
 
-    async def _load_conversation_context(
-        self, conversation_id: str, content: str | list[OpenAIResponseInput]
-    ) -> list[OpenAIResponseInput]:
-        """Load conversation history and merge with provided content."""
-        conversation_items = await self.conversations_api.list(conversation_id, order="asc")
-
-        context_messages = []
-        for item in conversation_items.data:
-            if isinstance(item, OpenAIResponseMessage):
-                if item.role == "user":
-                    context_messages.append(
-                        OpenAIResponseMessage(
-                            role="user", content=item.content, id=item.id if hasattr(item, "id") else None
-                        )
-                    )
-                elif item.role == "assistant":
-                    context_messages.append(
-                        OpenAIResponseMessage(
-                            role="assistant", content=item.content, id=item.id if hasattr(item, "id") else None
-                        )
-                    )
-
-        # add new content to context
-        if isinstance(content, str):
-            context_messages.append(OpenAIResponseMessage(role="user", content=content))
-        elif isinstance(content, list):
-            context_messages.extend(content)
-
-        return context_messages
-
     async def _sync_response_to_conversation(
-        self, conversation_id: str, content: str | list[OpenAIResponseInput], response: OpenAIResponseObject
+        self, conversation_id: str, input: str | list[OpenAIResponseInput] | None, output_items: list[ConversationItem]
     ) -> None:
         """Sync content and response messages to the conversation."""
         conversation_items = []
 
-        # add user content message(s)
-        if isinstance(content, str):
+        # add user content message(s) -- fix this, it is somewhat hacky and feels non comprehensive
+        if isinstance(input, str):
             conversation_items.append(
-                {"type": "message", "role": "user", "content": [{"type": "input_text", "text": content}]}
+                OpenAIResponseMessage(role="user", content=[OpenAIResponseInputMessageContentText(text=input)])
             )
-        elif isinstance(content, list):
-            for item in content:
-                if not isinstance(item, OpenAIResponseMessage):
-                    raise NotImplementedError(f"Unsupported input item type: {type(item)}")
+        elif isinstance(input, list):
+            conversation_items.extend(input)
 
-                if item.role == "user":
-                    if isinstance(item.content, str):
-                        conversation_items.append(
-                            {
-                                "type": "message",
-                                "role": "user",
-                                "content": [{"type": "input_text", "text": item.content}],
-                            }
-                        )
-                    elif isinstance(item.content, list):
-                        conversation_items.append({"type": "message", "role": "user", "content": item.content})
-                    else:
-                        raise NotImplementedError(f"Unsupported user message content type: {type(item.content)}")
-                elif item.role == "assistant":
-                    if isinstance(item.content, list):
-                        conversation_items.append({"type": "message", "role": "assistant", "content": item.content})
-                    else:
-                        raise NotImplementedError(f"Unsupported assistant message content type: {type(item.content)}")
-                else:
-                    raise NotImplementedError(f"Unsupported message role: {item.role}")
+        conversation_items.extend(output_items)
 
-        # add assistant response message
-        for output_item in response.output:
-            if isinstance(output_item, OpenAIResponseMessage) and output_item.role == "assistant":
-                if hasattr(output_item, "content") and isinstance(output_item.content, list):
-                    conversation_items.append({"type": "message", "role": "assistant", "content": output_item.content})
-
-        if conversation_items:
-            adapter = TypeAdapter(list[ConversationItem])
-            validated_items = adapter.validate_python(conversation_items)
-            await self.conversations_api.add_items(conversation_id, validated_items)
+        adapter = TypeAdapter(list[ConversationItem])
+        validated_items = adapter.validate_python(conversation_items)
+        await self.conversations_api.add_items(conversation_id, validated_items)

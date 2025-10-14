@@ -1258,9 +1258,9 @@ OpenAIResponseInput = Annotated[
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalRequest
     | OpenAIResponseMCPApprovalResponse
-    |
-    # Fallback to the generic message type as a last resort
-    OpenAIResponseMessage,
+    | OpenAIResponseOutputMessageMCPCall
+    | OpenAIResponseOutputMessageMCPListTools
+    | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")

@@ -12,6 +12,9 @@ from openai.types.responses.response_includable import ResponseIncludable
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.agents.openai_responses import (
+    OpenAIResponseInputFunctionToolCallOutput,
+    OpenAIResponseMCPApprovalRequest,
+    OpenAIResponseMCPApprovalResponse,
     OpenAIResponseMessage,
     OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFunctionToolCall,
@@ -61,9 +64,14 @@ class ConversationMessage(BaseModel):
 
 ConversationItem = Annotated[
     OpenAIResponseMessage
-    | OpenAIResponseOutputMessageFunctionToolCall
-    | OpenAIResponseOutputMessageFileSearchToolCall
     | OpenAIResponseOutputMessageWebSearchToolCall
+    | OpenAIResponseOutputMessageFileSearchToolCall
+    | OpenAIResponseOutputMessageFunctionToolCall
+    | OpenAIResponseInputFunctionToolCallOutput
+    | OpenAIResponseMCPApprovalRequest
+    | OpenAIResponseMCPApprovalResponse
+    | OpenAIResponseOutputMessageMCPCall
+    | OpenAIResponseOutputMessageMCPListTools
     | OpenAIResponseOutputMessageMCPCall
     | OpenAIResponseOutputMessageMCPListTools,
     Field(discriminator="type"),

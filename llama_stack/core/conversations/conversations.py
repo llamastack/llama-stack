@@ -255,6 +255,12 @@ class ConversationServiceImpl(Conversations):
 
     async def list(self, conversation_id: str, after=NOT_GIVEN, include=NOT_GIVEN, limit=NOT_GIVEN, order=NOT_GIVEN):
         """List items in the conversation."""
+        if not conversation_id:
+            raise ValueError(f"Expected a non-empty value for `conversation_id` but received {conversation_id!r}")
+
+        # check if conversation exists
+        await self.get_conversation(conversation_id)
+
         result = await self.sql_store.fetch_all(table="conversation_items", where={"conversation_id": conversation_id})
         records = result.data
 

@@ -19,6 +19,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInputTool,
     OpenAIResponseInputToolMCP,
     OpenAIResponseMCPApprovalRequest,
+    OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     OpenAIResponseObjectStreamResponseCompleted,
@@ -42,6 +43,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObjectStreamResponseRefusalDelta,
     OpenAIResponseObjectStreamResponseRefusalDone,
     OpenAIResponseOutput,
+    OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseText,
@@ -500,6 +502,7 @@ class StreamingResponseOrchestrator:
         # Track tool call items for streaming events
         tool_call_item_ids: dict[int, str] = {}
         # Track content parts for streaming events
+        message_item_added_emitted = False
         content_part_emitted = False
         reasoning_part_emitted = False
         refusal_part_emitted = False
@@ -521,6 +524,23 @@ class StreamingResponseOrchestrator:
             for chunk_choice in chunk.choices:
                 # Emit incremental text content as delta events
                 if chunk_choice.delta.content:
+                    # Emit output_item.added for the message on first content
+                    if not message_item_added_emitted:
+                        message_item_added_emitted = True
+                        self.sequence_number += 1
+                        message_item = OpenAIResponseMessage(
+                            id=message_item_id,
+                            content=[],
+                            role="assistant",
+                            status="in_progress",
+                        )
+                        yield OpenAIResponseObjectStreamResponseOutputItemAdded(
+                            response_id=self.response_id,
+                            item=message_item,
+                            output_index=message_output_index,
+                            sequence_number=self.sequence_number,
+                        )
+
                     # Emit content_part.added event for first text chunk
                     if not content_part_emitted:
                         content_part_emitted = True
@@ -699,6 +719,32 @@ class StreamingResponseOrchestrator:
         # Clear content when there are tool calls (OpenAI spec behavior)
         if chat_response_tool_calls:
             chat_response_content = []
+
+        # Emit output_item.done for message when we have content and no tool calls
+        if message_item_added_emitted and not chat_response_tool_calls:
+            content_parts = []
+            if content_part_emitted:
+                final_text = "".join(chat_response_content)
+                content_parts.append(
+                    OpenAIResponseOutputMessageContentOutputText(
+                        text=final_text,
+                        annotations=[],
+                    )
+                )
+
+            self.sequence_number += 1
+            message_item = OpenAIResponseMessage(
+                id=message_item_id,
+                content=content_parts,
+                role="assistant",
+                status="completed",
+            )
+            yield OpenAIResponseObjectStreamResponseOutputItemDone(
+                response_id=self.response_id,
+                item=message_item,
+                output_index=message_output_index,
+                sequence_number=self.sequence_number,
+            )
 
         yield ChatCompletionResult(
             response_id=chat_response_id,

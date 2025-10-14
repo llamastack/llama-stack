@@ -7151,13 +7151,22 @@
                         "$ref": "#/components/schemas/OpenAIResponseMessage"
                     },
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall"
+                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall"
                     },
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
+                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputFunctionToolCallOutput"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseMCPApprovalRequest"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseMCPApprovalResponse"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPCall"
@@ -7170,9 +7179,12 @@
                     "propertyName": "type",
                     "mapping": {
                         "message": "#/components/schemas/OpenAIResponseMessage",
-                        "function_call": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall",
-                        "file_search_call": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall",
                         "web_search_call": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall",
+                        "file_search_call": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall",
+                        "function_call": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall",
+                        "function_call_output": "#/components/schemas/OpenAIResponseInputFunctionToolCallOutput",
+                        "mcp_approval_request": "#/components/schemas/OpenAIResponseMCPApprovalRequest",
+                        "mcp_approval_response": "#/components/schemas/OpenAIResponseMCPApprovalResponse",
                         "mcp_call": "#/components/schemas/OpenAIResponseOutputMessageMCPCall",
                         "mcp_list_tools": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
                     }
@@ -7330,6 +7342,36 @@
                     }
                 }
             },
+            "OpenAIResponseInputFunctionToolCallOutput": {
+                "type": "object",
+                "properties": {
+                    "call_id": {
+                        "type": "string"
+                    },
+                    "output": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "function_call_output",
+                        "default": "function_call_output"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "call_id",
+                    "output",
+                    "type"
+                ],
+                "title": "OpenAIResponseInputFunctionToolCallOutput",
+                "description": "This represents the output of a function call that gets passed back to the model."
+            },
             "OpenAIResponseInputMessageContent": {
                 "oneOf": [
                     {
@@ -7408,6 +7450,68 @@
                 ],
                 "title": "OpenAIResponseInputMessageContentText",
                 "description": "Text content for input messages in OpenAI response format."
+            },
+            "OpenAIResponseMCPApprovalRequest": {
+                "type": "object",
+                "properties": {
+                    "arguments": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "server_label": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "mcp_approval_request",
+                        "default": "mcp_approval_request"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "arguments",
+                    "id",
+                    "name",
+                    "server_label",
+                    "type"
+                ],
+                "title": "OpenAIResponseMCPApprovalRequest",
+                "description": "A request for human approval of a tool invocation."
+            },
+            "OpenAIResponseMCPApprovalResponse": {
+                "type": "object",
+                "properties": {
+                    "approval_request_id": {
+                        "type": "string"
+                    },
+                    "approve": {
+                        "type": "boolean"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "mcp_approval_response",
+                        "default": "mcp_approval_response"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "approval_request_id",
+                    "approve",
+                    "type"
+                ],
+                "title": "OpenAIResponseMCPApprovalResponse",
+                "description": "A response to an MCP approval request."
             },
             "OpenAIResponseMessage": {
                 "type": "object",
@@ -8885,39 +8989,15 @@
                         "$ref": "#/components/schemas/OpenAIResponseMCPApprovalResponse"
                     },
                     {
+                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPCall"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
+                    },
+                    {
                         "$ref": "#/components/schemas/OpenAIResponseMessage"
                     }
                 ]
-            },
-            "OpenAIResponseInputFunctionToolCallOutput": {
-                "type": "object",
-                "properties": {
-                    "call_id": {
-                        "type": "string"
-                    },
-                    "output": {
-                        "type": "string"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "function_call_output",
-                        "default": "function_call_output"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "call_id",
-                    "output",
-                    "type"
-                ],
-                "title": "OpenAIResponseInputFunctionToolCallOutput",
-                "description": "This represents the output of a function call that gets passed back to the model."
             },
             "OpenAIResponseInputToolFileSearch": {
                 "type": "object",
@@ -9080,68 +9160,6 @@
                 ],
                 "title": "OpenAIResponseInputToolWebSearch",
                 "description": "Web search tool configuration for OpenAI response inputs."
-            },
-            "OpenAIResponseMCPApprovalRequest": {
-                "type": "object",
-                "properties": {
-                    "arguments": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "server_label": {
-                        "type": "string"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "mcp_approval_request",
-                        "default": "mcp_approval_request"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "arguments",
-                    "id",
-                    "name",
-                    "server_label",
-                    "type"
-                ],
-                "title": "OpenAIResponseMCPApprovalRequest",
-                "description": "A request for human approval of a tool invocation."
-            },
-            "OpenAIResponseMCPApprovalResponse": {
-                "type": "object",
-                "properties": {
-                    "approval_request_id": {
-                        "type": "string"
-                    },
-                    "approve": {
-                        "type": "boolean"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "mcp_approval_response",
-                        "default": "mcp_approval_response"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "reason": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false,
-                "required": [
-                    "approval_request_id",
-                    "approve",
-                    "type"
-                ],
-                "title": "OpenAIResponseMCPApprovalResponse",
-                "description": "A response to an MCP approval request."
             },
             "OpenAIResponseObjectWithInput": {
                 "type": "object",
