@@ -313,9 +313,9 @@ def is_function_tool_call(
     return False
 
 
-async def run_multiple_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> str | None:
-    """Run multiple guardrails against messages and return violation message if blocked."""
-    if not guardrail_ids or not messages:
+async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> str | None:
+    """Run guardrails against messages and return violation message if blocked."""
+    if not messages:
         return None
 
     # Look up shields to get their provider_resource_id (actual model ID)
