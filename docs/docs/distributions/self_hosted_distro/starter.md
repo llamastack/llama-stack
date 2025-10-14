@@ -119,7 +119,7 @@ The following environment variables can be configured:
 
 ### Telemetry Configuration
 - `OTEL_SERVICE_NAME`: OpenTelemetry service name
-- `TELEMETRY_SINKS`: Telemetry sinks (default: `console,sqlite`)
+- `TELEMETRY_SINKS`: Telemetry sinks (default: `[]`)
 
 ## Enabling Providers
 
@@ -216,7 +216,6 @@ The starter distribution uses SQLite for local storage of various components:
 - **Files metadata**: `~/.llama/distributions/starter/files_metadata.db`
 - **Agents store**: `~/.llama/distributions/starter/agents_store.db`
 - **Responses store**: `~/.llama/distributions/starter/responses_store.db`
-- **Trace store**: `~/.llama/distributions/starter/trace_store.db`
 - **Evaluation store**: `~/.llama/distributions/starter/meta_reference_eval.db`
 - **Dataset I/O stores**: Various HuggingFace and local filesystem stores
 
