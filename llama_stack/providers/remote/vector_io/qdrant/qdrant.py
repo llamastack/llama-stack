@@ -15,7 +15,8 @@ from qdrant_client.models import PointStruct
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
-from llama_stack.apis.inference import InterleavedContent
+from llama_stack.apis.inference import Inference, InterleavedContent
+from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
@@ -25,7 +26,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreFileObject,
 )
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api, VectorDBsProtocolPrivate
+from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -159,7 +160,8 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
     def __init__(
         self,
         config: RemoteQdrantVectorIOConfig | InlineQdrantVectorIOConfig,
-        inference_api: Api.inference,
+        inference_api: Inference,
+        models_api: Models,
         files_api: Files | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
@@ -167,6 +169,7 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.client: AsyncQdrantClient = None
         self.cache = {}
         self.inference_api = inference_api
+        self.models_api = models_api
         self.vector_db_store = None
         self._qdrant_lock = asyncio.Lock()
 

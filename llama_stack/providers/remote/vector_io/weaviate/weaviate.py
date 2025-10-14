@@ -14,12 +14,14 @@ from weaviate.classes.query import Filter, HybridFusion
 
 from llama_stack.apis.common.content_types import InterleavedContent
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files.files import Files
+from llama_stack.apis.files import Files
+from llama_stack.apis.inference import Inference
+from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api, VectorDBsProtocolPrivate
+from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import (
@@ -281,12 +283,14 @@ class WeaviateVectorIOAdapter(
     def __init__(
         self,
         config: WeaviateVectorIOConfig,
-        inference_api: Api.inference,
+        inference_api: Inference,
+        models_api: Models,
         files_api: Files | None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
+        self.models_api = models_api
         self.client_cache = {}
         self.cache = {}
         self.vector_db_store = None

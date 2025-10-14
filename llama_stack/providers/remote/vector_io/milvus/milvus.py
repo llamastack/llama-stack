@@ -12,8 +12,9 @@ from numpy.typing import NDArray
 from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusClient, RRFRanker, WeightedRanker
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files.files import Files
+from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
+from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
@@ -307,6 +308,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self,
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
         inference_api: Inference,
+        models_api: Models,
         files_api: Files | None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
@@ -314,6 +316,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.cache = {}
         self.client = None
         self.inference_api = inference_api
+        self.models_api = models_api
         self.vector_db_store = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 

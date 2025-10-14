@@ -159,6 +159,12 @@ def test_openai_create_vector_store(
     assert hasattr(vector_store, "created_at")
 
 
+def test_openai_create_vector_store_default(compat_client_with_empty_stores, client_with_models):
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    vector_store = compat_client_with_empty_stores.vector_stores.create()
+    assert vector_store.id
+
+
 def test_openai_list_vector_stores(
     compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
 ):
