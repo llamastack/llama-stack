@@ -11,6 +11,7 @@ from collections.abc import AsyncIterator
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.apis.agents import Order
+from llama_stack.apis.agents.agents import ResponseGuardrailSpec
 from llama_stack.apis.agents.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -236,7 +237,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
-        guardrails: list | None = None,
+        guardrails: list[ResponseGuardrailSpec] | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
