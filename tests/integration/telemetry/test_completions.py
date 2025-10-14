@@ -41,8 +41,6 @@ def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_mod
 
 def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, text_model_id):
     """Comprehensive validation of telemetry data format including spans and metrics."""
-    collector = mock_otlp_collector
-
     response = llama_stack_client.chat.completions.create(
         model=text_model_id,
         messages=[{"role": "user", "content": "Test trace openai with temperature 0.7"}],
@@ -51,31 +49,48 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
         stream=False,
     )
 
-    assert response
+    assert response.usage.get("prompt_tokens") > 0
+    assert response.usage.get("completion_tokens") > 0
+    assert response.usage.get("total_tokens") > 0
 
     # Verify spans
-    spans = collector.get_spans()
+    spans = mock_otlp_collector.get_spans()
     assert len(spans) == 5
 
     for span in spans:
-        print(f"Span: {span.attributes}")
-        if span.attributes.get("__autotraced__"):
-            assert span.attributes.get("__class__") and span.attributes.get("__method__")
-            assert span.attributes.get("__type__") in ["async", "sync", "async_generator"]
-        if span.attributes.get("__args__"):
-            args = json.loads(span.attributes.get("__args__"))
-            # The parameter is 'model' in openai_chat_completion, not 'model_id'
-            if "model" in args:
+        attrs = span.attributes
+        assert attrs is not None
+
+        # Root span is created manually by tracing middleware, not by @trace_protocol decorator
+        is_root_span = attrs.get("__root__") is True
+
+        if is_root_span:
+            # Root spans have different attributes
+            assert attrs.get("__location__") in ["library_client", "server"]
+        else:
+            # Non-root spans are created by @trace_protocol decorator
+            assert attrs.get("__autotraced__")
+            assert attrs.get("__class__") and attrs.get("__method__")
+            assert attrs.get("__type__") in ["async", "sync", "async_generator"]
+
+            args = json.loads(attrs["__args__"])
+            if "model_id" in args:
+                assert args.get("model_id") == text_model_id
+            else:
                 assert args.get("model") == text_model_id
 
-    # Verify token metrics in response
-    # Note: Llama Stack emits token metrics in the response JSON, not via OTel Metrics API
-    usage = response.usage if hasattr(response, "usage") else response.get("usage")
-    assert usage
-    prompt_tokens = usage.get("prompt_tokens") if isinstance(usage, dict) else usage.prompt_tokens
-    completion_tokens = usage.get("completion_tokens") if isinstance(usage, dict) else usage.completion_tokens
-    total_tokens = usage.get("total_tokens") if isinstance(usage, dict) else usage.total_tokens
-
-    assert prompt_tokens is not None and prompt_tokens > 0
-    assert completion_tokens is not None and completion_tokens > 0
-    assert total_tokens is not None and total_tokens > 0
+    # Verify token usage metrics in response
+    metrics = mock_otlp_collector.get_metrics()
+    print(f"metrics: {metrics}")
+    assert metrics
+    for metric in metrics:
+        assert metric.name in ["completion_tokens", "total_tokens", "prompt_tokens"]
+        assert metric.unit == "tokens"
+        assert metric.data.data_points and len(metric.data.data_points) == 1
+        match metric.name:
+            case "completion_tokens":
+                assert metric.data.data_points[0].value == response.usage.get("completion_tokens")
+            case "total_tokens":
+                assert metric.data.data_points[0].value == response.usage.get("total_tokens")
+            case "prompt_tokens":
+                assert metric.data.data_points[0].value == response.usage.get("prompt_tokens")
