@@ -123,6 +123,17 @@ class OpenAIResponsesImpl:
                 # Use stored messages directly and convert only new input
                 message_adapter = TypeAdapter(list[OpenAIMessageParam])
                 messages = message_adapter.validate_python(previous_response.messages)
+                # When managing conversation state with the previous_response_id parameter,
+                # the instructions used on previous turns will not be carried over in the context
+                previous_instructions = previous_response.instructions
+                if previous_instructions:
+                    if (isinstance(previous_instructions, str) and
+                        previous_instructions == messages[0].content and
+                        messages[0].role == "system"):
+                        # Omit instructions from previous response
+                        del messages[0]
+                    else:
+                        raise ValueError("Instructions from the previous response could not be validated")
                 new_messages = await convert_response_input_to_chat_messages(input, previous_messages=messages)
                 messages.extend(new_messages)
             else:
@@ -359,6 +370,7 @@ class OpenAIResponsesImpl:
             tool_executor=self.tool_executor,
             safety_api=self.safety_api,
             guardrail_ids=guardrail_ids,
+            instructions=instructions,
         )
 
         # Stream the response

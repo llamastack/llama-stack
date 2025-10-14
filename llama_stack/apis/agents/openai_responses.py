@@ -327,6 +327,35 @@ OpenAIResponseOutput = Annotated[
 register_schema(OpenAIResponseOutput, name="OpenAIResponseOutput")
 
 
+@json_schema_type
+class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
+    """
+    This represents the output of a function call that gets passed back to the model.
+    """
+
+    call_id: str
+    output: str
+    type: Literal["function_call_output"] = "function_call_output"
+    id: str | None = None
+    status: str | None = None
+
+
+OpenAIResponseInput = Annotated[
+    # Responses API allows output messages to be passed in as input
+    OpenAIResponseOutputMessageWebSearchToolCall
+    | OpenAIResponseOutputMessageFileSearchToolCall
+    | OpenAIResponseOutputMessageFunctionToolCall
+    | OpenAIResponseInputFunctionToolCallOutput
+    | OpenAIResponseMCPApprovalRequest
+    | OpenAIResponseMCPApprovalResponse
+    | OpenAIResponseOutputMessageMCPCall
+    | OpenAIResponseOutputMessageMCPListTools
+    | OpenAIResponseMessage,
+    Field(union_mode="left_to_right"),
+]
+register_schema(OpenAIResponseInput, name="OpenAIResponseInput")
+
+
 # This has to be a TypedDict because we need a "schema" field and our strong
 # typing code in the schema generator doesn't support Pydantic aliases. That also
 # means we can't use a discriminator field here, because TypedDicts don't support
@@ -545,6 +574,7 @@ class OpenAIResponseObject(BaseModel):
     :param tools: (Optional) An array of tools the model may call while generating a response.
     :param truncation: (Optional) Truncation strategy applied to the response
     :param usage: (Optional) Token usage information for the response
+    :param instructions: (Optional) System message inserted into the model's context
     """
 
     created_at: int
@@ -564,6 +594,7 @@ class OpenAIResponseObject(BaseModel):
     tools: list[OpenAIResponseTool] | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
+    instructions: str | list[OpenAIResponseInput] | None = None
 
 
 @json_schema_type
@@ -1235,35 +1266,6 @@ OpenAIResponseObjectStream = Annotated[
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseObjectStream, name="OpenAIResponseObjectStream")
-
-
-@json_schema_type
-class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
-    """
-    This represents the output of a function call that gets passed back to the model.
-    """
-
-    call_id: str
-    output: str
-    type: Literal["function_call_output"] = "function_call_output"
-    id: str | None = None
-    status: str | None = None
-
-
-OpenAIResponseInput = Annotated[
-    # Responses API allows output messages to be passed in as input
-    OpenAIResponseOutputMessageWebSearchToolCall
-    | OpenAIResponseOutputMessageFileSearchToolCall
-    | OpenAIResponseOutputMessageFunctionToolCall
-    | OpenAIResponseInputFunctionToolCallOutput
-    | OpenAIResponseMCPApprovalRequest
-    | OpenAIResponseMCPApprovalResponse
-    | OpenAIResponseOutputMessageMCPCall
-    | OpenAIResponseOutputMessageMCPListTools
-    | OpenAIResponseMessage,
-    Field(union_mode="left_to_right"),
-]
-register_schema(OpenAIResponseInput, name="OpenAIResponseInput")
 
 
 class ListOpenAIResponseInputItem(BaseModel):

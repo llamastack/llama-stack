@@ -112,6 +112,7 @@ class StreamingResponseOrchestrator:
         tool_executor,  # Will be the tool execution logic from the main class
         safety_api,
         guardrail_ids: list[str] | None = None,
+        instructions: str,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -133,6 +134,8 @@ class StreamingResponseOrchestrator:
         self.accumulated_usage: OpenAIResponseUsage | None = None
         # Track if we've sent a refusal response
         self.violation_detected = False
+        # system message that is inserted into the model's context
+        self.instructions = instructions
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""
@@ -176,6 +179,7 @@ class StreamingResponseOrchestrator:
             tools=self.ctx.available_tools(),
             error=error,
             usage=self.accumulated_usage,
+            instructions=self.instructions,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
