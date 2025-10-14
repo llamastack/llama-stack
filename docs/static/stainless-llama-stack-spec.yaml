@@ -7006,6 +7006,14 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIResponseInput'
+          description: >-
+            (Optional) System message inserted into the model's context
         input:
           type: array
           items:
@@ -7409,6 +7417,14 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/OpenAIResponseInput'
+          description: >-
+            (Optional) System message inserted into the model's context
       additionalProperties: false
       required:
         - created_at
