@@ -121,7 +121,9 @@ class TestMessageSyncing:
 
         # matching the behavior of OpenAI here
         with pytest.raises(Exception, match="API Error"):
-            await responses_impl_with_conversations._sync_response_to_conversation("conv_test123", "Hello", output_items)
+            await responses_impl_with_conversations._sync_response_to_conversation(
+                "conv_test123", "Hello", output_items
+            )
 
     async def test_sync_with_list_input(self, responses_impl_with_conversations, mock_conversations_api):
         """Test syncing with list of input messages."""
