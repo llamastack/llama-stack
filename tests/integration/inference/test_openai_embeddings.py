@@ -12,15 +12,6 @@ from openai import OpenAI
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
-
-def decode_base64_to_floats(base64_string: str) -> list[float]:
-    """Helper function to decode base64 string to list of float32 values."""
-    embedding_bytes = base64.b64decode(base64_string)
-    float_count = len(embedding_bytes) // 4  # 4 bytes per float32
-    embedding_floats = struct.unpack(f"{float_count}f", embedding_bytes)
-    return list(embedding_floats)
-
-
 ASYMMETRIC_EMBEDDING_MODELS_BY_PROVIDER = {
     "remote::nvidia": [
         "nvidia/llama-3.2-nv-embedqa-1b-v2",
@@ -29,6 +20,14 @@ ASYMMETRIC_EMBEDDING_MODELS_BY_PROVIDER = {
         "snowflake/arctic-embed-l",
     ],
 }
+
+
+def decode_base64_to_floats(base64_string: str) -> list[float]:
+    """Helper function to decode base64 string to list of float32 values."""
+    embedding_bytes = base64.b64decode(base64_string)
+    float_count = len(embedding_bytes) // 4  # 4 bytes per float32
+    embedding_floats = struct.unpack(f"{float_count}f", embedding_bytes)
+    return list(embedding_floats)
 
 
 def provider_from_model(client_with_models, model_id):
@@ -50,6 +49,9 @@ def is_asymmetric_model(client_with_models, model_id):
 
 
 def get_extra_body_for_model(client_with_models, model_id, input_type="query"):
+    if not is_asymmetric_model(client_with_models, model_id):
+        return None
+
     provider = provider_from_model(client_with_models, model_id)
 
     if provider.provider_type == "remote::nvidia":
@@ -149,27 +151,13 @@ def test_openai_embeddings_single_string(compat_client, client_with_models, embe
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_text = "Hello, world!"
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
 
-    # For asymmetric models, verify that calling without extra_body raises an error
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_text,
-            "encoding_format": "float",
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": input_text,
-        "encoding_format": "float",
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
-    response = compat_client.embeddings.create(**kwargs)
+    response = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_text,
+        encoding_format="float",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+    )
 
     assert response.object == "list"
 
@@ -188,26 +176,13 @@ def test_openai_embeddings_multiple_strings(compat_client, client_with_models, e
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_texts = ["Hello, world!", "How are you today?", "This is a test."]
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
 
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_texts,
-            "encoding_format": "float",
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": input_texts,
-        "encoding_format": "float",
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
-    response = compat_client.embeddings.create(**kwargs)
+    response = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_texts,
+        encoding_format="float",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+    )
 
     assert response.object == "list"
 
@@ -228,26 +203,13 @@ def test_openai_embeddings_with_encoding_format_float(compat_client, client_with
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
     input_text = "Test encoding format"
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
 
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_text,
-            "encoding_format": "float",
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": input_text,
-        "encoding_format": "float",
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
-    response = compat_client.embeddings.create(**kwargs)
+    response = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_text,
+        encoding_format="float",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+    )
 
     assert response.object == "list"
     assert len(response.data) == 1
@@ -262,26 +224,13 @@ def test_openai_embeddings_with_dimensions(compat_client, client_with_models, em
 
     input_text = "Test dimensions parameter"
     dimensions = 16
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
 
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_text,
-            "dimensions": dimensions,
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": input_text,
-        "dimensions": dimensions,
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
-    response = compat_client.embeddings.create(**kwargs)
+    response = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_text,
+        dimensions=dimensions,
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+    )
 
     assert response.object == "list"
     assert len(response.data) == 1
@@ -297,26 +246,13 @@ def test_openai_embeddings_with_user_parameter(compat_client, client_with_models
 
     input_text = "Test user parameter"
     user_id = "test-user-123"
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
 
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_text,
-            "user": user_id,
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": input_text,
-        "user": user_id,
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
-    response = compat_client.embeddings.create(**kwargs)
+    response = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_text,
+        user=user_id,
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+    )
 
     assert response.object == "list"
     assert len(response.data) == 1
@@ -328,17 +264,12 @@ def test_openai_embeddings_empty_list_error(compat_client, client_with_models, e
     """Test that empty list input raises an appropriate error."""
     skip_if_model_doesnt_support_openai_embeddings(client_with_models, embedding_model_id)
 
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": [],
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
     with pytest.raises(Exception):  # noqa: B017
-        compat_client.embeddings.create(**kwargs)
+        compat_client.embeddings.create(
+            model=embedding_model_id,
+            input=[],
+            extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+        )
 
 
 def test_openai_embeddings_invalid_model_error(compat_client, client_with_models, embedding_model_id):
@@ -349,6 +280,7 @@ def test_openai_embeddings_invalid_model_error(compat_client, client_with_models
         compat_client.embeddings.create(
             model="invalid-model-id",
             input="Test text",
+            extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
         )
 
 
@@ -358,35 +290,21 @@ def test_openai_embeddings_different_inputs_different_outputs(compat_client, cli
 
     input_text1 = "This is the first text"
     input_text2 = "This is completely different content"
+
     extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
+    response1 = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_text1,
+        encoding_format="float",
+        extra_body=extra_body,
+    )
 
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_text1,
-            "encoding_format": "float",
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs1 = {
-        "model": embedding_model_id,
-        "input": input_text1,
-        "encoding_format": "float",
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs1["extra_body"] = extra_body
-
-    kwargs2 = {
-        "model": embedding_model_id,
-        "input": input_text2,
-        "encoding_format": "float",
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs2["extra_body"] = extra_body
-
-    response1 = compat_client.embeddings.create(**kwargs1)
-    response2 = compat_client.embeddings.create(**kwargs2)
+    response2 = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_text2,
+        encoding_format="float",
+        extra_body=extra_body,
+    )
 
     embedding1 = response1.data[0].embedding
     embedding2 = response2.data[0].embedding
@@ -404,28 +322,14 @@ def test_openai_embeddings_with_encoding_format_base64(compat_client, client_wit
 
     input_text = "Test base64 encoding format"
     dimensions = 12
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
 
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_text,
-            "encoding_format": "base64",
-            "dimensions": dimensions,
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": input_text,
-        "encoding_format": "base64",
-        "dimensions": dimensions,
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
-    response = compat_client.embeddings.create(**kwargs)
+    response = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_text,
+        encoding_format="base64",
+        dimensions=dimensions,
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+    )
 
     # Validate response structure
     assert response.object == "list"
@@ -451,27 +355,13 @@ def test_openai_embeddings_base64_batch_processing(compat_client, client_with_mo
     skip_if_model_doesnt_support_encoding_format_base64(client_with_models, embedding_model_id)
 
     input_texts = ["First text for base64", "Second text for base64", "Third text for base64"]
-    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
 
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs_without_extra = {
-            "model": embedding_model_id,
-            "input": input_texts,
-            "encoding_format": "base64",
-        }
-        with pytest.raises(Exception):  # noqa: B017
-            compat_client.embeddings.create(**kwargs_without_extra)
-
-    kwargs = {
-        "model": embedding_model_id,
-        "input": input_texts,
-        "encoding_format": "base64",
-    }
-    if is_asymmetric_model(client_with_models, embedding_model_id):
-        kwargs["extra_body"] = extra_body
-
-    response = compat_client.embeddings.create(**kwargs)
-
+    response = compat_client.embeddings.create(
+        model=embedding_model_id,
+        input=input_texts,
+        encoding_format="base64",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
+    )
     # Validate response structure
     assert response.object == "list"
 
