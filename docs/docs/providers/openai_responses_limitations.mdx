@@ -7,13 +7,13 @@ sidebar_position: 1
 
 ## Unresolved Issues
 
-This document outlines known limitations and inconsistencies between Llama Stack's Responses API and OpenAI's Responses API. This comparison is based on OpenAI's API and reflects a comparison with the OpenAI APIs as of October 6, 2025.
+This document outlines known limitations and inconsistencies between Llama Stack's Responses API and OpenAI's Responses API. This comparison is based on OpenAI's API and reflects a comparison with the OpenAI APIs as of October 6, 2025 (OpenAI's client version `openai==1.107`).
 See the OpenAI [changelog](https://platform.openai.com/docs/changelog) for details of any new functionality that has been added since that date. Links to issues are included so readers can read about status, post comments, and/or subscribe for updates relating to any limitations that are of specific interest to them. We would also love any other feedback on any use-cases you try that do not work to help prioritize the pieces left to implement.
 Please open new issues in the [meta-llama/llama-stack](https://github.com/meta-llama/llama-stack) GitHub repository with details of anything that does not work that does not already have an open issue.
 
 ### Streaming
 
-**Status:** Partial Implementation  
+**Status:** Partial Implementation
 **Issue:** [#2364](https://github.com/llamastack/llama-stack/issues/2364)
 
 Streaming functionality for the Responses API is partially implemented and does work to some extent, but some streaming response objects that would be needed for full compatibility are still missing.
@@ -207,6 +207,16 @@ Sampling allows MCP tools to query the generative AI model. See the [MCP specifi
 - Does this work in OpenAI's Responses API reference implementation?
 - If not, is there a reasonable way to make that work within the API as is? Or would the API need to change?
 - Does this work in Llama Stack?
+
+### Prompt Caching
+**Status:** Unknown
+
+OpenAI provides a [prompt caching](https://platform.openai.com/docs/guides/prompt-caching) mechanism in Responses that is enabled for its most recent models.
+
+**Open Questions:**
+- Does this work in Llama Stack?
+- If not, is there a reasonable way to make that work for those inference providers that have this capability by passing through the provided `prompt_cache_key` to the inference provider?
+- Is there a reasonable way to make that work for inference providers that don't build in this capability by doing some sort of caching at the Llama Stack layer?
 
 ---
 
