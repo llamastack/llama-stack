@@ -70,7 +70,7 @@ def trace_protocol[T](cls: type[T]) -> type[T]:
                 "__class__": class_name,
                 "__method__": method_name,
                 "__type__": span_type,
-                "__args__": str(combined_args),
+                "__args__": json.dumps(combined_args),
             }
 
             return class_name, method_name, span_attributes
@@ -82,8 +82,8 @@ def trace_protocol[T](cls: type[T]) -> type[T]:
             class_name, method_name, span_attributes = create_span_context(self, *args, **kwargs)
 
             with tracing.span(f"{class_name}.{method_name}", span_attributes) as span:
+                count = 0
                 try:
-                    count = 0
                     async for item in method(self, *args, **kwargs):
                         yield item
                         count += 1
