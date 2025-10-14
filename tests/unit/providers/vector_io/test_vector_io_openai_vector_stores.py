@@ -15,6 +15,7 @@ from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
+    OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     QueryChunksResponse,
     VectorStoreChunkingStrategyAuto,
     VectorStoreFileObject,
@@ -326,8 +327,7 @@ async def test_create_vector_store_file_batch(vector_io_adapter):
     vector_io_adapter._process_file_batch_async = AsyncMock()
 
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     assert batch.vector_store_id == store_id
@@ -354,8 +354,7 @@ async def test_retrieve_vector_store_file_batch(vector_io_adapter):
 
     # Create batch first
     created_batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Retrieve batch
@@ -388,8 +387,7 @@ async def test_cancel_vector_store_file_batch(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Cancel batch
@@ -434,8 +432,7 @@ async def test_list_files_in_vector_store_file_batch(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # List files
@@ -455,7 +452,7 @@ async def test_file_batch_validation_errors(vector_io_adapter):
     with pytest.raises(VectorStoreNotFoundError):
         await vector_io_adapter.openai_create_vector_store_file_batch(
             vector_store_id="nonexistent",
-            file_ids=["file_1"],
+            params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_1"]),
         )
 
     # Setup store for remaining tests
@@ -472,8 +469,7 @@ async def test_file_batch_validation_errors(vector_io_adapter):
     # Test wrong vector store for batch
     vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=["file_1"],
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_1"])
     )
 
     # Create wrong_store so it exists but the batch doesn't belong to it
@@ -520,8 +516,7 @@ async def test_file_batch_pagination(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Test pagination with limit
@@ -593,8 +588,7 @@ async def test_file_batch_status_filtering(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Test filtering by completed status
@@ -636,8 +630,7 @@ async def test_cancel_completed_batch_fails(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Manually update status to completed
@@ -671,8 +664,7 @@ async def test_file_batch_persistence_across_restarts(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
     batch_id = batch.id
 
@@ -727,8 +719,7 @@ async def test_cancelled_batch_persists_in_storage(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
     batch_id = batch.id
 
@@ -775,10 +766,10 @@ async def test_only_in_progress_batches_resumed(vector_io_adapter):
 
     # Create multiple batches
     batch1 = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id, file_ids=["file_1"]
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_1"])
     )
     batch2 = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id, file_ids=["file_2"]
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_2"])
     )
 
     # Complete one batch (should persist with completed status)
@@ -791,7 +782,7 @@ async def test_only_in_progress_batches_resumed(vector_io_adapter):
 
     # Create a third batch that stays in progress
     batch3 = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id, file_ids=["file_3"]
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_3"])
     )
 
     # Simulate restart - clear memory and reload from persistence
@@ -952,8 +943,7 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
     file_ids = [f"file_{i}" for i in range(8)]  # 8 files, but limit should be 5
 
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Give time for the semaphore logic to start processing files

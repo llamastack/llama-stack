@@ -50,11 +50,15 @@ def skip_if_model_doesnt_support_encoding_format_base64(client, model_id):
 
 def skip_if_model_doesnt_support_variable_dimensions(client_with_models, model_id):
     provider = provider_from_model(client_with_models, model_id)
-    if provider.provider_type in (
-        "remote::together",  # returns 400
-        "inline::sentence-transformers",
-        # Error code: 400 - {'error_code': 'BAD_REQUEST', 'message': 'Bad request: json: unknown field "dimensions"\n'}
-        "remote::databricks",
+    if (
+        provider.provider_type
+        in (
+            "remote::together",  # returns 400
+            "inline::sentence-transformers",
+            # Error code: 400 - {'error_code': 'BAD_REQUEST', 'message': 'Bad request: json: unknown field "dimensions"\n'}
+            "remote::databricks",
+            "remote::watsonx",  # openai.BadRequestError: Error code: 400 - {'detail': "litellm.UnsupportedParamsError: watsonx does not support parameters: {'dimensions': 384}
+        )
     ):
         pytest.skip(
             f"Model {model_id} hosted by {provider.provider_type} does not support variable output embedding dimensions."
@@ -104,7 +108,9 @@ def test_openai_embeddings_single_string(compat_client, client_with_models, embe
     )
 
     assert response.object == "list"
-    assert response.model == embedding_model_id
+
+    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
+    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
     assert len(response.data) == 1
     assert response.data[0].object == "embedding"
     assert response.data[0].index == 0
@@ -126,7 +132,9 @@ def test_openai_embeddings_multiple_strings(compat_client, client_with_models, e
     )
 
     assert response.object == "list"
-    assert response.model == embedding_model_id
+
+    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
+    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
     assert len(response.data) == len(input_texts)
 
     for i, embedding_data in enumerate(response.data):
@@ -293,7 +301,9 @@ def test_openai_embeddings_base64_batch_processing(compat_client, client_with_mo
     )
     # Validate response structure
     assert response.object == "list"
-    assert response.model == embedding_model_id
+
+    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
+    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
     assert len(response.data) == len(input_texts)
 
     # Validate each embedding in the batch

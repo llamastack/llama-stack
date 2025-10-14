@@ -1140,6 +1140,25 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     user: str | None = None
 
 
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request parameters for OpenAI-compatible embeddings endpoint.
+
+    :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
+    :param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.
+    :param encoding_format: (Optional) The format to return the embeddings in. Can be either "float" or "base64". Defaults to "float".
+    :param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.
+    :param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+    """
+
+    model: str
+    input: str | list[str]
+    encoding_format: str | None = "float"
+    dimensions: int | None = None
+    user: str | None = None
+
+
 @runtime_checkable
 @trace_protocol
 class InferenceProvider(Protocol):
@@ -1200,21 +1219,11 @@ class InferenceProvider(Protocol):
     @webmethod(route="/embeddings", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIEmbeddingsRequestWithExtraBody, Body(...)],
     ) -> OpenAIEmbeddingsResponse:
         """Create embeddings.
 
         Generate OpenAI-compatible embeddings for the given input using the specified model.
-
-        :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
-        :param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.
-        :param encoding_format: (Optional) The format to return the embeddings in. Can be either "float" or "base64". Defaults to "float".
-        :param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.
-        :param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
         :returns: An OpenAIEmbeddingsResponse containing the embeddings.
         """
         ...

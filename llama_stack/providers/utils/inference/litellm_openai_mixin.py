@@ -20,6 +20,7 @@ from llama_stack.apis.inference import (
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingData,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
     ToolChoice,
@@ -189,16 +190,12 @@ class LiteLLMOpenAIMixin(
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
-        model_obj = await self.model_store.get_model(model)
+        model_obj = await self.model_store.get_model(params.model)
 
         # Convert input to list if it's a string
-        input_list = [input] if isinstance(input, str) else input
+        input_list = [params.input] if isinstance(params.input, str) else params.input
 
         # Call litellm embedding function
         # litellm.drop_params = True
@@ -207,11 +204,11 @@ class LiteLLMOpenAIMixin(
             input=input_list,
             api_key=self.get_api_key(),
             api_base=self.api_base,
-            dimensions=dimensions,
+            dimensions=params.dimensions,
         )
 
         # Convert response to OpenAI format
-        data = b64_encode_openai_embeddings_response(response.data, encoding_format)
+        data = b64_encode_openai_embeddings_response(response.data, params.encoding_format)
 
         usage = OpenAIEmbeddingUsage(
             prompt_tokens=response["usage"]["prompt_tokens"],

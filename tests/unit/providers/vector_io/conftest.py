@@ -20,7 +20,7 @@ from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorVecto
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
 from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
-EMBEDDING_DIMENSION = 384
+EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
 
 

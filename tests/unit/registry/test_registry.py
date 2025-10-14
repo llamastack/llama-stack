@@ -23,8 +23,8 @@ from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 def sample_vector_db():
     return VectorDB(
         identifier="test_vector_db",
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
+        embedding_model="nomic-embed-text-v1.5",
+        embedding_dimension=768,
         provider_resource_id="test_vector_db",
         provider_id="test-provider",
     )
@@ -86,8 +86,8 @@ async def test_cached_registry_initialization(sqlite_kvstore, sample_vector_db, 
 async def test_cached_registry_updates(cached_disk_dist_registry):
     new_vector_db = VectorDB(
         identifier="test_vector_db_2",
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
+        embedding_model="nomic-embed-text-v1.5",
+        embedding_dimension=768,
         provider_resource_id="test_vector_db_2",
         provider_id="baz",
     )
@@ -112,8 +112,8 @@ async def test_cached_registry_updates(cached_disk_dist_registry):
 async def test_duplicate_provider_registration(cached_disk_dist_registry):
     original_vector_db = VectorDB(
         identifier="test_vector_db_2",
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
+        embedding_model="nomic-embed-text-v1.5",
+        embedding_dimension=768,
         provider_resource_id="test_vector_db_2",
         provider_id="baz",
     )
@@ -122,7 +122,7 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
     duplicate_vector_db = VectorDB(
         identifier="test_vector_db_2",
         embedding_model="different-model",
-        embedding_dimension=384,
+        embedding_dimension=768,
         provider_resource_id="test_vector_db_2",
         provider_id="baz",  # Same provider_id
     )
@@ -140,8 +140,8 @@ async def test_get_all_objects(cached_disk_dist_registry):
     test_vector_dbs = [
         VectorDB(
             identifier=f"test_vector_db_{i}",
-            embedding_model="all-MiniLM-L6-v2",
-            embedding_dimension=384,
+            embedding_model="nomic-embed-text-v1.5",
+            embedding_dimension=768,
             provider_resource_id=f"test_vector_db_{i}",
             provider_id=f"provider_{i}",
         )
@@ -169,8 +169,8 @@ async def test_get_all_objects(cached_disk_dist_registry):
 async def test_parse_registry_values_error_handling(sqlite_kvstore):
     valid_db = VectorDB(
         identifier="valid_vector_db",
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
+        embedding_model="nomic-embed-text-v1.5",
+        embedding_dimension=768,
         provider_resource_id="valid_vector_db",
         provider_id="test-provider",
     )
@@ -207,8 +207,8 @@ async def test_parse_registry_values_error_handling(sqlite_kvstore):
 async def test_cached_registry_error_handling(sqlite_kvstore):
     valid_db = VectorDB(
         identifier="valid_cached_db",
-        embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384,
+        embedding_model="nomic-embed-text-v1.5",
+        embedding_dimension=768,
         provider_resource_id="valid_cached_db",
         provider_id="test-provider",
     )

@@ -21,6 +21,7 @@ from llama_stack.apis.inference import (
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingData,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
@@ -316,23 +317,27 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         """
         Direct OpenAI embeddings API call.
         """
+        # Prepare request parameters
+        request_params = {
+            "model": await self._get_provider_model_id(params.model),
+            "input": params.input,
+            "encoding_format": params.encoding_format if params.encoding_format is not None else NOT_GIVEN,
+            "dimensions": params.dimensions if params.dimensions is not None else NOT_GIVEN,
+            "user": params.user if params.user is not None else NOT_GIVEN,
+        }
+
+        # Add extra_body if present
+        extra_body = params.model_extra
+        if extra_body:
+            request_params["extra_body"] = extra_body
+
         # Call OpenAI embeddings API with properly typed parameters
-        response = await self.client.embeddings.create(
-            model=await self._get_provider_model_id(model),
-            input=input,
-            encoding_format=encoding_format if encoding_format is not None else NOT_GIVEN,
-            dimensions=dimensions if dimensions is not None else NOT_GIVEN,
-            user=user if user is not None else NOT_GIVEN,
-        )
+        response = await self.client.embeddings.create(**request_params)
 
         data = []
         for i, embedding_data in enumerate(response.data):
@@ -350,7 +355,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         return OpenAIEmbeddingsResponse(
             data=data,
-            model=model,
+            model=params.model,
             usage=usage,
         )
 

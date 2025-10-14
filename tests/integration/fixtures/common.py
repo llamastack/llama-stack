@@ -151,7 +151,7 @@ def client_with_models(
             model_id=embedding_model_id,
             provider_id=selected_provider.provider_id,
             model_type="embedding",
-            metadata={"embedding_dimension": embedding_dimension or 384},
+            metadata={"embedding_dimension": embedding_dimension or 768},
         )
     return client
 

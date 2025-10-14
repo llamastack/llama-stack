@@ -13,7 +13,10 @@ from unittest.mock import AsyncMock, MagicMock
 import numpy as np
 import pytest
 
-from llama_stack.apis.inference.inference import OpenAIEmbeddingData
+from llama_stack.apis.inference.inference import (
+    OpenAIEmbeddingData,
+    OpenAIEmbeddingsRequestWithExtraBody,
+)
 from llama_stack.apis.tools import RAGDocument
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.providers.utils.memory.vector_store import (
@@ -226,9 +229,14 @@ class TestVectorDBWithIndex:
 
         await vector_db_with_index.insert_chunks(chunks)
 
-        mock_inference_api.openai_embeddings.assert_called_once_with(
-            "test-model without embeddings", ["Test 1", "Test 2"]
-        )
+        # Verify openai_embeddings was called with correct params
+        mock_inference_api.openai_embeddings.assert_called_once()
+        call_args = mock_inference_api.openai_embeddings.call_args[0]
+        assert len(call_args) == 1
+        params = call_args[0]
+        assert isinstance(params, OpenAIEmbeddingsRequestWithExtraBody)
+        assert params.model == "test-model without embeddings"
+        assert params.input == ["Test 1", "Test 2"]
         mock_index.add_chunks.assert_called_once()
         args = mock_index.add_chunks.call_args[0]
         assert args[0] == chunks
@@ -321,9 +329,14 @@ class TestVectorDBWithIndex:
 
         await vector_db_with_index.insert_chunks(chunks)
 
-        mock_inference_api.openai_embeddings.assert_called_once_with(
-            "test-model with partial embeddings", ["Test 1", "Test 3"]
-        )
+        # Verify openai_embeddings was called with correct params
+        mock_inference_api.openai_embeddings.assert_called_once()
+        call_args = mock_inference_api.openai_embeddings.call_args[0]
+        assert len(call_args) == 1
+        params = call_args[0]
+        assert isinstance(params, OpenAIEmbeddingsRequestWithExtraBody)
+        assert params.model == "test-model with partial embeddings"
+        assert params.input == ["Test 1", "Test 3"]
         mock_index.add_chunks.assert_called_once()
         args = mock_index.add_chunks.call_args[0]
         assert len(args[0]) == 3

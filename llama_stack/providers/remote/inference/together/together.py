@@ -11,6 +11,7 @@ from together import AsyncTogether
 from together.constants import BASE_URL
 
 from llama_stack.apis.inference import (
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
 from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
@@ -62,11 +63,7 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         """
         Together's OpenAI-compatible embeddings endpoint is not compatible with
@@ -78,25 +75,27 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
          - does not support dimensions param, returns 400 Unrecognized request arguments supplied: dimensions
         """
         # Together support ticket #13332 -> will not fix
-        if user is not None:
+        if params.user is not None:
             raise ValueError("Together's embeddings endpoint does not support user param.")
         # Together support ticket #13333 -> escalated
-        if dimensions is not None:
+        if params.dimensions is not None:
             raise ValueError("Together's embeddings endpoint does not support dimensions param.")
 
         response = await self.client.embeddings.create(
-            model=await self._get_provider_model_id(model),
-            input=input,
-            encoding_format=encoding_format,
+            model=await self._get_provider_model_id(params.model),
+            input=params.input,
+            encoding_format=params.encoding_format,
         )
 
-        response.model = model  # return the user the same model id they provided, avoid exposing the provider model id
+        response.model = (
+            params.model
+        )  # return the user the same model id they provided, avoid exposing the provider model id
 
         # Together support ticket #13330 -> escalated
         #  - togethercomputer/m2-bert-80M-32k-retrieval *does not* return usage information
         if not hasattr(response, "usage") or response.usage is None:
             logger.warning(
-                f"Together's embedding endpoint for {model} did not return usage information, substituting -1s."
+                f"Together's embedding endpoint for {params.model} did not return usage information, substituting -1s."
             )
             response.usage = OpenAIEmbeddingUsage(prompt_tokens=-1, total_tokens=-1)
 

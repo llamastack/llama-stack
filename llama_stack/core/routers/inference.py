@@ -40,6 +40,7 @@ from llama_stack.apis.inference import (
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
     Order,
@@ -279,26 +280,18 @@ class InferenceRouter(Inference):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIEmbeddingsRequestWithExtraBody, Body(...)],
     ) -> OpenAIEmbeddingsResponse:
         logger.debug(
-            f"InferenceRouter.openai_embeddings: {model=}, input_type={type(input)}, {encoding_format=}, {dimensions=}",
+            f"InferenceRouter.openai_embeddings: model={params.model}, input_type={type(params.input)}, encoding_format={params.encoding_format}, dimensions={params.dimensions}",
         )
-        model_obj = await self._get_model(model, ModelType.embedding)
-        params = dict(
-            model=model_obj.identifier,
-            input=input,
-            encoding_format=encoding_format,
-            dimensions=dimensions,
-            user=user,
-        )
+        model_obj = await self._get_model(params.model, ModelType.embedding)
+
+        # Update model to use resolved identifier
+        params.model = model_obj.identifier
 
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
-        return await provider.openai_embeddings(**params)
+        return await provider.openai_embeddings(params)
 
     async def list_chat_completions(
         self,

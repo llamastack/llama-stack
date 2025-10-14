@@ -1662,7 +1662,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OpenaiEmbeddingsRequest"
+                                "$ref": "#/components/schemas/OpenAIEmbeddingsRequestWithExtraBody"
                             }
                         }
                     },
@@ -2436,13 +2436,13 @@
                     "VectorIO"
                 ],
                 "summary": "Creates a vector store.",
-                "description": "Creates a vector store.",
+                "description": "Creates a vector store.\nGenerate an OpenAI-compatible vector store with the given parameters.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OpenaiCreateVectorStoreRequest"
+                                "$ref": "#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody"
                             }
                         }
                     },
@@ -2622,7 +2622,7 @@
                     "VectorIO"
                 ],
                 "summary": "Create a vector store file batch.",
-                "description": "Create a vector store file batch.",
+                "description": "Create a vector store file batch.\nGenerate an OpenAI-compatible vector store file batch for the given vector store.",
                 "parameters": [
                     {
                         "name": "vector_store_id",
@@ -2638,7 +2638,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OpenaiCreateVectorStoreFileBatchRequest"
+                                "$ref": "#/components/schemas/OpenAICreateVectorStoreFileBatchRequestWithExtraBody"
                             }
                         }
                     },
@@ -8174,7 +8174,7 @@
                 "title": "OpenAICompletionChoice",
                 "description": "A choice from an OpenAI-compatible completion response."
             },
-            "OpenaiEmbeddingsRequest": {
+            "OpenAIEmbeddingsRequestWithExtraBody": {
                 "type": "object",
                 "properties": {
                     "model": {
@@ -8197,6 +8197,7 @@
                     },
                     "encoding_format": {
                         "type": "string",
+                        "default": "float",
                         "description": "(Optional) The format to return the embeddings in. Can be either \"float\" or \"base64\". Defaults to \"float\"."
                     },
                     "dimensions": {
@@ -8213,7 +8214,8 @@
                     "model",
                     "input"
                 ],
-                "title": "OpenaiEmbeddingsRequest"
+                "title": "OpenAIEmbeddingsRequestWithExtraBody",
+                "description": "Request parameters for OpenAI-compatible embeddings endpoint."
             },
             "OpenAIEmbeddingData": {
                 "type": "object",
@@ -12061,19 +12063,19 @@
                 "title": "VectorStoreObject",
                 "description": "OpenAI Vector Store object."
             },
-            "OpenaiCreateVectorStoreRequest": {
+            "OpenAICreateVectorStoreRequestWithExtraBody": {
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "A name for the vector store."
+                        "description": "(Optional) A name for the vector store"
                     },
                     "file_ids": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": "A list of File IDs that the vector store should use. Useful for tools like `file_search` that can access files."
+                        "description": "List of file IDs to include in the vector store"
                     },
                     "expires_after": {
                         "type": "object",
@@ -12099,7 +12101,7 @@
                                 }
                             ]
                         },
-                        "description": "The expiration policy for a vector store."
+                        "description": "(Optional) Expiration policy for the vector store"
                     },
                     "chunking_strategy": {
                         "type": "object",
@@ -12125,7 +12127,7 @@
                                 }
                             ]
                         },
-                        "description": "The chunking strategy used to chunk the file(s). If not set, will use the `auto` strategy."
+                        "description": "(Optional) Strategy for splitting files into chunks"
                     },
                     "metadata": {
                         "type": "object",
@@ -12151,23 +12153,12 @@
                                 }
                             ]
                         },
-                        "description": "Set of 16 key-value pairs that can be attached to an object."
-                    },
-                    "embedding_model": {
-                        "type": "string",
-                        "description": "The embedding model to use for this vector store."
-                    },
-                    "embedding_dimension": {
-                        "type": "integer",
-                        "description": "The dimension of the embedding vectors (default: 384)."
-                    },
-                    "provider_id": {
-                        "type": "string",
-                        "description": "The ID of the provider to use for this vector store."
+                        "description": "Set of key-value pairs that can be attached to the vector store"
                     }
                 },
                 "additionalProperties": false,
-                "title": "OpenaiCreateVectorStoreRequest"
+                "title": "OpenAICreateVectorStoreRequestWithExtraBody",
+                "description": "Request to create a vector store with extra_body support."
             },
             "OpenaiUpdateVectorStoreRequest": {
                 "type": "object",
@@ -12337,7 +12328,7 @@
                 "title": "VectorStoreChunkingStrategyStaticConfig",
                 "description": "Configuration for static chunking strategy."
             },
-            "OpenaiCreateVectorStoreFileBatchRequest": {
+            "OpenAICreateVectorStoreFileBatchRequestWithExtraBody": {
                 "type": "object",
                 "properties": {
                     "file_ids": {
@@ -12345,7 +12336,7 @@
                         "items": {
                             "type": "string"
                         },
-                        "description": "A list of File IDs that the vector store should use."
+                        "description": "A list of File IDs that the vector store should use"
                     },
                     "attributes": {
                         "type": "object",
@@ -12371,18 +12362,19 @@
                                 }
                             ]
                         },
-                        "description": "(Optional) Key-value attributes to store with the files."
+                        "description": "(Optional) Key-value attributes to store with the files"
                     },
                     "chunking_strategy": {
                         "$ref": "#/components/schemas/VectorStoreChunkingStrategy",
-                        "description": "(Optional) The chunking strategy used to chunk the file(s). Defaults to auto."
+                        "description": "(Optional) The chunking strategy used to chunk the file(s). Defaults to auto"
                     }
                 },
                 "additionalProperties": false,
                 "required": [
                     "file_ids"
                 ],
-                "title": "OpenaiCreateVectorStoreFileBatchRequest"
+                "title": "OpenAICreateVectorStoreFileBatchRequestWithExtraBody",
+                "description": "Request to create a vector store file batch with extra_body support."
             },
             "VectorStoreFileBatchObject": {
                 "type": "object",

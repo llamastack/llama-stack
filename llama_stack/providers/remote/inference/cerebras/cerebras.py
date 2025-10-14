@@ -6,7 +6,10 @@
 
 from urllib.parse import urljoin
 
-from llama_stack.apis.inference import OpenAIEmbeddingsResponse
+from llama_stack.apis.inference import (
+    OpenAIEmbeddingsRequestWithExtraBody,
+    OpenAIEmbeddingsResponse,
+)
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import CerebrasImplConfig
@@ -20,10 +23,6 @@ class CerebrasInferenceAdapter(OpenAIMixin):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         raise NotImplementedError()
