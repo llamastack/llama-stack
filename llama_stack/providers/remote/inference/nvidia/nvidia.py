@@ -5,14 +5,6 @@
 # the root directory of this source tree.
 
 
-from openai import NOT_GIVEN
-
-from llama_stack.apis.inference import (
-    OpenAIEmbeddingData,
-    OpenAIEmbeddingsRequestWithExtraBody,
-    OpenAIEmbeddingsResponse,
-    OpenAIEmbeddingUsage,
-)
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
@@ -76,50 +68,3 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         :return: The NVIDIA API base URL
         """
         return f"{self.config.url}/v1" if self.config.append_api_version else self.config.url
-
-    async def openai_embeddings(
-        self,
-        params: OpenAIEmbeddingsRequestWithExtraBody,
-    ) -> OpenAIEmbeddingsResponse:
-        """
-        OpenAI-compatible embeddings for NVIDIA NIM.
-
-        Note: NVIDIA NIM asymmetric embedding models require an "input_type" field not present in the standard OpenAI embeddings API.
-        We default this to "query" to ensure requests succeed when using the
-        OpenAI-compatible endpoint. For passage embeddings, use the embeddings API with
-        `task_type='document'`.
-        """
-        extra_body: dict[str, object] = {"input_type": "query"}
-        logger.warning(
-            "NVIDIA OpenAI-compatible embeddings: defaulting to input_type='query'. "
-            "For passage embeddings, use the embeddings API with task_type='document'."
-        )
-
-        response = await self.client.embeddings.create(
-            model=await self._get_provider_model_id(params.model),
-            input=params.input,
-            encoding_format=params.encoding_format if params.encoding_format is not None else NOT_GIVEN,
-            dimensions=params.dimensions if params.dimensions is not None else NOT_GIVEN,
-            user=params.user if params.user is not None else NOT_GIVEN,
-            extra_body=extra_body,
-        )
-
-        data = []
-        for i, embedding_data in enumerate(response.data):
-            data.append(
-                OpenAIEmbeddingData(
-                    embedding=embedding_data.embedding,
-                    index=i,
-                )
-            )
-
-        usage = OpenAIEmbeddingUsage(
-            prompt_tokens=response.usage.prompt_tokens,
-            total_tokens=response.usage.total_tokens,
-        )
-
-        return OpenAIEmbeddingsResponse(
-            data=data,
-            model=response.model,
-            usage=usage,
-        )
