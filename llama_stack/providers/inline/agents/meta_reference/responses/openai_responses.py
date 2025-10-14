@@ -381,7 +381,6 @@ class OpenAIResponsesImpl:
         """Sync content and response messages to the conversation."""
         conversation_items = []
 
-        # add user content message(s) -- fix this, it is somewhat hacky and feels non comprehensive
         if isinstance(input, str):
             conversation_items.append(
                 OpenAIResponseMessage(role="user", content=[OpenAIResponseInputMessageContentText(text=input)])
