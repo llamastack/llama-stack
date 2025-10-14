@@ -11,26 +11,22 @@ This document outlines known limitations and inconsistencies between Llama Stack
 See the OpenAI [changelog](https://platform.openai.com/docs/changelog) for details of any new functionality that has been added since that date. Links to issues are included so readers can read about status, post comments, and/or subscribe for updates relating to any limitations that are of specific interest to them. We would also love any other feedback on any use-cases you try that do not work to help prioritize the pieces left to implement.
 Please open new issues in the [meta-llama/llama-stack](https://github.com/meta-llama/llama-stack) GitHub repository with details of anything that does not work that does not already have an open issue.
 
-### Streaming
+### Instructions
+**Status:** Partial Implementation + Work in Progress
 
-**Status:** Partial Implementation
-**Issue:** [#2364](https://github.com/llamastack/llama-stack/issues/2364)
+**Issue:** [#3566](https://github.com/llamastack/llama-stack/issues/3566)
 
-Streaming functionality for the Responses API is partially implemented and does work to some extent, but some streaming response objects that would be needed for full compatibility are still missing.
+In Llama Stack, the instructions parameter is already implemented for creating a response, but it is not yet included in the output response object.
 
 ---
 
-### Built-in Tools
+### Streaming
+
 **Status:** Partial Implementation
 
-OpenAI's Responses API includes an ecosystem of built-in tools (e.g., code interpreter) that lower the barrier to entry for agentic workflows. These tools are typically aligned with specific model training.
+**Issue:** [#2364](https://github.com/llamastack/llama-stack/issues/2364)
 
-**Current Status in Llama Stack:**
-- Some built-in tools exist (file search, web search)
-- Missing tools include code interpreter, computer use, and image generation
-- Some built-in tools may require additional APIs (e.g., [containers API](https://platform.openai.com/docs/api-reference/containers) for code interpreter)
-
-It's unclear whether there is demand for additional built-in tools in Llama Stack. No upstream issues have been filed for adding more built-in tools.
+Streaming functionality for the Responses API is partially implemented and does work to some extent, but some streaming response objects that would be needed for full compatibility are still missing.
 
 ---
 
@@ -43,12 +39,34 @@ OpenAI's platform supports [templated prompts using a structured language](https
 
 ---
 
-### Instructions
-**Status:** Partial Implementation + Work in Progress
+### Web-search tool compatibility
 
-**Issue:** [#3566](https://github.com/llamastack/llama-stack/issues/3566)
+**Status:** Partial Implementation
 
-In Llama Stack, the instructions parameter is already implemented for creating a response, but it is not yet included in the output response object.
+Both OpenAI and Llama Stack support a web-search built-in tool.  The [OpenAI documentation](https://platform.openai.com/docs/api-reference/responses/create) for web search tool in a Responses tool list says:
+
+> The type of the web search tool. One of `web_search` or `web_search_2025_08_26`.
+
+In contrast, the [Llama Stack documentation](https://llamastack.github.io/docs/api/create-a-new-open-ai-response) says that the allowed values for `type` for web search are `MOD1`, `MOD2` and `MOD3`.
+Is that correct?  If so, what are the meanings of each of them?  It might make sense for the allowed values for OpenAI map to some values for Llama Stack so that code written to the OpenAI specification
+also work with Llama Stack.
+
+The OpenAI web search tool also has fields for `filters` and `user_location` which are not documented as options for Llama Stack.  If feasible, it would be good to support these too.
+
+---
+
+### Other built-in Tools
+
+**Status:** Partial Implementation
+
+OpenAI's Responses API includes an ecosystem of built-in tools (e.g., code interpreter) that lower the barrier to entry for agentic workflows. These tools are typically aligned with specific model training.
+
+**Current Status in Llama Stack:**
+- Some built-in tools exist (file search, web search)
+- Missing tools include code interpreter, computer use, and image generation
+- Some built-in tools may require additional APIs (e.g., [containers API](https://platform.openai.com/docs/api-reference/containers) for code interpreter)
+
+It's unclear whether there is demand for additional built-in tools in Llama Stack. No upstream issues have been filed for adding more built-in tools.
 
 ---
 
