@@ -139,16 +139,13 @@ print(f"Structured Response: {structured_response.choices[0].message.content}")
 
 The following example shows how to create embeddings for an NVIDIA NIM.
 
-> [!NOTE]
-> NVIDIA asymmetric embedding models (e.g., `nvidia/llama-3.2-nv-embedqa-1b-v2`) require an `input_type` parameter not present in the standard OpenAI embeddings API. The NVIDIA Inference Adapter automatically sets `input_type="query"` when using the OpenAI-compatible embeddings endpoint for NVIDIA. For passage embeddings, use the `embeddings` API with `task_type="document"`.
-
 ```python
-response = client.inference.embeddings(
-    model_id="nvidia/llama-3.2-nv-embedqa-1b-v2",
-    contents=["What is the capital of France?"],
-    task_type="query",
+response = client.embeddings.create(
+    model="nvidia/llama-3.2-nv-embedqa-1b-v2",
+    input=["What is the capital of France?"],
+    extra_body={"input_type": "query"},
 )
-print(f"Embeddings: {response.embeddings}")
+print(f"Embeddings: {response.data}")
 ```
 
 ### Vision Language Models Example
