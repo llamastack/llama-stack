@@ -119,7 +119,7 @@ The following environment variables can be configured:
 
 ### Telemetry Configuration
 - `OTEL_SERVICE_NAME`: OpenTelemetry service name
-- `TELEMETRY_SINKS`: Telemetry sinks (default: `console,sqlite`)
+- `TELEMETRY_SINKS`: Telemetry sinks (default: `[]`)
 
 ## Enabling Providers
 

@@ -207,8 +207,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         super().__init__()
         # when using the library client, we should not log to console since many
         # of our logs are intended for server-side usage
-        current_sinks = os.environ.get("TELEMETRY_SINKS", "sqlite").split(",")
-        os.environ["TELEMETRY_SINKS"] = ",".join(sink for sink in current_sinks if sink != "console")
+        if sinks_from_env := os.environ.get("TELEMETRY_SINKS", None):
+            current_sinks = sinks_from_env.split(",")
+            os.environ["TELEMETRY_SINKS"] = ",".join(sink for sink in current_sinks if sink != "console")
 
         if in_notebook():
             import nest_asyncio
@@ -253,6 +254,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         try:
             self.route_impls = None
+            breakpoint()
 
             stack = Stack(self.config, self.custom_provider_registry)
             await stack.initialize()
