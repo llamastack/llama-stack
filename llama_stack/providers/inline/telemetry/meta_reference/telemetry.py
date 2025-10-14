@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import datetime
 import threading
 from typing import Any
 
@@ -22,10 +21,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from llama_stack.apis.telemetry import (
     Event,
     MetricEvent,
-    MetricLabelMatcher,
-    MetricQueryType,
     QueryCondition,
-    QueryMetricsResponse,
     QuerySpanTreeResponse,
     QueryTracesResponse,
     Span,
@@ -42,11 +38,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.inline.telemetry.meta_reference.console_span_processor import (
     ConsoleSpanProcessor,
 )
-from llama_stack.providers.inline.telemetry.meta_reference.sqlite_span_processor import (
-    SQLiteSpanProcessor,
-)
 from llama_stack.providers.utils.telemetry.dataset_mixin import TelemetryDatasetMixin
-from llama_stack.providers.utils.telemetry.sqlite_trace_store import SQLiteTraceStore
 from llama_stack.providers.utils.telemetry.tracing import ROOT_SPAN_MARKERS
 
 from .config import TelemetryConfig, TelemetrySink
@@ -111,15 +103,11 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
                     metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
                     metrics.set_meter_provider(metric_provider)
 
-            if TelemetrySink.SQLITE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(SQLiteSpanProcessor(self.config.sqlite_db_path))
             if TelemetrySink.CONSOLE in self.config.sinks:
                 trace.get_tracer_provider().add_span_processor(ConsoleSpanProcessor(print_attributes=True))
 
         if TelemetrySink.OTEL_METRIC in self.config.sinks:
             self.meter = metrics.get_meter(__name__)
-        if TelemetrySink.SQLITE in self.config.sinks:
-            self.trace_store = SQLiteTraceStore(self.config.sqlite_db_path)
 
         self._lock = _global_lock
 
@@ -138,47 +126,6 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
             self._log_structured(event, ttl_seconds)
         else:
             raise ValueError(f"Unknown event type: {event}")
-
-    async def query_metrics(
-        self,
-        metric_name: str,
-        start_time: int,
-        end_time: int | None = None,
-        granularity: str | None = None,
-        query_type: MetricQueryType = MetricQueryType.RANGE,
-        label_matchers: list[MetricLabelMatcher] | None = None,
-    ) -> QueryMetricsResponse:
-        """Query metrics from the telemetry store.
-
-        Args:
-            metric_name: The name of the metric to query (e.g., "prompt_tokens")
-            start_time: Start time as Unix timestamp
-            end_time: End time as Unix timestamp (defaults to now if None)
-            granularity: Time granularity for aggregation
-            query_type: Type of query (RANGE or INSTANT)
-            label_matchers: Label filters to apply
-
-        Returns:
-            QueryMetricsResponse with metric time series data
-        """
-        # Convert timestamps to datetime objects
-        start_dt = datetime.datetime.fromtimestamp(start_time, datetime.UTC)
-        end_dt = datetime.datetime.fromtimestamp(end_time, datetime.UTC) if end_time else None
-
-        # Use SQLite trace store if available
-        if hasattr(self, "trace_store") and self.trace_store:
-            return await self.trace_store.query_metrics(
-                metric_name=metric_name,
-                start_time=start_dt,
-                end_time=end_dt,
-                granularity=granularity,
-                query_type=query_type,
-                label_matchers=label_matchers,
-            )
-        else:
-            raise ValueError(
-                f"In order to query_metrics, you must have {TelemetrySink.SQLITE} set in your telemetry sinks"
-            )
 
     def _log_unstructured(self, event: UnstructuredLogEvent, ttl_seconds: int) -> None:
         with self._lock:
