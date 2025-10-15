@@ -24,36 +24,8 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 import llama_stack.providers.inline.telemetry.meta_reference.telemetry as telemetry_module
-
-
-@pytest.fixture(scope="session")
-def _setup_test_telemetry():
-    """Session-scoped: Set up test telemetry providers before client initialization."""
-    # Reset OpenTelemetry's internal locks to allow test fixtures to override providers
-    if hasattr(otel_trace, "_TRACER_PROVIDER_SET_ONCE"):
-        otel_trace._TRACER_PROVIDER_SET_ONCE._done = False  # type: ignore
-    if hasattr(otel_metrics, "_METER_PROVIDER_SET_ONCE"):
-        otel_metrics._METER_PROVIDER_SET_ONCE._done = False  # type: ignore
-
-    # Create and set up providers before client initialization
-    span_exporter = InMemorySpanExporter()
-    tracer_provider = TracerProvider()
-    tracer_provider.add_span_processor(SimpleSpanProcessor(span_exporter))
-    trace.set_tracer_provider(tracer_provider)
-
-    metric_reader = InMemoryMetricReader()
-    meter_provider = MeterProvider(metric_readers=[metric_reader])
-    metrics.set_meter_provider(meter_provider)
-
-    # Set module-level providers so TelemetryAdapter uses them
-    telemetry_module._TRACER_PROVIDER = tracer_provider
-
-    yield tracer_provider, meter_provider, span_exporter, metric_reader
-
-    # Cleanup
-    telemetry_module._TRACER_PROVIDER = None
-    tracer_provider.shutdown()
-    meter_provider.shutdown()
+from llama_stack.testing.api_recorder import patch_httpx_for_test_id
+from tests.integration.fixtures.common import instantiate_llama_stack_client
 
 
 class TestCollector:
@@ -71,16 +43,53 @@ class TestCollector:
             return metrics.resource_metrics[0].scope_metrics[0].metrics
         return None
 
+    def clear(self) -> None:
+        self.span_exporter.clear()
+        self.metric_reader.get_metrics_data()
+
+
+@pytest.fixture(scope="session")
+def _telemetry_providers():
+    """Set up in-memory OTEL providers before llama_stack_client initializes."""
+    # Reset set-once flags to allow re-initialization
+    if hasattr(otel_trace, "_TRACER_PROVIDER_SET_ONCE"):
+        otel_trace._TRACER_PROVIDER_SET_ONCE._done = False  # type: ignore
+    if hasattr(otel_metrics, "_METER_PROVIDER_SET_ONCE"):
+        otel_metrics._METER_PROVIDER_SET_ONCE._done = False  # type: ignore
+
+    # Create in-memory exporters/readers
+    span_exporter = InMemorySpanExporter()
+    tracer_provider = TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(span_exporter))
+    trace.set_tracer_provider(tracer_provider)
+
+    metric_reader = InMemoryMetricReader()
+    meter_provider = MeterProvider(metric_readers=[metric_reader])
+    metrics.set_meter_provider(meter_provider)
+
+    # Set module-level provider so TelemetryAdapter uses our in-memory providers
+    telemetry_module._TRACER_PROVIDER = tracer_provider
+
+    yield (span_exporter, metric_reader, tracer_provider, meter_provider)
+
+    telemetry_module._TRACER_PROVIDER = None
+    tracer_provider.shutdown()
+    meter_provider.shutdown()
+
+
+@pytest.fixture(scope="session")
+def llama_stack_client(_telemetry_providers, request):
+    """Override llama_stack_client to ensure in-memory telemetry providers are used."""
+    patch_httpx_for_test_id()
+    client = instantiate_llama_stack_client(request.session)
+
+    return client
+
 
 @pytest.fixture
-def mock_otlp_collector(_setup_test_telemetry):
-    """Function-scoped: Access to telemetry data for each test."""
-    # Unpack the providers from the session fixture
-    tracer_provider, meter_provider, span_exporter, metric_reader = _setup_test_telemetry
-
+def mock_otlp_collector(_telemetry_providers):
+    """Provides access to telemetry data and clears between tests."""
+    span_exporter, metric_reader, _, _ = _telemetry_providers
     collector = TestCollector(span_exporter, metric_reader)
-
-    # Clear spans between tests
-    span_exporter.clear()
-
     yield collector
+    collector.clear()
