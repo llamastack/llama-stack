@@ -101,7 +101,7 @@ class ResponsesStore:
             for _ in range(self._num_writers):
                 self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
         else:
-            logger.info("Write queue disabled for SQLite to avoid concurrency issues")
+            logger.debug("Write queue disabled for SQLite to avoid concurrency issues")
 
     async def shutdown(self) -> None:
         if not self._worker_tasks:
@@ -329,7 +329,7 @@ class ResponsesStore:
                 where={"conversation_id": conversation_id},
             )
 
-        logger.info(f"Stored {len(messages)} messages for conversation {conversation_id}")
+        logger.debug(f"Stored {len(messages)} messages for conversation {conversation_id}")
 
     async def get_conversation_messages(self, conversation_id: str) -> list[OpenAIMessageParam] | None:
         """Get stored messages for a conversation.

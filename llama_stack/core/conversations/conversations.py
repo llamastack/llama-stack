@@ -135,7 +135,7 @@ class ConversationServiceImpl(Conversations):
             object="conversation",
         )
 
-        logger.info(f"Created conversation {conversation_id}")
+        logger.debug(f"Created conversation {conversation_id}")
         return conversation
 
     async def get_conversation(self, conversation_id: str) -> Conversation:
@@ -161,7 +161,7 @@ class ConversationServiceImpl(Conversations):
         """Delete a conversation with the given ID."""
         await self.sql_store.delete(table="openai_conversations", where={"id": conversation_id})
 
-        logger.info(f"Deleted conversation {conversation_id}")
+        logger.debug(f"Deleted conversation {conversation_id}")
         return ConversationDeletedResource(id=conversation_id)
 
     def _validate_conversation_id(self, conversation_id: str) -> None:
@@ -222,7 +222,7 @@ class ConversationServiceImpl(Conversations):
 
             created_items.append(item_dict)
 
-        logger.info(f"Created {len(created_items)} items in conversation {conversation_id}")
+        logger.debug(f"Created {len(created_items)} items in conversation {conversation_id}")
 
         # Convert created items (dicts) to proper ConversationItem types
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
@@ -311,5 +311,5 @@ class ConversationServiceImpl(Conversations):
             table="conversation_items", where={"id": item_id, "conversation_id": conversation_id}
         )
 
-        logger.info(f"Deleted item {item_id} from conversation {conversation_id}")
+        logger.debug(f"Deleted item {item_id} from conversation {conversation_id}")
         return ConversationItemDeletedResource(id=item_id)
