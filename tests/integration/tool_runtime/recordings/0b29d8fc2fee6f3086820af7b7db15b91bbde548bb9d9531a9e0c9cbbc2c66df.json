@@ -19,6 +19,44 @@
               "text": "Say hi to the world. Use tools to do so."
             }
           ]
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_c1tlwvxc",
+              "type": "function",
+              "function": {
+                "name": "greet_everyone",
+                "arguments": "{\"url\":\"world\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_c1tlwvxc",
+          "content": [
+            {
+              "type": "text",
+              "text": "Hello, world!"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": "I apologize, it seems like my previous response from the tool did not translate to a clear greeting.\n\nLet me try again using a different approach. I can use a text-to-speech conversion tool to say hello in various languages:\n\n\"Hello\"\n\n(or)\n\n\"Pong\"\n\n(in multiple languages such as Spanish: \"Hola\", French: \"Bonjour\", Chinese:, Japanese:, Korean:, or many others)"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What is the boiling point of polyjuice? Use tools to answer."
+            }
+          ]
         }
       ],
       "stream": true,
@@ -80,7 +118,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-d516b8d54a42",
+          "id": "rec-0b29d8fc2fee",
           "choices": [
             {
               "delta": {
@@ -91,10 +129,10 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_c1tlwvxc",
+                    "id": "call_h8atvnz3",
                     "function": {
-                      "arguments": "{\"url\":\"world\"}",
-                      "name": "greet_everyone"
+                      "arguments": "{\"celsius\":\"true\",\"liquid_name\":\"polyjuice\"}",
+                      "name": "get_boiling_point"
                     },
                     "type": "function"
                   }
@@ -116,7 +154,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-d516b8d54a42",
+          "id": "rec-0b29d8fc2fee",
           "choices": [
             {
               "delta": {
@@ -142,7 +180,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-d516b8d54a42",
+          "id": "rec-0b29d8fc2fee",
           "choices": [],
           "created": 0,
           "model": "llama3.2:3b-instruct-fp16",
@@ -150,9 +188,9 @@
           "service_tier": null,
           "system_fingerprint": "fp_ollama",
           "usage": {
-            "completion_tokens": 19,
-            "prompt_tokens": 278,
-            "total_tokens": 297,
+            "completion_tokens": 29,
+            "prompt_tokens": 414,
+            "total_tokens": 443,
             "completion_tokens_details": null,
             "prompt_tokens_details": null
           }

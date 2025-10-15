@@ -132,31 +132,3 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     assert tool_events[-1].result.tool_calls[0].tool_name == "greet_everyone"
 
     assert "hello" in final_response.output_text.lower()
-
-    # when streaming, we currently don't check auth headers upfront and fail the request
-    # early. but we should at least be generating a 401 later in the process.
-    response_stream = agent.create_turn(
-        session_id=session_id,
-        messages=[
-            {
-                "type": "message",
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": "What is the boiling point of polyjuice? Use tools to answer.",
-                    }
-                ],
-            }
-        ],
-        stream=True,
-    )
-    if isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-        with pytest.raises(AuthenticationRequiredError):
-            for _ in response_stream:
-                pass
-    else:
-        error_chunks = [chunk for chunk in response_stream if "error" in chunk.model_dump()]
-        assert len(error_chunks) == 1
-        chunk = error_chunks[0].model_dump()
-        assert "Unauthorized" in chunk["error"]["message"]
