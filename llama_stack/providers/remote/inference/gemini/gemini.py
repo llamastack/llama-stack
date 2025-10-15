@@ -14,7 +14,7 @@ class GeminiInferenceAdapter(OpenAIMixin):
 
     provider_data_api_key_field: str = "gemini_api_key"
     embedding_model_metadata: dict[str, dict[str, int]] = {
-        "text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
+        "models/text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
     }
 
     def get_base_url(self):
