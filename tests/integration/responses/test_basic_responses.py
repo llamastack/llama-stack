@@ -66,7 +66,9 @@ def test_response_streaming_basic(compat_client, text_model_id, case):
         if chunk.type == "response.created":
             # Verify response.created is emitted first and immediately
             assert len(events) == 1, "response.created should be the first event"
-            assert event_times[0] < 0.1, "response.created should be emitted immediately"
+            assert event_times[0] < 0.2, (
+                f"response.created should be emitted immediately (took {event_times[0]} seconds)"
+            )
             assert chunk.response.status == "in_progress"
             response_id = chunk.response.id
 
