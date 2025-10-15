@@ -9,13 +9,10 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
-
 
 class TelemetrySink(StrEnum):
     OTEL_TRACE = "otel_trace"
     OTEL_METRIC = "otel_metric"
-    SQLITE = "sqlite"
     CONSOLE = "console"
 
 
@@ -30,12 +27,8 @@ class TelemetryConfig(BaseModel):
         description="The service name to use for telemetry",
     )
     sinks: list[TelemetrySink] = Field(
-        default=[TelemetrySink.SQLITE],
-        description="List of telemetry sinks to enable (possible values: otel_trace, otel_metric, sqlite, console)",
-    )
-    sqlite_db_path: str = Field(
-        default_factory=lambda: (RUNTIME_BASE_DIR / "trace_store.db").as_posix(),
-        description="The path to the SQLite database to use for storing traces",
+        default_factory=list,
+        description="List of telemetry sinks to enable (possible values: otel_trace, otel_metric, console)",
     )
 
     @field_validator("sinks", mode="before")
@@ -43,13 +36,12 @@ class TelemetryConfig(BaseModel):
     def validate_sinks(cls, v):
         if isinstance(v, str):
             return [TelemetrySink(sink.strip()) for sink in v.split(",")]
-        return v
+        return v or []
 
     @classmethod
-    def sample_run_config(cls, __distro_dir__: str, db_name: str = "trace_store.db") -> dict[str, Any]:
+    def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
         return {
             "service_name": "${env.OTEL_SERVICE_NAME:=\u200b}",
-            "sinks": "${env.TELEMETRY_SINKS:=sqlite}",
-            "sqlite_db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
+            "sinks": "${env.TELEMETRY_SINKS:=}",
             "otel_exporter_otlp_endpoint": "${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}",
         }

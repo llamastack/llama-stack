@@ -93,6 +93,22 @@ class Chunk(BaseModel):
 
         return generate_chunk_id(str(uuid.uuid4()), str(self.content))
 
+    @property
+    def document_id(self) -> str | None:
+        """Returns the document_id from either metadata or chunk_metadata, with metadata taking precedence."""
+        # Check metadata first (takes precedence)
+        doc_id = self.metadata.get("document_id")
+        if doc_id is not None:
+            if not isinstance(doc_id, str):
+                raise TypeError(f"metadata['document_id'] must be a string, got {type(doc_id).__name__}: {doc_id!r}")
+            return doc_id
+
+        # Fall back to chunk_metadata if available (Pydantic ensures type safety)
+        if self.chunk_metadata is not None:
+            return self.chunk_metadata.document_id
+
+        return None
+
 
 @json_schema_type
 class QueryChunksResponse(BaseModel):

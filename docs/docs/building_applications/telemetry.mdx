@@ -10,58 +10,8 @@ import TabItem from '@theme/TabItem';
 
 # Telemetry
 
-The Llama Stack telemetry system provides comprehensive tracing, metrics, and logging capabilities. It supports multiple sink types including OpenTelemetry, SQLite, and Console output for complete observability of your AI applications.
+The Llama Stack uses OpenTelemetry to provide comprehensive tracing, metrics, and logging capabilities.
 
-## Event Types
-
-The telemetry system supports three main types of events:
-
-<Tabs>
-<TabItem value="unstructured" label="Unstructured Logs">
-
-Free-form log messages with severity levels for general application logging:
-
-```python
-unstructured_log_event = UnstructuredLogEvent(
-    message="This is a log message",
-    severity=LogSeverity.INFO
-)
-```
-
-</TabItem>
-<TabItem value="metrics" label="Metric Events">
-
-Numerical measurements with units for tracking performance and usage:
-
-```python
-metric_event = MetricEvent(
-    metric="my_metric",
-    value=10,
-    unit="count"
-)
-```
-
-</TabItem>
-<TabItem value="structured" label="Structured Logs">
-
-System events like span start/end that provide structured operation tracking:
-
-```python
-structured_log_event = SpanStartPayload(
-    name="my_span",
-    parent_span_id="parent_span_id"
-)
-```
-
-</TabItem>
-</Tabs>
-
-## Spans and Traces
-
-- **Spans**: Represent individual operations with timing information and hierarchical relationships
-- **Traces**: Collections of related spans that form a complete request flow across your application
-
-This hierarchical structure allows you to understand the complete execution path of requests through your Llama Stack application.
 
 ## Automatic Metrics Generation
 
@@ -130,21 +80,6 @@ Send events to an OpenTelemetry Collector for integration with observability pla
 - Supports both traces and metrics
 
 </TabItem>
-<TabItem value="sqlite" label="SQLite">
-
-Store events in a local SQLite database for direct querying:
-
-**Use Cases:**
-- Local development and debugging
-- Custom analytics and reporting
-- Offline analysis of application behavior
-
-**Features:**
-- Direct SQL querying capabilities
-- Persistent local storage
-- No external dependencies
-
-</TabItem>
 <TabItem value="console" label="Console">
 
 Print events to the console for immediate debugging:
@@ -174,9 +109,8 @@ telemetry:
     provider_type: inline::meta-reference
     config:
       service_name: "llama-stack-service"
-      sinks: ['console', 'sqlite', 'otel_trace', 'otel_metric']
+      sinks: ['console', 'otel_trace', 'otel_metric']
       otel_exporter_otlp_endpoint: "http://localhost:4318"
-      sqlite_db_path: "/path/to/telemetry.db"
 ```
 
 ### Environment Variables
@@ -185,7 +119,7 @@ Configure telemetry behavior using environment variables:
 
 - **`OTEL_EXPORTER_OTLP_ENDPOINT`**: OpenTelemetry Collector endpoint (default: `http://localhost:4318`)
 - **`OTEL_SERVICE_NAME`**: Service name for telemetry (default: empty string)
-- **`TELEMETRY_SINKS`**: Comma-separated list of sinks (default: `console,sqlite`)
+- **`TELEMETRY_SINKS`**: Comma-separated list of sinks (default: `[]`)
 
 ### Quick Setup: Complete Telemetry Stack
 
@@ -248,37 +182,10 @@ Forward metrics to other observability systems:
 </TabItem>
 </Tabs>
 
-## SQLite Querying
-
-The `sqlite` sink allows you to query traces without an external system. This is particularly useful for development and custom analytics.
-
-### Example Queries
-
-```sql
--- Query recent traces
-SELECT * FROM traces WHERE timestamp > datetime('now', '-1 hour');
-
--- Analyze span durations
-SELECT name, AVG(duration_ms) as avg_duration
-FROM spans
-GROUP BY name
-ORDER BY avg_duration DESC;
-
--- Find slow operations
-SELECT * FROM spans
-WHERE duration_ms > 1000
-ORDER BY duration_ms DESC;
-```
-
-:::tip[Advanced Analytics]
-Refer to the [Getting Started notebook](https://github.com/meta-llama/llama-stack/blob/main/docs/getting_started.ipynb) for more examples on querying traces and spans programmatically.
-:::
-
 ## Best Practices
 
 ### 🔍 **Monitoring Strategy**
 - Use OpenTelemetry for production environments
-- Combine multiple sinks for development (console + SQLite)
 - Set up alerts on key metrics like token usage and error rates
 
 ### 📊 **Metrics Analysis**
@@ -293,45 +200,8 @@ Refer to the [Getting Started notebook](https://github.com/meta-llama/llama-stac
 
 ### 🔧 **Configuration Management**
 - Use environment variables for flexible deployment
-- Configure appropriate retention policies for SQLite
 - Ensure proper network access to OpenTelemetry collectors
 
-## Integration Examples
-
-### Basic Telemetry Setup
-
-```python
-from llama_stack_client import LlamaStackClient
-
-# Client with telemetry headers
-client = LlamaStackClient(
-    base_url="http://localhost:8000",
-    extra_headers={
-        "X-Telemetry-Service": "my-ai-app",
-        "X-Telemetry-Version": "1.0.0"
-    }
-)
-
-# All API calls will be automatically traced
-response = client.chat.completions.create(
-    model="meta-llama/Llama-3.2-3B-Instruct",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-```
-
-### Custom Telemetry Context
-
-```python
-# Add custom span attributes for better tracking
-with tracer.start_as_current_span("custom_operation") as span:
-    span.set_attribute("user_id", "user123")
-    span.set_attribute("operation_type", "chat_completion")
-
-    response = client.chat.completions.create(
-        model="meta-llama/Llama-3.2-3B-Instruct",
-        messages=[{"role": "user", "content": "Hello!"}]
-    )
-```
 
 ## Related Resources
 

@@ -44,8 +44,11 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObjectStreamResponseRefusalDone,
     OpenAIResponseOutput,
     OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFunctionToolCall,
+    OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponseText,
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
@@ -177,6 +180,7 @@ class StreamingResponseOrchestrator:
                 # (some providers don't support non-empty response_format when tools are present)
                 response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
                 logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -613,19 +617,22 @@ class StreamingResponseOrchestrator:
 
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
-                            function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
-                                arguments="",  # Will be filled incrementally via delta events
-                                call_id=tool_call.id or "",
-                                name=tool_call.function.name if tool_call.function else "",
-                                id=tool_call_item_id,
-                                status="in_progress",
-                            )
-                            yield OpenAIResponseObjectStreamResponseOutputItemAdded(
-                                response_id=self.response_id,
-                                item=function_call_item,
-                                output_index=len(output_messages),
-                                sequence_number=self.sequence_number,
-                            )
+                            is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
+                            if not is_mcp_tool and tool_call.function.name not in ["web_search", "knowledge_search"]:
+                                # for MCP tools (and even other non-function tools) we emit an output message item later
+                                function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
+                                    arguments="",  # Will be filled incrementally via delta events
+                                    call_id=tool_call.id or "",
+                                    name=tool_call.function.name if tool_call.function else "",
+                                    id=tool_call_item_id,
+                                    status="in_progress",
+                                )
+                                yield OpenAIResponseObjectStreamResponseOutputItemAdded(
+                                    response_id=self.response_id,
+                                    item=function_call_item,
+                                    output_index=len(output_messages),
+                                    sequence_number=self.sequence_number,
+                                )
 
                         # Stream tool call arguments as they arrive (differentiate between MCP and function calls)
                         if tool_call.function and tool_call.function.arguments:
@@ -805,6 +812,35 @@ class StreamingResponseOrchestrator:
             # Use a fallback item_id if not found
             if not matching_item_id:
                 matching_item_id = f"tc_{uuid.uuid4()}"
+
+            self.sequence_number += 1
+            if tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server:
+                item = OpenAIResponseOutputMessageMCPCall(
+                    arguments="",
+                    name=tool_call.function.name,
+                    id=matching_item_id,
+                    server_label=self.mcp_tool_to_server[tool_call.function.name].server_label,
+                    status="in_progress",
+                )
+            elif tool_call.function.name == "web_search":
+                item = OpenAIResponseOutputMessageWebSearchToolCall(
+                    id=matching_item_id,
+                    status="in_progress",
+                )
+            elif tool_call.function.name == "knowledge_search":
+                item = OpenAIResponseOutputMessageFileSearchToolCall(
+                    id=matching_item_id,
+                    status="in_progress",
+                )
+            else:
+                raise ValueError(f"Unsupported tool call: {tool_call.function.name}")
+
+            yield OpenAIResponseObjectStreamResponseOutputItemAdded(
+                response_id=self.response_id,
+                item=item,
+                output_index=len(output_messages),
+                sequence_number=self.sequence_number,
+            )
 
             # Execute tool call with streaming
             tool_call_log = None
@@ -1064,7 +1100,11 @@ class StreamingResponseOrchestrator:
         self.sequence_number += 1
         yield OpenAIResponseObjectStreamResponseOutputItemAdded(
             response_id=self.response_id,
-            item=mcp_list_message,
+            item=OpenAIResponseOutputMessageMCPListTools(
+                id=mcp_list_message.id,
+                server_label=mcp_list_message.server_label,
+                tools=[],
+            ),
             output_index=len(output_messages) - 1,
             sequence_number=self.sequence_number,
         )

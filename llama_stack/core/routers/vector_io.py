@@ -93,8 +93,10 @@ class VectorIORouter(VectorIO):
         chunks: list[Chunk],
         ttl_seconds: int | None = None,
     ) -> None:
+        doc_ids = [chunk.document_id for chunk in chunks[:3]]
         logger.debug(
-            f"VectorIORouter.insert_chunks: {vector_db_id}, {len(chunks)} chunks, ttl_seconds={ttl_seconds}, chunk_ids={[chunk.metadata['document_id'] for chunk in chunks[:3]]}{' and more...' if len(chunks) > 3 else ''}",
+            f"VectorIORouter.insert_chunks: {vector_db_id}, {len(chunks)} chunks, "
+            f"ttl_seconds={ttl_seconds}, chunk_ids={doc_ids}{' and more...' if len(chunks) > 3 else ''}"
         )
         provider = await self.routing_table.get_provider_impl(vector_db_id)
         return await provider.insert_chunks(vector_db_id, chunks, ttl_seconds)

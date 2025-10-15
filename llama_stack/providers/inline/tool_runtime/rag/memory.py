@@ -272,7 +272,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
         return RAGQueryResult(
             content=picked,
             metadata={
-                "document_ids": [c.metadata["document_id"] for c in chunks[: len(picked)]],
+                "document_ids": [c.document_id for c in chunks[: len(picked)]],
                 "chunks": [c.content for c in chunks[: len(picked)]],
                 "scores": scores[: len(picked)],
                 "vector_db_ids": [c.metadata["vector_db_id"] for c in chunks[: len(picked)]],

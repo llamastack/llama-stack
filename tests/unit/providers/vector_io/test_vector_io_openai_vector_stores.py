@@ -128,6 +128,37 @@ async def test_insert_chunks_missing_db_raises(vector_io_adapter):
         await vector_io_adapter.insert_chunks("db_not_exist", [])
 
 
+async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
+    """Ensure no KeyError when document_id is missing or in different places."""
+    from llama_stack.apis.vector_io import Chunk, ChunkMetadata
+
+    fake_index = AsyncMock()
+    vector_io_adapter.cache["db1"] = fake_index
+
+    # Various document_id scenarios that shouldn't crash
+    chunks = [
+        Chunk(content="has doc_id in metadata", metadata={"document_id": "doc-1"}),
+        Chunk(content="no doc_id anywhere", metadata={"source": "test"}),
+        Chunk(content="doc_id in chunk_metadata", chunk_metadata=ChunkMetadata(document_id="doc-3")),
+    ]
+
+    # Should work without KeyError
+    await vector_io_adapter.insert_chunks("db1", chunks)
+    fake_index.insert_chunks.assert_awaited_once()
+
+
+async def test_document_id_with_invalid_type_raises_error():
+    """Ensure TypeError is raised when document_id is not a string."""
+    from llama_stack.apis.vector_io import Chunk
+
+    # Integer document_id should raise TypeError
+    chunk = Chunk(content="test", metadata={"document_id": 12345})
+    with pytest.raises(TypeError) as exc_info:
+        _ = chunk.document_id
+    assert "metadata['document_id'] must be a string" in str(exc_info.value)
+    assert "got int" in str(exc_info.value)
+
+
 async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter):
     expected = QueryChunksResponse(chunks=[Chunk(content="c1")], scores=[0.1])
     fake_index = AsyncMock(query_chunks=AsyncMock(return_value=expected))
