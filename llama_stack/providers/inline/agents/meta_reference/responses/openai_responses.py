@@ -136,9 +136,21 @@ class OpenAIResponsesImpl:
                 # First turn - just convert the new input
                 messages = await convert_response_input_to_chat_messages(input)
             else:
-                # Use stored messages directly and convert only new input
+                if not stored_messages:
+                    all_input = conversation_items.data
+                    if isinstance(input, str):
+                        all_input.append(
+                            OpenAIResponseMessage(
+                                role="user", content=[OpenAIResponseInputMessageContentText(text=input)]
+                            )
+                        )
+                    else:
+                        all_input.extend(input)
+                else:
+                    all_input = input
+
                 messages = stored_messages or []
-                new_messages = await convert_response_input_to_chat_messages(input, previous_messages=messages)
+                new_messages = await convert_response_input_to_chat_messages(all_input, previous_messages=messages)
                 messages.extend(new_messages)
         else:
             all_input = input
