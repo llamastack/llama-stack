@@ -125,17 +125,23 @@ class OpenAIResponsesImpl:
                 messages = await convert_response_input_to_chat_messages(all_input)
 
             tool_context.recover_tools_from_previous_response(previous_response)
-        else:
-            if conversation is not None:
-                conversation_items = await self.conversations_api.list(conversation, order="asc")
-                all_input = conversation_items.data
-                if isinstance(input, str):
-                    all_input.append(OpenAIResponseMessage(role="user", content=input))
-                elif isinstance(input, list):
-                    all_input.extend(input)
-            else:
-                all_input = input
+        elif conversation is not None:
+            conversation_items = await self.conversations_api.list(conversation, order="asc")
 
+            # Use stored messages as source of truth (like previous_response.messages)
+            stored_messages = await self.responses_store.get_conversation_messages(conversation)
+
+            all_input = input
+            if not conversation_items.data:
+                # First turn - just convert the new input
+                messages = await convert_response_input_to_chat_messages(input)
+            else:
+                # Use stored messages directly and convert only new input
+                messages = stored_messages or []
+                new_messages = await convert_response_input_to_chat_messages(input, previous_messages=messages)
+                messages.extend(new_messages)
+        else:
+            all_input = input
             messages = await convert_response_input_to_chat_messages(all_input)
 
         return all_input, messages, tool_context
@@ -356,21 +362,23 @@ class OpenAIResponsesImpl:
             # This ensures the storage/syncing happens even if the consumer breaks early
             if (
                 stream_chunk.type in {"response.completed", "response.incomplete"}
-                and store
                 and final_response
                 and failed_response is None
             ):
-                # TODO: we really should work off of output_items instead of "final_messages"
-                await self._store_response(
-                    response=final_response,
-                    input=all_input,
-                    messages=orchestrator.final_messages,
+                messages_to_store = list(
+                    filter(lambda x: not isinstance(x, OpenAISystemMessageParam), orchestrator.final_messages)
                 )
+                if store:
+                    # TODO: we really should work off of output_items instead of "final_messages"
+                    await self._store_response(
+                        response=final_response,
+                        input=all_input,
+                        messages=messages_to_store,
+                    )
 
-            if stream_chunk.type in {"response.completed", "response.incomplete"} and conversation and final_response:
-                # if we are starting the conversation, you will have "input" available
-                # we need to persist that. all else would be recorded via output_items
-                await self._sync_response_to_conversation(conversation, input, output_items)
+                if conversation:
+                    await self._sync_response_to_conversation(conversation, input, output_items)
+                    await self.responses_store.store_conversation_messages(conversation, messages_to_store)
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)

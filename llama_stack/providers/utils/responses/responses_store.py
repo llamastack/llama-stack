@@ -88,6 +88,14 @@ class ResponsesStore:
             },
         )
 
+        await self.sql_store.create_table(
+            "conversation_messages",
+            {
+                "conversation_id": ColumnDefinition(type=ColumnType.STRING, primary_key=True),
+                "messages": ColumnType.JSON,
+            },
+        )
+
         if self.enable_write_queue:
             self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
             for _ in range(self._num_writers):
@@ -294,3 +302,54 @@ class ResponsesStore:
             items = items[:limit]
 
         return ListOpenAIResponseInputItem(data=items)
+
+    async def store_conversation_messages(self, conversation_id: str, messages: list[OpenAIMessageParam]) -> None:
+        """Store messages for a conversation.
+
+        :param conversation_id: The conversation identifier.
+        :param messages: List of OpenAI message parameters to store.
+        """
+        if not self.sql_store:
+            raise ValueError("Responses store is not initialized")
+
+        # Serialize messages to dict format for JSON storage
+        messages_data = [msg.model_dump() for msg in messages]
+
+        # Upsert: try insert first, update if exists
+        try:
+            await self.sql_store.insert(
+                table="conversation_messages",
+                data={"conversation_id": conversation_id, "messages": messages_data},
+            )
+        except Exception:
+            # If insert fails due to ID conflict, update existing record
+            await self.sql_store.update(
+                table="conversation_messages",
+                data={"messages": messages_data},
+                where={"conversation_id": conversation_id},
+            )
+
+        logger.info(f"Stored {len(messages)} messages for conversation {conversation_id}")
+
+    async def get_conversation_messages(self, conversation_id: str) -> list[OpenAIMessageParam] | None:
+        """Get stored messages for a conversation.
+
+        :param conversation_id: The conversation identifier.
+        :returns: List of OpenAI message parameters, or None if no messages stored.
+        """
+        if not self.sql_store:
+            raise ValueError("Responses store is not initialized")
+
+        record = await self.sql_store.fetch_one(
+            table="conversation_messages",
+            where={"conversation_id": conversation_id},
+        )
+
+        if record is None:
+            return None
+
+        # Deserialize messages from JSON storage
+        from pydantic import TypeAdapter
+
+        adapter = TypeAdapter(list[OpenAIMessageParam])
+        return adapter.validate_python(record["messages"])
