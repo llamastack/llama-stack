@@ -98,30 +98,6 @@ REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
 
-async def validate_default_embedding_model(impls: dict[Api, Any]):
-    """Validate that at most one embedding model is marked as default."""
-    if Api.models not in impls:
-        return
-
-    models_impl = impls[Api.models]
-    response = await models_impl.list_models()
-    models_list = response.data if hasattr(response, "data") else response
-
-    default_embedding_models = []
-    for model in models_list:
-        if model.model_type == "embedding" and model.metadata.get("default_configured") is True:
-            default_embedding_models.append(model.identifier)
-
-    if len(default_embedding_models) > 1:
-        raise ValueError(
-            f"Multiple embedding models marked as default_configured=True: {default_embedding_models}. "
-            "Only one embedding model can be marked as default."
-        )
-
-    if default_embedding_models:
-        logger.info(f"Default embedding model configured: {default_embedding_models[0]}")
-
-
 async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
         objects = getattr(run_config, rsrc)
@@ -152,7 +128,48 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
 
-    await validate_default_embedding_model(impls)
+
+async def validate_vector_stores_config(run_config: StackRunConfig, impls: dict[Api, Any]):
+    """Validate vector stores configuration."""
+    if not run_config.vector_stores:
+        return
+
+    vector_stores_config = run_config.vector_stores
+    default_model_id = vector_stores_config.default_embedding_model_id
+
+    if Api.models not in impls:
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = response.data if hasattr(response, "data") else response
+
+    # find default embedding model
+    default_model = None
+    for model in models_list:
+        if model.identifier == default_model_id:
+            default_model = model
+            break
+
+    if not default_model:
+        available_models = [m.identifier for m in models_list if m.model_type == "embedding"]
+        raise ValueError(
+            f"Embedding model '{default_model_id}' not found. Available embedding models: {available_models}"
+        )
+
+    if default_model.model_type != "embedding":
+        raise ValueError(f"Model '{default_model_id}' is type '{default_model.model_type}', not 'embedding'")
+
+    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    if embedding_dimension is None:
+        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+
+    try:
+        int(embedding_dimension)
+    except ValueError as err:
+        raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
+
+    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
 
 
 class EnvVarError(Exception):
@@ -367,8 +384,8 @@ class Stack:
             await impls[Api.conversations].initialize()
 
         await register_resources(self.run_config, impls)
-
         await refresh_registry_once(impls)
+        await validate_vector_stores_config(self.run_config, impls)
         self.impls = impls
 
     def create_registry_refresh_task(self):

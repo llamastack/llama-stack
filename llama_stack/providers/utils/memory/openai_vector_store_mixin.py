@@ -44,6 +44,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore.api import KVStore
@@ -81,13 +82,17 @@ class OpenAIVectorStoreMixin(ABC):
     # Implementing classes should call super().__init__() in their __init__ method
     # to properly initialize the mixin attributes.
     def __init__(
-        self, files_api: Files | None = None, kvstore: KVStore | None = None, models_api: Models | None = None
+        self,
+        files_api: Files | None = None,
+        kvstore: KVStore | None = None,
     ):
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
         self.kvstore = kvstore
-        self.models_api = models_api
+        # These will be set by implementing classes
+        self.models_api: Models | None = None
+        self.vector_stores_config: VectorStoresConfig | None = None
         self._last_file_batch_cleanup_time = 0
         self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
 
@@ -474,24 +479,6 @@ class OpenAIVectorStoreMixin(ABC):
         store_info = self.openai_vector_stores[vector_db_id]
         return VectorStoreObject.model_validate(store_info)
 
-    async def _get_embedding_models(self) -> list[Model]:
-        """Get list of embedding models from the models API."""
-        if not self.models_api:
-            return []
-
-        models_response = await self.models_api.list_models()
-        models_list = models_response.data if hasattr(models_response, "data") else models_response
-
-        embedding_models = []
-        for model in models_list:
-            if not isinstance(model, Model):
-                logger.warning(f"Non-Model object found in models list: {type(model)} - {model}")
-                continue
-            if model.model_type == "embedding":
-                embedding_models.append(model)
-
-        return embedding_models
-
     async def _get_embedding_dimension_for_model(self, model_id: str) -> int | None:
         """Get embedding dimension for a specific model by looking it up in the models API.
 
@@ -501,9 +488,18 @@ class OpenAIVectorStoreMixin(ABC):
         Returns:
             The embedding dimension for the model, or None if not found
         """
-        embedding_models = await self._get_embedding_models()
+        if not self.models_api:
+            return None
 
-        for model in embedding_models:
+        models_response = await self.models_api.list_models()
+        models_list = models_response.data if hasattr(models_response, "data") else models_response
+
+        for model in models_list:
+            if not isinstance(model, Model):
+                continue
+            if model.model_type != "embedding":
+                continue
+
             # Check for exact match first
             if model.identifier == model_id:
                 embedding_dimension = model.metadata.get("embedding_dimension")
@@ -523,35 +519,23 @@ class OpenAIVectorStoreMixin(ABC):
         return None
 
     async def _get_default_embedding_model_and_dimension(self) -> tuple[str, int] | None:
-        """Get default embedding model from the models API.
+        """Get default embedding model from vector stores config.
 
-        Looks for embedding models marked with default_configured=True in metadata.
-        Returns None if no default embedding model is found.
-        Raises ValueError if multiple defaults are found.
+        Returns None if no vector stores config is provided.
         """
-        embedding_models = await self._get_embedding_models()
+        if not self.vector_stores_config:
+            logger.info("No vector stores config provided")
+            return None
 
-        default_models = []
-        for model in embedding_models:
-            if model.metadata.get("default_configured") is True:
-                default_models.append(model.identifier)
+        model_id = self.vector_stores_config.default_embedding_model_id
+        embedding_dimension = await self._get_embedding_dimension_for_model(model_id)
+        if embedding_dimension is None:
+            raise ValueError(f"Embedding model '{model_id}' not found or has no embedding_dimension in metadata")
 
-        if len(default_models) > 1:
-            raise ValueError(
-                f"Multiple embedding models marked as default_configured=True: {default_models}. "
-                "Only one embedding model can be marked as default."
-            )
-
-        if default_models:
-            model_id = default_models[0]
-            embedding_dimension = await self._get_embedding_dimension_for_model(model_id)
-            if embedding_dimension is None:
-                raise ValueError(f"Embedding model '{model_id}' has no embedding_dimension in metadata")
-            logger.info(f"Using default embedding model: {model_id} with dimension {embedding_dimension}")
-            return model_id, embedding_dimension
-
-        logger.debug("No default embedding models found")
-        return None
+        logger.debug(
+            f"Using default embedding model from vector stores config: {model_id} with dimension {embedding_dimension}"
+        )
+        return model_id, embedding_dimension
 
     async def openai_list_vector_stores(
         self,

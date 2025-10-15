@@ -13,6 +13,7 @@ from llama_stack.core.datatypes import (
     ProviderSpec,
     ShieldInput,
     ToolGroupInput,
+    VectorStoresConfig,
 )
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
@@ -227,6 +228,9 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 default_models=[],
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
+                vector_stores_config=VectorStoresConfig(
+                    default_embedding_model_id="sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+                ),
             ),
         },
         run_config_env_vars={

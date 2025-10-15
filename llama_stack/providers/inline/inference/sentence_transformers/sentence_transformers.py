@@ -59,7 +59,6 @@ class SentenceTransformersInferenceImpl(
                 provider_id=self.__provider_id__,
                 metadata={
                     "embedding_dimension": 768,
-                    "default_configured": True,
                 },
                 model_type=ModelType.embedding,
             ),

@@ -240,5 +240,7 @@ tool_groups:
   provider_id: rag-runtime
 server:
   port: 8321
+vector_stores:
+  default_embedding_model_id: sentence-transformers/nomic-ai/nomic-embed-text-v1.5
 telemetry:
   enabled: true

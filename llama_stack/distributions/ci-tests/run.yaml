@@ -239,3 +239,5 @@ server:
   port: 8321
 telemetry:
   enabled: true
+vector_stores:
+  default_embedding_model_id: sentence-transformers/nomic-ai/nomic-embed-text-v1.5

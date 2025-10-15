@@ -12,15 +12,17 @@ import chromadb
 from numpy.typing import NDArray
 
 from llama_stack.apis.files import Files
-from llama_stack.apis.inference import InterleavedContent
+from llama_stack.apis.inference import Inference, InterleavedContent
+from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
     QueryChunksResponse,
     VectorIO,
 )
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api, VectorDBsProtocolPrivate
+from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
@@ -137,15 +139,17 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
     def __init__(
         self,
         config: RemoteChromaVectorIOConfig | InlineChromaVectorIOConfig,
-        inference_api: Api.inference,
-        models_apis: Api.models,
+        inference_api: Inference,
+        models_apis: Models,
         files_api: Files | None,
+        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         log.info(f"Initializing ChromaVectorIOAdapter with url: {config}")
         self.config = config
         self.inference_api = inference_api
         self.models_api = models_apis
+        self.vector_stores_config = vector_stores_config
         self.client = None
         self.cache = {}
         self.vector_db_store = None

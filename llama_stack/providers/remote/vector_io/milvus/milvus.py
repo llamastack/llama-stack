@@ -21,6 +21,7 @@ from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     VectorIO,
 )
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
@@ -308,8 +309,9 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self,
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
         inference_api: Inference,
-        models_api: Models,
+        models_api: Models | None,
         files_api: Files | None,
+        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
@@ -317,6 +319,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.client = None
         self.inference_api = inference_api
         self.models_api = models_api
+        self.vector_stores_config = vector_stores_config
         self.vector_db_store = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 

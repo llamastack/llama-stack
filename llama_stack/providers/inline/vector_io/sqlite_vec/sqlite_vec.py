@@ -24,6 +24,7 @@ from llama_stack.apis.vector_io import (
     QueryChunksResponse,
     VectorIO,
 )
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
@@ -416,11 +417,13 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         inference_api: Inference,
         models_api: Models,
         files_api: Files | None,
+        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
         self.models_api = models_api
+        self.vector_stores_config = vector_stores_config
         self.cache: dict[str, VectorDBWithIndex] = {}
         self.vector_db_store = None
 
