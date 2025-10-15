@@ -120,13 +120,7 @@ class VectorIORouter(VectorIO):
         embedding_dimension = extra.get("embedding_dimension")
         provider_id = extra.get("provider_id")
 
-        logger.debug(f"VectorIORouter.openai_create_vector_store: name={params.name}, provider_id={provider_id}")
-
-        # Require explicit embedding model specification
-        if embedding_model is None:
-            raise ValueError("embedding_model is required in extra_body when creating a vector store")
-
-        if embedding_dimension is None:
+        if embedding_model is not None and embedding_dimension is None:
             embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
 
         # Auto-select provider if not specified
@@ -158,8 +152,10 @@ class VectorIORouter(VectorIO):
             params.model_extra = {}
         params.model_extra["provider_vector_db_id"] = registered_vector_db.provider_resource_id
         params.model_extra["provider_id"] = registered_vector_db.provider_id
-        params.model_extra["embedding_model"] = embedding_model
-        params.model_extra["embedding_dimension"] = embedding_dimension
+        if embedding_model is not None:
+            params.model_extra["embedding_model"] = embedding_model
+        if embedding_dimension is not None:
+            params.model_extra["embedding_dimension"] = embedding_dimension
 
         return await provider.openai_create_vector_store(params)
 

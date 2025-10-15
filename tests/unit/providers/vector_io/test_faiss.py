@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 
 from llama_stack.apis.files import Files
+from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
 from llama_stack.providers.datatypes import HealthStatus
@@ -76,6 +77,12 @@ def mock_files_api():
 
 
 @pytest.fixture
+def mock_models_api():
+    mock_api = MagicMock(spec=Models)
+    return mock_api
+
+
+@pytest.fixture
 def faiss_config():
     config = MagicMock(spec=FaissVectorIOConfig)
     config.kvstore = None
@@ -110,7 +117,7 @@ async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_
         assert response.chunks[1] == sample_chunks[1]
 
 
-async def test_health_success():
+async def test_health_success(mock_models_api):
     """Test that the health check returns OK status when faiss is working correctly."""
     # Create a fresh instance of FaissVectorIOAdapter for testing
     config = MagicMock()
@@ -119,7 +126,9 @@ async def test_health_success():
 
     with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
         mock_index_flat.return_value = MagicMock()
-        adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
+        adapter = FaissVectorIOAdapter(
+            config=config, inference_api=inference_api, models_api=mock_models_api, files_api=files_api
+        )
 
         # Calling the health method directly
         response = await adapter.health()
@@ -133,7 +142,7 @@ async def test_health_success():
         mock_index_flat.assert_called_once_with(128)  # VECTOR_DIMENSION is 128
 
 
-async def test_health_failure():
+async def test_health_failure(mock_models_api):
     """Test that the health check returns ERROR status when faiss encounters an error."""
     # Create a fresh instance of FaissVectorIOAdapter for testing
     config = MagicMock()
@@ -143,7 +152,9 @@ async def test_health_failure():
     with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
         mock_index_flat.side_effect = Exception("Test error")
 
-        adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
+        adapter = FaissVectorIOAdapter(
+            config=config, inference_api=inference_api, models_api=mock_models_api, files_api=files_api
+        )
 
         # Calling the health method directly
         response = await adapter.health()

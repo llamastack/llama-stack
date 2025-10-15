@@ -138,12 +138,14 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self,
         config: RemoteChromaVectorIOConfig | InlineChromaVectorIOConfig,
         inference_api: Api.inference,
+        models_apis: Api.models,
         files_api: Files | None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         log.info(f"Initializing ChromaVectorIOAdapter with url: {config}")
         self.config = config
         self.inference_api = inference_api
+        self.models_api = models_apis
         self.client = None
         self.cache = {}
         self.vector_db_store = None

@@ -496,12 +496,11 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         return await response.parse()
 
     def _convert_body(self, func: Any, body: dict | None = None, exclude_params: set[str] | None = None) -> dict:
-        if not body:
-            return {}
-
+        body = body or {}
         exclude_params = exclude_params or set()
         sig = inspect.signature(func)
         params_list = [p for p in sig.parameters.values() if p.name != "self"]
+
         # Flatten if there's a single unwrapped body parameter (BaseModel or Annotated[BaseModel, Body(embed=False)])
         if len(params_list) == 1:
             param = params_list[0]
@@ -530,11 +529,12 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     converted_body[param_name] = value
                 else:
                     converted_body[param_name] = convert_to_pydantic(param.annotation, value)
-            elif unwrapped_body_param and param.name == unwrapped_body_param.name:
-                # This is the unwrapped body param - construct it from remaining body keys
-                base_type = get_args(param.annotation)[0]
-                # Extract only the keys that aren't already used by other params
-                remaining_keys = {k: v for k, v in body.items() if k not in converted_body}
-                converted_body[param.name] = base_type(**remaining_keys)
+
+        # handle unwrapped body parameter after processing all named parameters
+        if unwrapped_body_param:
+            base_type = get_args(unwrapped_body_param.annotation)[0]
+            # extract only keys not already used by other params
+            remaining_keys = {k: v for k, v in body.items() if k not in converted_body}
+            converted_body[unwrapped_body_param.name] = base_type(**remaining_keys)
 
         return converted_body

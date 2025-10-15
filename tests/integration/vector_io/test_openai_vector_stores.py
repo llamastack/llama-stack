@@ -159,6 +159,12 @@ def test_openai_create_vector_store(
     assert hasattr(vector_store, "created_at")
 
 
+def test_openai_create_vector_store_default(compat_client_with_empty_stores, client_with_models):
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    vector_store = compat_client_with_empty_stores.vector_stores.create()
+    assert vector_store.id
+
+
 def test_openai_list_vector_stores(
     compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
 ):
@@ -1448,3 +1454,52 @@ def test_openai_vector_store_file_batch_error_handling(
             vector_store_id="non_existent_vector_store",
             file_ids=["any_file_id"],
         )
+
+
+def test_openai_vector_store_embedding_config_from_metadata(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
+):
+    """Test that embedding configuration works from metadata source."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    client = compat_client_with_empty_stores
+
+    # Test 1: Create vector store with embedding config in metadata only
+    vector_store_metadata = client.vector_stores.create(
+        name="metadata_config_store",
+        metadata={
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": str(embedding_dimension),
+            "test_source": "metadata",
+        },
+    )
+
+    assert vector_store_metadata is not None
+    assert vector_store_metadata.name == "metadata_config_store"
+    assert vector_store_metadata.status in ["completed", "in_progress"]
+    assert vector_store_metadata.metadata["test_source"] == "metadata"
+
+    # Test 2: Create vector store with consistent config in both sources
+    vector_store_consistent = client.vector_stores.create(
+        name="consistent_config_store",
+        metadata={
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": str(embedding_dimension),
+            "test_source": "consistent",
+        },
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "embedding_dimension": int(embedding_dimension),  # Ensure same type/value
+        },
+    )
+
+    assert vector_store_consistent is not None
+    assert vector_store_consistent.name == "consistent_config_store"
+    assert vector_store_consistent.status in ["completed", "in_progress"]
+    assert vector_store_consistent.metadata["test_source"] == "consistent"
+
+    # Verify both vector stores can be listed
+    response = client.vector_stores.list()
+    store_names = [store.name for store in response.data]
+
+    assert "metadata_config_store" in store_names
+    assert "consistent_config_store" in store_names

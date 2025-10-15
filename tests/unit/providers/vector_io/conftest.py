@@ -144,6 +144,7 @@ async def sqlite_vec_adapter(sqlite_vec_db_path, unique_kvstore_config, mock_inf
         config=config,
         inference_api=mock_inference_api,
         files_api=None,
+        models_api=None,
     )
     collection_id = f"sqlite_test_collection_{np.random.randint(1e6)}"
     await adapter.initialize()
@@ -182,6 +183,7 @@ async def faiss_vec_adapter(unique_kvstore_config, mock_inference_api, embedding
         config=config,
         inference_api=mock_inference_api,
         files_api=None,
+        models_api=None,
     )
     await adapter.initialize()
     await adapter.register_vector_db(
