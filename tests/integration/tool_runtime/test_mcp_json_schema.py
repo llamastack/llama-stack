@@ -416,7 +416,9 @@ class TestAgentWithMCPTools:
         )
 
         events = [chunk.event for chunk in chunks]
-        tool_execution_steps = [event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"]
+        tool_execution_steps = [
+            event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+        ]
 
         for step in tool_execution_steps:
             for tool_response in step.result.tool_responses:

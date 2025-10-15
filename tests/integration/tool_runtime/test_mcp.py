@@ -117,13 +117,13 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     assert final_response is not None
 
     issued_calls = [
-        event
-        for event in events
-        if isinstance(event, StepProgress) and isinstance(event.delta, ToolCallIssuedDelta)
+        event for event in events if isinstance(event, StepProgress) and isinstance(event.delta, ToolCallIssuedDelta)
     ]
     assert issued_calls and issued_calls[0].delta.tool_name == "greet_everyone"
 
-    tool_events = [event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"]
+    tool_events = [
+        event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+    ]
     assert tool_events and tool_events[0].result.tool_calls[0].tool_name == "greet_everyone"
 
     assert "hello" in final_response.output_text.lower()
