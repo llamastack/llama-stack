@@ -116,14 +116,29 @@ class ChromaIndex(EmbeddingIndex):
         k: int,
         score_threshold: float,
     ) -> QueryChunksResponse:
-        results = await maybe_await(
-            self.collection.query(
-                query_texts=[query_string],
-                where_document={"$contains": query_string},
-                n_results=k,
-                include=["documents", "distances"],
+        """
+        Perform keyword search using Chroma's built-in where_document feature.
+
+        Args:
+            query_string: The text query for keyword search
+            k: Number of results to return
+            score_threshold: Minimum similarity score threshold
+
+        Returns:
+            QueryChunksResponse with combined results
+        """
+        try:
+            results = await maybe_await(
+                self.collection.query(
+                    query_texts=[query_string],
+                    where_document={"$contains": query_string},
+                    n_results=k,
+                    include=["documents", "distances"],
+                )
             )
-        )
+        except Exception as e:
+            log.error(f"Chroma client keyword search failed: {e}")
+            raise
 
         distances = results["distances"][0] if results["distances"] else []
         documents = results["documents"][0] if results["documents"] else []
@@ -132,12 +147,8 @@ class ChromaIndex(EmbeddingIndex):
         scores = []
 
         for dist, doc in zip(distances, documents, strict=False):
-            try:
-                doc_data = json.loads(doc)
-                chunk = Chunk(**doc_data)
-            except Exception:
-                log.exception(f"Failed to load chunk: {doc}")
-                continue
+            doc_data = json.loads(doc)
+            chunk = Chunk(**doc_data)
 
             score = 1.0 / (1.0 + float(dist)) if dist is not None else 1.0
 
