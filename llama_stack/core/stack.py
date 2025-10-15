@@ -98,6 +98,30 @@ REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
 
+async def validate_default_embedding_model(impls: dict[Api, Any]):
+    """Validate that at most one embedding model is marked as default."""
+    if Api.models not in impls:
+        return
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = response.data if hasattr(response, "data") else response
+
+    default_embedding_models = []
+    for model in models_list:
+        if model.model_type == "embedding" and model.metadata.get("default_configured") is True:
+            default_embedding_models.append(model.identifier)
+
+    if len(default_embedding_models) > 1:
+        raise ValueError(
+            f"Multiple embedding models marked as default_configured=True: {default_embedding_models}. "
+            "Only one embedding model can be marked as default."
+        )
+
+    if default_embedding_models:
+        logger.info(f"Default embedding model configured: {default_embedding_models[0]}")
+
+
 async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
         objects = getattr(run_config, rsrc)
@@ -127,6 +151,8 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
             logger.debug(
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
+
+    await validate_default_embedding_model(impls)
 
 
 class EnvVarError(Exception):

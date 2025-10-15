@@ -501,25 +501,24 @@ class OpenAIVectorStoreMixin(ABC):
         """
         embedding_models = await self._get_embedding_models()
 
-        default_model_info = []
+        default_models = []
         for model in embedding_models:
             if model.metadata.get("default_configured") is True:
-                embedding_dimension = model.metadata.get("embedding_dimension")
-                if embedding_dimension is None:
-                    raise ValueError(f"Embedding model '{model.identifier}' has no embedding_dimension in metadata")
-                default_model_info.append((model.identifier, int(embedding_dimension)))
+                default_models.append(model.identifier)
 
-        if len(default_model_info) > 1:
-            model_ids = [info[0] for info in default_model_info]
+        if len(default_models) > 1:
             raise ValueError(
-                f"Multiple embedding models marked as default_configured=True: {model_ids}. "
+                f"Multiple embedding models marked as default_configured=True: {default_models}. "
                 "Only one embedding model can be marked as default."
             )
 
-        if default_model_info:
-            model_id, dimension = default_model_info[0]
-            logger.info(f"Using default embedding model: {model_id} with dimension {dimension}")
-            return model_id, dimension
+        if default_models:
+            model_id = default_models[0]
+            embedding_dimension = await self._get_embedding_dimension_for_model(model_id)
+            if embedding_dimension is None:
+                raise ValueError(f"Embedding model '{model_id}' has no embedding_dimension in metadata")
+            logger.info(f"Using default embedding model: {model_id} with dimension {embedding_dimension}")
+            return model_id, embedding_dimension
 
         logger.info("DEBUG: No default embedding models found")
         return None
