@@ -50,8 +50,7 @@ providers:
     provider_type: inline::meta-reference
     config:
       service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
-      sinks: ${env.TELEMETRY_SINKS:=sqlite}
-      sqlite_db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/trace_store.db
+      sinks: ${env.TELEMETRY_SINKS:=}
       otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
   eval:
   - provider_id: meta-reference
