@@ -38,7 +38,6 @@ from llama_stack.apis.inference import (
     OpenAIJSONSchema,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
-    OpenAISystemMessageParam,
     OpenAIUserMessageParam,
 )
 from llama_stack.apis.tools.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
@@ -840,7 +839,6 @@ async def test_create_openai_response_with_previous_response_instructions(
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
         messages=[
-            OpenAISystemMessageParam(content="You are a helpful assistant."),
             OpenAIUserMessageParam(content="Name some towns in Ireland"),
             OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
         ],
