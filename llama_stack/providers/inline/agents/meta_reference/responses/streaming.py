@@ -601,13 +601,15 @@ class StreamingResponseOrchestrator:
                             sequence_number=self.sequence_number,
                         )
                     self.sequence_number += 1
-                    yield OpenAIResponseObjectStreamResponseOutputTextDelta(
-                        content_index=content_index,
-                        delta=chunk_choice.delta.content,
-                        item_id=message_item_id,
-                        output_index=message_output_index,
-                        sequence_number=self.sequence_number,
-                    )
+                    # Skip Emitting text content delta event if guardrails are configured, only emits chunks after guardrails are applied
+                    if not self.guardrail_ids:
+                        yield OpenAIResponseObjectStreamResponseOutputTextDelta(
+                            content_index=content_index,
+                            delta=chunk_choice.delta.content,
+                            item_id=message_item_id,
+                            output_index=message_output_index,
+                            sequence_number=self.sequence_number,
+                        )
 
                 # Collect content for final response
                 chat_response_content.append(chunk_choice.delta.content or "")
