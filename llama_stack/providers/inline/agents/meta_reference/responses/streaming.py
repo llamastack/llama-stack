@@ -198,7 +198,6 @@ class StreamingResponseOrchestrator:
             input_violation_message = await run_guardrails(self.safety_api, combined_text, self.guardrail_ids)
             if input_violation_message:
                 logger.info(f"Input guardrail violation: {input_violation_message}")
-                # Return refusal response immediately
                 yield await self._create_refusal_response(input_violation_message)
                 return
 
