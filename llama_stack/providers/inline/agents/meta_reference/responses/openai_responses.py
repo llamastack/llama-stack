@@ -127,9 +127,11 @@ class OpenAIResponsesImpl:
                 # the instructions used on previous turns will not be carried over in the context
                 previous_instructions = previous_response.instructions
                 if previous_instructions:
-                    if (isinstance(previous_instructions, str) and
-                        previous_instructions == messages[0].content and
-                        messages[0].role == "system"):
+                    if (
+                        isinstance(previous_instructions, str)
+                        and previous_instructions == messages[0].content
+                        and messages[0].role == "system"
+                    ):
                         # Omit instructions from previous response
                         del messages[0]
                     else:

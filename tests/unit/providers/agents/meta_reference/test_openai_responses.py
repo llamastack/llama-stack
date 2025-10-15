@@ -844,7 +844,7 @@ async def test_create_openai_response_with_previous_response_instructions(
             OpenAIUserMessageParam(content="Name some towns in Ireland"),
             OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
         ],
-        instructions="You are a helpful assistant."
+        instructions="You are a helpful assistant.",
     )
     mock_responses_store.get_response_object.return_value = response
 
