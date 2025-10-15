@@ -31,6 +31,7 @@ Streaming functionality for the Responses API is partially implemented and does 
 ---
 
 ### Prompt Templates
+
 **Status:** Partial Implementation
 
 **Issue:** [#3321](https://github.com/llamastack/llama-stack/issues/3321)
@@ -71,6 +72,7 @@ It's unclear whether there is demand for additional built-in tools in Llama Stac
 ---
 
 ### Response Branching
+
 **Status:** Not Working
 
 Response branching, as discussed in the [Agents vs OpenAI Responses API documentation](https://llamastack.github.io/docs/building_applications/responses_vs_agents), is not currently functional.
@@ -78,6 +80,7 @@ Response branching, as discussed in the [Agents vs OpenAI Responses API document
 ---
 
 ### Include
+
 **Status:** Not Implemented
 
 The `include` parameter allows you to provide a list of values that indicate additional information for the system to include in the model response.  The [OpenAI API](https://platform.openai.com/docs/api-reference/responses/create) specifies the following allowed values for this parameter.
@@ -115,6 +118,7 @@ OpenAI's platform allows users to track agentic users using a safety identifier 
 ---
 
 ### Connectors
+
 **Status:** Not Implemented
 
 Connectors are MCP servers maintained and managed by the Responses API provider. OpenAI has documented their connectors at [https://platform.openai.com/docs/guides/tools-connectors-mcp](https://platform.openai.com/docs/guides/tools-connectors-mcp).
@@ -126,20 +130,25 @@ Connectors are MCP servers maintained and managed by the Responses API provider.
 ---
 
 ### Reasoning
-**Status:** Not Implemented
 
-**Issue:** [#3551](https://github.com/llamastack/llama-stack/issues/3551)
+**Status:** Partially Implemented
+
+The `reasoning` object in the output of Responses works for inference providers such as vLLM that output reasoning traces in chat completions requests.  It does not work for other providers such as OpenAI's hosted service.  See [#3551](https://github.com/llamastack/llama-stack/issues/3551) for more details.
 
 ---
 
 ### Service Tier
+
 **Status:** Not Implemented
 
 **Issue:** [#3550](https://github.com/llamastack/llama-stack/issues/3550)
 
+Responses has a field `service_tier` that can be used to prioritize access to inference resources.  Not all inference providers have such a concept, but Llama Stack pass through this value for those providers that do.  Currently it does not.
+
 ---
 
 ### Top Logprobs
+
 **Status:** Not Implemented
 
 **Issue:** [#3552](https://github.com/llamastack/llama-stack/issues/3552)
@@ -150,6 +159,7 @@ It enables users to also get logprobs for alternative tokens.
 ---
 
 ### Max Tool Calls
+
 **Status:** Not Implemented
 
 **Issue:** [#3563](https://github.com/llamastack/llama-stack/issues/3563)
@@ -159,34 +169,47 @@ The Responses API can accept a `max_tool_calls` parameter that limits the number
 ---
 
 ### Max Output Tokens
+
 **Status:** Not Implemented
 
 **Issue:** [#3562](https://github.com/llamastack/llama-stack/issues/3562)
 
----
-
-### Metadata
-**Status:** Not Implemented
-
-**Issue:** [#3564](https://github.com/llamastack/llama-stack/issues/3564)
+The `max_output_tokens` field limits how many tokens the model is allowed to generate (for both reasoning and output combined).  It is not implemented in Llama Stack.
 
 ---
 
 ### Incomplete Details
+
 **Status:** Not Implemented
 
 **Issue:** [#3567](https://github.com/llamastack/llama-stack/issues/3567)
 
+The return object from a call to Responses includes a field for indicating why a response is incomplete if it is.  For example, if the model stops generating because it has reached the specified max output tokens (see above), this field should be set to "IncompleteDetails(reason='max_output_tokens')".  This is not implemented in Llama Stack.
+
+---
+
+### Metadata
+
+**Status:** Not Implemented
+
+**Issue:** [#3564](https://github.com/llamastack/llama-stack/issues/3564)
+
+Metadata allows you to attach additional information to a response for your own reference and tracking.  It is not implemented in Llama Stack.
+
 ---
 
 ### Background
+
 **Status:** Not Implemented
 
 **Issue:** [#3568](https://github.com/llamastack/llama-stack/issues/3568)
 
+[Background mode](https://platform.openai.com/docs/guides/background) in OpenAI Responses lets you start a response generation job and then check back in on it later.  This is useful if you might lose a connection during a generation and want to reconnect later and get the response back (for example if the client is running in a mobile app).  It is not implemented in Llama Stack.
+
 ---
 
 ### Global Guardrails
+
 **Status:** Feature Request
 
 When calling the OpenAI Responses API, model outputs go through safety models configured by OpenAI administrators. Perhaps Llama Stack should provide a mechanism to configure safety models (or non-model logic) for all Responses requests, either through `run.yaml` or an administrative API.
@@ -204,6 +227,7 @@ OpenAI has not released a way for users to configure their own guardrails. Howev
 ---
 
 ### MCP Elicitations
+
 **Status:** Unknown
 
 Elicitations allow MCP servers to request additional information from users through the client during interactions (e.g., a tool requesting a username before proceeding).
@@ -217,6 +241,7 @@ See the [MCP specification](https://modelcontextprotocol.io/specification/draft/
 ---
 
 ### MCP Sampling
+
 **Status:** Unknown
 
 Sampling allows MCP tools to query the generative AI model. See the [MCP specification](https://modelcontextprotocol.io/specification/draft/client/sampling) for details.
@@ -227,6 +252,7 @@ Sampling allows MCP tools to query the generative AI model. See the [MCP specifi
 - Does this work in Llama Stack?
 
 ### Prompt Caching
+
 **Status:** Unknown
 
 OpenAI provides a [prompt caching](https://platform.openai.com/docs/guides/prompt-caching) mechanism in Responses that is enabled for its most recent models.
@@ -239,6 +265,7 @@ OpenAI provides a [prompt caching](https://platform.openai.com/docs/guides/promp
 ---
 
 ### Parallel Tool Calls
+
 **Status:** Rumored Issue
 
 There are reports that `parallel_tool_calls` may not work correctly. This needs verification and a ticket should be opened if confirmed.
@@ -250,6 +277,7 @@ There are reports that `parallel_tool_calls` may not work correctly. This needs 
 The following limitations have been addressed in recent releases:
 
 ### MCP and Function Tools with No Arguments
+
 **Status:** ✅ Resolved
 
 MCP and function tools now work correctly even when they have no arguments.
@@ -257,6 +285,7 @@ MCP and function tools now work correctly even when they have no arguments.
 ---
 
 ### `require_approval` Parameter for MCP Tools
+
 **Status:** ✅ Resolved
 
 The `require_approval` parameter for MCP tools in the Responses API now works correctly.
@@ -264,6 +293,7 @@ The `require_approval` parameter for MCP tools in the Responses API now works co
 ---
 
 ### MCP Tools with Array-Type Arguments
+
 **Status:** ✅ Resolved
 
 **Fixed in:** [#3003](https://github.com/llamastack/llama-stack/pull/3003) (Agent API), [#3602](https://github.com/llamastack/llama-stack/pull/3602) (Responses API)
