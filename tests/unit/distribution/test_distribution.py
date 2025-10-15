@@ -161,6 +161,8 @@ class TestProviderRegistry:
             assert internal_api not in apis, f"Internal API {internal_api} should not be in providable_apis"
 
         for api in apis:
+            if api == Api.telemetry:
+                continue
             module_name = f"llama_stack.providers.registry.{api.name.lower()}"
             try:
                 importlib.import_module(module_name)

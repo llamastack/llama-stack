@@ -63,16 +63,17 @@ async def get_auto_router_impl(
         "eval": EvalRouter,
         "tool_runtime": ToolRuntimeRouter,
     }
-    api_to_deps = {
-        "inference": {"telemetry": Api.telemetry},
-    }
     if api.value not in api_to_routers:
         raise ValueError(f"API {api.value} not found in router map")
 
     api_to_dep_impl = {}
-    for dep_name, dep_api in api_to_deps.get(api.value, {}).items():
-        if dep_api in deps:
-            api_to_dep_impl[dep_name] = deps[dep_api]
+    if run_config.telemetry.enabled:
+        api_to_deps = {
+            "inference": {"telemetry": Api.telemetry},
+        }
+        for dep_name, dep_api in api_to_deps.get(api.value, {}).items():
+            if dep_api in deps:
+                api_to_dep_impl[dep_name] = deps[dep_api]
 
     # TODO: move pass configs to routers instead
     if api == Api.inference and run_config.inference_store:

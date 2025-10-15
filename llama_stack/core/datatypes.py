@@ -176,6 +176,10 @@ class DistributionSpec(BaseModel):
     )
 
 
+class TelemetryConfig(BaseModel):
+    enabled: bool = Field(default=False, description="enable or disable telemetry")
+
+
 class LoggingConfig(BaseModel):
     category_levels: dict[str, str] = Field(
         default_factory=dict,
@@ -492,6 +496,8 @@ If not specified, a default SQLite store will be used.""",
     tool_groups: list[ToolGroupInput] = Field(default_factory=list)
 
     logging: LoggingConfig | None = Field(default=None, description="Configuration for Llama Stack Logging")
+
+    telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig, description="Configuration for telemetry")
 
     server: ServerConfig = Field(
         default_factory=ServerConfig,

@@ -445,7 +445,7 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
-    if Api.telemetry in impls:
+    if config.telemetry.enabled:
         setup_logger(impls[Api.telemetry])
     else:
         setup_logger(TelemetryAdapter(TelemetryConfig(), {}))

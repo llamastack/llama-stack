@@ -26,7 +26,6 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFunctions
 from llama_stack.apis.shields import Shields
-from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
@@ -47,6 +46,7 @@ from llama_stack.providers.datatypes import (
     Api,
     BenchmarksProtocolPrivate,
     DatasetsProtocolPrivate,
+    InlineProviderSpec,
     ModelsProtocolPrivate,
     ProviderSpec,
     RemoteProviderConfig,
@@ -82,7 +82,6 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.models: Models,
         Api.safety: Safety,
         Api.shields: Shields,
-        Api.telemetry: Telemetry,
         Api.datasetio: DatasetIO,
         Api.datasets: Datasets,
         Api.scoring: Scoring,
@@ -204,9 +203,7 @@ def specs_for_autorouted_apis(apis_to_serve: list[str] | set[str]) -> dict[str, 
                     module="llama_stack.core.routers",
                     routing_table_api=info.routing_table_api,
                     api_dependencies=[info.routing_table_api],
-                    # Add telemetry as an optional dependency to all auto-routed providers
-                    optional_api_dependencies=[Api.telemetry],
-                    deps__=([info.routing_table_api.value, Api.telemetry.value]),
+                    deps__=([info.routing_table_api.value]),
                 ),
             )
         }
@@ -238,6 +235,24 @@ def validate_and_prepare_providers(
 
         key = api_str if api not in router_apis else f"inner-{api_str}"
         providers_with_specs[key] = specs
+
+    # TODO: remove this logic, telemetry should not have providers.
+    # if telemetry has been enabled in the config initialize our internal impl
+    # telemetry is not an external API so it SHOULD NOT be auto-routed.
+    if run_config.telemetry.enabled:
+        specs = {}
+        p = InlineProviderSpec(
+            api=Api.telemetry,
+            provider_type="inline::meta-reference",
+            pip_packages=[],
+            optional_api_dependencies=[Api.datasetio],
+            module="llama_stack.providers.inline.telemetry.meta_reference",
+            config_class="llama_stack.providers.inline.telemetry.meta_reference.config.TelemetryConfig",
+            description="Meta's reference implementation of telemetry and observability using OpenTelemetry.",
+        )
+        spec = ProviderWithSpec(spec=p, provider_type="inline::meta-reference", provider_id="meta-reference")
+        specs["meta-reference"] = spec
+        providers_with_specs["telemetry"] = specs
 
     return providers_with_specs
 
@@ -389,6 +404,8 @@ async def instantiate_provider(
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:
             args.append(policy)
+        if "telemetry_enabled" in inspect.signature(getattr(module, method)).parameters and run_config.telemetry:
+            args.append(run_config.telemetry.enabled)
 
     fn = getattr(module, method)
     impl = await fn(*args)

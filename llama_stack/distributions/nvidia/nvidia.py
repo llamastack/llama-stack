@@ -21,7 +21,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
         "safety": [BuildProvider(provider_type="remote::nvidia")],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "telemetry": [BuildProvider(provider_type="inline::meta-reference")],
         "eval": [BuildProvider(provider_type="remote::nvidia")],
         "post_training": [BuildProvider(provider_type="remote::nvidia")],
         "datasetio": [

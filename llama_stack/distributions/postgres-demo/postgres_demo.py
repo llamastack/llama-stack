@@ -42,7 +42,6 @@ def get_distribution_template() -> DistributionTemplate:
         "vector_io": [BuildProvider(provider_type="remote::chromadb")],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "telemetry": [BuildProvider(provider_type="inline::meta-reference")],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
@@ -113,17 +112,6 @@ def get_distribution_template() -> DistributionTemplate:
                             config=dict(
                                 persistence_store=postgres_config,
                                 responses_store=postgres_config,
-                            ),
-                        )
-                    ],
-                    "telemetry": [
-                        Provider(
-                            provider_id="meta-reference",
-                            provider_type="inline::meta-reference",
-                            config=dict(
-                                service_name="${env.OTEL_SERVICE_NAME:=\u200b}",
-                                sinks="${env.TELEMETRY_SINKS:=console,otel_trace}",
-                                otel_exporter_otlp_endpoint="${env.OTEL_EXPORTER_OTLP_ENDPOINT:=http://localhost:4318/v1/traces}",
                             ),
                         )
                     ],

@@ -14,8 +14,6 @@ distribution_spec:
     - provider_type: inline::llama-guard
     agents:
     - provider_type: inline::meta-reference
-    telemetry:
-    - provider_type: inline::meta-reference
     eval:
     - provider_type: inline::meta-reference
     datasetio:
