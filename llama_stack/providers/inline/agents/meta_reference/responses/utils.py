@@ -323,13 +323,11 @@ async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[
     shields_list = await safety_api.routing_table.list_shields()
 
     for guardrail_id in guardrail_ids:
-        # Find the shield with this identifier
         matching_shields = [shield for shield in shields_list.data if shield.identifier == guardrail_id]
         if matching_shields:
             model_id = matching_shields[0].provider_resource_id
             model_ids.append(model_id)
         else:
-            # If no shield found, raise an error
             raise ValueError(f"No shield found with identifier '{guardrail_id}'")
 
     guardrail_tasks = [safety_api.run_moderation(messages, model=model_id) for model_id in model_ids]
