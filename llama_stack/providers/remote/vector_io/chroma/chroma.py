@@ -22,22 +22,16 @@ from llama_stack.apis.vector_io import (
 )
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api, VectorDBsProtocolPrivate
-from llama_stack.providers.inline.vector_io.chroma import (
-    ChromaVectorIOConfig as InlineChromaVectorIOConfig,
-)
+from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
-from llama_stack.providers.utils.memory.openai_vector_store_mixin import (
-    OpenAIVectorStoreMixin,
-)
+from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
     EmbeddingIndex,
     VectorDBWithIndex,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import (
-    WeightedInMemoryAggregator,
-)
+from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
 from .config import ChromaVectorIOConfig as RemoteChromaVectorIOConfig
 
