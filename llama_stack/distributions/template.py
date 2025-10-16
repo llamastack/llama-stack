@@ -25,6 +25,7 @@ from llama_stack.core.datatypes import (
     ModelInput,
     Provider,
     ShieldInput,
+    TelemetryConfig,
     ToolGroupInput,
 )
 from llama_stack.core.distribution import get_provider_registry
@@ -182,6 +183,7 @@ class RunConfigSettings(BaseModel):
     metadata_store: dict | None = None
     inference_store: dict | None = None
     conversations_store: dict | None = None
+    telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig(enabled=True))
 
     def run_config(
         self,
@@ -256,6 +258,7 @@ class RunConfigSettings(BaseModel):
             "server": {
                 "port": 8321,
             },
+            "telemetry": self.telemetry.model_dump(exclude_none=True) if self.telemetry else None,
         }
 
 
