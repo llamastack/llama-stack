@@ -6,20 +6,16 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.providers.datatypes import Api
 
 from .config import MilvusVectorIOConfig
 
 
 async def get_provider_impl(
-    config: MilvusVectorIOConfig, deps: dict[Api, Any], run_config: StackRunConfig | None = None
+    config: MilvusVectorIOConfig, deps: dict[Api, Any], vector_stores_config: VectorStoresConfig | None = None
 ):
     from llama_stack.providers.remote.vector_io.milvus.milvus import MilvusVectorIOAdapter
-
-    vector_stores_config = None
-    if run_config and run_config.vector_stores:
-        vector_stores_config = run_config.vector_stores
 
     impl = MilvusVectorIOAdapter(
         config,

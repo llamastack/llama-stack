@@ -409,9 +409,12 @@ async def instantiate_provider(
         if "telemetry_enabled" in inspect.signature(getattr(module, method)).parameters and run_config.telemetry:
             args.append(run_config.telemetry.enabled)
 
-    # vector_io providers need access to run_config.vector_stores
-    if provider_spec.api == Api.vector_io and "run_config" in inspect.signature(getattr(module, method)).parameters:
-        args.append(run_config)
+    # vector_io providers need access to vector_stores config
+    if provider_spec.api == Api.vector_io and not isinstance(provider_spec, AutoRoutedProviderSpec):
+        sig = inspect.signature(getattr(module, method))
+        if "vector_stores_config" in sig.parameters:
+            vector_stores_config = run_config.vector_stores if run_config else None
+            args.append(vector_stores_config)
 
     fn = getattr(module, method)
     impl = await fn(*args)
