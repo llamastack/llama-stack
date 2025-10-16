@@ -38,8 +38,7 @@ providers:
     provider_type: inline::faiss
     config:
       kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/faiss_store.db
+        namespace: vector_io::faiss
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
@@ -49,32 +48,28 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/agents_store.db
-      responses_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/responses_store.db
+      persistence:
+        agent_state:
+          namespace: agents
+        responses:
+          table_name: responses
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
       kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/meta_reference_eval.db
+        namespace: eval
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface
     config:
       kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/huggingface_datasetio.db
+        namespace: datasetio::huggingface
   - provider_id: localfs
     provider_type: inline::localfs
     config:
       kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/localfs_datasetio.db
+        namespace: datasetio::localfs
   scoring:
   - provider_id: basic
     provider_type: inline::basic
@@ -100,13 +95,13 @@ providers:
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
 metadata_store:
-  type: sqlite
+  type: kv_sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/registry.db
 inference_store:
-  type: sqlite
+  type: sql_sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/inference_store.db
 conversations_store:
-  type: sqlite
+  type: sql_sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/conversations.db
 models:
 - metadata: {}

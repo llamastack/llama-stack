@@ -295,12 +295,7 @@ def _generate_run_config(
         if build_config.external_providers_dir
         else EXTERNAL_PROVIDERS_DIR,
     )
-    if not run_config.inference_store:
-        run_config.inference_store = SqliteSqlStoreConfig(
-            **SqliteSqlStoreConfig.sample_run_config(
-                __distro_dir__=(DISTRIBS_BASE_DIR / image_name).as_posix(), db_name="inference_store.db"
-            )
-        )
+    # Persistence config defaults are handled by PersistenceConfig model validators
     # build providers dict
     provider_registry = get_provider_registry(build_config)
     for api in apis:

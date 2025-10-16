@@ -83,8 +83,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.policy = policy
 
     async def initialize(self) -> None:
-        self.persistence_store = await kvstore_impl(self.config.persistence_store)
-        self.responses_store = ResponsesStore(self.config.responses_store, self.policy)
+        self.persistence_store = await kvstore_impl(self.config.persistence.agent_state)
+        self.responses_store = ResponsesStore(self.config.persistence.responses, self.policy)
         await self.responses_store.initialize()
         self.openai_responses_impl = OpenAIResponsesImpl(
             inference_api=self.inference_api,

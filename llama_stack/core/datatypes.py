@@ -26,9 +26,8 @@ from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.core.storage.datatypes import KVStoreReference, StorageConfig
 from llama_stack.providers.datatypes import Api, ProviderSpec
-from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
-from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreConfig
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
 LLAMA_STACK_RUN_CONFIG_VERSION = 2
@@ -356,7 +355,7 @@ class QuotaPeriod(StrEnum):
 
 
 class QuotaConfig(BaseModel):
-    kvstore: SqliteKVStoreConfig = Field(description="Config for KV store backend (SQLite only for now)")
+    kvstore: KVStoreReference = Field(description="Config for KV store backend (SQLite only for now)")
     anonymous_max_requests: int = Field(default=100, description="Max requests for unauthenticated clients per period")
     authenticated_max_requests: int = Field(
         default=1000, description="Max requests for authenticated clients per period"
@@ -438,18 +437,6 @@ class ServerConfig(BaseModel):
     )
 
 
-class InferenceStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
-    max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
-    num_writers: int = Field(default=4, description="Number of concurrent background writers")
-
-
-class ResponsesStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
-    max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
-    num_writers: int = Field(default=4, description="Number of concurrent background writers")
-
-
 class StackRunConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
@@ -476,26 +463,11 @@ One or more providers to use for each API. The same provider_type (e.g., meta-re
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )
-    metadata_store: KVStoreConfig | None = Field(
-        default=None,
+    storage: StorageConfig = Field(
         description="""
-Configuration for the persistence store used by the distribution registry. If not specified,
-a default SQLite store will be used.""",
-    )
-
-    inference_store: InferenceStoreConfig | SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the inference API. Can be either a
-InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
-If not specified, a default SQLite store will be used.""",
-    )
-
-    conversations_store: SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the conversations API.
-If not specified, a default SQLite store will be used.""",
+Storage backend configurations. Each backend is named, and can be referenced by various components 
+throughout the Stack (both by its core as well as providers).
+""",
     )
 
     # registry of "resources" in the distribution

@@ -42,6 +42,7 @@ from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceI
 from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.resolver import ProviderRegistry, resolve_impls
 from llama_stack.core.routing_tables.common import CommonRoutingTableImpl
+from llama_stack.core.storage.datatypes import StorageBackendConfig
 from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
@@ -329,6 +330,25 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     impls[Api.conversations] = conversations_impl
 
 
+def _initialize_storage(run_config: StackRunConfig):
+    kv_backends: dict[str, StorageBackendConfig] = {}
+    sql_backends: dict[str, StorageBackendConfig] = {}
+    for backend_name, backend_config in run_config.storage.backends.items():
+        type = backend_config.type.value
+        if type.startswith("kv_"):
+            kv_backends[backend_name] = backend_config
+        elif type.startswith("sql_"):
+            sql_backends[backend_name] = backend_config
+        else:
+            raise ValueError(f"Unknown storage backend type: {type}")
+
+    from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
+    from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+
+    register_kvstore_backends(kv_backends)
+    register_sqlstore_backends(sql_backends)
+
+
 class Stack:
     def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
@@ -347,7 +367,8 @@ class Stack:
                 TEST_RECORDING_CONTEXT.__enter__()
                 logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
 
-        dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
+        _initialize_storage(self.run_config)
+        dist_registry, _ = await create_dist_registry(self.run_config.storage, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}
