@@ -110,9 +110,9 @@ class StreamingResponseOrchestrator:
         text: OpenAIResponseText,
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
+        instructions: str,
         safety_api,
         guardrail_ids: list[str] | None = None,
-        instructions: str,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
