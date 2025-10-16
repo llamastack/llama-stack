@@ -435,7 +435,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         # First check if the model is pre-registered in the model store
         if hasattr(self, "model_store") and self.model_store:
-            if await self.model_store.has_model(model):
+            qualified_model = f"{self.__provider_id__}/{model}"
+            if await self.model_store.has_model(qualified_model):
                 return True
 
         # Then check the provider's dynamic model cache
