@@ -91,23 +91,10 @@ def get_boiling_point_with_metadata(liquid_name: str, celcius: bool = True) -> d
 
 @pytest.fixture(scope="session")
 def agent_config(llama_stack_client, text_model_id):
-    available_shields = [shield.identifier for shield in llama_stack_client.shields.list()]
-    available_shields = available_shields[:1]
     agent_config = dict(
         model=text_model_id,
         instructions="You are a helpful assistant",
-        sampling_params={
-            "strategy": {
-                "type": "top_p",
-                "temperature": 0.0001,
-                "top_p": 0.9,
-            },
-            "max_tokens": 512,
-        },
         tools=[],
-        input_shields=available_shields,
-        output_shields=available_shields,
-        enable_session_persistence=False,
     )
     return agent_config
 
@@ -117,16 +104,7 @@ def agent_config_without_safety(text_model_id):
     agent_config = dict(
         model=text_model_id,
         instructions="You are a helpful assistant",
-        sampling_params={
-            "strategy": {
-                "type": "top_p",
-                "temperature": 0.0001,
-                "top_p": 0.9,
-            },
-            "max_tokens": 512,
-        },
         tools=[],
-        enable_session_persistence=False,
     )
     return agent_config
 
@@ -146,7 +124,7 @@ def test_agent_simple(llama_stack_client, agent_config):
 
     assert "hello" in logs_str.lower()
 
-    if len(agent_config["input_shields"]) > 0:
+    if "input_shields" in agent_config and len(agent_config.get("input_shields", [])) > 0:
         pytest.skip("Shield support not available in new Agent implementation")
 
 
@@ -289,7 +267,6 @@ def test_custom_tool_infinite_loop(llama_stack_client, agent_config):
         **agent_config,
         "instructions": "You are a helpful assistant Always respond with tool calls no matter what. ",
         "tools": [client_tool],
-        "max_infer_iters": 5,
     }
 
     agent = build_agent(llama_stack_client, agent_config)
@@ -333,9 +310,7 @@ def run_agent_with_tool_choice(client, agent_config, tool_choice):
 
     test_agent_config = {
         **agent_config,
-        "tool_config": {"tool_choice": tool_choice},
         "tools": [client_tool],
-        "max_infer_iters": 2,
     }
 
     agent = build_agent(client, test_agent_config)
@@ -358,8 +333,6 @@ def test_create_turn_response(llama_stack_client, agent_config, client_tools):
     client_tool, expects_metadata = client_tools
     agent_config = {
         **agent_config,
-        "input_shields": [],
-        "output_shields": [],
         "tools": [client_tool],
     }
 
