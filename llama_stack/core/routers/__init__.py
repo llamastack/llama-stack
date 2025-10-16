@@ -84,6 +84,9 @@ async def get_auto_router_impl(
         await inference_store.initialize()
         api_to_dep_impl["store"] = inference_store
 
+    if api == Api.vector_io and run_config.vector_stores:
+        api_to_dep_impl["vector_stores_config"] = run_config.vector_stores
+
     impl = api_to_routers[api.value](routing_table, **api_to_dep_impl)
     await impl.initialize()
     return impl

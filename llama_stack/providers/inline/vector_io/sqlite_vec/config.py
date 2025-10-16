@@ -8,10 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from llama_stack.providers.utils.kvstore.config import (
-    KVStoreConfig,
-    SqliteKVStoreConfig,
-)
+from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 
 
 class SQLiteVectorIOConfig(BaseModel):
@@ -23,7 +20,6 @@ class SQLiteVectorIOConfig(BaseModel):
         return {
             "db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + "sqlite_vec.db",
             "kvstore": SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="sqlite_vec_registry.db",
+                __distro_dir__=__distro_dir__, db_name="sqlite_vec_registry.db"
             ),
         }

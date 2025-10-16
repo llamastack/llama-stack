@@ -17,7 +17,6 @@ from pydantic import TypeAdapter
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files, OpenAIFileObject
-from llama_stack.apis.models import Model, Models
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
@@ -44,7 +43,6 @@ from llama_stack.apis.vector_io import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore.api import KVStore
@@ -90,9 +88,6 @@ class OpenAIVectorStoreMixin(ABC):
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
         self.kvstore = kvstore
-        # These will be set by implementing classes
-        self.models_api: Models | None = None
-        self.vector_stores_config: VectorStoresConfig | None = None
         self._last_file_batch_cleanup_time = 0
         self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
 
@@ -398,21 +393,7 @@ class OpenAIVectorStoreMixin(ABC):
         vector_db_id = provider_vector_db_id or generate_object_id("vector_store", lambda: f"vs_{uuid.uuid4()}")
 
         if embedding_model is None:
-            result = await self._get_default_embedding_model_and_dimension()
-            if result is None:
-                raise ValueError(
-                    "embedding_model is required in extra_body when creating a vector store. "
-                    "No default embedding model could be determined automatically."
-                )
-            embedding_model, embedding_dimension = result
-        elif embedding_dimension is None:
-            # Embedding model was provided but dimension wasn't, look it up
-            embedding_dimension = await self._get_embedding_dimension_for_model(embedding_model)
-            if embedding_dimension is None:
-                raise ValueError(
-                    f"Could not determine embedding dimension for model '{embedding_model}'. "
-                    "Please provide embedding_dimension in extra_body or ensure the model metadata contains embedding_dimension."
-                )
+            raise ValueError("embedding_model is required")
 
         if embedding_dimension is None:
             raise ValueError("Embedding dimension is required")
@@ -478,64 +459,6 @@ class OpenAIVectorStoreMixin(ABC):
         # Get the updated store info and return it
         store_info = self.openai_vector_stores[vector_db_id]
         return VectorStoreObject.model_validate(store_info)
-
-    async def _get_embedding_dimension_for_model(self, model_id: str) -> int | None:
-        """Get embedding dimension for a specific model by looking it up in the models API.
-
-        Args:
-            model_id: The identifier of the embedding model (supports both prefixed and non-prefixed)
-
-        Returns:
-            The embedding dimension for the model, or None if not found
-        """
-        if not self.models_api:
-            return None
-
-        models_response = await self.models_api.list_models()
-        models_list = models_response.data if hasattr(models_response, "data") else models_response
-
-        for model in models_list:
-            if not isinstance(model, Model):
-                continue
-            if model.model_type != "embedding":
-                continue
-
-            # Check for exact match first
-            if model.identifier == model_id:
-                embedding_dimension = model.metadata.get("embedding_dimension")
-                if embedding_dimension is not None:
-                    return int(embedding_dimension)
-                else:
-                    logger.warning(f"Model {model_id} found but has no embedding_dimension in metadata")
-                    return None
-
-            # Check for prefixed/unprefixed variations
-            # If model_id is unprefixed, check if it matches the resource_id
-            if model.provider_resource_id == model_id:
-                embedding_dimension = model.metadata.get("embedding_dimension")
-                if embedding_dimension is not None:
-                    return int(embedding_dimension)
-
-        return None
-
-    async def _get_default_embedding_model_and_dimension(self) -> tuple[str, int] | None:
-        """Get default embedding model from vector stores config.
-
-        Returns None if no vector stores config is provided.
-        """
-        if not self.vector_stores_config:
-            logger.info("No vector stores config provided")
-            return None
-
-        model_id = self.vector_stores_config.default_embedding_model_id
-        embedding_dimension = await self._get_embedding_dimension_for_model(model_id)
-        if embedding_dimension is None:
-            raise ValueError(f"Embedding model '{model_id}' not found or has no embedding_dimension in metadata")
-
-        logger.debug(
-            f"Using default embedding model from vector stores config: {model_id} with dimension {embedding_dimension}"
-        )
-        return model_id, embedding_dimension
 
     async def openai_list_vector_stores(
         self,

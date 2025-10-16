@@ -8,10 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from llama_stack.providers.utils.kvstore.config import (
-    KVStoreConfig,
-    SqliteKVStoreConfig,
-)
+from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -22,16 +19,11 @@ class WeaviateVectorIOConfig(BaseModel):
     kvstore: KVStoreConfig | None = Field(description="Config for KV store backend (SQLite only for now)", default=None)
 
     @classmethod
-    def sample_run_config(
-        cls,
-        __distro_dir__: str,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
+    def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
             "weaviate_api_key": None,
             "weaviate_cluster_url": "${env.WEAVIATE_CLUSTER_URL:=localhost:8080}",
             "kvstore": SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="weaviate_registry.db",
+                __distro_dir__=__distro_dir__, db_name="weaviate_registry.db"
             ),
         }

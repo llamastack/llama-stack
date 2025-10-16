@@ -6,28 +6,15 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.providers.datatypes import Api
 
 from .config import QdrantVectorIOConfig
 
 
-async def get_provider_impl(
-    config: QdrantVectorIOConfig, deps: dict[Api, Any], run_config: StackRunConfig | None = None
-):
+async def get_provider_impl(config: QdrantVectorIOConfig, deps: dict[Api, Any]):
     from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantVectorIOAdapter
 
-    vector_stores_config = None
-    if run_config and run_config.vector_stores:
-        vector_stores_config = run_config.vector_stores
-
     assert isinstance(config, QdrantVectorIOConfig), f"Unexpected config type: {type(config)}"
-    impl = QdrantVectorIOAdapter(
-        config,
-        deps[Api.inference],
-        deps[Api.models],
-        deps.get(Api.files),
-        vector_stores_config,
-    )
+    impl = QdrantVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
     await impl.initialize()
     return impl

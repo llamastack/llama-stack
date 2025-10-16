@@ -8,10 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from llama_stack.providers.utils.kvstore.config import (
-    KVStoreConfig,
-    SqliteKVStoreConfig,
-)
+from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -42,7 +39,6 @@ class PGVectorVectorIOConfig(BaseModel):
             "user": user,
             "password": password,
             "kvstore": SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="pgvector_registry.db",
+                __distro_dir__=__distro_dir__, db_name="pgvector_registry.db"
             ),
         }

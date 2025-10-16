@@ -22,7 +22,6 @@ class ChromaVectorIOConfig(BaseModel):
         return {
             "url": url,
             "kvstore": SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="chroma_remote_registry.db",
+                __distro_dir__=__distro_dir__, db_name="chroma_remote_registry.db"
             ),
         }

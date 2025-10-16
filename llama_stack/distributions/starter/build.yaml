@@ -26,6 +26,8 @@ distribution_spec:
     - provider_type: inline::milvus
     - provider_type: remote::chromadb
     - provider_type: remote::pgvector
+    - provider_type: remote::qdrant
+    - provider_type: remote::weaviate
     files:
     - provider_type: inline::localfs
     safety:

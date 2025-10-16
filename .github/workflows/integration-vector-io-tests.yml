@@ -144,7 +144,7 @@ jobs:
 
       - name: Build Llama Stack
         run: |
-          uv run --no-sync llama stack build --template ci-tests --image-type venv
+          uv run --no-sync llama stack build --distro starter --image-type venv --single-provider "vector_io=${{ matrix.vector-io-provider }}"
 
       - name: Check Storage and Memory Available Before Tests
         if: ${{ always() }}
@@ -168,7 +168,7 @@ jobs:
           WEAVIATE_CLUSTER_URL: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'localhost:8080' || '' }}
         run: |
           uv run --no-sync \
-            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
+            pytest -sv --stack-config ~/.llama/distributions/starter/starter-filtered-run.yaml \
             tests/integration/vector_io
 
       - name: Check Storage and Memory Available After Tests
