@@ -177,6 +177,18 @@ class DistributionSpec(BaseModel):
 
 
 class TelemetryConfig(BaseModel):
+    """
+    Configuration for telemetry.
+
+    Llama Stack uses OpenTelemetry for telemetry. Please refer to https://opentelemetry.io/docs/languages/sdk-configuration/
+    for env variables to configure the OpenTelemetry SDK.
+
+    Example:
+    ```bash
+    OTEL_SERVICE_NAME=llama-stack OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run llama stack run starter
+    ```
+    """
+
     enabled: bool = Field(default=False, description="enable or disable telemetry")
 
 
