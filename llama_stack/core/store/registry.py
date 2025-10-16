@@ -102,9 +102,6 @@ class DiskDistributionRegistry(DistributionRegistry):
                 "Unregister it first if you want to replace it."
             )
 
-        if "sentence-transformers/sentence-transformers" in obj.identifier:
-            raise Exception("OMG")
-
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),
             obj.model_dump_json(),

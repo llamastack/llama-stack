@@ -205,7 +205,7 @@ class TestOpenAIMixinCheckModelAvailability:
             assert await mixin.check_model_availability("pre-registered-model")
             # Should not call the provider's list_models since model was found in store
             mock_client_with_models.models.list.assert_not_called()
-            mock_model_store.has_model.assert_called_once_with("pre-registered-model")
+            mock_model_store.has_model.assert_called_once_with("test-provider/pre-registered-model")
 
     async def test_check_model_availability_fallback_to_provider_when_not_in_store(
         self, mixin, mock_client_with_models, mock_client_context
@@ -222,7 +222,7 @@ class TestOpenAIMixinCheckModelAvailability:
             assert await mixin.check_model_availability("some-mock-model-id")
             # Should call the provider's list_models since model was not found in store
             mock_client_with_models.models.list.assert_called_once()
-            mock_model_store.has_model.assert_called_once_with("some-mock-model-id")
+            mock_model_store.has_model.assert_called_once_with("test-provider/some-mock-model-id")
 
 
 class TestOpenAIMixinCacheBehavior:
