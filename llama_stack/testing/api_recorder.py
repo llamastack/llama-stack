@@ -355,9 +355,15 @@ class ResponseStorage:
             test_file = test_id.split("::")[0]  # Remove test function part
             test_dir = Path(test_file).parent  # Get parent directory
 
-            # Put recordings in a "recordings" subdirectory of the test's parent dir
-            # e.g., "tests/integration/inference" -> "tests/integration/inference/recordings"
-            return test_dir / "recordings"
+            # Make it absolute by resolving against base_dir
+            # If base_dir is absolute, use it as the root, otherwise resolve relative to cwd
+            if self.base_dir.is_absolute():
+                # base_dir is something like /app/llama-stack-source/tests/integration/common
+                # We need to go up to the repo root and then back down to the test dir
+                repo_root = self.base_dir.parent.parent.parent  # go up from common -> integration -> tests -> repo
+                return repo_root / test_dir / "recordings"
+            else:
+                return test_dir / "recordings"
         else:
             # Fallback for non-test contexts
             return self.base_dir / "recordings"
