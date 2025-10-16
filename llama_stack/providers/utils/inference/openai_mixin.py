@@ -168,13 +168,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         is used instead of any config API key.
         """
 
-        api_key = self.get_api_key()
-
-        if self.provider_data_api_key_field:
-            provider_data = self.get_request_provider_data()
-            if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
-                api_key = getattr(provider_data, self.provider_data_api_key_field)
-
+        api_key = self._get_api_key_from_config_or_provider_data()
         if not api_key:
             message = "API key not provided."
             if self.provider_data_api_key_field:
@@ -186,6 +180,16 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             base_url=self.get_base_url(),
             **self.get_extra_client_params(),
         )
+
+    def _get_api_key_from_config_or_provider_data(self) -> str | None:
+        api_key = self.get_api_key()
+
+        if self.provider_data_api_key_field:
+            provider_data = self.get_request_provider_data()
+            if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
+                api_key = getattr(provider_data, self.provider_data_api_key_field)
+
+        return api_key
 
     async def _get_provider_model_id(self, model: str) -> str:
         """
@@ -386,6 +390,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         :return: A list of Model instances representing available models.
         """
         self._model_cache = {}
+
+        api_key = self._get_api_key_from_config_or_provider_data()
+        if not api_key:
+            logger.debug(f"{self.__class__.__name__}.list_provider_model_ids() disabled because API key not provided")
+            return None
 
         try:
             iterable = await self.list_provider_model_ids()
