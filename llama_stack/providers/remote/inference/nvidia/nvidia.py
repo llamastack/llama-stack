@@ -49,18 +49,6 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         "snowflake/arctic-embed-l": {"embedding_dimension": 512, "context_length": 1024},
     }
 
-    rerank_model_list: list[str] = [
-        "nv-rerank-qa-mistral-4b:1",
-        "nvidia/nv-rerankqa-mistral-4b-v3",
-        "nvidia/llama-3.2-nv-rerankqa-1b-v2",
-    ]
-
-    _rerank_model_endpoints = {
-        "nv-rerank-qa-mistral-4b:1": "https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking",
-        "nvidia/nv-rerankqa-mistral-4b-v3": "https://ai.api.nvidia.com/v1/retrieval/nvidia/nv-rerankqa-mistral-4b-v3/reranking",
-        "nvidia/llama-3.2-nv-rerankqa-1b-v2": "https://ai.api.nvidia.com/v1/retrieval/nvidia/llama-3_2-nv-rerankqa-1b-v2/reranking",
-    }
-
     async def initialize(self) -> None:
         logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.url})...")
 
@@ -96,14 +84,14 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         """
         List available NVIDIA models by combining:
         1. Dynamic models from https://integrate.api.nvidia.com/v1/models
-        2. Static rerank models (which use different API endpoints)
+        2. Rerank models from config (which use different API endpoints)
         """
         self._model_cache = {}
         models = await super().list_models()
 
         # Add rerank models
         existing_ids = {m.identifier for m in models}
-        for model_id, _ in self._rerank_model_endpoints.items():
+        for model_id, _ in self.config.rerank_model_to_url.items():
             if self.allowed_models and model_id not in self.allowed_models:
                 continue
             if model_id not in existing_ids:
@@ -129,8 +117,8 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
         ranking_url = self.get_base_url()
 
-        if _is_nvidia_hosted(self.config) and provider_model_id in self._rerank_model_endpoints:
-            ranking_url = self._rerank_model_endpoints[provider_model_id]
+        if _is_nvidia_hosted(self.config) and provider_model_id in self.config.rerank_model_to_url:
+            ranking_url = self.config.rerank_model_to_url[provider_model_id]
 
         logger.debug(f"Using rerank endpoint: {ranking_url} for model: {provider_model_id}")
 

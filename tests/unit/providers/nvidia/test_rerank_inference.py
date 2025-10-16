@@ -68,7 +68,7 @@ def create_adapter(config=None, rerank_endpoints=None):
     adapter.model_store.get_model = AsyncMock(return_value=MockModel())
 
     if rerank_endpoints is not None:
-        adapter._rerank_model_endpoints = rerank_endpoints
+        adapter.config.rerank_model_to_url = rerank_endpoints
 
     return adapter
 

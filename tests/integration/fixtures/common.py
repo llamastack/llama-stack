@@ -136,7 +136,7 @@ def client_with_models(
 
     if embedding_model_id and embedding_model_id not in model_ids:
         raise ValueError(f"embedding_model_id {embedding_model_id} not found")
-    
+
     if rerank_model_id and rerank_model_id not in model_ids:
         raise ValueError(f"rerank_model_id {rerank_model_id} not found")
     return client
