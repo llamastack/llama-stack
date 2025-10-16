@@ -55,16 +55,9 @@ def is_tracing_enabled(tracer):
 
 
 class TelemetryAdapter(Telemetry):
-    def __init__(self, config: TelemetryConfig, deps: dict[Api, Any]) -> None:
-        self.config = config
+    def __init__(self, _config: TelemetryConfig, deps: dict[Api, Any]) -> None:
         self.datasetio_api = deps.get(Api.datasetio)
         self.meter = None
-
-        resource = Resource.create(
-            {
-                ResourceAttributes.SERVICE_NAME: self.config.service_name,
-            }
-        )
 
         global _TRACER_PROVIDER
         # Initialize the correct span processor based on the provider state.
@@ -73,35 +66,24 @@ class TelemetryAdapter(Telemetry):
         # Since the library client can be recreated multiple times in a notebook,
         # the kernel will hold on to the span processor and cause duplicate spans to be written.
         if _TRACER_PROVIDER is None:
-            provider = TracerProvider(resource=resource)
+            provider = TracerProvider()
             trace.set_tracer_provider(provider)
             _TRACER_PROVIDER = provider
 
             # Use single OTLP endpoint for all telemetry signals
-            if TelemetrySink.OTEL_TRACE in self.config.sinks or TelemetrySink.OTEL_METRIC in self.config.sinks:
-                if self.config.otel_exporter_otlp_endpoint is None:
-                    raise ValueError(
-                        "otel_exporter_otlp_endpoint is required when OTEL_TRACE or OTEL_METRIC is enabled"
-                    )
 
-                # Let OpenTelemetry SDK handle endpoint construction automatically
-                # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
-                # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
-                if TelemetrySink.OTEL_TRACE in self.config.sinks:
-                    span_exporter = OTLPSpanExporter()
-                    span_processor = BatchSpanProcessor(span_exporter)
-                    trace.get_tracer_provider().add_span_processor(span_processor)
+            # Let OpenTelemetry SDK handle endpoint construction automatically
+            # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
+            # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
+            span_exporter = OTLPSpanExporter()
+            span_processor = BatchSpanProcessor(span_exporter)
+            trace.get_tracer_provider().add_span_processor(span_processor)
 
-                if TelemetrySink.OTEL_METRIC in self.config.sinks:
-                    metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
-                    metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
-                    metrics.set_meter_provider(metric_provider)
+            metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+            metric_provider = MeterProvider(metric_readers=[metric_reader])
+            metrics.set_meter_provider(metric_provider)
 
-            if TelemetrySink.CONSOLE in self.config.sinks:
-                trace.get_tracer_provider().add_span_processor(ConsoleSpanProcessor(print_attributes=True))
-
-        if TelemetrySink.OTEL_METRIC in self.config.sinks:
-            self.meter = metrics.get_meter(__name__)
+        self.meter = metrics.get_meter(__name__)
 
         self._lock = _global_lock
 
