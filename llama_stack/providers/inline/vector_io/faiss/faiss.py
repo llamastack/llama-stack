@@ -17,27 +17,14 @@ from numpy.typing import NDArray
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import (
-    Chunk,
-    QueryChunksResponse,
-    VectorIO,
-)
+from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
-    HealthResponse,
-    HealthStatus,
-    VectorDBsProtocolPrivate,
-)
+from llama_stack.providers.datatypes import HealthResponse, HealthStatus, VectorDBsProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import (
-    ChunkForDeletion,
-    EmbeddingIndex,
-    VectorDBWithIndex,
-)
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorDBWithIndex
 
 from .config import FaissVectorIOConfig
 
@@ -155,12 +142,7 @@ class FaissIndex(EmbeddingIndex):
 
         await self._save_index()
 
-    async def query_vector(
-        self,
-        embedding: NDArray,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
         distances, indices = await asyncio.to_thread(self.index.search, embedding.reshape(1, -1).astype(np.float32), k)
         chunks = []
         scores = []
@@ -175,12 +157,7 @@ class FaissIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(
-        self,
-        query_string: str,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
         raise NotImplementedError(
             "Keyword search is not supported - underlying DB FAISS does not support this search mode"
         )
@@ -200,17 +177,10 @@ class FaissIndex(EmbeddingIndex):
 
 
 class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPrivate):
-    def __init__(
-        self,
-        config: FaissVectorIOConfig,
-        inference_api: Inference,
-        models_api: Models,
-        files_api: Files | None,
-    ) -> None:
+    def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.models_api = models_api
         self.cache: dict[str, VectorDBWithIndex] = {}
 
     async def initialize(self) -> None:
@@ -252,17 +222,11 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPr
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")
 
-    async def register_vector_db(
-        self,
-        vector_db: VectorDB,
-    ) -> None:
+    async def register_vector_db(self, vector_db: VectorDB) -> None:
         assert self.kvstore is not None
 
         key = f"{VECTOR_DBS_PREFIX}{vector_db.identifier}"
-        await self.kvstore.set(
-            key=key,
-            value=vector_db.model_dump_json(),
-        )
+        await self.kvstore.set(key=key, value=vector_db.model_dump_json())
 
         # Store in cache
         self.cache[vector_db.identifier] = VectorDBWithIndex(
@@ -285,12 +249,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPr
         del self.cache[vector_db_id]
         await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_db_id}")
 
-    async def insert_chunks(
-        self,
-        vector_db_id: str,
-        chunks: list[Chunk],
-        ttl_seconds: int | None = None,
-    ) -> None:
+    async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
         index = self.cache.get(vector_db_id)
         if index is None:
             raise ValueError(f"Vector DB {vector_db_id} not found. found: {self.cache.keys()}")
@@ -298,10 +257,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPr
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self,
-        vector_db_id: str,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
+        self, vector_db_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
         index = self.cache.get(vector_db_id)
         if index is None:
