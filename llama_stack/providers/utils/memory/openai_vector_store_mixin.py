@@ -550,7 +550,7 @@ class OpenAIVectorStoreMixin(ABC):
             logger.info(f"Using default embedding model: {model_id} with dimension {embedding_dimension}")
             return model_id, embedding_dimension
 
-        logger.info("DEBUG: No default embedding models found")
+        logger.debug("No default embedding models found")
         return None
 
     async def openai_list_vector_stores(

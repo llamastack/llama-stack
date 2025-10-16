@@ -329,3 +329,4 @@ classmethod-decorators = ["classmethod", "pydantic.field_validator"]
 addopts = ["--durations=10"]
 asyncio_mode = "auto"
 markers = ["allow_network: Allow network access for specific unit tests"]
+filterwarnings = "ignore::DeprecationWarning"

@@ -19,7 +19,7 @@ from llama_stack.providers.remote.safety.nvidia.config import NVIDIASafetyConfig
 from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
 
 
-class TestNVIDIASafetyAdapter(NVIDIASafetyAdapter):
+class FakeNVIDIASafetyAdapter(NVIDIASafetyAdapter):
     """Test implementation that provides the required shield_store."""
 
     def __init__(self, config: NVIDIASafetyConfig, shield_store):
@@ -41,7 +41,7 @@ def nvidia_adapter():
     shield_store = AsyncMock()
     shield_store.get_shield = AsyncMock()
 
-    adapter = TestNVIDIASafetyAdapter(config=config, shield_store=shield_store)
+    adapter = FakeNVIDIASafetyAdapter(config=config, shield_store=shield_store)
 
     return adapter
 
