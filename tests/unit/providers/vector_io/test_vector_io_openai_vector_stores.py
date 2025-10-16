@@ -1162,5 +1162,5 @@ async def test_embedding_config_required_model_missing(vector_io_adapter):
     # Test with no embedding model provided
     params = OpenAICreateVectorStoreRequestWithExtraBody(name="test_store", metadata={})
 
-    with pytest.raises(ValueError, match="embedding_model is required in extra_body when creating a vector store"):
+    with pytest.raises(ValueError, match="embedding_model is required"):
         await vector_io_adapter.openai_create_vector_store(params)

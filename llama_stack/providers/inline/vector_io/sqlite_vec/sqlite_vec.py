@@ -178,7 +178,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                     # Insert FTS content
                     fts_data = [(chunk.chunk_id, chunk.content) for chunk in batch_chunks]
                     # DELETE existing entries with same IDs (FTS5 doesn't support ON CONFLICT)
-                    cur.executemany(f"DELETE FROM [{self.fts_table}] WHERE id = ?;", [(row[0]) for row in fts_data])
+                    cur.executemany(f"DELETE FROM [{self.fts_table}] WHERE id = ?;", [(row[0],) for row in fts_data])
 
                     # INSERT new entries
                     cur.executemany(f"INSERT INTO [{self.fts_table}] (id, content) VALUES (?, ?);", fts_data)
