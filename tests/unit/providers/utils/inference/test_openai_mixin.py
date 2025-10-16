@@ -23,10 +23,10 @@ class OpenAIMixinImpl(OpenAIMixin):
     __provider_id__: str = "test-provider"
 
     def get_api_key(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
+        return "test-api-key"
 
     def get_base_url(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
+        return "http://test-base-url"
 
 
 class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
