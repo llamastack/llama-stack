@@ -256,6 +256,7 @@ class RunConfigSettings(BaseModel):
             "server": {
                 "port": 8321,
             },
+            "telemetry": {"enabled": True},
         }
 
 

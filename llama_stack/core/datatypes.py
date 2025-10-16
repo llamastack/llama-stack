@@ -177,7 +177,7 @@ class DistributionSpec(BaseModel):
 
 
 class TelemetryConfig(BaseModel):
-    enabled: bool = Field(default=False, description="enable or disable telemetry")
+    enabled: bool = Field(default=True, description="enable or disable telemetry")
 
 
 class LoggingConfig(BaseModel):
