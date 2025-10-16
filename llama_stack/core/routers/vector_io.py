@@ -31,6 +31,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 
@@ -43,9 +44,11 @@ class VectorIORouter(VectorIO):
     def __init__(
         self,
         routing_table: RoutingTable,
+        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         logger.debug("Initializing VectorIORouter")
         self.routing_table = routing_table
+        self.vector_stores_config = vector_stores_config
 
     async def initialize(self) -> None:
         logger.debug("VectorIORouter.initialize")
@@ -121,6 +124,10 @@ class VectorIORouter(VectorIO):
         embedding_model = extra.get("embedding_model")
         embedding_dimension = extra.get("embedding_dimension")
         provider_id = extra.get("provider_id")
+
+        if embedding_model is None and self.vector_stores_config is not None:
+            embedding_model = self.vector_stores_config.default_embedding_model_id
+            logger.debug(f"Using default embedding model: {embedding_model}")
 
         if embedding_model is not None and embedding_dimension is None:
             embedding_dimension = await self._get_embedding_model_dimension(embedding_model)

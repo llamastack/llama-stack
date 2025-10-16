@@ -6,23 +6,14 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.providers.datatypes import Api
 
 from .config import MilvusVectorIOConfig
 
 
-async def get_provider_impl(
-    config: MilvusVectorIOConfig, deps: dict[Api, Any], vector_stores_config: VectorStoresConfig | None = None
-):
+async def get_provider_impl(config: MilvusVectorIOConfig, deps: dict[Api, Any]):
     from llama_stack.providers.remote.vector_io.milvus.milvus import MilvusVectorIOAdapter
 
-    impl = MilvusVectorIOAdapter(
-        config,
-        deps[Api.inference],
-        deps.get(Api.models),
-        deps.get(Api.files),
-        vector_stores_config,
-    )
+    impl = MilvusVectorIOAdapter(config, deps[Api.inference], deps.get(Api.models), deps.get(Api.files))
     await impl.initialize()
     return impl

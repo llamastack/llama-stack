@@ -6,25 +6,14 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.providers.datatypes import Api
 
 from .config import ChromaVectorIOConfig
 
 
-async def get_provider_impl(
-    config: ChromaVectorIOConfig, deps: dict[Api, Any], vector_stores_config: VectorStoresConfig | None = None
-):
-    from llama_stack.providers.remote.vector_io.chroma.chroma import (
-        ChromaVectorIOAdapter,
-    )
+async def get_provider_impl(config: ChromaVectorIOConfig, deps: dict[Api, Any]):
+    from llama_stack.providers.remote.vector_io.chroma.chroma import ChromaVectorIOAdapter
 
-    impl = ChromaVectorIOAdapter(
-        config,
-        deps[Api.inference],
-        deps[Api.models],
-        deps.get(Api.files),
-        vector_stores_config,
-    )
+    impl = ChromaVectorIOAdapter(config, deps[Api.inference], deps[Api.models], deps.get(Api.files))
     await impl.initialize()
     return impl

@@ -241,7 +241,7 @@ def instantiate_llama_stack_client(session):
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:
             run_config.vector_stores = VectorStoresConfig(
-                default_embedding_model_id="inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+                default_embedding_model_id="sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
             )
 
         run_config_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")

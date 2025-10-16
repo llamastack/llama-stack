@@ -4,25 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.providers.datatypes import Api, ProviderSpec
 
 from .config import PGVectorVectorIOConfig
 
 
-async def get_adapter_impl(
-    config: PGVectorVectorIOConfig,
-    deps: dict[Api, ProviderSpec],
-    vector_stores_config: VectorStoresConfig | None = None,
-):
+async def get_adapter_impl(config: PGVectorVectorIOConfig, deps: dict[Api, ProviderSpec]):
     from .pgvector import PGVectorVectorIOAdapter
 
-    impl = PGVectorVectorIOAdapter(
-        config,
-        deps[Api.inference],
-        deps[Api.models],
-        deps.get(Api.files),
-        vector_stores_config,
-    )
+    impl = PGVectorVectorIOAdapter(config, deps[Api.inference], deps[Api.models], deps.get(Api.files))
     await impl.initialize()
     return impl
