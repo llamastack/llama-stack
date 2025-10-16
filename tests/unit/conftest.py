@@ -9,3 +9,6 @@ def pytest_sessionstart(session) -> None:
     # Silence common deprecation spam during unit tests.
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
+
+
+pytest_plugins = ["tests.unit.fixtures"]
