@@ -12,10 +12,8 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExp
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from llama_stack.apis.telemetry import (
@@ -30,12 +28,9 @@ from llama_stack.apis.telemetry import (
 )
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger
-from llama_stack.providers.inline.telemetry.meta_reference.console_span_processor import (
-    ConsoleSpanProcessor,
-)
 from llama_stack.providers.utils.telemetry.tracing import ROOT_SPAN_MARKERS
 
-from .config import TelemetryConfig, TelemetrySink
+from .config import TelemetryConfig
 
 _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
     "active_spans": {},
