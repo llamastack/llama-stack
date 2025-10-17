@@ -181,3 +181,22 @@ vlm_response = client.chat.completions.create(
 
 print(f"VLM Response: {vlm_response.choices[0].message.content}")
 ```
+
+### Rerank Example
+
+The following example shows how to rerank documents using an NVIDIA NIM.
+
+```python
+rerank_response = client.alpha.inference.rerank(
+    model="nvidia/nvidia/llama-3.2-nv-rerankqa-1b-v2",
+    query="query",
+    items=[
+        "item_1",
+        "item_2",
+        "item_3",
+    ],
+)
+
+for i, result in enumerate(rerank_response):
+    print(f"{i+1}. [Index: {result.index}, " f"Score: {(result.relevance_score):.3f}]")
+```

@@ -172,6 +172,10 @@ def pytest_addoption(parser):
         help="comma-separated list of embedding models. Fixture name: embedding_model_id",
     )
     parser.addoption(
+        "--rerank-model",
+        help="comma-separated list of rerank models. Fixture name: rerank_model_id",
+    )
+    parser.addoption(
         "--safety-shield",
         help="comma-separated list of safety shields. Fixture name: shield_id",
     )
@@ -249,6 +253,7 @@ def pytest_generate_tests(metafunc):
         "shield_id": ("--safety-shield", "shield"),
         "judge_model_id": ("--judge-model", "judge"),
         "embedding_dimension": ("--embedding-dimension", "dim"),
+        "rerank_model_id": ("--rerank-model", "rerank"),
     }
 
     # Collect all parameters and their values
