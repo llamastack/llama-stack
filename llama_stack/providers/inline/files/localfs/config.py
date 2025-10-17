@@ -25,6 +25,7 @@ class LocalfsFilesImplConfig(BaseModel):
         return {
             "storage_dir": "${env.FILES_STORAGE_DIR:=" + __distro_dir__ + "/files}",
             "metadata_store": SqlStoreReference(
+                backend="sql_default",
                 table_name="files_metadata",
             ).model_dump(exclude_none=True),
         }

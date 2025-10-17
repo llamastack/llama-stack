@@ -166,7 +166,7 @@ class S3FilesImpl(Files):
         self._client = _create_s3_client(self._config)
         await _create_bucket_if_not_exists(self._client, self._config)
 
-        self._sql_store = AuthorizedSqlStore(sqlstore_impl(self._config.persistence), self.policy)
+        self._sql_store = AuthorizedSqlStore(sqlstore_impl(self._config.metadata_store), self.policy)
         await self._sql_store.create_table(
             "openai_files",
             {

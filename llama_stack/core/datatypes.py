@@ -26,7 +26,13 @@ from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
-from llama_stack.core.storage.datatypes import KVStoreReference, StorageConfig
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    SqlStoreReference,
+    StorageBackendType,
+    StorageConfig,
+)
 from llama_stack.providers.datatypes import Api, ProviderSpec
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
@@ -464,10 +470,19 @@ can be instantiated multiple times (with different configs) if necessary.
 """,
     )
     storage: StorageConfig = Field(
-        description="""
-Storage backend configurations. Each backend is named, and can be referenced by various components
-throughout the Stack (both by its core as well as providers).
-""",
+        description="Catalog of named storage backends available to the stack",
+    )
+    metadata_store: KVStoreReference | None = Field(
+        default=None,
+        description="Reference to the KV store backend used by the distribution registry (kv_* backend).",
+    )
+    inference_store: InferenceStoreReference | None = Field(
+        default=None,
+        description="Reference to the SQL store backend used by the inference API (sql_* backend).",
+    )
+    conversations_store: SqlStoreReference | None = Field(
+        default=None,
+        description="Reference to the SQL store backend used by the conversations API (sql_* backend).",
     )
 
     # registry of "resources" in the distribution
@@ -506,6 +521,47 @@ throughout the Stack (both by its core as well as providers).
         if isinstance(v, str):
             return Path(v)
         return v
+
+    @model_validator(mode="after")
+    def validate_storage_references(self) -> "StackRunConfig":
+        backend_map = self.storage.backends if self.storage else {}
+        kv_backends = {
+            name
+            for name, cfg in backend_map.items()
+            if cfg.type
+            in {
+                StorageBackendType.KV_REDIS,
+                StorageBackendType.KV_SQLITE,
+                StorageBackendType.KV_POSTGRES,
+                StorageBackendType.KV_MONGODB,
+            }
+        }
+        sql_backends = {
+            name
+            for name, cfg in backend_map.items()
+            if cfg.type in {StorageBackendType.SQL_SQLITE, StorageBackendType.SQL_POSTGRES}
+        }
+
+        def _ensure_backend(reference, expected_set, store_name: str) -> None:
+            if reference is None:
+                return
+            backend_name = reference.backend
+            if backend_name not in backend_map:
+                raise ValueError(
+                    f"{store_name} references unknown backend '{backend_name}'. "
+                    f"Available backends: {sorted(backend_map)}"
+                )
+            if backend_name not in expected_set:
+                raise ValueError(
+                    f"{store_name} references backend '{backend_name}' of type "
+                    f"'{backend_map[backend_name].type.value}', but a backend of type "
+                    f"{'kv_*' if expected_set is kv_backends else 'sql_*'} is required."
+                )
+
+        _ensure_backend(self.metadata_store, kv_backends, "metadata_store")
+        _ensure_backend(self.inference_store, sql_backends, "inference_store")
+        _ensure_backend(self.conversations_store, sql_backends, "conversations_store")
+        return self
 
 
 class BuildConfig(BaseModel):

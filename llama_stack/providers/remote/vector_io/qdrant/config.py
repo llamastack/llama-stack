@@ -31,6 +31,7 @@ class QdrantVectorIOConfig(BaseModel):
         return {
             "api_key": "${env.QDRANT_API_KEY:=}",
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::qdrant_remote",
             ).model_dump(exclude_none=True),
         }

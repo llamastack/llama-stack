@@ -20,6 +20,7 @@ class SQLiteVectorIOConfig(BaseModel):
         return {
             "db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + "sqlite_vec.db",
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::sqlite_vec",
             ).model_dump(exclude_none=True),
         }

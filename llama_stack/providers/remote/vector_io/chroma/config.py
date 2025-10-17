@@ -22,6 +22,7 @@ class ChromaVectorIOConfig(BaseModel):
         return {
             "url": url,
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::chroma_remote",
             ).model_dump(exclude_none=True),
         }

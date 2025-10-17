@@ -8,14 +8,14 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from llama_stack.core.storage.datatypes import KVStoreReference, SqlStoreReference
+from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
 
 
 class AgentPersistenceConfig(BaseModel):
     """Nested persistence configuration for agents."""
 
     agent_state: KVStoreReference
-    responses: SqlStoreReference
+    responses: ResponsesStoreReference
 
 
 class MetaReferenceAgentsImplConfig(BaseModel):
@@ -26,9 +26,11 @@ class MetaReferenceAgentsImplConfig(BaseModel):
         return {
             "persistence": {
                 "agent_state": KVStoreReference(
+                    backend="kv_default",
                     namespace="agents",
                 ).model_dump(exclude_none=True),
-                "responses": SqlStoreReference(
+                "responses": ResponsesStoreReference(
+                    backend="sql_default",
                     table_name="responses",
                 ).model_dump(exclude_none=True),
             }

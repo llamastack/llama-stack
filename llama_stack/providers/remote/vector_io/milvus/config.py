@@ -29,6 +29,7 @@ class MilvusVectorIOConfig(BaseModel):
             "uri": "${env.MILVUS_ENDPOINT}",
             "token": "${env.MILVUS_TOKEN}",
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::milvus_remote",
             ).model_dump(exclude_none=True),
         }

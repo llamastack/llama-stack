@@ -231,31 +231,29 @@ class RunConfigSettings(BaseModel):
         apis = sorted(providers.keys())
 
         storage_backends = self.storage_backends or {
-            "default_kv_store": SqliteKVStoreConfig.sample_run_config(
+            "kv_default": SqliteKVStoreConfig.sample_run_config(
                 __distro_dir__=f"~/.llama/distributions/{name}",
                 db_name="kvstore.db",
             ),
-            "default_sql_store": SqliteSqlStoreConfig.sample_run_config(
+            "sql_default": SqliteSqlStoreConfig.sample_run_config(
                 __distro_dir__=f"~/.llama/distributions/{name}",
                 db_name="sql_store.db",
             ),
         }
 
-        storage_config = dict(
-            backends=storage_backends,
-            metadata=KVStoreReference(
-                backend="default_kv_store",
-                namespace="registry",
-            ).model_dump(exclude_none=True),
-            inference=InferenceStoreReference(
-                backend="default_sql_store",
-                table_name="inference_store",
-            ).model_dump(exclude_none=True),
-            conversations=SqlStoreReference(
-                backend="default_sql_store",
-                table_name="openai_conversations",
-            ).model_dump(exclude_none=True),
-        )
+        storage_config = dict(backends=storage_backends)
+        metadata_store = KVStoreReference(
+            backend="kv_default",
+            namespace="registry",
+        ).model_dump(exclude_none=True)
+        inference_store = InferenceStoreReference(
+            backend="sql_default",
+            table_name="inference_store",
+        ).model_dump(exclude_none=True)
+        conversations_store = SqlStoreReference(
+            backend="sql_default",
+            table_name="openai_conversations",
+        ).model_dump(exclude_none=True)
 
         # Return a dict that matches StackRunConfig structure
         return {
@@ -265,6 +263,9 @@ class RunConfigSettings(BaseModel):
             "apis": apis,
             "providers": provider_configs,
             "storage": storage_config,
+            "metadata_store": metadata_store,
+            "inference_store": inference_store,
+            "conversations_store": conversations_store,
             "models": [m.model_dump(exclude_none=True) for m in (self.default_models or [])],
             "shields": [s.model_dump(exclude_none=True) for s in (self.default_shields or [])],
             "vector_dbs": [],
@@ -314,11 +315,15 @@ class DistributionTemplate(BaseModel):
             # We should have a better way to do this by formalizing the concept of "internal" APIs
             # and providers, with a way to specify dependencies for them.
 
-            if run_config_.get("inference_store"):
-                additional_pip_packages.extend(get_sql_pip_packages(run_config_["inference_store"]))
-
-            if run_config_.get("metadata_store"):
-                additional_pip_packages.extend(get_kv_pip_packages(run_config_["metadata_store"]))
+            storage_cfg = run_config_.get("storage", {})
+            for backend_cfg in storage_cfg.get("backends", {}).values():
+                store_type = backend_cfg.get("type")
+                if not store_type:
+                    continue
+                if str(store_type).startswith("kv_"):
+                    additional_pip_packages.extend(get_kv_pip_packages(backend_cfg))
+                elif str(store_type).startswith("sql_"):
+                    additional_pip_packages.extend(get_sql_pip_packages(backend_cfg))
 
         if self.additional_pip_packages:
             additional_pip_packages.extend(self.additional_pip_packages)

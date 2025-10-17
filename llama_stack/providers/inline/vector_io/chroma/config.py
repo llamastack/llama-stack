@@ -24,6 +24,7 @@ class ChromaVectorIOConfig(BaseModel):
         return {
             "db_path": db_path,
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::chroma",
             ).model_dump(exclude_none=True),
         }

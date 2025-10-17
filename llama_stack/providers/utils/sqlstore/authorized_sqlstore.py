@@ -12,10 +12,10 @@ from llama_stack.core.access_control.conditions import ProtectedResource
 from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
 from llama_stack.core.datatypes import User
 from llama_stack.core.request_headers import get_authenticated_user
+from llama_stack.core.storage.datatypes import StorageBackendType
 from llama_stack.log import get_logger
 
 from .api import ColumnDefinition, ColumnType, PaginatedResponse, SqlStore
-from .sqlstore import StorageBackendType
 
 logger = get_logger(name=__name__, category="providers::utils")
 

@@ -30,6 +30,7 @@ providers:
     config:
       kvstore:
         namespace: vector_io::faiss
+        backend: kv_default
   safety:
   - provider_id: nvidia
     provider_type: remote::nvidia
@@ -43,8 +44,12 @@ providers:
       persistence:
         agent_state:
           namespace: agents
+          backend: kv_default
         responses:
           table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
   eval:
   - provider_id: nvidia
     provider_type: remote::nvidia
@@ -64,6 +69,7 @@ providers:
     config:
       kvstore:
         namespace: datasetio::localfs
+        backend: kv_default
   - provider_id: nvidia
     provider_type: remote::nvidia
     config:
@@ -84,25 +90,26 @@ providers:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/nvidia/files}
       metadata_store:
         table_name: files_metadata
+        backend: sql_default
 storage:
   backends:
-    default_kv_store:
+    kv_default:
       type: kv_sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/kvstore.db
-    default_sql_store:
+    sql_default:
       type: sql_sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/sql_store.db
-  metadata:
-    namespace: registry
-    backend: default_kv_store
-  inference:
-    table_name: inference_store
-    backend: default_sql_store
-    max_write_queue_size: 10000
-    num_writers: 4
-  conversations:
-    table_name: openai_conversations
-    backend: default_sql_store
+metadata_store:
+  namespace: registry
+  backend: kv_default
+inference_store:
+  table_name: inference_store
+  backend: sql_default
+  max_write_queue_size: 10000
+  num_writers: 4
+conversations_store:
+  table_name: openai_conversations
+  backend: sql_default
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}

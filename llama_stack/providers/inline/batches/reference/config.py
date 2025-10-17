@@ -34,6 +34,7 @@ class ReferenceBatchesImplConfig(BaseModel):
     def sample_run_config(cls, __distro_dir__: str) -> dict:
         return {
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="batches",
             ).model_dump(exclude_none=True),
         }

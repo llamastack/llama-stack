@@ -11,7 +11,7 @@ from typing import Protocol
 import pydantic
 
 from llama_stack.core.datatypes import RoutableObjectWithProvider
-from llama_stack.core.storage.datatypes import KVStoreReference, StorageConfig
+from llama_stack.core.storage.datatypes import KVStoreReference
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
 
@@ -190,17 +190,10 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
 
 
 async def create_dist_registry(
-    storage: StorageConfig,
-    image_name: str,
+    metadata_store: KVStoreReference, image_name: str
 ) -> tuple[CachedDiskDistributionRegistry, KVStore]:
     # instantiate kvstore for storing and retrieving distribution metadata
-    # Use metadata store backend with registry-specific namespace
-    metadata_ref = storage.metadata
-    registry_ref = KVStoreReference(
-        namespace="registry",
-        backend=metadata_ref.backend if metadata_ref else None,
-    )
-    dist_kvstore = await kvstore_impl(registry_ref)
+    dist_kvstore = await kvstore_impl(metadata_store)
     dist_registry = CachedDiskDistributionRegistry(dist_kvstore)
     await dist_registry.initialize()
     return dist_registry, dist_kvstore

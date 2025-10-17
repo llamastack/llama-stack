@@ -48,12 +48,13 @@ class InferenceStore:
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
 
         # Disable write queue for SQLite to avoid concurrency issues
-        backend_name = self.reference.backend or list(_SQLSTORE_BACKENDS.keys())[0] if _SQLSTORE_BACKENDS else None
-        if backend_name:
-            backend_config = _SQLSTORE_BACKENDS.get(backend_name)
-            self.enable_write_queue = backend_config.type != StorageBackendType.SQL_SQLITE
-        else:
-            self.enable_write_queue = True
+        backend_name = self.reference.backend
+        backend_config = _SQLSTORE_BACKENDS.get(backend_name)
+        if backend_config is None:
+            raise ValueError(
+                f"Unregistered SQL backend '{backend_name}'. Registered backends: {sorted(_SQLSTORE_BACKENDS)}"
+            )
+        self.enable_write_queue = backend_config.type != StorageBackendType.SQL_SQLITE
         await self.sql_store.create_table(
             "chat_completions",
             {

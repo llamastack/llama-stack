@@ -52,5 +52,6 @@ distribution_spec:
     - provider_type: inline::reference
 image_type: venv
 additional_pip_packages:
+- aiosqlite
 - asyncpg
 - sqlalchemy[asyncio]

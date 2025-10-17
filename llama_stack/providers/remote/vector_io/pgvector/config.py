@@ -41,6 +41,7 @@ class PGVectorVectorIOConfig(BaseModel):
             "user": user,
             "password": password,
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::pgvector",
             ).model_dump(exclude_none=True),
         }

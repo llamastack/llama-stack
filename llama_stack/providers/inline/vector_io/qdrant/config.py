@@ -23,6 +23,7 @@ class QdrantVectorIOConfig(BaseModel):
         return {
             "path": "${env.QDRANT_PATH:=~/.llama/" + __distro_dir__ + "}/" + "qdrant.db",
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::qdrant",
             ).model_dump(exclude_none=True),
         }

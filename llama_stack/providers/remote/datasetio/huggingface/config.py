@@ -17,6 +17,7 @@ class HuggingfaceDatasetIOConfig(BaseModel):
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="datasetio::huggingface",
             ).model_dump(exclude_none=True)
         }

@@ -91,7 +91,6 @@ def get_distribution_template() -> DistributionTemplate:
             "embedding_dimension": 768,
         },
     )
-    postgres_config = PostgresSqlStoreConfig.sample_run_config()
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -109,13 +108,11 @@ def get_distribution_template() -> DistributionTemplate:
                 default_models=default_models + [embedding_model],
                 default_tool_groups=default_tool_groups,
                 default_shields=[ShieldInput(shield_id="meta-llama/Llama-Guard-3-8B")],
-                metadata_store=PostgresKVStoreConfig.sample_run_config(),
-                inference_store=postgres_config,
                 storage_backends={
-                    "default_kv_store": PostgresKVStoreConfig.sample_run_config(
+                    "kv_default": PostgresKVStoreConfig.sample_run_config(
                         table_name="llamastack_kvstore",
                     ),
-                    "default_sql_store": PostgresSqlStoreConfig.sample_run_config(),
+                    "sql_default": PostgresSqlStoreConfig.sample_run_config(),
                 },
             ),
         },

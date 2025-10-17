@@ -40,6 +40,14 @@ from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.external import load_external_apis
 from llama_stack.core.resolver import InvalidProviderError
 from llama_stack.core.stack import replace_env_vars
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    SqliteKVStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageConfig,
+)
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR, EXTERNAL_PROVIDERS_DIR
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.exec import formulate_run_args, run_command
@@ -285,16 +293,40 @@ def _generate_run_config(
     Generate a run.yaml template file for user to edit from a build.yaml file
     """
     apis = list(build_config.distribution_spec.providers.keys())
+    distro_dir = f"~/.llama/distributions/{image_name}"
+    storage = StorageConfig(
+        backends={
+            "kv_default": SqliteKVStoreConfig(
+                db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/kvstore.db",
+            ),
+            "sql_default": SqliteSqlStoreConfig(
+                db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/sql_store.db",
+            ),
+        }
+    )
+
     run_config = StackRunConfig(
         container_image=(image_name if build_config.image_type == LlamaStackImageType.CONTAINER.value else None),
         image_name=image_name,
         apis=apis,
         providers={},
+        storage=storage,
+        metadata_store=KVStoreReference(
+            backend="kv_default",
+            namespace="registry",
+        ),
+        inference_store=InferenceStoreReference(
+            backend="sql_default",
+            table_name="inference_store",
+        ),
+        conversations_store=SqlStoreReference(
+            backend="sql_default",
+            table_name="openai_conversations",
+        ),
         external_providers_dir=build_config.external_providers_dir
         if build_config.external_providers_dir
         else EXTERNAL_PROVIDERS_DIR,
     )
-    # Persistence config defaults are handled by PersistenceConfig model validators
     # build providers dict
     provider_registry = get_provider_registry(build_config)
     for api in apis:

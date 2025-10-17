@@ -36,6 +36,7 @@ class S3FilesImplConfig(BaseModel):
             "endpoint_url": "${env.S3_ENDPOINT_URL:=}",
             "auto_create_bucket": "${env.S3_AUTO_CREATE_BUCKET:=false}",
             "metadata_store": SqlStoreReference(
+                backend="sql_default",
                 table_name="s3_files_metadata",
             ).model_dump(exclude_none=True),
         }

@@ -23,6 +23,7 @@ class MilvusVectorIOConfig(BaseModel):
         return {
             "db_path": "${env.MILVUS_DB_PATH:=" + __distro_dir__ + "}/" + "milvus.db",
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::milvus",
             ).model_dump(exclude_none=True),
         }

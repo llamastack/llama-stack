@@ -27,10 +27,6 @@ class CommonConfig(BaseModel):
         default=None,
         description="All keys will be prefixed with this namespace",
     )
-    default: bool = Field(
-        default=False,
-        description="Mark this KV store as the default choice when a reference omits the backend name",
-    )
 
 
 class RedisKVStoreConfig(CommonConfig):
@@ -143,13 +139,6 @@ class MongoDBKVStoreConfig(CommonConfig):
         }
 
 
-class CommonSqlStoreConfig(BaseModel):
-    default: bool = Field(
-        default=False,
-        description="Mark this SQL store as the default choice when a reference omits the backend name",
-    )
-
-
 class SqlAlchemySqlStoreConfig(BaseModel):
     @property
     @abstractmethod
@@ -161,7 +150,7 @@ class SqlAlchemySqlStoreConfig(BaseModel):
         return ["sqlalchemy[asyncio]"]
 
 
-class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig, CommonSqlStoreConfig):
+class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
     type: Literal[StorageBackendType.SQL_SQLITE] = StorageBackendType.SQL_SQLITE
     db_path: str = Field(
         description="Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
@@ -219,9 +208,8 @@ class SqlStoreReference(BaseModel):
         description="Name of the table to use for the SqlStore",
     )
 
-    backend: str | None = Field(
-        description="Name of backend from persistence.backends, a default will be used if not specified",
-        default=None,
+    backend: str = Field(
+        description="Name of backend from storage.backends",
     )
 
 
@@ -233,9 +221,8 @@ class KVStoreReference(BaseModel):
         description="Key prefix for KVStore backends",
     )
 
-    backend: str | None = Field(
-        description="Name of backend from persistence.backends, a default will be used if not specified",
-        default=None,
+    backend: str = Field(
+        description="Name of backend from storage.backends",
     )
 
 
@@ -263,21 +250,11 @@ class InferenceStoreReference(SqlStoreReference):
     )
 
 
+class ResponsesStoreReference(InferenceStoreReference):
+    """Responses store configuration with queue tuning."""
+
+
 class StorageConfig(BaseModel):
     backends: dict[str, StorageBackendConfig] = Field(
         description="Named backend configurations (e.g., 'default', 'cache')",
-    )
-
-    # these are stores used natively by the Stack
-    metadata: KVStoreReference | None = Field(
-        default=None,
-        description="Metadata store configuration (uses KVStore backend)",
-    )
-    inference: InferenceStoreReference | None = Field(
-        default=None,
-        description="Inference store configuration (uses SqlStore backend)",
-    )
-    conversations: SqlStoreReference | None = Field(
-        default=None,
-        description="Conversations store configuration (uses SqlStore backend)",
     )

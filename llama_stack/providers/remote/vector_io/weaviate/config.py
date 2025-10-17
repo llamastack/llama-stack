@@ -30,6 +30,7 @@ class WeaviateVectorIOConfig(BaseModel):
             "weaviate_api_key": None,
             "weaviate_cluster_url": "${env.WEAVIATE_CLUSTER_URL:=localhost:8080}",
             "kvstore": KVStoreReference(
+                backend="kv_default",
                 namespace="vector_io::weaviate",
             ).model_dump(exclude_none=True),
         }

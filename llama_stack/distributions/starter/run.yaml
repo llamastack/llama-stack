@@ -95,24 +95,28 @@ providers:
     config:
       kvstore:
         namespace: vector_io::faiss
+        backend: kv_default
   - provider_id: sqlite-vec
     provider_type: inline::sqlite-vec
     config:
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/sqlite_vec.db
       kvstore:
         namespace: vector_io::sqlite_vec
+        backend: kv_default
   - provider_id: ${env.MILVUS_URL:+milvus}
     provider_type: inline::milvus
     config:
       db_path: ${env.MILVUS_DB_PATH:=~/.llama/distributions/starter}/milvus.db
       kvstore:
         namespace: vector_io::milvus
+        backend: kv_default
   - provider_id: ${env.CHROMADB_URL:+chromadb}
     provider_type: remote::chromadb
     config:
       url: ${env.CHROMADB_URL:=}
       kvstore:
         namespace: vector_io::chroma_remote
+        backend: kv_default
   - provider_id: ${env.PGVECTOR_DB:+pgvector}
     provider_type: remote::pgvector
     config:
@@ -123,6 +127,7 @@ providers:
       password: ${env.PGVECTOR_PASSWORD:=}
       kvstore:
         namespace: vector_io::pgvector
+        backend: kv_default
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs
@@ -130,6 +135,7 @@ providers:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
       metadata_store:
         table_name: files_metadata
+        backend: sql_default
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
@@ -144,8 +150,12 @@ providers:
       persistence:
         agent_state:
           namespace: agents
+          backend: kv_default
         responses:
           table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
   post_training:
   - provider_id: torchtune-cpu
     provider_type: inline::torchtune-cpu
@@ -157,17 +167,20 @@ providers:
     config:
       kvstore:
         namespace: eval
+        backend: kv_default
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface
     config:
       kvstore:
         namespace: datasetio::huggingface
+        backend: kv_default
   - provider_id: localfs
     provider_type: inline::localfs
     config:
       kvstore:
         namespace: datasetio::localfs
+        backend: kv_default
   scoring:
   - provider_id: basic
     provider_type: inline::basic
@@ -198,25 +211,26 @@ providers:
     config:
       kvstore:
         namespace: batches
+        backend: kv_default
 storage:
   backends:
-    default_kv_store:
+    kv_default:
       type: kv_sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/kvstore.db
-    default_sql_store:
+    sql_default:
       type: sql_sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/sql_store.db
-  metadata:
-    namespace: registry
-    backend: default_kv_store
-  inference:
-    table_name: inference_store
-    backend: default_sql_store
-    max_write_queue_size: 10000
-    num_writers: 4
-  conversations:
-    table_name: openai_conversations
-    backend: default_sql_store
+metadata_store:
+  namespace: registry
+  backend: kv_default
+inference_store:
+  table_name: inference_store
+  backend: sql_default
+  max_write_queue_size: 10000
+  num_writers: 4
+conversations_store:
+  table_name: openai_conversations
+  backend: sql_default
 models: []
 shields:
 - shield_id: llama-guard

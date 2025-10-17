@@ -28,4 +28,6 @@ distribution_spec:
     - provider_type: remote::tavily-search
     - provider_type: inline::rag-runtime
 image_type: venv
-additional_pip_packages: []
+additional_pip_packages:
+- aiosqlite
+- sqlalchemy[asyncio]
