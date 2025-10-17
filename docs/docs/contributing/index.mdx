@@ -158,6 +158,31 @@ under the LICENSE file in the root directory of this source tree.
 
 Some tips about common tasks you work on while contributing to Llama Stack:
 
+### Building Docker Images
+
+The shell helper `llama_stack/core/build_container.sh` has been superseded by a Dockerfile so you can invoke `docker` or `podman` directly.
+
+```bash
+docker build \
+  -f docker/Dockerfile \
+  --build-arg DISTRO_NAME=starter \
+  --tag llama-stack:starter .
+```
+
+Key build arguments:
+
+- `BASE_IMAGE` – override the Linux base image (defaults to `python:3.12-slim`).
+- `DISTRO_NAME` – pick a bundled distribution (e.g. `starter`) and automatically install its dependencies.
+- `RUN_CONFIG_PATH` – set a default YAML config inside the image; the entrypoint prefers this over `DISTRO_NAME` if the file exists.
+- `INSTALL_MODE` – `pypi` (default), `test-pypi`, or `editable` (installs from the copied repo under `/workspace`).
+- `LLAMA_STACK_DIR` / `LLAMA_STACK_CLIENT_DIR` – absolute paths inside the build context for editable installs of the server or client packages.
+- `PYPI_VERSION` / `TEST_PYPI_VERSION` – pin a published version when installing from the respective index.
+- `KEEP_WORKSPACE=1` – keep `/workspace` (which contains the build context) in the image if you need bundled configs or providers.
+
+The Dockerfile installs `llama-stack` first and then runs `llama stack list-deps $DISTRO_NAME` to pull in the distribution-specific dependencies. Run the same command locally if you want to hydrate a virtualenv manually, e.g. `llama stack list-deps starter | xargs -L1 uv pip install`.
+
+Place any `run.yaml` or provider directories under the build context before running `docker build` so they are available within `/workspace`. At runtime the image entrypoint defaults to `llama stack run`, so additional arguments can be passed via `docker run llama-stack:dev <distro-or-config>`.
+
 ### Using `llama stack build`
 
 Building a stack image will use the production version of the `llama-stack` and `llama-stack-client` packages. If you are developing with a llama-stack repository checked out and need your code to be reflected in the stack image, set `LLAMA_STACK_DIR` and `LLAMA_STACK_CLIENT_DIR` to the appropriate checked out directories when running any of the `llama` CLI commands.
