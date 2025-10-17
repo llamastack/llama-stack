@@ -48,6 +48,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     - overwrite_completion_id: If True, overwrites the 'id' field in OpenAI responses
     - download_images: If True, downloads images and converts to base64 for providers that require it
     - embedding_model_metadata: A dictionary mapping model IDs to their embedding metadata
+    - rerank_model_list: A list of model IDs for rerank models
     - provider_data_api_key_field: Optional field name in provider data to look for API key
     - list_provider_model_ids: Method to list available models from the provider
     - get_extra_client_params: Method to provide extra parameters to the AsyncOpenAI client
