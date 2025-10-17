@@ -128,6 +128,21 @@ providers:
       kvstore:
         type: sqlite
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter-gpu}/pgvector_registry.db
+  - provider_id: ${env.QDRANT_URL:+qdrant}
+    provider_type: remote::qdrant
+    config:
+      api_key: ${env.QDRANT_API_KEY:=}
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter-gpu}/qdrant_registry.db
+  - provider_id: ${env.WEAVIATE_CLUSTER_URL:+weaviate}
+    provider_type: remote::weaviate
+    config:
+      weaviate_api_key: null
+      weaviate_cluster_url: ${env.WEAVIATE_CLUSTER_URL:=localhost:8080}
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter-gpu}/weaviate_registry.db
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs
@@ -240,7 +255,7 @@ tool_groups:
   provider_id: rag-runtime
 server:
   port: 8321
-vector_stores:
-  default_embedding_model_id: sentence-transformers/nomic-ai/nomic-embed-text-v1.5
 telemetry:
   enabled: true
+vector_stores:
+  default_embedding_model_id: sentence-transformers/nomic-ai/nomic-embed-text-v1.5
