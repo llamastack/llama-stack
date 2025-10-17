@@ -42,3 +42,8 @@ def sync_test_context_from_provider_data():
         return TEST_CONTEXT.set(provider_data["__test_id"])
 
     return None
+
+
+def is_debug_mode() -> bool:
+    """Check if test recording debug mode is enabled via LLAMA_STACK_TEST_DEBUG env var."""
+    return os.environ.get("LLAMA_STACK_TEST_DEBUG", "").lower() in ("1", "true", "yes")
