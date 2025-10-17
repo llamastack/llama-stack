@@ -24,6 +24,4 @@ distribution_spec:
     files:
     - provider_type: inline::localfs
 image_type: venv
-additional_pip_packages:
-- aiosqlite
-- sqlalchemy[asyncio]
+additional_pip_packages: []

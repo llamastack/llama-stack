@@ -9,7 +9,6 @@ import yaml
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.storage.datatypes import (
     PostgresSqlStoreConfig,
-    SqliteKVStoreConfig,
     SqliteSqlStoreConfig,
 )
 

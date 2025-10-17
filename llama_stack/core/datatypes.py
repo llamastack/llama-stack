@@ -465,7 +465,7 @@ can be instantiated multiple times (with different configs) if necessary.
     )
     storage: StorageConfig = Field(
         description="""
-Storage backend configurations. Each backend is named, and can be referenced by various components 
+Storage backend configurations. Each backend is named, and can be referenced by various components
 throughout the Stack (both by its core as well as providers).
 """,
     )

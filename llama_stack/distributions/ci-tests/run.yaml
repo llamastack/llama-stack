@@ -198,15 +198,25 @@ providers:
     config:
       kvstore:
         namespace: batches
-metadata_store:
-  type: kv_sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/registry.db
-inference_store:
-  type: sql_sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/inference_store.db
-conversations_store:
-  type: sql_sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/conversations.db
+storage:
+  backends:
+    default_kv_store:
+      type: kv_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/kvstore.db
+    default_sql_store:
+      type: sql_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sql_store.db
+  metadata:
+    namespace: registry
+    backend: default_kv_store
+  inference:
+    table_name: inference_store
+    backend: default_sql_store
+    max_write_queue_size: 10000
+    num_writers: 4
+  conversations:
+    table_name: openai_conversations
+    backend: default_sql_store
 models: []
 shields:
 - shield_id: llama-guard

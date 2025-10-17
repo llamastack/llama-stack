@@ -27,6 +27,4 @@ distribution_spec:
     - provider_type: inline::rag-runtime
     - provider_type: remote::model-context-protocol
 image_type: venv
-additional_pip_packages:
-- aiosqlite
-- sqlalchemy[asyncio]
+additional_pip_packages: []

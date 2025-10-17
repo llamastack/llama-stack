@@ -33,20 +33,11 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sql_postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
-      responses_store:
-        type: sql_postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
+      persistence:
+        agent_state:
+          namespace: agents
+        responses:
+          table_name: responses
   tool_runtime:
   - provider_id: brave-search
     provider_type: remote::brave-search
@@ -62,24 +53,34 @@ providers:
     provider_type: inline::rag-runtime
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
-metadata_store:
-  type: kv_postgres
-  host: ${env.POSTGRES_HOST:=localhost}
-  port: ${env.POSTGRES_PORT:=5432}
-  db: ${env.POSTGRES_DB:=llamastack}
-  user: ${env.POSTGRES_USER:=llamastack}
-  password: ${env.POSTGRES_PASSWORD:=llamastack}
-  table_name: ${env.POSTGRES_TABLE_NAME:=llamastack_kvstore}
-inference_store:
-  type: sql_postgres
-  host: ${env.POSTGRES_HOST:=localhost}
-  port: ${env.POSTGRES_PORT:=5432}
-  db: ${env.POSTGRES_DB:=llamastack}
-  user: ${env.POSTGRES_USER:=llamastack}
-  password: ${env.POSTGRES_PASSWORD:=llamastack}
-conversations_store:
-  type: sql_sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/postgres-demo}/conversations.db
+storage:
+  backends:
+    default_kv_store:
+      type: kv_postgres
+      host: ${env.POSTGRES_HOST:=localhost}
+      port: ${env.POSTGRES_PORT:=5432}
+      db: ${env.POSTGRES_DB:=llamastack}
+      user: ${env.POSTGRES_USER:=llamastack}
+      password: ${env.POSTGRES_PASSWORD:=llamastack}
+      table_name: ${env.POSTGRES_TABLE_NAME:=llamastack_kvstore}
+    default_sql_store:
+      type: sql_postgres
+      host: ${env.POSTGRES_HOST:=localhost}
+      port: ${env.POSTGRES_PORT:=5432}
+      db: ${env.POSTGRES_DB:=llamastack}
+      user: ${env.POSTGRES_USER:=llamastack}
+      password: ${env.POSTGRES_PASSWORD:=llamastack}
+  metadata:
+    namespace: registry
+    backend: default_kv_store
+  inference:
+    table_name: inference_store
+    backend: default_sql_store
+    max_write_queue_size: 10000
+    num_writers: 4
+  conversations:
+    table_name: openai_conversations
+    backend: default_sql_store
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}

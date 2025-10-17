@@ -29,6 +29,12 @@ from llama_stack.core.datatypes import (
     ToolGroupInput,
 )
 from llama_stack.core.distribution import get_provider_registry
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    SqlStoreReference,
+    StorageBackendType,
+)
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
@@ -180,10 +186,8 @@ class RunConfigSettings(BaseModel):
     default_tool_groups: list[ToolGroupInput] | None = None
     default_datasets: list[DatasetInput] | None = None
     default_benchmarks: list[BenchmarkInput] | None = None
-    metadata_store: dict | None = None
-    inference_store: dict | None = None
-    conversations_store: dict | None = None
     telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig(enabled=True))
+    storage_backends: dict[str, Any] | None = None
 
     def run_config(
         self,
@@ -226,6 +230,33 @@ class RunConfigSettings(BaseModel):
         # Get unique set of APIs from providers
         apis = sorted(providers.keys())
 
+        storage_backends = self.storage_backends or {
+            "default_kv_store": SqliteKVStoreConfig.sample_run_config(
+                __distro_dir__=f"~/.llama/distributions/{name}",
+                db_name="kvstore.db",
+            ),
+            "default_sql_store": SqliteSqlStoreConfig.sample_run_config(
+                __distro_dir__=f"~/.llama/distributions/{name}",
+                db_name="sql_store.db",
+            ),
+        }
+
+        storage_config = dict(
+            backends=storage_backends,
+            metadata=KVStoreReference(
+                backend="default_kv_store",
+                namespace="registry",
+            ).model_dump(exclude_none=True),
+            inference=InferenceStoreReference(
+                backend="default_sql_store",
+                table_name="inference_store",
+            ).model_dump(exclude_none=True),
+            conversations=SqlStoreReference(
+                backend="default_sql_store",
+                table_name="openai_conversations",
+            ).model_dump(exclude_none=True),
+        )
+
         # Return a dict that matches StackRunConfig structure
         return {
             "version": LLAMA_STACK_RUN_CONFIG_VERSION,
@@ -233,21 +264,7 @@ class RunConfigSettings(BaseModel):
             "container_image": container_image,
             "apis": apis,
             "providers": provider_configs,
-            "metadata_store": self.metadata_store
-            or SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=f"~/.llama/distributions/{name}",
-                db_name="registry.db",
-            ),
-            "inference_store": self.inference_store
-            or SqliteSqlStoreConfig.sample_run_config(
-                __distro_dir__=f"~/.llama/distributions/{name}",
-                db_name="inference_store.db",
-            ),
-            "conversations_store": self.conversations_store
-            or SqliteSqlStoreConfig.sample_run_config(
-                __distro_dir__=f"~/.llama/distributions/{name}",
-                db_name="conversations.db",
-            ),
+            "storage": storage_config,
             "models": [m.model_dump(exclude_none=True) for m in (self.default_models or [])],
             "shields": [s.model_dump(exclude_none=True) for s in (self.default_shields or [])],
             "vector_dbs": [],
@@ -387,11 +404,13 @@ class DistributionTemplate(BaseModel):
         def enum_representer(dumper, data):
             return dumper.represent_scalar("tag:yaml.org,2002:str", data.value)
 
-        # Register YAML representer for ModelType
+        # Register YAML representer for enums
         yaml.add_representer(ModelType, enum_representer)
         yaml.add_representer(DatasetPurpose, enum_representer)
+        yaml.add_representer(StorageBackendType, enum_representer)
         yaml.SafeDumper.add_representer(ModelType, enum_representer)
         yaml.SafeDumper.add_representer(DatasetPurpose, enum_representer)
+        yaml.SafeDumper.add_representer(StorageBackendType, enum_representer)
 
         for output_dir in [yaml_output_dir, doc_output_dir]:
             output_dir.mkdir(parents=True, exist_ok=True)

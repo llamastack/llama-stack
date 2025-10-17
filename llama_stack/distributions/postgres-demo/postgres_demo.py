@@ -105,22 +105,18 @@ def get_distribution_template() -> DistributionTemplate:
                 provider_overrides={
                     "inference": inference_providers + [embedding_provider],
                     "vector_io": vector_io_providers,
-                    "agents": [
-                        Provider(
-                            provider_id="meta-reference",
-                            provider_type="inline::meta-reference",
-                            config=dict(
-                                persistence_store=postgres_config,
-                                responses_store=postgres_config,
-                            ),
-                        )
-                    ],
                 },
                 default_models=default_models + [embedding_model],
                 default_tool_groups=default_tool_groups,
                 default_shields=[ShieldInput(shield_id="meta-llama/Llama-Guard-3-8B")],
                 metadata_store=PostgresKVStoreConfig.sample_run_config(),
                 inference_store=postgres_config,
+                storage_backends={
+                    "default_kv_store": PostgresKVStoreConfig.sample_run_config(
+                        table_name="llamastack_kvstore",
+                    ),
+                    "default_sql_store": PostgresSqlStoreConfig.sample_run_config(),
+                },
             ),
         },
         run_config_env_vars={
