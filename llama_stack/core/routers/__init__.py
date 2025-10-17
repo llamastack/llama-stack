@@ -26,6 +26,7 @@ async def get_routing_table_impl(
     from ..routing_tables.scoring_functions import ScoringFunctionsRoutingTable
     from ..routing_tables.shields import ShieldsRoutingTable
     from ..routing_tables.toolgroups import ToolGroupsRoutingTable
+    from ..routing_tables.vector_dbs import VectorDBsRoutingTable
 
     api_to_tables = {
         "models": ModelsRoutingTable,
@@ -34,6 +35,7 @@ async def get_routing_table_impl(
         "scoring_functions": ScoringFunctionsRoutingTable,
         "benchmarks": BenchmarksRoutingTable,
         "tool_groups": ToolGroupsRoutingTable,
+        "vector_dbs": VectorDBsRoutingTable,
     }
 
     if api.value not in api_to_tables:

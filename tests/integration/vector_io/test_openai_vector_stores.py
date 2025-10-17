@@ -161,8 +161,24 @@ def test_openai_create_vector_store(
 
 def test_openai_create_vector_store_default(compat_client_with_empty_stores, client_with_models):
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    vector_store = compat_client_with_empty_stores.vector_stores.create()
-    assert vector_store.id
+
+    # Get all available vector_io providers
+    providers = [p for p in compat_client_with_empty_stores.providers.list() if p.api == "vector_io"]
+
+    if len(providers) == 0:
+        pytest.skip("No vector_io providers available")
+
+    if len(providers) == 1:
+        # Single provider - can create without specifying provider_id
+        vector_store = compat_client_with_empty_stores.vector_stores.create()
+        assert vector_store.id
+    else:
+        # Multiple providers - test each one
+        for provider in providers:
+            vector_store = compat_client_with_empty_stores.vector_stores.create(
+                name=f"test_store_{provider.provider_id}", extra_body={"provider_id": provider.provider_id}
+            )
+            assert vector_store.id
 
 
 def test_openai_list_vector_stores(

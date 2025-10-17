@@ -63,6 +63,10 @@ def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
             routing_table_api=Api.tool_groups,
             router_api=Api.tool_runtime,
         ),
+        AutoRoutedApiInfo(
+            routing_table_api=Api.vector_dbs,
+            router_api=Api.vector_io,
+        ),
     ]
 
 

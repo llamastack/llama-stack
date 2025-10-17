@@ -134,12 +134,15 @@ class CommonRoutingTableImpl(RoutingTable):
         from .scoring_functions import ScoringFunctionsRoutingTable
         from .shields import ShieldsRoutingTable
         from .toolgroups import ToolGroupsRoutingTable
+        from .vector_dbs import VectorDBsRoutingTable
 
         def apiname_object():
             if isinstance(self, ModelsRoutingTable):
                 return ("Inference", "model")
             elif isinstance(self, ShieldsRoutingTable):
                 return ("Safety", "shield")
+            elif isinstance(self, VectorDBsRoutingTable):
+                return ("VectorIO", "vector_db")
             elif isinstance(self, DatasetsRoutingTable):
                 return ("DatasetIO", "dataset")
             elif isinstance(self, ScoringFunctionsRoutingTable):
