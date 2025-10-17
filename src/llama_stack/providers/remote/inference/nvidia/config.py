@@ -28,6 +28,7 @@ class NVIDIAConfig(RemoteInferenceProviderConfig):
     Attributes:
         url (str): A base url for accessing the NVIDIA NIM, e.g. http://localhost:8000
         api_key (str): The access key for the hosted NIM endpoints
+        rerank_model_to_url (dict[str, str]): Mapping of rerank model identifiers to their API endpoints
 
     There are two ways to access NVIDIA NIMs -
      0. Hosted: Preview APIs hosted at https://integrate.api.nvidia.com
@@ -54,6 +55,14 @@ class NVIDIAConfig(RemoteInferenceProviderConfig):
     append_api_version: bool = Field(
         default_factory=lambda: os.getenv("NVIDIA_APPEND_API_VERSION", "True").lower() != "false",
         description="When set to false, the API version will not be appended to the base_url. By default, it is true.",
+    )
+    rerank_model_to_url: dict[str, str] = Field(
+        default_factory=lambda: {
+            "nv-rerank-qa-mistral-4b:1": "https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking",
+            "nvidia/nv-rerankqa-mistral-4b-v3": "https://ai.api.nvidia.com/v1/retrieval/nvidia/nv-rerankqa-mistral-4b-v3/reranking",
+            "nvidia/llama-3.2-nv-rerankqa-1b-v2": "https://ai.api.nvidia.com/v1/retrieval/nvidia/llama-3_2-nv-rerankqa-1b-v2/reranking",
+        },
+        description="Mapping of rerank model identifiers to their API endpoints. ",
     )
 
     @classmethod
