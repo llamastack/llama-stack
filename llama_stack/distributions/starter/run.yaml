@@ -128,6 +128,21 @@ providers:
       kvstore:
         type: sqlite
         db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/pgvector_registry.db
+  - provider_id: ${env.WEAVIATE_CLUSTER_URL:+weaviate}
+    provider_type: remote::weaviate
+    config:
+      weaviate_api_key: null
+      weaviate_cluster_url: ${env.WEAVIATE_CLUSTER_URL:=localhost:8080}
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/weaviate_registry.db
+  - provider_id: ${env.QDRANT_URL:+qdrant}
+    provider_type: remote::qdrant
+    config:
+      api_key: ${env.QDRANT_API_KEY:=}
+      kvstore:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/qdrant_registry.db
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs

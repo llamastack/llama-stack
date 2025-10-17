@@ -153,6 +153,29 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "groq/llama-3.3-70b-versatile",
         },
     ),
+    "milvus": Setup(
+        name="milvus",
+        description="Milvus vector database provider for vector_io tests",
+        env={
+            "MILVUS_URL": "dummy",
+        },
+    ),
+    "chromadb": Setup(
+        name="chromadb",
+        description="ChromaDB vector database provider for vector_io tests",
+        env={
+            "CHROMADB_URL": "http://localhost:8000",
+        },
+    ),
+    "pgvector": Setup(
+        name="pgvector",
+        description="PGVector database provider for vector_io tests",
+        env={
+            "PGVECTOR_DB": "llama_stack_test",
+            "PGVECTOR_USER": "postgres",
+            "PGVECTOR_PASSWORD": "password",
+        },
+    ),
 }
 
 
@@ -178,5 +201,10 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="vision",
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
+    ),
+    "vector_io": Suite(
+        name="vector_io",
+        roots=["tests/integration/vector_io"],
+        default_setup="milvus",
     ),
 }
