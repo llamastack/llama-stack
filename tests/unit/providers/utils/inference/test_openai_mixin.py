@@ -38,6 +38,23 @@ class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
     }
 
 
+class OpenAIMixinWithRerankImpl(OpenAIMixinImpl):
+    """Test implementation with rerank model list"""
+
+    rerank_model_list: list[str] = ["rerank-model-1", "rerank-model-2"]
+
+
+class OpenAIMixinWithEmbeddingsAndRerankImpl(OpenAIMixinImpl):
+    """Test implementation with both embedding model metadata and rerank model list"""
+
+    embedding_model_metadata: dict[str, dict[str, int]] = {
+        "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
+        "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
+    }
+
+    rerank_model_list: list[str] = ["rerank-model-1", "rerank-model-2"]
+
+
 @pytest.fixture
 def mixin():
     """Create a test instance of OpenAIMixin with mocked model_store"""
@@ -60,6 +77,20 @@ def mixin_with_embeddings():
     """Create a test instance of OpenAIMixin with embedding model metadata"""
     config = RemoteInferenceProviderConfig()
     return OpenAIMixinWithEmbeddingsImpl(config=config)
+
+
+@pytest.fixture
+def mixin_with_rerank():
+    """Create a test instance of OpenAIMixin with rerank model list"""
+    config = RemoteInferenceProviderConfig()
+    return OpenAIMixinWithRerankImpl(config=config)
+
+
+@pytest.fixture
+def mixin_with_embeddings_and_rerank():
+    """Create a test instance of OpenAIMixin with both embedding model metadata and rerank model list"""
+    config = RemoteInferenceProviderConfig()
+    return OpenAIMixinWithEmbeddingsAndRerankImpl(config=config)
 
 
 @pytest.fixture
@@ -111,6 +142,19 @@ def mock_client_context():
         return patch.object(type(mixin), "client", new_callable=PropertyMock, return_value=mock_client)
 
     return _mock_client_context
+
+
+def _assert_models_match_expected(actual_models, expected_models):
+    """Verify the models match expected attributes.
+
+    Args:
+        actual_models: List of models to verify
+        expected_models: Mapping of model identifier to expected attribute values
+    """
+    for identifier, expected_attrs in expected_models.items():
+        model = next(m for m in actual_models if m.identifier == identifier)
+        for attr_name, expected_value in expected_attrs.items():
+            assert getattr(model, attr_name) == expected_value
 
 
 class TestOpenAIMixinListModels:
@@ -342,21 +386,113 @@ class TestOpenAIMixinEmbeddingModelMetadata:
             assert result is not None
             assert len(result) == 2
 
-            # Find the models in the result
-            embedding_model = next(m for m in result if m.identifier == "text-embedding-3-small")
-            llm_model = next(m for m in result if m.identifier == "gpt-4")
+            expected_models = {
+                "text-embedding-3-small": {
+                    "model_type": ModelType.embedding,
+                    "metadata": {"embedding_dimension": 1536, "context_length": 8192},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "text-embedding-3-small",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
 
-            # Check embedding model
-            assert embedding_model.model_type == ModelType.embedding
-            assert embedding_model.metadata == {"embedding_dimension": 1536, "context_length": 8192}
-            assert embedding_model.provider_id == "test-provider"
-            assert embedding_model.provider_resource_id == "text-embedding-3-small"
+            _assert_models_match_expected(result, expected_models)
 
-            # Check LLM model
-            assert llm_model.model_type == ModelType.llm
-            assert llm_model.metadata == {}  # No metadata for LLMs
-            assert llm_model.provider_id == "test-provider"
-            assert llm_model.provider_resource_id == "gpt-4"
+
+class TestOpenAIMixinRerankModelList:
+    """Test cases for rerank_model_list attribute functionality"""
+
+    async def test_rerank_model_identified(self, mixin_with_rerank, mock_client_context):
+        """Test that models in rerank_model_list are correctly identified as rerank models"""
+        # Create mock models: 1 rerank model and 1 LLM
+        mock_rerank_model = MagicMock(id="rerank-model-1")
+        mock_llm_model = MagicMock(id="gpt-4")
+        mock_models = [mock_rerank_model, mock_llm_model]
+
+        mock_client = MagicMock()
+
+        async def mock_models_list():
+            for model in mock_models:
+                yield model
+
+        mock_client.models.list.return_value = mock_models_list()
+
+        with mock_client_context(mixin_with_rerank, mock_client):
+            result = await mixin_with_rerank.list_models()
+
+            assert result is not None
+            assert len(result) == 2
+
+            expected_models = {
+                "rerank-model-1": {
+                    "model_type": ModelType.rerank,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "rerank-model-1",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
+
+            _assert_models_match_expected(result, expected_models)
+
+
+class TestOpenAIMixinMixedModelTypes:
+    """Test cases for mixed model types (LLM, embedding, rerank)"""
+
+    async def test_mixed_model_types_identification(self, mixin_with_embeddings_and_rerank, mock_client_context):
+        """Test that LLM, embedding, and rerank models are correctly identified with proper types and metadata"""
+        # Create mock models: 1 embedding, 1 rerank, 1 LLM
+        mock_embedding_model = MagicMock(id="text-embedding-3-small")
+        mock_rerank_model = MagicMock(id="rerank-model-1")
+        mock_llm_model = MagicMock(id="gpt-4")
+        mock_models = [mock_embedding_model, mock_rerank_model, mock_llm_model]
+
+        mock_client = MagicMock()
+
+        async def mock_models_list():
+            for model in mock_models:
+                yield model
+
+        mock_client.models.list.return_value = mock_models_list()
+
+        with mock_client_context(mixin_with_embeddings_and_rerank, mock_client):
+            result = await mixin_with_embeddings_and_rerank.list_models()
+
+            assert result is not None
+            assert len(result) == 3
+
+            expected_models = {
+                "text-embedding-3-small": {
+                    "model_type": ModelType.embedding,
+                    "metadata": {"embedding_dimension": 1536, "context_length": 8192},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "text-embedding-3-small",
+                },
+                "rerank-model-1": {
+                    "model_type": ModelType.rerank,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "rerank-model-1",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
+
+            _assert_models_match_expected(result, expected_models)
 
 
 class TestOpenAIMixinAllowedModels:
