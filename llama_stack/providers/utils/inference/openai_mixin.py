@@ -78,6 +78,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # Format: {"model_id": {"embedding_dimension": 1536, "context_length": 8192}}
     embedding_model_metadata: dict[str, dict[str, int]] = {}
 
+    # List of rerank model IDs for this provider
+    # Can be set by subclasses or instances to provide rerank models
+    rerank_model_list: list[str] = []
+
     # Cache of available models keyed by model ID
     # This is set in list_models() and used in check_model_availability()
     _model_cache: dict[str, Model] = {}
@@ -423,6 +427,13 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                     identifier=provider_model_id,
                     model_type=ModelType.embedding,
                     metadata=metadata,
+                )
+            elif provider_model_id in self.rerank_model_list:
+                model = Model(
+                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                    provider_resource_id=provider_model_id,
+                    identifier=provider_model_id,
+                    model_type=ModelType.rerank,
                 )
             else:
                 model = Model(
