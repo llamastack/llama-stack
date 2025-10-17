@@ -144,7 +144,7 @@ jobs:
 
       - name: Build Llama Stack
         run: |
-          uv run --no-sync llama stack build --template ci-tests --image-type venv
+          uv run --no-sync llama stack build --distro starter --image-type venv --single-provider "vector_io=${{ matrix.vector-io-provider }}"
 
       - name: Check Storage and Memory Available Before Tests
         if: ${{ always() }}
@@ -154,24 +154,23 @@ jobs:
 
       - name: Run Vector IO Integration Tests
         env:
-          ENABLE_CHROMADB: ${{ matrix.vector-io-provider == 'remote::chromadb' && 'true' || '' }}
+          # Set environment variables based on provider
+          MILVUS_URL: ${{ matrix.vector-io-provider == 'inline::milvus' && 'dummy' || '' }}
           CHROMADB_URL: ${{ matrix.vector-io-provider == 'remote::chromadb' && 'http://localhost:8000' || '' }}
-          ENABLE_PGVECTOR: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'true' || '' }}
-          PGVECTOR_HOST: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'localhost' || '' }}
-          PGVECTOR_PORT: ${{ matrix.vector-io-provider == 'remote::pgvector' && '5432' || '' }}
           PGVECTOR_DB: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
           PGVECTOR_USER: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
           PGVECTOR_PASSWORD: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
-          ENABLE_QDRANT: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'true' || '' }}
-          QDRANT_URL: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'http://localhost:6333' || '' }}
-          ENABLE_WEAVIATE: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'true' || '' }}
           WEAVIATE_CLUSTER_URL: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'localhost:8080' || '' }}
+          QDRANT_URL: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'http://localhost:6333' || '' }}
+          FAISS_URL: ${{ matrix.vector-io-provider == 'inline::faiss' && 'dummy' || '' }}
+          SQLITE_VEC_URL: ${{ matrix.vector-io-provider == 'inline::sqlite-vec' && 'dummy' || '' }}
         run: |
+          echo "Testing provider: ${{ matrix.vector-io-provider }}"
+          echo "Environment variables set for this provider"
+
           uv run --no-sync \
-            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
-            tests/integration/vector_io \
-            --embedding-model inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-            --embedding-dimension 768
+            pytest -sv --stack-config ~/.llama/distributions/starter/starter-filtered-run.yaml \
+            tests/integration/vector_io
 
       - name: Check Storage and Memory Available After Tests
         if: ${{ always() }}

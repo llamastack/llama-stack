@@ -30,8 +30,8 @@ class JobStatus(Enum):
     completed = "completed"
 
 
-type JobID = str
-type JobType = str
+JobID = str
+JobType = str
 
 
 class JobArtifact(BaseModel):
