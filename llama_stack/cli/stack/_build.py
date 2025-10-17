@@ -97,6 +97,38 @@ def _apply_single_provider_filter(build_config: BuildConfig, single_provider_arg
     return filtered_build_config
 
 
+def _generate_filtered_run_config(
+    build_config: BuildConfig,
+    build_dir: Path,
+    distro_name: str,
+) -> Path:
+    """
+    Generate a filtered run.yaml by starting with the original distribution's run.yaml
+    and filtering the providers according to the build_config.
+    """
+    # Load the original distribution's run.yaml
+    distro_resource = importlib.resources.files("llama_stack") / f"distributions/{distro_name}/run.yaml"
+
+    with importlib.resources.as_file(distro_resource) as path:
+        with open(path) as f:
+            original_config = yaml.safe_load(f)
+
+    # Apply provider filtering to the loaded config
+    for api, providers in build_config.distribution_spec.providers.items():
+        if api in original_config.get("providers", {}):
+            # Filter this API to only include the providers from build_config
+            provider_types = {p.provider_type for p in providers}
+            filtered_providers = [p for p in original_config["providers"][api] if p["provider_type"] in provider_types]
+            original_config["providers"][api] = filtered_providers
+
+    # Write the filtered config
+    run_config_file = build_dir / f"{distro_name}-filtered-run.yaml"
+    with open(run_config_file, "w") as f:
+        yaml.dump(original_config, f, sort_keys=False)
+
+    return run_config_file
+
+
 @lru_cache
 def available_distros_specs() -> dict[str, BuildConfig]:
     import yaml
@@ -492,7 +524,7 @@ def _run_stack_build_command_from_build_config(
         # If single-provider filtering was applied, generate a filtered run config
         # Otherwise, copy run.yaml from distribution as before
         if is_filtered:
-            run_config_file = _generate_run_config(build_config, build_dir, f"{distro_name}-filtered")
+            run_config_file = _generate_filtered_run_config(build_config, build_dir, distro_name)
             distro_path = run_config_file  # Use the generated file as the distro_path
         else:
             # copy run.yaml from distribution to build_dir instead of generating it again
