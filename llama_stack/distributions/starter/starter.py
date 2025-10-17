@@ -249,7 +249,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
                 vector_stores_config=VectorStoresConfig(
-                    default_embedding_model_id="sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+                    embedding_model_id="sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
                 ),
             ),
         },

@@ -31,7 +31,6 @@ from llama_stack.apis.vector_io import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 
@@ -44,7 +43,7 @@ class VectorIORouter(VectorIO):
     def __init__(
         self,
         routing_table: RoutingTable,
-        vector_stores_config: VectorStoresConfig | None = None,
+        vector_stores_config=None,
     ) -> None:
         logger.debug("Initializing VectorIORouter")
         self.routing_table = routing_table
@@ -125,9 +124,9 @@ class VectorIORouter(VectorIO):
         embedding_dimension = extra.get("embedding_dimension")
         provider_id = extra.get("provider_id")
 
+        # Use default embedding model if not specified
         if embedding_model is None and self.vector_stores_config is not None:
-            embedding_model = self.vector_stores_config.default_embedding_model_id
-            logger.debug(f"Using default embedding model: {embedding_model}")
+            embedding_model = self.vector_stores_config.embedding_model_id
 
         if embedding_model is not None and embedding_dimension is None:
             embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
@@ -139,11 +138,24 @@ class VectorIORouter(VectorIO):
                 raise ValueError("No vector_io providers available")
             if num_providers > 1:
                 available_providers = list(self.routing_table.impls_by_provider_id.keys())
-                raise ValueError(
-                    f"Multiple vector_io providers available. Please specify provider_id in extra_body. "
-                    f"Available providers: {available_providers}"
-                )
-            provider_id = list(self.routing_table.impls_by_provider_id.keys())[0]
+                # Use default configured provider
+                if self.vector_stores_config and self.vector_stores_config.provider_id:
+                    default_provider = self.vector_stores_config.provider_id
+                    if default_provider in available_providers:
+                        provider_id = default_provider
+                        logger.debug(f"Using configured default vector store provider: {provider_id}")
+                    else:
+                        raise ValueError(
+                            f"Configured default vector store provider '{default_provider}' not found. "
+                            f"Available providers: {available_providers}"
+                        )
+                else:
+                    raise ValueError(
+                        f"Multiple vector_io providers available. Please specify provider_id in extra_body. "
+                        f"Available providers: {available_providers}"
+                    )
+            else:
+                provider_id = list(self.routing_table.impls_by_provider_id.keys())[0]
 
         vector_db_id = f"vs_{uuid.uuid4()}"
         registered_vector_db = await self.routing_table.register_vector_db(
@@ -250,8 +262,7 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
     ) -> VectorStoreDeleteResponse:
         logger.debug(f"VectorIORouter.openai_delete_vector_store: {vector_store_id}")
-        provider = await self.routing_table.get_provider_impl(vector_store_id)
-        return await provider.openai_delete_vector_store(vector_store_id)
+        return await self.routing_table.openai_delete_vector_store(vector_store_id)
 
     async def openai_search_vector_store(
         self,

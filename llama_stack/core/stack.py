@@ -135,7 +135,7 @@ async def validate_vector_stores_config(run_config: StackRunConfig, impls: dict[
         return
 
     vector_stores_config = run_config.vector_stores
-    default_model_id = vector_stores_config.default_embedding_model_id
+    default_model_id = vector_stores_config.embedding_model_id
 
     if Api.models not in impls:
         raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")

@@ -317,3 +317,72 @@ def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
             if p.is_relative_to(rp):
                 return False
     return True
+
+
+def get_vector_io_provider_ids(client):
+    """Get all available vector_io provider IDs."""
+    providers = [p for p in client.providers.list() if p.api == "vector_io"]
+    return [p.provider_id for p in providers]
+
+
+def vector_provider_wrapper(func):
+    """Decorator to run a test against all available vector_io providers."""
+    import functools
+    import os
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Get the vector_io_provider_id from the test arguments
+        import inspect
+
+        sig = inspect.signature(func)
+        bound_args = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+
+        vector_io_provider_id = bound_args.arguments.get("vector_io_provider_id")
+        if not vector_io_provider_id:
+            pytest.skip("No vector_io_provider_id provided")
+
+        # Get client_with_models to check available providers
+        client_with_models = bound_args.arguments.get("client_with_models")
+        if client_with_models:
+            available_providers = get_vector_io_provider_ids(client_with_models)
+            if vector_io_provider_id not in available_providers:
+                pytest.skip(f"Provider '{vector_io_provider_id}' not available. Available: {available_providers}")
+
+        return func(*args, **kwargs)
+
+    # For replay tests, only use providers that are available in ci-tests environment
+    if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay":
+        all_providers = ["faiss", "sqlite-vec"]
+    else:
+        # For live tests, try all providers (they'll skip if not available)
+        all_providers = [
+            "faiss",
+            "sqlite-vec",
+            "milvus",
+            "chromadb",
+            "pgvector",
+            "weaviate",
+            "qdrant",
+        ]
+
+    return pytest.mark.parametrize("vector_io_provider_id", all_providers)(wrapper)
+
+
+@pytest.fixture
+def vector_io_provider_id(request, client_with_models):
+    """Fixture that provides a specific vector_io provider ID, skipping if not available."""
+    if hasattr(request, "param"):
+        requested_provider = request.param
+        available_providers = get_vector_io_provider_ids(client_with_models)
+
+        if requested_provider not in available_providers:
+            pytest.skip(f"Provider '{requested_provider}' not available. Available: {available_providers}")
+
+        return requested_provider
+    else:
+        provider_ids = get_vector_io_provider_ids(client_with_models)
+        if not provider_ids:
+            pytest.skip("No vector_io providers available")
+        return provider_ids[0]

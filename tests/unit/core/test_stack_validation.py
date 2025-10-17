@@ -20,7 +20,7 @@ class TestVectorStoresValidation:
     async def test_validate_missing_model(self):
         """Test validation fails when model not found."""
         run_config = StackRunConfig(
-            image_name="test", providers={}, vector_stores=VectorStoresConfig(default_embedding_model_id="missing")
+            image_name="test", providers={}, vector_stores=VectorStoresConfig(embedding_model_id="missing")
         )
         mock_models = AsyncMock()
         mock_models.list_models.return_value = []
@@ -31,7 +31,7 @@ class TestVectorStoresValidation:
     async def test_validate_success(self):
         """Test validation passes with valid model."""
         run_config = StackRunConfig(
-            image_name="test", providers={}, vector_stores=VectorStoresConfig(default_embedding_model_id="valid")
+            image_name="test", providers={}, vector_stores=VectorStoresConfig(embedding_model_id="valid")
         )
         mock_models = AsyncMock()
         mock_models.list_models.return_value = [

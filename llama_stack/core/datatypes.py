@@ -354,9 +354,13 @@ class AuthenticationRequiredError(Exception):
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
-    default_embedding_model_id: str = Field(
+    embedding_model_id: str = Field(
         ...,
         description="ID of the embedding model to use as default for vector stores when none is specified. Must reference a model defined in the 'models' section.",
+    )
+    provider_id: str | None = Field(
+        default=None,
+        description="ID of the vector_io provider to use as default when multiple providers are available and none is specified.",
     )
 
 
