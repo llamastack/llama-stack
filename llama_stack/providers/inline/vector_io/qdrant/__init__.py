@@ -15,11 +15,6 @@ async def get_provider_impl(config: QdrantVectorIOConfig, deps: dict[Api, Any]):
     from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantVectorIOAdapter
 
     assert isinstance(config, QdrantVectorIOConfig), f"Unexpected config type: {type(config)}"
-    impl = QdrantVectorIOAdapter(
-        config,
-        deps[Api.inference],
-        deps[Api.models],
-        deps.get(Api.files),
-    )
+    impl = QdrantVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
     await impl.initialize()
     return impl

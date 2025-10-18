@@ -14,11 +14,6 @@ from .config import MilvusVectorIOConfig
 async def get_provider_impl(config: MilvusVectorIOConfig, deps: dict[Api, Any]):
     from llama_stack.providers.remote.vector_io.milvus.milvus import MilvusVectorIOAdapter
 
-    impl = MilvusVectorIOAdapter(
-        config,
-        deps[Api.inference],
-        deps[Api.models],
-        deps.get(Api.files),
-    )
+    impl = MilvusVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
     await impl.initialize()
     return impl

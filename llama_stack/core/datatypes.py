@@ -351,6 +351,15 @@ class AuthenticationRequiredError(Exception):
     pass
 
 
+class VectorStoresConfig(BaseModel):
+    """Configuration for vector stores in the stack."""
+
+    default_embedding_model_id: str = Field(
+        ...,
+        description="ID of the embedding model to use as default for vector stores when none is specified. Must reference a model defined in the 'models' section.",
+    )
+
+
 class QuotaPeriod(StrEnum):
     DAY = "day"
 
@@ -524,6 +533,11 @@ If not specified, a default SQLite store will be used.""",
     external_apis_dir: Path | None = Field(
         default=None,
         description="Path to directory containing external API implementations. The APIs code and dependencies must be installed on the system.",
+    )
+
+    vector_stores: VectorStoresConfig | None = Field(
+        default=None,
+        description="Configuration for vector stores, including default embedding model",
     )
 
     @field_validator("external_providers_dir")

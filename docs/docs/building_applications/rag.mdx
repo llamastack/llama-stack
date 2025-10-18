@@ -92,13 +92,15 @@ models:
     provider_id: inline::sentence-transformers
     metadata:
       embedding_dimension: 768
-      default_configured: true
+
+vector_stores:
+  default_embedding_model_id: nomic-ai/nomic-embed-text-v1.5
 ```
 
 With this configuration:
 - `client.vector_stores.create()` works without requiring embedding model parameters
 - The system automatically uses the default model and its embedding dimension for any newly created vector store
-- Only one model can be marked as `default_configured: true`
+- The `vector_stores` section explicitly configures which embedding model to use as default
 
 ## Vector Store Operations
 

@@ -39,6 +39,20 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
     pytest.skip("OpenAI vector stores are not supported by any provider")
 
 
+def create_vector_store_with_provider(client, **kwargs):
+    """Helper function to create a vector store, handling multiple providers automatically."""
+    # Get all available vector_io providers
+    providers = [p for p in client.providers.list() if p.api == "vector_io"]
+
+    # If we have the extra_body parameter, modify it to include provider_id if needed
+    extra_body = kwargs.get("extra_body", {})
+    if len(providers) > 1 and "provider_id" not in extra_body:
+        extra_body["provider_id"] = providers[0].provider_id
+        kwargs["extra_body"] = extra_body
+
+    return client.vector_stores.create(**kwargs)
+
+
 def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_models, search_mode):
     vector_io_providers = [p for p in client_with_models.providers.list() if p.api == "vector_io"]
     search_mode_support = {
@@ -141,7 +155,8 @@ def test_openai_create_vector_store(
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        client,
         name="Vs_test_vector_store",
         metadata={"purpose": "testing", "environment": "integration"},
         extra_body={
@@ -161,8 +176,28 @@ def test_openai_create_vector_store(
 
 def test_openai_create_vector_store_default(compat_client_with_empty_stores, client_with_models):
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    vector_store = compat_client_with_empty_stores.vector_stores.create()
-    assert vector_store.id
+
+    # Get all available vector_io providers
+    providers = [p for p in compat_client_with_empty_stores.providers.list() if p.api == "vector_io"]
+
+    if len(providers) == 0:
+        pytest.skip("No vector_io providers available")
+
+    if len(providers) == 1:
+        # Single provider - can create without specifying provider_id
+        vector_store = create_vector_store_with_provider(
+            compat_client_with_empty_stores,
+        )
+        assert vector_store.id
+    else:
+        # Multiple providers - test each one
+        for provider in providers:
+            vector_store = create_vector_store_with_provider(
+                compat_client_with_empty_stores,
+                name=f"test_store_{provider.provider_id}",
+                extra_body={"provider_id": provider.provider_id},
+            )
+            assert vector_store.id
 
 
 def test_openai_list_vector_stores(
@@ -174,14 +209,16 @@ def test_openai_list_vector_stores(
     client = compat_client_with_empty_stores
 
     # Create a few vector stores
-    store1 = client.vector_stores.create(
+    store1 = create_vector_store_with_provider(
+        client,
         name="store1",
         metadata={"type": "test"},
         extra_body={
             "embedding_model": embedding_model_id,
         },
     )
-    store2 = client.vector_stores.create(
+    store2 = create_vector_store_with_provider(
+        client,
         name="store2",
         metadata={"type": "test"},
         extra_body={
@@ -215,7 +252,8 @@ def test_openai_retrieve_vector_store(
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    created_store = client.vector_stores.create(
+    created_store = create_vector_store_with_provider(
+        client,
         name="retrieve_test_store",
         metadata={"purpose": "retrieval_test"},
         extra_body={
@@ -242,7 +280,8 @@ def test_openai_update_vector_store(
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    created_store = client.vector_stores.create(
+    created_store = create_vector_store_with_provider(
+        client,
         name="original_name",
         metadata={"version": "1.0"},
         extra_body={
@@ -273,7 +312,8 @@ def test_openai_delete_vector_store(
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    created_store = client.vector_stores.create(
+    created_store = create_vector_store_with_provider(
+        client,
         name="delete_test_store",
         metadata={"purpose": "deletion_test"},
         extra_body={
@@ -303,7 +343,8 @@ def test_openai_vector_store_search_empty(
     client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        client,
         name="search_test_store",
         metadata={"purpose": "search_testing"},
         extra_body={
@@ -333,7 +374,8 @@ def test_openai_vector_store_with_chunks(
     llama_client = client_with_models
 
     # Create a vector store using OpenAI API
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="chunks_test_store",
         metadata={"purpose": "chunks_testing"},
         extra_body={
@@ -397,7 +439,8 @@ def test_openai_vector_store_search_relevance(
     query, expected_doc_id, expected_topic = test_case
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name=f"relevance_test_{expected_doc_id}",
         metadata={"purpose": "relevance_testing"},
         extra_body={
@@ -440,7 +483,8 @@ def test_openai_vector_store_search_with_ranking_options(
     llama_client = client_with_models
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="ranking_test_store",
         metadata={"purpose": "ranking_testing"},
         extra_body={
@@ -493,7 +537,8 @@ def test_openai_vector_store_search_with_high_score_filter(
     llama_client = client_with_models
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="high_score_filter_test",
         metadata={"purpose": "high_score_filtering"},
         extra_body={
@@ -552,7 +597,8 @@ def test_openai_vector_store_search_with_max_num_results(
     llama_client = client_with_models
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="max_num_results_test_store",
         metadata={"purpose": "max_num_results_testing"},
         extra_body={
@@ -587,7 +633,8 @@ def test_openai_vector_store_attach_file(
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -663,7 +710,8 @@ def test_openai_vector_store_attach_files_on_creation(
     file_ids = valid_file_ids + [failed_file_id]
     num_failed = len(file_ids) - len(valid_file_ids)
 
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store",
         file_ids=file_ids,
         extra_body={
@@ -710,7 +758,8 @@ def test_openai_vector_store_list_files(
     from llama_stack.apis.files import ExpiresAfter
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -799,7 +848,8 @@ def test_openai_vector_store_retrieve_file_contents(
     from llama_stack.apis.files import ExpiresAfter
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -858,7 +908,8 @@ def test_openai_vector_store_delete_file(
     from llama_stack.apis.files import ExpiresAfter
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -922,7 +973,8 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(
     from llama_stack.apis.files import ExpiresAfter
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -972,7 +1024,8 @@ def test_openai_vector_store_update_file(
     from llama_stack.apis.files import ExpiresAfter
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1021,7 +1074,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(
     compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension
 ):
     """
-    This test confirms that client.vector_stores.create() creates a unique ID
+    This test confirms that create_vector_store_with_provider() creates a unique ID
     """
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
     from llama_stack.apis.files import ExpiresAfter
@@ -1040,7 +1093,8 @@ def test_create_vector_store_files_duplicate_vector_store_name(
             )
         file_ids.append(file.id)
 
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="test_store_with_files",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1052,7 +1106,8 @@ def test_create_vector_store_files_duplicate_vector_store_name(
     assert vector_store.file_counts.failed == 0
     assert vector_store.file_counts.in_progress == 0
 
-    vector_store2 = compat_client.vector_stores.create(
+    vector_store2 = create_vector_store_with_provider(
+        compat_client,
         name="test_store_with_files",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1092,7 +1147,8 @@ def test_openai_vector_store_search_modes(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
     skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_models, search_mode)
 
-    vector_store = llama_stack_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        llama_stack_client,
         name=f"search_mode_test_{search_mode}",
         metadata={"purpose": "search_mode_testing"},
         extra_body={
@@ -1124,7 +1180,8 @@ def test_openai_vector_store_file_batch_create_and_retrieve(
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="batch_test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1187,7 +1244,8 @@ def test_openai_vector_store_file_batch_list_files(
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="batch_list_test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1280,7 +1338,8 @@ def test_openai_vector_store_file_batch_cancel(
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="batch_cancel_test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1335,7 +1394,8 @@ def test_openai_vector_store_file_batch_retrieve_contents(
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="batch_contents_test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1408,7 +1468,8 @@ def test_openai_vector_store_file_batch_error_handling(
     compat_client = compat_client_with_empty_stores
 
     # Create a vector store
-    vector_store = compat_client.vector_stores.create(
+    vector_store = create_vector_store_with_provider(
+        compat_client,
         name="batch_error_test_store",
         extra_body={
             "embedding_model": embedding_model_id,
@@ -1464,7 +1525,8 @@ def test_openai_vector_store_embedding_config_from_metadata(
     client = compat_client_with_empty_stores
 
     # Test 1: Create vector store with embedding config in metadata only
-    vector_store_metadata = client.vector_stores.create(
+    vector_store_metadata = create_vector_store_with_provider(
+        client,
         name="metadata_config_store",
         metadata={
             "embedding_model": embedding_model_id,
@@ -1479,7 +1541,8 @@ def test_openai_vector_store_embedding_config_from_metadata(
     assert vector_store_metadata.metadata["test_source"] == "metadata"
 
     # Test 2: Create vector store with consistent config in both sources
-    vector_store_consistent = client.vector_stores.create(
+    vector_store_consistent = create_vector_store_with_provider(
+        client,
         name="consistent_config_store",
         metadata={
             "embedding_model": embedding_model_id,

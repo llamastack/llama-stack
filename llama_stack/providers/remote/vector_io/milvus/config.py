@@ -29,7 +29,6 @@ class MilvusVectorIOConfig(BaseModel):
             "uri": "${env.MILVUS_ENDPOINT}",
             "token": "${env.MILVUS_TOKEN}",
             "kvstore": SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="milvus_remote_registry.db",
+                __distro_dir__=__distro_dir__, db_name="milvus_remote_registry.db"
             ),
         }

@@ -14,13 +14,8 @@ from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusC
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import (
-    Chunk,
-    QueryChunksResponse,
-    VectorIO,
-)
+from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
@@ -74,46 +69,23 @@ class MilvusIndex(EmbeddingIndex):
             logger.info(f"Creating new collection {self.collection_name} with nullable sparse field")
             # Create schema for vector search
             schema = self.client.create_schema()
-            schema.add_field(
-                field_name="chunk_id",
-                datatype=DataType.VARCHAR,
-                is_primary=True,
-                max_length=100,
-            )
+            schema.add_field(field_name="chunk_id", datatype=DataType.VARCHAR, is_primary=True, max_length=100)
             schema.add_field(
                 field_name="content",
                 datatype=DataType.VARCHAR,
                 max_length=65535,
                 enable_analyzer=True,  # Enable text analysis for BM25
             )
-            schema.add_field(
-                field_name="vector",
-                datatype=DataType.FLOAT_VECTOR,
-                dim=len(embeddings[0]),
-            )
-            schema.add_field(
-                field_name="chunk_content",
-                datatype=DataType.JSON,
-            )
+            schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=len(embeddings[0]))
+            schema.add_field(field_name="chunk_content", datatype=DataType.JSON)
             # Add sparse vector field for BM25 (required by the function)
-            schema.add_field(
-                field_name="sparse",
-                datatype=DataType.SPARSE_FLOAT_VECTOR,
-            )
+            schema.add_field(field_name="sparse", datatype=DataType.SPARSE_FLOAT_VECTOR)
 
             # Create indexes
             index_params = self.client.prepare_index_params()
-            index_params.add_index(
-                field_name="vector",
-                index_type="FLAT",
-                metric_type="COSINE",
-            )
+            index_params.add_index(field_name="vector", index_type="FLAT", metric_type="COSINE")
             # Add index for sparse field (required by BM25 function)
-            index_params.add_index(
-                field_name="sparse",
-                index_type="SPARSE_INVERTED_INDEX",
-                metric_type="BM25",
-            )
+            index_params.add_index(field_name="sparse", index_type="SPARSE_INVERTED_INDEX", metric_type="BM25")
 
             # Add BM25 function for full-text search
             bm25_function = Function(
@@ -144,11 +116,7 @@ class MilvusIndex(EmbeddingIndex):
                 }
             )
         try:
-            await asyncio.to_thread(
-                self.client.insert,
-                self.collection_name,
-                data=data,
-            )
+            await asyncio.to_thread(self.client.insert, self.collection_name, data=data)
         except Exception as e:
             logger.error(f"Error inserting chunks into Milvus collection {self.collection_name}: {e}")
             raise e
@@ -167,12 +135,7 @@ class MilvusIndex(EmbeddingIndex):
         scores = [res["distance"] for res in search_res[0]]
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(
-        self,
-        query_string: str,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Perform BM25-based keyword search using Milvus's built-in full-text search.
         """
@@ -210,12 +173,7 @@ class MilvusIndex(EmbeddingIndex):
             # Fallback to simple text search
             return await self._fallback_keyword_search(query_string, k, score_threshold)
 
-    async def _fallback_keyword_search(
-        self,
-        query_string: str,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def _fallback_keyword_search(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Fallback to simple text search when BM25 search is not available.
         """
@@ -308,7 +266,6 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self,
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
         inference_api: Inference,
-        models_api: Models,
         files_api: Files | None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
@@ -316,7 +273,6 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.cache = {}
         self.client = None
         self.inference_api = inference_api
-        self.models_api = models_api
         self.vector_db_store = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
@@ -355,10 +311,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         # Clean up mixin resources (file batch tasks)
         await super().shutdown()
 
-    async def register_vector_db(
-        self,
-        vector_db: VectorDB,
-    ) -> None:
+    async def register_vector_db(self, vector_db: VectorDB) -> None:
         if isinstance(self.config, RemoteMilvusVectorIOConfig):
             consistency_level = self.config.consistency_level
         else:
@@ -395,12 +348,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
             await self.cache[vector_db_id].index.delete()
             del self.cache[vector_db_id]
 
-    async def insert_chunks(
-        self,
-        vector_db_id: str,
-        chunks: list[Chunk],
-        ttl_seconds: int | None = None,
-    ) -> None:
+    async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
         index = await self._get_and_cache_vector_db_index(vector_db_id)
         if not index:
             raise VectorStoreNotFoundError(vector_db_id)
@@ -408,10 +356,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self,
-        vector_db_id: str,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
+        self, vector_db_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
         index = await self._get_and_cache_vector_db_index(vector_db_id)
         if not index:

@@ -16,26 +16,15 @@ from pydantic import BaseModel, TypeAdapter
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import (
-    Chunk,
-    QueryChunksResponse,
-    VectorIO,
-)
+from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
-)
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import (
-    ChunkForDeletion,
-    EmbeddingIndex,
-    VectorDBWithIndex,
-)
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorDBWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator, sanitize_collection_name
 
 from .config import PGVectorVectorIOConfig
@@ -205,12 +194,7 @@ class PGVectorIndex(EmbeddingIndex):
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(
-        self,
-        query_string: str,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Performs keyword-based search using PostgreSQL's full-text search with ts_rank scoring.
 
@@ -317,7 +301,7 @@ class PGVectorIndex(EmbeddingIndex):
         """Remove a chunk from the PostgreSQL table."""
         chunk_ids = [c.chunk_id for c in chunks_for_deletion]
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s)", (chunk_ids,))
+            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s)", (chunk_ids))
 
     def get_pgvector_search_function(self) -> str:
         return self.PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION[self.distance_metric]
@@ -341,16 +325,11 @@ class PGVectorIndex(EmbeddingIndex):
 
 class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPrivate):
     def __init__(
-        self,
-        config: PGVectorVectorIOConfig,
-        inference_api: Inference,
-        models_api: Models,
-        files_api: Files | None = None,
+        self, config: PGVectorVectorIOConfig, inference_api: Inference, files_api: Files | None = None
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.models_api = models_api
         self.conn = None
         self.cache = {}
         self.vector_db_store = None
@@ -407,11 +386,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
             vector_db=vector_db, dimension=vector_db.embedding_dimension, conn=self.conn, kvstore=self.kvstore
         )
         await pgvector_index.initialize()
-        index = VectorDBWithIndex(
-            vector_db,
-            index=pgvector_index,
-            inference_api=self.inference_api,
-        )
+        index = VectorDBWithIndex(vector_db, index=pgvector_index, inference_api=self.inference_api)
         self.cache[vector_db.identifier] = index
 
     async def unregister_vector_db(self, vector_db_id: str) -> None:
@@ -424,20 +399,12 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         assert self.kvstore is not None
         await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_db_id}")
 
-    async def insert_chunks(
-        self,
-        vector_db_id: str,
-        chunks: list[Chunk],
-        ttl_seconds: int | None = None,
-    ) -> None:
+    async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
         index = await self._get_and_cache_vector_db_index(vector_db_id)
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self,
-        vector_db_id: str,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
+        self, vector_db_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
         index = await self._get_and_cache_vector_db_index(vector_db_id)
         return await index.query_chunks(query, params)

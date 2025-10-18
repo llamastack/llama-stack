@@ -17,13 +17,8 @@ from numpy.typing import NDArray
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference
-from llama_stack.apis.models import Models
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import (
-    Chunk,
-    QueryChunksResponse,
-    VectorIO,
-)
+from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
@@ -175,32 +170,18 @@ class SQLiteVecIndex(EmbeddingIndex):
 
                     # Insert vector embeddings
                     embedding_data = [
-                        (
-                            (
-                                chunk.chunk_id,
-                                serialize_vector(emb.tolist()),
-                            )
-                        )
+                        ((chunk.chunk_id, serialize_vector(emb.tolist())))
                         for chunk, emb in zip(batch_chunks, batch_embeddings, strict=True)
                     ]
-                    cur.executemany(
-                        f"INSERT INTO [{self.vector_table}] (id, embedding) VALUES (?, ?);",
-                        embedding_data,
-                    )
+                    cur.executemany(f"INSERT INTO [{self.vector_table}] (id, embedding) VALUES (?, ?);", embedding_data)
 
                     # Insert FTS content
                     fts_data = [(chunk.chunk_id, chunk.content) for chunk in batch_chunks]
                     # DELETE existing entries with same IDs (FTS5 doesn't support ON CONFLICT)
-                    cur.executemany(
-                        f"DELETE FROM [{self.fts_table}] WHERE id = ?;",
-                        [(row[0],) for row in fts_data],
-                    )
+                    cur.executemany(f"DELETE FROM [{self.fts_table}] WHERE id = ?;", [(row[0],) for row in fts_data])
 
                     # INSERT new entries
-                    cur.executemany(
-                        f"INSERT INTO [{self.fts_table}] (id, content) VALUES (?, ?);",
-                        fts_data,
-                    )
+                    cur.executemany(f"INSERT INTO [{self.fts_table}] (id, content) VALUES (?, ?);", fts_data)
 
                 connection.commit()
 
@@ -216,12 +197,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         # Run batch insertion in a background thread
         await asyncio.to_thread(_execute_all_batch_inserts)
 
-    async def query_vector(
-        self,
-        embedding: NDArray,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Performs vector-based search using a virtual table for vector similarity.
         """
@@ -261,12 +237,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             scores.append(score)
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(
-        self,
-        query_string: str,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Performs keyword-based search using SQLite FTS5 for relevance-ranked full-text search.
         """
@@ -410,17 +381,10 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
     and creates a cache of VectorDBWithIndex instances (each wrapping a SQLiteVecIndex).
     """
 
-    def __init__(
-        self,
-        config,
-        inference_api: Inference,
-        models_api: Models,
-        files_api: Files | None,
-    ) -> None:
+    def __init__(self, config, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.models_api = models_api
         self.cache: dict[str, VectorDBWithIndex] = {}
         self.vector_db_store = None
 
@@ -433,9 +397,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         for db_json in stored_vector_dbs:
             vector_db = VectorDB.model_validate_json(db_json)
             index = await SQLiteVecIndex.create(
-                vector_db.embedding_dimension,
-                self.config.db_path,
-                vector_db.identifier,
+                vector_db.embedding_dimension, self.config.db_path, vector_db.identifier
             )
             self.cache[vector_db.identifier] = VectorDBWithIndex(vector_db, index, self.inference_api)
 
@@ -450,11 +412,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         return [v.vector_db for v in self.cache.values()]
 
     async def register_vector_db(self, vector_db: VectorDB) -> None:
-        index = await SQLiteVecIndex.create(
-            vector_db.embedding_dimension,
-            self.config.db_path,
-            vector_db.identifier,
-        )
+        index = await SQLiteVecIndex.create(vector_db.embedding_dimension, self.config.db_path, vector_db.identifier)
         self.cache[vector_db.identifier] = VectorDBWithIndex(vector_db, index, self.inference_api)
 
     async def _get_and_cache_vector_db_index(self, vector_db_id: str) -> VectorDBWithIndex | None:

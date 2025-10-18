@@ -43,9 +43,11 @@ class VectorIORouter(VectorIO):
     def __init__(
         self,
         routing_table: RoutingTable,
+        vector_stores_config=None,
     ) -> None:
         logger.debug("Initializing VectorIORouter")
         self.routing_table = routing_table
+        self.vector_stores_config = vector_stores_config
 
     async def initialize(self) -> None:
         logger.debug("VectorIORouter.initialize")
@@ -121,6 +123,10 @@ class VectorIORouter(VectorIO):
         embedding_model = extra.get("embedding_model")
         embedding_dimension = extra.get("embedding_dimension")
         provider_id = extra.get("provider_id")
+
+        # Use default embedding model if not specified
+        if embedding_model is None and self.vector_stores_config is not None:
+            embedding_model = self.vector_stores_config.default_embedding_model_id
 
         if embedding_model is not None and embedding_dimension is None:
             embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
