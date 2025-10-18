@@ -4,90 +4,28 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from abc import abstractmethod
-from enum import StrEnum
-from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, cast
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
+from llama_stack.core.storage.datatypes import (
+    PostgresSqlStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageBackendConfig,
+    StorageBackendType,
+)
 
 from .api import SqlStore
 
 sql_store_pip_packages = ["sqlalchemy[asyncio]", "aiosqlite", "asyncpg"]
 
-
-class SqlStoreType(StrEnum):
-    sqlite = "sqlite"
-    postgres = "postgres"
-
-
-class SqlAlchemySqlStoreConfig(BaseModel):
-    @property
-    @abstractmethod
-    def engine_str(self) -> str: ...
-
-    # TODO: move this when we have a better way to specify dependencies with internal APIs
-    @classmethod
-    def pip_packages(cls) -> list[str]:
-        return ["sqlalchemy[asyncio]"]
-
-
-class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
-    type: Literal[SqlStoreType.sqlite] = SqlStoreType.sqlite
-    db_path: str = Field(
-        default=(RUNTIME_BASE_DIR / "sqlstore.db").as_posix(),
-        description="Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
-    )
-
-    @property
-    def engine_str(self) -> str:
-        return "sqlite+aiosqlite:///" + Path(self.db_path).expanduser().as_posix()
-
-    @classmethod
-    def sample_run_config(cls, __distro_dir__: str, db_name: str = "sqlstore.db"):
-        return {
-            "type": "sqlite",
-            "db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
-        }
-
-    @classmethod
-    def pip_packages(cls) -> list[str]:
-        return super().pip_packages() + ["aiosqlite"]
-
-
-class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
-    type: Literal[SqlStoreType.postgres] = SqlStoreType.postgres
-    host: str = "localhost"
-    port: int = 5432
-    db: str = "llamastack"
-    user: str
-    password: str | None = None
-
-    @property
-    def engine_str(self) -> str:
-        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
-
-    @classmethod
-    def pip_packages(cls) -> list[str]:
-        return super().pip_packages() + ["asyncpg"]
-
-    @classmethod
-    def sample_run_config(cls, **kwargs):
-        return {
-            "type": "postgres",
-            "host": "${env.POSTGRES_HOST:=localhost}",
-            "port": "${env.POSTGRES_PORT:=5432}",
-            "db": "${env.POSTGRES_DB:=llamastack}",
-            "user": "${env.POSTGRES_USER:=llamastack}",
-            "password": "${env.POSTGRES_PASSWORD:=llamastack}",
-        }
+_SQLSTORE_BACKENDS: dict[str, StorageBackendConfig] = {}
 
 
 SqlStoreConfig = Annotated[
     SqliteSqlStoreConfig | PostgresSqlStoreConfig,
-    Field(discriminator="type", default=SqlStoreType.sqlite.value),
+    Field(discriminator="type"),
 ]
 
 
@@ -95,9 +33,9 @@ def get_pip_packages(store_config: dict | SqlStoreConfig) -> list[str]:
     """Get pip packages for SQL store config, handling both dict and object cases."""
     if isinstance(store_config, dict):
         store_type = store_config.get("type")
-        if store_type == "sqlite":
+        if store_type == StorageBackendType.SQL_SQLITE.value:
             return SqliteSqlStoreConfig.pip_packages()
-        elif store_type == "postgres":
+        elif store_type == StorageBackendType.SQL_POSTGRES.value:
             return PostgresSqlStoreConfig.pip_packages()
         else:
             raise ValueError(f"Unknown SQL store type: {store_type}")
@@ -105,12 +43,28 @@ def get_pip_packages(store_config: dict | SqlStoreConfig) -> list[str]:
         return store_config.pip_packages()
 
 
-def sqlstore_impl(config: SqlStoreConfig) -> SqlStore:
-    if config.type in [SqlStoreType.sqlite, SqlStoreType.postgres]:
+def sqlstore_impl(reference: SqlStoreReference) -> SqlStore:
+    backend_name = reference.backend
+
+    backend_config = _SQLSTORE_BACKENDS.get(backend_name)
+    if backend_config is None:
+        raise ValueError(
+            f"Unknown SQL store backend '{backend_name}'. Registered backends: {sorted(_SQLSTORE_BACKENDS)}"
+        )
+
+    if isinstance(backend_config, SqliteSqlStoreConfig | PostgresSqlStoreConfig):
         from .sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
 
-        impl = SqlAlchemySqlStoreImpl(config)
+        config = cast(SqliteSqlStoreConfig | PostgresSqlStoreConfig, backend_config).model_copy()
+        return SqlAlchemySqlStoreImpl(config)
     else:
-        raise ValueError(f"Unknown sqlstore type {config.type}")
+        raise ValueError(f"Unknown sqlstore type {backend_config.type}")
 
-    return impl
+
+def register_sqlstore_backends(backends: dict[str, StorageBackendConfig]) -> None:
+    """Register the set of available SQL store backends for reference resolution."""
+    global _SQLSTORE_BACKENDS
+
+    _SQLSTORE_BACKENDS.clear()
+    for name, cfg in backends.items():
+        _SQLSTORE_BACKENDS[name] = cfg

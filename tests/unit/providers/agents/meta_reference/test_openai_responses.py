@@ -42,7 +42,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.tools.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
-from llama_stack.core.datatypes import ResponsesStoreConfig
+from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
@@ -50,7 +50,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
 
@@ -854,8 +854,10 @@ async def test_responses_store_list_input_items_logic():
 
     # Create mock store and response store
     mock_sql_store = AsyncMock()
+    backend_name = "sql_responses_test"
+    register_sqlstore_backends({backend_name: SqliteSqlStoreConfig(db_path="mock_db_path")})
     responses_store = ResponsesStore(
-        ResponsesStoreConfig(sql_store_config=SqliteSqlStoreConfig(db_path="mock_db_path")), policy=default_policy()
+        ResponsesStoreReference(backend=backend_name, table_name="responses"), policy=default_policy()
     )
     responses_store.sql_store = mock_sql_store
 

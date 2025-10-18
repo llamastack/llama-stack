@@ -7,20 +7,17 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from llama_stack.providers.utils.kvstore.config import (
-    KVStoreConfig,
-    SqliteKVStoreConfig,
-)
+from llama_stack.core.storage.datatypes import KVStoreReference
 
 
 class LocalFSDatasetIOConfig(BaseModel):
-    kvstore: KVStoreConfig
+    kvstore: KVStoreReference
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="localfs_datasetio.db",
-            )
+            "kvstore": KVStoreReference(
+                backend="kv_default",
+                namespace="datasetio::localfs",
+            ).model_dump(exclude_none=True)
         }

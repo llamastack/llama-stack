@@ -8,8 +8,9 @@ import boto3
 import pytest
 from moto import mock_aws
 
+from llama_stack.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
 from llama_stack.providers.remote.files.s3 import S3FilesImplConfig, get_adapter_impl
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
 
 class MockUploadFile:
@@ -38,11 +39,13 @@ def sample_text_file2():
 def s3_config(tmp_path):
     db_path = tmp_path / "s3_files_metadata.db"
 
+    backend_name = f"sql_s3_{tmp_path.name}"
+    register_sqlstore_backends({backend_name: SqliteSqlStoreConfig(db_path=db_path.as_posix())})
     return S3FilesImplConfig(
         bucket_name=f"test-bucket-{tmp_path.name}",
         region="not-a-region",
         auto_create_bucket=True,
-        metadata_store=SqliteSqlStoreConfig(db_path=db_path.as_posix()),
+        metadata_store=SqlStoreReference(backend=backend_name, table_name="s3_files_metadata"),
     )
 
 

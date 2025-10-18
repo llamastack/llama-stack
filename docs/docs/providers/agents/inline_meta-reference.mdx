@@ -14,16 +14,18 @@ Meta's reference implementation of an agent system that can use tools, access ve
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `persistence_store` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig` | No | sqlite |  |
-| `responses_store` | `utils.sqlstore.sqlstore.SqliteSqlStoreConfig \| utils.sqlstore.sqlstore.PostgresSqlStoreConfig` | No | sqlite |  |
+| `persistence` | `<class 'inline.agents.meta_reference.config.AgentPersistenceConfig'>` | No |  |  |
 
 ## Sample Configuration
 
 ```yaml
-persistence_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/agents_store.db
-responses_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/responses_store.db
+persistence:
+  agent_state:
+    namespace: agents
+    backend: kv_default
+  responses:
+    table_name: responses
+    backend: sql_default
+    max_write_queue_size: 10000
+    num_writers: 4
 ```

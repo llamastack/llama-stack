@@ -10,10 +10,10 @@ from datetime import UTC, datetime, timedelta
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from llama_stack.core.storage.datatypes import KVStoreReference, StorageBackendType
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore.api import KVStore
-from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
-from llama_stack.providers.utils.kvstore.kvstore import kvstore_impl
+from llama_stack.providers.utils.kvstore.kvstore import _KVSTORE_BACKENDS, kvstore_impl
 
 logger = get_logger(name=__name__, category="core::server")
 
@@ -33,7 +33,7 @@ class QuotaMiddleware:
     def __init__(
         self,
         app: ASGIApp,
-        kv_config: KVStoreConfig,
+        kv_config: KVStoreReference,
         anonymous_max_requests: int,
         authenticated_max_requests: int,
         window_seconds: int = 86400,
@@ -45,15 +45,15 @@ class QuotaMiddleware:
         self.authenticated_max_requests = authenticated_max_requests
         self.window_seconds = window_seconds
 
-        if isinstance(self.kv_config, SqliteKVStoreConfig):
-            logger.warning(
-                "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. "
-                f"window_seconds={self.window_seconds}"
-            )
-
     async def _get_kv(self) -> KVStore:
         if self.kv is None:
             self.kv = await kvstore_impl(self.kv_config)
+            backend_config = _KVSTORE_BACKENDS.get(self.kv_config.backend)
+            if backend_config and backend_config.type == StorageBackendType.KV_SQLITE:
+                logger.warning(
+                    "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. "
+                    f"window_seconds={self.window_seconds}"
+                )
         return self.kv
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):

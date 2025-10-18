@@ -8,14 +8,14 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig, SqlStoreConfig
+from llama_stack.core.storage.datatypes import SqlStoreReference
 
 
 class LocalfsFilesImplConfig(BaseModel):
     storage_dir: str = Field(
         description="Directory to store uploaded files",
     )
-    metadata_store: SqlStoreConfig = Field(
+    metadata_store: SqlStoreReference = Field(
         description="SQL store configuration for file metadata",
     )
     ttl_secs: int = 365 * 24 * 60 * 60  # 1 year
@@ -24,8 +24,8 @@ class LocalfsFilesImplConfig(BaseModel):
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
         return {
             "storage_dir": "${env.FILES_STORAGE_DIR:=" + __distro_dir__ + "/files}",
-            "metadata_store": SqliteSqlStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="files_metadata.db",
-            ),
+            "metadata_store": SqlStoreReference(
+                backend="sql_default",
+                table_name="files_metadata",
+            ).model_dump(exclude_none=True),
         }

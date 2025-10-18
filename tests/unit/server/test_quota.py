@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from uuid import uuid4
+
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
@@ -11,7 +13,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from llama_stack.core.datatypes import QuotaConfig, QuotaPeriod
 from llama_stack.core.server.quota import QuotaMiddleware
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
+from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
+from llama_stack.providers.utils.kvstore import register_kvstore_backends
 
 
 class InjectClientIDMiddleware(BaseHTTPMiddleware):
@@ -29,8 +32,10 @@ class InjectClientIDMiddleware(BaseHTTPMiddleware):
 
 
 def build_quota_config(db_path) -> QuotaConfig:
+    backend_name = f"kv_quota_{uuid4().hex}"
+    register_kvstore_backends({backend_name: SqliteKVStoreConfig(db_path=str(db_path))})
     return QuotaConfig(
-        kvstore=SqliteKVStoreConfig(db_path=str(db_path)),
+        kvstore=KVStoreReference(backend=backend_name, namespace="quota"),
         anonymous_max_requests=1,
         authenticated_max_requests=2,
         period=QuotaPeriod.DAY,

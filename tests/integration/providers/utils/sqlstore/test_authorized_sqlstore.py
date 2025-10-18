@@ -12,9 +12,15 @@ import pytest
 
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.datatypes import User
+from llama_stack.core.storage.datatypes import SqlStoreReference
 from llama_stack.providers.utils.sqlstore.api import ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig, SqliteSqlStoreConfig, sqlstore_impl
+from llama_stack.providers.utils.sqlstore.sqlstore import (
+    PostgresSqlStoreConfig,
+    SqliteSqlStoreConfig,
+    register_sqlstore_backends,
+    sqlstore_impl,
+)
 
 
 def get_postgres_config():
@@ -55,8 +61,9 @@ def authorized_store(backend_config):
     config_func = backend_config
 
     config = config_func()
-
-    base_sqlstore = sqlstore_impl(config)
+    backend_name = f"sql_{type(config).__name__.lower()}"
+    register_sqlstore_backends({backend_name: config})
+    base_sqlstore = sqlstore_impl(SqlStoreReference(backend=backend_name, table_name="authorized_store"))
     authorized_store = AuthorizedSqlStore(base_sqlstore, default_policy())
 
     yield authorized_store
