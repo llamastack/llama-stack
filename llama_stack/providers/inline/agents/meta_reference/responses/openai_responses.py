@@ -359,6 +359,7 @@ class OpenAIResponsesImpl:
             tool_executor=self.tool_executor,
             safety_api=self.safety_api,
             guardrail_ids=guardrail_ids,
+            instructions=instructions,
         )
 
         # Stream the response
