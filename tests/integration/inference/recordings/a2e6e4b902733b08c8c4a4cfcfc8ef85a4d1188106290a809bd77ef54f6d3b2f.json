@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Humans live on Earth. It is the only known planet in our solar system that supports life.",
+              "content": "Humans do not live on any of the planets in our solar system. We live on Earth, which is a terrestrial planet located third from the Sun and is our home and only known habitat for humans and other life forms.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 20,
+          "completion_tokens": 45,
           "prompt_tokens": 32,
-          "total_tokens": 52,
+          "total_tokens": 77,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "The smallest country in the world is the Vatican City, with an area of approximately 0.44 km\u00b2 (0.17 square miles). It is an independent city-state located within Rome, Italy, and serves as the headquarters of the Catholic Church. The Vatican City has a population of around 800 people and is home to numerous iconic landmarks, including St. Peter's Basilica and the Sistine Chapel.",
+              "content": "According to the Guinness World Records, the smallest country in the world is Vatican City, with an area of approximately 0.44 km\u00b2 (0.17 sq mi). It has a population of around 800 people and serves as the headquarters of the Catholic Church.\n\nVatican City is an independent city-state located within Rome, Italy, and it's the smallest internationally recognized sovereign state in the world.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 84,
+          "completion_tokens": 82,
           "prompt_tokens": 34,
-          "total_tokens": 118,
+          "total_tokens": 116,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "I'd be happy to help you test the new text-based interface for the OpenAI chat model, known as \"ChatGPT\". Here's how we can do it:\n\n**What is the new interface?**\n\nThe new interface is a simple text-based interface that allows you to interact with an AI model using plain text commands. You can type in a question or prompt, and the AI will respond with a relevant answer.\n\n**How to test the interface:**\n\n1. Type your query in the chat window below.\n2. Press enter to submit your query.\n3. The AI will respond with an answer, which you can then examine and ask follow-up questions about.\n\nGo ahead and try something! What would you like to know or discuss?",
+              "content": "I'll do my best to test the capabilities of the OpenAI 2 model. Keep in mind that I'm just a text-based AI and not a direct interface to the actual model.\n\nTo start, please provide me with some prompts or questions you'd like me to answer. This could include:\n\n1. General conversations\n2. Text summarization\n3. Translation\n4. Sentiment analysis\n5. Creativity (storytelling, poem generation, etc.)\n\nLet's get started! Please provide the first prompt.\n\n**Note:** I'll be generating text based on my training data and algorithms, which may not always reflect the full capabilities of the actual OpenAI 2 model.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 151,
+          "completion_tokens": 140,
           "prompt_tokens": 31,
-          "total_tokens": 182,
+          "total_tokens": 171,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Jupiter is the largest planet in our solar system, with a diameter of approximately 142,984 kilometers (88,846 miles). It is a gas giant and composed mainly of hydrogen and helium. Jupiter's large size and mass are more than 2.5 times that of all the other planets in our solar system combined.",
+              "content": "The largest planet in our solar system is Jupiter. It is a gas giant, meaning that it is primarily composed of hydrogen and helium gases, and it has a diameter of approximately 142,984 kilometers (88,846 miles). This makes Jupiter more than 11 times the size of Earth in terms of diameter.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 67,
+          "completion_tokens": 64,
           "prompt_tokens": 35,
-          "total_tokens": 102,
+          "total_tokens": 99,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

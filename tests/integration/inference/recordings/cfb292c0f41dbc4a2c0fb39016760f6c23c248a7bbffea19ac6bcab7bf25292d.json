@@ -1,0 +1,114 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestChatCompletionWithTools::test_tool_with_complex_schema[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Book a flight from SFO to JFK for John Doe"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "book_flight",
+            "description": "Book a flight",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "flight": {
+                  "$ref": "#/$defs/FlightInfo"
+                },
+                "passenger": {
+                  "$ref": "#/$defs/Passenger"
+                }
+              },
+              "required": [
+                "flight",
+                "passenger"
+              ],
+              "$defs": {
+                "FlightInfo": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  }
+                },
+                "Passenger": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "age": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-cfb292c0f41d",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user wants to book a flight from SFO to JFK for John Doe. Let me check the tools available. The provided function is book_flight, which requires flight information and a passenger. The parameters needed are flight (as a FlightInfo object) and passenger (with name and age). The user mentioned SFO to JFK, so the flight details are from and to. The passenger's name is John Doe, but the age isn't provided. Wait, the function parameters require the passenger's name and age, but the user only mentioned the name. Maybe the age is missing? But the user didn't specify it, so perhaps I should note that the age is required. However, the function's required parameters are flight and passenger, so even if age is missing, the function can't be called without it. So I need to include both flight info and passenger details. The user's message only gives the name and destination, not the flight details or age. Therefore, I need to ask for the flight details and the passenger's age. But the user hasn't provided those. So I can't proceed with the function call. Wait, but maybe the user expects me to assume some default? No, the function requires all parameters. Since the user hasn't provided flight details or age, I can't call the function. So the correct response is to prompt the user for those details.\n</think>\n\nThe booking requires the flight details and passenger's age. Could you provide the flight number and John Doe's age?",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 310,
+          "prompt_tokens": 261,
+          "total_tokens": 571,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
