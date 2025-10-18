@@ -19,15 +19,6 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
     """
     NVIDIA Inference Adapter for Llama Stack.
-
-    Note: The inheritance order is important here. OpenAIMixin must come before
-    ModelRegistryHelper to ensure that OpenAIMixin.check_model_availability()
-    is used instead of ModelRegistryHelper.check_model_availability(). It also
-    must come before Inference to ensure that OpenAIMixin methods are available
-    in the Inference interface.
-
-    - OpenAIMixin.check_model_availability() queries the NVIDIA API to check if a model exists
-    - ModelRegistryHelper.check_model_availability() just returns False and shows a warning
     """
 
     # source: https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/support-matrix.html
