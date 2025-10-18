@@ -516,6 +516,82 @@ def test_get_attributes_from_claims():
     assert set(attributes["teams"]) == {"my-team", "group1", "group2"}
     assert attributes["namespaces"] == ["my-tenant"]
 
+    # Test nested claims with dot notation (e.g., Keycloak resource_access structure)
+    claims = {
+        "sub": "user123",
+        "resource_access": {"llamastack": {"roles": ["inference_max", "admin"]}, "other-client": {"roles": ["viewer"]}},
+        "realm_access": {"roles": ["offline_access", "uma_authorization"]},
+    }
+    attributes = get_attributes_from_claims(
+        claims, {"resource_access.llamastack.roles": "roles", "realm_access.roles": "realm_roles"}
+    )
+    assert set(attributes["roles"]) == {"inference_max", "admin"}
+    assert set(attributes["realm_roles"]) == {"offline_access", "uma_authorization"}
+
+    # Test that dot notation takes precedence over literal keys with dots
+    claims = {
+        "my.dotted.key": "literal-value",
+        "my": {"dotted": {"key": "nested-value"}},
+    }
+    attributes = get_attributes_from_claims(claims, {"my.dotted.key": "test"})
+    assert attributes["test"] == ["nested-value"]
+
+    # Test that literal key works when nested traversal doesn't exist
+    claims = {
+        "my.dotted.key": "literal-value",
+    }
+    attributes = get_attributes_from_claims(claims, {"my.dotted.key": "test"})
+    assert attributes["test"] == ["literal-value"]
+
+    # Test missing nested paths are handled gracefully
+    claims = {
+        "sub": "user123",
+        "resource_access": {"other-client": {"roles": ["viewer"]}},
+    }
+    attributes = get_attributes_from_claims(
+        claims,
+        {
+            "resource_access.llamastack.roles": "roles",  # Missing nested path
+            "resource_access.missing.key": "missing_attr",  # Missing nested path
+            "completely.missing.path": "another_missing",  # Completely missing
+            "sub": "username",  # Existing path
+        },
+    )
+    # Only the existing claim should be in attributes
+    assert attributes["username"] == ["user123"]
+    assert "roles" not in attributes
+    assert "missing_attr" not in attributes
+    assert "another_missing" not in attributes
+
+    # Test mixture of flat and nested claims paths
+    claims = {
+        "sub": "user456",
+        "flat_key": "flat-value",
+        "scope": "read write admin",
+        "resource_access": {"app1": {"roles": ["role1", "role2"]}, "app2": {"roles": ["role3"]}},
+        "groups": ["group1", "group2"],
+        "metadata": {"tenant": "tenant1", "region": "us-west"},
+    }
+    attributes = get_attributes_from_claims(
+        claims,
+        {
+            "sub": "user_id",  # Flat string
+            "scope": "permissions",  # Flat string with spaces
+            "groups": "teams",  # Flat list
+            "resource_access.app1.roles": "app1_roles",  # Nested list
+            "resource_access.app2.roles": "app2_roles",  # Nested list
+            "metadata.tenant": "tenant",  # Nested string
+            "metadata.region": "region",  # Nested string
+        },
+    )
+    assert attributes["user_id"] == ["user456"]
+    assert set(attributes["permissions"]) == {"read", "write", "admin"}
+    assert set(attributes["teams"]) == {"group1", "group2"}
+    assert set(attributes["app1_roles"]) == {"role1", "role2"}
+    assert attributes["app2_roles"] == ["role3"]
+    assert attributes["tenant"] == ["tenant1"]
+    assert attributes["region"] == ["us-west"]
+
 
 # TODO: add more tests for oauth2 token provider
 
