@@ -128,6 +128,9 @@ inference_store:
 conversations_store:
   type: sqlite
   db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/conversations.db
+prompts_store:
+  type: sqlite
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/prompts.db
 models:
 - metadata: {}
   model_id: gpt-4o

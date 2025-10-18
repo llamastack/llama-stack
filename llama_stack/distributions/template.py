@@ -184,6 +184,7 @@ class RunConfigSettings(BaseModel):
     inference_store: dict | None = None
     conversations_store: dict | None = None
     telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig(enabled=True))
+    prompts_store: dict | None = None
 
     def run_config(
         self,
@@ -247,6 +248,11 @@ class RunConfigSettings(BaseModel):
             or SqliteSqlStoreConfig.sample_run_config(
                 __distro_dir__=f"~/.llama/distributions/{name}",
                 db_name="conversations.db",
+            ),
+            "prompts_store": self.prompts_store
+            or SqliteSqlStoreConfig.sample_run_config(
+                __distro_dir__=f"~/.llama/distributions/{name}",
+                db_name="prompts.db",
             ),
             "models": [m.model_dump(exclude_none=True) for m in (self.default_models or [])],
             "shields": [s.model_dump(exclude_none=True) for s in (self.default_shields or [])],
