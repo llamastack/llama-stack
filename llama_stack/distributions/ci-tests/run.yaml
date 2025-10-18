@@ -46,6 +46,9 @@ providers:
       api_key: ${env.TOGETHER_API_KEY:=}
   - provider_id: bedrock
     provider_type: remote::bedrock
+    config:
+      api_key: ${env.AWS_BEDROCK_API_KEY:=}
+      region_name: ${env.AWS_DEFAULT_REGION:=us-east-2}
   - provider_id: ${env.NVIDIA_API_KEY:+nvidia}
     provider_type: remote::nvidia
     config:
