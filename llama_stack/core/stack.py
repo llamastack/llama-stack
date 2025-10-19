@@ -368,9 +368,10 @@ class Stack:
                 logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
 
         _initialize_storage(self.run_config)
-        if not self.run_config.metadata_store:
-            raise ValueError("metadata_store must be configured with a kv_* backend")
-        dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
+        stores = self.run_config.storage.stores
+        if not stores.metadata:
+            raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
+        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}

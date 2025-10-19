@@ -188,6 +188,7 @@ class RunConfigSettings(BaseModel):
     default_benchmarks: list[BenchmarkInput] | None = None
     telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig(enabled=True))
     storage_backends: dict[str, Any] | None = None
+    storage_stores: dict[str, Any] | None = None
 
     def run_config(
         self,
@@ -241,19 +242,25 @@ class RunConfigSettings(BaseModel):
             ),
         }
 
-        storage_config = dict(backends=storage_backends)
-        metadata_store = KVStoreReference(
-            backend="kv_default",
-            namespace="registry",
-        ).model_dump(exclude_none=True)
-        inference_store = InferenceStoreReference(
-            backend="sql_default",
-            table_name="inference_store",
-        ).model_dump(exclude_none=True)
-        conversations_store = SqlStoreReference(
-            backend="sql_default",
-            table_name="openai_conversations",
-        ).model_dump(exclude_none=True)
+        storage_stores = self.storage_stores or {
+            "metadata": KVStoreReference(
+                backend="kv_default",
+                namespace="registry",
+            ).model_dump(exclude_none=True),
+            "inference": InferenceStoreReference(
+                backend="sql_default",
+                table_name="inference_store",
+            ).model_dump(exclude_none=True),
+            "conversations": SqlStoreReference(
+                backend="sql_default",
+                table_name="openai_conversations",
+            ).model_dump(exclude_none=True),
+        }
+
+        storage_config = dict(
+            backends=storage_backends,
+            stores=storage_stores,
+        )
 
         # Return a dict that matches StackRunConfig structure
         return {
@@ -263,9 +270,6 @@ class RunConfigSettings(BaseModel):
             "apis": apis,
             "providers": provider_configs,
             "storage": storage_config,
-            "metadata_store": metadata_store,
-            "inference_store": inference_store,
-            "conversations_store": conversations_store,
             "models": [m.model_dump(exclude_none=True) for m in (self.default_models or [])],
             "shields": [s.model_dump(exclude_none=True) for s in (self.default_shields or [])],
             "vector_dbs": [],

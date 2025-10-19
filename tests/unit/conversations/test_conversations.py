@@ -20,7 +20,14 @@ from llama_stack.core.conversations.conversations import (
     ConversationServiceConfig,
     ConversationServiceImpl,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.storage.datatypes import (
+    ServerStoresConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageConfig,
+)
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
 
 @pytest.fixture
@@ -28,7 +35,18 @@ async def service():
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test_conversations.db"
 
-        config = ConversationServiceConfig(conversations_store=SqliteSqlStoreConfig(db_path=str(db_path)), policy=[])
+        storage = StorageConfig(
+            backends={
+                "sql_test": SqliteSqlStoreConfig(db_path=str(db_path)),
+            },
+            stores=ServerStoresConfig(
+                conversations=SqlStoreReference(backend="sql_test", table_name="openai_conversations"),
+            ),
+        )
+        register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
+        run_config = StackRunConfig(image_name="test", apis=[], providers={}, storage=storage)
+
+        config = ConversationServiceConfig(run_config=run_config, policy=[])
         service = ConversationServiceImpl(config, {})
         await service.initialize()
         yield service
@@ -121,9 +139,18 @@ async def test_policy_configuration():
             AccessRule(forbid=Scope(principal="test_user", actions=[Action.CREATE, Action.READ], resource="*"))
         ]
 
-        config = ConversationServiceConfig(
-            conversations_store=SqliteSqlStoreConfig(db_path=str(db_path)), policy=restrictive_policy
+        storage = StorageConfig(
+            backends={
+                "sql_test": SqliteSqlStoreConfig(db_path=str(db_path)),
+            },
+            stores=ServerStoresConfig(
+                conversations=SqlStoreReference(backend="sql_test", table_name="openai_conversations"),
+            ),
         )
+        register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
+        run_config = StackRunConfig(image_name="test", apis=[], providers={}, storage=storage)
+
+        config = ConversationServiceConfig(run_config=run_config, policy=restrictive_policy)
         service = ConversationServiceImpl(config, {})
         await service.initialize()
 

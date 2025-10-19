@@ -27,9 +27,7 @@ from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import (
-    InferenceStoreReference,
     KVStoreReference,
-    SqlStoreReference,
     StorageBackendType,
     StorageConfig,
 )
@@ -470,19 +468,7 @@ can be instantiated multiple times (with different configs) if necessary.
 """,
     )
     storage: StorageConfig = Field(
-        description="Catalog of named storage backends available to the stack",
-    )
-    metadata_store: KVStoreReference | None = Field(
-        default=None,
-        description="Reference to the KV store backend used by the distribution registry (kv_* backend).",
-    )
-    inference_store: InferenceStoreReference | None = Field(
-        default=None,
-        description="Reference to the SQL store backend used by the inference API (sql_* backend).",
-    )
-    conversations_store: SqlStoreReference | None = Field(
-        default=None,
-        description="Reference to the SQL store backend used by the conversations API (sql_* backend).",
+        description="Catalog of named storage backends and references available to the stack",
     )
 
     # registry of "resources" in the distribution
@@ -523,8 +509,9 @@ can be instantiated multiple times (with different configs) if necessary.
         return v
 
     @model_validator(mode="after")
-    def validate_storage_references(self) -> "StackRunConfig":
-        backend_map = self.storage.backends if self.storage else {}
+    def validate_server_stores(self) -> "StackRunConfig":
+        backend_map = self.storage.backends
+        stores = self.storage.stores
         kv_backends = {
             name
             for name, cfg in backend_map.items()
@@ -558,9 +545,10 @@ can be instantiated multiple times (with different configs) if necessary.
                     f"{'kv_*' if expected_set is kv_backends else 'sql_*'} is required."
                 )
 
-        _ensure_backend(self.metadata_store, kv_backends, "metadata_store")
-        _ensure_backend(self.inference_store, sql_backends, "inference_store")
-        _ensure_backend(self.conversations_store, sql_backends, "conversations_store")
+        _ensure_backend(stores.metadata, kv_backends, "storage.stores.metadata")
+        _ensure_backend(stores.inference, sql_backends, "storage.stores.inference")
+        _ensure_backend(stores.conversations, sql_backends, "storage.stores.conversations")
+        _ensure_backend(stores.responses, sql_backends, "storage.stores.responses")
         return self
 
 

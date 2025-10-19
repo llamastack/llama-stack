@@ -16,6 +16,7 @@ from llama_stack.core.distribution import INTERNAL_APIS, get_provider_registry, 
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
     KVStoreReference,
+    ServerStoresConfig,
     SqliteKVStoreConfig,
     SqliteSqlStoreConfig,
     SqlStoreReference,
@@ -42,35 +43,25 @@ def _default_storage() -> StorageConfig:
         backends={
             "kv_default": SqliteKVStoreConfig(db_path=":memory:"),
             "sql_default": SqliteSqlStoreConfig(db_path=":memory:"),
-        }
+        },
+        stores=ServerStoresConfig(
+            metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+            inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+            conversations=SqlStoreReference(backend="sql_default", table_name="conversations"),
+        ),
     )
 
 
 def make_stack_config(**overrides) -> StackRunConfig:
     storage = overrides.pop("storage", _default_storage())
-    metadata_store = overrides.pop(
-        "metadata_store",
-        KVStoreReference(backend="kv_default", namespace="registry"),
-    )
-    inference_store = overrides.pop(
-        "inference_store",
-        InferenceStoreReference(backend="sql_default", table_name="inference_store"),
-    )
-    conversations_store = overrides.pop(
-        "conversations_store",
-        SqlStoreReference(backend="sql_default", table_name="conversations"),
-    )
     defaults = dict(
         image_name="test_image",
         apis=[],
         providers={},
         storage=storage,
-        metadata_store=metadata_store,
-        inference_store=inference_store,
-        conversations_store=conversations_store,
     )
     defaults.update(overrides)
-    return make_stack_config(**defaults)
+    return StackRunConfig(**defaults)
 
 
 @pytest.fixture

@@ -72,7 +72,7 @@ class SqliteKVStoreConfig(CommonConfig):
 class PostgresKVStoreConfig(CommonConfig):
     type: Literal[StorageBackendType.KV_POSTGRES] = StorageBackendType.KV_POSTGRES
     host: str = "localhost"
-    port: int = 5432
+    port: int | str = 5432
     db: str = "llamastack"
     user: str
     password: str | None = None
@@ -175,7 +175,7 @@ class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
 class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
     type: Literal[StorageBackendType.SQL_POSTGRES] = StorageBackendType.SQL_POSTGRES
     host: str = "localhost"
-    port: int = 5432
+    port: int | str = 5432
     db: str = "llamastack"
     user: str
     password: str | None = None
@@ -254,7 +254,30 @@ class ResponsesStoreReference(InferenceStoreReference):
     """Responses store configuration with queue tuning."""
 
 
+class ServerStoresConfig(BaseModel):
+    metadata: KVStoreReference | None = Field(
+        default=None,
+        description="Metadata store configuration (uses KV backend)",
+    )
+    inference: InferenceStoreReference | None = Field(
+        default=None,
+        description="Inference store configuration (uses SQL backend)",
+    )
+    conversations: SqlStoreReference | None = Field(
+        default=None,
+        description="Conversations store configuration (uses SQL backend)",
+    )
+    responses: ResponsesStoreReference | None = Field(
+        default=None,
+        description="Responses store configuration (uses SQL backend)",
+    )
+
+
 class StorageConfig(BaseModel):
     backends: dict[str, StorageBackendConfig] = Field(
         description="Named backend configurations (e.g., 'default', 'cache')",
+    )
+    stores: ServerStoresConfig = Field(
+        default_factory=lambda: ServerStoresConfig(),
+        description="Named references to storage backends used by the stack core",
     )

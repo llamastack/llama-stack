@@ -159,6 +159,37 @@ def upgrade_from_routing_table(
     config_dict["apis"] = config_dict["apis_to_serve"]
     config_dict.pop("apis_to_serve", None)
 
+    # Add default storage config if not present
+    if "storage" not in config_dict:
+        config_dict["storage"] = {
+            "backends": {
+                "kv_default": {
+                    "type": "kv_sqlite",
+                    "db_path": "~/.llama/kvstore.db",
+                },
+                "sql_default": {
+                    "type": "sql_sqlite",
+                    "db_path": "~/.llama/sql_store.db",
+                },
+            },
+            "stores": {
+                "metadata": {
+                    "namespace": "registry",
+                    "backend": "kv_default",
+                },
+                "inference": {
+                    "table_name": "inference_store",
+                    "backend": "sql_default",
+                    "max_write_queue_size": 10000,
+                    "num_writers": 4,
+                },
+                "conversations": {
+                    "table_name": "openai_conversations",
+                    "backend": "sql_default",
+                },
+            },
+        }
+
     return config_dict
 
 

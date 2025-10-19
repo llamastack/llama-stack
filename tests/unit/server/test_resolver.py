@@ -19,12 +19,15 @@ from llama_stack.core.routing_tables.models import ModelsRoutingTable
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
     KVStoreReference,
+    ServerStoresConfig,
     SqliteKVStoreConfig,
     SqliteSqlStoreConfig,
     SqlStoreReference,
     StorageConfig,
 )
 from llama_stack.providers.datatypes import InlineProviderSpec, ProviderSpec
+from llama_stack.providers.utils.kvstore import register_kvstore_backends
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
 
 def add_protocol_methods(cls: type, protocol: type[Protocol]) -> None:
@@ -76,26 +79,23 @@ def make_run_config(**overrides) -> StackRunConfig:
             backends={
                 "kv_default": SqliteKVStoreConfig(db_path=":memory:"),
                 "sql_default": SqliteSqlStoreConfig(db_path=":memory:"),
-            }
+            },
+            stores=ServerStoresConfig(
+                metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+                inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+                conversations=SqlStoreReference(backend="sql_default", table_name="conversations"),
+            ),
         ),
+    )
+    register_kvstore_backends({name: cfg for name, cfg in storage.backends.items() if cfg.type.value.startswith("kv_")})
+    register_sqlstore_backends(
+        {name: cfg for name, cfg in storage.backends.items() if cfg.type.value.startswith("sql_")}
     )
     defaults = dict(
         image_name="test_image",
         apis=[],
         providers={},
         storage=storage,
-        metadata_store=overrides.pop(
-            "metadata_store",
-            KVStoreReference(backend="kv_default", namespace="registry"),
-        ),
-        inference_store=overrides.pop(
-            "inference_store",
-            InferenceStoreReference(backend="sql_default", table_name="inference_store"),
-        ),
-        conversations_store=overrides.pop(
-            "conversations_store",
-            SqlStoreReference(backend="sql_default", table_name="conversations"),
-        ),
     )
     defaults.update(overrides)
     return StackRunConfig(**defaults)

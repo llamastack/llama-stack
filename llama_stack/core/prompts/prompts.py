@@ -41,9 +41,9 @@ class PromptServiceImpl(Prompts):
 
     async def initialize(self) -> None:
         # Use metadata store backend with prompts-specific namespace
-        metadata_ref = self.config.run_config.metadata_store
+        metadata_ref = self.config.run_config.storage.stores.metadata
         if not metadata_ref:
-            raise ValueError("metadata_store must be configured in run config")
+            raise ValueError("storage.stores.metadata must be configured in run config")
         prompts_ref = KVStoreReference(namespace="prompts", backend=metadata_ref.backend)
         self.kvstore = await kvstore_impl(prompts_ref)
 

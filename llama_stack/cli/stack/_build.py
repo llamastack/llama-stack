@@ -43,6 +43,7 @@ from llama_stack.core.stack import replace_env_vars
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
     KVStoreReference,
+    ServerStoresConfig,
     SqliteKVStoreConfig,
     SqliteSqlStoreConfig,
     SqlStoreReference,
@@ -302,7 +303,21 @@ def _generate_run_config(
             "sql_default": SqliteSqlStoreConfig(
                 db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/sql_store.db",
             ),
-        }
+        },
+        stores=ServerStoresConfig(
+            metadata=KVStoreReference(
+                backend="kv_default",
+                namespace="registry",
+            ),
+            inference=InferenceStoreReference(
+                backend="sql_default",
+                table_name="inference_store",
+            ),
+            conversations=SqlStoreReference(
+                backend="sql_default",
+                table_name="openai_conversations",
+            ),
+        ),
     )
 
     run_config = StackRunConfig(
@@ -311,18 +326,6 @@ def _generate_run_config(
         apis=apis,
         providers={},
         storage=storage,
-        metadata_store=KVStoreReference(
-            backend="kv_default",
-            namespace="registry",
-        ),
-        inference_store=InferenceStoreReference(
-            backend="sql_default",
-            table_name="inference_store",
-        ),
-        conversations_store=SqlStoreReference(
-            backend="sql_default",
-            table_name="openai_conversations",
-        ),
         external_providers_dir=build_config.external_providers_dir
         if build_config.external_providers_dir
         else EXTERNAL_PROVIDERS_DIR,

@@ -56,9 +56,9 @@ class ConversationServiceImpl(Conversations):
         self.policy = config.policy
 
         # Use conversations store reference from run config
-        conversations_ref = config.run_config.conversations_store
+        conversations_ref = config.run_config.storage.stores.conversations
         if not conversations_ref:
-            raise ValueError("conversations_store must be configured in run config")
+            raise ValueError("storage.stores.conversations must be configured in run config")
 
         base_sql_store = sqlstore_impl(conversations_ref)
         self.sql_store = AuthorizedSqlStore(base_sql_store, self.policy)

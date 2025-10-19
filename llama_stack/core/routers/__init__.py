@@ -80,9 +80,9 @@ async def get_auto_router_impl(
 
     # TODO: move pass configs to routers instead
     if api == Api.inference:
-        inference_ref = run_config.inference_store
+        inference_ref = run_config.storage.stores.inference
         if not inference_ref:
-            raise ValueError("inference_store must be configured in run config")
+            raise ValueError("storage.stores.inference must be configured in run config")
 
         inference_store = InferenceStore(
             reference=inference_ref,

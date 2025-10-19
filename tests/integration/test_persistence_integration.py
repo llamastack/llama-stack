@@ -29,19 +29,20 @@ def test_starter_distribution_config_loads_and_resolves():
     assert isinstance(config.storage.backends["kv_default"], SqliteKVStoreConfig)
     assert isinstance(config.storage.backends["sql_default"], SqliteSqlStoreConfig)
 
-    assert config.metadata_store is not None
-    assert config.metadata_store.backend == "kv_default"
-    assert config.metadata_store.namespace == "registry"
+    stores = config.storage.stores
+    assert stores.metadata is not None
+    assert stores.metadata.backend == "kv_default"
+    assert stores.metadata.namespace == "registry"
 
-    assert config.inference_store is not None
-    assert config.inference_store.backend == "sql_default"
-    assert config.inference_store.table_name == "inference_store"
-    assert config.inference_store.max_write_queue_size > 0
-    assert config.inference_store.num_writers > 0
+    assert stores.inference is not None
+    assert stores.inference.backend == "sql_default"
+    assert stores.inference.table_name == "inference_store"
+    assert stores.inference.max_write_queue_size > 0
+    assert stores.inference.num_writers > 0
 
-    assert config.conversations_store is not None
-    assert config.conversations_store.backend == "sql_default"
-    assert config.conversations_store.table_name == "openai_conversations"
+    assert stores.conversations is not None
+    assert stores.conversations.backend == "sql_default"
+    assert stores.conversations.table_name == "openai_conversations"
 
 
 def test_postgres_demo_distribution_config_loads():
@@ -62,6 +63,9 @@ def test_postgres_demo_distribution_config_loads():
     kv_backend = config.storage.backends["kv_default"]
     assert isinstance(kv_backend, PostgresKVStoreConfig)
 
+    stores = config.storage.stores
     # Stores target the Postgres backends explicitly
-    assert config.metadata_store.backend == "kv_default"
-    assert config.inference_store.backend == "sql_default"
+    assert stores.metadata is not None
+    assert stores.metadata.backend == "kv_default"
+    assert stores.inference is not None
+    assert stores.inference.backend == "sql_default"

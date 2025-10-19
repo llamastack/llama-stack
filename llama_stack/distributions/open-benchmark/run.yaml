@@ -130,17 +130,18 @@ storage:
     sql_default:
       type: sql_sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/open-benchmark}/sql_store.db
-metadata_store:
-  namespace: registry
-  backend: kv_default
-inference_store:
-  table_name: inference_store
-  backend: sql_default
-  max_write_queue_size: 10000
-  num_writers: 4
-conversations_store:
-  table_name: openai_conversations
-  backend: sql_default
+  stores:
+    metadata:
+      namespace: registry
+      backend: kv_default
+    inference:
+      table_name: inference_store
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
 models:
 - metadata: {}
   model_id: gpt-4o

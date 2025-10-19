@@ -12,6 +12,7 @@ from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceI
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
     KVStoreReference,
+    ServerStoresConfig,
     SqliteKVStoreConfig,
     SqliteSqlStoreConfig,
     SqlStoreReference,
@@ -32,16 +33,18 @@ async def temp_prompt_store(tmp_path_factory):
         backends={
             "kv_test": SqliteKVStoreConfig(db_path=db_path),
             "sql_test": SqliteSqlStoreConfig(db_path=str(temp_dir / f"{unique_id}_sql.db")),
-        }
+        },
+        stores=ServerStoresConfig(
+            metadata=KVStoreReference(backend="kv_test", namespace="registry"),
+            inference=InferenceStoreReference(backend="sql_test", table_name="inference"),
+            conversations=SqlStoreReference(backend="sql_test", table_name="conversations"),
+        ),
     )
     mock_run_config = StackRunConfig(
         image_name="test-distribution",
         apis=[],
         providers={},
         storage=storage,
-        metadata_store=KVStoreReference(backend="kv_test", namespace="registry"),
-        inference_store=InferenceStoreReference(backend="sql_test", table_name="inference"),
-        conversations_store=SqlStoreReference(backend="sql_test", table_name="conversations"),
     )
     config = PromptServiceConfig(run_config=mock_run_config)
     store = PromptServiceImpl(config, deps={})
