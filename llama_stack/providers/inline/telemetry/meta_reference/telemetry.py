@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
 import threading
 from typing import Any
 
@@ -60,23 +61,26 @@ class TelemetryAdapter(Telemetry):
         # Recreating the telemetry adapter multiple times will result in duplicate span processors.
         # Since the library client can be recreated multiple times in a notebook,
         # the kernel will hold on to the span processor and cause duplicate spans to be written.
-        if _TRACER_PROVIDER is None:
-            provider = TracerProvider()
-            trace.set_tracer_provider(provider)
-            _TRACER_PROVIDER = provider
+        if os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"):
+            if _TRACER_PROVIDER is None:
+                provider = TracerProvider()
+                trace.set_tracer_provider(provider)
+                _TRACER_PROVIDER = provider
 
-            # Use single OTLP endpoint for all telemetry signals
+                # Use single OTLP endpoint for all telemetry signals
 
-            # Let OpenTelemetry SDK handle endpoint construction automatically
-            # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
-            # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
-            span_exporter = OTLPSpanExporter()
-            span_processor = BatchSpanProcessor(span_exporter)
-            trace.get_tracer_provider().add_span_processor(span_processor)
+                # Let OpenTelemetry SDK handle endpoint construction automatically
+                # The SDK will read OTEL_EXPORTER_OTLP_ENDPOINT and construct appropriate URLs
+                # https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter
+                span_exporter = OTLPSpanExporter()
+                span_processor = BatchSpanProcessor(span_exporter)
+                trace.get_tracer_provider().add_span_processor(span_processor)
 
-            metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
-            metric_provider = MeterProvider(metric_readers=[metric_reader])
-            metrics.set_meter_provider(metric_provider)
+                metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+                metric_provider = MeterProvider(metric_readers=[metric_reader])
+                metrics.set_meter_provider(metric_provider)
+        else:
+            logger.warning("OTEL_EXPORTER_OTLP_ENDPOINT is not set, skipping telemetry")
 
         self.meter = metrics.get_meter(__name__)
         self._lock = _global_lock
