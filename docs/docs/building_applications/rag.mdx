@@ -20,7 +20,8 @@ RAG enables your applications to reference and recall information from external 
 In one terminal, start the Llama Stack server:
 
 ```bash
-uv run llama stack build --distro starter --image-type venv --run
+llama stack list-deps starter | xargs -L1 uv pip install
+llama stack run starter
 ```
 
 ### 2. Connect with OpenAI Client
