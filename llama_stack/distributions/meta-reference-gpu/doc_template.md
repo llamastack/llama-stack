@@ -70,7 +70,7 @@ docker run \
 
 ### Via venv
 
-Make sure you have done `uv pip install llama-stack` and have the Llama Stack CLI available.
+Make sure you have the Llama Stack CLI available.
 
 ```bash
 llama stack build --distro {{ name }} --image-type venv
