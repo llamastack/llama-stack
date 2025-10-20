@@ -15,12 +15,13 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     Order,
 )
-from llama_stack.core.datatypes import AccessRule, InferenceStoreConfig
+from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.storage.datatypes import InferenceStoreReference, StorageBackendType
 from llama_stack.log import get_logger
 
 from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import SqlStoreConfig, SqlStoreType, sqlstore_impl
+from ..sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
 
 logger = get_logger(name=__name__, category="inference")
 
@@ -28,33 +29,32 @@ logger = get_logger(name=__name__, category="inference")
 class InferenceStore:
     def __init__(
         self,
-        config: InferenceStoreConfig | SqlStoreConfig,
+        reference: InferenceStoreReference,
         policy: list[AccessRule],
     ):
-        # Handle backward compatibility
-        if not isinstance(config, InferenceStoreConfig):
-            # Legacy: SqlStoreConfig passed directly as config
-            config = InferenceStoreConfig(
-                sql_store_config=config,
-            )
-
-        self.config = config
-        self.sql_store_config = config.sql_store_config
+        self.reference = reference
         self.sql_store = None
         self.policy = policy
-
-        # Disable write queue for SQLite to avoid concurrency issues
-        self.enable_write_queue = self.sql_store_config.type != SqlStoreType.sqlite
 
         # Async write queue and worker control
         self._queue: asyncio.Queue[tuple[OpenAIChatCompletion, list[OpenAIMessageParam]]] | None = None
         self._worker_tasks: list[asyncio.Task[Any]] = []
-        self._max_write_queue_size: int = config.max_write_queue_size
-        self._num_writers: int = max(1, config.num_writers)
+        self._max_write_queue_size: int = reference.max_write_queue_size
+        self._num_writers: int = max(1, reference.num_writers)
 
     async def initialize(self):
         """Create the necessary tables if they don't exist."""
-        self.sql_store = AuthorizedSqlStore(sqlstore_impl(self.sql_store_config), self.policy)
+        base_store = sqlstore_impl(self.reference)
+        self.sql_store = AuthorizedSqlStore(base_store, self.policy)
+
+        # Disable write queue for SQLite to avoid concurrency issues
+        backend_name = self.reference.backend
+        backend_config = _SQLSTORE_BACKENDS.get(backend_name)
+        if backend_config is None:
+            raise ValueError(
+                f"Unregistered SQL backend '{backend_name}'. Registered backends: {sorted(_SQLSTORE_BACKENDS)}"
+            )
+        self.enable_write_queue = backend_config.type != StorageBackendType.SQL_SQLITE
         await self.sql_store.create_table(
             "chat_completions",
             {

@@ -173,13 +173,17 @@ class ConversationItemDeletedResource(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Conversations(Protocol):
-    """Protocol for conversation management operations."""
+    """Conversations
+
+    Protocol for conversation management operations."""
 
     @webmethod(route="/conversations", method="POST", level=LLAMA_STACK_API_V1)
     async def create_conversation(
         self, items: list[ConversationItem] | None = None, metadata: Metadata | None = None
     ) -> Conversation:
         """Create a conversation.
+
+        Create a conversation.
 
         :param items: Initial items to include in the conversation context.
         :param metadata: Set of key-value pairs that can be attached to an object.
@@ -189,7 +193,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_conversation(self, conversation_id: str) -> Conversation:
-        """Get a conversation with the given ID.
+        """Retrieve a conversation.
+
+        Get a conversation with the given ID.
 
         :param conversation_id: The conversation identifier.
         :returns: The conversation object.
@@ -198,7 +204,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}", method="POST", level=LLAMA_STACK_API_V1)
     async def update_conversation(self, conversation_id: str, metadata: Metadata) -> Conversation:
-        """Update a conversation's metadata with the given ID.
+        """Update a conversation.
+
+        Update a conversation's metadata with the given ID.
 
         :param conversation_id: The conversation identifier.
         :param metadata: Set of key-value pairs that can be attached to an object.
@@ -208,7 +216,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_conversation(self, conversation_id: str) -> ConversationDeletedResource:
-        """Delete a conversation with the given ID.
+        """Delete a conversation.
+
+        Delete a conversation with the given ID.
 
         :param conversation_id: The conversation identifier.
         :returns: The deleted conversation resource.
@@ -217,7 +227,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}/items", method="POST", level=LLAMA_STACK_API_V1)
     async def add_items(self, conversation_id: str, items: list[ConversationItem]) -> ConversationItemList:
-        """Create items in the conversation.
+        """Create items.
+
+        Create items in the conversation.
 
         :param conversation_id: The conversation identifier.
         :param items: Items to include in the conversation context.
@@ -227,7 +239,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}/items/{item_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def retrieve(self, conversation_id: str, item_id: str) -> ConversationItem:
-        """Retrieve a conversation item.
+        """Retrieve an item.
+
+        Retrieve a conversation item.
 
         :param conversation_id: The conversation identifier.
         :param item_id: The item identifier.
@@ -244,7 +258,9 @@ class Conversations(Protocol):
         limit: int | NotGiven = NOT_GIVEN,
         order: Literal["asc", "desc"] | NotGiven = NOT_GIVEN,
     ) -> ConversationItemList:
-        """List items in the conversation.
+        """List items.
+
+        List items in the conversation.
 
         :param conversation_id: The conversation identifier.
         :param after: An item ID to list items after, used in pagination.
@@ -259,7 +275,9 @@ class Conversations(Protocol):
     async def openai_delete_conversation_item(
         self, conversation_id: str, item_id: str
     ) -> ConversationItemDeletedResource:
-        """Delete a conversation item.
+        """Delete an item.
+
+        Delete a conversation item.
 
         :param conversation_id: The conversation identifier.
         :param item_id: The item identifier.

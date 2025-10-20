@@ -44,18 +44,32 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sqlite
-        namespace: null
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/agents_store.db
+      persistence:
+        agent_state:
+          backend: kv_default
+          namespace: agents
+        responses:
+          backend: sql_default
+          table_name: responses
   telemetry:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config: {}
-metadata_store:
-  namespace: null
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/registry.db
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/kvstore.db
+    sql_default:
+      type: sql_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/sqlstore.db
+  references:
+    metadata:
+      backend: kv_default
+      namespace: registry
+    inference:
+      backend: sql_default
+      table_name: inference_store
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}

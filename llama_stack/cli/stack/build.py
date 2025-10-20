@@ -8,6 +8,9 @@ import textwrap
 
 from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
+from llama_stack.log import get_logger
+
+logger = get_logger(__name__, category="cli")
 
 
 class StackBuild(Subcommand):
@@ -16,7 +19,7 @@ class StackBuild(Subcommand):
         self.parser = subparsers.add_parser(
             "build",
             prog="llama stack build",
-            description="Build a Llama stack container",
+            description="[DEPRECATED] Build a Llama stack container. This command is deprecated and will be removed in a future release. Use `llama stack list-deps <distro>' instead.",
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
         self._add_arguments()
@@ -93,6 +96,9 @@ the build. If not specified, currently active environment will be used if found.
         )
 
     def _run_stack_build_command(self, args: argparse.Namespace) -> None:
+        logger.warning(
+            "The 'llama stack build' command is deprecated and will be removed in a future release. Please use 'llama stack list-deps'"
+        )
         # always keep implementation completely silo-ed away from CLI so CLI
         # can be fast to load and reduces dependencies
         from ._build import run_stack_build_command

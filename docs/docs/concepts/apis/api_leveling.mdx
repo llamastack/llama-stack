@@ -62,6 +62,10 @@ The new `/v2` API must be introduced alongside the existing `/v1` API and run in
 
 When a `/v2` API is introduced, a clear and generous deprecation policy for the `/v1` API must be published simultaneously. This policy must outline the timeline for the eventual removal of the `/v1` API, giving users ample time to migrate.
 
+### Deprecated APIs
+
+Deprecated APIs are those that are no longer actively maintained or supported. Depreated APIs are marked with the flag `deprecated = True` in the OpenAPI spec. These APIs will be removed in a future release.
+
 ### API Stability vs. Provider Stability
 
 The leveling introduced in this document relates to the stability of the API and not specifically the providers within the API.

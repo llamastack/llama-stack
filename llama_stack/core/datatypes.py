@@ -26,9 +26,12 @@ from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
 from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.core.storage.datatypes import (
+    KVStoreReference,
+    StorageBackendType,
+    StorageConfig,
+)
 from llama_stack.providers.datatypes import Api, ProviderSpec
-from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
-from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreConfig
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
 LLAMA_STACK_RUN_CONFIG_VERSION = 2
@@ -382,7 +385,7 @@ class QuotaPeriod(StrEnum):
 
 
 class QuotaConfig(BaseModel):
-    kvstore: SqliteKVStoreConfig = Field(description="Config for KV store backend (SQLite only for now)")
+    kvstore: KVStoreReference = Field(description="Config for KV store backend (SQLite only for now)")
     anonymous_max_requests: int = Field(default=100, description="Max requests for unauthenticated clients per period")
     authenticated_max_requests: int = Field(
         default=1000, description="Max requests for authenticated clients per period"
@@ -464,18 +467,6 @@ class ServerConfig(BaseModel):
     )
 
 
-class InferenceStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
-    max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
-    num_writers: int = Field(default=4, description="Number of concurrent background writers")
-
-
-class ResponsesStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
-    max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
-    num_writers: int = Field(default=4, description="Number of concurrent background writers")
-
-
 class StackRunConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
@@ -502,26 +493,8 @@ One or more providers to use for each API. The same provider_type (e.g., meta-re
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )
-    metadata_store: KVStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the distribution registry. If not specified,
-a default SQLite store will be used.""",
-    )
-
-    inference_store: InferenceStoreConfig | SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the inference API. Can be either a
-InferenceStoreConfig (with queue tuning parameters) or a SqlStoreConfig (deprecated).
-If not specified, a default SQLite store will be used.""",
-    )
-
-    conversations_store: SqlStoreConfig | None = Field(
-        default=None,
-        description="""
-Configuration for the persistence store used by the conversations API.
-If not specified, a default SQLite store will be used.""",
+    storage: StorageConfig = Field(
+        description="Catalog of named storage backends and references available to the stack",
     )
 
     # registry of "resources" in the distribution
@@ -565,6 +538,49 @@ If not specified, a default SQLite store will be used.""",
         if isinstance(v, str):
             return Path(v)
         return v
+
+    @model_validator(mode="after")
+    def validate_server_stores(self) -> "StackRunConfig":
+        backend_map = self.storage.backends
+        stores = self.storage.stores
+        kv_backends = {
+            name
+            for name, cfg in backend_map.items()
+            if cfg.type
+            in {
+                StorageBackendType.KV_REDIS,
+                StorageBackendType.KV_SQLITE,
+                StorageBackendType.KV_POSTGRES,
+                StorageBackendType.KV_MONGODB,
+            }
+        }
+        sql_backends = {
+            name
+            for name, cfg in backend_map.items()
+            if cfg.type in {StorageBackendType.SQL_SQLITE, StorageBackendType.SQL_POSTGRES}
+        }
+
+        def _ensure_backend(reference, expected_set, store_name: str) -> None:
+            if reference is None:
+                return
+            backend_name = reference.backend
+            if backend_name not in backend_map:
+                raise ValueError(
+                    f"{store_name} references unknown backend '{backend_name}'. "
+                    f"Available backends: {sorted(backend_map)}"
+                )
+            if backend_name not in expected_set:
+                raise ValueError(
+                    f"{store_name} references backend '{backend_name}' of type "
+                    f"'{backend_map[backend_name].type.value}', but a backend of type "
+                    f"{'kv_*' if expected_set is kv_backends else 'sql_*'} is required."
+                )
+
+        _ensure_backend(stores.metadata, kv_backends, "storage.stores.metadata")
+        _ensure_backend(stores.inference, sql_backends, "storage.stores.inference")
+        _ensure_backend(stores.conversations, sql_backends, "storage.stores.conversations")
+        _ensure_backend(stores.responses, sql_backends, "storage.stores.responses")
+        return self
 
 
 class BuildConfig(BaseModel):

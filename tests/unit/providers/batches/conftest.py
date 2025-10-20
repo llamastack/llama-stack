@@ -12,10 +12,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.providers.inline.batches.reference.batches import ReferenceBatchesImpl
 from llama_stack.providers.inline.batches.reference.config import ReferenceBatchesImplConfig
-from llama_stack.providers.utils.kvstore import kvstore_impl
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
+from llama_stack.providers.utils.kvstore import kvstore_impl, register_kvstore_backends
 
 
 @pytest.fixture
@@ -23,8 +23,10 @@ async def provider():
     """Create a test provider instance with temporary database."""
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test_batches.db"
+        backend_name = "kv_batches_test"
         kvstore_config = SqliteKVStoreConfig(db_path=str(db_path))
-        config = ReferenceBatchesImplConfig(kvstore=kvstore_config)
+        register_kvstore_backends({backend_name: kvstore_config})
+        config = ReferenceBatchesImplConfig(kvstore=KVStoreReference(backend=backend_name, namespace="batches"))
 
         # Create kvstore and mock APIs
         kvstore = await kvstore_impl(config.kvstore)

@@ -246,7 +246,7 @@ def instantiate_llama_stack_client(session):
 
         run_config_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")
         with open(run_config_file.name, "w") as f:
-            yaml.dump(run_config.model_dump(), f)
+            yaml.dump(run_config.model_dump(mode="json"), f)
         config = run_config_file.name
 
     client = LlamaStackAsLibraryClient(

@@ -10,13 +10,13 @@ import pytest
 from llama_stack.apis.inference import Model
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.core.datatypes import VectorDBWithOwner
+from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.core.store.registry import (
     KEY_FORMAT,
     CachedDiskDistributionRegistry,
     DiskDistributionRegistry,
 )
-from llama_stack.providers.utils.kvstore import kvstore_impl
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
+from llama_stack.providers.utils.kvstore import kvstore_impl, register_kvstore_backends
 
 
 @pytest.fixture
@@ -72,7 +72,11 @@ async def test_cached_registry_initialization(sqlite_kvstore, sample_vector_db, 
 
     # Test cached version loads from disk
     db_path = sqlite_kvstore.db_path
-    cached_registry = CachedDiskDistributionRegistry(await kvstore_impl(SqliteKVStoreConfig(db_path=db_path)))
+    backend_name = "kv_cached_test"
+    register_kvstore_backends({backend_name: SqliteKVStoreConfig(db_path=db_path)})
+    cached_registry = CachedDiskDistributionRegistry(
+        await kvstore_impl(KVStoreReference(backend=backend_name, namespace="registry"))
+    )
     await cached_registry.initialize()
 
     result_vector_db = await cached_registry.get("vector_db", "test_vector_db")
@@ -101,7 +105,11 @@ async def test_cached_registry_updates(cached_disk_dist_registry):
 
     # Verify persisted to disk
     db_path = cached_disk_dist_registry.kvstore.db_path
-    new_registry = DiskDistributionRegistry(await kvstore_impl(SqliteKVStoreConfig(db_path=db_path)))
+    backend_name = "kv_cached_new"
+    register_kvstore_backends({backend_name: SqliteKVStoreConfig(db_path=db_path)})
+    new_registry = DiskDistributionRegistry(
+        await kvstore_impl(KVStoreReference(backend=backend_name, namespace="registry"))
+    )
     await new_registry.initialize()
     result_vector_db = await new_registry.get("vector_db", "test_vector_db_2")
     assert result_vector_db is not None

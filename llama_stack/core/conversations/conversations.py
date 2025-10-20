@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import os
 import secrets
 import time
 from typing import Any
@@ -21,16 +20,11 @@ from llama_stack.apis.conversations.conversations import (
     Conversations,
     Metadata,
 )
-from llama_stack.core.datatypes import AccessRule
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
+from llama_stack.core.datatypes import AccessRule, StackRunConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from llama_stack.providers.utils.sqlstore.sqlstore import (
-    SqliteSqlStoreConfig,
-    SqlStoreConfig,
-    sqlstore_impl,
-)
+from llama_stack.providers.utils.sqlstore.sqlstore import sqlstore_impl
 
 logger = get_logger(name=__name__, category="openai_conversations")
 
@@ -38,13 +32,11 @@ logger = get_logger(name=__name__, category="openai_conversations")
 class ConversationServiceConfig(BaseModel):
     """Configuration for the built-in conversation service.
 
-    :param conversations_store: SQL store configuration for conversations (defaults to SQLite)
+    :param run_config: Stack run configuration for resolving persistence
     :param policy: Access control rules
     """
 
-    conversations_store: SqlStoreConfig = SqliteSqlStoreConfig(
-        db_path=(DISTRIBS_BASE_DIR / "conversations.db").as_posix()
-    )
+    run_config: StackRunConfig
     policy: list[AccessRule] = []
 
 
@@ -63,14 +55,16 @@ class ConversationServiceImpl(Conversations):
         self.deps = deps
         self.policy = config.policy
 
-        base_sql_store = sqlstore_impl(config.conversations_store)
+        # Use conversations store reference from run config
+        conversations_ref = config.run_config.storage.stores.conversations
+        if not conversations_ref:
+            raise ValueError("storage.stores.conversations must be configured in run config")
+
+        base_sql_store = sqlstore_impl(conversations_ref)
         self.sql_store = AuthorizedSqlStore(base_sql_store, self.policy)
 
     async def initialize(self) -> None:
         """Initialize the store and create tables."""
-        if isinstance(self.config.conversations_store, SqliteSqlStoreConfig):
-            os.makedirs(os.path.dirname(self.config.conversations_store.db_path), exist_ok=True)
-
         await self.sql_store.create_table(
             "openai_conversations",
             {

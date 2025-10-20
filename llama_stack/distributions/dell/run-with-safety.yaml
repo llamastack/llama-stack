@@ -26,9 +26,9 @@ providers:
     provider_type: remote::chromadb
     config:
       url: ${env.CHROMADB_URL:=}
-      kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell/}/chroma_remote_registry.db
+      persistence:
+        namespace: vector_io::chroma_remote
+        backend: kv_default
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
@@ -38,32 +38,35 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/agents_store.db
-      responses_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/responses_store.db
+      persistence:
+        agent_state:
+          namespace: agents
+          backend: kv_default
+        responses:
+          table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
       kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/meta_reference_eval.db
+        namespace: eval
+        backend: kv_default
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface
     config:
       kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/huggingface_datasetio.db
+        namespace: datasetio::huggingface
+        backend: kv_default
   - provider_id: localfs
     provider_type: inline::localfs
     config:
       kvstore:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/localfs_datasetio.db
+        namespace: datasetio::localfs
+        backend: kv_default
   scoring:
   - provider_id: basic
     provider_type: inline::basic
@@ -86,15 +89,26 @@ providers:
       max_results: 3
   - provider_id: rag-runtime
     provider_type: inline::rag-runtime
-metadata_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/registry.db
-inference_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/inference_store.db
-conversations_store:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/conversations.db
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/kvstore.db
+    sql_default:
+      type: sql_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/dell}/sql_store.db
+  stores:
+    metadata:
+      namespace: registry
+      backend: kv_default
+    inference:
+      table_name: inference_store
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}

@@ -545,6 +545,7 @@ class OpenAIResponseObject(BaseModel):
     :param tools: (Optional) An array of tools the model may call while generating a response.
     :param truncation: (Optional) Truncation strategy applied to the response
     :param usage: (Optional) Token usage information for the response
+    :param instructions: (Optional) System message inserted into the model's context
     """
 
     created_at: int
@@ -564,6 +565,7 @@ class OpenAIResponseObject(BaseModel):
     tools: list[OpenAIResponseTool] | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
+    instructions: str | None = None
 
 
 @json_schema_type

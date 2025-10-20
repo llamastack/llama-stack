@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import importlib
+import importlib.metadata
 import inspect
 from typing import Any
 

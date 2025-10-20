@@ -5,10 +5,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-[ -z "$BASH_VERSION" ] && {
-  echo "This script must be run with bash" >&2
-  exit 1
-}
+[ -z "${BASH_VERSION:-}" ] && exec /usr/bin/env bash "$0" "$@"
+if set -o | grep -Eq 'posix[[:space:]]+on'; then
+  exec /usr/bin/env bash "$0" "$@"
+fi
 
 set -Eeuo pipefail
 
@@ -18,11 +18,109 @@ MODEL_ALIAS="llama3.2:3b"
 SERVER_IMAGE="docker.io/llamastack/distribution-starter:latest"
 WAIT_TIMEOUT=30
 TEMP_LOG=""
+WITH_TELEMETRY=true
+TELEMETRY_SERVICE_NAME="llama-stack"
+TELEMETRY_SINKS="otel_trace,otel_metric"
+OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4318"
+TEMP_TELEMETRY_DIR=""
+
+materialize_telemetry_configs() {
+  local dest="$1"
+  mkdir -p "$dest"
+  local otel_cfg="${dest}/otel-collector-config.yaml"
+  local prom_cfg="${dest}/prometheus.yml"
+  local graf_cfg="${dest}/grafana-datasources.yaml"
+
+  for asset in "$otel_cfg" "$prom_cfg" "$graf_cfg"; do
+    if [ -e "$asset" ]; then
+      die "Telemetry asset ${asset} already exists; refusing to overwrite"
+    fi
+  done
+
+  cat <<'EOF' > "$otel_cfg"
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  # Export traces to Jaeger
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Export metrics to Prometheus
+  prometheus:
+    endpoint: 0.0.0.0:9464
+    namespace: llama_stack
+
+  # Debug exporter for troubleshooting
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger, debug]
+
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, debug]
+EOF
+
+  cat <<'EOF' > "$prom_cfg"
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:9464']
+EOF
+
+  cat <<'EOF' > "$graf_cfg"
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    editable: true
+EOF
+}
 
 # Cleanup function to remove temporary files
 cleanup() {
   if [ -n "$TEMP_LOG" ] && [ -f "$TEMP_LOG" ]; then
     rm -f "$TEMP_LOG"
+  fi
+  if [ -n "$TEMP_TELEMETRY_DIR" ] && [ -d "$TEMP_TELEMETRY_DIR" ]; then
+    rm -rf "$TEMP_TELEMETRY_DIR"
   fi
 }
 
@@ -32,7 +130,7 @@ trap cleanup EXIT ERR INT TERM
 log(){ printf "\e[1;32m%s\e[0m\n" "$*"; }
 die(){
   printf "\e[1;31m❌ %s\e[0m\n" "$*" >&2
-  printf "\e[1;31m🐛 Report an issue @ https://github.com/meta-llama/llama-stack/issues if you think it's a bug\e[0m\n" >&2
+  printf "\e[1;31m🐛 Report an issue @ https://github.com/llamastack/llama-stack/issues if you think it's a bug\e[0m\n" >&2
   exit 1
 }
 
@@ -89,6 +187,12 @@ Options:
     -m, --model MODEL          Model alias to use (default: ${MODEL_ALIAS})
     -i, --image IMAGE          Server image (default: ${SERVER_IMAGE})
     -t, --timeout SECONDS      Service wait timeout in seconds (default: ${WAIT_TIMEOUT})
+    --with-telemetry           Provision Jaeger, OTEL Collector, Prometheus, and Grafana (default: enabled)
+    --no-telemetry, --without-telemetry
+                              Skip provisioning the telemetry stack
+    --telemetry-service NAME   Service name reported to telemetry (default: ${TELEMETRY_SERVICE_NAME})
+    --telemetry-sinks SINKS    Comma-separated telemetry sinks (default: ${TELEMETRY_SINKS})
+    --otel-endpoint URL        OTLP endpoint provided to Llama Stack (default: ${OTEL_EXPORTER_OTLP_ENDPOINT})
     -h, --help                 Show this help message
 
 For more information:
@@ -125,6 +229,26 @@ while [[ $# -gt 0 ]]; do
             ;;
         -t|--timeout)
             WAIT_TIMEOUT="$2"
+            shift 2
+            ;;
+        --with-telemetry)
+            WITH_TELEMETRY=true
+            shift
+            ;;
+        --no-telemetry|--without-telemetry)
+            WITH_TELEMETRY=false
+            shift
+            ;;
+        --telemetry-service)
+            TELEMETRY_SERVICE_NAME="$2"
+            shift 2
+            ;;
+        --telemetry-sinks)
+            TELEMETRY_SINKS="$2"
+            shift 2
+            ;;
+        --otel-endpoint)
+            OTEL_EXPORTER_OTLP_ENDPOINT="$2"
             shift 2
             ;;
         *)
@@ -171,7 +295,11 @@ if [ "$ENGINE" = "podman" ] && [ "$(uname -s)" = "Darwin" ]; then
 fi
 
 # Clean up any leftovers from earlier runs
-for name in ollama-server llama-stack; do
+containers=(ollama-server llama-stack)
+if [ "$WITH_TELEMETRY" = true ]; then
+  containers+=(jaeger otel-collector prometheus grafana)
+fi
+for name in "${containers[@]}"; do
   ids=$($ENGINE ps -aq --filter "name=^${name}$")
   if [ -n "$ids" ]; then
     log "⚠️  Found existing container(s) for '${name}', removing..."
@@ -188,6 +316,64 @@ if ! $ENGINE network inspect llama-net >/dev/null 2>&1; then
   log "🌐 Creating network..."
   if ! execute_with_log $ENGINE network create llama-net; then
     die "Network creation failed"
+  fi
+fi
+
+###############################################################################
+# Telemetry Stack
+###############################################################################
+if [ "$WITH_TELEMETRY" = true ]; then
+  TEMP_TELEMETRY_DIR="$(mktemp -d)"
+  TELEMETRY_ASSETS_DIR="$TEMP_TELEMETRY_DIR"
+  log "🧰 Materializing telemetry configs..."
+  materialize_telemetry_configs "$TELEMETRY_ASSETS_DIR"
+
+  log "📡 Starting telemetry stack..."
+
+  if ! execute_with_log $ENGINE run -d "${PLATFORM_OPTS[@]}" --name jaeger \
+    --network llama-net \
+    -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+    -p 16686:16686 \
+    -p 14250:14250 \
+    -p 9411:9411 \
+    docker.io/jaegertracing/all-in-one:latest > /dev/null 2>&1; then
+    die "Jaeger startup failed"
+  fi
+
+  if ! execute_with_log $ENGINE run -d "${PLATFORM_OPTS[@]}" --name otel-collector \
+    --network llama-net \
+    -p 4318:4318 \
+    -p 4317:4317 \
+    -p 9464:9464 \
+    -p 13133:13133 \
+    -v "${TELEMETRY_ASSETS_DIR}/otel-collector-config.yaml:/etc/otel-collector-config.yaml:Z" \
+    docker.io/otel/opentelemetry-collector-contrib:latest \
+    --config /etc/otel-collector-config.yaml > /dev/null 2>&1; then
+    die "OpenTelemetry Collector startup failed"
+  fi
+
+  if ! execute_with_log $ENGINE run -d "${PLATFORM_OPTS[@]}" --name prometheus \
+    --network llama-net \
+    -p 9090:9090 \
+    -v "${TELEMETRY_ASSETS_DIR}/prometheus.yml:/etc/prometheus/prometheus.yml:Z" \
+    docker.io/prom/prometheus:latest \
+    --config.file=/etc/prometheus/prometheus.yml \
+    --storage.tsdb.path=/prometheus \
+    --web.console.libraries=/etc/prometheus/console_libraries \
+    --web.console.templates=/etc/prometheus/consoles \
+    --storage.tsdb.retention.time=200h \
+    --web.enable-lifecycle > /dev/null 2>&1; then
+    die "Prometheus startup failed"
+  fi
+
+  if ! execute_with_log $ENGINE run -d "${PLATFORM_OPTS[@]}" --name grafana \
+    --network llama-net \
+    -p 3000:3000 \
+    -e GF_SECURITY_ADMIN_PASSWORD=admin \
+    -e GF_USERS_ALLOW_SIGN_UP=false \
+    -v "${TELEMETRY_ASSETS_DIR}/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z" \
+    docker.io/grafana/grafana:11.0.0 > /dev/null 2>&1; then
+    die "Grafana startup failed"
   fi
 fi
 
@@ -218,9 +404,19 @@ fi
 ###############################################################################
 # 2. Llama‑Stack
 ###############################################################################
+server_env_opts=()
+if [ "$WITH_TELEMETRY" = true ]; then
+  server_env_opts+=(
+    -e TELEMETRY_SINKS="${TELEMETRY_SINKS}"
+    -e OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT}"
+    -e OTEL_SERVICE_NAME="${TELEMETRY_SERVICE_NAME}"
+  )
+fi
+
 cmd=( run -d "${PLATFORM_OPTS[@]}" --name llama-stack \
       --network llama-net \
       -p "${PORT}:${PORT}" \
+      "${server_env_opts[@]}" \
       -e OLLAMA_URL="http://ollama-server:${OLLAMA_PORT}" \
       "${SERVER_IMAGE}" --port "${PORT}")
 
@@ -244,5 +440,12 @@ log "👉  API endpoint: http://localhost:${PORT}"
 log "📖 Documentation: https://llamastack.github.io/latest/references/api_reference/index.html"
 log "💻 To access the llama stack CLI, exec into the container:"
 log "   $ENGINE exec -ti llama-stack bash"
+if [ "$WITH_TELEMETRY" = true ]; then
+  log "📡 Telemetry dashboards:"
+  log "   Jaeger UI:      http://localhost:16686"
+  log "   Prometheus UI:  http://localhost:9090"
+  log "   Grafana UI:     http://localhost:3000 (admin/admin)"
+  log "   OTEL Collector: http://localhost:4318"
+fi
 log "🐛 Report an issue @ https://github.com/llamastack/llama-stack/issues if you think it's a bug"
 log ""

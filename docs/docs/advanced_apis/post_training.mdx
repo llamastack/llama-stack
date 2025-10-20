@@ -51,8 +51,8 @@ device: cpu
 You can access the HuggingFace trainer via the `starter` distribution:
 
 ```bash
-llama stack build --distro starter --image-type venv
-llama stack run ~/.llama/distributions/starter/starter-run.yaml
+llama stack list-deps starter | xargs -L1 uv pip install
+llama stack run starter
 ```
 
 ### Usage Example

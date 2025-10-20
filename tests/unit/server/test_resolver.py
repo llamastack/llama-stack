@@ -12,15 +12,22 @@ from unittest.mock import AsyncMock, MagicMock
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import Inference
-from llama_stack.core.datatypes import (
-    Api,
-    Provider,
-    StackRunConfig,
-)
+from llama_stack.core.datatypes import Api, Provider, StackRunConfig
 from llama_stack.core.resolver import resolve_impls
 from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.core.routing_tables.models import ModelsRoutingTable
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    ServerStoresConfig,
+    SqliteKVStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageConfig,
+)
 from llama_stack.providers.datatypes import InlineProviderSpec, ProviderSpec
+from llama_stack.providers.utils.kvstore import register_kvstore_backends
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
 
 def add_protocol_methods(cls: type, protocol: type[Protocol]) -> None:
@@ -65,6 +72,35 @@ class SampleImpl:
         pass
 
 
+def make_run_config(**overrides) -> StackRunConfig:
+    storage = overrides.pop(
+        "storage",
+        StorageConfig(
+            backends={
+                "kv_default": SqliteKVStoreConfig(db_path=":memory:"),
+                "sql_default": SqliteSqlStoreConfig(db_path=":memory:"),
+            },
+            stores=ServerStoresConfig(
+                metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+                inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+                conversations=SqlStoreReference(backend="sql_default", table_name="conversations"),
+            ),
+        ),
+    )
+    register_kvstore_backends({name: cfg for name, cfg in storage.backends.items() if cfg.type.value.startswith("kv_")})
+    register_sqlstore_backends(
+        {name: cfg for name, cfg in storage.backends.items() if cfg.type.value.startswith("sql_")}
+    )
+    defaults = dict(
+        image_name="test_image",
+        apis=[],
+        providers={},
+        storage=storage,
+    )
+    defaults.update(overrides)
+    return StackRunConfig(**defaults)
+
+
 async def test_resolve_impls_basic():
     # Create a real provider spec
     provider_spec = InlineProviderSpec(
@@ -78,7 +114,7 @@ async def test_resolve_impls_basic():
     # Create provider registry with our provider
     provider_registry = {Api.inference: {provider_spec.provider_type: provider_spec}}
 
-    run_config = StackRunConfig(
+    run_config = make_run_config(
         image_name="test_image",
         providers={
             "inference": [

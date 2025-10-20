@@ -6,7 +6,10 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import AccessRule, RoutedProtocol
+from llama_stack.core.datatypes import (
+    AccessRule,
+    RoutedProtocol,
+)
 from llama_stack.core.stack import StackRunConfig
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.providers.datatypes import Api, RoutingTable
@@ -78,9 +81,13 @@ async def get_auto_router_impl(
                 api_to_dep_impl[dep_name] = deps[dep_api]
 
     # TODO: move pass configs to routers instead
-    if api == Api.inference and run_config.inference_store:
+    if api == Api.inference:
+        inference_ref = run_config.storage.stores.inference
+        if not inference_ref:
+            raise ValueError("storage.stores.inference must be configured in run config")
+
         inference_store = InferenceStore(
-            config=run_config.inference_store,
+            reference=inference_ref,
             policy=policy,
         )
         await inference_store.initialize()
