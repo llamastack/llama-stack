@@ -321,7 +321,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        self.kvstore = await kvstore_impl(self.config.persistence)
         start_key = VECTOR_DBS_PREFIX
         end_key = f"{VECTOR_DBS_PREFIX}\xff"
         stored_vector_dbs = await self.kvstore.values_in_range(start_key, end_key)

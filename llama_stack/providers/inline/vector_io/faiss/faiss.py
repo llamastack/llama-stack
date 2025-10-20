@@ -214,7 +214,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPr
         self.cache: dict[str, VectorDBWithIndex] = {}
 
     async def initialize(self) -> None:
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        self.kvstore = await kvstore_impl(self.config.persistence)
         # Load existing banks from kvstore
         start_key = VECTOR_DBS_PREFIX
         end_key = f"{VECTOR_DBS_PREFIX}\xff"

@@ -19,7 +19,7 @@ class PGVectorVectorIOConfig(BaseModel):
     db: str | None = Field(default="postgres")
     user: str | None = Field(default="postgres")
     password: str | None = Field(default="mysecretpassword")
-    kvstore: KVStoreReference | None = Field(
+    persistence: KVStoreReference | None = Field(
         description="Config for KV store backend (SQLite only for now)", default=None
     )
 
@@ -40,7 +40,7 @@ class PGVectorVectorIOConfig(BaseModel):
             "db": db,
             "user": user,
             "password": password,
-            "kvstore": KVStoreReference(
+            "persistence": KVStoreReference(
                 backend="kv_default",
                 namespace="vector_io::pgvector",
             ).model_dump(exclude_none=True),

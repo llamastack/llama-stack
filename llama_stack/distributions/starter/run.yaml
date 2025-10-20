@@ -93,21 +93,21 @@ providers:
   - provider_id: faiss
     provider_type: inline::faiss
     config:
-      kvstore:
+      persistence:
         namespace: vector_io::faiss
         backend: kv_default
   - provider_id: sqlite-vec
     provider_type: inline::sqlite-vec
     config:
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/sqlite_vec.db
-      kvstore:
+      persistence:
         namespace: vector_io::sqlite_vec
         backend: kv_default
   - provider_id: ${env.MILVUS_URL:+milvus}
     provider_type: inline::milvus
     config:
       db_path: ${env.MILVUS_DB_PATH:=~/.llama/distributions/starter}/milvus.db
-      kvstore:
+      persistence:
         namespace: vector_io::milvus
         backend: kv_default
   - provider_id: ${env.CHROMADB_URL:+chromadb}
@@ -125,7 +125,7 @@ providers:
       db: ${env.PGVECTOR_DB:=}
       user: ${env.PGVECTOR_USER:=}
       password: ${env.PGVECTOR_PASSWORD:=}
-      kvstore:
+      persistence:
         namespace: vector_io::pgvector
         backend: kv_default
   files:

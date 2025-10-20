@@ -16,13 +16,13 @@ from llama_stack.schema_utils import json_schema_type
 @json_schema_type
 class QdrantVectorIOConfig(BaseModel):
     path: str
-    kvstore: KVStoreReference
+    persistence: KVStoreReference
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
         return {
             "path": "${env.QDRANT_PATH:=~/.llama/" + __distro_dir__ + "}/" + "qdrant.db",
-            "kvstore": KVStoreReference(
+            "persistence": KVStoreReference(
                 backend="kv_default",
                 namespace="vector_io::qdrant",
             ).model_dump(exclude_none=True),

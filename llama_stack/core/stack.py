@@ -42,7 +42,16 @@ from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceI
 from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.resolver import ProviderRegistry, resolve_impls
 from llama_stack.core.routing_tables.common import CommonRoutingTableImpl
-from llama_stack.core.storage.datatypes import StorageBackendConfig
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    ServerStoresConfig,
+    SqliteKVStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageBackendConfig,
+    StorageConfig,
+)
 from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
@@ -512,5 +521,16 @@ def run_config_from_adhoc_config_spec(
         image_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
+        storage=StorageConfig(
+            backends={
+                "kv_default": SqliteKVStoreConfig(db_path=f"{distro_dir}/kvstore.db"),
+                "sql_default": SqliteSqlStoreConfig(db_path=f"{distro_dir}/sql_store.db"),
+            },
+            stores=ServerStoresConfig(
+                metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+                inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+                conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
+            ),
+        ),
     )
     return config

@@ -425,7 +425,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         self.vector_db_store = None
 
     async def initialize(self) -> None:
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        self.kvstore = await kvstore_impl(self.config.persistence)
 
         start_key = VECTOR_DBS_PREFIX
         end_key = f"{VECTOR_DBS_PREFIX}\xff"

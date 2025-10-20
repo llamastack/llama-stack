@@ -320,8 +320,8 @@ class WeaviateVectorIOAdapter(
     async def initialize(self) -> None:
         """Set up KV store and load existing vector DBs and OpenAI vector stores."""
         # Initialize KV store for metadata if configured
-        if self.config.kvstore is not None:
-            self.kvstore = await kvstore_impl(self.config.kvstore)
+        if self.config.persistence is not None:
+            self.kvstore = await kvstore_impl(self.config.persistence)
         else:
             self.kvstore = None
             log.info("No kvstore configured, registry will not persist across restarts")

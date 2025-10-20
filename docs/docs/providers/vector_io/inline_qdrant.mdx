@@ -98,13 +98,13 @@ See the [Qdrant documentation](https://qdrant.tech/documentation/) for more deta
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `path` | `<class 'str'>` | No |  |  |
-| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
 
 ## Sample Configuration
 
 ```yaml
 path: ${env.QDRANT_PATH:=~/.llama/~/.llama/dummy}/qdrant.db
-kvstore:
+persistence:
   namespace: vector_io::qdrant
   backend: kv_default
 ```

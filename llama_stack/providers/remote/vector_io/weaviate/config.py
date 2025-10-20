@@ -16,7 +16,7 @@ from llama_stack.schema_utils import json_schema_type
 class WeaviateVectorIOConfig(BaseModel):
     weaviate_api_key: str | None = Field(description="The API key for the Weaviate instance", default=None)
     weaviate_cluster_url: str | None = Field(description="The URL of the Weaviate cluster", default="localhost:8080")
-    kvstore: KVStoreReference | None = Field(
+    persistence: KVStoreReference | None = Field(
         description="Config for KV store backend (SQLite only for now)", default=None
     )
 
@@ -29,7 +29,7 @@ class WeaviateVectorIOConfig(BaseModel):
         return {
             "weaviate_api_key": None,
             "weaviate_cluster_url": "${env.WEAVIATE_CLUSTER_URL:=localhost:8080}",
-            "kvstore": KVStoreReference(
+            "persistence": KVStoreReference(
                 backend="kv_default",
                 namespace="vector_io::weaviate",
             ).model_dump(exclude_none=True),

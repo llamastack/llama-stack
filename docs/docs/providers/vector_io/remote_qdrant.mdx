@@ -26,13 +26,13 @@ Please refer to the inline provider documentation.
 | `prefix` | `str \| None` | No |  |  |
 | `timeout` | `int \| None` | No |  |  |
 | `host` | `str \| None` | No |  |  |
-| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
 
 ## Sample Configuration
 
 ```yaml
 api_key: ${env.QDRANT_API_KEY:=}
-kvstore:
+persistence:
   namespace: vector_io::qdrant_remote
   backend: kv_default
 ```

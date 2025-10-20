@@ -95,12 +95,12 @@ more details about Faiss in general.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
 
 ## Sample Configuration
 
 ```yaml
-kvstore:
+persistence:
   namespace: vector_io::faiss
   backend: kv_default
 ```

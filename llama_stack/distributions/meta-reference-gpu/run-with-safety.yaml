@@ -37,7 +37,7 @@ providers:
   - provider_id: faiss
     provider_type: inline::faiss
     config:
-      kvstore:
+      persistence:
         namespace: vector_io::faiss
         backend: kv_default
   safety:

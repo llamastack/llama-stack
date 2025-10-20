@@ -140,7 +140,7 @@ async def sqlite_vec_vec_index(embedding_dimension, tmp_path_factory):
 async def sqlite_vec_adapter(sqlite_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = SQLiteVectorIOConfig(
         db_path=sqlite_vec_db_path,
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
     adapter = SQLiteVecVectorIOAdapter(
         config=config,
@@ -179,7 +179,7 @@ async def faiss_vec_index(embedding_dimension):
 @pytest.fixture
 async def faiss_vec_adapter(unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = FaissVectorIOConfig(
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
     adapter = FaissVectorIOAdapter(
         config=config,
@@ -255,7 +255,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         db="test_db",
         user="test_user",
         password="test_password",
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
 
     adapter = PGVectorVectorIOAdapter(config, mock_inference_api, None)

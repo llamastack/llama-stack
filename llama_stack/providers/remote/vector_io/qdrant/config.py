@@ -24,13 +24,13 @@ class QdrantVectorIOConfig(BaseModel):
     prefix: str | None = None
     timeout: int | None = None
     host: str | None = None
-    kvstore: KVStoreReference
+    persistence: KVStoreReference
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
             "api_key": "${env.QDRANT_API_KEY:=}",
-            "kvstore": KVStoreReference(
+            "persistence": KVStoreReference(
                 backend="kv_default",
                 namespace="vector_io::qdrant_remote",
             ).model_dump(exclude_none=True),

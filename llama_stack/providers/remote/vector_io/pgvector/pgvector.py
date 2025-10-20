@@ -358,7 +358,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
 
     async def initialize(self) -> None:
         log.info(f"Initializing PGVector memory adapter with config: {self.config}")
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        self.kvstore = await kvstore_impl(self.config.persistence)
         await self.initialize_openai_vector_stores()
 
         try:
