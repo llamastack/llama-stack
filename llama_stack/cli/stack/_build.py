@@ -294,7 +294,7 @@ def _generate_run_config(
     Generate a run.yaml template file for user to edit from a build.yaml file
     """
     apis = list(build_config.distribution_spec.providers.keys())
-    distro_dir = f"~/.llama/distributions/{image_name}"
+    distro_dir = DISTRIBS_BASE_DIR / image_name
     storage = StorageConfig(
         backends={
             "kv_default": SqliteKVStoreConfig(

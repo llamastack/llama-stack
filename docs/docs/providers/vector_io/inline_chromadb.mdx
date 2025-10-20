@@ -79,13 +79,13 @@ See [Chroma's documentation](https://docs.trychroma.com/docs/overview/introducti
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `db_path` | `<class 'str'>` | No |  |  |
-| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  | Config for KV store backend |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  | Config for KV store backend |
 
 ## Sample Configuration
 
 ```yaml
 db_path: ${env.CHROMADB_PATH}
-kvstore:
+persistence:
   namespace: vector_io::chroma
   backend: kv_default
 ```

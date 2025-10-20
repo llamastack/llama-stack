@@ -29,19 +29,15 @@ from llama_stack.providers.inline.agents.meta_reference.persistence import Agent
 @pytest.fixture(autouse=True)
 def setup_backends(tmp_path):
     """Register KV and SQL store backends for testing."""
-    from llama_stack.core.storage.datatypes import SqliteSqlStoreConfig, SqliteKVStoreConfig
+    from llama_stack.core.storage.datatypes import SqliteKVStoreConfig, SqliteSqlStoreConfig
     from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
     from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
     kv_path = str(tmp_path / "test_kv.db")
     sql_path = str(tmp_path / "test_sql.db")
 
-    register_kvstore_backends({
-        "kv_default": SqliteKVStoreConfig(db_path=kv_path)
-    })
-    register_sqlstore_backends({
-        "sql_default": SqliteSqlStoreConfig(db_path=sql_path)
-    })
+    register_kvstore_backends({"kv_default": SqliteKVStoreConfig(db_path=kv_path)})
+    register_sqlstore_backends({"sql_default": SqliteSqlStoreConfig(db_path=sql_path)})
 
 
 @pytest.fixture

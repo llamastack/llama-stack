@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import time
-from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -25,9 +24,7 @@ from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_back
 def setup_backends(tmp_path):
     """Register SQL store backends for testing."""
     db_path = str(tmp_path / "test.db")
-    register_sqlstore_backends({
-        "sql_default": SqliteSqlStoreConfig(db_path=db_path)
-    })
+    register_sqlstore_backends({"sql_default": SqliteSqlStoreConfig(db_path=db_path)})
 
 
 def create_test_chat_completion(
