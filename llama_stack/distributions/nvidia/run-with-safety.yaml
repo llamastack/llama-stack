@@ -111,25 +111,26 @@ storage:
     conversations:
       table_name: openai_conversations
       backend: sql_default
-models:
-- metadata: {}
-  model_id: ${env.INFERENCE_MODEL}
-  provider_id: nvidia
-  model_type: llm
-- metadata: {}
-  model_id: ${env.SAFETY_MODEL}
-  provider_id: nvidia
-  model_type: llm
-shields:
-- shield_id: ${env.SAFETY_MODEL}
-  provider_id: nvidia
-vector_dbs: []
-datasets: []
-scoring_fns: []
-benchmarks: []
-tool_groups:
-- toolgroup_id: builtin::rag
-  provider_id: rag-runtime
+registered_resources:
+  models:
+  - metadata: {}
+    model_id: ${env.INFERENCE_MODEL}
+    provider_id: nvidia
+    model_type: llm
+  - metadata: {}
+    model_id: ${env.SAFETY_MODEL}
+    provider_id: nvidia
+    model_type: llm
+  shields:
+  - shield_id: ${env.SAFETY_MODEL}
+    provider_id: nvidia
+  vector_dbs: []
+  datasets: []
+  scoring_fns: []
+  benchmarks: []
+  tool_groups:
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8321
 telemetry:

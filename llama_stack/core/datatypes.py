@@ -422,6 +422,18 @@ def process_cors_config(cors_config: bool | CORSConfig | None) -> CORSConfig | N
     raise ValueError(f"Expected bool or CORSConfig, got {type(cors_config).__name__}")
 
 
+class RegisteredResources(BaseModel):
+    """Registry of resources available in the distribution."""
+
+    models: list[ModelInput] = Field(default_factory=list)
+    shields: list[ShieldInput] = Field(default_factory=list)
+    vector_dbs: list[VectorDBInput] = Field(default_factory=list)
+    datasets: list[DatasetInput] = Field(default_factory=list)
+    scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
+    benchmarks: list[BenchmarkInput] = Field(default_factory=list)
+    tool_groups: list[ToolGroupInput] = Field(default_factory=list)
+
+
 class ServerConfig(BaseModel):
     port: int = Field(
         default=8321,
@@ -491,14 +503,10 @@ can be instantiated multiple times (with different configs) if necessary.
         description="Catalog of named storage backends and references available to the stack",
     )
 
-    # registry of "resources" in the distribution
-    models: list[ModelInput] = Field(default_factory=list)
-    shields: list[ShieldInput] = Field(default_factory=list)
-    vector_dbs: list[VectorDBInput] = Field(default_factory=list)
-    datasets: list[DatasetInput] = Field(default_factory=list)
-    scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
-    benchmarks: list[BenchmarkInput] = Field(default_factory=list)
-    tool_groups: list[ToolGroupInput] = Field(default_factory=list)
+    registered_resources: RegisteredResources = Field(
+        default_factory=RegisteredResources,
+        description="Registry of resources available in the distribution",
+    )
 
     logging: LoggingConfig | None = Field(default=None, description="Configuration for Llama Stack Logging")
 
