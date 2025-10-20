@@ -114,7 +114,7 @@ providers:
     provider_type: remote::chromadb
     config:
       url: ${env.CHROMADB_URL:=}
-      kvstore:
+      persistence:
         namespace: vector_io::chroma_remote
         backend: kv_default
   - provider_id: ${env.PGVECTOR_DB:+pgvector}

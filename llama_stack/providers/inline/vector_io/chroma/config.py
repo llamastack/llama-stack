@@ -15,7 +15,7 @@ from llama_stack.schema_utils import json_schema_type
 @json_schema_type
 class ChromaVectorIOConfig(BaseModel):
     db_path: str
-    kvstore: KVStoreReference = Field(description="Config for KV store backend")
+    persistence: KVStoreReference = Field(description="Config for KV store backend")
 
     @classmethod
     def sample_run_config(
@@ -23,7 +23,7 @@ class ChromaVectorIOConfig(BaseModel):
     ) -> dict[str, Any]:
         return {
             "db_path": db_path,
-            "kvstore": KVStoreReference(
+            "persistence": KVStoreReference(
                 backend="kv_default",
                 namespace="vector_io::chroma",
             ).model_dump(exclude_none=True),
