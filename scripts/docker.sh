@@ -236,7 +236,7 @@ start_container() {
     echo "=== Starting Docker Container ==="
 
     # Get the repo root for volume mount
-    SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
     REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
 
     # Determine the actual image name (may have localhost/ prefix)

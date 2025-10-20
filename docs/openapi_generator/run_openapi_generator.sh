@@ -30,3 +30,5 @@ fi
 stack_dir=$(dirname $(dirname $THIS_DIR))
 PYTHONPATH=$PYTHONPATH:$stack_dir \
   python -m docs.openapi_generator.generate $(dirname $THIS_DIR)/static
+
+cp $stack_dir/docs/static/stainless-llama-stack-spec.yaml $stack_dir/client-sdks/stainless/openapi.yml

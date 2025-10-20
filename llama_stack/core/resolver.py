@@ -29,6 +29,7 @@ from llama_stack.apis.scoring_functions import ScoringFunctions
 from llama_stack.apis.shields import Shields
 from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
+from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.core.client import get_client_impl
@@ -81,6 +82,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.inspect: Inspect,
         Api.batches: Batches,
         Api.vector_io: VectorIO,
+        Api.vector_dbs: VectorDBs,
         Api.models: Models,
         Api.safety: Safety,
         Api.shields: Shields,

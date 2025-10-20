@@ -60,6 +60,17 @@ ENV RUN_CONFIG_PATH=${RUN_CONFIG_PATH}
 # Copy the repository so editable installs and run configurations are available.
 COPY . /workspace
 
+# Install the client package if it is provided
+# NOTE: this is installed before llama-stack since llama-stack depends on llama-stack-client-python
+RUN set -eux; \
+    if [ -n "$LLAMA_STACK_CLIENT_DIR" ]; then \
+        if [ ! -d "$LLAMA_STACK_CLIENT_DIR" ]; then \
+            echo "LLAMA_STACK_CLIENT_DIR is set but $LLAMA_STACK_CLIENT_DIR does not exist" >&2; \
+            exit 1; \
+        fi; \
+        uv pip install --no-cache-dir -e "$LLAMA_STACK_CLIENT_DIR"; \
+    fi;
+
 # Install llama-stack
 RUN set -eux; \
     if [ "$INSTALL_MODE" = "editable" ]; then \
@@ -81,16 +92,6 @@ RUN set -eux; \
         else \
             uv pip install --no-cache-dir llama-stack; \
         fi; \
-    fi;
-
-# Install the client package if it is provided
-RUN set -eux; \
-    if [ -n "$LLAMA_STACK_CLIENT_DIR" ]; then \
-        if [ ! -d "$LLAMA_STACK_CLIENT_DIR" ]; then \
-            echo "LLAMA_STACK_CLIENT_DIR is set but $LLAMA_STACK_CLIENT_DIR does not exist" >&2; \
-            exit 1; \
-        fi; \
-        uv pip install --no-cache-dir -e "$LLAMA_STACK_CLIENT_DIR"; \
     fi;
 
 # Install the dependencies for the distribution

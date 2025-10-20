@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Literal
+from typing import Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
@@ -59,3 +59,35 @@ class ListVectorDBsResponse(BaseModel):
     """
 
     data: list[VectorDB]
+
+
+@runtime_checkable
+class VectorDBs(Protocol):
+    """Internal protocol for vector_dbs routing - no public API endpoints."""
+
+    async def list_vector_dbs(self) -> ListVectorDBsResponse:
+        """Internal method to list vector databases."""
+        ...
+
+    async def get_vector_db(
+        self,
+        vector_db_id: str,
+    ) -> VectorDB:
+        """Internal method to get a vector database by ID."""
+        ...
+
+    async def register_vector_db(
+        self,
+        vector_db_id: str,
+        embedding_model: str,
+        embedding_dimension: int | None = 384,
+        provider_id: str | None = None,
+        vector_db_name: str | None = None,
+        provider_vector_db_id: str | None = None,
+    ) -> VectorDB:
+        """Internal method to register a vector database."""
+        ...
+
+    async def unregister_vector_db(self, vector_db_id: str) -> None:
+        """Internal method to unregister a vector database."""
+        ...

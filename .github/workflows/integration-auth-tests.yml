@@ -73,6 +73,24 @@ jobs:
           image_name: kube
           apis: []
           providers: {}
+          storage:
+            backends:
+              kv_default:
+                type: kv_sqlite
+                db_path: $run_dir/kvstore.db
+              sql_default:
+                type: sql_sqlite
+                db_path: $run_dir/sql_store.db
+            stores:
+              metadata:
+                namespace: registry
+                backend: kv_default
+              inference:
+                table_name: inference_store
+                backend: sql_default
+              conversations:
+                table_name: openai_conversations
+                backend: sql_default
           server:
             port: 8321
           EOF

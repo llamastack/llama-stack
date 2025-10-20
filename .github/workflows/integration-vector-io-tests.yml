@@ -169,9 +169,7 @@ jobs:
         run: |
           uv run --no-sync \
             pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
-            tests/integration/vector_io \
-            --embedding-model inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-            --embedding-dimension 768
+            tests/integration/vector_io
 
       - name: Check Storage and Memory Available After Tests
         if: ${{ always() }}

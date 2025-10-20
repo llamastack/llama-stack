@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig, SqlStoreConfig
+from llama_stack.core.storage.datatypes import SqlStoreReference
 
 
 class S3FilesImplConfig(BaseModel):
@@ -24,7 +24,7 @@ class S3FilesImplConfig(BaseModel):
     auto_create_bucket: bool = Field(
         default=False, description="Automatically create the S3 bucket if it doesn't exist"
     )
-    metadata_store: SqlStoreConfig = Field(description="SQL store configuration for file metadata")
+    metadata_store: SqlStoreReference = Field(description="SQL store configuration for file metadata")
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
@@ -35,8 +35,8 @@ class S3FilesImplConfig(BaseModel):
             "aws_secret_access_key": "${env.AWS_SECRET_ACCESS_KEY:=}",
             "endpoint_url": "${env.S3_ENDPOINT_URL:=}",
             "auto_create_bucket": "${env.S3_AUTO_CREATE_BUCKET:=false}",
-            "metadata_store": SqliteSqlStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="s3_files_metadata.db",
-            ),
+            "metadata_store": SqlStoreReference(
+                backend="sql_default",
+                table_name="s3_files_metadata",
+            ).model_dump(exclude_none=True),
         }

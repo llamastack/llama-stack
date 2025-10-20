@@ -8,6 +8,8 @@ import pytest
 
 from llama_stack.apis.vector_io import Chunk
 
+from ..conftest import vector_provider_wrapper
+
 
 @pytest.fixture(scope="session")
 def sample_chunks():
@@ -46,12 +48,13 @@ def client_with_empty_registry(client_with_models):
     clear_registry()
 
 
-def test_vector_db_retrieve(client_with_empty_registry, embedding_model_id, embedding_dimension):
+@vector_provider_wrapper
+def test_vector_db_retrieve(client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id):
     vector_db_name = "test_vector_db"
     create_response = client_with_empty_registry.vector_stores.create(
         name=vector_db_name,
         extra_body={
-            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
         },
     )
 
@@ -65,12 +68,13 @@ def test_vector_db_retrieve(client_with_empty_registry, embedding_model_id, embe
     assert response.id.startswith("vs_")
 
 
-def test_vector_db_register(client_with_empty_registry, embedding_model_id, embedding_dimension):
+@vector_provider_wrapper
+def test_vector_db_register(client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id):
     vector_db_name = "test_vector_db"
     response = client_with_empty_registry.vector_stores.create(
         name=vector_db_name,
         extra_body={
-            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
         },
     )
 
@@ -100,12 +104,15 @@ def test_vector_db_register(client_with_empty_registry, embedding_model_id, embe
         ("How does machine learning improve over time?", "doc2"),
     ],
 )
-def test_insert_chunks(client_with_empty_registry, embedding_model_id, embedding_dimension, sample_chunks, test_case):
+@vector_provider_wrapper
+def test_insert_chunks(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, sample_chunks, test_case, vector_io_provider_id
+):
     vector_db_name = "test_vector_db"
     create_response = client_with_empty_registry.vector_stores.create(
         name=vector_db_name,
         extra_body={
-            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
         },
     )
 
@@ -135,7 +142,10 @@ def test_insert_chunks(client_with_empty_registry, embedding_model_id, embedding
     assert top_match.metadata["document_id"] == expected_doc_id, f"Query '{query}' should match {expected_doc_id}"
 
 
-def test_insert_chunks_with_precomputed_embeddings(client_with_empty_registry, embedding_model_id, embedding_dimension):
+@vector_provider_wrapper
+def test_insert_chunks_with_precomputed_embeddings(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
     vector_io_provider_params_dict = {
         "inline::milvus": {"score_threshold": -1.0},
         "inline::qdrant": {"score_threshold": -1.0},
@@ -145,7 +155,7 @@ def test_insert_chunks_with_precomputed_embeddings(client_with_empty_registry, e
     register_response = client_with_empty_registry.vector_stores.create(
         name=vector_db_name,
         extra_body={
-            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
         },
     )
 
@@ -181,8 +191,9 @@ def test_insert_chunks_with_precomputed_embeddings(client_with_empty_registry, e
 
 
 # expect this test to fail
+@vector_provider_wrapper
 def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
-    client_with_empty_registry, embedding_model_id, embedding_dimension
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
 ):
     vector_io_provider_params_dict = {
         "inline::milvus": {"score_threshold": 0.0},
@@ -194,6 +205,7 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
         name=vector_db_name,
         extra_body={
             "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
         },
     )
 
@@ -226,33 +238,44 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
     assert response.chunks[0].metadata["source"] == "precomputed"
 
 
-def test_auto_extract_embedding_dimension(client_with_empty_registry, embedding_model_id):
+@vector_provider_wrapper
+def test_auto_extract_embedding_dimension(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    # This test specifically tests embedding model override, so we keep embedding_model
     vs = client_with_empty_registry.vector_stores.create(
-        name="test_auto_extract", extra_body={"embedding_model": embedding_model_id}
+        name="test_auto_extract",
+        extra_body={"embedding_model": embedding_model_id, "provider_id": vector_io_provider_id},
     )
     assert vs.id is not None
 
 
-def test_provider_auto_selection_single_provider(client_with_empty_registry, embedding_model_id):
+@vector_provider_wrapper
+def test_provider_auto_selection_single_provider(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
     providers = [p for p in client_with_empty_registry.providers.list() if p.api == "vector_io"]
     if len(providers) != 1:
         pytest.skip(f"Test requires exactly one vector_io provider, found {len(providers)}")
 
-    vs = client_with_empty_registry.vector_stores.create(
-        name="test_auto_provider", extra_body={"embedding_model": embedding_model_id}
-    )
+    # Test that when only one provider is available, it's auto-selected (no provider_id needed)
+    vs = client_with_empty_registry.vector_stores.create(name="test_auto_provider")
     assert vs.id is not None
 
 
-def test_provider_id_override(client_with_empty_registry, embedding_model_id):
+@vector_provider_wrapper
+def test_provider_id_override(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
     providers = [p for p in client_with_empty_registry.providers.list() if p.api == "vector_io"]
     if len(providers) != 1:
         pytest.skip(f"Test requires exactly one vector_io provider, found {len(providers)}")
 
     provider_id = providers[0].provider_id
 
+    # Test explicit provider_id specification (using default embedding model)
     vs = client_with_empty_registry.vector_stores.create(
-        name="test_provider_override", extra_body={"embedding_model": embedding_model_id, "provider_id": provider_id}
+        name="test_provider_override", extra_body={"provider_id": provider_id}
     )
     assert vs.id is not None
     assert vs.metadata.get("provider_id") == provider_id
