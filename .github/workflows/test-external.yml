@@ -44,7 +44,7 @@ jobs:
 
       - name: Print distro dependencies
         run: |
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack list-deps tests/external/build.yaml
+          uv run --no-sync llama stack list-deps tests/external/build.yaml
 
       - name: Build distro from config file
         run: |
