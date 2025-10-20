@@ -79,8 +79,10 @@ class TelemetryAdapter(Telemetry):
                 metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
                 metric_provider = MeterProvider(metric_readers=[metric_reader])
                 metrics.set_meter_provider(metric_provider)
+            self.is_otel_endpoint_set = True
         else:
             logger.warning("OTEL_EXPORTER_OTLP_ENDPOINT is not set, skipping telemetry")
+            self.is_otel_endpoint_set = False
 
         self.meter = metrics.get_meter(__name__)
         self._lock = _global_lock
@@ -89,7 +91,8 @@ class TelemetryAdapter(Telemetry):
         pass
 
     async def shutdown(self) -> None:
-        trace.get_tracer_provider().force_flush()
+        if self.is_otel_endpoint_set:
+            trace.get_tracer_provider().force_flush()
 
     async def log_event(self, event: Event, ttl_seconds: int = 604800) -> None:
         if isinstance(event, UnstructuredLogEvent):
