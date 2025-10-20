@@ -351,16 +351,29 @@ class AuthenticationRequiredError(Exception):
     pass
 
 
+class DefaultEmbeddingModel(BaseModel):
+    """Configuration for default embedding model."""
+
+    provider_id: str = Field(
+        ...,
+        description="ID of the inference provider that serves the embedding model (e.g., 'sentence-transformers').",
+    )
+    model_id: str = Field(
+        ...,
+        description="ID of the embedding model (e.g., 'nomic-ai/nomic-embed-text-v1.5').",
+    )
+
+
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
-    embedding_model_id: str = Field(
-        ...,
-        description="ID of the embedding model to use as default for vector stores when none is specified. Must reference a model defined in the 'models' section.",
-    )
-    provider_id: str | None = Field(
+    default_provider_id: str | None = Field(
         default=None,
         description="ID of the vector_io provider to use as default when multiple providers are available and none is specified.",
+    )
+    default_embedding_model: DefaultEmbeddingModel | None = Field(
+        default=None,
+        description="Default embedding model configuration for vector stores.",
     )
 
 

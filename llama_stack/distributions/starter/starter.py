@@ -9,6 +9,7 @@ from typing import Any
 
 from llama_stack.core.datatypes import (
     BuildProvider,
+    DefaultEmbeddingModel,
     Provider,
     ProviderSpec,
     ShieldInput,
@@ -249,7 +250,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
                 vector_stores_config=VectorStoresConfig(
-                    embedding_model_id="sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+                    default_provider_id="faiss",
+                    default_embedding_model=DefaultEmbeddingModel(
+                        provider_id="sentence-transformers",
+                        model_id="nomic-ai/nomic-embed-text-v1.5",
+                    ),
                 ),
             ),
         },

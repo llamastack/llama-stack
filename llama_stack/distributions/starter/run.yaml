@@ -255,4 +255,7 @@ server:
 telemetry:
   enabled: true
 vector_stores:
-  embedding_model_id: sentence-transformers/nomic-ai/nomic-embed-text-v1.5
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: nomic-ai/nomic-embed-text-v1.5

@@ -135,41 +135,52 @@ async def validate_vector_stores_config(run_config: StackRunConfig, impls: dict[
         return
 
     vector_stores_config = run_config.vector_stores
-    default_model_id = vector_stores_config.embedding_model_id
 
-    if Api.models not in impls:
-        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
+    # Validate default embedding model if configured
+    if vector_stores_config.default_embedding_model:
+        default_embedding_model = vector_stores_config.default_embedding_model
+        provider_id = default_embedding_model.provider_id
+        model_id = default_embedding_model.model_id
+        # Construct the full model identifier
+        default_model_id = f"{provider_id}/{model_id}"
 
-    models_impl = impls[Api.models]
-    response = await models_impl.list_models()
-    models_list = response.data if hasattr(response, "data") else response
+        if Api.models not in impls:
+            raise ValueError(
+                f"Models API is not available but vector_stores config requires model '{default_model_id}'"
+            )
 
-    # find default embedding model
-    default_model = None
-    for model in models_list:
-        if model.identifier == default_model_id:
-            default_model = model
-            break
+        models_impl = impls[Api.models]
+        response = await models_impl.list_models()
+        models_list = response.data if hasattr(response, "data") else response
 
-    if not default_model:
-        available_models = [m.identifier for m in models_list if m.model_type == "embedding"]
-        raise ValueError(
-            f"Embedding model '{default_model_id}' not found. Available embedding models: {available_models}"
-        )
+        # find default embedding model
+        default_model = None
+        for model in models_list:
+            if model.identifier == default_model_id:
+                default_model = model
+                break
 
-    if default_model.model_type != "embedding":
-        raise ValueError(f"Model '{default_model_id}' is type '{default_model.model_type}', not 'embedding'")
+        if not default_model:
+            available_models = [m.identifier for m in models_list if m.model_type == "embedding"]
+            raise ValueError(
+                f"Embedding model '{default_model_id}' not found. Available embedding models: {available_models}"
+            )
 
-    embedding_dimension = default_model.metadata.get("embedding_dimension")
-    if embedding_dimension is None:
-        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+        if default_model.model_type != "embedding":
+            raise ValueError(f"Model '{default_model_id}' is type '{default_model.model_type}', not 'embedding'")
 
-    try:
-        int(embedding_dimension)
-    except ValueError as err:
-        raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
+        embedding_dimension = default_model.metadata.get("embedding_dimension")
+        if embedding_dimension is None:
+            raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
 
-    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+        try:
+            int(embedding_dimension)
+        except ValueError as err:
+            raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
+
+        logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+
+    # If no default embedding model is configured, that's fine - validation passes
 
 
 class EnvVarError(Exception):

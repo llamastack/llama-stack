@@ -8,9 +8,8 @@ import time
 from io import BytesIO
 
 import pytest
-from llama_stack_client import BadRequestError, NotFoundError
+from llama_stack_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
-from openai import NotFoundError as OpenAINotFoundError
 
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
@@ -839,7 +838,7 @@ def test_openai_vector_store_list_files_invalid_vector_store(
     if isinstance(compat_client, LlamaStackAsLibraryClient):
         errors = ValueError
     else:
-        errors = (NotFoundError, OpenAINotFoundError)
+        errors = (BadRequestError, OpenAIBadRequestError)
 
     with pytest.raises(errors):
         compat_client.vector_stores.files.list(vector_store_id="abc123")
@@ -1528,11 +1527,11 @@ def test_openai_vector_store_file_batch_error_handling(
             batch_id="non_existent_batch_id",
         )
 
-    # Test operations on non-existent vector store (returns NotFoundError)
+    # Test operations on non-existent vector store (returns BadRequestError)
     if isinstance(compat_client, LlamaStackAsLibraryClient):
         vector_store_errors = ValueError
     else:
-        vector_store_errors = (NotFoundError, OpenAINotFoundError)
+        vector_store_errors = (BadRequestError, OpenAIBadRequestError)
 
     with pytest.raises(vector_store_errors):  # Should raise an error for non-existent vector store
         compat_client.vector_stores.file_batches.create(

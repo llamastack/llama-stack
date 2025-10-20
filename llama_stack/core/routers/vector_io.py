@@ -126,7 +126,11 @@ class VectorIORouter(VectorIO):
 
         # Use default embedding model if not specified
         if embedding_model is None and self.vector_stores_config is not None:
-            embedding_model = self.vector_stores_config.embedding_model_id
+            if self.vector_stores_config.default_embedding_model is not None:
+                # Construct the full model ID with provider prefix
+                embedding_provider_id = self.vector_stores_config.default_embedding_model.provider_id
+                model_id = self.vector_stores_config.default_embedding_model.model_id
+                embedding_model = f"{embedding_provider_id}/{model_id}"
 
         if embedding_model is not None and embedding_dimension is None:
             embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
@@ -139,8 +143,8 @@ class VectorIORouter(VectorIO):
             if num_providers > 1:
                 available_providers = list(self.routing_table.impls_by_provider_id.keys())
                 # Use default configured provider
-                if self.vector_stores_config and self.vector_stores_config.provider_id:
-                    default_provider = self.vector_stores_config.provider_id
+                if self.vector_stores_config and self.vector_stores_config.default_provider_id:
+                    default_provider = self.vector_stores_config.default_provider_id
                     if default_provider in available_providers:
                         provider_id = default_provider
                         logger.debug(f"Using configured default vector store provider: {provider_id}")
