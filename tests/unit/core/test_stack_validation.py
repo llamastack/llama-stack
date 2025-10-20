@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from llama_stack.apis.models import Model, ModelType
-from llama_stack.core.datatypes import DefaultEmbeddingModel, StackRunConfig, StorageConfig, VectorStoresConfig
+from llama_stack.core.datatypes import QualifiedModel, StackRunConfig, StorageConfig, VectorStoresConfig
 from llama_stack.core.stack import validate_vector_stores_config
 from llama_stack.providers.datatypes import Api
 
@@ -25,7 +25,7 @@ class TestVectorStoresValidation:
             storage=StorageConfig(backends={}, stores={}),
             vector_stores=VectorStoresConfig(
                 default_provider_id="faiss",
-                default_embedding_model=DefaultEmbeddingModel(
+                default_embedding_model=QualifiedModel(
                     provider_id="p",
                     model_id="missing",
                 ),
@@ -45,7 +45,7 @@ class TestVectorStoresValidation:
             storage=StorageConfig(backends={}, stores={}),
             vector_stores=VectorStoresConfig(
                 default_provider_id="faiss",
-                default_embedding_model=DefaultEmbeddingModel(
+                default_embedding_model=QualifiedModel(
                     provider_id="p",
                     model_id="valid",
                 ),

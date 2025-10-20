@@ -35,7 +35,7 @@ from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, StackRunConfig
+from llama_stack.core.datatypes import Provider, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -139,58 +139,40 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
             )
 
 
-async def validate_vector_stores_config(run_config: StackRunConfig, impls: dict[Api, Any]):
+async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
     """Validate vector stores configuration."""
-    if not run_config.vector_stores:
+    if vector_stores_config is None:
         return
 
-    vector_stores_config = run_config.vector_stores
+    default_embedding_model = vector_stores_config.default_embedding_model
+    if default_embedding_model is None:
+        return
 
-    # Validate default embedding model if configured
-    if vector_stores_config.default_embedding_model:
-        default_embedding_model = vector_stores_config.default_embedding_model
-        provider_id = default_embedding_model.provider_id
-        model_id = default_embedding_model.model_id
-        # Construct the full model identifier
-        default_model_id = f"{provider_id}/{model_id}"
+    provider_id = default_embedding_model.provider_id
+    model_id = default_embedding_model.model_id
+    default_model_id = f"{provider_id}/{model_id}"
 
-        if Api.models not in impls:
-            raise ValueError(
-                f"Models API is not available but vector_stores config requires model '{default_model_id}'"
-            )
+    if Api.models not in impls:
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
 
-        models_impl = impls[Api.models]
-        response = await models_impl.list_models()
-        models_list = response.data if hasattr(response, "data") else response
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
 
-        # find default embedding model
-        default_model = None
-        for model in models_list:
-            if model.identifier == default_model_id:
-                default_model = model
-                break
+    default_model = models_list.get(default_model_id)
+    if default_model is None:
+        raise ValueError(f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}")
 
-        if not default_model:
-            available_models = [m.identifier for m in models_list if m.model_type == "embedding"]
-            raise ValueError(
-                f"Embedding model '{default_model_id}' not found. Available embedding models: {available_models}"
-            )
+    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    if embedding_dimension is None:
+        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
 
-        if default_model.model_type != "embedding":
-            raise ValueError(f"Model '{default_model_id}' is type '{default_model.model_type}', not 'embedding'")
+    try:
+        int(embedding_dimension)
+    except ValueError as err:
+        raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-        embedding_dimension = default_model.metadata.get("embedding_dimension")
-        if embedding_dimension is None:
-            raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
-
-        try:
-            int(embedding_dimension)
-        except ValueError as err:
-            raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
-
-        logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
-
-    # If no default embedding model is configured, that's fine - validation passes
+    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
 
 
 class EnvVarError(Exception):
@@ -429,7 +411,7 @@ class Stack:
 
         await register_resources(self.run_config, impls)
         await refresh_registry_once(impls)
-        await validate_vector_stores_config(self.run_config, impls)
+        await validate_vector_stores_config(self.run_config.vector_stores, impls)
         self.impls = impls
 
     def create_registry_refresh_task(self):

@@ -9,9 +9,9 @@ from typing import Any
 
 from llama_stack.core.datatypes import (
     BuildProvider,
-    DefaultEmbeddingModel,
     Provider,
     ProviderSpec,
+    QualifiedModel,
     ShieldInput,
     ToolGroupInput,
     VectorStoresConfig,
@@ -251,7 +251,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 default_shields=default_shields,
                 vector_stores_config=VectorStoresConfig(
                     default_provider_id="faiss",
-                    default_embedding_model=DefaultEmbeddingModel(
+                    default_embedding_model=QualifiedModel(
                         provider_id="sentence-transformers",
                         model_id="nomic-ai/nomic-embed-text-v1.5",
                     ),
