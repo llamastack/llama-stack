@@ -28,7 +28,7 @@ from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.providers.datatypes import Api, ProviderSpec
 from llama_stack.providers.utils.kvstore.config import KVStoreConfig, SqliteKVStoreConfig
-from llama_stack.providers.utils.sqlstore.sqlstore import SqlStoreConfig
+from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig, SqlStoreConfig
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
 LLAMA_STACK_RUN_CONFIG_VERSION = 2
@@ -439,13 +439,13 @@ class ServerConfig(BaseModel):
 
 
 class InferenceStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
+    sql_store_config: SqlStoreConfig = Field(default_factory=SqliteSqlStoreConfig)
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for inference store")
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 
 
 class ResponsesStoreConfig(BaseModel):
-    sql_store_config: SqlStoreConfig
+    sql_store_config: SqlStoreConfig = Field(default_factory=SqliteSqlStoreConfig)
     max_write_queue_size: int = Field(default=10000, description="Max queued writes for responses store")
     num_writers: int = Field(default=4, description="Number of concurrent background writers")
 

@@ -16,7 +16,9 @@ from llama_stack.providers.utils.kvstore.config import (
 
 class SQLiteVectorIOConfig(BaseModel):
     db_path: str = Field(description="Path to the SQLite database file")
-    kvstore: KVStoreConfig = Field(description="Config for KV store backend (SQLite only for now)")
+    kvstore: KVStoreConfig = Field(
+        default_factory=SqliteKVStoreConfig, description="Config for KV store backend (SQLite only for now)"
+    )
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:

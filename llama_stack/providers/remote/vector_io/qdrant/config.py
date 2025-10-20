@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.kvstore.config import (
     KVStoreConfig,
@@ -27,7 +27,7 @@ class QdrantVectorIOConfig(BaseModel):
     prefix: str | None = None
     timeout: int | None = None
     host: str | None = None
-    kvstore: KVStoreConfig
+    kvstore: KVStoreConfig = Field(default_factory=SqliteKVStoreConfig)
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:

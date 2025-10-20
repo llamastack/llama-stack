@@ -11,8 +11,6 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
-
 from .api import SqlStore
 
 sql_store_pip_packages = ["sqlalchemy[asyncio]", "aiosqlite", "asyncpg"]
@@ -37,7 +35,7 @@ class SqlAlchemySqlStoreConfig(BaseModel):
 class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
     type: Literal[SqlStoreType.sqlite] = SqlStoreType.sqlite
     db_path: str = Field(
-        default=(RUNTIME_BASE_DIR / "sqlstore.db").as_posix(),
+        default="~/.llama/runtime/sqlstore.db",
         description="Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
     )
 
@@ -87,7 +85,7 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
 
 SqlStoreConfig = Annotated[
     SqliteSqlStoreConfig | PostgresSqlStoreConfig,
-    Field(discriminator="type", default=SqlStoreType.sqlite.value),
+    Field(discriminator="type"),
 ]
 
 

@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.kvstore.config import (
     KVStoreConfig,
@@ -14,7 +14,7 @@ from llama_stack.providers.utils.kvstore.config import (
 
 
 class MetaReferenceEvalConfig(BaseModel):
-    kvstore: KVStoreConfig
+    kvstore: KVStoreConfig = Field(default_factory=SqliteKVStoreConfig)
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:

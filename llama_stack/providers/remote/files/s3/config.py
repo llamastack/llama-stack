@@ -24,7 +24,9 @@ class S3FilesImplConfig(BaseModel):
     auto_create_bucket: bool = Field(
         default=False, description="Automatically create the S3 bucket if it doesn't exist"
     )
-    metadata_store: SqlStoreConfig = Field(description="SQL store configuration for file metadata")
+    metadata_store: SqlStoreConfig = Field(
+        default_factory=SqliteSqlStoreConfig, description="SQL store configuration for file metadata"
+    )
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:

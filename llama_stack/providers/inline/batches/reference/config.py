@@ -13,6 +13,7 @@ class ReferenceBatchesImplConfig(BaseModel):
     """Configuration for the Reference Batches implementation."""
 
     kvstore: KVStoreConfig = Field(
+        default_factory=SqliteKVStoreConfig,
         description="Configuration for the key-value store backend.",
     )
 

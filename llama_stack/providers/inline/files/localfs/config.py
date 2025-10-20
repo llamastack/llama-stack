@@ -16,6 +16,7 @@ class LocalfsFilesImplConfig(BaseModel):
         description="Directory to store uploaded files",
     )
     metadata_store: SqlStoreConfig = Field(
+        default_factory=SqliteSqlStoreConfig,
         description="SQL store configuration for file metadata",
     )
     ttl_secs: int = 365 * 24 * 60 * 60  # 1 year

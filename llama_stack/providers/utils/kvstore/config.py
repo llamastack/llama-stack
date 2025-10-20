@@ -10,8 +10,6 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from llama_stack.core.utils.config_dirs import RUNTIME_BASE_DIR
-
 
 class KVStoreType(Enum):
     redis = "redis"
@@ -52,7 +50,7 @@ class RedisKVStoreConfig(CommonConfig):
 class SqliteKVStoreConfig(CommonConfig):
     type: Literal["sqlite"] = KVStoreType.sqlite.value
     db_path: str = Field(
-        default=(RUNTIME_BASE_DIR / "kvstore.db").as_posix(),
+        default="~/.llama/runtime/kvstore.db",
         description="File path for the sqlite database",
     )
 
@@ -140,7 +138,7 @@ class MongoDBKVStoreConfig(CommonConfig):
 
 KVStoreConfig = Annotated[
     RedisKVStoreConfig | SqliteKVStoreConfig | PostgresKVStoreConfig | MongoDBKVStoreConfig,
-    Field(discriminator="type", default=KVStoreType.sqlite.value),
+    Field(discriminator="type"),
 ]
 
 

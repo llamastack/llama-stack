@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.kvstore import KVStoreConfig
 from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
@@ -14,8 +14,8 @@ from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig, 
 
 
 class MetaReferenceAgentsImplConfig(BaseModel):
-    persistence_store: KVStoreConfig
-    responses_store: SqlStoreConfig
+    persistence_store: KVStoreConfig = Field(default_factory=SqliteKVStoreConfig)
+    responses_store: SqlStoreConfig = Field(default_factory=SqliteSqlStoreConfig)
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:
