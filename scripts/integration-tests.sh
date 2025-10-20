@@ -42,8 +42,11 @@ Setups are defined in tests/integration/setups.py and provide global configurati
 You can also specify subdirectories (of tests/integration) to select tests from, which will override the suite.
 
 Examples:
-    # Basic inference tests with ollama
+    # Basic inference tests with ollama (server mode)
     $0 --stack-config server:ci-tests --suite base --setup ollama
+
+    # Basic inference tests with docker
+    $0 --stack-config docker:ci-tests --suite base --setup ollama
 
     # Multiple test directories with vllm
     $0 --stack-config server:ci-tests --subdirs 'inference,agents' --setup vllm
@@ -153,7 +156,7 @@ echo "Setting SQLITE_STORE_DIR: $SQLITE_STORE_DIR"
 
 # Determine stack config type for api_recorder test isolation
 if [[ "$COLLECT_ONLY" == false ]]; then
-    if [[ "$STACK_CONFIG" == server:* ]]; then
+    if [[ "$STACK_CONFIG" == server:* ]] || [[ "$STACK_CONFIG" == docker:* ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
         echo "Setting stack config type: server"
     else
@@ -227,6 +230,104 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     fi
 
     trap stop_server EXIT ERR INT TERM
+fi
+
+# Start Docker Container if needed
+if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
+    stop_container() {
+        echo "Stopping Docker container..."
+        container_name="llama-stack-test-$DISTRO"
+        if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo "Stopping and removing container: $container_name"
+            docker stop "$container_name" 2>/dev/null || true
+            docker rm "$container_name" 2>/dev/null || true
+        else
+            echo "No container named $container_name found"
+        fi
+        echo "Docker container stopped"
+    }
+
+    # Extract distribution name from docker:distro format
+    DISTRO=$(echo "$STACK_CONFIG" | sed 's/^docker://')
+    export LLAMA_STACK_PORT=8321
+
+    echo "=== Building Docker Image for distribution: $DISTRO ==="
+    # Set LLAMA_STACK_DIR to repo root
+    # USE_COPY_NOT_MOUNT copies files into image (for CI), otherwise mounts for live development
+    BUILD_ENV="LLAMA_STACK_DIR=$ROOT_DIR"
+    if [[ "${CI:-false}" == "true" ]] || [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
+        echo "CI detected (CI=$CI, GITHUB_ACTIONS=$GITHUB_ACTIONS): copying source into image"
+        BUILD_ENV="USE_COPY_NOT_MOUNT=true $BUILD_ENV"
+    else
+        echo "Local mode: will mount source for live development"
+    fi
+
+    eval "$BUILD_ENV llama stack build --distro '$DISTRO' --image-type container"
+
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to build Docker image"
+        exit 1
+    fi
+
+    echo ""
+    echo "=== Starting Docker Container ==="
+    container_name="llama-stack-test-$DISTRO"
+
+    # Stop and remove existing container if it exists
+    docker stop "$container_name" 2>/dev/null || true
+    docker rm "$container_name" 2>/dev/null || true
+
+    # Build environment variables for docker run
+    DOCKER_ENV_VARS=""
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
+
+    # Pass through API keys if they exist
+    [ -n "${TOGETHER_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e TOGETHER_API_KEY=$TOGETHER_API_KEY"
+    [ -n "${FIREWORKS_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e FIREWORKS_API_KEY=$FIREWORKS_API_KEY"
+    [ -n "${TAVILY_SEARCH_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e TAVILY_SEARCH_API_KEY=$TAVILY_SEARCH_API_KEY"
+    [ -n "${OPENAI_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OPENAI_API_KEY=$OPENAI_API_KEY"
+    [ -n "${ANTHROPIC_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY"
+    [ -n "${GROQ_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e GROQ_API_KEY=$GROQ_API_KEY"
+    [ -n "${GEMINI_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e GEMINI_API_KEY=$GEMINI_API_KEY"
+    [ -n "${OLLAMA_URL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OLLAMA_URL=$OLLAMA_URL"
+    [ -n "${SAFETY_MODEL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e SAFETY_MODEL=$SAFETY_MODEL"
+
+    # Determine the actual image name (may have localhost/ prefix)
+    IMAGE_NAME=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "distribution-$DISTRO:dev$" | head -1)
+    if [[ -z "$IMAGE_NAME" ]]; then
+        echo "❌ Error: Could not find image for distribution-$DISTRO:dev"
+        exit 1
+    fi
+    echo "Using image: $IMAGE_NAME"
+
+    docker run -d --network host --name "$container_name" \
+        -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+        $DOCKER_ENV_VARS \
+        -v $ROOT_DIR:/app/llama-stack-source \
+        "$IMAGE_NAME" \
+        --port $LLAMA_STACK_PORT
+
+    echo "Waiting for Docker container to start..."
+    for i in {1..30}; do
+        if curl -s http://localhost:$LLAMA_STACK_PORT/v1/health 2>/dev/null | grep -q "OK"; then
+            echo "✅ Docker container started successfully"
+            break
+        fi
+        if [[ $i -eq 30 ]]; then
+            echo "❌ Docker container failed to start"
+            echo "Container logs:"
+            docker logs "$container_name"
+            exit 1
+        fi
+        sleep 1
+    done
+    echo ""
+
+    # Update STACK_CONFIG to point to the running container
+    STACK_CONFIG="http://localhost:$LLAMA_STACK_PORT"
+
+    trap stop_container EXIT ERR INT TERM
 fi
 
 # Run tests

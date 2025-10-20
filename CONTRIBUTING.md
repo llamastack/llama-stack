@@ -167,9 +167,9 @@ under the LICENSE file in the root directory of this source tree.
 
 Some tips about common tasks you work on while contributing to Llama Stack:
 
-### Using `llama stack build`
+### Installing dependencies of distributions
 
-Building a stack image will use the production version of the `llama-stack` and `llama-stack-client` packages. If you are developing with a llama-stack repository checked out and need your code to be reflected in the stack image, set `LLAMA_STACK_DIR` and `LLAMA_STACK_CLIENT_DIR` to the appropriate checked out directories when running any of the `llama` CLI commands.
+When installing dependencies for a distribution, you can use `llama stack list-deps` to view and install the required packages.
 
 Example:
 ```bash
@@ -177,7 +177,12 @@ cd work/
 git clone https://github.com/llamastack/llama-stack.git
 git clone https://github.com/llamastack/llama-stack-client-python.git
 cd llama-stack
-LLAMA_STACK_DIR=$(pwd) LLAMA_STACK_CLIENT_DIR=../llama-stack-client-python llama stack build --distro <...>
+
+# Show dependencies for a distribution
+llama stack list-deps <distro-name>
+
+# Install dependencies
+llama stack list-deps <distro-name> | xargs -L1 uv pip install
 ```
 
 ### Updating distribution configurations

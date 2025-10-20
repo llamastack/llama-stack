@@ -27,8 +27,11 @@ MODEL="Llama-4-Scout-17B-16E-Instruct"
 # get meta url from llama.com
 huggingface-cli download meta-llama/$MODEL --local-dir ~/.llama/$MODEL
 
+# install dependencies for the distribution
+llama stack list-deps meta-reference-gpu | xargs -L1 uv pip install
+
 # start a llama stack server
-INFERENCE_MODEL=meta-llama/$MODEL llama stack build --run --template meta-reference-gpu
+INFERENCE_MODEL=meta-llama/$MODEL llama stack run meta-reference-gpu
 
 # install client to interact with the server
 pip install llama-stack-client
@@ -89,7 +92,7 @@ As more providers start supporting Llama 4, you can use them in Llama Stack as w
 To try Llama Stack locally, run:
 
 ```bash
-curl -LsSf https://github.com/meta-llama/llama-stack/raw/main/scripts/install.sh | bash
+curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 ```
 
 ### Overview

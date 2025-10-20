@@ -42,7 +42,9 @@ def pytest_sessionstart(session):
 
     # Set test stack config type for api_recorder test isolation
     stack_config = session.config.getoption("--stack-config", default=None)
-    if stack_config and (stack_config.startswith("server:") or stack_config.startswith("http")):
+    if stack_config and (
+        stack_config.startswith("server:") or stack_config.startswith("docker:") or stack_config.startswith("http")
+    ):
         os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "server"
         logger.info(f"Test stack config type: server (stack_config={stack_config})")
     else:
@@ -139,7 +141,9 @@ def pytest_addoption(parser):
             a 'pointer' to the stack. this can be either be:
             (a) a template name like `starter`, or
             (b) a path to a run.yaml file, or
-            (c) an adhoc config spec, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`
+            (c) an adhoc config spec, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`, or
+            (d) a server config like `server:ci-tests`, or
+            (e) a docker config like `docker:ci-tests` (builds and runs container)
             """
         ),
     )

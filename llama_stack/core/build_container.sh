@@ -338,7 +338,7 @@ fi
 # Add other require item commands genearic to all containers
 add_to_container << EOF
 
-RUN mkdir -p /.llama /.cache && chmod -R g+rw /app /.llama /.cache
+RUN mkdir -p /.llama /.cache && chmod -R g+rw /.llama /.cache && (chmod -R g+rw /app 2>/dev/null || true)
 EOF
 
 printf "Containerfile created successfully in %s/Containerfile\n\n" "$TEMP_DIR"

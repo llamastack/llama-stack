@@ -192,7 +192,10 @@ paths:
       tags:
         - Conversations
       summary: Create a conversation.
-      description: Create a conversation.
+      description: >-
+        Create a conversation.
+
+        Create a conversation.
       parameters: []
       requestBody:
         content:
@@ -222,8 +225,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Get a conversation with the given ID.
-      description: Get a conversation with the given ID.
+      summary: Retrieve a conversation.
+      description: >-
+        Retrieve a conversation.
+
+        Get a conversation with the given ID.
       parameters:
         - name: conversation_id
           in: path
@@ -252,9 +258,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: >-
-        Update a conversation's metadata with the given ID.
+      summary: Update a conversation.
       description: >-
+        Update a conversation.
+
         Update a conversation's metadata with the given ID.
       parameters:
         - name: conversation_id
@@ -290,8 +297,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Delete a conversation with the given ID.
-      description: Delete a conversation with the given ID.
+      summary: Delete a conversation.
+      description: >-
+        Delete a conversation.
+
+        Delete a conversation with the given ID.
       parameters:
         - name: conversation_id
           in: path
@@ -321,8 +331,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: List items in the conversation.
-      description: List items in the conversation.
+      summary: List items.
+      description: >-
+        List items.
+
+        List items in the conversation.
       parameters:
         - name: conversation_id
           in: path
@@ -495,8 +508,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Create items in the conversation.
-      description: Create items in the conversation.
+      summary: Create items.
+      description: >-
+        Create items.
+
+        Create items in the conversation.
       parameters:
         - name: conversation_id
           in: path
@@ -532,8 +548,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Retrieve a conversation item.
-      description: Retrieve a conversation item.
+      summary: Retrieve an item.
+      description: >-
+        Retrieve an item.
+
+        Retrieve a conversation item.
       parameters:
         - name: conversation_id
           in: path
@@ -568,8 +587,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Delete a conversation item.
-      description: Delete a conversation item.
+      summary: Delete an item.
+      description: >-
+        Delete an item.
+
+        Delete a conversation item.
       parameters:
         - name: conversation_id
           in: path
@@ -10146,9 +10168,9 @@ tags:
       - `background`
     x-displayName: Agents
   - name: Conversations
-    description: ''
-    x-displayName: >-
+    description: >-
       Protocol for conversation management operations.
+    x-displayName: Conversations
   - name: Files
     description: >-
       This API is used to upload documents that can be used with other Llama Stack

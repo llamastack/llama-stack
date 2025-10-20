@@ -79,7 +79,6 @@ class TelemetryAdapter(Telemetry):
             metrics.set_meter_provider(metric_provider)
 
         self.meter = metrics.get_meter(__name__)
-
         self._lock = _global_lock
 
     async def initialize(self) -> None:
