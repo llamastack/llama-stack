@@ -166,10 +166,11 @@ docker run \
 
 ### Via venv
 
-Make sure you have done `pip install llama-stack` and have the Llama Stack CLI available.
+Install the package and distribution dependencies before launching:
 
 ```bash
-llama stack build --distro dell --image-type venv
+uv pip install llama-stack
+llama stack list-deps dell | xargs -L1 uv pip install
 INFERENCE_MODEL=$INFERENCE_MODEL \
 DEH_URL=$DEH_URL \
 CHROMA_URL=$CHROMA_URL \

@@ -81,10 +81,11 @@ docker run \
 
 ### Via venv
 
-Make sure you have done `uv pip install llama-stack` and have the Llama Stack CLI available.
+Install the package and this distribution’s dependencies into your active virtualenv:
 
 ```bash
-llama stack build --distro meta-reference-gpu --image-type venv
+uv pip install llama-stack
+llama stack list-deps meta-reference-gpu | xargs -L1 uv pip install
 INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
 llama stack run distributions/meta-reference-gpu/run.yaml \
   --port 8321
