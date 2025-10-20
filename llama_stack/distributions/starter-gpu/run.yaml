@@ -250,23 +250,24 @@ storage:
     conversations:
       table_name: openai_conversations
       backend: sql_default
-models: []
-shields:
-- shield_id: llama-guard
-  provider_id: ${env.SAFETY_MODEL:+llama-guard}
-  provider_shield_id: ${env.SAFETY_MODEL:=}
-- shield_id: code-scanner
-  provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
-  provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
-vector_dbs: []
-datasets: []
-scoring_fns: []
-benchmarks: []
-tool_groups:
-- toolgroup_id: builtin::websearch
-  provider_id: tavily-search
-- toolgroup_id: builtin::rag
-  provider_id: rag-runtime
+registered_resources:
+  models: []
+  shields:
+  - shield_id: llama-guard
+    provider_id: ${env.SAFETY_MODEL:+llama-guard}
+    provider_shield_id: ${env.SAFETY_MODEL:=}
+  - shield_id: code-scanner
+    provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
+    provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
+  vector_dbs: []
+  datasets: []
+  scoring_fns: []
+  benchmarks: []
+  tool_groups:
+  - toolgroup_id: builtin::websearch
+    provider_id: tavily-search
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8321
 telemetry:

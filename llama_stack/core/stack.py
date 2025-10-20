@@ -110,7 +110,7 @@ TEST_RECORDING_CONTEXT = None
 
 async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
-        objects = getattr(run_config, rsrc)
+        objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
 
