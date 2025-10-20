@@ -252,19 +252,24 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     export LLAMA_STACK_PORT=8321
 
     echo "=== Building Docker Image for distribution: $DISTRO ==="
-    # Set LLAMA_STACK_DIR to repo root
-    # USE_COPY_NOT_MOUNT copies files into image (for CI), otherwise mounts for live development
-    BUILD_ENV="LLAMA_STACK_DIR=$ROOT_DIR"
-    if [[ "${CI:-false}" == "true" ]] || [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
-        echo "CI detected (CI=$CI, GITHUB_ACTIONS=$GITHUB_ACTIONS): copying source into image"
-        BUILD_ENV="USE_COPY_NOT_MOUNT=true $BUILD_ENV"
-    else
-        echo "Local mode: will mount source for live development"
+    containerfile="$ROOT_DIR/containers/Containerfile"
+    if [[ ! -f "$containerfile" ]]; then
+        echo "❌ Containerfile not found at $containerfile"
+        exit 1
     fi
 
-    eval "$BUILD_ENV llama stack build --distro '$DISTRO' --image-type container"
+    build_cmd=(
+        docker
+        build
+        "$ROOT_DIR"
+        -f "$containerfile"
+        --tag "localhost/distribution-$DISTRO:dev"
+        --build-arg "DISTRO_NAME=$DISTRO"
+        --build-arg "INSTALL_MODE=editable"
+        --build-arg "LLAMA_STACK_DIR=/workspace"
+    )
 
-    if [ $? -ne 0 ]; then
+    if ! "${build_cmd[@]}"; then
         echo "❌ Failed to build Docker image"
         exit 1
     fi
@@ -304,7 +309,6 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     docker run -d --network host --name "$container_name" \
         -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
         $DOCKER_ENV_VARS \
-        -v $ROOT_DIR:/app/llama-stack-source \
         "$IMAGE_NAME" \
         --port $LLAMA_STACK_PORT
 
