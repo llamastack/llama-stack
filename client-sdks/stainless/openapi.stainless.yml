@@ -208,19 +208,6 @@ resources:
             type: http
             endpoint: post /v1/conversations/{conversation_id}/items
 
-  datasets:
-    models:
-      list_datasets_response: ListDatasetsResponse
-    methods:
-      register: post /v1beta/datasets
-      retrieve: get /v1beta/datasets/{dataset_id}
-      list:
-        endpoint: get /v1beta/datasets
-        paginated: false
-      unregister: delete /v1beta/datasets/{dataset_id}
-      iterrows: get /v1beta/datasetio/iterrows/{dataset_id}
-      appendrows: post /v1beta/datasetio/append-rows/{dataset_id}
-
   inspect:
     models:
       healthInfo: HealthInfo
@@ -520,6 +507,21 @@ resources:
                 streaming:
                   stream_event_model: alpha.agents.turn.agent_turn_response_stream_chunk
                   param_discriminator: stream
+
+  beta:
+    subresources:
+      datasets:
+        models:
+          list_datasets_response: ListDatasetsResponse
+        methods:
+          register: post /v1beta/datasets
+          retrieve: get /v1beta/datasets/{dataset_id}
+          list:
+            endpoint: get /v1beta/datasets
+            paginated: false
+          unregister: delete /v1beta/datasets/{dataset_id}
+          iterrows: get /v1beta/datasetio/iterrows/{dataset_id}
+          appendrows: post /v1beta/datasetio/append-rows/{dataset_id}
 
 
 settings:
