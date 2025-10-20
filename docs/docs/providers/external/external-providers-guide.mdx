@@ -240,6 +240,6 @@ additional_pip_packages:
 - sqlalchemy[asyncio]
 ```
 
-No other steps are required other than `llama stack build` and `llama stack run`. The build process will use `module` to install all of the provider dependencies, retrieve the spec, etc.
+No other steps are required beyond installing dependencies with `llama stack list-deps <distro> | xargs -L1 uv pip install` and then running `llama stack run`. The CLI will use `module` to install the provider dependencies, retrieve the spec, etc.
 
 The provider will now be available in Llama Stack with the type `remote::ramalama`.
