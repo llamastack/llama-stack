@@ -38,21 +38,26 @@ class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
     }
 
 
-class OpenAIMixinWithRerankImpl(OpenAIMixinImpl):
-    """Test implementation with rerank model list"""
-
-    rerank_model_list: list[str] = ["rerank-model-1", "rerank-model-2"]
-
-
-class OpenAIMixinWithEmbeddingsAndRerankImpl(OpenAIMixinImpl):
-    """Test implementation with both embedding model metadata and rerank model list"""
+class OpenAIMixinWithCustomModelConstruction(OpenAIMixinImpl):
+    """Test implementation that uses construct_model_from_identifier to add rerank models"""
 
     embedding_model_metadata: dict[str, dict[str, int]] = {
         "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
         "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
     }
 
-    rerank_model_list: list[str] = ["rerank-model-1", "rerank-model-2"]
+    # Adds rerank models via construct_model_from_identifier
+    rerank_model_ids: set[str] = {"rerank-model-1", "rerank-model-2"}
+
+    def construct_model_from_identifier(self, identifier: str) -> Model:
+        if identifier in self.rerank_model_ids:
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.rerank,
+            )
+        return super().construct_model_from_identifier(identifier)
 
 
 @pytest.fixture
@@ -80,17 +85,10 @@ def mixin_with_embeddings():
 
 
 @pytest.fixture
-def mixin_with_rerank():
-    """Create a test instance of OpenAIMixin with rerank model list"""
+def mixin_with_custom_model_construction():
+    """Create a test instance using custom construct_model_from_identifier"""
     config = RemoteInferenceProviderConfig()
-    return OpenAIMixinWithRerankImpl(config=config)
-
-
-@pytest.fixture
-def mixin_with_embeddings_and_rerank():
-    """Create a test instance of OpenAIMixin with both embedding model metadata and rerank model list"""
-    config = RemoteInferenceProviderConfig()
-    return OpenAIMixinWithEmbeddingsAndRerankImpl(config=config)
+    return OpenAIMixinWithCustomModelConstruction(config=config)
 
 
 @pytest.fixture
@@ -404,52 +402,10 @@ class TestOpenAIMixinEmbeddingModelMetadata:
             _assert_models_match_expected(result, expected_models)
 
 
-class TestOpenAIMixinRerankModelList:
-    """Test cases for rerank_model_list attribute functionality"""
+class TestOpenAIMixinCustomModelConstruction:
+    """Test cases for mixed model types (LLM, embedding, rerank) through construct_model_from_identifier"""
 
-    async def test_rerank_model_identified(self, mixin_with_rerank, mock_client_context):
-        """Test that models in rerank_model_list are correctly identified as rerank models"""
-        # Create mock models: 1 rerank model and 1 LLM
-        mock_rerank_model = MagicMock(id="rerank-model-1")
-        mock_llm_model = MagicMock(id="gpt-4")
-        mock_models = [mock_rerank_model, mock_llm_model]
-
-        mock_client = MagicMock()
-
-        async def mock_models_list():
-            for model in mock_models:
-                yield model
-
-        mock_client.models.list.return_value = mock_models_list()
-
-        with mock_client_context(mixin_with_rerank, mock_client):
-            result = await mixin_with_rerank.list_models()
-
-            assert result is not None
-            assert len(result) == 2
-
-            expected_models = {
-                "rerank-model-1": {
-                    "model_type": ModelType.rerank,
-                    "metadata": {},
-                    "provider_id": "test-provider",
-                    "provider_resource_id": "rerank-model-1",
-                },
-                "gpt-4": {
-                    "model_type": ModelType.llm,
-                    "metadata": {},
-                    "provider_id": "test-provider",
-                    "provider_resource_id": "gpt-4",
-                },
-            }
-
-            _assert_models_match_expected(result, expected_models)
-
-
-class TestOpenAIMixinMixedModelTypes:
-    """Test cases for mixed model types (LLM, embedding, rerank)"""
-
-    async def test_mixed_model_types_identification(self, mixin_with_embeddings_and_rerank, mock_client_context):
+    async def test_mixed_model_types_identification(self, mixin_with_custom_model_construction, mock_client_context):
         """Test that LLM, embedding, and rerank models are correctly identified with proper types and metadata"""
         # Create mock models: 1 embedding, 1 rerank, 1 LLM
         mock_embedding_model = MagicMock(id="text-embedding-3-small")
@@ -465,8 +421,8 @@ class TestOpenAIMixinMixedModelTypes:
 
         mock_client.models.list.return_value = mock_models_list()
 
-        with mock_client_context(mixin_with_embeddings_and_rerank, mock_client):
-            result = await mixin_with_embeddings_and_rerank.list_models()
+        with mock_client_context(mixin_with_custom_model_construction, mock_client):
+            result = await mixin_with_custom_model_construction.list_models()
 
             assert result is not None
             assert len(result) == 3
