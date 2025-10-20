@@ -156,6 +156,16 @@ DISTRO=$(echo "$DISTRO" | sed 's/^docker://')
 
 CONTAINER_NAME="llama-stack-test-$DISTRO"
 
+should_copy_source() {
+    if [[ "$USE_COPY_NOT_MOUNT" == "true" ]]; then
+        return 0
+    fi
+    if [[ "${CI:-false}" == "true" ]] || [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
+        return 0
+    fi
+    return 1
+}
+
 # Function to check if container is running
 is_container_running() {
     docker ps --filter "name=^${CONTAINER_NAME}$" --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"
@@ -183,20 +193,29 @@ stop_container() {
 build_image() {
     echo "=== Building Docker Image for distribution: $DISTRO ==="
     # Get the repo root (parent of scripts directory)
-    SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-    REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+    local script_dir
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    local repo_root
+    repo_root=$(cd "$script_dir/.." && pwd)
 
-    # Determine whether to copy or mount source
-    # Copy in CI or if explicitly requested, otherwise mount for live development
-    BUILD_ENV="LLAMA_STACK_DIR=$REPO_ROOT"
-    if [[ "$USE_COPY_NOT_MOUNT" == "true" ]] || [[ "${CI:-false}" == "true" ]] || [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
-        echo "Copying source into image (USE_COPY_NOT_MOUNT=true, CI=${CI:-false}, GITHUB_ACTIONS=${GITHUB_ACTIONS:-false})"
-        BUILD_ENV="USE_COPY_NOT_MOUNT=true $BUILD_ENV"
-    else
-        echo "Will mount source for live development"
+    local containerfile="$repo_root/containers/Containerfile"
+    if [[ ! -f "$containerfile" ]]; then
+        echo "❌ Containerfile not found at $containerfile"
+        exit 1
     fi
 
-    if ! eval "$BUILD_ENV llama stack build --distro '$DISTRO' --image-type container"; then
+    local build_cmd=(
+        docker
+        build
+        "$repo_root"
+        -f "$containerfile"
+        --tag "localhost/distribution-$DISTRO:dev"
+        --build-arg "DISTRO_NAME=$DISTRO"
+        --build-arg "INSTALL_MODE=editable"
+        --build-arg "LLAMA_STACK_DIR=/workspace"
+    )
+
+    if ! "${build_cmd[@]}"; then
         echo "❌ Failed to build Docker image"
         exit 1
     fi
@@ -224,7 +243,7 @@ start_container() {
         # Check if image exists (with or without localhost/ prefix)
         if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "distribution-$DISTRO:dev$"; then
             echo "❌ Error: Image distribution-$DISTRO:dev does not exist"
-            echo "Either build it first without --no-rebuild, or run: llama stack build --distro $DISTRO --image-type container"
+            echo "Either build it first without --no-rebuild, or run: docker build . -f containers/Containerfile --build-arg DISTRO_NAME=$DISTRO --tag localhost/distribution-$DISTRO:dev"
             exit 1
         fi
         echo "✅ Found existing image for distribution-$DISTRO:dev"
@@ -236,8 +255,10 @@ start_container() {
     echo "=== Starting Docker Container ==="
 
     # Get the repo root for volume mount
-    SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
-    REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+    local script_dir
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+    local repo_root
+    repo_root=$(cd "$script_dir/.." && pwd)
 
     # Determine the actual image name (may have localhost/ prefix)
     IMAGE_NAME=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "distribution-$DISTRO:dev$" | head -1)
@@ -279,10 +300,18 @@ start_container() {
         NETWORK_MODE="--network host"
     fi
 
+    local source_mount=""
+    if should_copy_source; then
+        echo "Source baked into image (no volume mount)"
+    else
+        source_mount="-v \"$repo_root\":/workspace"
+        echo "Mounting $repo_root into /workspace"
+    fi
+
     docker run -d $NETWORK_MODE --name "$CONTAINER_NAME" \
         -p $PORT:$PORT \
         $DOCKER_ENV_VARS \
-        -v "$REPO_ROOT":/app/llama-stack-source \
+        $source_mount \
         "$IMAGE_NAME" \
         --port $PORT
 
