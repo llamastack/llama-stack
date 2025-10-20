@@ -17,10 +17,19 @@ from llama_stack.core.datatypes import (
     BuildConfig,
     Provider,
     StackRunConfig,
+    StorageConfig,
 )
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.resolver import InvalidProviderError
-from llama_stack.core.utils.config_dirs import EXTERNAL_PROVIDERS_DIR
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    ServerStoresConfig,
+    SqliteKVStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+)
+from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR, EXTERNAL_PROVIDERS_DIR
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.providers.datatypes import Api
@@ -51,11 +60,23 @@ def generate_run_config(
     Generate a run.yaml template file for user to edit from a build.yaml file
     """
     apis = list(build_config.distribution_spec.providers.keys())
+    distro_dir = DISTRIBS_BASE_DIR / image_name
     run_config = StackRunConfig(
         container_image=(image_name if build_config.image_type == LlamaStackImageType.CONTAINER.value else None),
         image_name=image_name,
         apis=apis,
         providers={},
+        storage=StorageConfig(
+            backends={
+                "kv_default": SqliteKVStoreConfig(db_path=str(distro_dir / "kvstore.db")),
+                "sql_default": SqliteSqlStoreConfig(db_path=str(distro_dir / "sql_store.db")),
+            },
+            stores=ServerStoresConfig(
+                metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+                inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+                conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
+            ),
+        ),
         external_providers_dir=build_config.external_providers_dir
         if build_config.external_providers_dir
         else EXTERNAL_PROVIDERS_DIR,

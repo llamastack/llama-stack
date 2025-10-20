@@ -26,10 +26,10 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.sql.elements import ColumnElement
 
 from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack.core.storage.datatypes import SqlAlchemySqlStoreConfig
 from llama_stack.log import get_logger
 
 from .api import ColumnDefinition, ColumnType, SqlStore
-from .sqlstore import SqlAlchemySqlStoreConfig
 
 logger = get_logger(name=__name__, category="providers::utils")
 

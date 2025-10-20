@@ -12,13 +12,14 @@ import pytest
 
 from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
+from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import FaissIndex, FaissVectorIOAdapter
 from llama_stack.providers.inline.vector_io.sqlite_vec import SQLiteVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
 from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
+from llama_stack.providers.utils.kvstore import register_kvstore_backends
 
 EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
@@ -112,8 +113,9 @@ async def unique_kvstore_config(tmp_path_factory):
     unique_id = f"test_kv_{np.random.randint(1e6)}"
     temp_dir = tmp_path_factory.getbasetemp()
     db_path = str(temp_dir / f"{unique_id}.db")
-
-    return SqliteKVStoreConfig(db_path=db_path)
+    backend_name = f"kv_vector_{unique_id}"
+    register_kvstore_backends({backend_name: SqliteKVStoreConfig(db_path=db_path)})
+    return KVStoreReference(backend=backend_name, namespace=f"vector_io::{unique_id}")
 
 
 @pytest.fixture(scope="session")
@@ -138,13 +140,12 @@ async def sqlite_vec_vec_index(embedding_dimension, tmp_path_factory):
 async def sqlite_vec_adapter(sqlite_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = SQLiteVectorIOConfig(
         db_path=sqlite_vec_db_path,
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
     adapter = SQLiteVecVectorIOAdapter(
         config=config,
         inference_api=mock_inference_api,
         files_api=None,
-        models_api=None,
     )
     collection_id = f"sqlite_test_collection_{np.random.randint(1e6)}"
     await adapter.initialize()
@@ -177,13 +178,12 @@ async def faiss_vec_index(embedding_dimension):
 @pytest.fixture
 async def faiss_vec_adapter(unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = FaissVectorIOConfig(
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
     adapter = FaissVectorIOAdapter(
         config=config,
         inference_api=mock_inference_api,
         files_api=None,
-        models_api=None,
     )
     await adapter.initialize()
     await adapter.register_vector_db(
@@ -253,7 +253,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         db="test_db",
         user="test_user",
         password="test_password",
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
 
     adapter = PGVectorVectorIOAdapter(config, mock_inference_api, None)
