@@ -40,7 +40,7 @@ def is_port_available(port: int, host: str = "localhost") -> bool:
 
 def start_llama_stack_server(config_name: str) -> subprocess.Popen:
     """Start a llama stack server with the given config."""
-    cmd = f"uv run --with llama-stack llama stack build --distro {config_name} --image-type venv --run"
+    cmd = f"uv run llama stack run {config_name}"
     devnull = open(os.devnull, "w")
     process = subprocess.Popen(
         shlex.split(cmd),

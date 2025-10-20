@@ -18,7 +18,7 @@ This provider enables running inference using NVIDIA NIM.
 Build the NVIDIA environment:
 
 ```bash
-llama stack build --distro nvidia --image-type venv
+uv run llama stack list-deps nvidia | xargs -L1 uv pip install
 ```
 
 ### Basic Usage using the LlamaStack Python Client
