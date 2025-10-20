@@ -136,11 +136,12 @@ docker run \
 
 ### Via venv
 
-If you've set up your local development environment, you can also build the image using your local virtual environment.
+If you've set up your local development environment, you can install this distribution into your virtualenv:
 
 ```bash
+uv pip install llama-stack
+llama stack list-deps nvidia | xargs -L1 uv pip install
 INFERENCE_MODEL=meta-llama/Llama-3.1-8B-Instruct
-llama stack build --distro nvidia --image-type venv
 NVIDIA_API_KEY=$NVIDIA_API_KEY \
 INFERENCE_MODEL=$INFERENCE_MODEL \
 llama stack run ./run.yaml \

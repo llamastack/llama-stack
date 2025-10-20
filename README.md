@@ -92,7 +92,7 @@ As more providers start supporting Llama 4, you can use them in Llama Stack as w
 To try Llama Stack locally, run:
 
 ```bash
-curl -LsSf https://github.com/meta-llama/llama-stack/raw/main/scripts/install.sh | bash
+curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 ```
 
 ### Overview
