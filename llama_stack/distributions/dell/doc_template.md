@@ -157,7 +157,7 @@ docker run \
 Make sure you have done `pip install llama-stack` and have the Llama Stack CLI available.
 
 ```bash
-llama stack build --distro {{ name }} --image-type conda
+llama stack list-deps {{ name }} | xargs -L1 pip install
 INFERENCE_MODEL=$INFERENCE_MODEL \
 DEH_URL=$DEH_URL \
 CHROMA_URL=$CHROMA_URL \

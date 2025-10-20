@@ -278,7 +278,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             else:
                 prefix = "!" if in_notebook() else ""
                 cprint(
-                    f"Please run:\n\n{prefix}llama stack build --distro {self.config_path_or_distro_name} --image-type venv\n\n",
+                    f"Please run:\n\n{prefix}llama stack list-deps {self.config_path_or_distro_name} | xargs -L1 uv pip install\n\n",
                     "yellow",
                     file=sys.stderr,
                 )
