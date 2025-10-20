@@ -175,8 +175,7 @@ llama-stack-client benchmarks register \
 **1. Start the Llama Stack API Server**
 
 ```bash
-# Build and run a distribution (example: together)
-llama stack build --distro together --image-type venv
+llama stack list-deps together | xargs -L1 uv pip install
 llama stack run together
 ```
 
@@ -209,7 +208,7 @@ The playground works with any Llama Stack distribution. Popular options include:
 <TabItem value="together" label="Together AI">
 
 ```bash
-llama stack build --distro together --image-type venv
+llama stack list-deps together | xargs -L1 uv pip install
 llama stack run together
 ```
 
@@ -222,7 +221,7 @@ llama stack run together
 <TabItem value="ollama" label="Ollama (Local)">
 
 ```bash
-llama stack build --distro ollama --image-type venv
+llama stack list-deps ollama | xargs -L1 uv pip install
 llama stack run ollama
 ```
 
@@ -235,7 +234,7 @@ llama stack run ollama
 <TabItem value="meta-reference" label="Meta Reference">
 
 ```bash
-llama stack build --distro meta-reference --image-type venv
+llama stack list-deps meta-reference | xargs -L1 uv pip install
 llama stack run meta-reference
 ```
 

@@ -59,7 +59,7 @@ Start a Llama Stack server on localhost. Here is an example of how you can do th
 uv venv starter --python 3.12
 source starter/bin/activate  # On Windows: starter\Scripts\activate
 pip install --no-cache llama-stack==0.2.2
-llama stack build --distro starter --image-type venv
+llama stack list-deps starter | xargs -L1 uv pip install
 export FIREWORKS_API_KEY=<SOME_KEY>
 llama stack run starter --port 5050
 ```
