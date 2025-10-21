@@ -24,6 +24,7 @@ class VectorStore(Resource):
 
     embedding_model: str
     embedding_dimension: int
+    vector_store_name: str | None = None
 
     @property
     def vector_store_id(self) -> str:
