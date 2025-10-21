@@ -80,7 +80,9 @@ providers:
   scoring:
   - provider_id: basic
     provider_type: inline::basic
-  tool_runtime: []
+  tool_runtime:
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs
@@ -126,7 +128,9 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups: []
+  tool_groups:
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8321
 telemetry:

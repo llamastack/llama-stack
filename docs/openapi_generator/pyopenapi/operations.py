@@ -196,10 +196,16 @@ def _get_endpoint_functions(
 def _get_defining_class(member_fn: str, derived_cls: type) -> type:
     "Find the class in which a member function is first defined in a class inheritance hierarchy."
 
+    # This import must be dynamic here
+    from llama_stack.apis.tools import RAGToolRuntime, ToolRuntime
+
     # iterate in reverse member resolution order to find most specific class first
     for cls in reversed(inspect.getmro(derived_cls)):
         for name, _ in inspect.getmembers(cls, inspect.isfunction):
             if name == member_fn:
+                # HACK ALERT
+                if cls == RAGToolRuntime:
+                    return ToolRuntime
                 return cls
 
     raise ValidationError(

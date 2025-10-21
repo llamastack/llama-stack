@@ -45,6 +45,7 @@ def get_distribution_template() -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
+            BuildProvider(provider_type="inline::rag-runtime"),
         ],
     }
     name = "dell"
@@ -96,6 +97,10 @@ def get_distribution_template() -> DistributionTemplate:
         ToolGroupInput(
             toolgroup_id="builtin::websearch",
             provider_id="brave-search",
+        ),
+        ToolGroupInput(
+            toolgroup_id="builtin::rag",
+            provider_id="rag-runtime",
         ),
     ]
 

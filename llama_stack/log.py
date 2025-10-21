@@ -166,14 +166,26 @@ class CustomFileHandler(logging.FileHandler):
         super().emit(record)
 
 
-def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None:
+def setup_logging(category_levels: dict[str, int] | None = None, log_file: str | None = None) -> None:
     """
     Configure logging based on the provided category log levels and an optional log file.
+    If category_levels or log_file are not provided, they will be read from environment variables.
 
     Parameters:
-        category_levels (Dict[str, int]): A dictionary mapping categories to their log levels.
-        log_file (str): Path to a log file to additionally pipe the logs into
+        category_levels (Dict[str, int] | None): A dictionary mapping categories to their log levels.
+            If None, reads from LLAMA_STACK_LOGGING environment variable and uses defaults.
+        log_file (str | None): Path to a log file to additionally pipe the logs into.
+            If None, reads from LLAMA_STACK_LOG_FILE environment variable.
     """
+    # Read from environment variables if not explicitly provided
+    if category_levels is None:
+        category_levels = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
+        env_config = os.environ.get("LLAMA_STACK_LOGGING", "")
+        if env_config:
+            category_levels.update(parse_environment_config(env_config))
+
+    if log_file is None:
+        log_file = os.environ.get("LLAMA_STACK_LOG_FILE")
     log_format = "%(asctime)s %(name)s:%(lineno)d %(category)s: %(message)s"
 
     class CategoryFilter(logging.Filter):
@@ -278,12 +290,3 @@ def get_logger(
             log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
     logger.setLevel(log_level)
     return logging.LoggerAdapter(logger, {"category": category})
-
-
-env_config = os.environ.get("LLAMA_STACK_LOGGING", "")
-if env_config:
-    _category_levels.update(parse_environment_config(env_config))
-
-log_file = os.environ.get("LLAMA_STACK_LOG_FILE")
-
-setup_logging(_category_levels, log_file)

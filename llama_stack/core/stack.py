@@ -32,7 +32,7 @@ from llama_stack.apis.scoring_functions import ScoringFunctions
 from llama_stack.apis.shields import Shields
 from llama_stack.apis.synthetic_data_generation import SyntheticDataGeneration
 from llama_stack.apis.telemetry import Telemetry
-from llama_stack.apis.tools import ToolGroups, ToolRuntime
+from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, StackRunConfig, VectorStoresConfig
@@ -80,6 +80,7 @@ class LlamaStack(
     Inspect,
     ToolGroups,
     ToolRuntime,
+    RAGToolRuntime,
     Files,
     Prompts,
     Conversations,
