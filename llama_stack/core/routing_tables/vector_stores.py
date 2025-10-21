@@ -6,15 +6,12 @@
 
 from typing import Any
 
-from pydantic import TypeAdapter
-
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.models import ModelType
 from llama_stack.apis.resource import ResourceType
 
 # Removed VectorStores import to avoid exposing public API
 from llama_stack.apis.vector_io.vector_io import (
-    OpenAICreateVectorStoreRequestWithExtraBody,
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
