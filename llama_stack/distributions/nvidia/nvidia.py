@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput, ToolGroupInput
+from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.remote.datasetio.nvidia import NvidiaDatasetIOConfig
@@ -28,7 +28,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
             BuildProvider(provider_type="remote::nvidia"),
         ],
         "scoring": [BuildProvider(provider_type="inline::basic")],
-        "tool_runtime": [BuildProvider(provider_type="inline::rag-runtime")],
+        "tool_runtime": [],
         "files": [BuildProvider(provider_type="inline::localfs")],
     }
 
@@ -66,12 +66,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         provider_id="nvidia",
     )
 
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
-        ),
-    ]
+    default_tool_groups = []
 
     return DistributionTemplate(
         name=name,

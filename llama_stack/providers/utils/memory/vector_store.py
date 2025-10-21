@@ -12,17 +12,14 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import unquote
 
-import httpx
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
 from llama_stack.apis.common.content_types import (
-    URL,
     InterleavedContent,
 )
 from llama_stack.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
-from llama_stack.apis.tools import RAGDocument
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
 from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
@@ -127,31 +124,6 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
     else:
         log.error("Could not extract content from data_url properly.")
         return ""
-
-
-async def content_from_doc(doc: RAGDocument) -> str:
-    if isinstance(doc.content, URL):
-        if doc.content.uri.startswith("data:"):
-            return content_from_data(doc.content.uri)
-        async with httpx.AsyncClient() as client:
-            r = await client.get(doc.content.uri)
-        if doc.mime_type == "application/pdf":
-            return parse_pdf(r.content)
-        return r.text
-    elif isinstance(doc.content, str):
-        pattern = re.compile("^(https?://|file://|data:)")
-        if pattern.match(doc.content):
-            if doc.content.startswith("data:"):
-                return content_from_data(doc.content)
-            async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content)
-            if doc.mime_type == "application/pdf":
-                return parse_pdf(r.content)
-            return r.text
-        return doc.content
-    else:
-        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
-        return interleaved_content_as_str(doc.content)
 
 
 def make_overlapped_chunks(

@@ -33,7 +33,6 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
@@ -49,10 +48,6 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         ToolGroupInput(
             toolgroup_id="builtin::websearch",
             provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
         ),
     ]
 

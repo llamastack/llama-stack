@@ -23,7 +23,6 @@ distribution_spec:
     tool_runtime:
     - provider_type: remote::brave-search
     - provider_type: remote::tavily-search
-    - provider_type: inline::rag-runtime
     - provider_type: remote::model-context-protocol
     files:
     - provider_type: inline::localfs

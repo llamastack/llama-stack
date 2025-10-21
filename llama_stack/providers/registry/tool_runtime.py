@@ -7,33 +7,13 @@
 
 from llama_stack.providers.datatypes import (
     Api,
-    InlineProviderSpec,
     ProviderSpec,
     RemoteProviderSpec,
 )
-from llama_stack.providers.registry.vector_io import DEFAULT_VECTOR_IO_DEPS
 
 
 def available_providers() -> list[ProviderSpec]:
     return [
-        InlineProviderSpec(
-            api=Api.tool_runtime,
-            provider_type="inline::rag-runtime",
-            pip_packages=DEFAULT_VECTOR_IO_DEPS
-            + [
-                "tqdm",
-                "numpy",
-                "scikit-learn",
-                "scipy",
-                "nltk",
-                "sentencepiece",
-                "transformers",
-            ],
-            module="llama_stack.providers.inline.tool_runtime.rag",
-            config_class="llama_stack.providers.inline.tool_runtime.rag.config.RagToolRuntimeConfig",
-            api_dependencies=[Api.vector_io, Api.inference, Api.files],
-            description="RAG (Retrieval-Augmented Generation) tool runtime for document ingestion, chunking, and semantic search.",
-        ),
         RemoteProviderSpec(
             api=Api.tool_runtime,
             adapter_type="brave-search",
