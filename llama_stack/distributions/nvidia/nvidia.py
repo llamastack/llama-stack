@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput
+from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput, ToolGroupInput
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.remote.datasetio.nvidia import NvidiaDatasetIOConfig
@@ -66,7 +66,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         provider_id="nvidia",
     )
 
-    default_tool_groups = []
+    default_tool_groups: list[ToolGroupInput] = []
 
     return DistributionTemplate(
         name=name,
