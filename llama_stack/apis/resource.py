@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 class ResourceType(StrEnum):
     model = "model"
     shield = "shield"
-    vector_db = "vector_db"
+    vector_store = "vector_store"
     dataset = "dataset"
     scoring_function = "scoring_function"
     benchmark = "benchmark"
@@ -34,4 +34,4 @@ class Resource(BaseModel):
 
     provider_id: str = Field(description="ID of the provider that owns this resource")
 
-    type: ResourceType = Field(description="Type of resource (e.g. 'model', 'shield', 'vector_db', etc.)")
+    type: ResourceType = Field(description="Type of resource (e.g. 'model', 'shield', 'vector_store', etc.)")

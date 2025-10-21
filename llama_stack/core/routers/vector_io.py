@@ -71,25 +71,6 @@ class VectorIORouter(VectorIO):
 
         raise ValueError(f"Embedding model '{embedding_model_id}' not found or not an embedding model")
 
-    async def register_vector_db(
-        self,
-        vector_db_id: str,
-        embedding_model: str,
-        embedding_dimension: int | None = 384,
-        provider_id: str | None = None,
-        vector_db_name: str | None = None,
-        provider_vector_db_id: str | None = None,
-    ) -> None:
-        logger.debug(f"VectorIORouter.register_vector_db: {vector_db_id}, {embedding_model}")
-        await self.routing_table.register_vector_db(
-            vector_db_id,
-            embedding_model,
-            embedding_dimension,
-            provider_id,
-            vector_db_name,
-            provider_vector_db_id,
-        )
-
     async def insert_chunks(
         self,
         vector_db_id: str,
