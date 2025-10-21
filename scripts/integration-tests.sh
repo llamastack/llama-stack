@@ -410,6 +410,21 @@ elif [ $exit_code -eq 5 ]; then
     echo "⚠️ No tests collected (pattern matched no tests)"
 else
     echo "❌ Tests failed"
+    echo ""
+    echo "=== Dumping last 100 lines of logs for debugging ==="
+
+    # Output server or container logs based on stack config
+    if [[ "$STACK_CONFIG" == *"server:"* && -f "server.log" ]]; then
+        echo "--- Last 100 lines of server.log ---"
+        tail -100 server.log
+    elif [[ "$STACK_CONFIG" == *"docker:"* ]]; then
+        container_name="llama-stack-test-$DISTRO"
+        if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo "--- Last 100 lines of docker logs for $container_name ---"
+            docker logs "$container_name" 2>&1 | tail -100
+        fi
+    fi
+
     exit 1
 fi
 
