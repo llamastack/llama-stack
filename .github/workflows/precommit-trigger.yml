@@ -99,7 +99,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.check_author.outputs.pr_number }},
-              body: `⏳ Running pre-commit hooks on PR #${{ steps.check_author.outputs.pr_number }}...`
+              body: `⏳ Running [pre-commit hooks](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) on PR #${{ steps.check_author.outputs.pr_number }}...`
             });
 
       - name: Checkout PR branch (same-repo)
