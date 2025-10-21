@@ -238,6 +238,8 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         echo "Stopping Docker container..."
         container_name="llama-stack-test-$DISTRO"
         if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo "Dumping container logs before stopping..."
+            docker logs "$container_name" > "docker-${DISTRO}-${INFERENCE_MODE}.log" 2>&1 || true
             echo "Stopping and removing container: $container_name"
             docker stop "$container_name" 2>/dev/null || true
             docker rm "$container_name" 2>/dev/null || true
