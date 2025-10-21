@@ -17,7 +17,6 @@ from pydantic import TypeAdapter
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files, OpenAIFileObject
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.vector_io import (
     Chunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
@@ -43,6 +42,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore.api import KVStore

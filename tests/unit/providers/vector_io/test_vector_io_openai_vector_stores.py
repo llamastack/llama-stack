@@ -12,7 +12,6 @@ import numpy as np
 import pytest
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.vector_io import (
     Chunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
@@ -21,6 +20,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategyAuto,
     VectorStoreFileObject,
 )
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectorIO providers. This should only contain

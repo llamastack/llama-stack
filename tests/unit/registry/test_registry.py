@@ -134,7 +134,9 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
         provider_resource_id="test_vector_store_2",
         provider_id="baz",  # Same provider_id
     )
-    with pytest.raises(ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store_2' already exists"):
+    with pytest.raises(
+        ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store_2' already exists"
+    ):
         await cached_disk_dist_registry.register(duplicate_vector_store)
 
     result = await cached_disk_dist_registry.get("vector_store", "test_vector_store_2")
@@ -289,7 +291,9 @@ async def test_double_registration_different_objects(disk_dist_registry):
     assert result1 is True
 
     # Second registration with different data should fail
-    with pytest.raises(ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store' already exists"):
+    with pytest.raises(
+        ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store' already exists"
+    ):
         await disk_dist_registry.register(vector_store2)
 
     # Verify original object is unchanged

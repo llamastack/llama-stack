@@ -49,7 +49,9 @@ def client_with_empty_registry(client_with_models):
 
 
 @vector_provider_wrapper
-def test_vector_store_retrieve(client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id):
+def test_vector_store_retrieve(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
     vector_store_name = "test_vector_store"
     create_response = client_with_empty_registry.vector_stores.create(
         name=vector_store_name,
@@ -69,7 +71,9 @@ def test_vector_store_retrieve(client_with_empty_registry, embedding_model_id, e
 
 
 @vector_provider_wrapper
-def test_vector_store_register(client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id):
+def test_vector_store_register(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
     vector_store_name = "test_vector_store"
     response = client_with_empty_registry.vector_stores.create(
         name=vector_store_name,

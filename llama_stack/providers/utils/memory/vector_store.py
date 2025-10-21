@@ -23,8 +23,8 @@ from llama_stack.apis.common.content_types import (
 )
 from llama_stack.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
 from llama_stack.apis.tools import RAGDocument
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import Api

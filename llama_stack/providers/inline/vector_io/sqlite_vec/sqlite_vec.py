@@ -17,8 +17,8 @@ from numpy.typing import NDArray
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
@@ -412,7 +412,9 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         return [v.vector_store for v in self.cache.values()]
 
     async def register_vector_store(self, vector_store: VectorStore) -> None:
-        index = await SQLiteVecIndex.create(vector_store.embedding_dimension, self.config.db_path, vector_store.identifier)
+        index = await SQLiteVecIndex.create(
+            vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
+        )
         self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
     async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex | None:

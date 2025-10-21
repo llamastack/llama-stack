@@ -16,7 +16,6 @@ from qdrant_client.models import PointStruct
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.vector_io import (
     Chunk,
     QueryChunksResponse,
@@ -24,6 +23,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategy,
     VectorStoreFileObject,
 )
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
@@ -171,7 +171,9 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
 
         for vector_store_data in stored_vector_stores:
             vector_store = VectorStore.model_validate_json(vector_store_data)
-            index = VectorStoreWithIndex(vector_store, QdrantIndex(self.client, vector_store.identifier), self.inference_api)
+            index = VectorStoreWithIndex(
+                vector_store, QdrantIndex(self.client, vector_store.identifier), self.inference_api
+            )
             self.cache[vector_store.identifier] = index
         self.openai_vector_stores = await self._load_openai_vector_stores()
 
@@ -186,7 +188,9 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         await self.kvstore.set(key=key, value=vector_store.model_dump_json())
 
         index = VectorStoreWithIndex(
-            vector_store=vector_store, index=QdrantIndex(self.client, vector_store.identifier), inference_api=self.inference_api
+            vector_store=vector_store,
+            index=QdrantIndex(self.client, vector_store.identifier),
+            inference_api=self.inference_api,
         )
 
         self.cache[vector_store.identifier] = index

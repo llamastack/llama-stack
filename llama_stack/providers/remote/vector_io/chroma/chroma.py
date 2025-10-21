@@ -13,8 +13,8 @@ from numpy.typing import NDArray
 
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
