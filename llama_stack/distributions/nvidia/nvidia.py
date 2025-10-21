@@ -28,7 +28,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
             BuildProvider(provider_type="remote::nvidia"),
         ],
         "scoring": [BuildProvider(provider_type="inline::basic")],
-        "tool_runtime": [],
+        "tool_runtime": [BuildProvider(provider_type="inline::rag-runtime")],
         "files": [BuildProvider(provider_type="inline::localfs")],
     }
 
@@ -66,7 +66,12 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         provider_id="nvidia",
     )
 
-    default_tool_groups: list[ToolGroupInput] = []
+    default_tool_groups = [
+        ToolGroupInput(
+            toolgroup_id="builtin::rag",
+            provider_id="rag-runtime",
+        ),
+    ]
 
     return DistributionTemplate(
         name=name,

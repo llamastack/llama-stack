@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from enum import Enum
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
@@ -14,6 +15,8 @@ from llama_stack.apis.resource import Resource, ResourceType
 from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
+
+from .rag_tool import RAGToolRuntime
 
 
 @json_schema_type
@@ -178,10 +181,21 @@ class ToolGroups(Protocol):
         ...
 
 
+class SpecialToolGroup(Enum):
+    """Special tool groups with predefined functionality.
+
+    :cvar rag_tool: Retrieval-Augmented Generation tool group for document search and retrieval
+    """
+
+    rag_tool = "rag_tool"
+
+
 @runtime_checkable
 @trace_protocol
 class ToolRuntime(Protocol):
     tool_store: ToolStore | None = None
+
+    rag_tool: RAGToolRuntime | None = None
 
     # TODO: This needs to be renamed once OPEN API generator name conflict issue is fixed.
     @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1)

@@ -26,6 +26,7 @@ distribution_spec:
     tool_runtime:
     - provider_type: remote::brave-search
     - provider_type: remote::tavily-search
+    - provider_type: inline::rag-runtime
 image_type: venv
 additional_pip_packages:
 - aiosqlite
