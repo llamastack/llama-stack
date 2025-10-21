@@ -140,6 +140,7 @@ class VectorStoreFileCounts(BaseModel):
     total: int
 
 
+# TODO: rename this as OpenAIVectorStore
 @json_schema_type
 class VectorStoreObject(BaseModel):
     """OpenAI Vector Store object.
