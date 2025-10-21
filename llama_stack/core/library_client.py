@@ -47,7 +47,7 @@ from llama_stack.core.stack import (
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
-from llama_stack.log import get_logger
+from llama_stack.log import get_logger, setup_logging
 from llama_stack.providers.utils.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.strong_typing.inspection import is_unwrapped_body_param
 
@@ -200,6 +200,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         skip_logger_removal: bool = False,
     ):
         super().__init__()
+        # Initialize logging from environment variables first
+        setup_logging()
+
         # when using the library client, we should not log to console since many
         # of our logs are intended for server-side usage
         if sinks_from_env := os.environ.get("TELEMETRY_SINKS", None):
