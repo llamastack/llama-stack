@@ -15,7 +15,7 @@ from fastapi import Body
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import InterleavedContent
-from llama_stack.apis.vector_dbs import VectorStore
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
