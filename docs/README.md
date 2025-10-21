@@ -13,6 +13,19 @@ npm run serve
 ```
 You can open up the docs in your browser at http://localhost:3000
 
+## File Import System
+
+This documentation uses a custom component to import files directly from the repository, eliminating copy-paste maintenance:
+
+```jsx
+import CodeFromFile from '@site/src/components/CodeFromFile';
+
+<CodeFromFile src="path/to/file.py" />
+<CodeFromFile src="README.md" startLine={1} endLine={20} />
+```
+
+Files are automatically synced from the repo root when building. See the `CodeFromFile` component for syntax highlighting, line ranges, and multi-language support.
+
 ## Content
 
 Try out Llama Stack's capabilities through our detailed Jupyter notebooks:
