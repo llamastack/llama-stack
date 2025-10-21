@@ -17,7 +17,7 @@ from llama_stack.apis.models import Model
 from llama_stack.apis.scoring_functions import ScoringFn
 from llama_stack.apis.shields import Shield
 from llama_stack.apis.tools import ToolGroup
-from llama_stack.apis.vector_dbs import VectorStore
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.schema_utils import json_schema_type
 
 
