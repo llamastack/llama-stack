@@ -24,6 +24,9 @@ ollama run llama3.2:3b --keepalive 60m
 
 #### Step 2: Run the Llama Stack server
 
+```python file=./demo_script.py title="demo_script.py"
+```
+
 We will use `uv` to install dependencies and run the Llama Stack server.
 ```bash
 # Install dependencies for the starter distribution
@@ -35,9 +38,6 @@ OLLAMA_URL=http://localhost:11434 uv run --with llama-stack llama stack run star
 #### Step 3: Run the demo
 Now open up a new terminal and copy the following script into a file named `demo_script.py`.
 
-import CodeFromFile from '@site/src/components/CodeFromFile';
-
-<CodeFromFile src="demo_script.py" title="demo_script.py" />
 We will use `uv` to run the script
 ```
 uv run --with llama-stack-client,fire,requests demo_script.py

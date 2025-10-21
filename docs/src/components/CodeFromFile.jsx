@@ -15,33 +15,7 @@ export default function CodeFromFile({
   useEffect(() => {
     async function loadFile() {
       try {
-        // Register this file for syncing (build-time only)
-        if (typeof window === 'undefined') {
-          // This runs during build - register the file
-          const fs = require('fs');
-          const path = require('path');
-
-          const usageFile = path.join(process.cwd(), 'static', 'imported-files', 'usage.json');
-          const usageDir = path.dirname(usageFile);
-
-          if (!fs.existsSync(usageDir)) {
-            fs.mkdirSync(usageDir, { recursive: true });
-          }
-
-          let usage = { files: [] };
-          if (fs.existsSync(usageFile)) {
-            try {
-              usage = JSON.parse(fs.readFileSync(usageFile, 'utf8'));
-            } catch (error) {
-              console.warn('Could not read existing usage file');
-            }
-          }
-
-          if (!usage.files.includes(src)) {
-            usage.files.push(src);
-            fs.writeFileSync(usageFile, JSON.stringify(usage, null, 2));
-          }
-        }
+        // File registration is now handled by the file-sync-plugin during build
 
         // Load file from static/imported-files directory
         const response = await fetch(`/imported-files/${src}`);
@@ -50,7 +24,7 @@ export default function CodeFromFile({
         }
         let text = await response.text();
 
-        // Handle line range if specified
+        // Handle line range if specified (filtering is done at build time)
         if (startLine || endLine) {
           const lines = text.split('\n');
           const start = startLine ? Math.max(0, startLine - 1) : 0;
