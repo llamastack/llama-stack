@@ -49,46 +49,50 @@ def client_with_empty_registry(client_with_models):
 
 
 @vector_provider_wrapper
-def test_vector_db_retrieve(client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id):
-    vector_db_name = "test_vector_db"
+def test_vector_store_retrieve(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    vector_store_name = "test_vector_store"
     create_response = client_with_empty_registry.vector_stores.create(
-        name=vector_db_name,
+        name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
         },
     )
 
-    actual_vector_db_id = create_response.id
+    actual_vector_store_id = create_response.id
 
     # Retrieve the vector store and validate its properties
-    response = client_with_empty_registry.vector_stores.retrieve(vector_store_id=actual_vector_db_id)
+    response = client_with_empty_registry.vector_stores.retrieve(vector_store_id=actual_vector_store_id)
     assert response is not None
-    assert response.id == actual_vector_db_id
-    assert response.name == vector_db_name
+    assert response.id == actual_vector_store_id
+    assert response.name == vector_store_name
     assert response.id.startswith("vs_")
 
 
 @vector_provider_wrapper
-def test_vector_db_register(client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id):
-    vector_db_name = "test_vector_db"
+def test_vector_store_register(
+    client_with_empty_registry, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    vector_store_name = "test_vector_store"
     response = client_with_empty_registry.vector_stores.create(
-        name=vector_db_name,
+        name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
         },
     )
 
-    actual_vector_db_id = response.id
-    assert actual_vector_db_id.startswith("vs_")
-    assert actual_vector_db_id != vector_db_name
+    actual_vector_store_id = response.id
+    assert actual_vector_store_id.startswith("vs_")
+    assert actual_vector_store_id != vector_store_name
 
     vector_stores = client_with_empty_registry.vector_stores.list()
     assert len(vector_stores.data) == 1
     vector_store = vector_stores.data[0]
-    assert vector_store.id == actual_vector_db_id
-    assert vector_store.name == vector_db_name
+    assert vector_store.id == actual_vector_store_id
+    assert vector_store.name == vector_store_name
 
-    client_with_empty_registry.vector_stores.delete(vector_store_id=actual_vector_db_id)
+    client_with_empty_registry.vector_stores.delete(vector_store_id=actual_vector_store_id)
 
     vector_stores = client_with_empty_registry.vector_stores.list()
     assert len(vector_stores.data) == 0
@@ -108,23 +112,23 @@ def test_vector_db_register(client_with_empty_registry, embedding_model_id, embe
 def test_insert_chunks(
     client_with_empty_registry, embedding_model_id, embedding_dimension, sample_chunks, test_case, vector_io_provider_id
 ):
-    vector_db_name = "test_vector_db"
+    vector_store_name = "test_vector_store"
     create_response = client_with_empty_registry.vector_stores.create(
-        name=vector_db_name,
+        name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
         },
     )
 
-    actual_vector_db_id = create_response.id
+    actual_vector_store_id = create_response.id
 
     client_with_empty_registry.vector_io.insert(
-        vector_db_id=actual_vector_db_id,
+        vector_db_id=actual_vector_store_id,
         chunks=sample_chunks,
     )
 
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_db_id,
+        vector_db_id=actual_vector_store_id,
         query="What is the capital of France?",
     )
     assert response is not None
@@ -133,7 +137,7 @@ def test_insert_chunks(
 
     query, expected_doc_id = test_case
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_db_id,
+        vector_db_id=actual_vector_store_id,
         query=query,
     )
     assert response is not None
@@ -151,15 +155,15 @@ def test_insert_chunks_with_precomputed_embeddings(
         "inline::qdrant": {"score_threshold": -1.0},
         "remote::qdrant": {"score_threshold": -1.0},
     }
-    vector_db_name = "test_precomputed_embeddings_db"
+    vector_store_name = "test_precomputed_embeddings_db"
     register_response = client_with_empty_registry.vector_stores.create(
-        name=vector_db_name,
+        name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
         },
     )
 
-    actual_vector_db_id = register_response.id
+    actual_vector_store_id = register_response.id
 
     chunks_with_embeddings = [
         Chunk(
@@ -170,13 +174,13 @@ def test_insert_chunks_with_precomputed_embeddings(
     ]
 
     client_with_empty_registry.vector_io.insert(
-        vector_db_id=actual_vector_db_id,
+        vector_db_id=actual_vector_store_id,
         chunks=chunks_with_embeddings,
     )
 
     provider = [p.provider_id for p in client_with_empty_registry.providers.list() if p.api == "vector_io"][0]
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_db_id,
+        vector_db_id=actual_vector_store_id,
         query="precomputed embedding test",
         params=vector_io_provider_params_dict.get(provider, None),
     )
@@ -200,16 +204,16 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
         "remote::qdrant": {"score_threshold": 0.0},
         "inline::qdrant": {"score_threshold": 0.0},
     }
-    vector_db_name = "test_precomputed_embeddings_db"
+    vector_store_name = "test_precomputed_embeddings_db"
     register_response = client_with_empty_registry.vector_stores.create(
-        name=vector_db_name,
+        name=vector_store_name,
         extra_body={
             "embedding_model": embedding_model_id,
             "provider_id": vector_io_provider_id,
         },
     )
 
-    actual_vector_db_id = register_response.id
+    actual_vector_store_id = register_response.id
 
     chunks_with_embeddings = [
         Chunk(
@@ -220,13 +224,13 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
     ]
 
     client_with_empty_registry.vector_io.insert(
-        vector_db_id=actual_vector_db_id,
+        vector_db_id=actual_vector_store_id,
         chunks=chunks_with_embeddings,
     )
 
     provider = [p.provider_id for p in client_with_empty_registry.providers.list() if p.api == "vector_io"][0]
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_db_id,
+        vector_db_id=actual_vector_store_id,
         query="duplicate",
         params=vector_io_provider_params_dict.get(provider, None),
     )

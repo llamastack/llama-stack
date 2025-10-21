@@ -42,6 +42,7 @@ def available_providers() -> list[ProviderSpec]:
             # CrossEncoder depends on torchao.quantization
             pip_packages=[
                 "torch torchvision torchao>=0.12.0 --extra-index-url https://download.pytorch.org/whl/cpu",
+                "numpy tqdm transformers",
                 "sentence-transformers --no-deps",
                 # required by some SentenceTransformers architectures for tensor rearrange/merge ops
                 "einops",

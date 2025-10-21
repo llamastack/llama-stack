@@ -16,15 +16,15 @@ from pydantic import BaseModel, TypeAdapter
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
+from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorDBWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator, sanitize_collection_name
 
 from .config import PGVectorVectorIOConfig
@@ -32,7 +32,7 @@ from .config import PGVectorVectorIOConfig
 log = get_logger(name=__name__, category="vector_io::pgvector")
 
 VERSION = "v3"
-VECTOR_DBS_PREFIX = f"vector_dbs:pgvector:{VERSION}::"
+VECTOR_DBS_PREFIX = f"vector_stores:pgvector:{VERSION}::"
 VECTOR_INDEX_PREFIX = f"vector_index:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:pgvector:{VERSION}::"
@@ -79,13 +79,13 @@ class PGVectorIndex(EmbeddingIndex):
 
     def __init__(
         self,
-        vector_db: VectorDB,
+        vector_store: VectorStore,
         dimension: int,
         conn: psycopg2.extensions.connection,
         kvstore: KVStore | None = None,
         distance_metric: str = "COSINE",
     ):
-        self.vector_db = vector_db
+        self.vector_store = vector_store
         self.dimension = dimension
         self.conn = conn
         self.kvstore = kvstore
@@ -97,9 +97,9 @@ class PGVectorIndex(EmbeddingIndex):
         try:
             with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 # Sanitize the table name by replacing hyphens with underscores
-                # SQL doesn't allow hyphens in table names, and vector_db.identifier may contain hyphens
+                # SQL doesn't allow hyphens in table names, and vector_store.identifier may contain hyphens
                 # when created with patterns like "test-vector-db-{uuid4()}"
-                sanitized_identifier = sanitize_collection_name(self.vector_db.identifier)
+                sanitized_identifier = sanitize_collection_name(self.vector_store.identifier)
                 self.table_name = f"vs_{sanitized_identifier}"
 
                 cur.execute(
@@ -122,8 +122,8 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
         except Exception as e:
-            log.exception(f"Error creating PGVectorIndex for vector_db: {self.vector_db.identifier}")
-            raise RuntimeError(f"Error creating PGVectorIndex for vector_db: {self.vector_db.identifier}") from e
+            log.exception(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}")
+            raise RuntimeError(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}") from e
 
     async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
@@ -323,7 +323,7 @@ class PGVectorIndex(EmbeddingIndex):
             )
 
 
-class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPrivate):
+class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(
         self, config: PGVectorVectorIOConfig, inference_api: Inference, files_api: Files | None = None
     ) -> None:
@@ -332,7 +332,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         self.inference_api = inference_api
         self.conn = None
         self.cache = {}
-        self.vector_db_store = None
+        self.vector_store_table = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:
@@ -375,59 +375,59 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoco
         # Clean up mixin resources (file batch tasks)
         await super().shutdown()
 
-    async def register_vector_db(self, vector_db: VectorDB) -> None:
+    async def register_vector_store(self, vector_store: VectorStore) -> None:
         # Persist vector DB metadata in the KV store
         assert self.kvstore is not None
         # Upsert model metadata in Postgres
-        upsert_models(self.conn, [(vector_db.identifier, vector_db)])
+        upsert_models(self.conn, [(vector_store.identifier, vector_store)])
 
         # Create and cache the PGVector index table for the vector DB
         pgvector_index = PGVectorIndex(
-            vector_db=vector_db, dimension=vector_db.embedding_dimension, conn=self.conn, kvstore=self.kvstore
+            vector_store=vector_store, dimension=vector_store.embedding_dimension, conn=self.conn, kvstore=self.kvstore
         )
         await pgvector_index.initialize()
-        index = VectorDBWithIndex(vector_db, index=pgvector_index, inference_api=self.inference_api)
-        self.cache[vector_db.identifier] = index
+        index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
+        self.cache[vector_store.identifier] = index
 
-    async def unregister_vector_db(self, vector_db_id: str) -> None:
+    async def unregister_vector_store(self, vector_store_id: str) -> None:
         # Remove provider index and cache
-        if vector_db_id in self.cache:
-            await self.cache[vector_db_id].index.delete()
-            del self.cache[vector_db_id]
+        if vector_store_id in self.cache:
+            await self.cache[vector_store_id].index.delete()
+            del self.cache[vector_store_id]
 
         # Delete vector DB metadata from KV store
         assert self.kvstore is not None
-        await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_db_id}")
+        await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
     async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
-        index = await self._get_and_cache_vector_db_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_db_id)
         await index.insert_chunks(chunks)
 
     async def query_chunks(
         self, vector_db_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_db_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_db_id)
         return await index.query_chunks(query, params)
 
-    async def _get_and_cache_vector_db_index(self, vector_db_id: str) -> VectorDBWithIndex:
-        if vector_db_id in self.cache:
-            return self.cache[vector_db_id]
+    async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex:
+        if vector_store_id in self.cache:
+            return self.cache[vector_store_id]
 
-        if self.vector_db_store is None:
-            raise VectorStoreNotFoundError(vector_db_id)
+        if self.vector_store_table is None:
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        vector_db = await self.vector_db_store.get_vector_db(vector_db_id)
-        if not vector_db:
-            raise VectorStoreNotFoundError(vector_db_id)
+        vector_store = await self.vector_store_table.get_vector_store(vector_store_id)
+        if not vector_store:
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        index = PGVectorIndex(vector_db, vector_db.embedding_dimension, self.conn)
+        index = PGVectorIndex(vector_store, vector_store.embedding_dimension, self.conn)
         await index.initialize()
-        self.cache[vector_db_id] = VectorDBWithIndex(vector_db, index, self.inference_api)
-        return self.cache[vector_db_id]
+        self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)
+        return self.cache[vector_store_id]
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Delete a chunk from a PostgreSQL vector store."""
-        index = await self._get_and_cache_vector_db_index(store_id)
+        index = await self._get_and_cache_vector_store_index(store_id)
         if not index:
             raise VectorStoreNotFoundError(store_id)
 

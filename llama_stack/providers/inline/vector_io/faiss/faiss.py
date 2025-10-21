@@ -17,21 +17,21 @@ from numpy.typing import NDArray
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus, VectorDBsProtocolPrivate
+from llama_stack.providers.datatypes import HealthResponse, HealthStatus, VectorStoresProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorDBWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 
 from .config import FaissVectorIOConfig
 
 logger = get_logger(name=__name__, category="vector_io")
 
 VERSION = "v3"
-VECTOR_DBS_PREFIX = f"vector_dbs:{VERSION}::"
+VECTOR_DBS_PREFIX = f"vector_stores:{VERSION}::"
 FAISS_INDEX_PREFIX = f"faiss_index:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:{VERSION}::"
@@ -176,28 +176,28 @@ class FaissIndex(EmbeddingIndex):
         )
 
 
-class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPrivate):
+class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.cache: dict[str, VectorDBWithIndex] = {}
+        self.cache: dict[str, VectorStoreWithIndex] = {}
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.persistence)
         # Load existing banks from kvstore
         start_key = VECTOR_DBS_PREFIX
         end_key = f"{VECTOR_DBS_PREFIX}\xff"
-        stored_vector_dbs = await self.kvstore.values_in_range(start_key, end_key)
+        stored_vector_stores = await self.kvstore.values_in_range(start_key, end_key)
 
-        for vector_db_data in stored_vector_dbs:
-            vector_db = VectorDB.model_validate_json(vector_db_data)
-            index = VectorDBWithIndex(
-                vector_db,
-                await FaissIndex.create(vector_db.embedding_dimension, self.kvstore, vector_db.identifier),
+        for vector_store_data in stored_vector_stores:
+            vector_store = VectorStore.model_validate_json(vector_store_data)
+            index = VectorStoreWithIndex(
+                vector_store,
+                await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
                 self.inference_api,
             )
-            self.cache[vector_db.identifier] = index
+            self.cache[vector_store.identifier] = index
 
         # Load existing OpenAI vector stores into the in-memory cache
         await self.initialize_openai_vector_stores()
@@ -222,32 +222,31 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPr
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")
 
-    async def register_vector_db(self, vector_db: VectorDB) -> None:
+    async def register_vector_store(self, vector_store: VectorStore) -> None:
         assert self.kvstore is not None
 
-        key = f"{VECTOR_DBS_PREFIX}{vector_db.identifier}"
-        await self.kvstore.set(key=key, value=vector_db.model_dump_json())
+        key = f"{VECTOR_DBS_PREFIX}{vector_store.identifier}"
+        await self.kvstore.set(key=key, value=vector_store.model_dump_json())
 
         # Store in cache
-        self.cache[vector_db.identifier] = VectorDBWithIndex(
-            vector_db=vector_db,
-            index=await FaissIndex.create(vector_db.embedding_dimension, self.kvstore, vector_db.identifier),
+        self.cache[vector_store.identifier] = VectorStoreWithIndex(
+            vector_store=vector_store,
+            index=await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
             inference_api=self.inference_api,
         )
 
-    async def list_vector_dbs(self) -> list[VectorDB]:
-        return [i.vector_db for i in self.cache.values()]
+    async def list_vector_stores(self) -> list[VectorStore]:
+        return [i.vector_store for i in self.cache.values()]
 
-    async def unregister_vector_db(self, vector_db_id: str) -> None:
+    async def unregister_vector_store(self, vector_store_id: str) -> None:
         assert self.kvstore is not None
 
-        if vector_db_id not in self.cache:
-            logger.warning(f"Vector DB {vector_db_id} not found")
+        if vector_store_id not in self.cache:
             return
 
-        await self.cache[vector_db_id].index.delete()
-        del self.cache[vector_db_id]
-        await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_db_id}")
+        await self.cache[vector_store_id].index.delete()
+        del self.cache[vector_store_id]
+        await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
     async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
         index = self.cache.get(vector_db_id)

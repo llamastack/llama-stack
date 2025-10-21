@@ -41,7 +41,7 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
     elif api == Api.safety:
         return await p.register_shield(obj)
     elif api == Api.vector_io:
-        return await p.register_vector_db(obj)
+        return await p.register_vector_store(obj)
     elif api == Api.datasetio:
         return await p.register_dataset(obj)
     elif api == Api.scoring:
@@ -57,7 +57,7 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
 async def unregister_object_from_provider(obj: RoutableObject, p: Any) -> None:
     api = get_impl_api(p)
     if api == Api.vector_io:
-        return await p.unregister_vector_db(obj.identifier)
+        return await p.unregister_vector_store(obj.identifier)
     elif api == Api.inference:
         return await p.unregister_model(obj.identifier)
     elif api == Api.safety:
@@ -108,7 +108,7 @@ class CommonRoutingTableImpl(RoutingTable):
             elif api == Api.safety:
                 p.shield_store = self
             elif api == Api.vector_io:
-                p.vector_db_store = self
+                p.vector_store_store = self
             elif api == Api.datasetio:
                 p.dataset_store = self
             elif api == Api.scoring:
@@ -134,15 +134,15 @@ class CommonRoutingTableImpl(RoutingTable):
         from .scoring_functions import ScoringFunctionsRoutingTable
         from .shields import ShieldsRoutingTable
         from .toolgroups import ToolGroupsRoutingTable
-        from .vector_dbs import VectorDBsRoutingTable
+        from .vector_stores import VectorStoresRoutingTable
 
         def apiname_object():
             if isinstance(self, ModelsRoutingTable):
                 return ("Inference", "model")
             elif isinstance(self, ShieldsRoutingTable):
                 return ("Safety", "shield")
-            elif isinstance(self, VectorDBsRoutingTable):
-                return ("VectorIO", "vector_db")
+            elif isinstance(self, VectorStoresRoutingTable):
+                return ("VectorIO", "vector_store")
             elif isinstance(self, DatasetsRoutingTable):
                 return ("DatasetIO", "dataset")
             elif isinstance(self, ScoringFunctionsRoutingTable):

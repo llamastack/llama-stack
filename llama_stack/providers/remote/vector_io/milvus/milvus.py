@@ -14,10 +14,10 @@ from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusC
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
+from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
@@ -26,7 +26,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_WEIGHTED,
     ChunkForDeletion,
     EmbeddingIndex,
-    VectorDBWithIndex,
+    VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 
@@ -35,7 +35,7 @@ from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig
 logger = get_logger(name=__name__, category="vector_io::milvus")
 
 VERSION = "v3"
-VECTOR_DBS_PREFIX = f"vector_dbs:milvus:{VERSION}::"
+VECTOR_DBS_PREFIX = f"vector_stores:milvus:{VERSION}::"
 VECTOR_INDEX_PREFIX = f"vector_index:milvus:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:milvus:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:milvus:{VERSION}::"
@@ -261,7 +261,7 @@ class MilvusIndex(EmbeddingIndex):
             raise
 
 
-class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPrivate):
+class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(
         self,
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
@@ -273,28 +273,28 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         self.cache = {}
         self.client = None
         self.inference_api = inference_api
-        self.vector_db_store = None
+        self.vector_store_table = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.persistence)
         start_key = VECTOR_DBS_PREFIX
         end_key = f"{VECTOR_DBS_PREFIX}\xff"
-        stored_vector_dbs = await self.kvstore.values_in_range(start_key, end_key)
+        stored_vector_stores = await self.kvstore.values_in_range(start_key, end_key)
 
-        for vector_db_data in stored_vector_dbs:
-            vector_db = VectorDB.model_validate_json(vector_db_data)
-            index = VectorDBWithIndex(
-                vector_db,
+        for vector_store_data in stored_vector_stores:
+            vector_store = VectorStore.model_validate_json(vector_store_data)
+            index = VectorStoreWithIndex(
+                vector_store,
                 index=MilvusIndex(
                     client=self.client,
-                    collection_name=vector_db.identifier,
+                    collection_name=vector_store.identifier,
                     consistency_level=self.config.consistency_level,
                     kvstore=self.kvstore,
                 ),
                 inference_api=self.inference_api,
             )
-            self.cache[vector_db.identifier] = index
+            self.cache[vector_store.identifier] = index
         if isinstance(self.config, RemoteMilvusVectorIOConfig):
             logger.info(f"Connecting to Milvus server at {self.config.uri}")
             self.client = MilvusClient(**self.config.model_dump(exclude_none=True))
@@ -311,45 +311,45 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
         # Clean up mixin resources (file batch tasks)
         await super().shutdown()
 
-    async def register_vector_db(self, vector_db: VectorDB) -> None:
+    async def register_vector_store(self, vector_store: VectorStore) -> None:
         if isinstance(self.config, RemoteMilvusVectorIOConfig):
             consistency_level = self.config.consistency_level
         else:
             consistency_level = "Strong"
-        index = VectorDBWithIndex(
-            vector_db=vector_db,
-            index=MilvusIndex(self.client, vector_db.identifier, consistency_level=consistency_level),
+        index = VectorStoreWithIndex(
+            vector_store=vector_store,
+            index=MilvusIndex(self.client, vector_store.identifier, consistency_level=consistency_level),
             inference_api=self.inference_api,
         )
 
-        self.cache[vector_db.identifier] = index
+        self.cache[vector_store.identifier] = index
 
-    async def _get_and_cache_vector_db_index(self, vector_db_id: str) -> VectorDBWithIndex | None:
-        if vector_db_id in self.cache:
-            return self.cache[vector_db_id]
+    async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex | None:
+        if vector_store_id in self.cache:
+            return self.cache[vector_store_id]
 
-        if self.vector_db_store is None:
-            raise VectorStoreNotFoundError(vector_db_id)
+        if self.vector_store_table is None:
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        vector_db = await self.vector_db_store.get_vector_db(vector_db_id)
-        if not vector_db:
-            raise VectorStoreNotFoundError(vector_db_id)
+        vector_store = await self.vector_store_table.get_vector_store(vector_store_id)
+        if not vector_store:
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        index = VectorDBWithIndex(
-            vector_db=vector_db,
-            index=MilvusIndex(client=self.client, collection_name=vector_db.identifier, kvstore=self.kvstore),
+        index = VectorStoreWithIndex(
+            vector_store=vector_store,
+            index=MilvusIndex(client=self.client, collection_name=vector_store.identifier, kvstore=self.kvstore),
             inference_api=self.inference_api,
         )
-        self.cache[vector_db_id] = index
+        self.cache[vector_store_id] = index
         return index
 
-    async def unregister_vector_db(self, vector_db_id: str) -> None:
-        if vector_db_id in self.cache:
-            await self.cache[vector_db_id].index.delete()
-            del self.cache[vector_db_id]
+    async def unregister_vector_store(self, vector_store_id: str) -> None:
+        if vector_store_id in self.cache:
+            await self.cache[vector_store_id].index.delete()
+            del self.cache[vector_store_id]
 
     async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
-        index = await self._get_and_cache_vector_db_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_db_id)
         if not index:
             raise VectorStoreNotFoundError(vector_db_id)
 
@@ -358,14 +358,14 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolP
     async def query_chunks(
         self, vector_db_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_db_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_db_id)
         if not index:
             raise VectorStoreNotFoundError(vector_db_id)
         return await index.query_chunks(query, params)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Delete a chunk from a milvus vector store."""
-        index = await self._get_and_cache_vector_db_index(store_id)
+        index = await self._get_and_cache_vector_store_index(store_id)
         if not index:
             raise VectorStoreNotFoundError(store_id)
 

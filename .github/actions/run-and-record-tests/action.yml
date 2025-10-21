@@ -86,10 +86,9 @@ runs:
       if: ${{ always() }}
       shell: bash
       run: |
-        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log || true
-        distro_name=$(echo "${{ inputs.stack-config }}" | sed 's/^docker://' | sed 's/^server://')
-        stack_container_name="llama-stack-test-$distro_name"
-        sudo docker logs $stack_container_name > docker-${distro_name}-${{ inputs.inference-mode }}.log || true
+        # Ollama logs (if ollama container exists)
+        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log 2>&1 || true
+        # Note: distro container logs are now dumped in integration-tests.sh before container is removed
 
     - name: Upload logs
       if: ${{ always() }}

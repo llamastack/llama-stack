@@ -23,8 +23,8 @@ from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnInput
 from llama_stack.apis.shields import Shield, ShieldInput
 from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
-from llama_stack.apis.vector_dbs import VectorDB, VectorDBInput
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.apis.vector_stores import VectorStore, VectorStoreInput
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import (
     KVStoreReference,
@@ -71,7 +71,7 @@ class ShieldWithOwner(Shield, ResourceWithOwner):
     pass
 
 
-class VectorDBWithOwner(VectorDB, ResourceWithOwner):
+class VectorStoreWithOwner(VectorStore, ResourceWithOwner):
     pass
 
 
@@ -91,12 +91,12 @@ class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
     pass
 
 
-RoutableObject = Model | Shield | VectorDB | Dataset | ScoringFn | Benchmark | ToolGroup
+RoutableObject = Model | Shield | VectorStore | Dataset | ScoringFn | Benchmark | ToolGroup
 
 RoutableObjectWithProvider = Annotated[
     ModelWithOwner
     | ShieldWithOwner
-    | VectorDBWithOwner
+    | VectorStoreWithOwner
     | DatasetWithOwner
     | ScoringFnWithOwner
     | BenchmarkWithOwner
@@ -427,7 +427,7 @@ class RegisteredResources(BaseModel):
 
     models: list[ModelInput] = Field(default_factory=list)
     shields: list[ShieldInput] = Field(default_factory=list)
-    vector_dbs: list[VectorDBInput] = Field(default_factory=list)
+    vector_stores: list[VectorStoreInput] = Field(default_factory=list)
     datasets: list[DatasetInput] = Field(default_factory=list)
     scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
     benchmarks: list[BenchmarkInput] = Field(default_factory=list)

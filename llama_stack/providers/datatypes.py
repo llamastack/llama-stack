@@ -17,7 +17,7 @@ from llama_stack.apis.models import Model
 from llama_stack.apis.scoring_functions import ScoringFn
 from llama_stack.apis.shields import Shield
 from llama_stack.apis.tools import ToolGroup
-from llama_stack.apis.vector_dbs import VectorDB
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -68,10 +68,10 @@ class ShieldsProtocolPrivate(Protocol):
     async def unregister_shield(self, identifier: str) -> None: ...
 
 
-class VectorDBsProtocolPrivate(Protocol):
-    async def register_vector_db(self, vector_db: VectorDB) -> None: ...
+class VectorStoresProtocolPrivate(Protocol):
+    async def register_vector_store(self, vector_store: VectorStore) -> None: ...
 
-    async def unregister_vector_db(self, vector_db_id: str) -> None: ...
+    async def unregister_vector_store(self, vector_store_id: str) -> None: ...
 
 
 class DatasetsProtocolPrivate(Protocol):

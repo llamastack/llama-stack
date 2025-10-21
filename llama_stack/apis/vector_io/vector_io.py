@@ -15,7 +15,7 @@ from fastapi import Body
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import InterleavedContent
-from llama_stack.apis.vector_dbs import VectorDB
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
@@ -140,6 +140,7 @@ class VectorStoreFileCounts(BaseModel):
     total: int
 
 
+# TODO: rename this as OpenAIVectorStore
 @json_schema_type
 class VectorStoreObject(BaseModel):
     """OpenAI Vector Store object.
@@ -517,17 +518,18 @@ class OpenAICreateVectorStoreFileBatchRequestWithExtraBody(BaseModel, extra="all
     chunking_strategy: VectorStoreChunkingStrategy | None = None
 
 
-class VectorDBStore(Protocol):
-    def get_vector_db(self, vector_db_id: str) -> VectorDB | None: ...
+class VectorStoreTable(Protocol):
+    def get_vector_store(self, vector_store_id: str) -> VectorStore | None: ...
 
 
 @runtime_checkable
 @trace_protocol
 class VectorIO(Protocol):
-    vector_db_store: VectorDBStore | None = None
+    vector_store_table: VectorStoreTable | None = None
 
     # this will just block now until chunks are inserted, but it should
     # probably return a Job instance which can be polled for completion
+    # TODO: rename vector_db_id to vector_store_id once Stainless is working
     @webmethod(route="/vector-io/insert", method="POST", level=LLAMA_STACK_API_V1)
     async def insert_chunks(
         self,
@@ -546,6 +548,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    # TODO: rename vector_db_id to vector_store_id once Stainless is working
     @webmethod(route="/vector-io/query", method="POST", level=LLAMA_STACK_API_V1)
     async def query_chunks(
         self,

@@ -238,6 +238,8 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         echo "Stopping Docker container..."
         container_name="llama-stack-test-$DISTRO"
         if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo "Dumping container logs before stopping..."
+            docker logs "$container_name" > "docker-${DISTRO}-${INFERENCE_MODE}.log" 2>&1 || true
             echo "Stopping and removing container: $container_name"
             docker stop "$container_name" 2>/dev/null || true
             docker rm "$container_name" 2>/dev/null || true
@@ -408,6 +410,21 @@ elif [ $exit_code -eq 5 ]; then
     echo "⚠️ No tests collected (pattern matched no tests)"
 else
     echo "❌ Tests failed"
+    echo ""
+    echo "=== Dumping last 100 lines of logs for debugging ==="
+
+    # Output server or container logs based on stack config
+    if [[ "$STACK_CONFIG" == *"server:"* && -f "server.log" ]]; then
+        echo "--- Last 100 lines of server.log ---"
+        tail -100 server.log
+    elif [[ "$STACK_CONFIG" == *"docker:"* ]]; then
+        docker_log_file="docker-${DISTRO}-${INFERENCE_MODE}.log"
+        if [[ -f "$docker_log_file" ]]; then
+            echo "--- Last 100 lines of $docker_log_file ---"
+            tail -100 "$docker_log_file"
+        fi
+    fi
+
     exit 1
 fi
 

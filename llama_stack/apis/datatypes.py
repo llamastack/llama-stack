@@ -121,7 +121,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
 
     models = "models"
     shields = "shields"
-    vector_dbs = "vector_dbs"  # only used for routing
+    vector_stores = "vector_stores"  # only used for routing table
     datasets = "datasets"
     scoring_functions = "scoring_functions"
     benchmarks = "benchmarks"

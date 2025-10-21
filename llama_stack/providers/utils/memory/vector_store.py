@@ -12,19 +12,16 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import unquote
 
-import httpx
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
 from llama_stack.apis.common.content_types import (
-    URL,
     InterleavedContent,
 )
 from llama_stack.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
-from llama_stack.apis.tools import RAGDocument
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import Api
@@ -129,31 +126,6 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
         return ""
 
 
-async def content_from_doc(doc: RAGDocument) -> str:
-    if isinstance(doc.content, URL):
-        if doc.content.uri.startswith("data:"):
-            return content_from_data(doc.content.uri)
-        async with httpx.AsyncClient() as client:
-            r = await client.get(doc.content.uri)
-        if doc.mime_type == "application/pdf":
-            return parse_pdf(r.content)
-        return r.text
-    elif isinstance(doc.content, str):
-        pattern = re.compile("^(https?://|file://|data:)")
-        if pattern.match(doc.content):
-            if doc.content.startswith("data:"):
-                return content_from_data(doc.content)
-            async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content)
-            if doc.mime_type == "application/pdf":
-                return parse_pdf(r.content)
-            return r.text
-        return doc.content
-    else:
-        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
-        return interleaved_content_as_str(doc.content)
-
-
 def make_overlapped_chunks(
     document_id: str, text: str, window_len: int, overlap_len: int, metadata: dict[str, Any]
 ) -> list[Chunk]:
@@ -187,7 +159,7 @@ def make_overlapped_chunks(
             updated_timestamp=int(time.time()),
             chunk_window=chunk_window,
             chunk_tokenizer=default_tokenizer,
-            chunk_embedding_model=None,  # This will be set in `VectorDBWithIndex.insert_chunks`
+            chunk_embedding_model=None,  # This will be set in `VectorStoreWithIndex.insert_chunks`
             content_token_count=len(toks),
             metadata_token_count=len(metadata_tokens),
         )
@@ -255,8 +227,8 @@ class EmbeddingIndex(ABC):
 
 
 @dataclass
-class VectorDBWithIndex:
-    vector_db: VectorDB
+class VectorStoreWithIndex:
+    vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Api.inference
 
@@ -269,14 +241,14 @@ class VectorDBWithIndex:
             if c.embedding is None:
                 chunks_to_embed.append(c)
                 if c.chunk_metadata:
-                    c.chunk_metadata.chunk_embedding_model = self.vector_db.embedding_model
-                    c.chunk_metadata.chunk_embedding_dimension = self.vector_db.embedding_dimension
+                    c.chunk_metadata.chunk_embedding_model = self.vector_store.embedding_model
+                    c.chunk_metadata.chunk_embedding_dimension = self.vector_store.embedding_dimension
             else:
-                _validate_embedding(c.embedding, i, self.vector_db.embedding_dimension)
+                _validate_embedding(c.embedding, i, self.vector_store.embedding_dimension)
 
         if chunks_to_embed:
             params = OpenAIEmbeddingsRequestWithExtraBody(
-                model=self.vector_db.embedding_model,
+                model=self.vector_store.embedding_model,
                 input=[c.content for c in chunks_to_embed],
             )
             resp = await self.inference_api.openai_embeddings(params)
@@ -319,7 +291,7 @@ class VectorDBWithIndex:
             return await self.index.query_keyword(query_string, k, score_threshold)
 
         params = OpenAIEmbeddingsRequestWithExtraBody(
-            model=self.vector_db.embedding_model,
+            model=self.vector_store.embedding_model,
             input=[query_string],
         )
         embeddings_response = await self.inference_api.openai_embeddings(params)
