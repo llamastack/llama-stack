@@ -37,6 +37,9 @@ def pytest_sessionstart(session):
     if "LLAMA_STACK_TEST_INFERENCE_MODE" not in os.environ:
         os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = "replay"
 
+    if "LLAMA_STACK_LOGGING" not in os.environ:
+        os.environ["LLAMA_STACK_LOGGING"] = "all=warning"
+
     if "SQLITE_STORE_DIR" not in os.environ:
         os.environ["SQLITE_STORE_DIR"] = tempfile.mkdtemp()
 

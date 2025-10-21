@@ -443,7 +443,6 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:
         if vector_store_id not in self.cache:
-            logger.warning(f"Vector DB {vector_store_id} not found")
             return
         await self.cache[vector_store_id].index.delete()
         del self.cache[vector_store_id]

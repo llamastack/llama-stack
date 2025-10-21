@@ -67,44 +67,16 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
             raise ModelNotFoundError(embedding_model)
         if model.model_type != ModelType.embedding:
             raise ModelTypeError(embedding_model, model.model_type, ModelType.embedding)
-        if "embedding_dimension" not in model.metadata:
-            raise ValueError(f"Model {embedding_model} does not have an embedding dimension")
 
-        try:
-            provider = self.impls_by_provider_id[provider_id]
-        except KeyError:
-            available_providers = list(self.impls_by_provider_id.keys())
-            raise ValueError(
-                f"Provider '{provider_id}' not found in routing table. Available providers: {available_providers}"
-            ) from None
-        logger.warning(
-            "VectorStore is being deprecated in future releases in favor of VectorStore. Please migrate your usage accordingly."
-        )
-        request = OpenAICreateVectorStoreRequestWithExtraBody(
-            name=vector_store_name or vector_store_id,
-            embedding_model=embedding_model,
-            embedding_dimension=model.metadata["embedding_dimension"],
+        vector_store = VectorStoreWithOwner(
+            identifier=vector_store_id,
+            type=ResourceType.vector_store.value,
             provider_id=provider_id,
-            provider_vector_store_id=provider_vector_store_id,
+            provider_resource_id=provider_vector_store_id,
+            embedding_model=embedding_model,
+            embedding_dimension=embedding_dimension,
+            vector_store_name=vector_store_name,
         )
-        vector_store = await provider.openai_create_vector_store(request)
-
-        vector_store_id = vector_store.id
-        actual_provider_vector_store_id = provider_vector_store_id or vector_store_id
-        logger.warning(
-            f"Ignoring vector_store_id {vector_store_id} and using vector_store_id {vector_store_id} instead. Setting VectorStore {vector_store_id} to VectorStore.vector_store_name"
-        )
-
-        vector_store_data = {
-            "identifier": vector_store_id,
-            "type": ResourceType.vector_store.value,
-            "provider_id": provider_id,
-            "provider_resource_id": actual_provider_vector_store_id,
-            "embedding_model": embedding_model,
-            "embedding_dimension": model.metadata["embedding_dimension"],
-            "vector_store_name": vector_store.name,
-        }
-        vector_store = TypeAdapter(VectorStoreWithOwner).validate_python(vector_store_data)
         await self.register_object(vector_store)
         return vector_store
 

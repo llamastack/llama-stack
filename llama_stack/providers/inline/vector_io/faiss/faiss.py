@@ -242,7 +242,6 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         assert self.kvstore is not None
 
         if vector_store_id not in self.cache:
-            logger.warning(f"Vector DB {vector_store_id} not found")
             return
 
         await self.cache[vector_store_id].index.delete()
