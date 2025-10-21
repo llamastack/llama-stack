@@ -418,10 +418,10 @@ else
         echo "--- Last 100 lines of server.log ---"
         tail -100 server.log
     elif [[ "$STACK_CONFIG" == *"docker:"* ]]; then
-        container_name="llama-stack-test-$DISTRO"
-        if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
-            echo "--- Last 100 lines of docker logs for $container_name ---"
-            docker logs "$container_name" 2>&1 | tail -100
+        docker_log_file="docker-${DISTRO}-${INFERENCE_MODE}.log"
+        if [[ -f "$docker_log_file" ]]; then
+            echo "--- Last 100 lines of $docker_log_file ---"
+            tail -100 "$docker_log_file"
         fi
     fi
 
