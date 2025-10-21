@@ -222,6 +222,7 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
 
   plugins: [
+    require.resolve('./plugins/file-sync-plugin'),
     [
       "docusaurus-plugin-openapi-docs",
       {
