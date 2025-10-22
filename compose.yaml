@@ -1,0 +1,18 @@
+services:
+  # Jaeger - OpenTelemetry collector and UI
+  jaeger:
+    image: jaegertracing/jaeger:2.1.0
+    container_name: llama-stack-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4318:4318"    # OTLP HTTP receiver
+      - "4317:4317"    # OTLP gRPC receiver (optional)
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+    networks:
+      - llama-stack-network
+
+networks:
+  llama-stack-network:
+    driver: bridge

@@ -98,7 +98,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
         params = params.model_copy()
 
         # Apply vLLM-specific defaults
-        if params.max_tokens is None and self.config.max_tokens:
+        if (params.max_tokens is None or params.max_tokens == 0) and self.config.max_tokens:
             params.max_tokens = self.config.max_tokens
 
         # This is to be consistent with OpenAI API and support vLLM <= v0.6.3
