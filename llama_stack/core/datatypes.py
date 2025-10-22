@@ -374,6 +374,15 @@ class VectorStoresConfig(BaseModel):
     )
 
 
+class SafetyConfig(BaseModel):
+    """Configuration for default moderations model."""
+
+    default_shield_id: str | None = Field(
+        default=None,
+        description="ID of the shield to use for when `model` is not specified in the `moderations` API request.",
+    )
+
+
 class QuotaPeriod(StrEnum):
     DAY = "day"
 
@@ -530,6 +539,11 @@ can be instantiated multiple times (with different configs) if necessary.
     vector_stores: VectorStoresConfig | None = Field(
         default=None,
         description="Configuration for vector stores, including default embedding model",
+    )
+
+    safety: SafetyConfig | None = Field(
+        default=None,
+        description="Configuration for default moderations model",
     )
 
     @field_validator("external_providers_dir")
