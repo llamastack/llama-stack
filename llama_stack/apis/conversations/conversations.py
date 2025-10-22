@@ -148,7 +148,6 @@ class ConversationItemCreateRequest(BaseModel):
     )
 
 
-@json_schema_type
 class ConversationItemInclude(StrEnum):
     """
     Specify additional output data to include in the model response.

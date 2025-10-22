@@ -496,7 +496,18 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/ConversationItemInclude"
+                                "type": "string",
+                                "enum": [
+                                    "web_search_call.action.sources",
+                                    "code_interpreter_call.outputs",
+                                    "computer_call_output.output.image_url",
+                                    "file_search_call.results",
+                                    "message.input_image.image_url",
+                                    "message.output_text.logprobs",
+                                    "reasoning.encrypted_content"
+                                ],
+                                "title": "ConversationItemInclude",
+                                "description": "Specify additional output data to include in the model response."
                             }
                         }
                     },
@@ -6310,20 +6321,6 @@
                 ],
                 "title": "ConversationDeletedResource",
                 "description": "Response for deleted conversation."
-            },
-            "ConversationItemInclude": {
-                "type": "string",
-                "enum": [
-                    "web_search_call.action.sources",
-                    "code_interpreter_call.outputs",
-                    "computer_call_output.output.image_url",
-                    "file_search_call.results",
-                    "message.input_image.image_url",
-                    "message.output_text.logprobs",
-                    "reasoning.encrypted_content"
-                ],
-                "title": "ConversationItemInclude",
-                "description": "Specify additional output data to include in the model response."
             },
             "ConversationItemList": {
                 "type": "object",
