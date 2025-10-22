@@ -372,14 +372,13 @@ class OpenAIResponsesImpl:
                 final_response = stream_chunk.response
             elif stream_chunk.type == "response.failed":
                 failed_response = stream_chunk.response
-            yield stream_chunk
 
             if stream_chunk.type == "response.output_item.done":
                 item = stream_chunk.item
                 output_items.append(item)
 
-            # Store and sync immediately after yielding terminal events
-            # This ensures the storage/syncing happens even if the consumer breaks early
+            # Store and sync before yielding terminal events
+            # This ensures the storage/syncing happens even if the consumer breaks after receiving the event
             if (
                 stream_chunk.type in {"response.completed", "response.incomplete"}
                 and final_response
@@ -399,6 +398,8 @@ class OpenAIResponsesImpl:
                 if conversation:
                     await self._sync_response_to_conversation(conversation, input, output_items)
                     await self.responses_store.store_conversation_messages(conversation, messages_to_store)
+
+            yield stream_chunk
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)
