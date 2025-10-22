@@ -66,7 +66,7 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
         self.shield = NeMoGuardrails(self.config, shield.shield_id)
         return await self.shield.run(messages)
 
-    async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
+    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
         raise NotImplementedError("NVIDIA safety provider currently does not implement run_moderation")
 
 

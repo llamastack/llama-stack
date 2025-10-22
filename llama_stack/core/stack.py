@@ -35,7 +35,7 @@ from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, StackRunConfig, VectorStoresConfig
+from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -173,6 +173,30 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
     logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+
+
+async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
+    if safety_config is None or safety_config.default_shield_id is None:
+        return
+
+    if Api.shields not in impls:
+        raise ValueError("Safety configuration requires the shields API to be enabled")
+
+    if Api.safety not in impls:
+        raise ValueError("Safety configuration requires the safety API to be enabled")
+
+    shields_impl = impls[Api.shields]
+    response = await shields_impl.list_shields()
+    shields_by_id = {shield.identifier: shield for shield in response.data}
+
+    default_shield_id = safety_config.default_shield_id
+    # don't validate if there are no shields registered
+    if shields_by_id and default_shield_id not in shields_by_id:
+        available = sorted(shields_by_id)
+        raise ValueError(
+            f"Configured default_shield_id '{default_shield_id}' not found among registered shields."
+            f" Available shields: {available}"
+        )
 
 
 class EnvVarError(Exception):
@@ -412,6 +436,7 @@ class Stack:
         await register_resources(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
+        await validate_safety_config(self.run_config.safety, impls)
         self.impls = impls
 
     def create_registry_refresh_task(self):

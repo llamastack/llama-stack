@@ -11,8 +11,9 @@ from unittest.mock import AsyncMock
 import pytest
 
 from llama_stack.apis.models import ListModelsResponse, Model, ModelType
-from llama_stack.core.datatypes import QualifiedModel, StackRunConfig, StorageConfig, VectorStoresConfig
-from llama_stack.core.stack import validate_vector_stores_config
+from llama_stack.apis.shields import ListShieldsResponse, Shield
+from llama_stack.core.datatypes import QualifiedModel, SafetyConfig, StackRunConfig, StorageConfig, VectorStoresConfig
+from llama_stack.core.stack import validate_safety_config, validate_vector_stores_config
 from llama_stack.providers.datatypes import Api
 
 
@@ -65,3 +66,29 @@ class TestVectorStoresValidation:
         )
 
         await validate_vector_stores_config(run_config.vector_stores, {Api.models: mock_models})
+
+
+class TestSafetyConfigValidation:
+    async def test_validate_missing_shield(self):
+        safety_config = SafetyConfig(default_shield_id="missing-shield")
+
+        shields_impl = AsyncMock()
+        shields_impl.list_shields.return_value = ListShieldsResponse(data=[])
+
+        with pytest.raises(ValueError, match="missing-shield"):
+            await validate_safety_config(safety_config, {Api.shields: shields_impl, Api.safety: AsyncMock()})
+
+    async def test_validate_success(self):
+        safety_config = SafetyConfig(default_shield_id="shield-1")
+
+        shield = Shield(
+            identifier="shield-1",
+            provider_id="provider-x",
+            provider_resource_id="model-x",
+            params={},
+        )
+
+        shields_impl = AsyncMock()
+        shields_impl.list_shields.return_value = ListShieldsResponse(data=[shield])
+
+        await validate_safety_config(safety_config, {Api.shields: shields_impl, Api.safety: AsyncMock()})
