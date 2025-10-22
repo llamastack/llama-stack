@@ -43,6 +43,7 @@ def pytest_sessionstart(session):
 
     if "SQLITE_STORE_DIR" not in os.environ:
         os.environ["SQLITE_STORE_DIR"] = tempfile.mkdtemp()
+        logger.info(f"Setting SQLITE_STORE_DIR: {os.environ['SQLITE_STORE_DIR']}")
 
     # Set test stack config type for api_recorder test isolation
     stack_config = session.config.getoption("--stack-config", default=None)
