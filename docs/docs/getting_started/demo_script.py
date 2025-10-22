@@ -18,7 +18,7 @@ uploaded_file = client.files.create(file=(url, pseudo_file, "text/html"), purpos
 client.vector_stores.files.create(vector_store_id=vs.id, file_id=uploaded_file.id)
 
 resp = client.responses.create(
-    model="gpt-4o",
+    model="openai/gpt-4o",
     input="How do you do great work? Use the existing knowledge_search tool.",
     tools=[{"type": "file_search", "vector_store_ids": [vs.id]}],
     include=["file_search_call.results"],

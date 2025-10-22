@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "start": "npm run sync-files && docusaurus start",
-    "build": "npm run sync-files && docusaurus build",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
@@ -15,8 +15,7 @@
     "gen-api-docs": "docusaurus gen-api-docs",
     "clean-api-docs": "docusaurus clean-api-docs",
     "gen-api-docs:version": "docusaurus gen-api-docs:version",
-    "clean-api-docs:version": "docusaurus clean-api-docs:version",
-    "sync-files": "node scripts/sync-files.js"
+    "clean-api-docs:version": "docusaurus clean-api-docs:version"
   },
   "dependencies": {
     "@docusaurus/core": "3.8.1",
