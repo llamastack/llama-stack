@@ -236,12 +236,30 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
             }
         },
         "loggers": {
-            category: {
-                "handlers": list(handlers.keys()),  # Apply all handlers
-                "level": category_levels.get(category, DEFAULT_LOG_LEVEL),
-                "propagate": False,  # Disable propagation to root logger
-            }
-            for category in CATEGORIES
+            **{
+                category: {
+                    "handlers": list(handlers.keys()),  # Apply all handlers
+                    "level": category_levels.get(category, DEFAULT_LOG_LEVEL),
+                    "propagate": False,  # Disable propagation to root logger
+                }
+                for category in CATEGORIES
+            },
+            # Explicitly configure uvicorn loggers to preserve their INFO level
+            "uvicorn": {
+                "handlers": list(handlers.keys()),
+                "level": logging.INFO,
+                "propagate": False,
+            },
+            "uvicorn.error": {
+                "handlers": list(handlers.keys()),
+                "level": logging.INFO,
+                "propagate": False,
+            },
+            "uvicorn.access": {
+                "handlers": list(handlers.keys()),
+                "level": logging.INFO,
+                "propagate": False,
+            },
         },
         "root": {
             "handlers": list(handlers.keys()),
@@ -250,9 +268,13 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
     }
     dictConfig(logging_config)
 
-    # Ensure third-party libraries follow the root log level
-    for _, logger in logging.root.manager.loggerDict.items():
+    # Ensure third-party libraries follow the root log level, but preserve
+    # already-configured loggers (e.g., uvicorn) and our own llama_stack loggers
+    for name, logger in logging.root.manager.loggerDict.items():
         if isinstance(logger, logging.Logger):
+            # Skip infrastructure loggers (uvicorn, fastapi) and our own loggers
+            if name.startswith(("uvicorn", "fastapi", "llama_stack")):
+                continue
             logger.setLevel(root_level)
 
 

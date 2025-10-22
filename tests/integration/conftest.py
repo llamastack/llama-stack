@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 import inspect
 import itertools
+import logging  # allow-direct-logging
 import os
 import tempfile
 import textwrap
@@ -55,6 +56,12 @@ def pytest_sessionstart(session):
         logger.info(f"Test stack config type: library_client (stack_config={stack_config})")
 
     patch_httpx_for_test_id()
+
+
+@pytest.fixture(autouse=True)
+def suppress_httpx_logs(caplog):
+    """Suppress httpx INFO logs for all integration tests"""
+    caplog.set_level(logging.WARNING, logger="httpx")
 
 
 @pytest.fixture(autouse=True)

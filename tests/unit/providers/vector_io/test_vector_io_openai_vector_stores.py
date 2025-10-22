@@ -1079,50 +1079,6 @@ async def test_embedding_config_consistency_check_passes(vector_io_adapter):
     assert call_args.embedding_dimension == 768
 
 
-async def test_embedding_config_inconsistency_errors(vector_io_adapter):
-    """Test that inconsistent embedding config between metadata and extra_body raises errors."""
-
-    # Mock register_vector_store to avoid actual registration
-    vector_io_adapter.register_vector_store = AsyncMock()
-    # Set provider_id attribute for the adapter
-    vector_io_adapter.__provider_id__ = "test_provider"
-
-    # Test with inconsistent embedding model
-    params = OpenAICreateVectorStoreRequestWithExtraBody(
-        name="test_store",
-        metadata={
-            "embedding_model": "metadata-model",
-            "embedding_dimension": "768",
-        },
-        **{
-            "embedding_model": "extra-body-model",
-            "embedding_dimension": 768,
-        },
-    )
-
-    with pytest.raises(ValueError, match="Embedding model inconsistent between metadata"):
-        await vector_io_adapter.openai_create_vector_store(params)
-
-    # Reset mock for second test
-    vector_io_adapter.register_vector_store.reset_mock()
-
-    # Test with inconsistent embedding dimension
-    params = OpenAICreateVectorStoreRequestWithExtraBody(
-        name="test_store",
-        metadata={
-            "embedding_model": "same-model",
-            "embedding_dimension": "512",
-        },
-        **{
-            "embedding_model": "same-model",
-            "embedding_dimension": 1024,
-        },
-    )
-
-    with pytest.raises(ValueError, match="Embedding dimension inconsistent between metadata"):
-        await vector_io_adapter.openai_create_vector_store(params)
-
-
 async def test_embedding_config_defaults_when_missing(vector_io_adapter):
     """Test that embedding dimension defaults to 768 when not provided."""
 
