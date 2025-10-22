@@ -95,6 +95,8 @@ async def get_auto_router_impl(
 
     elif api == Api.vector_io:
         api_to_dep_impl["vector_stores_config"] = run_config.vector_stores
+    elif api == Api.safety:
+        api_to_dep_impl["safety_config"] = run_config.safety
 
     impl = api_to_routers[api.value](routing_table, **api_to_dep_impl)
     await impl.initialize()

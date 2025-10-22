@@ -101,7 +101,10 @@ class MetaReferenceCodeScannerSafetyImpl(Safety):
             metadata=metadata,
         )
 
-    async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
+    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
+        if model is None:
+            raise ValueError("Code scanner moderation requires a model identifier.")
+
         inputs = input if isinstance(input, list) else [input]
         results = []
 
