@@ -12,6 +12,7 @@ from llama_stack.core.datatypes import (
     Provider,
     ProviderSpec,
     QualifiedModel,
+    SafetyConfig,
     ShieldInput,
     ToolGroupInput,
     VectorStoresConfig,
@@ -255,6 +256,9 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                         provider_id="sentence-transformers",
                         model_id="nomic-ai/nomic-embed-text-v1.5",
                     ),
+                ),
+                safety_config=SafetyConfig(
+                    default_shield_id="llama-guard",
                 ),
             ),
         },

@@ -274,3 +274,5 @@ vector_stores:
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: nomic-ai/nomic-embed-text-v1.5
+safety:
+  default_shield_id: llama-guard

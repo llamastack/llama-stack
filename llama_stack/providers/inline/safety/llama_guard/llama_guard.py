@@ -200,7 +200,10 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
 
         return await impl.run(messages)
 
-    async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
+    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
+        if model is None:
+            raise ValueError("Llama Guard moderation requires a model identifier.")
+
         if isinstance(input, list):
             messages = input.copy()
         else:
