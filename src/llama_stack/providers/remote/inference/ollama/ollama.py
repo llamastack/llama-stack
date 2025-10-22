@@ -55,17 +55,23 @@ class OllamaInferenceAdapter(OpenAIMixin):
         # ollama client attaches itself to the current event loop (sadly?)
         loop = asyncio.get_running_loop()
         if loop not in self._clients:
-            self._clients[loop] = AsyncOllamaClient(host=self.config.url)
+            # Ollama client expects base URL without /v1 suffix
+            base_url_str = str(self.config.base_url)
+            if base_url_str.endswith("/v1"):
+                host = base_url_str[:-3]
+            else:
+                host = base_url_str
+            self._clients[loop] = AsyncOllamaClient(host=host)
         return self._clients[loop]
 
     def get_api_key(self):
         return "NO KEY REQUIRED"
 
     def get_base_url(self):
-        return self.config.url.rstrip("/") + "/v1"
+        return str(self.config.base_url)
 
     async def initialize(self) -> None:
-        logger.info(f"checking connectivity to Ollama at `{self.config.url}`...")
+        logger.info(f"checking connectivity to Ollama at `{self.config.base_url}`...")
         r = await self.health()
         if r["status"] == HealthStatus.ERROR:
             logger.warning(

@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
@@ -21,8 +21,8 @@ class OpenAIProviderDataValidator(BaseModel):
 
 @json_schema_type
 class OpenAIConfig(RemoteInferenceProviderConfig):
-    base_url: str = Field(
-        default="https://api.openai.com/v1",
+    base_url: HttpUrl | None = Field(
+        default=HttpUrl("https://api.openai.com/v1"),
         description="Base URL for OpenAI API",
     )
 

@@ -15,7 +15,7 @@ providers:
   - provider_id: watsonx
     provider_type: remote::watsonx
     config:
-      url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
       api_key: ${env.WATSONX_API_KEY:=}
       project_id: ${env.WATSONX_PROJECT_ID:=}
   vector_io:

@@ -31,7 +31,7 @@ class LlamaCompatInferenceAdapter(OpenAIMixin):
 
         :return: The Llama API base URL
         """
-        return self.config.openai_compat_api_base
+        return str(self.config.base_url)
 
     async def openai_completion(
         self,

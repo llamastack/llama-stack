@@ -25,4 +25,4 @@ class SambaNovaInferenceAdapter(OpenAIMixin):
 
         :return: The SambaNova base URL
         """
-        return self.config.url
+        return str(self.config.base_url)

@@ -8,7 +8,7 @@
 from collections.abc import Iterable
 
 from huggingface_hub import AsyncInferenceClient, HfApi
-from pydantic import SecretStr
+from pydantic import HttpUrl, SecretStr
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
@@ -23,7 +23,7 @@ log = get_logger(name=__name__, category="inference::tgi")
 
 
 class _HfAdapter(OpenAIMixin):
-    url: str
+    base_url: HttpUrl
     api_key: SecretStr
 
     hf_client: AsyncInferenceClient
@@ -36,7 +36,7 @@ class _HfAdapter(OpenAIMixin):
         return "NO KEY REQUIRED"
 
     def get_base_url(self):
-        return self.url
+        return self.base_url
 
     async def list_provider_model_ids(self) -> Iterable[str]:
         return [self.model_id]
@@ -50,14 +50,20 @@ class _HfAdapter(OpenAIMixin):
 
 class TGIAdapter(_HfAdapter):
     async def initialize(self, config: TGIImplConfig) -> None:
-        if not config.url:
+        if not config.base_url:
             raise ValueError("You must provide a URL in run.yaml (or via the TGI_URL environment variable) to use TGI.")
-        log.info(f"Initializing TGI client with url={config.url}")
-        self.hf_client = AsyncInferenceClient(model=config.url, provider="hf-inference")
+        log.info(f"Initializing TGI client with url={config.base_url}")
+        # Extract base URL without /v1 for HF client initialization
+        base_url_str = str(config.base_url).rstrip("/")
+        if base_url_str.endswith("/v1"):
+            base_url_for_client = base_url_str[:-3]
+        else:
+            base_url_for_client = base_url_str
+        self.hf_client = AsyncInferenceClient(model=base_url_for_client, provider="hf-inference")
         endpoint_info = await self.hf_client.get_endpoint_info()
         self.max_tokens = endpoint_info["max_total_tokens"]
         self.model_id = endpoint_info["model_id"]
-        self.url = f"{config.url.rstrip('/')}/v1"
+        self.base_url = config.base_url
         self.api_key = SecretStr("NO_KEY")
 
 
