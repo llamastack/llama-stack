@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import json
+import logging  # allow-direct-logging
 import os
 
 import httpx
@@ -198,7 +199,7 @@ def test_response_sequential_file_search(
 
 
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
-def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case):
+def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case, caplog):
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
@@ -245,13 +246,17 @@ def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case):
             if isinstance(compat_client, LlamaStackAsLibraryClient)
             else (httpx.HTTPStatusError, openai.AuthenticationError)
         )
-        with pytest.raises(exc_type):
-            compat_client.responses.create(
-                model=text_model_id,
-                input=case.input,
-                tools=tools,
-                stream=False,
-            )
+        # Suppress expected auth error logs only for the failing auth attempt
+        with caplog.at_level(
+            logging.CRITICAL, logger="llama_stack.providers.inline.agents.meta_reference.responses.streaming"
+        ):
+            with pytest.raises(exc_type):
+                compat_client.responses.create(
+                    model=text_model_id,
+                    input=case.input,
+                    tools=tools,
+                    stream=False,
+                )
 
         for tool in tools:
             if tool["type"] == "mcp":
