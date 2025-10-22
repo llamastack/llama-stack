@@ -6,9 +6,8 @@
 
 import secrets
 import time
-from typing import Any
+from typing import Any, Literal
 
-from openai import NOT_GIVEN
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.apis.conversations.conversations import (
@@ -16,6 +15,7 @@ from llama_stack.apis.conversations.conversations import (
     ConversationDeletedResource,
     ConversationItem,
     ConversationItemDeletedResource,
+    ConversationItemInclude,
     ConversationItemList,
     Conversations,
     Metadata,
@@ -247,7 +247,14 @@ class ConversationServiceImpl(Conversations):
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
         return adapter.validate_python(record["item_data"])
 
-    async def list(self, conversation_id: str, after=NOT_GIVEN, include=NOT_GIVEN, limit=NOT_GIVEN, order=NOT_GIVEN):
+    async def list_items(
+        self,
+        conversation_id: str,
+        after: str | None = None,
+        include: list[ConversationItemInclude] | None = None,
+        limit: int | None = None,
+        order: Literal["asc", "desc"] | None = None,
+    ) -> ConversationItemList:
         """List items in the conversation."""
         if not conversation_id:
             raise ValueError(f"Expected a non-empty value for `conversation_id` but received {conversation_id!r}")
@@ -258,14 +265,12 @@ class ConversationServiceImpl(Conversations):
         result = await self.sql_store.fetch_all(table="conversation_items", where={"conversation_id": conversation_id})
         records = result.data
 
-        if order != NOT_GIVEN and order == "asc":
+        if order is not None and order == "asc":
             records.sort(key=lambda x: x["created_at"])
         else:
             records.sort(key=lambda x: x["created_at"], reverse=True)
 
-        actual_limit = 20
-        if limit != NOT_GIVEN and isinstance(limit, int):
-            actual_limit = limit
+        actual_limit = limit or 20
 
         records = records[:actual_limit]
         items = [record["item_data"] for record in records]

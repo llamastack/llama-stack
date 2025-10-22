@@ -350,146 +350,46 @@ paths:
           in: query
           description: >-
             An item ID to list items after, used in pagination.
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: string
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: string
         - name: include
           in: query
           description: >-
             Specify additional output data to include in the response.
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: array
-                items:
-                  type: string
-                  enum:
-                    - code_interpreter_call.outputs
-                    - computer_call_output.output.image_url
-                    - file_search_call.results
-                    - message.input_image.image_url
-                    - message.output_text.logprobs
-                    - reasoning.encrypted_content
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: array
+            items:
+              type: string
+              enum:
+                - web_search_call.action.sources
+                - code_interpreter_call.outputs
+                - computer_call_output.output.image_url
+                - file_search_call.results
+                - message.input_image.image_url
+                - message.output_text.logprobs
+                - reasoning.encrypted_content
+              title: ConversationItemInclude
+              description: >-
+                Specify additional output data to include in the model response.
         - name: limit
           in: query
           description: >-
             A limit on the number of objects to be returned (1-100, default 20).
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: integer
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: integer
         - name: order
           in: query
           description: >-
             The order to return items in (asc or desc, default desc).
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: string
-                enum:
-                  - asc
-                  - desc
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: string
+            enum:
+              - asc
+              - desc
       deprecated: false
     post:
       responses:
@@ -6482,6 +6382,7 @@ components:
       enum:
         - llm
         - embedding
+        - rerank
       title: ModelType
       description: >-
         Enumeration of supported model types in Llama Stack.
@@ -13585,13 +13486,16 @@ tags:
       embeddings.
 
 
-      This API provides the raw interface to the underlying models. Two kinds of models
-      are supported:
+      This API provides the raw interface to the underlying models. Three kinds of
+      models are supported:
 
       - LLM models: these models generate "raw" and "chat" (conversational) completions.
 
       - Embedding models: these models generate embeddings to be used for semantic
       search.
+
+      - Rerank models: these models reorder the documents based on their relevance
+      to a query.
     x-displayName: Inference
   - name: Inspect
     description: >-

@@ -65,12 +65,16 @@ class SafetyRouter(Safety):
             """Get Shield id from model (provider_resource_id) of shield."""
             list_shields_response = await self.routing_table.list_shields()
 
-            matches = [s.identifier for s in list_shields_response.data if model == s.provider_resource_id]
+            matches: list[str] = [s.identifier for s in list_shields_response.data if model == s.provider_resource_id]
 
             if not matches:
-                raise ValueError(f"No shield associated with provider_resource id {model}")
+                raise ValueError(
+                    f"No shield associated with provider_resource id {model}: choose from {[s.provider_resource_id for s in list_shields_response.data]}"
+                )
             if len(matches) > 1:
-                raise ValueError(f"Multiple shields associated with provider_resource id {model}")
+                raise ValueError(
+                    f"Multiple shields associated with provider_resource id {model}: matched shields {matches}"
+                )
             return matches[0]
 
         shield_id = await get_shield_id(self, model)

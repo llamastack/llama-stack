@@ -131,7 +131,7 @@ class OpenAIResponsesImpl:
 
             tool_context.recover_tools_from_previous_response(previous_response)
         elif conversation is not None:
-            conversation_items = await self.conversations_api.list(conversation, order="asc")
+            conversation_items = await self.conversations_api.list_items(conversation, order="asc")
 
             # Use stored messages as source of truth (like previous_response.messages)
             stored_messages = await self.responses_store.get_conversation_messages(conversation)

@@ -137,7 +137,8 @@ class CustomRichHandler(RichHandler):
         # Set a reasonable default width for console output, especially when redirected to files
         console_width = int(os.environ.get("LLAMA_STACK_LOG_WIDTH", "120"))
         # Don't force terminal codes to avoid ANSI escape codes in log files
-        kwargs["console"] = Console(width=console_width)
+        # Ensure logs go to stderr, not stdout
+        kwargs["console"] = Console(width=console_width, stderr=True)
         super().__init__(*args, **kwargs)
 
     def emit(self, record):
@@ -177,12 +178,16 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
         log_file (str | None): Path to a log file to additionally pipe the logs into.
             If None, reads from LLAMA_STACK_LOG_FILE environment variable.
     """
+    global _category_levels
     # Read from environment variables if not explicitly provided
     if category_levels is None:
         category_levels = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
         env_config = os.environ.get("LLAMA_STACK_LOGGING", "")
         if env_config:
             category_levels.update(parse_environment_config(env_config))
+
+    # Update the module-level _category_levels so that already-created loggers pick up the new levels
+    _category_levels.update(category_levels)
 
     if log_file is None:
         log_file = os.environ.get("LLAMA_STACK_LOG_FILE")
@@ -268,14 +273,18 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
     }
     dictConfig(logging_config)
 
-    # Ensure third-party libraries follow the root log level, but preserve
-    # already-configured loggers (e.g., uvicorn) and our own llama_stack loggers
+    # Update log levels for all loggers that were created before setup_logging was called
     for name, logger in logging.root.manager.loggerDict.items():
         if isinstance(logger, logging.Logger):
-            # Skip infrastructure loggers (uvicorn, fastapi) and our own loggers
-            if name.startswith(("uvicorn", "fastapi", "llama_stack")):
+            # Skip infrastructure loggers (uvicorn, fastapi) to preserve their configured levels
+            if name.startswith(("uvicorn", "fastapi")):
                 continue
-            logger.setLevel(root_level)
+            # Update llama_stack loggers if root level was explicitly set (e.g., via all=CRITICAL)
+            if name.startswith("llama_stack") and "root" in category_levels:
+                logger.setLevel(root_level)
+            # Update third-party library loggers
+            elif not name.startswith("llama_stack"):
+                logger.setLevel(root_level)
 
 
 def get_logger(

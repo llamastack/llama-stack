@@ -4,11 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from enum import StrEnum
 from typing import Annotated, Literal, Protocol, runtime_checkable
 
-from openai import NOT_GIVEN
-from openai._types import NotGiven
-from openai.types.responses.response_includable import ResponseIncludable
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.agents.openai_responses import (
@@ -150,6 +148,20 @@ class ConversationItemCreateRequest(BaseModel):
     )
 
 
+class ConversationItemInclude(StrEnum):
+    """
+    Specify additional output data to include in the model response.
+    """
+
+    web_search_call_action_sources = "web_search_call.action.sources"
+    code_interpreter_call_outputs = "code_interpreter_call.outputs"
+    computer_call_output_output_image_url = "computer_call_output.output.image_url"
+    file_search_call_results = "file_search_call.results"
+    message_input_image_image_url = "message.input_image.image_url"
+    message_output_text_logprobs = "message.output_text.logprobs"
+    reasoning_encrypted_content = "reasoning.encrypted_content"
+
+
 @json_schema_type
 class ConversationItemList(BaseModel):
     """List of conversation items with pagination."""
@@ -250,13 +262,13 @@ class Conversations(Protocol):
         ...
 
     @webmethod(route="/conversations/{conversation_id}/items", method="GET", level=LLAMA_STACK_API_V1)
-    async def list(
+    async def list_items(
         self,
         conversation_id: str,
-        after: str | NotGiven = NOT_GIVEN,
-        include: list[ResponseIncludable] | NotGiven = NOT_GIVEN,
-        limit: int | NotGiven = NOT_GIVEN,
-        order: Literal["asc", "desc"] | NotGiven = NOT_GIVEN,
+        after: str | None = None,
+        include: list[ConversationItemInclude] | None = None,
+        limit: int | None = None,
+        order: Literal["asc", "desc"] | None = None,
     ) -> ConversationItemList:
         """List items.
 

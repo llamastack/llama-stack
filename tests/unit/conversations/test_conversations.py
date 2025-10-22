@@ -82,7 +82,7 @@ async def test_conversation_items(service):
     assert len(item_list.data) == 1
     assert item_list.data[0].id == "msg_test123"
 
-    items = await service.list(conversation.id)
+    items = await service.list_items(conversation.id)
     assert len(items.data) == 1
 
 
@@ -120,7 +120,7 @@ async def test_openai_type_compatibility(service):
         assert hasattr(item_list, attr)
     assert item_list.object == "list"
 
-    items = await service.list(conversation.id)
+    items = await service.list_items(conversation.id)
     item = await service.retrieve(conversation.id, items.data[0].id)
     item_dict = item.model_dump()
 
