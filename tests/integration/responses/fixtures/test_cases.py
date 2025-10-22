@@ -212,7 +212,7 @@ multi_turn_image_test_cases = [
                 ),
                 (
                     "What country do you find this animal primarily in? What continent?",
-                    "peru",
+                    "south america",
                 ),
             ],
         ),

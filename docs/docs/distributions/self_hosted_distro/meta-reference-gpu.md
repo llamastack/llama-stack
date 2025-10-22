@@ -21,7 +21,6 @@ The `llamastack/distribution-meta-reference-gpu` distribution consists of the fo
 | inference | `inline::meta-reference` |
 | safety | `inline::llama-guard` |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |
-| telemetry | `inline::meta-reference` |
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::rag-runtime`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
 
@@ -82,10 +81,10 @@ docker run \
 
 ### Via venv
 
-Make sure you have done `uv pip install llama-stack` and have the Llama Stack CLI available.
+Make sure you have the Llama Stack CLI available.
 
 ```bash
-llama stack build --distro meta-reference-gpu --image-type venv
+llama stack list-deps meta-reference-gpu | xargs -L1 uv pip install
 INFERENCE_MODEL=meta-llama/Llama-3.2-3B-Instruct \
 llama stack run distributions/meta-reference-gpu/run.yaml \
   --port 8321

@@ -34,7 +34,6 @@ def get_distribution_template() -> DistributionTemplate:
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "telemetry": [BuildProvider(provider_type="inline::meta-reference")],
         "eval": [BuildProvider(provider_type="inline::meta-reference")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),

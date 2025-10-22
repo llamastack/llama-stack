@@ -93,7 +93,7 @@ class ToolExecutor:
 
         # Build result messages from tool execution
         output_message, input_message = await self._build_result_messages(
-            function, tool_call_id, tool_kwargs, ctx, error_exc, result, has_error, mcp_tool_to_server
+            function, tool_call_id, item_id, tool_kwargs, ctx, error_exc, result, has_error, mcp_tool_to_server
         )
 
         # Yield the final result
@@ -356,6 +356,7 @@ class ToolExecutor:
         self,
         function,
         tool_call_id: str,
+        item_id: str,
         tool_kwargs: dict,
         ctx: ChatCompletionContext,
         error_exc: Exception | None,
@@ -375,7 +376,7 @@ class ToolExecutor:
             )
 
             message = OpenAIResponseOutputMessageMCPCall(
-                id=tool_call_id,
+                id=item_id,
                 arguments=function.arguments,
                 name=function.name,
                 server_label=mcp_tool_to_server[function.name].server_label,
@@ -389,14 +390,14 @@ class ToolExecutor:
         else:
             if function.name == "web_search":
                 message = OpenAIResponseOutputMessageWebSearchToolCall(
-                    id=tool_call_id,
+                    id=item_id,
                     status="completed",
                 )
                 if has_error:
                     message.status = "failed"
             elif function.name == "knowledge_search":
                 message = OpenAIResponseOutputMessageFileSearchToolCall(
-                    id=tool_call_id,
+                    id=item_id,
                     queries=[tool_kwargs.get("query", "")],
                     status="completed",
                 )

@@ -31,6 +31,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 
@@ -43,9 +44,11 @@ class VectorIORouter(VectorIO):
     def __init__(
         self,
         routing_table: RoutingTable,
+        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         logger.debug("Initializing VectorIORouter")
         self.routing_table = routing_table
+        self.vector_stores_config = vector_stores_config
 
     async def initialize(self) -> None:
         logger.debug("VectorIORouter.initialize")
@@ -68,33 +71,16 @@ class VectorIORouter(VectorIO):
 
         raise ValueError(f"Embedding model '{embedding_model_id}' not found or not an embedding model")
 
-    async def register_vector_db(
-        self,
-        vector_db_id: str,
-        embedding_model: str,
-        embedding_dimension: int | None = 384,
-        provider_id: str | None = None,
-        vector_db_name: str | None = None,
-        provider_vector_db_id: str | None = None,
-    ) -> None:
-        logger.debug(f"VectorIORouter.register_vector_db: {vector_db_id}, {embedding_model}")
-        await self.routing_table.register_vector_db(
-            vector_db_id,
-            embedding_model,
-            embedding_dimension,
-            provider_id,
-            vector_db_name,
-            provider_vector_db_id,
-        )
-
     async def insert_chunks(
         self,
         vector_db_id: str,
         chunks: list[Chunk],
         ttl_seconds: int | None = None,
     ) -> None:
+        doc_ids = [chunk.document_id for chunk in chunks[:3]]
         logger.debug(
-            f"VectorIORouter.insert_chunks: {vector_db_id}, {len(chunks)} chunks, ttl_seconds={ttl_seconds}, chunk_ids={[chunk.metadata['document_id'] for chunk in chunks[:3]]}{' and more...' if len(chunks) > 3 else ''}",
+            f"VectorIORouter.insert_chunks: {vector_db_id}, {len(chunks)} chunks, "
+            f"ttl_seconds={ttl_seconds}, chunk_ids={doc_ids}{' and more...' if len(chunks) > 3 else ''}"
         )
         provider = await self.routing_table.get_provider_impl(vector_db_id)
         return await provider.insert_chunks(vector_db_id, chunks, ttl_seconds)
@@ -120,13 +106,18 @@ class VectorIORouter(VectorIO):
         embedding_dimension = extra.get("embedding_dimension")
         provider_id = extra.get("provider_id")
 
-        logger.debug(f"VectorIORouter.openai_create_vector_store: name={params.name}, provider_id={provider_id}")
+        # Use default embedding model if not specified
+        if (
+            embedding_model is None
+            and self.vector_stores_config
+            and self.vector_stores_config.default_embedding_model is not None
+        ):
+            # Construct the full model ID with provider prefix
+            embedding_provider_id = self.vector_stores_config.default_embedding_model.provider_id
+            model_id = self.vector_stores_config.default_embedding_model.model_id
+            embedding_model = f"{embedding_provider_id}/{model_id}"
 
-        # Require explicit embedding model specification
-        if embedding_model is None:
-            raise ValueError("embedding_model is required in extra_body when creating a vector store")
-
-        if embedding_dimension is None:
+        if embedding_model is not None and embedding_dimension is None:
             embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
 
         # Auto-select provider if not specified
@@ -136,30 +127,45 @@ class VectorIORouter(VectorIO):
                 raise ValueError("No vector_io providers available")
             if num_providers > 1:
                 available_providers = list(self.routing_table.impls_by_provider_id.keys())
-                raise ValueError(
-                    f"Multiple vector_io providers available. Please specify provider_id in extra_body. "
-                    f"Available providers: {available_providers}"
-                )
-            provider_id = list(self.routing_table.impls_by_provider_id.keys())[0]
+                # Use default configured provider
+                if self.vector_stores_config and self.vector_stores_config.default_provider_id:
+                    default_provider = self.vector_stores_config.default_provider_id
+                    if default_provider in available_providers:
+                        provider_id = default_provider
+                        logger.debug(f"Using configured default vector store provider: {provider_id}")
+                    else:
+                        raise ValueError(
+                            f"Configured default vector store provider '{default_provider}' not found. "
+                            f"Available providers: {available_providers}"
+                        )
+                else:
+                    raise ValueError(
+                        f"Multiple vector_io providers available. Please specify provider_id in extra_body. "
+                        f"Available providers: {available_providers}"
+                    )
+            else:
+                provider_id = list(self.routing_table.impls_by_provider_id.keys())[0]
 
-        vector_db_id = f"vs_{uuid.uuid4()}"
-        registered_vector_db = await self.routing_table.register_vector_db(
-            vector_db_id=vector_db_id,
+        vector_store_id = f"vs_{uuid.uuid4()}"
+        registered_vector_store = await self.routing_table.register_vector_store(
+            vector_store_id=vector_store_id,
             embedding_model=embedding_model,
             embedding_dimension=embedding_dimension,
             provider_id=provider_id,
-            provider_vector_db_id=vector_db_id,
-            vector_db_name=params.name,
+            provider_vector_store_id=vector_store_id,
+            vector_store_name=params.name,
         )
-        provider = await self.routing_table.get_provider_impl(registered_vector_db.identifier)
+        provider = await self.routing_table.get_provider_impl(registered_vector_store.identifier)
 
-        # Update model_extra with registered values so provider uses the already-registered vector_db
+        # Update model_extra with registered values so provider uses the already-registered vector_store
         if params.model_extra is None:
             params.model_extra = {}
-        params.model_extra["provider_vector_db_id"] = registered_vector_db.provider_resource_id
-        params.model_extra["provider_id"] = registered_vector_db.provider_id
-        params.model_extra["embedding_model"] = embedding_model
-        params.model_extra["embedding_dimension"] = embedding_dimension
+        params.model_extra["provider_vector_store_id"] = registered_vector_store.provider_resource_id
+        params.model_extra["provider_id"] = registered_vector_store.provider_id
+        if embedding_model is not None:
+            params.model_extra["embedding_model"] = embedding_model
+        if embedding_dimension is not None:
+            params.model_extra["embedding_dimension"] = embedding_dimension
 
         return await provider.openai_create_vector_store(params)
 
@@ -173,15 +179,15 @@ class VectorIORouter(VectorIO):
         logger.debug(f"VectorIORouter.openai_list_vector_stores: limit={limit}")
         # Route to default provider for now - could aggregate from all providers in the future
         # call retrieve on each vector dbs to get list of vector stores
-        vector_dbs = await self.routing_table.get_all_with_type("vector_db")
+        vector_stores = await self.routing_table.get_all_with_type("vector_store")
         all_stores = []
-        for vector_db in vector_dbs:
+        for vector_store in vector_stores:
             try:
-                provider = await self.routing_table.get_provider_impl(vector_db.identifier)
-                vector_store = await provider.openai_retrieve_vector_store(vector_db.identifier)
+                provider = await self.routing_table.get_provider_impl(vector_store.identifier)
+                vector_store = await provider.openai_retrieve_vector_store(vector_store.identifier)
                 all_stores.append(vector_store)
             except Exception as e:
-                logger.error(f"Error retrieving vector store {vector_db.identifier}: {e}")
+                logger.error(f"Error retrieving vector store {vector_store.identifier}: {e}")
                 continue
 
         # Sort by created_at
@@ -245,8 +251,7 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
     ) -> VectorStoreDeleteResponse:
         logger.debug(f"VectorIORouter.openai_delete_vector_store: {vector_store_id}")
-        provider = await self.routing_table.get_provider_impl(vector_store_id)
-        return await provider.openai_delete_vector_store(vector_store_id)
+        return await self.routing_table.openai_delete_vector_store(vector_store_id)
 
     async def openai_search_vector_store(
         self,

@@ -47,13 +47,8 @@ from llama_stack.core.stack import (
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry.tracing import (
-    CURRENT_TRACE_CONTEXT,
-    end_trace,
-    setup_logger,
-    start_trace,
-)
+from llama_stack.log import get_logger, setup_logging
+from llama_stack.providers.utils.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.strong_typing.inspection import is_unwrapped_body_param
 
 logger = get_logger(name=__name__, category="core")
@@ -205,10 +200,14 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         skip_logger_removal: bool = False,
     ):
         super().__init__()
+        # Initialize logging from environment variables first
+        setup_logging()
+
         # when using the library client, we should not log to console since many
         # of our logs are intended for server-side usage
-        current_sinks = os.environ.get("TELEMETRY_SINKS", "sqlite").split(",")
-        os.environ["TELEMETRY_SINKS"] = ",".join(sink for sink in current_sinks if sink != "console")
+        if sinks_from_env := os.environ.get("TELEMETRY_SINKS", None):
+            current_sinks = sinks_from_env.strip().lower().split(",")
+            os.environ["TELEMETRY_SINKS"] = ",".join(sink for sink in current_sinks if sink != "console")
 
         if in_notebook():
             import nest_asyncio
@@ -282,7 +281,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             else:
                 prefix = "!" if in_notebook() else ""
                 cprint(
-                    f"Please run:\n\n{prefix}llama stack build --distro {self.config_path_or_distro_name} --image-type venv\n\n",
+                    f"Please run:\n\n{prefix}llama stack list-deps {self.config_path_or_distro_name} | xargs -L1 uv pip install\n\n",
                     "yellow",
                     file=sys.stderr,
                 )
@@ -496,12 +495,11 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         return await response.parse()
 
     def _convert_body(self, func: Any, body: dict | None = None, exclude_params: set[str] | None = None) -> dict:
-        if not body:
-            return {}
-
+        body = body or {}
         exclude_params = exclude_params or set()
         sig = inspect.signature(func)
         params_list = [p for p in sig.parameters.values() if p.name != "self"]
+
         # Flatten if there's a single unwrapped body parameter (BaseModel or Annotated[BaseModel, Body(embed=False)])
         if len(params_list) == 1:
             param = params_list[0]
@@ -530,11 +528,12 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     converted_body[param_name] = value
                 else:
                     converted_body[param_name] = convert_to_pydantic(param.annotation, value)
-            elif unwrapped_body_param and param.name == unwrapped_body_param.name:
-                # This is the unwrapped body param - construct it from remaining body keys
-                base_type = get_args(param.annotation)[0]
-                # Extract only the keys that aren't already used by other params
-                remaining_keys = {k: v for k, v in body.items() if k not in converted_body}
-                converted_body[param.name] = base_type(**remaining_keys)
+
+        # handle unwrapped body parameter after processing all named parameters
+        if unwrapped_body_param:
+            base_type = get_args(unwrapped_body_param.annotation)[0]
+            # extract only keys not already used by other params
+            remaining_keys = {k: v for k, v in body.items() if k not in converted_body}
+            converted_body[unwrapped_body_param.name] = base_type(**remaining_keys)
 
         return converted_body

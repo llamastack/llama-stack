@@ -192,7 +192,10 @@ paths:
       tags:
         - Conversations
       summary: Create a conversation.
-      description: Create a conversation.
+      description: >-
+        Create a conversation.
+
+        Create a conversation.
       parameters: []
       requestBody:
         content:
@@ -222,8 +225,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Get a conversation with the given ID.
-      description: Get a conversation with the given ID.
+      summary: Retrieve a conversation.
+      description: >-
+        Retrieve a conversation.
+
+        Get a conversation with the given ID.
       parameters:
         - name: conversation_id
           in: path
@@ -252,9 +258,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: >-
-        Update a conversation's metadata with the given ID.
+      summary: Update a conversation.
       description: >-
+        Update a conversation.
+
         Update a conversation's metadata with the given ID.
       parameters:
         - name: conversation_id
@@ -290,8 +297,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Delete a conversation with the given ID.
-      description: Delete a conversation with the given ID.
+      summary: Delete a conversation.
+      description: >-
+        Delete a conversation.
+
+        Delete a conversation with the given ID.
       parameters:
         - name: conversation_id
           in: path
@@ -321,8 +331,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: List items in the conversation.
-      description: List items in the conversation.
+      summary: List items.
+      description: >-
+        List items.
+
+        List items in the conversation.
       parameters:
         - name: conversation_id
           in: path
@@ -495,8 +508,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Create items in the conversation.
-      description: Create items in the conversation.
+      summary: Create items.
+      description: >-
+        Create items.
+
+        Create items in the conversation.
       parameters:
         - name: conversation_id
           in: path
@@ -532,8 +548,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Retrieve a conversation item.
-      description: Retrieve a conversation item.
+      summary: Retrieve an item.
+      description: >-
+        Retrieve an item.
+
+        Retrieve a conversation item.
       parameters:
         - name: conversation_id
           in: path
@@ -568,8 +587,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Delete a conversation item.
-      description: Delete a conversation item.
+      summary: Delete an item.
+      description: >-
+        Delete an item.
+
+        Delete a conversation item.
       parameters:
         - name: conversation_id
           in: path
@@ -1448,16 +1470,16 @@ paths:
         required: true
       deprecated: false
       x-llama-stack-extra-body-params:
-        - name: shields
+        - name: guardrails
           schema:
             type: array
             items:
               oneOf:
                 - type: string
-                - $ref: '#/components/schemas/ResponseShieldSpec'
+                - $ref: '#/components/schemas/ResponseGuardrailSpec'
           description: >-
-            List of shields to apply during response generation. Shields provide safety
-            and content moderation.
+            List of guardrails to apply during response generation. Guardrails provide
+            safety and content moderation.
           required: false
   /v1/responses/{response_id}:
     get:
@@ -1942,33 +1964,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SyntheticDataGenerateRequest'
-        required: true
-      deprecated: false
-  /v1/telemetry/events:
-    post:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Log an event.
-      description: Log an event.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LogEventRequest'
         required: true
       deprecated: false
   /v1/tool-runtime/invoke:
@@ -4180,18 +4175,24 @@ components:
     ConversationItem:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseMessage'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
       discriminator:
         propertyName: type
         mapping:
           message: '#/components/schemas/OpenAIResponseMessage'
-          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+          function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+          mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
     OpenAIResponseAnnotationCitation:
@@ -4312,6 +4313,50 @@ components:
           url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
           container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
           file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+    OpenAIResponseContentPartRefusal:
+      type: object
+      properties:
+        type:
+          type: string
+          const: refusal
+          default: refusal
+          description: >-
+            Content part type identifier, always "refusal"
+        refusal:
+          type: string
+          description: Refusal text supplied by the model
+      additionalProperties: false
+      required:
+        - type
+        - refusal
+      title: OpenAIResponseContentPartRefusal
+      description: >-
+        Refusal content within a streamed response part.
+    "OpenAIResponseInputFunctionToolCallOutput":
+      type: object
+      properties:
+        call_id:
+          type: string
+        output:
+          type: string
+        type:
+          type: string
+          const: function_call_output
+          default: function_call_output
+        id:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+      required:
+        - call_id
+        - output
+        - type
+      title: >-
+        OpenAIResponseInputFunctionToolCallOutput
+      description: >-
+        This represents the output of a function call that gets passed back to the
+        model.
     OpenAIResponseInputMessageContent:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
@@ -4370,6 +4415,53 @@ components:
       title: OpenAIResponseInputMessageContentText
       description: >-
         Text content for input messages in OpenAI response format.
+    OpenAIResponseMCPApprovalRequest:
+      type: object
+      properties:
+        arguments:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        server_label:
+          type: string
+        type:
+          type: string
+          const: mcp_approval_request
+          default: mcp_approval_request
+      additionalProperties: false
+      required:
+        - arguments
+        - id
+        - name
+        - server_label
+        - type
+      title: OpenAIResponseMCPApprovalRequest
+      description: >-
+        A request for human approval of a tool invocation.
+    OpenAIResponseMCPApprovalResponse:
+      type: object
+      properties:
+        approval_request_id:
+          type: string
+        approve:
+          type: boolean
+        type:
+          type: string
+          const: mcp_approval_response
+          default: mcp_approval_response
+        id:
+          type: string
+        reason:
+          type: string
+      additionalProperties: false
+      required:
+        - approval_request_id
+        - approve
+        - type
+      title: OpenAIResponseMCPApprovalResponse
+      description: A response to an MCP approval request.
     OpenAIResponseMessage:
       type: object
       properties:
@@ -4411,6 +4503,15 @@ components:
         under one type because the Responses API gives them all the same "type" value,
         and there is no way to tell them apart in certain scenarios.
     OpenAIResponseOutputMessageContent:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+        - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+      discriminator:
+        propertyName: type
+        mapping:
+          output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+          refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+    "OpenAIResponseOutputMessageContentOutputText":
       type: object
       properties:
         text:
@@ -5126,7 +5227,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -5527,32 +5628,9 @@ components:
         - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
         - $ref: '#/components/schemas/OpenAIResponseMessage'
-    "OpenAIResponseInputFunctionToolCallOutput":
-      type: object
-      properties:
-        call_id:
-          type: string
-        output:
-          type: string
-        type:
-          type: string
-          const: function_call_output
-          default: function_call_output
-        id:
-          type: string
-        status:
-          type: string
-      additionalProperties: false
-      required:
-        - call_id
-        - output
-        - type
-      title: >-
-        OpenAIResponseInputFunctionToolCallOutput
-      description: >-
-        This represents the output of a function call that gets passed back to the
-        model.
     OpenAIResponseInputToolFileSearch:
       type: object
       properties:
@@ -5669,53 +5747,6 @@ components:
       title: OpenAIResponseInputToolWebSearch
       description: >-
         Web search tool configuration for OpenAI response inputs.
-    OpenAIResponseMCPApprovalRequest:
-      type: object
-      properties:
-        arguments:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        server_label:
-          type: string
-        type:
-          type: string
-          const: mcp_approval_request
-          default: mcp_approval_request
-      additionalProperties: false
-      required:
-        - arguments
-        - id
-        - name
-        - server_label
-        - type
-      title: OpenAIResponseMCPApprovalRequest
-      description: >-
-        A request for human approval of a tool invocation.
-    OpenAIResponseMCPApprovalResponse:
-      type: object
-      properties:
-        approval_request_id:
-          type: string
-        approve:
-          type: boolean
-        type:
-          type: string
-          const: mcp_approval_response
-          default: mcp_approval_response
-        id:
-          type: string
-        reason:
-          type: string
-      additionalProperties: false
-      required:
-        - approval_request_id
-        - approve
-        - type
-      title: OpenAIResponseMCPApprovalResponse
-      description: A response to an MCP approval request.
     OpenAIResponseObjectWithInput:
       type: object
       properties:
@@ -5784,6 +5815,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
         input:
           type: array
           items:
@@ -5961,18 +5996,18 @@ components:
         - total_tokens
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
-    ResponseShieldSpec:
+    ResponseGuardrailSpec:
       type: object
       properties:
         type:
           type: string
-          description: The type/identifier of the shield.
+          description: The type/identifier of the guardrail.
       additionalProperties: false
       required:
         - type
-      title: ResponseShieldSpec
+      title: ResponseGuardrailSpec
       description: >-
-        Specification for a shield to apply during response generation.
+        Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
@@ -6187,6 +6222,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
       additionalProperties: false
       required:
         - created_at
@@ -6278,25 +6317,6 @@ components:
       title: OpenAIResponseContentPartReasoningText
       description: >-
         Reasoning text emitted as part of a streamed response.
-    OpenAIResponseContentPartRefusal:
-      type: object
-      properties:
-        type:
-          type: string
-          const: refusal
-          default: refusal
-          description: >-
-            Content part type identifier, always "refusal"
-        refusal:
-          type: string
-          description: Refusal text supplied by the model
-      additionalProperties: false
-      required:
-        - type
-        - refusal
-      title: OpenAIResponseContentPartRefusal
-      description: >-
-        Refusal content within a streamed response part.
     OpenAIResponseObjectStream:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
@@ -7899,7 +7919,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -8207,7 +8227,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -8565,267 +8585,6 @@ components:
       description: >-
         Response from the synthetic data generation. Batch of (prompt, response, score)
         tuples that pass the threshold.
-    Event:
-      oneOf:
-        - $ref: '#/components/schemas/UnstructuredLogEvent'
-        - $ref: '#/components/schemas/MetricEvent'
-        - $ref: '#/components/schemas/StructuredLogEvent'
-      discriminator:
-        propertyName: type
-        mapping:
-          unstructured_log: '#/components/schemas/UnstructuredLogEvent'
-          metric: '#/components/schemas/MetricEvent'
-          structured_log: '#/components/schemas/StructuredLogEvent'
-    EventType:
-      type: string
-      enum:
-        - unstructured_log
-        - structured_log
-        - metric
-      title: EventType
-      description: >-
-        The type of telemetry event being logged.
-    LogSeverity:
-      type: string
-      enum:
-        - verbose
-        - debug
-        - info
-        - warn
-        - error
-        - critical
-      title: LogSeverity
-      description: The severity level of a log message.
-    MetricEvent:
-      type: object
-      properties:
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this event belongs to
-        span_id:
-          type: string
-          description: >-
-            Unique identifier for the span this event belongs to
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the event occurred
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: integer
-              - type: number
-              - type: boolean
-              - type: 'null'
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the event
-        type:
-          $ref: '#/components/schemas/EventType'
-          const: metric
-          default: metric
-          description: Event type identifier set to METRIC
-        metric:
-          type: string
-          description: The name of the metric being measured
-        value:
-          oneOf:
-            - type: integer
-            - type: number
-          description: >-
-            The numeric value of the metric measurement
-        unit:
-          type: string
-          description: >-
-            The unit of measurement for the metric value
-      additionalProperties: false
-      required:
-        - trace_id
-        - span_id
-        - timestamp
-        - type
-        - metric
-        - value
-        - unit
-      title: MetricEvent
-      description: >-
-        A metric event containing a measured value.
-    SpanEndPayload:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/StructuredLogType'
-          const: span_end
-          default: span_end
-          description: Payload type identifier set to SPAN_END
-        status:
-          $ref: '#/components/schemas/SpanStatus'
-          description: >-
-            The final status of the span indicating success or failure
-      additionalProperties: false
-      required:
-        - type
-        - status
-      title: SpanEndPayload
-      description: Payload for a span end event.
-    SpanStartPayload:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/StructuredLogType'
-          const: span_start
-          default: span_start
-          description: >-
-            Payload type identifier set to SPAN_START
-        name:
-          type: string
-          description: >-
-            Human-readable name describing the operation this span represents
-        parent_span_id:
-          type: string
-          description: >-
-            (Optional) Unique identifier for the parent span, if this is a child span
-      additionalProperties: false
-      required:
-        - type
-        - name
-      title: SpanStartPayload
-      description: Payload for a span start event.
-    SpanStatus:
-      type: string
-      enum:
-        - ok
-        - error
-      title: SpanStatus
-      description: >-
-        The status of a span indicating whether it completed successfully or with
-        an error.
-    StructuredLogEvent:
-      type: object
-      properties:
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this event belongs to
-        span_id:
-          type: string
-          description: >-
-            Unique identifier for the span this event belongs to
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the event occurred
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: integer
-              - type: number
-              - type: boolean
-              - type: 'null'
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the event
-        type:
-          $ref: '#/components/schemas/EventType'
-          const: structured_log
-          default: structured_log
-          description: >-
-            Event type identifier set to STRUCTURED_LOG
-        payload:
-          oneOf:
-            - $ref: '#/components/schemas/SpanStartPayload'
-            - $ref: '#/components/schemas/SpanEndPayload'
-          discriminator:
-            propertyName: type
-            mapping:
-              span_start: '#/components/schemas/SpanStartPayload'
-              span_end: '#/components/schemas/SpanEndPayload'
-          description: >-
-            The structured payload data for the log event
-      additionalProperties: false
-      required:
-        - trace_id
-        - span_id
-        - timestamp
-        - type
-        - payload
-      title: StructuredLogEvent
-      description: >-
-        A structured log event containing typed payload data.
-    StructuredLogType:
-      type: string
-      enum:
-        - span_start
-        - span_end
-      title: StructuredLogType
-      description: >-
-        The type of structured log event payload.
-    UnstructuredLogEvent:
-      type: object
-      properties:
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this event belongs to
-        span_id:
-          type: string
-          description: >-
-            Unique identifier for the span this event belongs to
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the event occurred
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: integer
-              - type: number
-              - type: boolean
-              - type: 'null'
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the event
-        type:
-          $ref: '#/components/schemas/EventType'
-          const: unstructured_log
-          default: unstructured_log
-          description: >-
-            Event type identifier set to UNSTRUCTURED_LOG
-        message:
-          type: string
-          description: The log message text
-        severity:
-          $ref: '#/components/schemas/LogSeverity'
-          description: The severity level of the log message
-      additionalProperties: false
-      required:
-        - trace_id
-        - span_id
-        - timestamp
-        - type
-        - message
-        - severity
-      title: UnstructuredLogEvent
-      description: >-
-        An unstructured log event containing a simple text message.
-    LogEventRequest:
-      type: object
-      properties:
-        event:
-          $ref: '#/components/schemas/Event'
-          description: The event to log.
-        ttl_seconds:
-          type: integer
-          description: The time to live of the event.
-      additionalProperties: false
-      required:
-        - event
-        - ttl_seconds
-      title: LogEventRequest
     InvokeToolRequest:
       type: object
       properties:
@@ -9231,7 +8990,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -10417,9 +10176,9 @@ tags:
       - `background`
     x-displayName: Agents
   - name: Conversations
-    description: ''
-    x-displayName: >-
+    description: >-
       Protocol for conversation management operations.
+    x-displayName: Conversations
   - name: Files
     description: >-
       This API is used to upload documents that can be used with other Llama Stack
@@ -10465,8 +10224,6 @@ tags:
     description: ''
   - name: SyntheticDataGeneration (Coming Soon)
     description: ''
-  - name: Telemetry
-    description: ''
   - name: ToolGroups
     description: ''
   - name: ToolRuntime
@@ -10489,7 +10246,6 @@ x-tagGroups:
       - ScoringFunctions
       - Shields
       - SyntheticDataGeneration (Coming Soon)
-      - Telemetry
       - ToolGroups
       - ToolRuntime
       - VectorIO

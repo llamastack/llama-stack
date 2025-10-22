@@ -36,9 +36,6 @@ def available_providers() -> list[ProviderSpec]:
                 Api.tool_groups,
                 Api.conversations,
             ],
-            optional_api_dependencies=[
-                Api.telemetry,
-            ],
             description="Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks.",
         ),
     ]

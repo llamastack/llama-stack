@@ -28,6 +28,7 @@ from llama_stack.apis.agents import (
     Session,
     Turn,
 )
+from llama_stack.apis.agents.agents import ResponseGuardrail
 from llama_stack.apis.agents.openai_responses import OpenAIResponseText
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.conversations import Conversations
@@ -82,8 +83,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.policy = policy
 
     async def initialize(self) -> None:
-        self.persistence_store = await kvstore_impl(self.config.persistence_store)
-        self.responses_store = ResponsesStore(self.config.responses_store, self.policy)
+        self.persistence_store = await kvstore_impl(self.config.persistence.agent_state)
+        self.responses_store = ResponsesStore(self.config.persistence.responses, self.policy)
         await self.responses_store.initialize()
         self.openai_responses_impl = OpenAIResponsesImpl(
             inference_api=self.inference_api,
@@ -91,6 +92,7 @@ class MetaReferenceAgentsImpl(Agents):
             tool_runtime_api=self.tool_runtime_api,
             responses_store=self.responses_store,
             vector_io_api=self.vector_io_api,
+            safety_api=self.safety_api,
             conversations_api=self.conversations_api,
         )
 
@@ -337,7 +339,7 @@ class MetaReferenceAgentsImpl(Agents):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
-        shields: list | None = None,
+        guardrails: list[ResponseGuardrail] | None = None,
     ) -> OpenAIResponseObject:
         return await self.openai_responses_impl.create_openai_response(
             input,
@@ -352,7 +354,7 @@ class MetaReferenceAgentsImpl(Agents):
             tools,
             include,
             max_infer_iters,
-            shields,
+            guardrails,
         )
 
     async def list_openai_responses(

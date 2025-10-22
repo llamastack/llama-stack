@@ -11,14 +11,17 @@ You can install the dependencies by running:
 
 ```bash
 cd llama-stack
+uv venv --python 3.12
 uv sync --group dev
 uv pip install -e .
 source .venv/bin/activate
 ```
 
 ```{note}
-You can use a specific version of Python with `uv` by adding the `--python <version>` flag (e.g. `--python 3.12`).
-Otherwise, `uv` will automatically select a Python version according to the `requires-python` section of the `pyproject.toml`.
+If you are making changes to Llama Stack, it is essential that you use Python 3.12 as shown above.
+Llama Stack can work with Python 3.13 but the pre-commit hooks used to validate code changes only work with Python 3.12.
+If you don't specify a Python version, `uv` will automatically select a Python version according to the `requires-python`
+section of the `pyproject.toml`, which is fine for running Llama Stack but not for committing changes.
 For more info, see the [uv docs around Python versions](https://docs.astral.sh/uv/concepts/python-versions/).
 ```
 
@@ -42,16 +45,21 @@ uv run --env-file .env -- pytest -v tests/integration/inference/test_text_infere
 We use [pre-commit](https://pre-commit.com/) to run linting and formatting checks on your code. You can install the pre-commit hooks by running:
 
 ```bash
+uv pip install pre-commit==4.3.0
 uv run pre-commit install
 ```
 
-After that, pre-commit hooks will run automatically before each commit.
+Note that the only version of pre-commit that works with the Llama Stack continuous integration is `4.3.0` so it is essential that you pull
+that specific version as shown above.  Once you have run these commands, pre-commit hooks will run automatically before each commit.
 
-Alternatively, if you don't want to install the pre-commit hooks, you can run the checks manually by running:
+Alternatively, if you don't want to install the pre-commit hooks (or if you want to check if your changes are ready before committing),
+you can run the checks manually by running:
 
 ```bash
-uv run pre-commit run --all-files
+uv run pre-commit run --all-files -v
 ```
+
+The `-v` (verbose) parameter is optional but often helpful for getting more information about any issues with that the pre-commit checks identify.
 
 ```{caution}
 Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
@@ -83,6 +91,7 @@ If you are new to the project, start by looking at the issues tagged with "good 
 leave a comment on the issue and a triager will assign it to you.
 
 Please avoid picking up too many issues at once. This helps you stay focused and ensures that others in the community also have opportunities to contribute.
+
 - Try to work on only 1–2 issues at a time, especially if you’re still getting familiar with the codebase.
 - Before taking an issue, check if it’s already assigned or being actively discussed.
 - If you’re blocked or can’t continue with an issue, feel free to unassign yourself or leave a comment so others can step in.
@@ -158,9 +167,9 @@ under the LICENSE file in the root directory of this source tree.
 
 Some tips about common tasks you work on while contributing to Llama Stack:
 
-### Using `llama stack build`
+### Installing dependencies of distributions
 
-Building a stack image will use the production version of the `llama-stack` and `llama-stack-client` packages. If you are developing with a llama-stack repository checked out and need your code to be reflected in the stack image, set `LLAMA_STACK_DIR` and `LLAMA_STACK_CLIENT_DIR` to the appropriate checked out directories when running any of the `llama` CLI commands.
+When installing dependencies for a distribution, you can use `llama stack list-deps` to view and install the required packages.
 
 Example:
 ```bash
@@ -168,7 +177,12 @@ cd work/
 git clone https://github.com/llamastack/llama-stack.git
 git clone https://github.com/llamastack/llama-stack-client-python.git
 cd llama-stack
-LLAMA_STACK_DIR=$(pwd) LLAMA_STACK_CLIENT_DIR=../llama-stack-client-python llama stack build --distro <...>
+
+# Show dependencies for a distribution
+llama stack list-deps <distro-name>
+
+# Install dependencies
+llama stack list-deps <distro-name> | xargs -L1 uv pip install
 ```
 
 ### Updating distribution configurations
@@ -191,6 +205,7 @@ If you are making changes to the documentation at [https://llamastack.github.io/
 
 ```bash
 # This rebuilds the documentation pages and the OpenAPI spec.
+cd docs/
 npm install
 npm run gen-api-docs all
 npm run build

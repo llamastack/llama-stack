@@ -33,7 +33,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             try:
                 models = await provider.list_models()
             except Exception as e:
-                logger.debug(f"Model refresh failed for provider {provider_id}: {e}")
+                logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
                 continue
 
             self.listed_providers.add(provider_id)
@@ -104,15 +104,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         if "embedding_dimension" not in metadata and model_type == ModelType.embedding:
             raise ValueError("Embedding model must have an embedding dimension in its metadata")
 
-        # an identifier different than provider_model_id implies it is an alias, so that
-        # becomes the globally unique identifier. otherwise provider_model_ids can conflict,
-        # so as a general rule we must use the provider_id to disambiguate.
-
-        if model_id != provider_model_id:
-            identifier = model_id
-        else:
-            identifier = f"{provider_id}/{provider_model_id}"
-
+        identifier = f"{provider_id}/{provider_model_id}"
         model = ModelWithOwner(
             identifier=identifier,
             provider_resource_id=provider_model_id,

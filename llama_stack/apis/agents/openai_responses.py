@@ -131,8 +131,20 @@ class OpenAIResponseOutputMessageContentOutputText(BaseModel):
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
 
 
+@json_schema_type
+class OpenAIResponseContentPartRefusal(BaseModel):
+    """Refusal content within a streamed response part.
+
+    :param type: Content part type identifier, always "refusal"
+    :param refusal: Refusal text supplied by the model
+    """
+
+    type: Literal["refusal"] = "refusal"
+    refusal: str
+
+
 OpenAIResponseOutputMessageContent = Annotated[
-    OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseOutputMessageContent, name="OpenAIResponseOutputMessageContent")
@@ -533,6 +545,7 @@ class OpenAIResponseObject(BaseModel):
     :param tools: (Optional) An array of tools the model may call while generating a response.
     :param truncation: (Optional) Truncation strategy applied to the response
     :param usage: (Optional) Token usage information for the response
+    :param instructions: (Optional) System message inserted into the model's context
     """
 
     created_at: int
@@ -552,6 +565,7 @@ class OpenAIResponseObject(BaseModel):
     tools: list[OpenAIResponseTool] | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
+    instructions: str | None = None
 
 
 @json_schema_type
@@ -876,18 +890,6 @@ class OpenAIResponseContentPartOutputText(BaseModel):
     text: str
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
     logprobs: list[dict[str, Any]] | None = None
-
-
-@json_schema_type
-class OpenAIResponseContentPartRefusal(BaseModel):
-    """Refusal content within a streamed response part.
-
-    :param type: Content part type identifier, always "refusal"
-    :param refusal: Refusal text supplied by the model
-    """
-
-    type: Literal["refusal"] = "refusal"
-    refusal: str
 
 
 @json_schema_type
@@ -1258,9 +1260,9 @@ OpenAIResponseInput = Annotated[
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalRequest
     | OpenAIResponseMCPApprovalResponse
-    |
-    # Fallback to the generic message type as a last resort
-    OpenAIResponseMessage,
+    | OpenAIResponseOutputMessageMCPCall
+    | OpenAIResponseOutputMessageMCPListTools
+    | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")

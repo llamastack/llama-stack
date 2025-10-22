@@ -11,8 +11,8 @@ import numpy as np
 import pytest
 
 from llama_stack.apis.files import Files
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.providers.datatypes import HealthStatus
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import (
@@ -43,8 +43,8 @@ def embedding_dimension():
 
 
 @pytest.fixture
-def vector_db_id():
-    return "test_vector_db"
+def vector_store_id():
+    return "test_vector_store"
 
 
 @pytest.fixture
@@ -61,12 +61,12 @@ def sample_embeddings(embedding_dimension):
 
 
 @pytest.fixture
-def mock_vector_db(vector_db_id, embedding_dimension) -> MagicMock:
-    mock_vector_db = MagicMock(spec=VectorDB)
-    mock_vector_db.embedding_model = "mock_embedding_model"
-    mock_vector_db.identifier = vector_db_id
-    mock_vector_db.embedding_dimension = embedding_dimension
-    return mock_vector_db
+def mock_vector_store(vector_store_id, embedding_dimension) -> MagicMock:
+    mock_vector_store = MagicMock(spec=VectorStore)
+    mock_vector_store.embedding_model = "mock_embedding_model"
+    mock_vector_store.identifier = vector_store_id
+    mock_vector_store.embedding_dimension = embedding_dimension
+    return mock_vector_store
 
 
 @pytest.fixture

@@ -42,7 +42,6 @@ def get_distribution_template() -> DistributionTemplate:
         "vector_io": [BuildProvider(provider_type="remote::chromadb")],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "telemetry": [BuildProvider(provider_type="inline::meta-reference")],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
@@ -92,7 +91,6 @@ def get_distribution_template() -> DistributionTemplate:
             "embedding_dimension": 768,
         },
     )
-    postgres_config = PostgresSqlStoreConfig.sample_run_config()
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -106,33 +104,16 @@ def get_distribution_template() -> DistributionTemplate:
                 provider_overrides={
                     "inference": inference_providers + [embedding_provider],
                     "vector_io": vector_io_providers,
-                    "agents": [
-                        Provider(
-                            provider_id="meta-reference",
-                            provider_type="inline::meta-reference",
-                            config=dict(
-                                persistence_store=postgres_config,
-                                responses_store=postgres_config,
-                            ),
-                        )
-                    ],
-                    "telemetry": [
-                        Provider(
-                            provider_id="meta-reference",
-                            provider_type="inline::meta-reference",
-                            config=dict(
-                                service_name="${env.OTEL_SERVICE_NAME:=\u200b}",
-                                sinks="${env.TELEMETRY_SINKS:=console,otel_trace}",
-                                otel_exporter_otlp_endpoint="${env.OTEL_EXPORTER_OTLP_ENDPOINT:=http://localhost:4318/v1/traces}",
-                            ),
-                        )
-                    ],
                 },
                 default_models=default_models + [embedding_model],
                 default_tool_groups=default_tool_groups,
                 default_shields=[ShieldInput(shield_id="meta-llama/Llama-Guard-3-8B")],
-                metadata_store=PostgresKVStoreConfig.sample_run_config(),
-                inference_store=postgres_config,
+                storage_backends={
+                    "kv_default": PostgresKVStoreConfig.sample_run_config(
+                        table_name="llamastack_kvstore",
+                    ),
+                    "sql_default": PostgresSqlStoreConfig.sample_run_config(),
+                },
             ),
         },
         run_config_env_vars={

@@ -6,7 +6,10 @@
 
 from typing import Any
 
-from llama_stack.core.datatypes import AccessRule, RoutedProtocol
+from llama_stack.core.datatypes import (
+    AccessRule,
+    RoutedProtocol,
+)
 from llama_stack.core.stack import StackRunConfig
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.providers.datatypes import Api, RoutingTable
@@ -26,6 +29,7 @@ async def get_routing_table_impl(
     from ..routing_tables.scoring_functions import ScoringFunctionsRoutingTable
     from ..routing_tables.shields import ShieldsRoutingTable
     from ..routing_tables.toolgroups import ToolGroupsRoutingTable
+    from ..routing_tables.vector_stores import VectorStoresRoutingTable
 
     api_to_tables = {
         "models": ModelsRoutingTable,
@@ -34,6 +38,7 @@ async def get_routing_table_impl(
         "scoring_functions": ScoringFunctionsRoutingTable,
         "benchmarks": BenchmarksRoutingTable,
         "tool_groups": ToolGroupsRoutingTable,
+        "vector_stores": VectorStoresRoutingTable,
     }
 
     if api.value not in api_to_tables:
@@ -63,25 +68,33 @@ async def get_auto_router_impl(
         "eval": EvalRouter,
         "tool_runtime": ToolRuntimeRouter,
     }
-    api_to_deps = {
-        "inference": {"telemetry": Api.telemetry},
-    }
     if api.value not in api_to_routers:
         raise ValueError(f"API {api.value} not found in router map")
 
     api_to_dep_impl = {}
-    for dep_name, dep_api in api_to_deps.get(api.value, {}).items():
-        if dep_api in deps:
-            api_to_dep_impl[dep_name] = deps[dep_api]
+    if run_config.telemetry.enabled:
+        api_to_deps = {
+            "inference": {"telemetry": Api.telemetry},
+        }
+        for dep_name, dep_api in api_to_deps.get(api.value, {}).items():
+            if dep_api in deps:
+                api_to_dep_impl[dep_name] = deps[dep_api]
 
     # TODO: move pass configs to routers instead
-    if api == Api.inference and run_config.inference_store:
+    if api == Api.inference:
+        inference_ref = run_config.storage.stores.inference
+        if not inference_ref:
+            raise ValueError("storage.stores.inference must be configured in run config")
+
         inference_store = InferenceStore(
-            config=run_config.inference_store,
+            reference=inference_ref,
             policy=policy,
         )
         await inference_store.initialize()
         api_to_dep_impl["store"] = inference_store
+
+    elif api == Api.vector_io:
+        api_to_dep_impl["vector_stores_config"] = run_config.vector_stores
 
     impl = api_to_routers[api.value](routing_table, **api_to_dep_impl)
     await impl.initialize()

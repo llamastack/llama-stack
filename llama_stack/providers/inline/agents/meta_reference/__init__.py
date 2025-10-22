@@ -11,7 +11,12 @@ from llama_stack.core.datatypes import AccessRule, Api
 from .config import MetaReferenceAgentsImplConfig
 
 
-async def get_provider_impl(config: MetaReferenceAgentsImplConfig, deps: dict[Api, Any], policy: list[AccessRule]):
+async def get_provider_impl(
+    config: MetaReferenceAgentsImplConfig,
+    deps: dict[Api, Any],
+    policy: list[AccessRule],
+    telemetry_enabled: bool = False,
+):
     from .agents import MetaReferenceAgentsImpl
 
     impl = MetaReferenceAgentsImpl(
@@ -23,7 +28,7 @@ async def get_provider_impl(config: MetaReferenceAgentsImplConfig, deps: dict[Ap
         deps[Api.tool_groups],
         deps[Api.conversations],
         policy,
-        Api.telemetry in deps,
+        telemetry_enabled,
     )
     await impl.initialize()
     return impl

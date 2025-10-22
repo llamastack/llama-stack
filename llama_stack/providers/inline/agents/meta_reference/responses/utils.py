@@ -4,9 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import re
 import uuid
 
+from llama_stack.apis.agents.agents import ResponseGuardrailSpec
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInput,
@@ -45,6 +47,7 @@ from llama_stack.apis.inference import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
 )
+from llama_stack.apis.safety import Safety
 
 
 async def convert_chat_choice_to_response_message(
@@ -240,7 +243,8 @@ async def convert_response_text_to_chat_response_format(
     raise ValueError(f"Unsupported text format: {text.format}")
 
 
-async def get_message_type_by_role(role: str):
+async def get_message_type_by_role(role: str) -> type[OpenAIMessageParam] | None:
+    """Get the appropriate OpenAI message parameter type for a given role."""
     role_to_type = {
         "user": OpenAIUserMessageParam,
         "system": OpenAISystemMessageParam,
@@ -307,3 +311,55 @@ def is_function_tool_call(
         if t.type == "function" and t.name == tool_call.function.name:
             return True
     return False
+
+
+async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> str | None:
+    """Run guardrails against messages and return violation message if blocked."""
+    if not messages:
+        return None
+
+    # Look up shields to get their provider_resource_id (actual model ID)
+    model_ids = []
+    shields_list = await safety_api.routing_table.list_shields()
+
+    for guardrail_id in guardrail_ids:
+        matching_shields = [shield for shield in shields_list.data if shield.identifier == guardrail_id]
+        if matching_shields:
+            model_id = matching_shields[0].provider_resource_id
+            model_ids.append(model_id)
+        else:
+            raise ValueError(f"No shield found with identifier '{guardrail_id}'")
+
+    guardrail_tasks = [safety_api.run_moderation(messages, model=model_id) for model_id in model_ids]
+    responses = await asyncio.gather(*guardrail_tasks)
+
+    for response in responses:
+        for result in response.results:
+            if result.flagged:
+                message = result.user_message or "Content blocked by safety guardrails"
+                flagged_categories = [cat for cat, flagged in result.categories.items() if flagged]
+                violation_type = result.metadata.get("violation_type", []) if result.metadata else []
+
+                if flagged_categories:
+                    message += f" (flagged for: {', '.join(flagged_categories)})"
+                if violation_type:
+                    message += f" (violation type: {', '.join(violation_type)})"
+
+                return message
+
+
+def extract_guardrail_ids(guardrails: list | None) -> list[str]:
+    """Extract guardrail IDs from guardrails parameter, handling both string IDs and ResponseGuardrailSpec objects."""
+    if not guardrails:
+        return []
+
+    guardrail_ids = []
+    for guardrail in guardrails:
+        if isinstance(guardrail, str):
+            guardrail_ids.append(guardrail)
+        elif isinstance(guardrail, ResponseGuardrailSpec):
+            guardrail_ids.append(guardrail.type)
+        else:
+            raise ValueError(f"Unknown guardrail format: {guardrail}, expected str or ResponseGuardrailSpec")
+
+    return guardrail_ids

@@ -26,14 +26,14 @@ distribution_spec:
     - provider_type: inline::milvus
     - provider_type: remote::chromadb
     - provider_type: remote::pgvector
+    - provider_type: remote::qdrant
+    - provider_type: remote::weaviate
     files:
     - provider_type: inline::localfs
     safety:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
     agents:
-    - provider_type: inline::meta-reference
-    telemetry:
     - provider_type: inline::meta-reference
     post_training:
     - provider_type: inline::huggingface-gpu

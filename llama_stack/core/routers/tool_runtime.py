@@ -37,24 +37,24 @@ class ToolRuntimeRouter(ToolRuntime):
         async def query(
             self,
             content: InterleavedContent,
-            vector_db_ids: list[str],
+            vector_store_ids: list[str],
             query_config: RAGQueryConfig | None = None,
         ) -> RAGQueryResult:
-            logger.debug(f"ToolRuntimeRouter.RagToolImpl.query: {vector_db_ids}")
+            logger.debug(f"ToolRuntimeRouter.RagToolImpl.query: {vector_store_ids}")
             provider = await self.routing_table.get_provider_impl("knowledge_search")
-            return await provider.query(content, vector_db_ids, query_config)
+            return await provider.query(content, vector_store_ids, query_config)
 
         async def insert(
             self,
             documents: list[RAGDocument],
-            vector_db_id: str,
+            vector_store_id: str,
             chunk_size_in_tokens: int = 512,
         ) -> None:
             logger.debug(
-                f"ToolRuntimeRouter.RagToolImpl.insert: {vector_db_id}, {len(documents)} documents, chunk_size={chunk_size_in_tokens}"
+                f"ToolRuntimeRouter.RagToolImpl.insert: {vector_store_id}, {len(documents)} documents, chunk_size={chunk_size_in_tokens}"
             )
             provider = await self.routing_table.get_provider_impl("insert_into_memory")
-            return await provider.insert(documents, vector_db_id, chunk_size_in_tokens)
+            return await provider.insert(documents, vector_store_id, chunk_size_in_tokens)
 
     def __init__(
         self,

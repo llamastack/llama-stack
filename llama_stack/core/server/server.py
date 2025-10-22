@@ -56,7 +56,7 @@ from llama_stack.core.stack import (
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
-from llama_stack.log import get_logger
+from llama_stack.log import get_logger, setup_logging
 from llama_stack.providers.datatypes import Api
 from llama_stack.providers.inline.telemetry.meta_reference.config import TelemetryConfig
 from llama_stack.providers.inline.telemetry.meta_reference.telemetry import (
@@ -374,6 +374,9 @@ def create_app() -> StackApp:
     Returns:
         Configured StackApp instance.
     """
+    # Initialize logging from environment variables first
+    setup_logging()
+
     config_file = os.getenv("LLAMA_STACK_CONFIG")
     if config_file is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
@@ -445,7 +448,7 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
-    if Api.telemetry in impls:
+    if config.telemetry.enabled:
         setup_logger(impls[Api.telemetry])
     else:
         setup_logger(TelemetryAdapter(TelemetryConfig(), {}))

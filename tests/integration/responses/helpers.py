@@ -16,21 +16,11 @@ def new_vector_store(openai_client, name, embedding_model, embedding_dimension):
             openai_client.vector_stores.delete(vector_store_id=vector_store.id)
 
     # Create a new vector store
-    # OpenAI SDK client uses extra_body for non-standard parameters
-    from openai import OpenAI
 
-    if isinstance(openai_client, OpenAI):
-        # OpenAI SDK client - use extra_body
-        vector_store = openai_client.vector_stores.create(
-            name=name,
-            extra_body={"embedding_model": embedding_model, "embedding_dimension": embedding_dimension},
-        )
-    else:
-        # LlamaStack client - direct parameter
-        vector_store = openai_client.vector_stores.create(
-            name=name, embedding_model=embedding_model, embedding_dimension=embedding_dimension
-        )
-
+    vector_store = openai_client.vector_stores.create(
+        name=name,
+        extra_body={"embedding_model": embedding_model, "embedding_dimension": embedding_dimension},
+    )
     return vector_store
 
 

@@ -43,17 +43,17 @@ from .openai_responses import (
 
 
 @json_schema_type
-class ResponseShieldSpec(BaseModel):
-    """Specification for a shield to apply during response generation.
+class ResponseGuardrailSpec(BaseModel):
+    """Specification for a guardrail to apply during response generation.
 
-    :param type: The type/identifier of the shield.
+    :param type: The type/identifier of the guardrail.
     """
 
     type: str
-    # TODO: more fields to be added for shield configuration
+    # TODO: more fields to be added for guardrail configuration
 
 
-ResponseShield = str | ResponseShieldSpec
+ResponseGuardrail = str | ResponseGuardrailSpec
 
 
 class Attachment(BaseModel):
@@ -820,10 +820,10 @@ class Agents(Protocol):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
-        shields: Annotated[
-            list[ResponseShield] | None,
+        guardrails: Annotated[
+            list[ResponseGuardrail] | None,
             ExtraBodyField(
-                "List of shields to apply during response generation. Shields provide safety and content moderation."
+                "List of guardrails to apply during response generation. Guardrails provide safety and content moderation."
             ),
         ] = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
@@ -834,7 +834,7 @@ class Agents(Protocol):
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
         :param conversation: (Optional) The ID of a conversation to add the response to. Must begin with 'conv_'. Input and output messages will be automatically added to the conversation.
         :param include: (Optional) Additional fields to include in the response.
-        :param shields: (Optional) List of shields to apply during response generation. Can be shield IDs (strings) or shield specifications.
+        :param guardrails: (Optional) List of guardrails to apply during response generation. Can be guardrail IDs (strings) or guardrail specifications.
         :returns: An OpenAIResponseObject.
         """
         ...

@@ -25,7 +25,7 @@ from llama_stack.providers.datatypes import (
 logger = get_logger(name=__name__, category="core")
 
 
-INTERNAL_APIS = {Api.inspect, Api.providers, Api.prompts, Api.conversations}
+INTERNAL_APIS = {Api.inspect, Api.providers, Api.prompts, Api.conversations, Api.telemetry}
 
 
 def stack_apis() -> list[Api]:
@@ -62,6 +62,10 @@ def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
         AutoRoutedApiInfo(
             routing_table_api=Api.tool_groups,
             router_api=Api.tool_runtime,
+        ),
+        AutoRoutedApiInfo(
+            routing_table_api=Api.vector_stores,
+            router_api=Api.vector_io,
         ),
     ]
 

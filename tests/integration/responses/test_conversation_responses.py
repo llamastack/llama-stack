@@ -63,29 +63,24 @@ class TestConversationResponses:
 
         # Verify all turns are in conversation
         conversation_items = openai_client.conversations.items.list(conversation.id)
-        print(f"DEBUG: Found {len(conversation_items.data)} messages in conversation:")
-        for i, item in enumerate(conversation_items.data):
-            if hasattr(item, "role") and hasattr(item, "content"):
-                content = item.content[0].text if item.content else "No content"
-                print(f"  {i}: {item.role} - {content}")
         assert len(conversation_items.data) >= 4  # 2 user + 2 assistant messages
 
     def test_conversation_context_loading(self, openai_client, text_model_id):
         """Test that conversation context is properly loaded for responses."""
         conversation = openai_client.conversations.create(
             items=[
-                {"type": "message", "role": "user", "content": "My name is Alice"},
+                {"type": "message", "role": "user", "content": "My name is Alice. I like to eat apples."},
                 {"type": "message", "role": "assistant", "content": "Hello Alice!"},
             ]
         )
 
         response = openai_client.responses.create(
             model=text_model_id,
-            input=[{"role": "user", "content": "What's my name?"}],
+            input=[{"role": "user", "content": "What do I like to eat?"}],
             conversation=conversation.id,
         )
 
-        assert "alice" in response.output_text.lower()
+        assert "apple" in response.output_text.lower()
 
     def test_conversation_error_handling(self, openai_client, text_model_id):
         """Test error handling for invalid and nonexistent conversations."""
