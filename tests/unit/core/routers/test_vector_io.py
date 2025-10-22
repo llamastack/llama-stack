@@ -21,7 +21,7 @@ async def test_single_provider_auto_selection():
             Mock(identifier="all-MiniLM-L6-v2", model_type="embedding", metadata={"embedding_dimension": 384})
         ]
     )
-    mock_routing_table.register_vector_db = AsyncMock(
+    mock_routing_table.register_vector_store = AsyncMock(
         return_value=Mock(identifier="vs_123", provider_id="inline::faiss", provider_resource_id="vs_123")
     )
     mock_routing_table.get_provider_impl = AsyncMock(

@@ -58,15 +58,19 @@ Llama Stack is a server that exposes multiple APIs, you connect with it using th
 
 <Tabs>
 <TabItem value="venv" label="Using venv">
-You can use Python to build and run the Llama Stack server, which is useful for testing and development.
+You can use Python to install dependencies and run the Llama Stack server, which is useful for testing and development.
 
 Llama Stack uses a [YAML configuration file](../distributions/configuration) to specify the stack setup,
 which defines the providers and their settings. The generated configuration serves as a starting point that you can [customize for your specific needs](../distributions/customizing_run_yaml).
-Now let's build and run the Llama Stack config for Ollama.
+Now let's install dependencies and run the Llama Stack config for Ollama.
 We use `starter` as template. By default all providers are disabled, this requires enable ollama by passing environment variables.
 
 ```bash
-llama stack build --distro starter --image-type venv --run
+# Install dependencies for the starter distribution
+uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
+
+# Run the server
+llama stack run starter
 ```
 </TabItem>
 <TabItem value="container" label="Using a Container">
@@ -304,7 +308,7 @@ stream = agent.create_turn(
 for event in AgentEventLogger().log(stream):
     event.print()
 ```
-### ii. Run the Script
+#### ii. Run the Script
 Let's run the script using `uv`
 ```bash
 uv run python agent.py

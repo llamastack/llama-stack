@@ -11,8 +11,10 @@ from llama_stack.core.datatypes import (
     BuildProvider,
     Provider,
     ProviderSpec,
+    QualifiedModel,
     ShieldInput,
     ToolGroupInput,
+    VectorStoresConfig,
 )
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
@@ -31,6 +33,8 @@ from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOC
 from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
+from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOConfig
+from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
 
 
@@ -113,6 +117,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::milvus"),
             BuildProvider(provider_type="remote::chromadb"),
             BuildProvider(provider_type="remote::pgvector"),
+            BuildProvider(provider_type="remote::qdrant"),
+            BuildProvider(provider_type="remote::weaviate"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
         "safety": [
@@ -221,12 +227,35 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                                 password="${env.PGVECTOR_PASSWORD:=}",
                             ),
                         ),
+                        Provider(
+                            provider_id="${env.QDRANT_URL:+qdrant}",
+                            provider_type="remote::qdrant",
+                            config=QdrantVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}",
+                                url="${env.QDRANT_URL:=}",
+                            ),
+                        ),
+                        Provider(
+                            provider_id="${env.WEAVIATE_CLUSTER_URL:+weaviate}",
+                            provider_type="remote::weaviate",
+                            config=WeaviateVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}",
+                                cluster_url="${env.WEAVIATE_CLUSTER_URL:=}",
+                            ),
+                        ),
                     ],
                     "files": [files_provider],
                 },
                 default_models=[],
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
+                vector_stores_config=VectorStoresConfig(
+                    default_provider_id="faiss",
+                    default_embedding_model=QualifiedModel(
+                        provider_id="sentence-transformers",
+                        model_id="nomic-ai/nomic-embed-text-v1.5",
+                    ),
+                ),
             ),
         },
         run_config_env_vars={

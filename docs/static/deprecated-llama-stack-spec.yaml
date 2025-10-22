@@ -4114,7 +4114,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -4303,7 +4303,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -6734,6 +6734,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
         input:
           type: array
           items:
@@ -7403,6 +7407,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
       additionalProperties: false
       required:
         - created_at
@@ -10196,9 +10204,9 @@ tags:
   - name: Datasets
     description: ''
   - name: Eval
-    description: ''
-    x-displayName: >-
+    description: >-
       Llama Stack Evaluation API for running evaluations on model and agent candidates.
+    x-displayName: Evaluations
   - name: Files
     description: >-
       This API is used to upload documents that can be used with other Llama Stack

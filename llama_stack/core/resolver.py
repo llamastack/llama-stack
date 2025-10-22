@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import importlib
+import importlib.metadata
 import inspect
 from typing import Any
 
@@ -29,6 +30,7 @@ from llama_stack.apis.shields import Shields
 from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.core.client import get_client_impl
 from llama_stack.core.datatypes import (
@@ -80,6 +82,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.inspect: Inspect,
         Api.batches: Batches,
         Api.vector_io: VectorIO,
+        Api.vector_stores: VectorStore,
         Api.models: Models,
         Api.safety: Safety,
         Api.shields: Shields,

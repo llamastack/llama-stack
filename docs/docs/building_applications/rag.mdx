@@ -20,7 +20,8 @@ RAG enables your applications to reference and recall information from external 
 In one terminal, start the Llama Stack server:
 
 ```bash
-uv run llama stack build --distro starter --image-type venv --run
+llama stack list-deps starter | xargs -L1 uv pip install
+llama stack run starter
 ```
 
 ### 2. Connect with OpenAI Client
@@ -87,18 +88,19 @@ Llama Stack provides OpenAI-compatible RAG capabilities through:
 To enable automatic vector store creation without specifying embedding models, configure a default embedding model in your run.yaml like so:
 
 ```yaml
-models:
-  - model_id: nomic-ai/nomic-embed-text-v1.5
-    provider_id: inline::sentence-transformers
-    metadata:
-      embedding_dimension: 768
-      default_configured: true
+vector_stores:
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: nomic-ai/nomic-embed-text-v1.5
 ```
 
 With this configuration:
-- `client.vector_stores.create()` works without requiring embedding model parameters
-- The system automatically uses the default model and its embedding dimension for any newly created vector store
-- Only one model can be marked as `default_configured: true`
+- `client.vector_stores.create()` works without requiring embedding model or provider parameters
+- The system automatically uses the default vector store provider (`faiss`) when multiple providers are available
+- The system automatically uses the default embedding model (`sentence-transformers/nomic-ai/nomic-embed-text-v1.5`) for any newly created vector store
+- The `default_provider_id` specifies which vector storage backend to use
+- The `default_embedding_model` specifies both the inference provider and model for embeddings
 
 ## Vector Store Operations
 
@@ -107,14 +109,15 @@ With this configuration:
 You can create vector stores with automatic or explicit embedding model selection:
 
 ```python
-# Automatic - uses default configured embedding model
+# Automatic - uses default configured embedding model and vector store provider
 vs = client.vector_stores.create()
 
-# Explicit - specify embedding model when you need a specific one
+# Explicit - specify embedding model and/or provider when you need specific ones
 vs = client.vector_stores.create(
     extra_body={
-        "embedding_model": "nomic-ai/nomic-embed-text-v1.5",
-        "embedding_dimension": 768
+        "provider_id": "faiss",  # Optional: specify vector store provider
+        "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+        "embedding_dimension": 768  # Optional: will be auto-detected if not provided
     }
 )
 ```

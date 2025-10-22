@@ -6,8 +6,11 @@
 
 import asyncio
 import base64
+import platform
 import struct
 from typing import TYPE_CHECKING
+
+import torch
 
 from llama_stack.log import get_logger
 
@@ -23,6 +26,8 @@ from llama_stack.apis.inference import (
 )
 
 EMBEDDING_MODELS = {}
+
+DARWIN = "Darwin"
 
 
 log = get_logger(name=__name__, category="providers::utils")
@@ -82,6 +87,13 @@ class SentenceTransformerEmbeddingMixin:
 
         def _load_model():
             from sentence_transformers import SentenceTransformer
+
+            platform_name = platform.system()
+            if platform_name == DARWIN:
+                # PyTorch's OpenMP kernels can segfault on macOS when spawned from background
+                # threads with the default parallel settings, so force a single-threaded CPU run.
+                log.debug(f"Constraining torch threads on {platform_name} to a single worker")
+                torch.set_num_threads(1)
 
             return SentenceTransformer(model, trust_remote_code=True)
 

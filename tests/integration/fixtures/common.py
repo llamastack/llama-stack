@@ -21,6 +21,7 @@ from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
 from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
 from llama_stack.env import get_env_or_fail
 
@@ -39,7 +40,7 @@ def is_port_available(port: int, host: str = "localhost") -> bool:
 
 def start_llama_stack_server(config_name: str) -> subprocess.Popen:
     """Start a llama stack server with the given config."""
-    cmd = f"uv run --with llama-stack llama stack build --distro {config_name} --image-type venv --run"
+    cmd = f"uv run llama stack run {config_name}"
     devnull = open(os.devnull, "w")
     process = subprocess.Popen(
         shlex.split(cmd),
@@ -236,9 +237,16 @@ def instantiate_llama_stack_client(session):
 
     if "=" in config:
         run_config = run_config_from_adhoc_config_spec(config)
+
+        # --stack-config bypasses template so need this to set default embedding model
+        if "vector_io" in config and "inference" in config:
+            run_config.vector_stores = VectorStoresConfig(
+                embedding_model_id="inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+            )
+
         run_config_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")
         with open(run_config_file.name, "w") as f:
-            yaml.dump(run_config.model_dump(), f)
+            yaml.dump(run_config.model_dump(mode="json"), f)
         config = run_config_file.name
 
     client = LlamaStackAsLibraryClient(

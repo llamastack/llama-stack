@@ -82,11 +82,13 @@ runs:
           echo "No recording changes"
         fi
 
-    - name: Write inference logs to file
+    - name: Write docker logs to file
       if: ${{ always() }}
       shell: bash
       run: |
-        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log || true
+        # Ollama logs (if ollama container exists)
+        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log 2>&1 || true
+        # Note: distro container logs are now dumped in integration-tests.sh before container is removed
 
     - name: Upload logs
       if: ${{ always() }}

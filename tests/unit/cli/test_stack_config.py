@@ -23,6 +23,27 @@ def config_with_image_name_int():
         image_name: 1234
         apis_to_serve: []
         built_at: {datetime.now().isoformat()}
+        storage:
+          backends:
+            kv_default:
+              type: kv_sqlite
+              db_path: /tmp/test_kv.db
+            sql_default:
+              type: sql_sqlite
+              db_path: /tmp/test_sql.db
+          stores:
+            metadata:
+              backend: kv_default
+              namespace: metadata
+            inference:
+              backend: sql_default
+              table_name: inference
+            conversations:
+              backend: sql_default
+              table_name: conversations
+            responses:
+              backend: sql_default
+              table_name: responses
         providers:
           inference:
             - provider_id: provider1
@@ -54,6 +75,27 @@ def up_to_date_config():
         image_name: foo
         apis_to_serve: []
         built_at: {datetime.now().isoformat()}
+        storage:
+          backends:
+            kv_default:
+              type: kv_sqlite
+              db_path: /tmp/test_kv.db
+            sql_default:
+              type: sql_sqlite
+              db_path: /tmp/test_sql.db
+          stores:
+            metadata:
+              backend: kv_default
+              namespace: metadata
+            inference:
+              backend: sql_default
+              table_name: inference
+            conversations:
+              backend: sql_default
+              table_name: conversations
+            responses:
+              backend: sql_default
+              table_name: responses
         providers:
           inference:
             - provider_id: provider1

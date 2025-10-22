@@ -41,7 +41,7 @@ class TestTranslateException:
                 self.identifier = identifier
                 self.owner = owner
 
-        resource = MockResource("vector_db", "test-db")
+        resource = MockResource("vector_store", "test-db")
 
         exc = AccessDeniedError("create", resource, user)
         result = translate_exception(exc)
@@ -49,7 +49,7 @@ class TestTranslateException:
         assert isinstance(result, HTTPException)
         assert result.status_code == 403
         assert "test-user" in result.detail
-        assert "vector_db::test-db" in result.detail
+        assert "vector_store::test-db" in result.detail
         assert "create" in result.detail
         assert "roles=['user']" in result.detail
         assert "teams=['dev']" in result.detail
