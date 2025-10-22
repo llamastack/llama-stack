@@ -17,15 +17,10 @@ from numpy.typing import NDArray
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference
-from llama_stack.apis.models import Models
-from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import (
-    Chunk,
-    QueryChunksResponse,
-    VectorIO,
-)
+from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorDBsProtocolPrivate
+from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -33,7 +28,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,
     ChunkForDeletion,
     EmbeddingIndex,
-    VectorDBWithIndex,
+    VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
@@ -46,7 +41,7 @@ HYBRID_SEARCH = "hybrid"
 SEARCH_MODES = {VECTOR_SEARCH, KEYWORD_SEARCH, HYBRID_SEARCH}
 
 VERSION = "v3"
-VECTOR_DBS_PREFIX = f"vector_dbs:sqlite_vec:{VERSION}::"
+VECTOR_DBS_PREFIX = f"vector_stores:sqlite_vec:{VERSION}::"
 VECTOR_INDEX_PREFIX = f"vector_index:sqlite_vec:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:sqlite_vec:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:sqlite_vec:{VERSION}::"
@@ -175,32 +170,18 @@ class SQLiteVecIndex(EmbeddingIndex):
 
                     # Insert vector embeddings
                     embedding_data = [
-                        (
-                            (
-                                chunk.chunk_id,
-                                serialize_vector(emb.tolist()),
-                            )
-                        )
+                        ((chunk.chunk_id, serialize_vector(emb.tolist())))
                         for chunk, emb in zip(batch_chunks, batch_embeddings, strict=True)
                     ]
-                    cur.executemany(
-                        f"INSERT INTO [{self.vector_table}] (id, embedding) VALUES (?, ?);",
-                        embedding_data,
-                    )
+                    cur.executemany(f"INSERT INTO [{self.vector_table}] (id, embedding) VALUES (?, ?);", embedding_data)
 
                     # Insert FTS content
                     fts_data = [(chunk.chunk_id, chunk.content) for chunk in batch_chunks]
                     # DELETE existing entries with same IDs (FTS5 doesn't support ON CONFLICT)
-                    cur.executemany(
-                        f"DELETE FROM [{self.fts_table}] WHERE id = ?;",
-                        [(row[0],) for row in fts_data],
-                    )
+                    cur.executemany(f"DELETE FROM [{self.fts_table}] WHERE id = ?;", [(row[0],) for row in fts_data])
 
                     # INSERT new entries
-                    cur.executemany(
-                        f"INSERT INTO [{self.fts_table}] (id, content) VALUES (?, ?);",
-                        fts_data,
-                    )
+                    cur.executemany(f"INSERT INTO [{self.fts_table}] (id, content) VALUES (?, ?);", fts_data)
 
                 connection.commit()
 
@@ -216,12 +197,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         # Run batch insertion in a background thread
         await asyncio.to_thread(_execute_all_batch_inserts)
 
-    async def query_vector(
-        self,
-        embedding: NDArray,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Performs vector-based search using a virtual table for vector similarity.
         """
@@ -261,12 +237,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             scores.append(score)
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(
-        self,
-        query_string: str,
-        k: int,
-        score_threshold: float,
-    ) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Performs keyword-based search using SQLite FTS5 for relevance-ranked full-text search.
         """
@@ -403,41 +374,32 @@ class SQLiteVecIndex(EmbeddingIndex):
         await asyncio.to_thread(_delete_chunks)
 
 
-class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPrivate):
+class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     """
     A VectorIO implementation using SQLite + sqlite_vec.
-    This class handles vector database registration (with metadata stored in a table named `vector_dbs`)
-    and creates a cache of VectorDBWithIndex instances (each wrapping a SQLiteVecIndex).
+    This class handles vector database registration (with metadata stored in a table named `vector_stores`)
+    and creates a cache of VectorStoreWithIndex instances (each wrapping a SQLiteVecIndex).
     """
 
-    def __init__(
-        self,
-        config,
-        inference_api: Inference,
-        models_api: Models,
-        files_api: Files | None,
-    ) -> None:
+    def __init__(self, config, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.models_api = models_api
-        self.cache: dict[str, VectorDBWithIndex] = {}
-        self.vector_db_store = None
+        self.cache: dict[str, VectorStoreWithIndex] = {}
+        self.vector_store_table = None
 
     async def initialize(self) -> None:
-        self.kvstore = await kvstore_impl(self.config.kvstore)
+        self.kvstore = await kvstore_impl(self.config.persistence)
 
         start_key = VECTOR_DBS_PREFIX
         end_key = f"{VECTOR_DBS_PREFIX}\xff"
-        stored_vector_dbs = await self.kvstore.values_in_range(start_key, end_key)
-        for db_json in stored_vector_dbs:
-            vector_db = VectorDB.model_validate_json(db_json)
+        stored_vector_stores = await self.kvstore.values_in_range(start_key, end_key)
+        for db_json in stored_vector_stores:
+            vector_store = VectorStore.model_validate_json(db_json)
             index = await SQLiteVecIndex.create(
-                vector_db.embedding_dimension,
-                self.config.db_path,
-                vector_db.identifier,
+                vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
             )
-            self.cache[vector_db.identifier] = VectorDBWithIndex(vector_db, index, self.inference_api)
+            self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
         # Load existing OpenAI vector stores into the in-memory cache
         await self.initialize_openai_vector_stores()
@@ -446,67 +408,64 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtoc
         # Clean up mixin resources (file batch tasks)
         await super().shutdown()
 
-    async def list_vector_dbs(self) -> list[VectorDB]:
-        return [v.vector_db for v in self.cache.values()]
+    async def list_vector_stores(self) -> list[VectorStore]:
+        return [v.vector_store for v in self.cache.values()]
 
-    async def register_vector_db(self, vector_db: VectorDB) -> None:
+    async def register_vector_store(self, vector_store: VectorStore) -> None:
         index = await SQLiteVecIndex.create(
-            vector_db.embedding_dimension,
-            self.config.db_path,
-            vector_db.identifier,
+            vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
         )
-        self.cache[vector_db.identifier] = VectorDBWithIndex(vector_db, index, self.inference_api)
+        self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
-    async def _get_and_cache_vector_db_index(self, vector_db_id: str) -> VectorDBWithIndex | None:
-        if vector_db_id in self.cache:
-            return self.cache[vector_db_id]
+    async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex | None:
+        if vector_store_id in self.cache:
+            return self.cache[vector_store_id]
 
-        if self.vector_db_store is None:
-            raise VectorStoreNotFoundError(vector_db_id)
+        if self.vector_store_table is None:
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        vector_db = self.vector_db_store.get_vector_db(vector_db_id)
-        if not vector_db:
-            raise VectorStoreNotFoundError(vector_db_id)
+        vector_store = self.vector_store_table.get_vector_store(vector_store_id)
+        if not vector_store:
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        index = VectorDBWithIndex(
-            vector_db=vector_db,
+        index = VectorStoreWithIndex(
+            vector_store=vector_store,
             index=SQLiteVecIndex(
-                dimension=vector_db.embedding_dimension,
+                dimension=vector_store.embedding_dimension,
                 db_path=self.config.db_path,
-                bank_id=vector_db.identifier,
+                bank_id=vector_store.identifier,
                 kvstore=self.kvstore,
             ),
             inference_api=self.inference_api,
         )
-        self.cache[vector_db_id] = index
+        self.cache[vector_store_id] = index
         return index
 
-    async def unregister_vector_db(self, vector_db_id: str) -> None:
-        if vector_db_id not in self.cache:
-            logger.warning(f"Vector DB {vector_db_id} not found")
+    async def unregister_vector_store(self, vector_store_id: str) -> None:
+        if vector_store_id not in self.cache:
             return
-        await self.cache[vector_db_id].index.delete()
-        del self.cache[vector_db_id]
+        await self.cache[vector_store_id].index.delete()
+        del self.cache[vector_store_id]
 
     async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
-        index = await self._get_and_cache_vector_db_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_db_id)
         if not index:
             raise VectorStoreNotFoundError(vector_db_id)
-        # The VectorDBWithIndex helper is expected to compute embeddings via the inference_api
+        # The VectorStoreWithIndex helper is expected to compute embeddings via the inference_api
         # and then call our index's add_chunks.
         await index.insert_chunks(chunks)
 
     async def query_chunks(
         self, vector_db_id: str, query: Any, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_db_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_db_id)
         if not index:
             raise VectorStoreNotFoundError(vector_db_id)
         return await index.query_chunks(query, params)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Delete chunks from a sqlite_vec index."""
-        index = await self._get_and_cache_vector_db_index(store_id)
+        index = await self._get_and_cache_vector_store_index(store_id)
         if not index:
             raise VectorStoreNotFoundError(store_id)
 

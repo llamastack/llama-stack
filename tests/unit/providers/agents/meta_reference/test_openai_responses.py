@@ -42,7 +42,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.tools.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
-from llama_stack.core.datatypes import ResponsesStoreConfig
+from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
@@ -50,7 +50,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
 
@@ -814,6 +814,69 @@ async def test_create_openai_response_with_instructions_and_previous_response(
     assert sent_messages[3].content == "Which is the largest?"
 
 
+async def test_create_openai_response_with_previous_response_instructions(
+    openai_responses_impl, mock_responses_store, mock_inference_api
+):
+    """Test prepending instructions and previous response with instructions."""
+
+    input_item_message = OpenAIResponseMessage(
+        id="123",
+        content="Name some towns in Ireland",
+        role="user",
+    )
+    response_output_message = OpenAIResponseMessage(
+        id="123",
+        content="Galway, Longford, Sligo",
+        status="completed",
+        role="assistant",
+    )
+    response = _OpenAIResponseObjectWithInputAndMessages(
+        created_at=1,
+        id="resp_123",
+        model="fake_model",
+        output=[response_output_message],
+        status="completed",
+        text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+        input=[input_item_message],
+        messages=[
+            OpenAIUserMessageParam(content="Name some towns in Ireland"),
+            OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
+        ],
+        instructions="You are a helpful assistant.",
+    )
+    mock_responses_store.get_response_object.return_value = response
+
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    instructions = "You are a geography expert. Provide concise answers."
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    await openai_responses_impl.create_openai_response(
+        input="Which is the largest?", model=model, instructions=instructions, previous_response_id="123"
+    )
+
+    # Verify
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    sent_messages = params.messages
+
+    # Check that instructions were prepended as a system message
+    # and that the previous response instructions were not carried over
+    assert len(sent_messages) == 4, sent_messages
+    assert sent_messages[0].role == "system"
+    assert sent_messages[0].content == instructions
+
+    # Check the rest of the messages were converted correctly
+    assert sent_messages[1].role == "user"
+    assert sent_messages[1].content == "Name some towns in Ireland"
+    assert sent_messages[2].role == "assistant"
+    assert sent_messages[2].content == "Galway, Longford, Sligo"
+    assert sent_messages[3].role == "user"
+    assert sent_messages[3].content == "Which is the largest?"
+
+
 async def test_list_openai_response_input_items_delegation(openai_responses_impl, mock_responses_store):
     """Test that list_openai_response_input_items properly delegates to responses_store with correct parameters."""
     # Setup
@@ -854,8 +917,10 @@ async def test_responses_store_list_input_items_logic():
 
     # Create mock store and response store
     mock_sql_store = AsyncMock()
+    backend_name = "sql_responses_test"
+    register_sqlstore_backends({backend_name: SqliteSqlStoreConfig(db_path="mock_db_path")})
     responses_store = ResponsesStore(
-        ResponsesStoreConfig(sql_store_config=SqliteSqlStoreConfig(db_path="mock_db_path")), policy=default_policy()
+        ResponsesStoreReference(backend=backend_name, table_name="responses"), policy=default_policy()
     )
     responses_store.sql_store = mock_sql_store
 

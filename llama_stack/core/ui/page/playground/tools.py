@@ -32,7 +32,7 @@ def tool_chat_page():
     tool_groups_list = [tool_group.identifier for tool_group in tool_groups]
     mcp_tools_list = [tool for tool in tool_groups_list if tool.startswith("mcp::")]
     builtin_tools_list = [tool for tool in tool_groups_list if not tool.startswith("mcp::")]
-    selected_vector_dbs = []
+    selected_vector_stores = []
 
     def reset_agent():
         st.session_state.clear()
@@ -55,13 +55,13 @@ def tool_chat_page():
         )
 
         if "builtin::rag" in toolgroup_selection:
-            vector_dbs = llama_stack_api.client.vector_dbs.list() or []
-            if not vector_dbs:
+            vector_stores = llama_stack_api.client.vector_stores.list() or []
+            if not vector_stores:
                 st.info("No vector databases available for selection.")
-            vector_dbs = [vector_db.identifier for vector_db in vector_dbs]
-            selected_vector_dbs = st.multiselect(
+            vector_stores = [vector_store.identifier for vector_store in vector_stores]
+            selected_vector_stores = st.multiselect(
                 label="Select Document Collections to use in RAG queries",
-                options=vector_dbs,
+                options=vector_stores,
                 on_change=reset_agent,
             )
 
@@ -119,7 +119,7 @@ def tool_chat_page():
             tool_dict = dict(
                 name="builtin::rag",
                 args={
-                    "vector_db_ids": list(selected_vector_dbs),
+                    "vector_store_ids": list(selected_vector_stores),
                 },
             )
             toolgroup_selection[i] = tool_dict

@@ -72,13 +72,30 @@ class AuthProvider(ABC):
 def get_attributes_from_claims(claims: dict[str, str], mapping: dict[str, str]) -> dict[str, list[str]]:
     attributes: dict[str, list[str]] = {}
     for claim_key, attribute_key in mapping.items():
-        if claim_key not in claims:
+        # First try dot notation for nested traversal (e.g., "resource_access.llamastack.roles")
+        # Then fall back to literal key with dots (e.g., "my.dotted.key")
+        claim: object = claims
+        keys = claim_key.split(".")
+        for key in keys:
+            if isinstance(claim, dict) and key in claim:
+                claim = claim[key]
+            else:
+                claim = None
+                break
+
+        if claim is None and claim_key in claims:
+            # Fall back to checking if claim_key exists as a literal key
+            claim = claims[claim_key]
+
+        if claim is None:
             continue
-        claim = claims[claim_key]
+
         if isinstance(claim, list):
             values = claim
-        else:
+        elif isinstance(claim, str):
             values = claim.split()
+        else:
+            continue
 
         if attribute_key in attributes:
             attributes[attribute_key].extend(values)

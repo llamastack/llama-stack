@@ -5127,7 +5127,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -5169,6 +5169,7 @@ components:
       enum:
         - llm
         - embedding
+        - rerank
       title: ModelType
       description: >-
         Enumeration of supported model types in Llama Stack.
@@ -5715,6 +5716,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
         input:
           type: array
           items:
@@ -6118,6 +6123,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
       additionalProperties: false
       required:
         - created_at
@@ -7811,7 +7820,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -8119,7 +8128,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -8882,7 +8891,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -10082,13 +10091,16 @@ tags:
       embeddings.
 
 
-      This API provides the raw interface to the underlying models. Two kinds of models
-      are supported:
+      This API provides the raw interface to the underlying models. Three kinds of
+      models are supported:
 
       - LLM models: these models generate "raw" and "chat" (conversational) completions.
 
       - Embedding models: these models generate embeddings to be used for semantic
       search.
+
+      - Rerank models: these models reorder the documents based on their relevance
+      to a query.
     x-displayName: Inference
   - name: Inspect
     description: >-

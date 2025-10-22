@@ -8,10 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from llama_stack.providers.utils.kvstore.config import (
-    KVStoreConfig,
-    SqliteKVStoreConfig,
-)
+from llama_stack.core.storage.datatypes import KVStoreReference
 from llama_stack.schema_utils import json_schema_type
 
 
@@ -27,14 +24,14 @@ class QdrantVectorIOConfig(BaseModel):
     prefix: str | None = None
     timeout: int | None = None
     host: str | None = None
-    kvstore: KVStoreConfig
+    persistence: KVStoreReference
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
             "api_key": "${env.QDRANT_API_KEY:=}",
-            "kvstore": SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=__distro_dir__,
-                db_name="qdrant_registry.db",
-            ),
+            "persistence": KVStoreReference(
+                backend="kv_default",
+                namespace="vector_io::qdrant_remote",
+            ).model_dump(exclude_none=True),
         }

@@ -8439,7 +8439,7 @@
                         "enum": [
                             "model",
                             "shield",
-                            "vector_db",
+                            "vector_store",
                             "dataset",
                             "scoring_function",
                             "benchmark",
@@ -8498,7 +8498,8 @@
                 "type": "string",
                 "enum": [
                     "llm",
-                    "embedding"
+                    "embedding",
+                    "rerank"
                 ],
                 "title": "ModelType",
                 "description": "Enumeration of supported model types in Llama Stack."
@@ -9239,6 +9240,10 @@
                         "$ref": "#/components/schemas/OpenAIResponseUsage",
                         "description": "(Optional) Token usage information for the response"
                     },
+                    "instructions": {
+                        "type": "string",
+                        "description": "(Optional) System message inserted into the model's context"
+                    },
                     "input": {
                         "type": "array",
                         "items": {
@@ -9787,6 +9792,10 @@
                     "usage": {
                         "$ref": "#/components/schemas/OpenAIResponseUsage",
                         "description": "(Optional) Token usage information for the response"
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "description": "(Optional) System message inserted into the model's context"
                     }
                 },
                 "additionalProperties": false,
@@ -11836,7 +11845,7 @@
                         "enum": [
                             "model",
                             "shield",
-                            "vector_db",
+                            "vector_store",
                             "dataset",
                             "scoring_function",
                             "benchmark",
@@ -12318,7 +12327,7 @@
                         "enum": [
                             "model",
                             "shield",
-                            "vector_db",
+                            "vector_store",
                             "dataset",
                             "scoring_function",
                             "benchmark",
@@ -13371,7 +13380,7 @@
                         "enum": [
                             "model",
                             "shield",
-                            "vector_db",
+                            "vector_store",
                             "dataset",
                             "scoring_function",
                             "benchmark",
@@ -14918,7 +14927,7 @@
                         "enum": [
                             "model",
                             "shield",
-                            "vector_db",
+                            "vector_store",
                             "dataset",
                             "scoring_function",
                             "benchmark",
@@ -16663,7 +16672,7 @@
                         "enum": [
                             "model",
                             "shield",
-                            "vector_db",
+                            "vector_store",
                             "dataset",
                             "scoring_function",
                             "benchmark",
@@ -17918,7 +17927,7 @@
         },
         {
             "name": "Inference",
-            "description": "Llama Stack Inference API for generating completions, chat completions, and embeddings.\n\nThis API provides the raw interface to the underlying models. Two kinds of models are supported:\n- LLM models: these models generate \"raw\" and \"chat\" (conversational) completions.\n- Embedding models: these models generate embeddings to be used for semantic search.",
+            "description": "Llama Stack Inference API for generating completions, chat completions, and embeddings.\n\nThis API provides the raw interface to the underlying models. Three kinds of models are supported:\n- LLM models: these models generate \"raw\" and \"chat\" (conversational) completions.\n- Embedding models: these models generate embeddings to be used for semantic search.\n- Rerank models: these models reorder the documents based on their relevance to a query.",
             "x-displayName": "Inference"
         },
         {

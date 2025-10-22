@@ -6,14 +6,12 @@
 
 import json
 import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
@@ -22,6 +20,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategyAuto,
     VectorStoreFileObject,
 )
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectorIO providers. This should only contain
@@ -72,7 +71,7 @@ async def test_chunk_id_conflict(vector_index, sample_chunks, embedding_dimensio
 
 async def test_initialize_adapter_with_existing_kvstore(vector_io_adapter):
     key = f"{VECTOR_DBS_PREFIX}db1"
-    dummy = VectorDB(
+    dummy = VectorStore(
         identifier="foo_db", provider_id="test_provider", embedding_model="test_model", embedding_dimension=128
     )
     await vector_io_adapter.kvstore.set(key=key, value=json.dumps(dummy.model_dump()))
@@ -82,10 +81,10 @@ async def test_initialize_adapter_with_existing_kvstore(vector_io_adapter):
 
 async def test_persistence_across_adapter_restarts(vector_io_adapter):
     await vector_io_adapter.initialize()
-    dummy = VectorDB(
+    dummy = VectorStore(
         identifier="foo_db", provider_id="test_provider", embedding_model="test_model", embedding_dimension=128
     )
-    await vector_io_adapter.register_vector_db(dummy)
+    await vector_io_adapter.register_vector_store(dummy)
     await vector_io_adapter.shutdown()
 
     await vector_io_adapter.initialize()
@@ -93,15 +92,15 @@ async def test_persistence_across_adapter_restarts(vector_io_adapter):
     await vector_io_adapter.shutdown()
 
 
-async def test_register_and_unregister_vector_db(vector_io_adapter):
+async def test_register_and_unregister_vector_store(vector_io_adapter):
     unique_id = f"foo_db_{np.random.randint(1e6)}"
-    dummy = VectorDB(
+    dummy = VectorStore(
         identifier=unique_id, provider_id="test_provider", embedding_model="test_model", embedding_dimension=128
     )
 
-    await vector_io_adapter.register_vector_db(dummy)
+    await vector_io_adapter.register_vector_store(dummy)
     assert dummy.identifier in vector_io_adapter.cache
-    await vector_io_adapter.unregister_vector_db(dummy.identifier)
+    await vector_io_adapter.unregister_vector_store(dummy.identifier)
     assert dummy.identifier not in vector_io_adapter.cache
 
 
@@ -122,7 +121,7 @@ async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
 
 
 async def test_insert_chunks_missing_db_raises(vector_io_adapter):
-    vector_io_adapter._get_and_cache_vector_db_index = AsyncMock(return_value=None)
+    vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
     with pytest.raises(ValueError):
         await vector_io_adapter.insert_chunks("db_not_exist", [])
@@ -171,7 +170,7 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
 
 
 async def test_query_chunks_missing_db_raises(vector_io_adapter):
-    vector_io_adapter._get_and_cache_vector_db_index = AsyncMock(return_value=None)
+    vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
     with pytest.raises(ValueError):
         await vector_io_adapter.query_chunks("db_missing", "q", None)
@@ -183,7 +182,7 @@ async def test_save_openai_vector_store(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -199,7 +198,7 @@ async def test_update_openai_vector_store(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -215,7 +214,7 @@ async def test_delete_openai_vector_store(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -230,7 +229,7 @@ async def test_load_openai_vector_stores(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -996,101 +995,11 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
     assert batch.file_counts.in_progress == 8
 
 
-async def test_get_default_embedding_model_success(vector_io_adapter):
-    """Test successful default embedding model detection."""
-    # Mock models API with a default model
-    mock_models_api = Mock()
-    mock_models_api.list_models = AsyncMock(
-        return_value=Mock(
-            data=[
-                Model(
-                    identifier="nomic-embed-text-v1.5",
-                    model_type=ModelType.embedding,
-                    provider_id="test-provider",
-                    metadata={
-                        "embedding_dimension": 768,
-                        "default_configured": True,
-                    },
-                )
-            ]
-        )
-    )
-
-    vector_io_adapter.models_api = mock_models_api
-    result = await vector_io_adapter._get_default_embedding_model_and_dimension()
-
-    assert result is not None
-    model_id, dimension = result
-    assert model_id == "nomic-embed-text-v1.5"
-    assert dimension == 768
-
-
-async def test_get_default_embedding_model_multiple_defaults_error(vector_io_adapter):
-    """Test error when multiple models are marked as default."""
-    mock_models_api = Mock()
-    mock_models_api.list_models = AsyncMock(
-        return_value=Mock(
-            data=[
-                Model(
-                    identifier="model1",
-                    model_type=ModelType.embedding,
-                    provider_id="test-provider",
-                    metadata={"embedding_dimension": 768, "default_configured": True},
-                ),
-                Model(
-                    identifier="model2",
-                    model_type=ModelType.embedding,
-                    provider_id="test-provider",
-                    metadata={"embedding_dimension": 512, "default_configured": True},
-                ),
-            ]
-        )
-    )
-
-    vector_io_adapter.models_api = mock_models_api
-
-    with pytest.raises(ValueError, match="Multiple embedding models marked as default_configured=True"):
-        await vector_io_adapter._get_default_embedding_model_and_dimension()
-
-
-async def test_openai_create_vector_store_uses_default_model(vector_io_adapter):
-    """Test that vector store creation uses default embedding model when none specified."""
-    # Mock models API and dependencies
-    mock_models_api = Mock()
-    mock_models_api.list_models = AsyncMock(
-        return_value=Mock(
-            data=[
-                Model(
-                    identifier="default-model",
-                    model_type=ModelType.embedding,
-                    provider_id="test-provider",
-                    metadata={"embedding_dimension": 512, "default_configured": True},
-                )
-            ]
-        )
-    )
-
-    vector_io_adapter.models_api = mock_models_api
-    vector_io_adapter.register_vector_db = AsyncMock()
-    vector_io_adapter.__provider_id__ = "test-provider"
-
-    # Create vector store without specifying embedding model
-    params = OpenAICreateVectorStoreRequestWithExtraBody(name="test-store")
-    result = await vector_io_adapter.openai_create_vector_store(params)
-
-    # Verify the vector store was created with default model
-    assert result.name == "test-store"
-    vector_io_adapter.register_vector_db.assert_called_once()
-    call_args = vector_io_adapter.register_vector_db.call_args[0][0]
-    assert call_args.embedding_model == "default-model"
-    assert call_args.embedding_dimension == 512
-
-
 async def test_embedding_config_from_metadata(vector_io_adapter):
     """Test that embedding configuration is correctly extracted from metadata."""
 
-    # Mock register_vector_db to avoid actual registration
-    vector_io_adapter.register_vector_db = AsyncMock()
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1106,9 +1015,9 @@ async def test_embedding_config_from_metadata(vector_io_adapter):
 
     await vector_io_adapter.openai_create_vector_store(params)
 
-    # Verify VectorDB was registered with correct embedding config from metadata
-    vector_io_adapter.register_vector_db.assert_called_once()
-    call_args = vector_io_adapter.register_vector_db.call_args[0][0]
+    # Verify VectorStore was registered with correct embedding config from metadata
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
     assert call_args.embedding_model == "test-embedding-model"
     assert call_args.embedding_dimension == 512
 
@@ -1116,8 +1025,8 @@ async def test_embedding_config_from_metadata(vector_io_adapter):
 async def test_embedding_config_from_extra_body(vector_io_adapter):
     """Test that embedding configuration is correctly extracted from extra_body when metadata is empty."""
 
-    # Mock register_vector_db to avoid actual registration
-    vector_io_adapter.register_vector_db = AsyncMock()
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1133,9 +1042,9 @@ async def test_embedding_config_from_extra_body(vector_io_adapter):
 
     await vector_io_adapter.openai_create_vector_store(params)
 
-    # Verify VectorDB was registered with correct embedding config from extra_body
-    vector_io_adapter.register_vector_db.assert_called_once()
-    call_args = vector_io_adapter.register_vector_db.call_args[0][0]
+    # Verify VectorStore was registered with correct embedding config from extra_body
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
     assert call_args.embedding_model == "extra-body-model"
     assert call_args.embedding_dimension == 1024
 
@@ -1143,8 +1052,8 @@ async def test_embedding_config_from_extra_body(vector_io_adapter):
 async def test_embedding_config_consistency_check_passes(vector_io_adapter):
     """Test that consistent embedding config in both metadata and extra_body passes validation."""
 
-    # Mock register_vector_db to avoid actual registration
-    vector_io_adapter.register_vector_db = AsyncMock()
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1164,61 +1073,17 @@ async def test_embedding_config_consistency_check_passes(vector_io_adapter):
     await vector_io_adapter.openai_create_vector_store(params)
 
     # Should not raise any error and use metadata config
-    vector_io_adapter.register_vector_db.assert_called_once()
-    call_args = vector_io_adapter.register_vector_db.call_args[0][0]
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
     assert call_args.embedding_model == "consistent-model"
     assert call_args.embedding_dimension == 768
-
-
-async def test_embedding_config_inconsistency_errors(vector_io_adapter):
-    """Test that inconsistent embedding config between metadata and extra_body raises errors."""
-
-    # Mock register_vector_db to avoid actual registration
-    vector_io_adapter.register_vector_db = AsyncMock()
-    # Set provider_id attribute for the adapter
-    vector_io_adapter.__provider_id__ = "test_provider"
-
-    # Test with inconsistent embedding model
-    params = OpenAICreateVectorStoreRequestWithExtraBody(
-        name="test_store",
-        metadata={
-            "embedding_model": "metadata-model",
-            "embedding_dimension": "768",
-        },
-        **{
-            "embedding_model": "extra-body-model",
-            "embedding_dimension": 768,
-        },
-    )
-
-    with pytest.raises(ValueError, match="Embedding model inconsistent between metadata"):
-        await vector_io_adapter.openai_create_vector_store(params)
-
-    # Reset mock for second test
-    vector_io_adapter.register_vector_db.reset_mock()
-
-    # Test with inconsistent embedding dimension
-    params = OpenAICreateVectorStoreRequestWithExtraBody(
-        name="test_store",
-        metadata={
-            "embedding_model": "same-model",
-            "embedding_dimension": "512",
-        },
-        **{
-            "embedding_model": "same-model",
-            "embedding_dimension": 1024,
-        },
-    )
-
-    with pytest.raises(ValueError, match="Embedding dimension inconsistent between metadata"):
-        await vector_io_adapter.openai_create_vector_store(params)
 
 
 async def test_embedding_config_defaults_when_missing(vector_io_adapter):
     """Test that embedding dimension defaults to 768 when not provided."""
 
-    # Mock register_vector_db to avoid actual registration
-    vector_io_adapter.register_vector_db = AsyncMock()
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1234,8 +1099,8 @@ async def test_embedding_config_defaults_when_missing(vector_io_adapter):
     await vector_io_adapter.openai_create_vector_store(params)
 
     # Should default to 768 dimensions
-    vector_io_adapter.register_vector_db.assert_called_once()
-    call_args = vector_io_adapter.register_vector_db.call_args[0][0]
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
     assert call_args.embedding_model == "model-without-dimension"
     assert call_args.embedding_dimension == 768
 
@@ -1243,8 +1108,8 @@ async def test_embedding_config_defaults_when_missing(vector_io_adapter):
 async def test_embedding_config_required_model_missing(vector_io_adapter):
     """Test that missing embedding model raises error."""
 
-    # Mock register_vector_db to avoid actual registration
-    vector_io_adapter.register_vector_db = AsyncMock()
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
     # Mock the default model lookup to return None (no default model available)
@@ -1253,5 +1118,5 @@ async def test_embedding_config_required_model_missing(vector_io_adapter):
     # Test with no embedding model provided
     params = OpenAICreateVectorStoreRequestWithExtraBody(name="test_store", metadata={})
 
-    with pytest.raises(ValueError, match="embedding_model is required in extra_body when creating a vector store"):
+    with pytest.raises(ValueError, match="embedding_model is required"):
         await vector_io_adapter.openai_create_vector_store(params)

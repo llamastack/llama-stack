@@ -6,6 +6,8 @@
 
 import argparse
 
+from llama_stack.log import setup_logging
+
 from .stack import StackParser
 from .stack.utils import print_subcommand_description
 
@@ -42,6 +44,9 @@ class LlamaCLIParser:
 
 
 def main():
+    # Initialize logging from environment variables before any other operations
+    setup_logging()
+
     parser = LlamaCLIParser()
     args = parser.parse_args()
     parser.run(args)

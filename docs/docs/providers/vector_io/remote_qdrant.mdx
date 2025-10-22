@@ -26,13 +26,13 @@ Please refer to the inline provider documentation.
 | `prefix` | `str \| None` | No |  |  |
 | `timeout` | `int \| None` | No |  |  |
 | `host` | `str \| None` | No |  |  |
-| `kvstore` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig` | No | sqlite |  |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
 
 ## Sample Configuration
 
 ```yaml
 api_key: ${env.QDRANT_API_KEY:=}
-kvstore:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/qdrant_registry.db
+persistence:
+  namespace: vector_io::qdrant_remote
+  backend: kv_default
 ```

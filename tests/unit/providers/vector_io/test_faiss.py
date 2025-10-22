@@ -11,9 +11,8 @@ import numpy as np
 import pytest
 
 from llama_stack.apis.files import Files
-from llama_stack.apis.models import Models
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.providers.datatypes import HealthStatus
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import (
@@ -44,8 +43,8 @@ def embedding_dimension():
 
 
 @pytest.fixture
-def vector_db_id():
-    return "test_vector_db"
+def vector_store_id():
+    return "test_vector_store"
 
 
 @pytest.fixture
@@ -62,23 +61,17 @@ def sample_embeddings(embedding_dimension):
 
 
 @pytest.fixture
-def mock_vector_db(vector_db_id, embedding_dimension) -> MagicMock:
-    mock_vector_db = MagicMock(spec=VectorDB)
-    mock_vector_db.embedding_model = "mock_embedding_model"
-    mock_vector_db.identifier = vector_db_id
-    mock_vector_db.embedding_dimension = embedding_dimension
-    return mock_vector_db
+def mock_vector_store(vector_store_id, embedding_dimension) -> MagicMock:
+    mock_vector_store = MagicMock(spec=VectorStore)
+    mock_vector_store.embedding_model = "mock_embedding_model"
+    mock_vector_store.identifier = vector_store_id
+    mock_vector_store.embedding_dimension = embedding_dimension
+    return mock_vector_store
 
 
 @pytest.fixture
 def mock_files_api():
     mock_api = MagicMock(spec=Files)
-    return mock_api
-
-
-@pytest.fixture
-def mock_models_api():
-    mock_api = MagicMock(spec=Models)
     return mock_api
 
 
@@ -117,7 +110,7 @@ async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_
         assert response.chunks[1] == sample_chunks[1]
 
 
-async def test_health_success(mock_models_api):
+async def test_health_success():
     """Test that the health check returns OK status when faiss is working correctly."""
     # Create a fresh instance of FaissVectorIOAdapter for testing
     config = MagicMock()
@@ -126,9 +119,7 @@ async def test_health_success(mock_models_api):
 
     with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
         mock_index_flat.return_value = MagicMock()
-        adapter = FaissVectorIOAdapter(
-            config=config, inference_api=inference_api, models_api=mock_models_api, files_api=files_api
-        )
+        adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly
         response = await adapter.health()
@@ -142,7 +133,7 @@ async def test_health_success(mock_models_api):
         mock_index_flat.assert_called_once_with(128)  # VECTOR_DIMENSION is 128
 
 
-async def test_health_failure(mock_models_api):
+async def test_health_failure():
     """Test that the health check returns ERROR status when faiss encounters an error."""
     # Create a fresh instance of FaissVectorIOAdapter for testing
     config = MagicMock()
@@ -152,9 +143,7 @@ async def test_health_failure(mock_models_api):
     with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
         mock_index_flat.side_effect = Exception("Test error")
 
-        adapter = FaissVectorIOAdapter(
-            config=config, inference_api=inference_api, models_api=mock_models_api, files_api=files_api
-        )
+        adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly
         response = await adapter.health()

@@ -12,10 +12,10 @@ from llama_stack.core.access_control.conditions import ProtectedResource
 from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
 from llama_stack.core.datatypes import User
 from llama_stack.core.request_headers import get_authenticated_user
+from llama_stack.core.storage.datatypes import StorageBackendType
 from llama_stack.log import get_logger
 
 from .api import ColumnDefinition, ColumnType, PaginatedResponse, SqlStore
-from .sqlstore import SqlStoreType
 
 logger = get_logger(name=__name__, category="providers::utils")
 
@@ -82,8 +82,8 @@ class AuthorizedSqlStore:
         if not hasattr(self.sql_store, "config"):
             raise ValueError("SqlStore must have a config attribute to be used with AuthorizedSqlStore")
 
-        self.database_type = self.sql_store.config.type
-        if self.database_type not in [SqlStoreType.postgres, SqlStoreType.sqlite]:
+        self.database_type = self.sql_store.config.type.value
+        if self.database_type not in [StorageBackendType.SQL_POSTGRES.value, StorageBackendType.SQL_SQLITE.value]:
             raise ValueError(f"Unsupported database type: {self.database_type}")
 
     def _validate_sql_optimized_policy(self) -> None:
@@ -220,9 +220,9 @@ class AuthorizedSqlStore:
         Returns:
             SQL expression to extract JSON value
         """
-        if self.database_type == SqlStoreType.postgres:
+        if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             return f"{column}->'{path}'"
-        elif self.database_type == SqlStoreType.sqlite:
+        elif self.database_type == StorageBackendType.SQL_SQLITE.value:
             return f"JSON_EXTRACT({column}, '$.{path}')"
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")
@@ -237,9 +237,9 @@ class AuthorizedSqlStore:
         Returns:
             SQL expression to extract JSON value as text
         """
-        if self.database_type == SqlStoreType.postgres:
+        if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             return f"{column}->>'{path}'"
-        elif self.database_type == SqlStoreType.sqlite:
+        elif self.database_type == StorageBackendType.SQL_SQLITE.value:
             return f"JSON_EXTRACT({column}, '$.{path}')"
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")
@@ -248,10 +248,10 @@ class AuthorizedSqlStore:
         """Get the SQL conditions for public access."""
         # Public records are records that have no owner_principal or access_attributes
         conditions = ["owner_principal = ''"]
-        if self.database_type == SqlStoreType.postgres:
+        if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             # Postgres stores JSON null as 'null'
             conditions.append("access_attributes::text = 'null'")
-        elif self.database_type == SqlStoreType.sqlite:
+        elif self.database_type == StorageBackendType.SQL_SQLITE.value:
             conditions.append("access_attributes = 'null'")
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")

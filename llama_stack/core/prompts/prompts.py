@@ -11,9 +11,8 @@ from pydantic import BaseModel
 
 from llama_stack.apis.prompts import ListPromptsResponse, Prompt, Prompts
 from llama_stack.core.datatypes import StackRunConfig
-from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
+from llama_stack.core.storage.datatypes import KVStoreReference
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 
 
 class PromptServiceConfig(BaseModel):
@@ -41,10 +40,12 @@ class PromptServiceImpl(Prompts):
         self.kvstore: KVStore
 
     async def initialize(self) -> None:
-        kvstore_config = SqliteKVStoreConfig(
-            db_path=(DISTRIBS_BASE_DIR / self.config.run_config.image_name / "prompts.db").as_posix()
-        )
-        self.kvstore = await kvstore_impl(kvstore_config)
+        # Use metadata store backend with prompts-specific namespace
+        metadata_ref = self.config.run_config.storage.stores.metadata
+        if not metadata_ref:
+            raise ValueError("storage.stores.metadata must be configured in run config")
+        prompts_ref = KVStoreReference(namespace="prompts", backend=metadata_ref.backend)
+        self.kvstore = await kvstore_impl(prompts_ref)
 
     def _get_default_key(self, prompt_id: str) -> str:
         """Get the KVStore key that stores the default version number."""

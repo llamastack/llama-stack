@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.2.23"
+version = "0.3.0"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
@@ -30,7 +30,7 @@ dependencies = [
     "httpx",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-client>=0.2.23",
+    "llama-stack-client>=0.3.0",
     "openai>=1.107",                                  # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
@@ -55,7 +55,7 @@ dependencies = [
 ui = [
     "streamlit",
     "pandas",
-    "llama-stack-client>=0.2.23",
+    "llama-stack-client>=0.3.0",
     "streamlit-option-menu",
 ]
 

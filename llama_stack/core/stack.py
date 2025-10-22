@@ -35,13 +35,23 @@ from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, StackRunConfig
+from llama_stack.core.datatypes import Provider, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
 from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.resolver import ProviderRegistry, resolve_impls
 from llama_stack.core.routing_tables.common import CommonRoutingTableImpl
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    ServerStoresConfig,
+    SqliteKVStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageBackendConfig,
+    StorageConfig,
+)
 from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
@@ -98,33 +108,9 @@ REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
 
-async def validate_default_embedding_model(impls: dict[Api, Any]):
-    """Validate that at most one embedding model is marked as default."""
-    if Api.models not in impls:
-        return
-
-    models_impl = impls[Api.models]
-    response = await models_impl.list_models()
-    models_list = response.data if hasattr(response, "data") else response
-
-    default_embedding_models = []
-    for model in models_list:
-        if model.model_type == "embedding" and model.metadata.get("default_configured") is True:
-            default_embedding_models.append(model.identifier)
-
-    if len(default_embedding_models) > 1:
-        raise ValueError(
-            f"Multiple embedding models marked as default_configured=True: {default_embedding_models}. "
-            "Only one embedding model can be marked as default."
-        )
-
-    if default_embedding_models:
-        logger.info(f"Default embedding model configured: {default_embedding_models[0]}")
-
-
 async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
-        objects = getattr(run_config, rsrc)
+        objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
 
@@ -152,7 +138,41 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
 
-    await validate_default_embedding_model(impls)
+
+async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
+    """Validate vector stores configuration."""
+    if vector_stores_config is None:
+        return
+
+    default_embedding_model = vector_stores_config.default_embedding_model
+    if default_embedding_model is None:
+        return
+
+    provider_id = default_embedding_model.provider_id
+    model_id = default_embedding_model.model_id
+    default_model_id = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
+
+    default_model = models_list.get(default_model_id)
+    if default_model is None:
+        raise ValueError(f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}")
+
+    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    if embedding_dimension is None:
+        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+
+    try:
+        int(embedding_dimension)
+    except ValueError as err:
+        raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
+
+    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
 
 
 class EnvVarError(Exception):
@@ -329,6 +349,25 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     impls[Api.conversations] = conversations_impl
 
 
+def _initialize_storage(run_config: StackRunConfig):
+    kv_backends: dict[str, StorageBackendConfig] = {}
+    sql_backends: dict[str, StorageBackendConfig] = {}
+    for backend_name, backend_config in run_config.storage.backends.items():
+        type = backend_config.type.value
+        if type.startswith("kv_"):
+            kv_backends[backend_name] = backend_config
+        elif type.startswith("sql_"):
+            sql_backends[backend_name] = backend_config
+        else:
+            raise ValueError(f"Unknown storage backend type: {type}")
+
+    from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
+    from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+
+    register_kvstore_backends(kv_backends)
+    register_sqlstore_backends(sql_backends)
+
+
 class Stack:
     def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
@@ -347,7 +386,11 @@ class Stack:
                 TEST_RECORDING_CONTEXT.__enter__()
                 logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
 
-        dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
+        _initialize_storage(self.run_config)
+        stores = self.run_config.storage.stores
+        if not stores.metadata:
+            raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
+        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}
@@ -367,8 +410,8 @@ class Stack:
             await impls[Api.conversations].initialize()
 
         await register_resources(self.run_config, impls)
-
         await refresh_registry_once(impls)
+        await validate_vector_stores_config(self.run_config.vector_stores, impls)
         self.impls = impls
 
     def create_registry_refresh_task(self):
@@ -488,5 +531,16 @@ def run_config_from_adhoc_config_spec(
         image_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
+        storage=StorageConfig(
+            backends={
+                "kv_default": SqliteKVStoreConfig(db_path=f"{distro_dir}/kvstore.db"),
+                "sql_default": SqliteSqlStoreConfig(db_path=f"{distro_dir}/sql_store.db"),
+            },
+            stores=ServerStoresConfig(
+                metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+                inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+                conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
+            ),
+        ),
     )
     return config
