@@ -582,6 +582,7 @@ can be instantiated multiple times (with different configs) if necessary.
         _ensure_backend(stores.inference, sql_backends, "storage.stores.inference")
         _ensure_backend(stores.conversations, sql_backends, "storage.stores.conversations")
         _ensure_backend(stores.responses, sql_backends, "storage.stores.responses")
+        _ensure_backend(stores.prompts, kv_backends, "storage.stores.prompts")
         return self
 
 

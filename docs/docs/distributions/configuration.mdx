@@ -63,13 +63,21 @@ storage:
     sql_default:
       type: sql_sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/sqlstore.db
-  references:
+  stores:
     metadata:
       backend: kv_default
       namespace: registry
     inference:
       backend: sql_default
       table_name: inference_store
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      backend: sql_default
+      table_name: openai_conversations
+    prompts:
+      backend: kv_default
+      namespace: prompts
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}

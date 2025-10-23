@@ -540,6 +540,7 @@ def run_config_from_adhoc_config_spec(
                 metadata=KVStoreReference(backend="kv_default", namespace="registry"),
                 inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
                 conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
+                prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
             ),
         ),
     )
