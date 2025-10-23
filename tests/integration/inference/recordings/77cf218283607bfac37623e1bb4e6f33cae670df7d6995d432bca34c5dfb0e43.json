@@ -1,0 +1,67 @@
+{
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_with_tool_choice_none[txt=vllm/Qwen/Qwen3-0.6B-inference:chat_completion:tool_calling]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Pretend you are a weather assistant."
+        },
+        {
+          "role": "user",
+          "content": "What's the weather like in San Francisco, CA?"
+        }
+      ],
+      "max_tokens": 4096,
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-77cf21828360",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user is asking about the weather in San Francisco, CA. I need to provide accurate information. Let me check the current weather conditions. San Francisco is known for being a rainy city, especially during the summer. The temperature ranges from around 70\u00b0F to 85\u00b0F. I should mention the typical rainy days and the humidity. Also, it's important to note that it's a dry season for most of the year, so the weather might be different. I should keep the response clear and helpful, making sure the user knows the current conditions.\n</think>\n\nThe weather in San Francisco, CA, is typically rainy, with temperatures ranging from around **70\u00b0F to 85\u00b0F**. It's a dry season, so the weather may be more variable. You might encounter showers or light drizzle during the day, and the humidity can be high. For the most accurate current information, check the local weather service or app.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 196,
+          "prompt_tokens": 33,
+          "total_tokens": 229,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
