@@ -22,11 +22,11 @@ from llama_stack.apis.inference.inference import (
 )
 from llama_stack.apis.models import Model
 from llama_stack.apis.models.models import ModelType
+from llama_stack.core.telemetry.tracing import get_current_span
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
-from llama_stack.providers.utils.telemetry.tracing import get_current_span
 
 logger = get_logger(name=__name__, category="providers::remote::watsonx")
 

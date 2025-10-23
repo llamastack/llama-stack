@@ -67,6 +67,7 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
@@ -78,7 +79,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
     convert_tooldef_to_openai_tool,
 )
 from llama_stack.providers.utils.kvstore import KVStore
-from llama_stack.providers.utils.telemetry import tracing
 
 from .persistence import AgentPersistence
 from .safety import SafetyException, ShieldRunnerMixin

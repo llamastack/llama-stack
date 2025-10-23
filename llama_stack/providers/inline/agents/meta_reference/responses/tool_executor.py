@@ -37,8 +37,8 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.tools import ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry import tracing
 
 from .types import ChatCompletionContext, ToolExecutionResult
 

@@ -256,7 +256,7 @@ class LiteLLMOpenAIMixin(
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         # Add usage tracking for streaming when telemetry is active
-        from llama_stack.providers.utils.telemetry.tracing import get_current_span
+        from llama_stack.core.telemetry.tracing import get_current_span
 
         stream_options = params.stream_options
         if params.stream and get_current_span() is not None:

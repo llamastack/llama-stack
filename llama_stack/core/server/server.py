@@ -36,7 +36,6 @@ from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
-    LoggingConfig,
     StackRunConfig,
     process_cors_config,
 )
@@ -53,19 +52,13 @@ from llama_stack.core.stack import (
     cast_image_name_to_string,
     replace_env_vars,
 )
+from llama_stack.core.telemetry import Telemetry
+from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, setup_logger
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
-from llama_stack.log import get_logger, setup_logging
+from llama_stack.log import LoggingConfig, get_logger, setup_logging
 from llama_stack.providers.datatypes import Api
-from llama_stack.providers.inline.telemetry.meta_reference.config import TelemetryConfig
-from llama_stack.providers.inline.telemetry.meta_reference.telemetry import (
-    TelemetryAdapter,
-)
-from llama_stack.providers.utils.telemetry.tracing import (
-    CURRENT_TRACE_CONTEXT,
-    setup_logger,
-)
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
@@ -451,9 +444,7 @@ def create_app() -> StackApp:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
     if config.telemetry.enabled:
-        setup_logger(impls[Api.telemetry])
-    else:
-        setup_logger(TelemetryAdapter(TelemetryConfig(), {}))
+        setup_logger(Telemetry())
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)
@@ -511,7 +502,8 @@ def create_app() -> StackApp:
     app.exception_handler(RequestValidationError)(global_exception_handler)
     app.exception_handler(Exception)(global_exception_handler)
 
-    app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
+    if config.telemetry.enabled:
+        app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 

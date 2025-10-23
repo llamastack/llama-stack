@@ -23,7 +23,7 @@ from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-import llama_stack.providers.inline.telemetry.meta_reference.telemetry as telemetry_module
+import llama_stack.core.telemetry.telemetry as telemetry_module
 from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 from tests.integration.fixtures.common import instantiate_llama_stack_client
 
