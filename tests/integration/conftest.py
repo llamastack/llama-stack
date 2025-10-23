@@ -363,8 +363,8 @@ def vector_provider_wrapper(func):
 
         return func(*args, **kwargs)
 
-    # For replay tests, only use providers that are available in ci-tests environment
-    if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay":
+    # For CI tests (replay/record), only use providers that are available in ci-tests environment
+    if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") in ("replay", "record"):
         all_providers = ["faiss", "sqlite-vec"]
     else:
         # For live tests, try all providers (they'll skip if not available)
