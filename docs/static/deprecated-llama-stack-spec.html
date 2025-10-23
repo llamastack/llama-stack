@@ -8593,15 +8593,52 @@
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseInputMessageContentImage"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputMessageContentFile"
                     }
                 ],
                 "discriminator": {
                     "propertyName": "type",
                     "mapping": {
                         "input_text": "#/components/schemas/OpenAIResponseInputMessageContentText",
-                        "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage"
+                        "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage",
+                        "input_file": "#/components/schemas/OpenAIResponseInputMessageContentFile"
                     }
                 }
+            },
+            "OpenAIResponseInputMessageContentFile": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "input_file",
+                        "default": "input_file",
+                        "description": "The type of the input item. Always `input_file`."
+                    },
+                    "file_data": {
+                        "type": "string",
+                        "description": "The data of the file to be sent to the model."
+                    },
+                    "file_id": {
+                        "type": "string",
+                        "description": "(Optional) The ID of the file to be sent to the model."
+                    },
+                    "file_url": {
+                        "type": "string",
+                        "description": "The URL of the file to be sent to the model."
+                    },
+                    "filename": {
+                        "type": "string",
+                        "description": "The name of the file to be sent to the model."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "OpenAIResponseInputMessageContentFile",
+                "description": "File content for input messages in OpenAI response format."
             },
             "OpenAIResponseInputMessageContentImage": {
                 "type": "object",
@@ -8629,6 +8666,10 @@
                         "const": "input_image",
                         "default": "input_image",
                         "description": "Content type identifier, always \"input_image\""
+                    },
+                    "file_id": {
+                        "type": "string",
+                        "description": "(Optional) The ID of the file to be sent to the model."
                     },
                     "image_url": {
                         "type": "string",
@@ -8992,6 +9033,10 @@
                     "previous_response_id": {
                         "type": "string",
                         "description": "(Optional) ID of the previous response in a conversation"
+                    },
+                    "prompt": {
+                        "$ref": "#/components/schemas/Prompt",
+                        "description": "(Optional) Prompt object with ID, version, and variables"
                     },
                     "status": {
                         "type": "string",
@@ -9610,6 +9655,44 @@
                 "title": "OpenAIResponseUsage",
                 "description": "Usage information for OpenAI response."
             },
+            "Prompt": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "description": "The system prompt text with variable placeholders. Variables are only supported when using the Responses API."
+                    },
+                    "version": {
+                        "type": "integer",
+                        "description": "Version (integer starting at 1, incremented on save)"
+                    },
+                    "prompt_id": {
+                        "type": "string",
+                        "description": "Unique identifier formatted as 'pmpt_<48-digit-hash>'"
+                    },
+                    "variables": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of prompt variable names that can be used in the prompt template"
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Boolean indicating whether this version is the default version for this prompt"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "version",
+                    "prompt_id",
+                    "variables",
+                    "is_default"
+                ],
+                "title": "Prompt",
+                "description": "A prompt resource representing a stored OpenAI Compatible prompt template in Llama Stack."
+            },
             "ResponseGuardrailSpec": {
                 "type": "object",
                 "properties": {
@@ -9766,6 +9849,32 @@
                 "title": "OpenAIResponseInputToolMCP",
                 "description": "Model Context Protocol (MCP) tool configuration for OpenAI response inputs."
             },
+            "OpenAIResponsePromptParam": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the prompt template"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContent"
+                        },
+                        "description": "Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution"
+                    },
+                    "version": {
+                        "type": "string",
+                        "description": "Version number of the prompt to use (defaults to latest if not specified)"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "id"
+                ],
+                "title": "OpenAIResponsePromptParam",
+                "description": "Prompt object that is used for OpenAI responses."
+            },
             "CreateOpenaiResponseRequest": {
                 "type": "object",
                 "properties": {
@@ -9786,6 +9895,10 @@
                     "model": {
                         "type": "string",
                         "description": "The underlying LLM used for completions."
+                    },
+                    "prompt": {
+                        "$ref": "#/components/schemas/OpenAIResponsePromptParam",
+                        "description": "Prompt object with ID, version, and variables."
                     },
                     "instructions": {
                         "type": "string"
@@ -9874,6 +9987,10 @@
                     "previous_response_id": {
                         "type": "string",
                         "description": "(Optional) ID of the previous response in a conversation"
+                    },
+                    "prompt": {
+                        "$ref": "#/components/schemas/Prompt",
+                        "description": "(Optional) Prompt object with ID, version, and variables"
                     },
                     "status": {
                         "type": "string",

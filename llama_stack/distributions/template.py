@@ -257,6 +257,10 @@ class RunConfigSettings(BaseModel):
                 backend="sql_default",
                 table_name="openai_conversations",
             ).model_dump(exclude_none=True),
+            "prompts": SqlStoreReference(
+                backend="sql_default",
+                table_name="prompts",
+            ).model_dump(exclude_none=True),
         }
 
         storage_config = dict(

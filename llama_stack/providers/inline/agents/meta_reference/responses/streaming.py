@@ -65,6 +65,7 @@ from llama_stack.apis.inference import (
     OpenAIChoice,
     OpenAIMessageParam,
 )
+from llama_stack.apis.prompts.prompts import Prompt
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.telemetry import tracing
@@ -107,6 +108,7 @@ class StreamingResponseOrchestrator:
         ctx: ChatCompletionContext,
         response_id: str,
         created_at: int,
+        prompt: Prompt | None,
         text: OpenAIResponseText,
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
@@ -118,6 +120,7 @@ class StreamingResponseOrchestrator:
         self.ctx = ctx
         self.response_id = response_id
         self.created_at = created_at
+        self.prompt = prompt
         self.text = text
         self.max_infer_iters = max_infer_iters
         self.tool_executor = tool_executor
@@ -175,6 +178,7 @@ class StreamingResponseOrchestrator:
             object="response",
             status=status,
             output=self._clone_outputs(outputs),
+            prompt=self.prompt,
             text=self.text,
             tools=self.ctx.available_tools(),
             error=error,

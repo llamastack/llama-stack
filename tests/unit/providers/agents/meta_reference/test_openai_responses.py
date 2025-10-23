@@ -40,6 +40,7 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
 )
+from llama_stack.apis.prompts import Prompt
 from llama_stack.apis.tools.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
@@ -98,6 +99,19 @@ def mock_safety_api():
 
 
 @pytest.fixture
+def mock_prompts_api():
+    prompts_api = AsyncMock()
+    return prompts_api
+
+
+@pytest.fixture
+def mock_files_api():
+    """Mock files API for testing."""
+    files_api = AsyncMock()
+    return files_api
+
+
+@pytest.fixture
 def openai_responses_impl(
     mock_inference_api,
     mock_tool_groups_api,
@@ -106,6 +120,8 @@ def openai_responses_impl(
     mock_vector_io_api,
     mock_safety_api,
     mock_conversations_api,
+    mock_prompts_api,
+    mock_files_api,
 ):
     return OpenAIResponsesImpl(
         inference_api=mock_inference_api,
@@ -115,6 +131,8 @@ def openai_responses_impl(
         vector_io_api=mock_vector_io_api,
         safety_api=mock_safety_api,
         conversations_api=mock_conversations_api,
+        prompts_api=mock_prompts_api,
+        files_api=mock_files_api,
     )
 
 
@@ -498,7 +516,7 @@ async def test_create_openai_response_with_tool_call_function_arguments_none(ope
     mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
 
 
-async def test_create_openai_response_with_multiple_messages(openai_responses_impl, mock_inference_api):
+async def test_create_openai_response_with_multiple_messages(openai_responses_impl, mock_inference_api, mock_files_api):
     """Test creating an OpenAI response with multiple messages."""
     # Setup
     input_messages = [
@@ -709,7 +727,7 @@ async def test_create_openai_response_with_instructions(openai_responses_impl, m
 
 
 async def test_create_openai_response_with_instructions_and_multiple_messages(
-    openai_responses_impl, mock_inference_api
+    openai_responses_impl, mock_inference_api, mock_files_api
 ):
     # Setup
     input_messages = [
@@ -1169,3 +1187,657 @@ async def test_create_openai_response_with_invalid_text_format(openai_responses_
             model=model,
             text=OpenAIResponseText(format={"type": "invalid"}),
         )
+
+
+async def test_create_openai_response_with_prompt(openai_responses_impl, mock_inference_api, mock_prompts_api):
+    """Test creating an OpenAI response with a prompt."""
+    input_text = "What is the capital of Ireland?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a helpful {{ area_name }} assistant at {{ company_name }}. Always provide accurate information.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["area_name", "company_name"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentText,
+        OpenAIResponsePromptParam,
+    )
+
+    prompt_params_with_version_1 = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={
+            "area_name": OpenAIResponseInputMessageContentText(text="geography"),
+            "company_name": OpenAIResponseInputMessageContentText(text="Dummy Company"),
+        },
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt=prompt_params_with_version_1,
+    )
+
+    mock_prompts_api.get_prompt.assert_called_with(prompt_id, 1)
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    sent_messages = call_args.args[0].messages
+    assert len(sent_messages) == 2
+
+    system_messages = [msg for msg in sent_messages if msg.role == "system"]
+    assert len(system_messages) == 1
+    assert (
+        system_messages[0].content
+        == "You are a helpful geography assistant at Dummy Company. Always provide accurate information."
+    )
+
+    user_messages = [msg for msg in sent_messages if msg.role == "user"]
+    assert len(user_messages) == 1
+    assert user_messages[0].content == input_text
+
+    assert result.model == model
+    assert result.status == "completed"
+    assert result.prompt.prompt_id == prompt_id
+    assert result.prompt.variables == ["area_name", "company_name"]
+    assert result.prompt.version == 1
+    assert result.prompt.prompt == prompt.prompt
+
+
+async def test_prepend_prompt_successful_without_variables(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt function without variables."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a helpful assistant. Always provide accurate information.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=[],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAISystemMessageParam, OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(id=prompt_id, version="1")
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Hello")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+    # Check that prompt was returned
+    assert result == prompt
+
+    # Check that system message was prepended
+    assert len(messages) == 2
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    assert messages[0].content == "You are a helpful assistant. Always provide accurate information."
+
+
+async def test_prepend_prompt_no_version_specified(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt function when no version is specified (should use None)."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Default prompt text.",
+        prompt_id=prompt_id,
+        version=3,
+        variables=[],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(id=prompt_id)  # No version specified
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, None)
+    assert result == prompt
+    assert len(messages) == 2
+
+
+async def test_prepend_prompt_invalid_variable(openai_responses_impl, mock_prompts_api):
+    """Test error handling in prepend_prompt function when prompt parameters contain invalid variables."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="You are a {{ role }} assistant.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["role"],  # Only "role" is valid
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentText,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={
+            "role": OpenAIResponseInputMessageContentText(text="helpful"),
+            "company": OpenAIResponseInputMessageContentText(
+                text="Dummy Company"
+            ),  # company is not in prompt.variables
+        },
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test prompt")]
+
+    # Execute - should raise ValueError for invalid variable
+    with pytest.raises(ValueError, match="Variable company not found in prompt"):
+        await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+
+async def test_prepend_prompt_not_found(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt function when prompt is not found."""
+    # Setup
+    prompt_id = "pmpt_nonexistent"
+
+    from llama_stack.apis.agents.openai_responses import OpenAIResponsePromptParam
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(id=prompt_id, version="1")
+
+    mock_prompts_api.get_prompt.return_value = None  # Prompt not found
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test prompt")]
+    initial_length = len(messages)
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+
+    # Should return None when prompt not found
+    assert result is None
+
+    # Messages should not be modified
+    assert len(messages) == initial_length
+    assert messages[0].content == "Test prompt"
+
+
+async def test_prepend_prompt_no_params(openai_responses_impl, mock_prompts_api):
+    """Test handling in prepend_prompt function when prompt_params is None."""
+    # Setup
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    messages = [OpenAIUserMessageParam(content="Test")]
+    initial_length = len(messages)
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, None)
+
+    # Verify
+    mock_prompts_api.get_prompt.assert_not_called()
+
+    # Should return None when no prompt params
+    assert result is None
+
+    # Messages should not be modified
+    assert len(messages) == initial_length
+
+
+async def test_prepend_prompt_variable_substitution(openai_responses_impl, mock_prompts_api):
+    """Test complex variable substitution with multiple occurrences and special characters in prepend_prompt function."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+
+    # Support all whitespace variations: {{name}}, {{ name }}, {{ name}}, {{name }}, etc.
+    prompt = Prompt(
+        prompt="Hello {{name}}! You are working at {{ company}}. Your role is {{role}} at {{company}}. Remember, {{ name }}, to be {{ tone }}.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["name", "company", "role", "tone"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentText,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.inference import OpenAISystemMessageParam, OpenAIUserMessageParam
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={
+            "name": OpenAIResponseInputMessageContentText(text="Alice"),
+            "company": OpenAIResponseInputMessageContentText(text="Dummy Company"),
+            "role": OpenAIResponseInputMessageContentText(text="AI Assistant"),
+            "tone": OpenAIResponseInputMessageContentText(text="professional"),
+        },
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Test")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    assert result == prompt
+    assert len(messages) == 2
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    expected_content = "Hello Alice! You are working at Dummy Company. Your role is AI Assistant at Dummy Company. Remember, Alice, to be professional."
+    assert messages[0].content == expected_content
+
+
+async def test_prepend_prompt_with_image_variable(openai_responses_impl, mock_prompts_api, mock_files_api):
+    """Test prepend_prompt with image variable - should create placeholder in system message and inject image into user message."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Analyze this {{product_image}} and describe what you see.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["product_image"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentImage,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.inference import (
+        OpenAIChatCompletionContentPartImageParam,
+        OpenAISystemMessageParam,
+        OpenAIUserMessageParam,
+    )
+
+    # Mock file content
+    mock_file_content = b"fake_image_data"
+    mock_files_api.openai_retrieve_file_content.return_value = type("obj", (object,), {"body": mock_file_content})()
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={
+            "product_image": OpenAIResponseInputMessageContentImage(
+                file_id="file-abc123",
+                detail="high",
+            )
+        },
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="What do you think?")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    assert result == prompt
+    assert len(messages) == 2
+
+    # Check system message has placeholder
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    assert messages[0].content == "Analyze this [Image: product_image] and describe what you see."
+
+    # Check user message has image prepended
+    assert isinstance(messages[1], OpenAIUserMessageParam)
+    assert isinstance(messages[1].content, list)
+    assert len(messages[1].content) == 2  # Image + original text
+
+    # First part should be image with data URL
+    assert isinstance(messages[1].content[0], OpenAIChatCompletionContentPartImageParam)
+    assert messages[1].content[0].image_url.url.startswith("data:image/")
+    assert messages[1].content[0].image_url.detail == "high"
+
+    # Second part should be original text
+    assert messages[1].content[1].text == "What do you think?"
+
+
+async def test_prepend_prompt_with_file_variable(openai_responses_impl, mock_prompts_api, mock_files_api):
+    """Test prepend_prompt with file variable - should create placeholder in system message and inject file into user message."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Review the document {{contract_file}} and summarize key points.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["contract_file"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentFile,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.files import OpenAIFileObject
+    from llama_stack.apis.inference import (
+        OpenAIFile,
+        OpenAISystemMessageParam,
+        OpenAIUserMessageParam,
+    )
+
+    # Mock file retrieval
+    mock_file_content = b"fake_pdf_content"
+    mock_files_api.openai_retrieve_file_content.return_value = type("obj", (object,), {"body": mock_file_content})()
+    mock_files_api.openai_retrieve_file.return_value = OpenAIFileObject(
+        object="file",
+        id="file-contract-789",
+        bytes=len(mock_file_content),
+        created_at=1234567890,
+        expires_at=1234567890,
+        filename="contract.pdf",
+        purpose="assistants",
+    )
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={
+            "contract_file": OpenAIResponseInputMessageContentFile(
+                file_id="file-contract-789",
+                filename="contract.pdf",
+            )
+        },
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Please review this.")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    assert result == prompt
+    assert len(messages) == 2
+
+    # Check system message has placeholder
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    assert messages[0].content == "Review the document [File: contract_file] and summarize key points."
+
+    # Check user message has file prepended
+    assert isinstance(messages[1], OpenAIUserMessageParam)
+    assert isinstance(messages[1].content, list)
+    assert len(messages[1].content) == 2  # File + original text
+
+    # First part should be file with data URL (not file_id)
+    assert isinstance(messages[1].content[0], OpenAIFile)
+    assert messages[1].content[0].file.file_data.startswith("data:application/pdf;base64,")
+    assert messages[1].content[0].file.filename == "contract.pdf"
+    # file_id should NOT be set in the OpenAI request
+    assert messages[1].content[0].file.file_id is None
+
+    # Second part should be original text
+    assert messages[1].content[1].text == "Please review this."
+
+
+async def test_prepend_prompt_with_mixed_variables(openai_responses_impl, mock_prompts_api, mock_files_api):
+    """Test prepend_prompt with text, image, and file variables mixed together."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Hello {{name}}! Analyze {{photo}} and review {{document}}. Provide insights for {{company}}.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["name", "photo", "document", "company"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentFile,
+        OpenAIResponseInputMessageContentImage,
+        OpenAIResponseInputMessageContentText,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.files import OpenAIFileObject
+    from llama_stack.apis.inference import (
+        OpenAIChatCompletionContentPartImageParam,
+        OpenAIFile,
+        OpenAISystemMessageParam,
+        OpenAIUserMessageParam,
+    )
+
+    # Mock file retrieval for document
+    mock_file_content = b"fake_doc_content"
+    mock_files_api.openai_retrieve_file_content.return_value = type("obj", (object,), {"body": mock_file_content})()
+    mock_files_api.openai_retrieve_file.return_value = OpenAIFileObject(
+        object="file",
+        id="file-doc-456",
+        bytes=len(mock_file_content),
+        created_at=1234567890,
+        expires_at=1234567890,
+        filename="doc.pdf",
+        purpose="assistants",
+    )
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={
+            "name": OpenAIResponseInputMessageContentText(text="Alice"),
+            "photo": OpenAIResponseInputMessageContentImage(file_id="file-photo-123", detail="auto"),
+            "document": OpenAIResponseInputMessageContentFile(file_id="file-doc-456", filename="doc.pdf"),
+            "company": OpenAIResponseInputMessageContentText(text="Acme Corp"),
+        },
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="Here's my question.")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    assert result == prompt
+    assert len(messages) == 2
+
+    # Check system message has text and placeholders
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    expected_system = "Hello Alice! Analyze [Image: photo] and review [File: document]. Provide insights for Acme Corp."
+    assert messages[0].content == expected_system
+
+    # Check user message has media prepended (2 media items + original text)
+    assert isinstance(messages[1], OpenAIUserMessageParam)
+    assert isinstance(messages[1].content, list)
+    assert len(messages[1].content) == 3  # Image + File + original text
+
+    # First part should be image with data URL
+    assert isinstance(messages[1].content[0], OpenAIChatCompletionContentPartImageParam)
+    assert messages[1].content[0].image_url.url.startswith("data:image/")
+
+    # Second part should be file with data URL
+    assert isinstance(messages[1].content[1], OpenAIFile)
+    assert messages[1].content[1].file.file_data.startswith("data:application/pdf;base64,")
+    assert messages[1].content[1].file.filename == "doc.pdf"
+    assert messages[1].content[1].file.file_id is None  # file_id should NOT be sent
+
+    # Third part should be original text
+    assert messages[1].content[2].text == "Here's my question."
+
+
+async def test_prepend_prompt_with_image_using_image_url(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt with image variable using image_url instead of file_id."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Describe {{screenshot}}.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["screenshot"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentImage,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.inference import (
+        OpenAIChatCompletionContentPartImageParam,
+        OpenAISystemMessageParam,
+        OpenAIUserMessageParam,
+    )
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={
+            "screenshot": OpenAIResponseInputMessageContentImage(
+                image_url="https://example.com/screenshot.png",
+                detail="low",
+            )
+        },
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages
+    messages = [OpenAIUserMessageParam(content="What is this?")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    assert result == prompt
+    assert len(messages) == 2
+
+    # Check system message has placeholder
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    assert messages[0].content == "Describe [Image: screenshot]."
+
+    # Check user message has image with URL
+    assert isinstance(messages[1], OpenAIUserMessageParam)
+    assert isinstance(messages[1].content, list)
+
+    # Image should use the provided URL
+    assert isinstance(messages[1].content[0], OpenAIChatCompletionContentPartImageParam)
+    assert messages[1].content[0].image_url.url == "https://example.com/screenshot.png"
+    assert messages[1].content[0].image_url.detail == "low"
+
+
+async def test_prepend_prompt_with_media_no_user_message(openai_responses_impl, mock_prompts_api, mock_files_api):
+    """Test prepend_prompt with media when there's no existing user message - should create one."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Analyze {{image}}.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["image"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentImage,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.inference import (
+        OpenAIAssistantMessageParam,
+        OpenAIChatCompletionContentPartImageParam,
+        OpenAISystemMessageParam,
+        OpenAIUserMessageParam,
+    )
+
+    # Mock file content
+    mock_file_content = b"fake_image_data"
+    mock_files_api.openai_retrieve_file_content.return_value = type("obj", (object,), {"body": mock_file_content})()
+
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={"image": OpenAIResponseInputMessageContentImage(file_id="file-img-999")},
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+
+    # Initial messages - only assistant message, no user message
+    messages = [OpenAIAssistantMessageParam(content="Previous response")]
+
+    # Execute
+    result = await openai_responses_impl._prepend_prompt(messages, prompt_params)
+
+    # Verify
+    assert result == prompt
+    assert len(messages) == 3  # System + Assistant + New User
+
+    # Check system message
+    assert isinstance(messages[0], OpenAISystemMessageParam)
+    assert messages[0].content == "Analyze [Image: image]."
+
+    # Original assistant message should still be there
+    assert isinstance(messages[1], OpenAIAssistantMessageParam)
+    assert messages[1].content == "Previous response"
+
+    # New user message with just the image should be appended
+    assert isinstance(messages[2], OpenAIUserMessageParam)
+    assert isinstance(messages[2].content, list)
+    assert len(messages[2].content) == 1
+    assert isinstance(messages[2].content[0], OpenAIChatCompletionContentPartImageParam)
+    assert messages[2].content[0].image_url.url.startswith("data:image/")
+
+
+async def test_prepend_prompt_image_variable_missing_required_fields(openai_responses_impl, mock_prompts_api):
+    """Test prepend_prompt with image variable that has neither file_id nor image_url - should raise error."""
+    # Setup
+    prompt_id = "pmpt_1234567890abcdef1234567890abcdef1234567890abcdef"
+    prompt = Prompt(
+        prompt="Analyze {{bad_image}}.",
+        prompt_id=prompt_id,
+        version=1,
+        variables=["bad_image"],
+        is_default=True,
+    )
+
+    from llama_stack.apis.agents.openai_responses import (
+        OpenAIResponseInputMessageContentImage,
+        OpenAIResponsePromptParam,
+    )
+    from llama_stack.apis.inference import OpenAIUserMessageParam
+
+    # Create image content with neither file_id nor image_url
+    prompt_params = OpenAIResponsePromptParam(
+        id=prompt_id,
+        version="1",
+        variables={"bad_image": OpenAIResponseInputMessageContentImage()},  # No file_id or image_url
+    )
+
+    mock_prompts_api.get_prompt.return_value = prompt
+    messages = [OpenAIUserMessageParam(content="Test")]
+
+    # Execute - should raise ValueError
+    with pytest.raises(ValueError, match="Image content must have either 'image_url' or 'file_id'"):
+        await openai_responses_impl._prepend_prompt(messages, prompt_params)
