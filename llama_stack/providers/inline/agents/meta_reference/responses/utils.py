@@ -8,8 +8,8 @@ import asyncio
 import re
 import uuid
 
-from llama_stack.apis.agents.agents import ResponseGuardrailSpec
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_spec.apis.agents.agents import ResponseGuardrailSpec
+from llama_stack_spec.apis.agents.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInput,
     OpenAIResponseInputFunctionToolCallOutput,
@@ -27,7 +27,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseText,
 )
-from llama_stack.apis.inference import (
+from llama_stack_spec.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
@@ -47,7 +47,7 @@ from llama_stack.apis.inference import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
 )
-from llama_stack.apis.safety import Safety
+from llama_stack_spec.apis.safety import Safety
 
 
 async def convert_chat_choice_to_response_message(

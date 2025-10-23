@@ -9,9 +9,9 @@ from io import BytesIO
 
 import pytest
 from llama_stack_client import BadRequestError
+from llama_stack_spec.apis.vector_io import Chunk
 from openai import BadRequestError as OpenAIBadRequestError
 
-from llama_stack.apis.vector_io import Chunk
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
 
@@ -631,7 +631,7 @@ def test_openai_vector_store_attach_file(
 ):
     """Test OpenAI vector store attach file."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     compat_client = compat_client_with_empty_stores
 
@@ -695,7 +695,7 @@ def test_openai_vector_store_attach_files_on_creation(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     # Create some files and attach them to the vector store
     valid_file_ids = []
@@ -760,7 +760,7 @@ def test_openai_vector_store_list_files(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -852,7 +852,7 @@ def test_openai_vector_store_retrieve_file_contents(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -913,7 +913,7 @@ def test_openai_vector_store_delete_file(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -979,7 +979,7 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -1031,7 +1031,7 @@ def test_openai_vector_store_update_file(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -1088,7 +1088,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(
     This test confirms that client.vector_stores.create() creates a unique ID
     """
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_spec.apis.files import ExpiresAfter
 
     compat_client = compat_client_with_empty_stores
 

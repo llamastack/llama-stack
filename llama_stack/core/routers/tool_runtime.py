@@ -6,11 +6,11 @@
 
 from typing import Any
 
-from llama_stack.apis.common.content_types import (
+from llama_stack_spec.apis.common.content_types import (
     URL,
     InterleavedContent,
 )
-from llama_stack.apis.tools import (
+from llama_stack_spec.apis.tools import (
     ListToolDefsResponse,
     RAGDocument,
     RAGQueryConfig,
@@ -18,6 +18,7 @@ from llama_stack.apis.tools import (
     RAGToolRuntime,
     ToolRuntime,
 )
+
 from llama_stack.log import get_logger
 
 from ..routing_tables.toolgroups import ToolGroupsRoutingTable

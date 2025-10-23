@@ -11,10 +11,9 @@ from typing import Annotated, Any
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 from fastapi import Depends, File, Form, Response, UploadFile
-
-from llama_stack.apis.common.errors import ResourceNotFoundError
-from llama_stack.apis.common.responses import Order
-from llama_stack.apis.files import (
+from llama_stack_spec.apis.common.errors import ResourceNotFoundError
+from llama_stack_spec.apis.common.responses import Order
+from llama_stack_spec.apis.files import (
     ExpiresAfter,
     Files,
     ListOpenAIFileResponse,
@@ -22,6 +21,7 @@ from llama_stack.apis.files import (
     OpenAIFileObject,
     OpenAIFilePurpose,
 )
+
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.providers.utils.files.form_data import parse_expires_after

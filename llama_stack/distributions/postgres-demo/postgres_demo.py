@@ -5,7 +5,8 @@
 # the root directory of this source tree.
 
 
-from llama_stack.apis.models import ModelType
+from llama_stack_spec.apis.models import ModelType
+
 from llama_stack.core.datatypes import (
     BuildProvider,
     ModelInput,

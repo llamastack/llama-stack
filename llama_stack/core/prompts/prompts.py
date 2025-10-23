@@ -7,9 +7,9 @@
 import json
 from typing import Any
 
+from llama_stack_spec.apis.prompts import ListPromptsResponse, Prompt, Prompts
 from pydantic import BaseModel
 
-from llama_stack.apis.prompts import ListPromptsResponse, Prompt, Prompts
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.storage.datatypes import KVStoreReference
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl

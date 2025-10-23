@@ -11,11 +11,11 @@ import typing
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA, LLAMA_STACK_API_V1ALPHA
+from llama_stack_spec.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA, LLAMA_STACK_API_V1ALPHA
 
 from termcolor import colored
 
-from llama_stack.strong_typing.inspection import get_signature
+from llama_stack_spec.strong_typing.inspection import get_signature
 
 from typing import get_origin, get_args
 
@@ -23,7 +23,7 @@ from fastapi import UploadFile
 from fastapi.params import File, Form
 from typing import Annotated
 
-from llama_stack.schema_utils import ExtraBodyField
+from llama_stack_spec.schema_utils import ExtraBodyField
 
 
 def split_prefix(
@@ -197,7 +197,7 @@ def _get_defining_class(member_fn: str, derived_cls: type) -> type:
     "Find the class in which a member function is first defined in a class inheritance hierarchy."
 
     # This import must be dynamic here
-    from llama_stack.apis.tools import RAGToolRuntime, ToolRuntime
+    from llama_stack_spec.apis.tools import RAGToolRuntime, ToolRuntime
 
     # iterate in reverse member resolution order to find most specific class first
     for cls in reversed(inspect.getmro(derived_cls)):

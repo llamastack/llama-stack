@@ -1769,6 +1769,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "llama-stack-client" },
+    { name = "llama-stack-spec" },
     { name = "openai" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
@@ -1891,6 +1892,7 @@ requires-dist = [
     { name = "jsonschema" },
     { name = "llama-stack-client", specifier = ">=0.3.0" },
     { name = "llama-stack-client", marker = "extra == 'ui'", specifier = ">=0.3.0" },
+    { name = "llama-stack-spec", editable = "llama-stack-spec" },
     { name = "openai", specifier = ">=1.107" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
@@ -2018,6 +2020,25 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1d/d9/3c720f420fc80ce51de1a0ad90c53edc613617b68980137dcf716a86198a/llama_stack_client-0.3.0.tar.gz", hash = "sha256:1e974a74d0da285e18ba7df30b9a324e250782b130253bcef3e695830c5bb03d", size = 340443, upload-time = "2025-10-21T23:58:25.855Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/96/27/1c65035ce58100be22409c98e4d65b1cdaeff7811ea968f9f844641330d7/llama_stack_client-0.3.0-py3-none-any.whl", hash = "sha256:9f85d84d508ef7da44b96ca8555d7783da717cfc9135bab6a5530fe8c852690d", size = 425234, upload-time = "2025-10-21T23:58:24.246Z" },
+]
+
+[[package]]
+name = "llama-stack-spec"
+version = "0.1.0"
+source = { editable = "llama-stack-spec" }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-sdk" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jsonschema" },
+    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
+    { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
+    { name = "pydantic", specifier = ">=2.11.9" },
 ]
 
 [[package]]

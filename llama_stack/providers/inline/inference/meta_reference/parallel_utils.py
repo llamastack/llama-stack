@@ -28,11 +28,11 @@ from fairscale.nn.model_parallel.initialize import (
     get_model_parallel_rank,
     get_model_parallel_src_rank,
 )
+from llama_stack_spec.models.llama.datatypes import GenerationResult
 from pydantic import BaseModel, Field
 from torch.distributed.launcher.api import LaunchConfig, elastic_launch
 
 from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import GenerationResult
 from llama_stack.providers.utils.inference.prompt_adapter import (
     ChatCompletionRequestWithRawContent,
     CompletionRequestWithRawContent,

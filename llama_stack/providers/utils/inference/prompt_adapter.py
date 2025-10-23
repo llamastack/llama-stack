@@ -12,15 +12,13 @@ import re
 from typing import Any
 
 import httpx
-from PIL import Image as PIL_Image
-
-from llama_stack.apis.common.content_types import (
+from llama_stack_spec.apis.common.content_types import (
     ImageContentItem,
     InterleavedContent,
     InterleavedContentItem,
     TextContentItem,
 )
-from llama_stack.apis.inference import (
+from llama_stack_spec.apis.inference import (
     ChatCompletionRequest,
     CompletionRequest,
     Message,
@@ -35,8 +33,7 @@ from llama_stack.apis.inference import (
     ToolDefinition,
     UserMessage,
 )
-from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import (
+from llama_stack_spec.models.llama.datatypes import (
     RawContent,
     RawContentItem,
     RawMediaItem,
@@ -46,20 +43,23 @@ from llama_stack.models.llama.datatypes import (
     StopReason,
     ToolPromptFormat,
 )
-from llama_stack.models.llama.llama3.chat_format import ChatFormat
-from llama_stack.models.llama.llama3.prompt_templates import (
+from llama_stack_spec.models.llama.llama3.chat_format import ChatFormat
+from llama_stack_spec.models.llama.llama3.prompt_templates import (
     BuiltinToolGenerator,
     FunctionTagCustomToolGenerator,
     JsonCustomToolGenerator,
     PythonListCustomToolGenerator,
     SystemDefaultGenerator,
 )
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
-from llama_stack.models.llama.llama4.prompt_templates.system_prompts import (
+from llama_stack_spec.models.llama.llama3.tokenizer import Tokenizer
+from llama_stack_spec.models.llama.llama4.prompt_templates.system_prompts import (
     PythonListCustomToolGenerator as PythonListCustomToolGeneratorLlama4,
 )
-from llama_stack.models.llama.sku_list import resolve_model
-from llama_stack.models.llama.sku_types import ModelFamily, is_multimodal
+from llama_stack_spec.models.llama.sku_list import resolve_model
+from llama_stack_spec.models.llama.sku_types import ModelFamily, is_multimodal
+from PIL import Image as PIL_Image
+
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference import supported_inference_models
 
 log = get_logger(name=__name__, category="providers::utils")

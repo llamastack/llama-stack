@@ -8,19 +8,20 @@ from typing import Any
 
 import weaviate
 import weaviate.classes as wvc
+from llama_stack_spec.apis.common.content_types import InterleavedContent
+from llama_stack_spec.apis.common.errors import VectorStoreNotFoundError
+from llama_stack_spec.apis.files import Files
+from llama_stack_spec.apis.inference import Inference
+from llama_stack_spec.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack_spec.apis.vector_stores import VectorStore
+from llama_stack_spec.providers.datatypes import VectorStoresProtocolPrivate
+from llama_stack_spec.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from numpy.typing import NDArray
 from weaviate.classes.init import Auth
 from weaviate.classes.query import Filter, HybridFusion
 
-from llama_stack.apis.common.content_types import InterleavedContent
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -30,7 +31,6 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 
 from .config import WeaviateVectorIOConfig
 

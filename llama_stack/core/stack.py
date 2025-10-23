@@ -12,28 +12,29 @@ import tempfile
 from typing import Any
 
 import yaml
+from llama_stack_spec.apis.agents import Agents
+from llama_stack_spec.apis.benchmarks import Benchmarks
+from llama_stack_spec.apis.conversations import Conversations
+from llama_stack_spec.apis.datasetio import DatasetIO
+from llama_stack_spec.apis.datasets import Datasets
+from llama_stack_spec.apis.eval import Eval
+from llama_stack_spec.apis.files import Files
+from llama_stack_spec.apis.inference import Inference
+from llama_stack_spec.apis.inspect import Inspect
+from llama_stack_spec.apis.models import Models
+from llama_stack_spec.apis.post_training import PostTraining
+from llama_stack_spec.apis.prompts import Prompts
+from llama_stack_spec.apis.providers import Providers
+from llama_stack_spec.apis.safety import Safety
+from llama_stack_spec.apis.scoring import Scoring
+from llama_stack_spec.apis.scoring_functions import ScoringFunctions
+from llama_stack_spec.apis.shields import Shields
+from llama_stack_spec.apis.synthetic_data_generation import SyntheticDataGeneration
+from llama_stack_spec.apis.telemetry import Telemetry
+from llama_stack_spec.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
+from llama_stack_spec.apis.vector_io import VectorIO
+from llama_stack_spec.providers.datatypes import Api
 
-from llama_stack.apis.agents import Agents
-from llama_stack.apis.benchmarks import Benchmarks
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.eval import Eval
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.inspect import Inspect
-from llama_stack.apis.models import Models
-from llama_stack.apis.post_training import PostTraining
-from llama_stack.apis.prompts import Prompts
-from llama_stack.apis.providers import Providers
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.scoring import Scoring
-from llama_stack.apis.scoring_functions import ScoringFunctions
-from llama_stack.apis.shields import Shields
-from llama_stack.apis.synthetic_data_generation import SyntheticDataGeneration
-from llama_stack.apis.telemetry import Telemetry
-from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -55,7 +56,6 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api
 
 logger = get_logger(name=__name__, category="core")
 

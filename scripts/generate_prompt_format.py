@@ -6,7 +6,7 @@
 # the root directory of this source tree.
 
 # Run this script:
-# torchrun --nproc_per_node=8 scripts/generate_prompt_format.py meta-llama/Llama-4-17B-Omni-Instruct-BF16-16E ~/.llama/checkpoints/Llama-4-17B-Omni-Instruct-BF16-16E/ llama_stack.models.llama.llama4.prompts llama_stack/models/llama/llama4/prompt_format.md
+# torchrun --nproc_per_node=8 scripts/generate_prompt_format.py meta-llama/Llama-4-17B-Omni-Instruct-BF16-16E ~/.llama/checkpoints/Llama-4-17B-Omni-Instruct-BF16-16E/ llama_stack_spec.models.llama.llama4.prompts llama_stack/models/llama/llama4/prompt_format.md
 
 
 import importlib
@@ -14,11 +14,10 @@ import os
 from pathlib import Path
 
 import fire
-
-from llama_stack.apis.common.errors import ModelNotFoundError
-from llama_stack.models.llama.llama3.generation import Llama3
-from llama_stack.models.llama.llama4.generation import Llama4
-from llama_stack.models.llama.sku_list import resolve_model
+from llama_stack_spec.apis.common.errors import ModelNotFoundError
+from llama_stack_spec.models.llama.llama3.generation import Llama3
+from llama_stack_spec.models.llama.llama4.generation import Llama4
+from llama_stack_spec.models.llama.sku_list import resolve_model
 
 THIS_DIR = Path(__file__).parent.resolve()
 

@@ -5,7 +5,8 @@
 # the root directory of this source tree.
 
 
-from llama_stack.models.llama.sku_types import CoreModelId
+from llama_stack_spec.models.llama.sku_types import CoreModelId
+
 from llama_stack.providers.utils.inference.model_registry import (
     ProviderModelEntry,
     build_hf_repo_model_entry,

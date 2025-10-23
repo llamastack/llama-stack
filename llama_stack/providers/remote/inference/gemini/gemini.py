@@ -4,14 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from openai import NOT_GIVEN
-
-from llama_stack.apis.inference import (
+from llama_stack_spec.apis.inference import (
     OpenAIEmbeddingData,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
 )
+from openai import NOT_GIVEN
+
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import GeminiConfig

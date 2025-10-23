@@ -37,6 +37,50 @@ except ImportError:
     from openai.types.chat.chat_completion_message_tool_call import (
         ChatCompletionMessageToolCall as OpenAIChatCompletionMessageFunctionToolCall,
     )
+from llama_stack_spec.apis.common.content_types import (
+    URL,
+    ImageContentItem,
+    InterleavedContent,
+    TextContentItem,
+    TextDelta,
+    ToolCallDelta,
+    ToolCallParseStatus,
+    _URLOrData,
+)
+from llama_stack_spec.apis.inference import (
+    ChatCompletionRequest,
+    ChatCompletionResponse,
+    ChatCompletionResponseEvent,
+    ChatCompletionResponseEventType,
+    ChatCompletionResponseStreamChunk,
+    CompletionMessage,
+    CompletionResponse,
+    CompletionResponseStreamChunk,
+    GreedySamplingStrategy,
+    JsonSchemaResponseFormat,
+    Message,
+    OpenAIChatCompletion,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
+    SamplingParams,
+    SystemMessage,
+    TokenLogProbs,
+    ToolChoice,
+    ToolConfig,
+    ToolResponseMessage,
+    TopKSamplingStrategy,
+    TopPSamplingStrategy,
+    UserMessage,
+)
+from llama_stack_spec.apis.inference import (
+    OpenAIChoice as OpenAIChatCompletionChoice,
+)
+from llama_stack_spec.models.llama.datatypes import (
+    BuiltinTool,
+    StopReason,
+    ToolCall,
+    ToolDefinition,
+)
 from openai.types.chat import (
     ChatCompletionMessageParam as OpenAIChatCompletionMessage,
 )
@@ -78,51 +122,7 @@ from openai.types.chat.chat_completion_message_tool_call import (
 )
 from pydantic import BaseModel
 
-from llama_stack.apis.common.content_types import (
-    URL,
-    ImageContentItem,
-    InterleavedContent,
-    TextContentItem,
-    TextDelta,
-    ToolCallDelta,
-    ToolCallParseStatus,
-    _URLOrData,
-)
-from llama_stack.apis.inference import (
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatCompletionResponseEvent,
-    ChatCompletionResponseEventType,
-    ChatCompletionResponseStreamChunk,
-    CompletionMessage,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
-    GreedySamplingStrategy,
-    JsonSchemaResponseFormat,
-    Message,
-    OpenAIChatCompletion,
-    OpenAIMessageParam,
-    OpenAIResponseFormatParam,
-    SamplingParams,
-    SystemMessage,
-    TokenLogProbs,
-    ToolChoice,
-    ToolConfig,
-    ToolResponseMessage,
-    TopKSamplingStrategy,
-    TopPSamplingStrategy,
-    UserMessage,
-)
-from llama_stack.apis.inference import (
-    OpenAIChoice as OpenAIChatCompletionChoice,
-)
 from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import (
-    BuiltinTool,
-    StopReason,
-    ToolCall,
-    ToolDefinition,
-)
 from llama_stack.providers.utils.inference.prompt_adapter import (
     convert_image_content_to_url,
     decode_assistant_message,

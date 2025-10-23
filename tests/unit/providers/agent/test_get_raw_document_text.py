@@ -8,9 +8,9 @@ import warnings
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from llama_stack_spec.apis.agents import Document
+from llama_stack_spec.apis.common.content_types import URL, TextContentItem
 
-from llama_stack.apis.agents import Document
-from llama_stack.apis.common.content_types import URL, TextContentItem
 from llama_stack.providers.inline.agents.meta_reference.agent_instance import get_raw_document_text
 
 

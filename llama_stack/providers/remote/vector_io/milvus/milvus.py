@@ -8,16 +8,17 @@ import asyncio
 import os
 from typing import Any
 
+from llama_stack_spec.apis.common.errors import VectorStoreNotFoundError
+from llama_stack_spec.apis.files import Files
+from llama_stack_spec.apis.inference import Inference, InterleavedContent
+from llama_stack_spec.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack_spec.apis.vector_stores import VectorStore
+from llama_stack_spec.providers.datatypes import VectorStoresProtocolPrivate
+from llama_stack_spec.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from numpy.typing import NDArray
 from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusClient, RRFRanker, WeightedRanker
 
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
@@ -28,7 +29,6 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 
 from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig
 

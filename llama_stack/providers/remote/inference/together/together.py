@@ -7,15 +7,15 @@
 
 from collections.abc import Iterable
 
-from together import AsyncTogether
-from together.constants import BASE_URL
-
-from llama_stack.apis.inference import (
+from llama_stack_spec.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
-from llama_stack.apis.models import Model
+from llama_stack_spec.apis.inference.inference import OpenAIEmbeddingUsage
+from llama_stack_spec.apis.models import Model
+from together import AsyncTogether
+from together.constants import BASE_URL
+
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin

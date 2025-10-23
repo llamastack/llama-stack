@@ -7,25 +7,26 @@
 import asyncio
 from collections.abc import AsyncIterator
 
-from llama_stack.apis.inference import (
+from llama_stack_spec.apis.inference import (
     InferenceProvider,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletionRequestWithExtraBody,
 )
-from llama_stack.apis.inference.inference import (
+from llama_stack_spec.apis.inference.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
 )
-from llama_stack.apis.models import Model, ModelType
+from llama_stack_spec.apis.models import Model, ModelType
+from llama_stack_spec.models.llama.llama3.chat_format import ChatFormat as Llama3ChatFormat
+from llama_stack_spec.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
+from llama_stack_spec.models.llama.llama4.chat_format import ChatFormat as Llama4ChatFormat
+from llama_stack_spec.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
+from llama_stack_spec.models.llama.sku_list import resolve_model
+from llama_stack_spec.models.llama.sku_types import ModelFamily
+from llama_stack_spec.providers.datatypes import ModelsProtocolPrivate
+
 from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.chat_format import ChatFormat as Llama3ChatFormat
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
-from llama_stack.models.llama.llama4.chat_format import ChatFormat as Llama4ChatFormat
-from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
-from llama_stack.models.llama.sku_list import resolve_model
-from llama_stack.models.llama.sku_types import ModelFamily
-from llama_stack.providers.datatypes import ModelsProtocolPrivate
 from llama_stack.providers.utils.inference.embedding_mixin import (
     SentenceTransformerEmbeddingMixin,
 )

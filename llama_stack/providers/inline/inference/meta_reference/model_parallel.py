@@ -9,8 +9,9 @@ from copy import deepcopy
 from functools import partial
 from typing import Any
 
-from llama_stack.models.llama.llama3.chat_format import ChatFormat as Llama3ChatFormat
-from llama_stack.models.llama.llama4.chat_format import ChatFormat as Llama4ChatFormat
+from llama_stack_spec.models.llama.llama3.chat_format import ChatFormat as Llama3ChatFormat
+from llama_stack_spec.models.llama.llama4.chat_format import ChatFormat as Llama4ChatFormat
+
 from llama_stack.providers.utils.inference.prompt_adapter import (
     ChatCompletionRequestWithRawContent,
     CompletionRequestWithRawContent,

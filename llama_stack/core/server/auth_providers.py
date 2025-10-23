@@ -10,9 +10,9 @@ from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
 import jwt
+from llama_stack_spec.apis.common.errors import TokenValidationError
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.common.errors import TokenValidationError
 from llama_stack.core.datatypes import (
     AuthenticationConfig,
     CustomAuthConfig,

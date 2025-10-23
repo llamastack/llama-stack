@@ -12,11 +12,10 @@ from llama_stack_client import AgentEventLogger
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted
 from llama_stack_client.types.shared_params.agent_config import AgentConfig, ToolConfig
-
-from llama_stack.apis.agents.agents import (
+from llama_stack_spec.apis.agents.agents import (
     AgentConfig as Server__AgentConfig,
 )
-from llama_stack.apis.agents.agents import (
+from llama_stack_spec.apis.agents.agents import (
     ToolChoice,
 )
 

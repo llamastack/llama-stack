@@ -8,8 +8,9 @@ import json
 import uuid
 from datetime import UTC, datetime
 
-from llama_stack.apis.agents import AgentConfig, Session, ToolExecutionStep, Turn
-from llama_stack.apis.common.errors import SessionNotFoundError
+from llama_stack_spec.apis.agents import AgentConfig, Session, ToolExecutionStep, Turn
+from llama_stack_spec.apis.common.errors import SessionNotFoundError
+
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.core.datatypes import User

@@ -11,15 +11,11 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import Body
-from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
-from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
-from pydantic import TypeAdapter
-
-from llama_stack.apis.common.content_types import (
+from llama_stack_spec.apis.common.content_types import (
     InterleavedContent,
 )
-from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
-from llama_stack.apis.inference import (
+from llama_stack_spec.apis.common.errors import ModelNotFoundError, ModelTypeError
+from llama_stack_spec.apis.inference import (
     ChatCompletionResponse,
     ChatCompletionResponseEventType,
     ChatCompletionResponseStreamChunk,
@@ -48,17 +44,21 @@ from llama_stack.apis.inference import (
     StopReason,
     ToolPromptFormat,
 )
-from llama_stack.apis.inference.inference import (
+from llama_stack_spec.apis.inference.inference import (
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
 )
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.apis.telemetry import MetricEvent, MetricInResponse
-from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
+from llama_stack_spec.apis.models import Model, ModelType
+from llama_stack_spec.apis.telemetry import MetricEvent, MetricInResponse
+from llama_stack_spec.core.telemetry.tracing import enqueue_event, get_current_span
+from llama_stack_spec.models.llama.llama3.chat_format import ChatFormat
+from llama_stack_spec.models.llama.llama3.tokenizer import Tokenizer
+from llama_stack_spec.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
+from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
+from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
+from pydantic import TypeAdapter
+
 from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.chat_format import ChatFormat
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 
 logger = get_logger(name=__name__, category="core::routers")

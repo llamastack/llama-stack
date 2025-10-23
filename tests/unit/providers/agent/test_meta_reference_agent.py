@@ -8,18 +8,18 @@ from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
-
-from llama_stack.apis.agents import (
+from llama_stack_spec.apis.agents import (
     Agent,
     AgentConfig,
     AgentCreateResponse,
 )
-from llama_stack.apis.common.responses import PaginatedResponse
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
+from llama_stack_spec.apis.common.responses import PaginatedResponse
+from llama_stack_spec.apis.conversations import Conversations
+from llama_stack_spec.apis.inference import Inference
+from llama_stack_spec.apis.safety import Safety
+from llama_stack_spec.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
+from llama_stack_spec.apis.vector_io import VectorIO
+
 from llama_stack.providers.inline.agents.meta_reference.agent_instance import ChatAgent
 from llama_stack.providers.inline.agents.meta_reference.agents import MetaReferenceAgentsImpl
 from llama_stack.providers.inline.agents.meta_reference.config import MetaReferenceAgentsImplConfig

@@ -26,6 +26,14 @@ from llama_stack_client import (
     AsyncStream,
     LlamaStackClient,
 )
+from llama_stack_spec.core.telemetry import Telemetry
+from llama_stack_spec.core.telemetry.tracing import (
+    CURRENT_TRACE_CONTEXT,
+    end_trace,
+    setup_logger,
+    start_trace,
+)
+from llama_stack_spec.strong_typing.inspection import is_unwrapped_body_param
 from pydantic import BaseModel, TypeAdapter
 from rich.console import Console
 from termcolor import cprint
@@ -44,13 +52,10 @@ from llama_stack.core.stack import (
     get_stack_run_config_from_distro,
     replace_env_vars,
 )
-from llama_stack.core.telemetry import Telemetry
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
 from llama_stack.log import get_logger, setup_logging
-from llama_stack.strong_typing.inspection import is_unwrapped_body_param
 
 logger = get_logger(name=__name__, category="core")
 
