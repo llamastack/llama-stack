@@ -174,7 +174,9 @@ class StackApp(FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: StackApp):
-    logger.info("Starting up")
+    server_version = parse_version("llama-stack")
+
+    logger.info(f"Starting up Llama Stack server (version: {server_version})")
     assert app.stack is not None
     app.stack.create_registry_refresh_task()
     yield

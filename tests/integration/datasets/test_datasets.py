@@ -78,18 +78,18 @@ def data_url_from_file(file_path: str) -> str:
     ],
 )
 def test_register_and_iterrows(llama_stack_client, purpose, source, provider_id, limit):
-    dataset = llama_stack_client.datasets.register(
+    dataset = llama_stack_client.beta.datasets.register(
         purpose=purpose,
         source=source,
     )
     assert dataset.identifier is not None
     assert dataset.provider_id == provider_id
-    iterrow_response = llama_stack_client.datasets.iterrows(dataset.identifier, limit=limit)
+    iterrow_response = llama_stack_client.beta.datasets.iterrows(dataset.identifier, limit=limit)
     assert len(iterrow_response.data) == limit
 
-    dataset_list = llama_stack_client.datasets.list()
+    dataset_list = llama_stack_client.beta.datasets.list()
     assert dataset.identifier in [d.identifier for d in dataset_list]
 
-    llama_stack_client.datasets.unregister(dataset.identifier)
-    dataset_list = llama_stack_client.datasets.list()
+    llama_stack_client.beta.datasets.unregister(dataset.identifier)
+    dataset_list = llama_stack_client.beta.datasets.list()
     assert dataset.identifier not in [d.identifier for d in dataset_list]
