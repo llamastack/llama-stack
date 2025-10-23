@@ -382,8 +382,13 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         upsert_models(self.conn, [(vector_store.identifier, vector_store)])
 
         # Create and cache the PGVector index table for the vector DB
+        distance_metric = vector_store.distance_metric or "COSINE"  # Default to COSINE if not specified
         pgvector_index = PGVectorIndex(
-            vector_store=vector_store, dimension=vector_store.embedding_dimension, conn=self.conn, kvstore=self.kvstore
+            vector_store=vector_store,
+            dimension=vector_store.embedding_dimension,
+            conn=self.conn,
+            kvstore=self.kvstore,
+            distance_metric=distance_metric,
         )
         await pgvector_index.initialize()
         index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
@@ -420,7 +425,10 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         if not vector_store:
             raise VectorStoreNotFoundError(vector_store_id)
 
-        index = PGVectorIndex(vector_store, vector_store.embedding_dimension, self.conn)
+        distance_metric = vector_store.distance_metric or "COSINE"  # Default to COSINE if not specified
+        index = PGVectorIndex(
+            vector_store, vector_store.embedding_dimension, self.conn, distance_metric=distance_metric
+        )
         await index.initialize()
         self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)
         return self.cache[vector_store_id]

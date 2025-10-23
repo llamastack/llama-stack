@@ -392,6 +392,9 @@ class OpenAIVectorStoreMixin(ABC):
         if provider_id is None:
             raise ValueError("Provider ID is required but was not provided")
 
+        # Extract distance_metric from extra_body if provided
+        distance_metric = extra_body.get("distance_metric")
+
         # call to the provider to create any index, etc.
         vector_store = VectorStore(
             identifier=vector_store_id,
@@ -400,6 +403,7 @@ class OpenAIVectorStoreMixin(ABC):
             provider_id=provider_id,
             provider_resource_id=vector_store_id,
             vector_store_name=params.name,
+            distance_metric=distance_metric,
         )
         await self.register_vector_store(vector_store)
 

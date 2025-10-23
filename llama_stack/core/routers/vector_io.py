@@ -105,6 +105,7 @@ class VectorIORouter(VectorIO):
         embedding_model = extra.get("embedding_model")
         embedding_dimension = extra.get("embedding_dimension")
         provider_id = extra.get("provider_id")
+        distance_metric = extra.get("distance_metric")
 
         # Use default embedding model if not specified
         if (
@@ -154,6 +155,7 @@ class VectorIORouter(VectorIO):
             provider_id=provider_id,
             provider_vector_store_id=vector_store_id,
             vector_store_name=params.name,
+            distance_metric=distance_metric,
         )
         provider = await self.routing_table.get_provider_impl(registered_vector_store.identifier)
 
@@ -162,6 +164,8 @@ class VectorIORouter(VectorIO):
             params.model_extra = {}
         params.model_extra["provider_vector_store_id"] = registered_vector_store.provider_resource_id
         params.model_extra["provider_id"] = registered_vector_store.provider_id
+        if distance_metric is not None:
+            params.model_extra["distance_metric"] = distance_metric
         if embedding_model is not None:
             params.model_extra["embedding_model"] = embedding_model
         if embedding_dimension is not None:

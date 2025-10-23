@@ -49,6 +49,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         provider_id: str | None = None,
         provider_vector_store_id: str | None = None,
         vector_store_name: str | None = None,
+        distance_metric: str | None = None,
     ) -> Any:
         if provider_id is None:
             if len(self.impls_by_provider_id) > 0:
@@ -73,6 +74,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
             embedding_model=embedding_model,
             embedding_dimension=embedding_dimension,
             vector_store_name=vector_store_name,
+            distance_metric=distance_metric,
         )
         await self.register_object(vector_store)
         return vector_store

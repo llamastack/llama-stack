@@ -18,6 +18,7 @@ class VectorStore(Resource):
     :param type: Type of resource, always 'vector_store' for vector stores
     :param embedding_model: Name of the embedding model to use for vector generation
     :param embedding_dimension: Dimension of the embedding vectors
+    :param distance_metric: Distance metric for vector similarity calculations (e.g., 'COSINE', 'L2', 'INNER_PRODUCT')
     """
 
     type: Literal[ResourceType.vector_store] = ResourceType.vector_store
@@ -25,6 +26,7 @@ class VectorStore(Resource):
     embedding_model: str
     embedding_dimension: int
     vector_store_name: str | None = None
+    distance_metric: str | None = None
 
     @property
     def vector_store_id(self) -> str:
@@ -42,6 +44,7 @@ class VectorStoreInput(BaseModel):
     :param embedding_model: Name of the embedding model to use for vector generation
     :param embedding_dimension: Dimension of the embedding vectors
     :param provider_vector_store_id: (Optional) Provider-specific identifier for the vector store
+    :param distance_metric: (Optional) Distance metric for vector similarity calculations
     """
 
     vector_store_id: str
@@ -49,3 +52,4 @@ class VectorStoreInput(BaseModel):
     embedding_dimension: int
     provider_id: str | None = None
     provider_vector_store_id: str | None = None
+    distance_metric: str | None = None
