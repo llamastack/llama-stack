@@ -502,7 +502,8 @@ def create_app() -> StackApp:
     app.exception_handler(RequestValidationError)(global_exception_handler)
     app.exception_handler(Exception)(global_exception_handler)
 
-    app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
+    if config.telemetry.enabled:
+        app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 
