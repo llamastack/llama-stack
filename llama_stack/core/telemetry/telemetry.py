@@ -24,14 +24,13 @@ from llama_stack.apis.telemetry import (
     SpanStartPayload,
     SpanStatus,
     StructuredLogEvent,
-    Telemetry,
     UnstructuredLogEvent,
 )
-from llama_stack.core.datatypes import Api
+from llama_stack.apis.telemetry import (
+    Telemetry as TelemetryBase,
+)
+from llama_stack.core.telemetry.tracing import ROOT_SPAN_MARKERS
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry.tracing import ROOT_SPAN_MARKERS
-
-from .config import TelemetryConfig
 
 _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
     "active_spans": {},
@@ -50,9 +49,8 @@ def is_tracing_enabled(tracer):
         return span.is_recording()
 
 
-class TelemetryAdapter(Telemetry):
-    def __init__(self, _config: TelemetryConfig, deps: dict[Api, Any]) -> None:
-        self.datasetio_api = deps.get(Api.datasetio)
+class Telemetry(TelemetryBase):
+    def __init__(self) -> None:
         self.meter = None
 
         global _TRACER_PROVIDER

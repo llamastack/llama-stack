@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from llama_stack.apis.inference import InterleavedContent
 from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack.schema_utils import json_schema_type, webmethod
 from llama_stack.strong_typing.schema import register_schema
