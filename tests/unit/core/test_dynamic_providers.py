@@ -4,12 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from llama_stack.apis.providers.connection import ProviderConnectionInfo, ProviderConnectionStatus, ProviderHealth
+from llama_stack.apis.providers.connection import ProviderConnectionStatus, ProviderHealth
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.storage.datatypes import KVStoreReference, ServerStoresConfig, SqliteKVStoreConfig, StorageConfig
@@ -72,7 +71,6 @@ async def provider_impl(kvstore, tmp_path):
     yield impl
 
 
-@pytest.mark.asyncio
 class TestDynamicProviderManagement:
     """Unit tests for dynamic provider registration, update, and unregistration."""
 
@@ -333,7 +331,6 @@ class TestDynamicProviderManagement:
         # (In reality, the health check happens during registration,
         # but our mock may not have been properly called)
         conn_info = provider_impl.dynamic_providers["test-inspect"]
-        from llama_stack.apis.providers.connection import ProviderHealth
 
         conn_info.health = ProviderHealth.from_health_response({"status": HealthStatus.OK})
 

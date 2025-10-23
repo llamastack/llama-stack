@@ -9,6 +9,8 @@ from llama_stack_client import LlamaStackClient
 
 from llama_stack import LlamaStackAsLibraryClient
 
+pytestmark = pytest.mark.skip(reason="Requires client SDK update for new provider management APIs")
+
 
 class TestDynamicProviderManagement:
     """Integration tests for dynamic provider registration, update, and unregistration."""
@@ -261,9 +263,7 @@ class TestDynamicProviderManagement:
         # Verify error message mentions provider not found
         assert "not found" in str(exc_info.value).lower() or "does not exist" in str(exc_info.value).lower()
 
-    def test_provider_lifecycle_with_inference(
-        self, llama_stack_client: LlamaStackAsLibraryClient | LlamaStackClient
-    ):
+    def test_provider_lifecycle_with_inference(self, llama_stack_client: LlamaStackAsLibraryClient | LlamaStackClient):
         """Test full lifecycle: register, use for inference (if Ollama available), update, unregister."""
         provider_id = "test-lifecycle-inference"
 
