@@ -53,13 +53,13 @@ from llama_stack.apis.inference.inference import (
     OpenAIChatCompletionContentPartTextParam,
 )
 from llama_stack.apis.models import Model, ModelType
-from llama_stack.apis.telemetry import MetricEvent, MetricInResponse, Telemetry
+from llama_stack.apis.telemetry import MetricEvent, MetricInResponse
+from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.chat_format import ChatFormat
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
-from llama_stack.providers.utils.telemetry.tracing import enqueue_event, get_current_span
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -70,14 +70,14 @@ class InferenceRouter(Inference):
     def __init__(
         self,
         routing_table: RoutingTable,
-        telemetry: Telemetry | None = None,
         store: InferenceStore | None = None,
+        telemetry_enabled: bool = False,
     ) -> None:
         logger.debug("Initializing InferenceRouter")
         self.routing_table = routing_table
-        self.telemetry = telemetry
+        self.telemetry_enabled = telemetry_enabled
         self.store = store
-        if self.telemetry:
+        if self.telemetry_enabled:
             self.tokenizer = Tokenizer.get_instance()
             self.formatter = ChatFormat(self.tokenizer)
 
@@ -159,7 +159,7 @@ class InferenceRouter(Inference):
         model: Model,
     ) -> list[MetricInResponse]:
         metrics = self._construct_metrics(prompt_tokens, completion_tokens, total_tokens, model)
-        if self.telemetry:
+        if self.telemetry_enabled:
             for metric in metrics:
                 enqueue_event(metric)
         return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in metrics]
@@ -223,7 +223,7 @@ class InferenceRouter(Inference):
             # that we do not return an AsyncIterator, our tests expect a stream of chunks we cannot intercept currently.
 
         response = await provider.openai_completion(params)
-        if self.telemetry:
+        if self.telemetry_enabled:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
@@ -285,7 +285,7 @@ class InferenceRouter(Inference):
         if self.store:
             asyncio.create_task(self.store.store_chat_completion(response, params.messages))
 
-        if self.telemetry:
+        if self.telemetry_enabled:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
@@ -393,7 +393,7 @@ class InferenceRouter(Inference):
             else:
                 if hasattr(chunk, "delta"):
                     completion_text += chunk.delta
-                if hasattr(chunk, "stop_reason") and chunk.stop_reason and self.telemetry:
+                if hasattr(chunk, "stop_reason") and chunk.stop_reason and self.telemetry_enabled:
                     complete = True
                     completion_tokens = await self._count_tokens(completion_text)
             # if we are done receiving tokens
@@ -401,7 +401,7 @@ class InferenceRouter(Inference):
                 total_tokens = (prompt_tokens or 0) + (completion_tokens or 0)
 
                 # Create a separate span for streaming completion metrics
-                if self.telemetry:
+                if self.telemetry_enabled:
                     # Log metrics in the new span context
                     completion_metrics = self._construct_metrics(
                         prompt_tokens=prompt_tokens,
@@ -450,7 +450,7 @@ class InferenceRouter(Inference):
         total_tokens = (prompt_tokens or 0) + (completion_tokens or 0)
 
         # Create a separate span for completion metrics
-        if self.telemetry:
+        if self.telemetry_enabled:
             # Log metrics in the new span context
             completion_metrics = self._construct_metrics(
                 prompt_tokens=prompt_tokens,
@@ -548,7 +548,7 @@ class InferenceRouter(Inference):
                         completion_text += "".join(choice_data["content_parts"])
 
                     # Add metrics to the chunk
-                    if self.telemetry and hasattr(chunk, "usage") and chunk.usage:
+                    if self.telemetry_enabled and hasattr(chunk, "usage") and chunk.usage:
                         metrics = self._construct_metrics(
                             prompt_tokens=chunk.usage.prompt_tokens,
                             completion_tokens=chunk.usage.completion_tokens,

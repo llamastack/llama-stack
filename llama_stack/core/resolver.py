@@ -27,7 +27,6 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFunctions
 from llama_stack.apis.shields import Shields
-from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.apis.vector_stores import VectorStore
@@ -49,7 +48,6 @@ from llama_stack.providers.datatypes import (
     Api,
     BenchmarksProtocolPrivate,
     DatasetsProtocolPrivate,
-    InlineProviderSpec,
     ModelsProtocolPrivate,
     ProviderSpec,
     RemoteProviderConfig,
@@ -98,7 +96,6 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.files: Files,
         Api.prompts: Prompts,
         Api.conversations: Conversations,
-        Api.telemetry: Telemetry,
     }
 
     if external_apis:
@@ -240,24 +237,6 @@ def validate_and_prepare_providers(
 
         key = api_str if api not in router_apis else f"inner-{api_str}"
         providers_with_specs[key] = specs
-
-    # TODO: remove this logic, telemetry should not have providers.
-    # if telemetry has been enabled in the config initialize our internal impl
-    # telemetry is not an external API so it SHOULD NOT be auto-routed.
-    if run_config.telemetry.enabled:
-        specs = {}
-        p = InlineProviderSpec(
-            api=Api.telemetry,
-            provider_type="inline::meta-reference",
-            pip_packages=[],
-            optional_api_dependencies=[Api.datasetio],
-            module="llama_stack.providers.inline.telemetry.meta_reference",
-            config_class="llama_stack.providers.inline.telemetry.meta_reference.config.TelemetryConfig",
-            description="Meta's reference implementation of telemetry and observability using OpenTelemetry.",
-        )
-        spec = ProviderWithSpec(spec=p, provider_type="inline::meta-reference", provider_id="meta-reference")
-        specs["meta-reference"] = spec
-        providers_with_specs["telemetry"] = specs
 
     return providers_with_specs
 

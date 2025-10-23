@@ -31,6 +31,7 @@ from llama_stack.core.storage.datatypes import (
     StorageBackendType,
     StorageConfig,
 )
+from llama_stack.log import LoggingConfig
 from llama_stack.providers.datatypes import Api, ProviderSpec
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
@@ -193,14 +194,6 @@ class TelemetryConfig(BaseModel):
     """
 
     enabled: bool = Field(default=False, description="enable or disable telemetry")
-
-
-class LoggingConfig(BaseModel):
-    category_levels: dict[str, str] = Field(
-        default_factory=dict,
-        description="""
- Dictionary of different logging configurations for different portions (ex: core, server) of llama stack""",
-    )
 
 
 class OAuth2JWKSConfig(BaseModel):
