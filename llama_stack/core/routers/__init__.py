@@ -72,14 +72,6 @@ async def get_auto_router_impl(
         raise ValueError(f"API {api.value} not found in router map")
 
     api_to_dep_impl = {}
-    if run_config.telemetry.enabled:
-        api_to_deps = {
-            "inference": {"telemetry": Api.telemetry},
-        }
-        for dep_name, dep_api in api_to_deps.get(api.value, {}).items():
-            if dep_api in deps:
-                api_to_dep_impl[dep_name] = deps[dep_api]
-
     # TODO: move pass configs to routers instead
     if api == Api.inference:
         inference_ref = run_config.storage.stores.inference
@@ -92,6 +84,7 @@ async def get_auto_router_impl(
         )
         await inference_store.initialize()
         api_to_dep_impl["store"] = inference_store
+        api_to_dep_impl["telemetry_enabled"] = run_config.telemetry.enabled
 
     elif api == Api.vector_io:
         api_to_dep_impl["vector_stores_config"] = run_config.vector_stores
