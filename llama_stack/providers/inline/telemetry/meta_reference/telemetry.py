@@ -8,9 +8,11 @@ import os
 import threading
 from typing import Any
 
+from fastapi import FastAPI
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.trace import TracerProvider
@@ -250,3 +252,10 @@ class TelemetryAdapter(Telemetry):
                     _GLOBAL_STORAGE["active_spans"].pop(span_id, None)
             else:
                 raise ValueError(f"Unknown structured log event: {event}")
+
+
+def fastapi_telemetry_middleware(app: FastAPI):
+    """
+    Instrument the FastAPI app with OpenTelemetry.
+    """
+    FastAPIInstrumentor.instrument_app(app)
