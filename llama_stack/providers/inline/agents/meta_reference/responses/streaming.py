@@ -65,9 +65,9 @@ from llama_stack.apis.inference import (
     OpenAIChoice,
     OpenAIMessageParam,
 )
+from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
-from llama_stack.providers.utils.telemetry import tracing
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (

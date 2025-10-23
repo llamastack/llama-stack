@@ -117,8 +117,6 @@ class Api(Enum, metaclass=DynamicApiMeta):
     post_training = "post_training"
     tool_runtime = "tool_runtime"
 
-    telemetry = "telemetry"
-
     models = "models"
     shields = "shields"
     vector_stores = "vector_stores"  # only used for routing table

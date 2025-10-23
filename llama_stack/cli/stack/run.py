@@ -15,10 +15,10 @@ import yaml
 
 from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
-from llama_stack.core.datatypes import LoggingConfig, StackRunConfig
+from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
-from llama_stack.log import get_logger
+from llama_stack.log import LoggingConfig, get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
