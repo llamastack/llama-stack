@@ -11,6 +11,10 @@ export function useAuthClient() {
 
     const options: any = {
       baseURL: `${clientHostname}/api`,
+      defaultHeaders: {
+        "X-Telemetry-Service": "llama-stack-ui",
+        "X-Telemetry-Version": "1.0.0",
+      },
     };
 
     if (session?.accessToken) {
