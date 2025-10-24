@@ -32,7 +32,7 @@ from termcolor import cprint
 
 from llama_stack.core.build import print_pip_install_help
 from llama_stack.core.configure import parse_and_maybe_upgrade_config
-from llama_stack.core.datatypes import Api, BuildConfig, BuildProvider, DistributionSpec
+from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
 from llama_stack.core.request_headers import (
     PROVIDER_DATA_VAR,
     request_provider_data_context,
@@ -44,11 +44,12 @@ from llama_stack.core.stack import (
     get_stack_run_config_from_distro,
     replace_env_vars,
 )
+from llama_stack.core.telemetry import Telemetry
+from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
 from llama_stack.log import get_logger, setup_logging
-from llama_stack.providers.utils.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.strong_typing.inspection import is_unwrapped_body_param
 
 logger = get_logger(name=__name__, category="core")
@@ -293,8 +294,8 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             raise _e
 
         assert self.impls is not None
-        if Api.telemetry in self.impls:
-            setup_logger(self.impls[Api.telemetry])
+        if self.config.telemetry.enabled:
+            setup_logger(Telemetry())
 
         if not os.environ.get("PYTEST_CURRENT_TEST"):
             console = Console()

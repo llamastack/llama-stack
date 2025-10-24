@@ -15,7 +15,7 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import Any
+from typing import Any, Self
 
 from llama_stack.apis.telemetry import (
     Event,
@@ -28,8 +28,8 @@ from llama_stack.apis.telemetry import (
     Telemetry,
     UnstructuredLogEvent,
 )
+from llama_stack.core.telemetry.trace_protocol import serialize_value
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry.trace_protocol import serialize_value
 
 logger = get_logger(__name__, category="core")
 
@@ -89,9 +89,6 @@ def generate_trace_id() -> str:
     return trace_id_to_str(trace_id)
 
 
-CURRENT_TRACE_CONTEXT = contextvars.ContextVar("trace_context", default=None)
-BACKGROUND_LOGGER = None
-
 LOG_QUEUE_FULL_LOG_INTERVAL_SECONDS = 60.0
 
 
@@ -104,7 +101,7 @@ class BackgroundLogger:
         self._last_queue_full_log_time: float = 0.0
         self._dropped_since_last_notice: int = 0
 
-    def log_event(self, event):
+    def log_event(self, event: Event) -> None:
         try:
             self.log_queue.put_nowait(event)
         except queue.Full:
@@ -137,8 +134,11 @@ class BackgroundLogger:
             finally:
                 self.log_queue.task_done()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.log_queue.join()
+
+
+BACKGROUND_LOGGER: BackgroundLogger | None = None
 
 
 def enqueue_event(event: Event) -> None:
@@ -155,13 +155,12 @@ def enqueue_event(event: Event) -> None:
 
 
 class TraceContext:
-    spans: list[Span] = []
-
     def __init__(self, logger: BackgroundLogger, trace_id: str):
         self.logger = logger
         self.trace_id = trace_id
+        self.spans: list[Span] = []
 
-    def push_span(self, name: str, attributes: dict[str, Any] = None) -> Span:
+    def push_span(self, name: str, attributes: dict[str, Any] | None = None) -> Span:
         current_span = self.get_current_span()
         span = Span(
             span_id=generate_span_id(),
@@ -188,7 +187,7 @@ class TraceContext:
         self.spans.append(span)
         return span
 
-    def pop_span(self, status: SpanStatus = SpanStatus.OK):
+    def pop_span(self, status: SpanStatus = SpanStatus.OK) -> None:
         span = self.spans.pop()
         if span is not None:
             self.logger.log_event(
@@ -203,8 +202,13 @@ class TraceContext:
                 )
             )
 
-    def get_current_span(self):
+    def get_current_span(self) -> Span | None:
         return self.spans[-1] if self.spans else None
+
+
+CURRENT_TRACE_CONTEXT: contextvars.ContextVar[TraceContext | None] = contextvars.ContextVar(
+    "trace_context", default=None
+)
 
 
 def setup_logger(api: Telemetry, level: int = logging.INFO):
@@ -217,12 +221,12 @@ def setup_logger(api: Telemetry, level: int = logging.INFO):
     root_logger.addHandler(TelemetryHandler())
 
 
-async def start_trace(name: str, attributes: dict[str, Any] = None) -> TraceContext:
+async def start_trace(name: str, attributes: dict[str, Any] | None = None) -> TraceContext | None:
     global CURRENT_TRACE_CONTEXT, BACKGROUND_LOGGER
 
     if BACKGROUND_LOGGER is None:
         logger.debug("No Telemetry implementation set. Skipping trace initialization...")
-        return
+        return None
 
     trace_id = generate_trace_id()
     context = TraceContext(BACKGROUND_LOGGER, trace_id)
@@ -269,7 +273,7 @@ def severity(levelname: str) -> LogSeverity:
 # TODO: ideally, the actual emitting should be done inside a separate daemon
 # process completely isolated from the server
 class TelemetryHandler(logging.Handler):
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
         # horrendous hack to avoid logging from asyncio and getting into an infinite loop
         if record.module in ("asyncio", "selector_events"):
             return
@@ -293,17 +297,17 @@ class TelemetryHandler(logging.Handler):
             )
         )
 
-    def close(self):
+    def close(self) -> None:
         pass
 
 
 class SpanContextManager:
-    def __init__(self, name: str, attributes: dict[str, Any] = None):
+    def __init__(self, name: str, attributes: dict[str, Any] | None = None):
         self.name = name
         self.attributes = attributes
-        self.span = None
+        self.span: Span | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if not context:
@@ -313,7 +317,7 @@ class SpanContextManager:
         self.span = context.push_span(self.name, self.attributes)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if not context:
@@ -322,13 +326,13 @@ class SpanContextManager:
 
         context.pop_span()
 
-    def set_attribute(self, key: str, value: Any):
+    def set_attribute(self, key: str, value: Any) -> None:
         if self.span:
             if self.span.attributes is None:
                 self.span.attributes = {}
             self.span.attributes[key] = serialize_value(value)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if not context:
@@ -338,7 +342,7 @@ class SpanContextManager:
         self.span = context.push_span(self.name, self.attributes)
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
         global CURRENT_TRACE_CONTEXT
         context = CURRENT_TRACE_CONTEXT.get()
         if not context:
@@ -347,19 +351,19 @@ class SpanContextManager:
 
         context.pop_span()
 
-    def __call__(self, func: Callable):
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             with self:
                 return func(*args, **kwargs)
 
         @wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             async with self:
                 return await func(*args, **kwargs)
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             if asyncio.iscoroutinefunction(func):
                 return async_wrapper(*args, **kwargs)
             else:
@@ -368,7 +372,7 @@ class SpanContextManager:
         return wrapper
 
 
-def span(name: str, attributes: dict[str, Any] = None):
+def span(name: str, attributes: dict[str, Any] | None = None) -> SpanContextManager:
     return SpanContextManager(name, attributes)
 
 

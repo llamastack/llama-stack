@@ -9,27 +9,29 @@ import inspect
 import json
 from collections.abc import AsyncGenerator, Callable
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel
 
 from llama_stack.models.llama.datatypes import Primitive
 
+type JSONValue = Primitive | list["JSONValue"] | dict[str, "JSONValue"]
 
-def serialize_value(value: Any) -> Primitive:
+
+def serialize_value(value: Any) -> str:
     return str(_prepare_for_json(value))
 
 
-def _prepare_for_json(value: Any) -> str:
+def _prepare_for_json(value: Any) -> JSONValue:
     """Serialize a single value into JSON-compatible format."""
     if value is None:
         return ""
     elif isinstance(value, str | int | float | bool):
         return value
     elif hasattr(value, "_name_"):
-        return value._name_
+        return cast(str, value._name_)
     elif isinstance(value, BaseModel):
-        return json.loads(value.model_dump_json())
+        return cast(JSONValue, json.loads(value.model_dump_json()))
     elif isinstance(value, list | tuple | set):
         return [_prepare_for_json(item) for item in value]
     elif isinstance(value, dict):
@@ -37,35 +39,35 @@ def _prepare_for_json(value: Any) -> str:
     else:
         try:
             json.dumps(value)
-            return value
+            return cast(JSONValue, value)
         except Exception:
             return str(value)
 
 
-def trace_protocol[T](cls: type[T]) -> type[T]:
+def trace_protocol[T: type[Any]](cls: T) -> T:
     """
     A class decorator that automatically traces all methods in a protocol/base class
     and its inheriting classes.
     """
 
-    def trace_method(method: Callable) -> Callable:
+    def trace_method(method: Callable[..., Any]) -> Callable[..., Any]:
         is_async = asyncio.iscoroutinefunction(method)
         is_async_gen = inspect.isasyncgenfunction(method)
 
-        def create_span_context(self: Any, *args: Any, **kwargs: Any) -> tuple:
+        def create_span_context(self: Any, *args: Any, **kwargs: Any) -> tuple[str, str, dict[str, Primitive]]:
             class_name = self.__class__.__name__
             method_name = method.__name__
             span_type = "async_generator" if is_async_gen else "async" if is_async else "sync"
             sig = inspect.signature(method)
             param_names = list(sig.parameters.keys())[1:]  # Skip 'self'
-            combined_args = {}
+            combined_args: dict[str, str] = {}
             for i, arg in enumerate(args):
                 param_name = param_names[i] if i < len(param_names) else f"position_{i + 1}"
                 combined_args[param_name] = serialize_value(arg)
             for k, v in kwargs.items():
                 combined_args[str(k)] = serialize_value(v)
 
-            span_attributes = {
+            span_attributes: dict[str, Primitive] = {
                 "__autotraced__": True,
                 "__class__": class_name,
                 "__method__": method_name,
@@ -76,8 +78,8 @@ def trace_protocol[T](cls: type[T]) -> type[T]:
             return class_name, method_name, span_attributes
 
         @wraps(method)
-        async def async_gen_wrapper(self: Any, *args: Any, **kwargs: Any) -> AsyncGenerator:
-            from llama_stack.providers.utils.telemetry import tracing
+        async def async_gen_wrapper(self: Any, *args: Any, **kwargs: Any) -> AsyncGenerator[Any, None]:
+            from llama_stack.core.telemetry import tracing
 
             class_name, method_name, span_attributes = create_span_context(self, *args, **kwargs)
 
@@ -92,7 +94,7 @@ def trace_protocol[T](cls: type[T]) -> type[T]:
 
         @wraps(method)
         async def async_wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-            from llama_stack.providers.utils.telemetry import tracing
+            from llama_stack.core.telemetry import tracing
 
             class_name, method_name, span_attributes = create_span_context(self, *args, **kwargs)
 
@@ -107,7 +109,7 @@ def trace_protocol[T](cls: type[T]) -> type[T]:
 
         @wraps(method)
         def sync_wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-            from llama_stack.providers.utils.telemetry import tracing
+            from llama_stack.core.telemetry import tracing
 
             class_name, method_name, span_attributes = create_span_context(self, *args, **kwargs)
 
@@ -127,16 +129,17 @@ def trace_protocol[T](cls: type[T]) -> type[T]:
         else:
             return sync_wrapper
 
-    original_init_subclass = getattr(cls, "__init_subclass__", None)
+    original_init_subclass = cast(Callable[..., Any] | None, getattr(cls, "__init_subclass__", None))
 
-    def __init_subclass__(cls_child, **kwargs):  # noqa: N807
+    def __init_subclass__(cls_child: type[Any], **kwargs: Any) -> None:  # noqa: N807
         if original_init_subclass:
-            original_init_subclass(**kwargs)
+            cast(Callable[..., None], original_init_subclass)(**kwargs)
 
         for name, method in vars(cls_child).items():
             if inspect.isfunction(method) and not name.startswith("_"):
                 setattr(cls_child, name, trace_method(method))  # noqa: B010
 
-    cls.__init_subclass__ = classmethod(__init_subclass__)
+    cls_any = cast(Any, cls)
+    cls_any.__init_subclass__ = classmethod(__init_subclass__)
 
     return cls

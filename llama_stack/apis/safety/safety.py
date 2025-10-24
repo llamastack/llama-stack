@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.apis.shields import Shield
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
