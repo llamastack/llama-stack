@@ -153,7 +153,6 @@ repos:
         files: ^src/llama_stack/ui/.*\.(ts|tsx)$
         pass_filenames: false
         require_serial: true
-
       - id: check-log-usage
         name: Ensure 'llama_stack.log' usage for logging
         entry: bash
@@ -172,7 +171,23 @@ repos:
               exit 1
             fi
             exit 0
-
+      - id: fips-compliance
+        name: Ensure llama-stack remains FIPS compliant
+        entry: bash
+        language: system
+        types: [python]
+        pass_filenames: true
+        exclude: '^tests/.*$'  # Exclude test dir as some safety tests used MD5
+        args:
+          - -c
+          - |
+            grep -EnH '^[^#]*\b(md5|sha1|uuid3|uuid5)\b' "$@" && {
+              echo;
+              echo "❌ Do not use any of the following functions: hashlib.md5, hashlib.sha1, uuid.uuid3, uuid.uuid5"
+              echo "   These functions are not FIPS-compliant"
+              echo;
+              exit 1;
+            } || true
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
     autoupdate_commit_msg: ⬆ [pre-commit.ci] pre-commit autoupdate
