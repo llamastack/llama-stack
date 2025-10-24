@@ -101,7 +101,7 @@ agent = Agent(
     # Enable both RAG and tool usage
     tools=[
         {
-            "name": "builtin::rag/knowledge_search",
+            "name": "builtin::file_search/knowledge_search",
             "args": {"vector_db_ids": ["my_docs"]},
         },
         "builtin::code_interpreter",

@@ -1,0 +1,68 @@
+---
+id: delete-a-vector-store
+title: "Delete a vector store."
+description: "Delete a vector store."
+sidebar_label: "Delete a vector store."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tuGzcQ/ZUBnxJjLTlBgiR6c2oXNeDAhu20KGwjGHFHWiZcckPOyhaEfexf9Ov6JcVwd62rWxfoSwD7xZKWnDlz5hxyZ6ECxcq7SFGNFur1wYH8yynqYCo23qmROoRfSbMPl+wDHZElpotuExiXG41s3BS4IMjlqfEOIiPXcaAypb1jcixhsapsWu3d8GuU2AsVdUElyieeV6RGyo+/kmaVqSr4igKbFpnJV9ZEDsZNVbYB9LMz32sCk5NjMzEUwE+WsCiHWaoDohSimqzPtTPwBGvLaqTaPV/SnkEXaCvzWQoEEmU1/cSHdVp6siV5H2uZfey9JXSr6TnUtJnst4K4oI3IwlViFu4wQqy1phgntVVNkynMcyPP0J6vkDpBGylTgb7XJgiQa2E5W3agR3ibKTZsBeKjStii5EEik+DLDqebAq41YaCaRgC+2aW7q4JAwFHkVJRxM7QmBx+gRDvxoUyd+J8E1ip2ZZ1xTFMKW4X9cnV13ukbtM9TLzt6/k2gxyGIImRxBgix8IEh1mWJYd5rldKau8LoAkxbdDDoOIkJXfc85UkiYjT2qZnb1ZLaejelAEVdotsPhDmOrajpYc8aHMlkXGR0+glVvjirWrG9hEP4fHHaFaPRwZigjpQDewjEwdCMoPRBzhHpZytgHPuaU/JYkTYTo8FrXYdATtMGrv8i7q7DfbceyFuRd6LpEfLCmqAFw+H5yQAufD0t7Bwm3lp/F+Hi55/g3fuDdwMhje6xrFpl9Pp6c3CwzPcRc7hoJb7E80Tld855/WG3c7Q15BgKOQ3kA3sPJbp5H1iiAsLUzMgBlr52nLg1JT2b6tlUP5ipXn9Y5rvyHj6J0jtnxVVr/e5rKHBGQPeaKBfaxGzIBNaUhgdwbgkjAYc54BSNA4tMob+p3j52U0UKMwpATouVKFAuwqod3Vek5eWDOhqerfVsrR/IWm9X76sTUbZDC5et2pf5O3sdbku+JyMfwFkdgAnLdCuNiRw4n16V895eDy++W0PIPwR+NtWzqX4sUx3syvYECyWXiNRwGqWadhw7ORP463Db6Wxr3MpUhQFLYgoSYKEclrQx5X5JU6CRKBVyscWE3HYnR30PVuNLS9uhUTItaW+n2C0TdtJpmoS+CqQxDcRd20riwudq1M2hCTsXaqSGs1fDVcBxuNjA36hMtRdyW2UdhNmCuRoNh+jm+4WPTPm+tVjifmTU3wbal0qQRNJ1MDxPG4/68+j6Vp6JQlMBXfNOZT9cyn647HSa9KsyJclbwmavdnAoto5rAsdVy61G5gIZquBnJqd442DjDyFSencnl1feOI6ALr3XmADah1azuUzfcpyFCWqKbVAMdONEdz4kQ24HH8sMYmlGAac9qk8+JxsHN+7G7e399ecfcHl1+PH0eG9vBOfB57WWQtKBMhd7RLgzXMAY9bc7DDloX1bIZmys4TlMawzomCgms1Q+conp0O6k+aiS1xhdLK+Ax3d0umO652Fl0TjJmLSx6LR13TZrTV0qU6NNf9xmSiQkGxaLMUb6HGzTyM/fawqindtMpUN7LEK5XqjcRPm8lPej8F9cdMZ5CU+12s7Cuh/RzaUitLV8U5n6RvMdjm9um0wVhDmFhLdddag1Vbyyf+t2FVs8OPXo+PT46lg1zd+l0iDj
+sidebar_class_name: "delete api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete a vector store."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/vector_stores/{vector_store_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Delete a vector store.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"vector_store_id","in":"path","description":"The ID of the vector store to delete.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A VectorStoreDeleteResponse indicating the deletion status.","content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string","description":"Unique identifier of the deleted vector store"},"object":{"type":"string","default":"vector_store.deleted","description":"Object type identifier for the deletion response"},"deleted":{"type":"boolean","default":true,"description":"Whether the deletion operation was successful"}},"additionalProperties":false,"required":["id","object","deleted"],"title":"VectorStoreDeleteResponse","description":"Response from deleting a vector store."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

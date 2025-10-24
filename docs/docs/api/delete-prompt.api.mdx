@@ -1,0 +1,69 @@
+---
+id: delete-prompt
+title: "Delete prompt."
+description: "Delete prompt."
+sidebar_label: "Delete prompt."
+hide_title: true
+hide_table_of_contents: true
+api: eJztl81OIzkQx1+l5NMMahIGMZqd3JiF1Y6WEQiYwwrQqmJX0h7cdo9dHYiiPu5b7NPtk6zK3SGBwCpXJLjQabu+/z87WahIqQ4+UVKjhdrf25N/hpKOtmYbvBqp0z9UW6iD55YuS4JIPxtKDHeYwPoZOmsgRKjQTUKsyKhC6eCZPIs91rWzGsV++COJk4VKuqQK5YnnNamRCuMfpFkVqo6hpsi2yy4xcpPW9lnPNKWoiidp/X55eQbdbtDBkOTPlh2t2SaO1k83TI9jDBHy5gIQUhkiQ2qqCuMcwgS4JKC85660ugTbFR0teoZJiIC+X89xWvHPaN22kbvdEtoFP6UIZVOh342EBseOYM3mUToSyfrE6PUWVb47zU/o3sMhfD8/6YvR6GFM0CQywAEicbQ0I6hCJLBe5pknBzgODefgqSZtJ1ZD0LqJkbymJ3m1hUJjbBfvbG2gE3SJCiX6sZGMGl0tJ7yc1kPzbh7m17XpheYttQyTGKqcw+HZ1wGch2ZaujlMgnPhLsH5b7/Cp1/2Pg2kaXSPVd0pY6mvg729VbwvaOC8k/gqny2V37ZS/cH+5+fJ0c6SZygxQZIHDgEq9POlY/EKCFM7Iw9YhcZz7q2t6A2qN6heGVT7n1fxLkOAb6L0nqy0jtafoYESZwR0r4mMtE1gQyZwtrI8gDNHmAg4zgGnaD04ZIqDnrePL91UieKMIpDXghJFMiKsxtN9TZrJ9M19Q+sNrVeF1sf1++qrKNujg4tO7av4PV6Hm5JfNsMM4LSJwIRVvpXGRB58YDuxZJZ4GZpg43gTsf9z/AbVG1SvC6q956JtgVCmRKSG0yTVnMVQ1Zwk+8fZHpEjJqjz+uDa959x+UaUjxErYoriaaE8VpJOt/6XFaiseKqRy41myIVnDfkMb1yOo7OVuZocTqKses+xoWKTxF4/bZtrqCNpZNnez64iLoNRI9W5zHlzqUZqOPsw7AKm4eIh61YVqruJu6qaKC0tmevRcIh+vluGxGR2ncMKdxOjvh3oUCmJnkg30fI8Gx4tD6KrG1kTaeak+6mdiD1ciD1c9ALNwlWFkuBdm2Yfnumc8JweKRvXWVv3zCWydHVmDaVrD0/+EBLlL+3kTR2s5wTo8xcaG0GH2InVWD8FOcfiBDWlzilGuvYiuBAziZvOx/Ljw9GMIk6XWX0LhlwaXPtrv7Pz7z9/w8Xl4ZeT452dEZzFYBotheSTZC5cJLizXMIY9e0dRgM6VDWyHVtneQ7TBiN6JkqZkjokrjCf1r0UH2v4aScXqzN/G7X3amO652Ht0HqJmdWx6BV11Y2r15Qq1GjFwk2hRDiyabEYY6Lv0bWtvP7ZUBTF3BQqn9FjkcfVQhmb5Hkl5BeTf3feI/Ietsfq2XL6l+jnokJ0jXxShbql+SOy25u2UCWhoZhz7dYPtaaa1yw3LlIB4YHHo+OT48tj1bb/AZyJPvQ=
+sidebar_class_name: "delete api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete prompt."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/prompts/{prompt_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Delete prompt.
+Delete a prompt.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"prompt_id","in":"path","description":"The identifier of the prompt to delete.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"OK"},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

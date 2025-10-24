@@ -433,7 +433,7 @@ export default function ChatPlaygroundPage() {
     ) => {
       try {
         const processedToolgroups = toolgroups.map(toolgroup => {
-          if (toolgroup === "builtin::rag" && vectorDBs.length > 0) {
+          if (toolgroup === "builtin::file_search" && vectorDBs.length > 0) {
             return {
               name: "builtin::rag/knowledge_search",
               args: {
@@ -1167,7 +1167,7 @@ export default function ChatPlaygroundPage() {
 
     // find RAG toolgroups that have vector_db_ids configured
     const ragToolgroups = selectedAgentConfig.toolgroups.filter(toolgroup => {
-      if (typeof toolgroup === "object" && toolgroup.name?.includes("rag")) {
+      if (typeof toolgroup === "object" && toolgroup.name?.includes("file_search")) {
         return toolgroup.args && "vector_db_ids" in toolgroup.args;
       }
       return false;
@@ -1505,7 +1505,7 @@ export default function ChatPlaygroundPage() {
                         const toolArgs =
                           typeof toolgroup === "object" ? toolgroup.args : null;
 
-                        const isRAGTool = toolName.includes("rag");
+                        const isRAGTool = toolName.includes("file_search");
                         const displayName = isRAGTool ? "RAG Search" : toolName;
                         const displayIcon = isRAGTool
                           ? "🔍"
@@ -1761,7 +1761,7 @@ export default function ChatPlaygroundPage() {
               </div>
 
               {/* Vector DB Configuration for RAG */}
-              {selectedToolgroups.includes("builtin::rag") && (
+              {selectedToolgroups.includes("builtin::file_search") && (
                 <div>
                   <label className="text-sm font-medium block mb-2">
                     Vector Databases for RAG
@@ -1825,7 +1825,7 @@ export default function ChatPlaygroundPage() {
                     )}
                   </div>
                   {selectedVectorDBs.length === 0 &&
-                    selectedToolgroups.includes("builtin::rag") && (
+                    selectedToolgroups.includes("builtin::file_search") && (
                       <p className="text-xs text-muted-foreground mt-1">
                         ⚠️ RAG tool selected but no vector databases chosen.
                         Create or select a vector database.

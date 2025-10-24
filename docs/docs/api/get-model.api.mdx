@@ -1,0 +1,69 @@
+---
+id: get-model
+title: "Get model."
+description: "Get model."
+sidebar_label: "Get model."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1uGzcQfpUBL0mMtewEKdLopjRpasBBDNs5FLZhjLgjLWMuuSFnZQuCjn2LPl2fpBjurrSS5dYBcglgXbRaDef3+0jOLFSgWHkXKarhQr06PJSvnKIOpmLjnRqqEXzyOdmBypT2jsmxyGBVWaNRZA6+RhFcqKgLKlGeeF6RGio//kqaVaaq4CsKbBozJifHZmIo9GQjB+OmKtuy/sWZbzXBeglMfAAuTIRA0ddBExgH1mKJEBn1jVomezOTU7juZK5N/sNscUHQGdgw9hgbR+/BTzZUABfI4G9d3DQlqhtd93WSq0s1vFClVEZlKhaGbK4yNSPNPlxH9oHENjJGkgpE7WXt9aR2OrmSqTE5XZQYblSm2Hvbfl1Pg6+rpmhlxeoq1T2yGq7M5TTB2m6+6Qd5XtA6Y+J7BmhvcR7hWVrwLCU2Pa7kosRbEqP4vAtDmOdG9KM92UCTd/R5ooYXqxWutlYts9XvsfeW0PVfubocp+Jtp7b3BkPAef9F68nyarkd78jNYe0edFGs4dOkSQKUh+uurOs8WlvuzKJICmCaXD0/Pv4EPgCVY8pz46bN+xcqexAhjeLVAqkmG7Yim2h9LuuWy4fSO0EbKVOBvtUmUC4ae+zdxH7rRK+KG/FuW74X72gLERCoChTFmpsCOhgdrSSmJjIFyoWPx4n7Z8L9gVouJZjXuzayBpXfaooMtxjBuBlak0tCS7QTH0rKf9wmFxm5jj0545imKWmbbv1xfn4CjTRonze8bxL1f5vJhxAEYSKcAUIsfGCIdVlimHfbDCWZ28LoAkwTdDDoOIETXft/spNwzWjsYy030mLaejelAEVdotsPhDmOLUFvzYY7Ysm4yOj0I6J8/rlqgPkCRvDl9LgNRqODMUEdKQf2EIiDoRlB6YNs01LPVDnAsa85GY8VaTMxGrzWdQjkNG359T1EaCvcVWuVvB7QU5oeSF538sIk+DL5MDo5GsCpr6eFncPEW+tvI5z+/hu8+fXwzUCSRndYVg0yOny9Pjxc23uHOZw2EF/780jkt8x59XY3c7Q15BgKjCCUBPYeSnTzTrFoBYSpmZEDLH3tOOXWlPREqidS/WSkevV2be/ce/gkSG+ZFfvU+tPXUOCMgO40US5pE7IhE1hTGh7AiSWMBBzmgFOUuyoyhe6k+uWhkypSmFEAclqolM46dFA7uqtIM+Vtcp+o9UStn4pav/TPqyNBtlyZzxq0r+239Brdh3yXjHwAn+sATFimU2lM5MD5dDXNO3qtbtj3utr/UPxEqidS/VykOtxl7REUSiwRqOE0SjSpMYvi/KazH4mb1mtw6eQZ20ZsPAcjN79VSyhTogoDlsQUYurKHZbUTQqaNtGIygq52Nny9sYvbVkaW+xhSiwG1vnnUFN2n41dM79MgVSBNLKIt/UriQufq6GaptFI8mSoDmYvD5KleLDonF3K5CRtTU0sdZCMFszV8OAA3Xy/8JEp30/jp/00fhpoXyoxHEnXwfA8LXzf7UMXV/KfIDP52xat18LCWYtPbMc0YrzJzuzljoQJneMGsLFPtb7mNGhqO/Z46WDrgxAp3dnJ5ZU3jiOgS/cZE0D70GA1jR1kGwsT1BQbpRjo0gnefEhEvK98LL2HpRkFnHZeNWgbXLpLt7f3z99/wdn56N3xh729IZwEn9dpUJU2krnQIsKt4QLGqG9uMeSgfVkhm7GxhucwrTGgY6KYSFL5yCWmzboF4BrD21lcrLf770N6CzemOz6oLBqZMTUYWbSoumiK1uBKZWq4osFVpgQ8IrJYjDHSl2CXS3n9raYgqLnKVNqmxwKRi4XKTZTnNY4fDOL5acuQF/A4Ru0MpJuDubmgEG0tv1Smbmje53OahxWEMg0VN5u/R1pTxb2F945R4cGKiR8/nKvl8l9KSN7o
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get model."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/models/{model_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get model.
+Get a model by its identifier.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"model_id","in":"path","description":"The identifier of the model to get.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A Model.","content":{"application/json":{"schema":{"type":"object","properties":{"identifier":{"type":"string","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"type":"string","description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","description":"ID of the provider that owns this resource"},"type":{"type":"string","enum":["model","shield","vector_store","dataset","scoring_function","benchmark","tool","tool_group","prompt"],"const":"model","default":"model","description":"The resource type, always 'model' for model resources"},"metadata":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]},"description":"Any additional metadata for this model"},"model_type":{"default":"llm","description":"The type of model (LLM or embedding model)","type":"string","enum":["llm","embedding"],"title":"ModelType"}},"additionalProperties":false,"required":["identifier","provider_id","type","metadata","model_type"],"title":"Model","description":"A model resource representing an AI model registered in Llama Stack."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

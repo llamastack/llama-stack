@@ -1,0 +1,69 @@
+---
+id: delete-a-conversation
+title: "Delete a conversation."
+description: "Delete a conversation."
+sidebar_label: "Delete a conversation."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWMFuGzcQ/ZUBT4mxlpwgQRrdnNhFAziIYTuHwjaKETnSMuGSmyFXtiDo2L/o1/VLiuGurLUkty6QiwHrotWSw3kz8x7J0UIxxTr4SFGNFur1wYF8GYqabZ1s8GqkLkoCQ44SGdDBz4gjyhAwxdCwpoEqlA4+kU9ijXXtrM5Tht+iLLFQUZdUoTyleU1qpML4G+mkClVzqImTbQFY05sTE1s/VctiNXtrqFCGJti4pEaqD23Q4RXb1ePaeByCI/R968QNLZeFQmOsLIDutIdrgi5SoZh+NJZlqUsBWqyDWPm4LlSyyYmTjz04R+3wWZevbNDP8FlXA5gE3pnqgVouBd6bh+oj0CgmuMEI1s/QWQOBoUI3CVyR+XkViglTE3vzrE80Jd4K6reLi1NoZ4MOhqQWXXJ2lbFveswcGPLkAhBiGThBbKoKeQ5hAqkkoDznprS6BNsGzRZ9yjlE341nP5kECa17rOd2trh2wU+JoWwq9PtMaHDsRA13NvfgiCfrY0KvHxHliy91S7WXcAhfz066YDR6GBM0kQykAEyJLc0IqsAE1ks9W/nhODQpO481aTuxGoLWDTN5TRu4/g+1uwqvqnWXvB65c5oeSB7fkZlDlTEcnn4awFlopqWbwyQ4F24inP36Ed79cvBuIEmjW6zqlhkrfr05OFj7+4AGzlqKr/E8kvmdcl6/360c7Sz5BCVGiPKQQoAK/Xy1sKwKCFM7Iw9YhcannFtb0bOonkX1xET1+v3a30UI8FmY3ikr9qX1e2igxBkB3WoiI2kTsWEicLayaQCnjjASJJ4DTtF6cJiIVyfV24dOqkg8IwbyWqRETEaI1Xi6rUnLuUddGp6l9SytJyStt/3z6pMw26OD85bta/+dvA63Kb9KhhnAl4YhEVb5VBoTefAh2Ykls5LX3cV1U2L/tvCzqJ5F9bREdbDL2yMklFUiVMNplGj6zViUGO5jbvszwPs915Xf+R5ubCpzSO2d8NOR9L81MlaUiMXfQnmsaKMn/SO3jFb81ZjKrcTly2jfjzXks+pZHKyLI71qsS3VVbe8zOHVTBpz29sVt6JUBqNGXa+aIadSjdRw9mrY9xuHiw3YS1Wo9thug2tY8l+mVI+GQ/Tz/TLERGbfOaxwPybU3wc6VEqQRNIN2zTPhkerXevyWsaExzmArsQnYg/nYg/nHZszBlUocd7mafZqR+pE/PGeDLAvzP7KqcQENYeZNRSvPGx8ECLlGz55UwfrUwT0+fZjGXTgltnG+inIpscT1BTbRZHpygs7A2fZbi8+lk7F0YwYpytUn4MhFwdX/srv7f39159wfnH44eR4b28EpxxMoyWQvO3MRUSx5d8Y9fcbZPmboKox2bF1Ns1h2iCjT0QxS6oOMVWYt/aOkbupvpnRxfqg+Bni6Bia6DYNa4fWC7bMokXHwsu2rPd4qAo12hTQdaGEbGKwWIwx0ld2y6W8/tEQC8uuC5UPgbFQ6nKhjI3yvBbCg4G+OOsk9hL+Q4s74+leop8LXdE18ksV6jvNd+wEy+tloUpCQ5xhtrMOtaY69ey3DmnRzZ2Uj45Pji+O1XL5D/cp7rM=
+sidebar_class_name: "delete api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete a conversation."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/conversations/{conversation_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Delete a conversation.
+Delete a conversation with the given ID.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"conversation_id","in":"path","description":"The conversation identifier.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The deleted conversation resource.","content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"},"object":{"type":"string","default":"conversation.deleted"},"deleted":{"type":"boolean","default":true}},"additionalProperties":false,"required":["id","object","deleted"],"title":"ConversationDeletedResource","description":"Response for deleted conversation."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

@@ -144,7 +144,7 @@ const mockModels = [
 
 const mockToolgroups = [
   {
-    identifier: "builtin::rag",
+    identifier: "builtin::file_search",
     provider_id: "test-provider",
     type: "tool_group",
     provider_resource_id: "test-resource",
@@ -171,7 +171,7 @@ describe("ChatPlaygroundPage", () => {
     mockClient.agents.retrieve.mockResolvedValue({
       agent_id: "test-agent",
       agent_config: {
-        toolgroups: ["builtin::rag"],
+        toolgroups: ["builtin::file_search"],
         instructions: "Test instructions",
         model: "test-model",
       },
@@ -629,7 +629,7 @@ describe("ChatPlaygroundPage", () => {
         agent_config: {
           toolgroups: [
             {
-              name: "builtin::rag/knowledge_search",
+              name: "builtin::file_search/knowledge_search",
               args: { vector_db_ids: ["test-vector-db"] },
             },
           ],
@@ -664,7 +664,7 @@ describe("ChatPlaygroundPage", () => {
         agent_config: {
           toolgroups: [
             {
-              name: "builtin::rag/knowledge_search",
+              name: "builtin::file_search/knowledge_search",
               args: { vector_db_ids: ["test-vector-db"] },
             },
           ],

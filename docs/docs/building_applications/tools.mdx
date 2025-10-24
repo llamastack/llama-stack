@@ -73,7 +73,7 @@ The RAG tool enables retrieval of context from various types of memory banks (ve
 ```python
 # Register Memory tool group
 client.toolgroups.register(
-    toolgroup_id="builtin::rag",
+    toolgroup_id="builtin::file_search",
     provider_id="faiss",
     args={"max_chunks": 5, "max_tokens_in_context": 4096},
 )

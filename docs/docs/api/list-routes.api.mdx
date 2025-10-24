@@ -1,0 +1,69 @@
+---
+id: list-routes
+title: "List routes."
+description: "List routes."
+sidebar_label: "List routes."
+hide_title: true
+hide_table_of_contents: true
+api: eJztmN1OIzcUx1/lyFctGgiLdrXd3LEtbZF2tSiwFxWg6sQ+yXjx2LP2mUAU5bJv0afrk1THMwMhCQsrtRdIcMNH7PPx9+9vYy9UpFQHnyip4UId7O/LN0NJR1uzDV4N1agbATp4Ruutn4L1kxArlBGA49AwoHOAM7QOx44ghoYp7alCySTyLGGxrp3VedLgS5LYC5V0SRXKTzyvSQ1VGH8hzapQdQw1RbZtZQZ5dRTGiHNVKMtUpcdn53JWhiWO1k9VsdbpWUlweHIM5E0drGeokUu1LFRFXAbzeIDfz85OoB0MkxCBy04KCVLHMLOG4p8SIz2hmS7Jcj3LB5sYwgT6gJADApfIYKvaUUWegUub+uTLQqExVuajO1mRZoIuUaEifW1sJKOG551Wtz1v1H1ZKLbspMCRDD32k7AhxPEmHz5Lm6OD9do1JoPEKatcdLIVgN7cdSFD+vxp72Ep1si7x2fLRPo+FTJvK61Kotxu6u2w0fM2nyC4vsJ7/riVQppaSmWvt1lPgJSqKDFcYwLrZ+isgRChQictkvnvPJYYuVkF0HqmKcXtmLejQQeT6e6EeswhRzGKL2RwAQipDJEhNVWFcS4yiWMoj7kurS7Btk1Hi56zpdB3n+c8GQhG656auR0tqV3wU4pQNhX63Uho8sKszLlXjmSyPjF6/YQuf/hUt5T9CIfwefSha0ajhzFBk8gAB4jE0dKMoAqRtmypkjzVpO3EaghaNzGS17RW1/dQ3a1wv1q34q2AnmV6QLz+rIBJDFWu4fDkeA9GoZmWbg6T4Fy4TjD69Wd4+9P+2+xXukEx8ypfr/f37/K9RwOjFvG7ep5Ifuecg3fbnaOdlY2wxAQp74ghQIV+3geWqIAwtTPygFVofHYq24peTPViqmdmqoN3d/nOQoCPQnrnrLRqrT9CAyXOCOhGExmRTcyGTOBsZXkPThxhIuA4B5yi9eCQKfYn1ZuHTqpEcUYRyGuxEkUyAlbj6aYmzWQ6cV+s9WKtZ2WtN6vn1bGQ7dHBaUv7Xf7OXoebyPdimD341ERgwiqfSmMiDz6wnVgyvb0MTbBxvGmxbwV+MdWLqZ6Xqfa3ZXuChbJLBDWcJunm2Is6LNVvuRp2d6wLn3976A4G15ZLacXG7hqavnkNLVSNEStiilJDTl1H0siicCd5/2agppRdJk8JQzWYvRrYtuRBm1wVqj04JdRCNVEUKJnr4WCAfr5bhsRkdp3DCncTo77a06FSy0uZp5toeZ4n/tLvG+eX8pmQlBntL7AyH05lPpx2PGXOVKEkeSva7NWWRxGxX7oHIq5aYzVyfoPolEoXHta+EBLl/7H7F5ZW51Z5HWLLVvswIPvsBHX/sIGRLuRa7ULMxtkMPpa7gqMZRZz2VX0Mhpys/4Xf2fnn77/g9Ozw/YejnZ0hnMRgGi2NZOPPhYeOhDHqq2uMBnSoamQ7ts7yHKYNRvRM1L5E1CFxhXlz9VjRGnLrOi7uNuj/F81uU2K64UHt0HqpNVO16CA8b5e5w1AVqgPxslACmwxYLMaY6HN0y6X8+WtDcd6SnrfhsSB1frksVEloKGYAr2gu3tWaagk6Q9fk1631w0jovDXHb0dnarn8F2DaNZg=
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List routes."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/inspect/routes"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List routes.
+List all available API routes with their methods and implementing providers.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Response containing information about all available routes.","content":{"application/json":{"schema":{"type":"object","properties":{"data":{"type":"array","items":{"type":"object","properties":{"route":{"type":"string","description":"The API endpoint path"},"method":{"type":"string","description":"HTTP method for the route"},"provider_types":{"type":"array","items":{"type":"string"},"description":"List of provider types that implement this route"}},"additionalProperties":false,"required":["route","method","provider_types"],"title":"RouteInfo","description":"Information about an API route including its path, method, and implementing providers."},"description":"List of available route information objects"}},"additionalProperties":false,"required":["data"],"title":"ListRoutesResponse","description":"Response containing a list of all available API routes."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,68 @@
+---
+id: get-a-tool-by-its-name
+title: "Get a tool by its name."
+description: "Get a tool by its name."
+sidebar_label: "Get a tool by its name."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1uGzcQfpUBT7EhS06QII1uzk+TFEls2MqhsI1gRI60TLjkhpyVLQg69i36dH2SYrgreWXZiQP04sK6iNwdzh+/b7ichYqUquATJTVcqCf7+/JnKOloK7bBq6E6gFEI7jVN+qqndPBMnkUKq8pZjSI1+JpEdKGSLqhEGfG8IjVUYfyVNKueqmKoKLJtDHEIbhpDXX2xpiOdOFo/Vb1rHjw6zCN0O/D+NYQJcEEgKiDrAC5sauZjcsFPZaKWPeWxpJ9r/4QldZXKyg2JX3DvXV2i34uEBseOoCMnFi4K5CvfTaAktqyvav5ye+bQGNvoP9rIYfB0OFHD0/UKXztxfj0fh+AIffeRr8sxxe6TNqbOE4wR590HrSfL8+uJ6Ub+x8nhJzjJQcAkxCbEHFqCRx9fHTXjRmBHwg41/2/jbmJrA28mnchLYjTI9zjog7WXsAoGcBxq7pBoeVswE3SJeirS99pGMmp42hD1vKfYshMn2oKzxbRR5g1NrM96oU5kwHqItWdbEuTqdMmpr5ZLceDpTfVsVBCIcUoMF5jA+hk6ayBEKNFNQizJ/HeVLjFynTpy1jNNKW7F9m40OoJGGnQwJEhp8/GzAvQmRkGeCPcAIRUhMqS6LDHOV5WNssxFYXUBtgk6WvScQYu+fZ/t5J1ntO6ulhtpMS3VlyIUPyyDa3ea6pcYvb5DlF38wefjD20wGj2MqYECB4jE0dKMoAyRwHrZz7xzHYCmirSdWA1B6zpG8pqu+fUr4G13eLVb6+R18JzTdEvyVgcwTGIosw8HR+/7cBzqaeHmMAnOhYsEx7+/gue/7T/vS9LoEsuqQcYKX0/396/svUQDxw3Er/y5I/Jb5jx5cTNztLPkGQpMkGTAIUCJfr5SLFoBYWpn5AHLUHvOubUlPZDqgVT3jFRPXmwcSvBRkN4yK3Wp9WeoocAZAV1qIiNpE7IhEzhbWu7DkSNMBBzngFO0HhwyxdVJ9ey2kypRnFEE8lqoRJGMAKv2dFmRZjJtch+o9UCte0WtZ93z6r0gW74mTxq0X9lv6XWwDflVMkwfDusITFjmU2lM5MEHthNLZkUvQxOsHd9wuf2B4gdSPZDqfpFq/yZrd6BQZolADadJopF71ltprSQJYNPht8SAbbdlDpYTyO1NekMVRiyJKaZ8UW26L7nV8yWPZZ/VUFXIxfbNrqCsZ6O7wwGmxKL6KtUca+ptE291s11mf6tIGlnE260qiYtg1FBNKbNTXBiqwezxQAylwWLt5VL1VHPmNlHUUZJXMFfDwQD9fK8IicnsOYcl7iVG/a2vQ6nEcCJdR8vzvPD1quScnss7AWH2t92fD7IeTmQ9nLRQzBBVPSXGm7TMHt+QKWFu2sAwdlnV1czScapimFlD6czDtR9Covx5Tt5UwXpOgD5/utgIOsQGlsb6KUjFihPUlBqlGOnMC7RCzJzbVj6Wa4ajGUWcrrz6GAy51D/zZ35395+//4KT0cHLD292d4dwFIOptQSSa8ZcGJDgwnIBY9TfLjAa0KGskO3YOstzmNYY0TNRynyoQuISc11uoXc7VK/199Zl/gdLWqBJf2FQObTSamnQsWjxdNpsV0aU6qnhFfLPe0pgIyKLxRgTfY5uuZTH32uKgpfznsq1eCzgOF0oY5OMrxB8q8ePjltu7MBPSHRjBKs+kJ8L8NDVMlM99Y3mG+TNDaGC0FDMDjbvD7Smijsrt05Jwf6afW/fjNRy+S+9ZNQw
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get a tool by its name."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/tools/{tool_name}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get a tool by its name.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"tool_name","in":"path","description":"The name of the tool to get.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ToolDef.","content":{"application/json":{"schema":{"type":"object","properties":{"toolgroup_id":{"type":"string","description":"(Optional) ID of the tool group this tool belongs to"},"name":{"type":"string","description":"Name of the tool"},"description":{"type":"string","description":"(Optional) Human-readable description of what the tool does"},"input_schema":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]},"description":"(Optional) JSON Schema for tool inputs (MCP inputSchema)"},"output_schema":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]},"description":"(Optional) JSON Schema for tool outputs (MCP outputSchema)"},"metadata":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]},"description":"(Optional) Additional metadata about the tool"}},"additionalProperties":false,"required":["name"],"title":"ToolDef","description":"Tool definition used in runtime contexts."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

@@ -86,7 +86,7 @@ from .safety import SafetyException, ShieldRunnerMixin
 TOOLS_ATTACHMENT_KEY_REGEX = re.compile(r"__tools_attachment__=(\{.*?\})")
 MEMORY_QUERY_TOOL = "knowledge_search"
 WEB_SEARCH_TOOL = "web_search"
-RAG_TOOL_GROUP = "builtin::rag"
+RAG_TOOL_GROUP = "builtin::file_search"
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
 
@@ -927,14 +927,14 @@ class ChatAgent(ShieldRunnerMixin):
         """Parse a toolgroup name into its components.
 
         Args:
-            toolgroup_name: The toolgroup name to parse (e.g. "builtin::rag/knowledge_search")
+            toolgroup_name: The toolgroup name to parse (e.g. "builtin::file_search/knowledge_search")
 
         Returns:
             A tuple of (tool_type, tool_group, tool_name)
         """
         split_names = toolgroup_name_with_maybe_tool_name.split("/")
         if len(split_names) == 2:
-            # e.g. "builtin::rag"
+            # e.g. "builtin::file_search"
             tool_group, tool_name = split_names
         else:
             tool_group, tool_name = split_names[0], None
