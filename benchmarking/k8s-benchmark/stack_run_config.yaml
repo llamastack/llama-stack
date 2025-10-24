@@ -6,7 +6,6 @@ apis:
 - inference
 - files
 - safety
-- telemetry
 - tool_runtime
 - vector_io
 providers:
@@ -63,12 +62,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  telemetry:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
-    config:
-      service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
-      sinks: ${env.TELEMETRY_SINKS:=console}
   tool_runtime:
   - provider_id: brave-search
     provider_type: remote::brave-search
