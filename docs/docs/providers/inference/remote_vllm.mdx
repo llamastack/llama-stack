@@ -1,0 +1,31 @@
+---
+description: "Remote vLLM inference provider for connecting to vLLM servers."
+sidebar_label: Remote - Vllm
+title: remote::vllm
+---
+
+# remote::vllm
+
+## Description
+
+Remote vLLM inference provider for connecting to vLLM servers.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_token` | `pydantic.types.SecretStr \| None` | No |  | The API token |
+| `url` | `str \| None` | No |  | The URL for the vLLM model serving endpoint |
+| `max_tokens` | `<class 'int'>` | No | 4096 | Maximum number of tokens to generate. |
+| `tls_verify` | `bool \| str` | No | True | Whether to verify TLS certificates. Can be a boolean or a path to a CA certificate file. |
+
+## Sample Configuration
+
+```yaml
+url: ${env.VLLM_URL:=}
+max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
+api_token: ${env.VLLM_API_TOKEN:=fake}
+tls_verify: ${env.VLLM_TLS_VERIFY:=true}
+```

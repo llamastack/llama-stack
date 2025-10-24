@@ -7,6 +7,7 @@
 from datetime import datetime
 
 from pymongo import AsyncMongoClient
+from pymongo.asynchronous.collection import AsyncCollection
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import KVStore
@@ -19,8 +20,13 @@ log = get_logger(name=__name__, category="providers::utils")
 class MongoDBKVStoreImpl(KVStore):
     def __init__(self, config: MongoDBKVStoreConfig):
         self.config = config
-        self.conn = None
-        self.collection = None
+        self.conn: AsyncMongoClient | None = None
+
+    @property
+    def collection(self) -> AsyncCollection:
+        if self.conn is None:
+            raise RuntimeError("MongoDB connection is not initialized")
+        return self.conn[self.config.db][self.config.collection_name]
 
     async def initialize(self) -> None:
         try:
@@ -32,7 +38,6 @@ class MongoDBKVStoreImpl(KVStore):
             }
             conn_creds = {k: v for k, v in conn_creds.items() if v is not None}
             self.conn = AsyncMongoClient(**conn_creds)
-            self.collection = self.conn[self.config.db][self.config.collection_name]
         except Exception as e:
             log.exception("Could not connect to MongoDB database server")
             raise RuntimeError("Could not connect to MongoDB database server") from e

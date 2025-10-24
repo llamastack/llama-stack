@@ -1,0 +1,82 @@
+---
+description: environments.
+sidebar_label: Quickstart
+sidebar_position: 1
+title: Quickstart
+---
+
+Get started with Llama Stack in minutes!
+
+Llama Stack is a stateful service with REST APIs to support the seamless transition of AI applications across different
+environments. You can build and test using a local server first and deploy to a hosted endpoint for production.
+
+In this guide, we'll walk through how to build a RAG application locally using Llama Stack with [Ollama](https://ollama.com/)
+as the inference [provider](/docs/providers/inference) for a Llama Model.
+
+**💡 Notebook Version:** You can also follow this quickstart guide in a Jupyter notebook format: [quick_start.ipynb](https://github.com/meta-llama/llama-stack/blob/main/docs/quick_start.ipynb)
+
+#### Step 1: Install and setup
+1. Install [uv](https://docs.astral.sh/uv/)
+2. Run inference on a Llama model with [Ollama](https://ollama.com/download)
+```bash
+ollama run llama3.2:3b --keepalive 60m
+```
+
+#### Step 2: Run the Llama Stack server
+
+```python file=./demo_script.py title="demo_script.py"
+```
+
+We will use `uv` to install dependencies and run the Llama Stack server.
+```bash
+# Install dependencies for the starter distribution
+uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
+
+# Run the server
+OLLAMA_URL=http://localhost:11434 uv run --with llama-stack llama stack run starter
+```
+#### Step 3: Run the demo
+Now open up a new terminal and copy the following script into a file named `demo_script.py`.
+
+We will use `uv` to run the script
+```
+uv run --with llama-stack-client,fire,requests demo_script.py
+```
+And you should see output like below.
+```python
+>print(resp.output[1].content[0].text)
+To do great work, consider the following principles:
+
+1. **Follow Your Interests**: Engage in work that genuinely excites you. If you find an area intriguing, pursue it without being overly concerned about external pressures or norms. You should create things that you would want for yourself, as this often aligns with what others in your circle might want too.
+
+2. **Work Hard on Ambitious Projects**: Ambition is vital, but it should be tempered by genuine interest. Instead of detailed planning for the future, focus on exciting projects that keep your options open. This approach, known as "staying upwind," allows for adaptability and can lead to unforeseen achievements.
+
+3. **Choose Quality Colleagues**: Collaborating with talented colleagues can significantly affect your own work. Seek out individuals who offer surprising insights and whom you admire. The presence of good colleagues can elevate the quality of your work and inspire you.
+
+4. **Maintain High Morale**: Your attitude towards work and life affects your performance. Cultivating optimism and viewing yourself as lucky rather than victimized can boost your productivity. It’s essential to care for your physical health as well since it directly impacts your mental faculties and morale.
+
+5. **Be Consistent**: Great work often comes from cumulative effort. Daily progress, even in small amounts, can result in substantial achievements over time. Emphasize consistency and make the work engaging, as this reduces the perceived burden of hard labor.
+
+6. **Embrace Curiosity**: Curiosity is a driving force that can guide you in selecting fields of interest, pushing you to explore uncharted territories. Allow it to shape your work and continually seek knowledge and insights.
+
+By focusing on these aspects, you can create an environment conducive to great work and personal fulfillment.
+```
+
+Congratulations! You've successfully built your first RAG application using Llama Stack! 🎉🥳
+
+:::tip HuggingFace access
+
+If you are getting a **401 Client Error** from HuggingFace for the **all-MiniLM-L6-v2** model, try setting **HF_TOKEN** to a valid HuggingFace token in your environment
+
+:::
+
+### Next Steps
+
+Now you're ready to dive deeper into Llama Stack!
+- Explore the [Detailed Tutorial](./detailed_tutorial).
+- Try the [Getting Started Notebook](https://github.com/meta-llama/llama-stack/blob/main/docs/getting_started.ipynb).
+- Browse more [Notebooks on GitHub](https://github.com/meta-llama/llama-stack/tree/main/docs/notebooks).
+- Learn about Llama Stack [Concepts](/docs/concepts).
+- Discover how to [Build Llama Stacks](/docs/distributions).
+- Refer to our [References](/docs/references) for details on the Llama CLI and Python SDK.
+- Check out the [llama-stack-apps](https://github.com/meta-llama/llama-stack-apps/tree/main/examples) repository for example applications and tutorials.

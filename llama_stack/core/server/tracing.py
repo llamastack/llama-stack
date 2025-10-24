@@ -7,8 +7,8 @@ from aiohttp import hdrs
 
 from llama_stack.core.external import ExternalApiSpec
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
+from llama_stack.core.telemetry.tracing import end_trace, start_trace
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry.tracing import end_trace, start_trace
 
 logger = get_logger(name=__name__, category="core::server")
 
@@ -44,6 +44,14 @@ class TracingMiddleware:
             # If no matching endpoint is found, pass through to FastAPI
             logger.debug(f"No matching route found for path: {path}, falling back to FastAPI")
             return await self.app(scope, receive, send)
+
+        # Log deprecation warning if route is deprecated
+        if getattr(webmethod, "deprecated", False):
+            logger.warning(
+                f"DEPRECATED ROUTE USED: {scope.get('method', 'GET')} {path} - "
+                f"This route is deprecated and may be removed in a future version. "
+                f"Please check the docs for the supported version."
+            )
 
         trace_attributes = {"__location__": "server", "raw_path": path}
 

@@ -54,6 +54,7 @@ class Options:
     property_description_fun: Optional[Callable[[type, str, str], str]] = None
     captions: Optional[Dict[str, str]] = None
     include_standard_error_responses: bool = True
+    stability_filter: Optional[str] = None
 
     default_captions: ClassVar[Dict[str, str]] = {
         "Operations": "Operations",

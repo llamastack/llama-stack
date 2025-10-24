@@ -1,0 +1,35 @@
+---
+title: API Providers
+description: Ecosystem of providers for swapping implementations across the same API
+sidebar_label: Overview
+sidebar_position: 1
+---
+
+# API Providers
+
+The goal of Llama Stack is to build an ecosystem where users can easily swap out different implementations for the same API. Examples for these include:
+- LLM inference providers (e.g., Meta Reference, Ollama, Fireworks, Together, AWS Bedrock, Groq, Cerebras, SambaNova, vLLM, OpenAI, Anthropic, Gemini, WatsonX, etc.),
+- Vector databases (e.g., FAISS, SQLite-Vec, ChromaDB, Weaviate, Qdrant, Milvus, PGVector, etc.),
+- Safety providers (e.g., Meta's Llama Guard, Prompt Guard, Code Scanner, AWS Bedrock Guardrails, etc.),
+- Tool Runtime providers (e.g., RAG Runtime, Brave Search, etc.)
+
+Providers come in two flavors:
+- **Remote**: the provider runs as a separate service external to the Llama Stack codebase. Llama Stack contains a small amount of adapter code.
+- **Inline**: the provider is fully specified and implemented within the Llama Stack codebase. It may be a simple wrapper around an existing library, or a full fledged implementation within Llama Stack.
+
+Importantly, Llama Stack always strives to provide at least one fully inline provider for each API so you can iterate on a fully featured environment locally.
+
+## Provider Categories
+
+- **[External Providers](external/index.mdx)** - Guide for building and using external providers
+- **[Inference](inference/index.mdx)** - LLM and embedding model providers
+- **[Agents](agents/index.mdx)** - Agentic system providers
+- **[DatasetIO](datasetio/index.mdx)** - Dataset and data loader providers
+- **[Safety](safety/index.mdx)** - Content moderation and safety providers
+- **[Vector IO](vector_io/index.mdx)** - Vector database providers
+- **[Tool Runtime](tool_runtime/index.mdx)** - Tool and protocol providers
+- **[Files](files/index.mdx)** - File system and storage providers
+
+## Other information about Providers
+- **[OpenAI Compatibility](./openai.mdx)** - OpenAI API compatibility layer
+- **[OpenAI-Compatible Responses Limitations](./openai_responses_limitations.mdx)** - Known limitations of the Responses API in Llama Stack

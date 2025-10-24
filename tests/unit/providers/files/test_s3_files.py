@@ -228,12 +228,13 @@ class TestS3FilesImpl:
 
             mock_now.return_value = 0
 
+            from llama_stack.apis.files import ExpiresAfter
+
             sample_text_file.filename = "test_expired_file"
             uploaded = await s3_provider.openai_upload_file(
                 file=sample_text_file,
                 purpose=OpenAIFilePurpose.ASSISTANTS,
-                expires_after_anchor="created_at",
-                expires_after_seconds=two_hours,
+                expires_after=ExpiresAfter(anchor="created_at", seconds=two_hours),
             )
 
             mock_now.return_value = two_hours * 2  # fast forward 4 hours
@@ -259,42 +260,44 @@ class TestS3FilesImpl:
 
     async def test_unsupported_expires_after_anchor(self, s3_provider, sample_text_file):
         """Unsupported anchor value should raise ValueError."""
+        from llama_stack.apis.files import ExpiresAfter
+
         sample_text_file.filename = "test_unsupported_expires_after_anchor"
 
         with pytest.raises(ValueError, match="Input should be 'created_at'"):
             await s3_provider.openai_upload_file(
                 file=sample_text_file,
                 purpose=OpenAIFilePurpose.ASSISTANTS,
-                expires_after_anchor="now",
-                expires_after_seconds=3600,
+                expires_after=ExpiresAfter(anchor="now", seconds=3600),  # type: ignore
             )
 
     async def test_nonint_expires_after_seconds(self, s3_provider, sample_text_file):
         """Non-integer seconds in expires_after should raise ValueError."""
+        from llama_stack.apis.files import ExpiresAfter
+
         sample_text_file.filename = "test_nonint_expires_after_seconds"
 
         with pytest.raises(ValueError, match="should be a valid integer"):
             await s3_provider.openai_upload_file(
                 file=sample_text_file,
                 purpose=OpenAIFilePurpose.ASSISTANTS,
-                expires_after_anchor="created_at",
-                expires_after_seconds="many",
+                expires_after=ExpiresAfter(anchor="created_at", seconds="many"),  # type: ignore
             )
 
     async def test_expires_after_seconds_out_of_bounds(self, s3_provider, sample_text_file):
         """Seconds outside allowed range should raise ValueError."""
+        from llama_stack.apis.files import ExpiresAfter
+
         with pytest.raises(ValueError, match="greater than or equal to 3600"):
             await s3_provider.openai_upload_file(
                 file=sample_text_file,
                 purpose=OpenAIFilePurpose.ASSISTANTS,
-                expires_after_anchor="created_at",
-                expires_after_seconds=3599,
+                expires_after=ExpiresAfter(anchor="created_at", seconds=3599),
             )
 
         with pytest.raises(ValueError, match="less than or equal to 2592000"):
             await s3_provider.openai_upload_file(
                 file=sample_text_file,
                 purpose=OpenAIFilePurpose.ASSISTANTS,
-                expires_after_anchor="created_at",
-                expires_after_seconds=2592001,
+                expires_after=ExpiresAfter(anchor="created_at", seconds=2592001),
             )

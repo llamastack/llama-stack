@@ -368,6 +368,32 @@ async def test_where_operator_gt_and_update_delete():
         assert {r["id"] for r in rows_after} == {1, 3}
 
 
+async def test_batch_insert():
+    with TemporaryDirectory() as tmp_dir:
+        db_path = tmp_dir + "/test.db"
+        store = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=db_path))
+
+        await store.create_table(
+            "batch_test",
+            {
+                "id": ColumnType.INTEGER,
+                "name": ColumnType.STRING,
+                "value": ColumnType.INTEGER,
+            },
+        )
+
+        batch_data = [
+            {"id": 1, "name": "first", "value": 10},
+            {"id": 2, "name": "second", "value": 20},
+            {"id": 3, "name": "third", "value": 30},
+        ]
+
+        await store.insert("batch_test", batch_data)
+
+        result = await store.fetch_all("batch_test", order_by=[("id", "asc")])
+        assert result.data == batch_data
+
+
 async def test_where_operator_edge_cases():
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"

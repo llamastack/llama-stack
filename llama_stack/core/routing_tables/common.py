@@ -9,7 +9,6 @@ from typing import Any
 from llama_stack.apis.common.errors import ModelNotFoundError
 from llama_stack.apis.models import Model
 from llama_stack.apis.resource import ResourceType
-from llama_stack.apis.scoring_functions import ScoringFn
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import (
@@ -17,6 +16,7 @@ from llama_stack.core.datatypes import (
     RoutableObject,
     RoutableObjectWithProvider,
     RoutedProtocol,
+    ScoringFnWithOwner,
 )
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.core.store import DistributionRegistry
@@ -41,7 +41,7 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
     elif api == Api.safety:
         return await p.register_shield(obj)
     elif api == Api.vector_io:
-        return await p.register_vector_db(obj)
+        return await p.register_vector_store(obj)
     elif api == Api.datasetio:
         return await p.register_dataset(obj)
     elif api == Api.scoring:
@@ -57,7 +57,7 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
 async def unregister_object_from_provider(obj: RoutableObject, p: Any) -> None:
     api = get_impl_api(p)
     if api == Api.vector_io:
-        return await p.unregister_vector_db(obj.identifier)
+        return await p.unregister_vector_store(obj.identifier)
     elif api == Api.inference:
         return await p.unregister_model(obj.identifier)
     elif api == Api.safety:
@@ -108,13 +108,13 @@ class CommonRoutingTableImpl(RoutingTable):
             elif api == Api.safety:
                 p.shield_store = self
             elif api == Api.vector_io:
-                p.vector_db_store = self
+                p.vector_store_store = self
             elif api == Api.datasetio:
                 p.dataset_store = self
             elif api == Api.scoring:
                 p.scoring_function_store = self
                 scoring_functions = await p.list_scoring_functions()
-                await add_objects(scoring_functions, pid, ScoringFn)
+                await add_objects(scoring_functions, pid, ScoringFnWithOwner)
             elif api == Api.eval:
                 p.benchmark_store = self
             elif api == Api.tool_runtime:
@@ -134,15 +134,15 @@ class CommonRoutingTableImpl(RoutingTable):
         from .scoring_functions import ScoringFunctionsRoutingTable
         from .shields import ShieldsRoutingTable
         from .toolgroups import ToolGroupsRoutingTable
-        from .vector_dbs import VectorDBsRoutingTable
+        from .vector_stores import VectorStoresRoutingTable
 
         def apiname_object():
             if isinstance(self, ModelsRoutingTable):
                 return ("Inference", "model")
             elif isinstance(self, ShieldsRoutingTable):
                 return ("Safety", "shield")
-            elif isinstance(self, VectorDBsRoutingTable):
-                return ("VectorIO", "vector_db")
+            elif isinstance(self, VectorStoresRoutingTable):
+                return ("VectorIO", "vector_store")
             elif isinstance(self, DatasetsRoutingTable):
                 return ("DatasetIO", "dataset")
             elif isinstance(self, ScoringFunctionsRoutingTable):
@@ -248,25 +248,7 @@ class CommonRoutingTableImpl(RoutingTable):
 
 
 async def lookup_model(routing_table: CommonRoutingTableImpl, model_id: str) -> Model:
-    # first try to get the model by identifier
-    # this works if model_id is an alias or is of the form provider_id/provider_model_id
     model = await routing_table.get_object_by_identifier("model", model_id)
-    if model is not None:
-        return model
-
-    logger.warning(
-        f"WARNING: model identifier '{model_id}' not found in routing table. Falling back to "
-        "searching in all providers. This is only for backwards compatibility and will stop working "
-        "soon. Migrate your calls to use fully scoped `provider_id/model_id` names."
-    )
-    # if not found, this means model_id is an unscoped provider_model_id, we need
-    # to iterate (given a lack of an efficient index on the KVStore)
-    models = await routing_table.get_all_with_type("model")
-    matching_models = [m for m in models if m.provider_resource_id == model_id]
-    if len(matching_models) == 0:
+    if not model:
         raise ModelNotFoundError(model_id)
-
-    if len(matching_models) > 1:
-        raise ValueError(f"Multiple providers found for '{model_id}': {[m.provider_id for m in matching_models]}")
-
-    return matching_models[0]
+    return model

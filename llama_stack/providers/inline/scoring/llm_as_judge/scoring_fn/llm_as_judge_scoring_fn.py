@@ -6,7 +6,7 @@
 import re
 from typing import Any
 
-from llama_stack.apis.inference import Inference, UserMessage
+from llama_stack.apis.inference import Inference, OpenAIChatCompletionRequestWithExtraBody
 from llama_stack.apis.scoring import ScoringResultRow
 from llama_stack.apis.scoring_functions import ScoringFnParams
 from llama_stack.providers.utils.scoring.base_scoring_fn import RegisteredBaseScoringFn
@@ -55,15 +55,17 @@ class LlmAsJudgeScoringFn(RegisteredBaseScoringFn):
             generated_answer=generated_answer,
         )
 
-        judge_response = await self.inference_api.chat_completion(
-            model_id=fn_def.params.judge_model,
+        params = OpenAIChatCompletionRequestWithExtraBody(
+            model=fn_def.params.judge_model,
             messages=[
-                UserMessage(
-                    content=judge_input_msg,
-                ),
+                {
+                    "role": "user",
+                    "content": judge_input_msg,
+                }
             ],
         )
-        content = judge_response.completion_message.content
+        judge_response = await self.inference_api.openai_chat_completion(params)
+        content = judge_response.choices[0].message.content
         rating_regexes = fn_def.params.judge_score_regexes
 
         judge_rating = None

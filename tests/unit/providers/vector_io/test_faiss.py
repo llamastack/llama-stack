@@ -5,15 +5,14 @@
 # the root directory of this source tree.
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from llama_stack.apis.files import Files
-from llama_stack.apis.inference import EmbeddingsResponse, Inference
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.providers.datatypes import HealthStatus
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import (
@@ -40,12 +39,12 @@ def loop():
 
 @pytest.fixture
 def embedding_dimension():
-    return 384
+    return 768
 
 
 @pytest.fixture
-def vector_db_id():
-    return "test_vector_db"
+def vector_store_id():
+    return "test_vector_store"
 
 
 @pytest.fixture
@@ -62,19 +61,12 @@ def sample_embeddings(embedding_dimension):
 
 
 @pytest.fixture
-def mock_vector_db(vector_db_id, embedding_dimension) -> MagicMock:
-    mock_vector_db = MagicMock(spec=VectorDB)
-    mock_vector_db.embedding_model = "mock_embedding_model"
-    mock_vector_db.identifier = vector_db_id
-    mock_vector_db.embedding_dimension = embedding_dimension
-    return mock_vector_db
-
-
-@pytest.fixture
-def mock_inference_api(sample_embeddings):
-    mock_api = MagicMock(spec=Inference)
-    mock_api.embeddings = AsyncMock(return_value=EmbeddingsResponse(embeddings=sample_embeddings))
-    return mock_api
+def mock_vector_store(vector_store_id, embedding_dimension) -> MagicMock:
+    mock_vector_store = MagicMock(spec=VectorStore)
+    mock_vector_store.embedding_model = "mock_embedding_model"
+    mock_vector_store.identifier = vector_store_id
+    mock_vector_store.embedding_dimension = embedding_dimension
+    return mock_vector_store
 
 
 @pytest.fixture
@@ -94,22 +86,6 @@ def faiss_config():
 async def faiss_index(embedding_dimension):
     index = await FaissIndex.create(dimension=embedding_dimension)
     yield index
-
-
-@pytest.fixture
-async def faiss_adapter(faiss_config, mock_inference_api, mock_files_api) -> FaissVectorIOAdapter:
-    # Create the adapter
-    adapter = FaissVectorIOAdapter(config=faiss_config, inference_api=mock_inference_api, files_api=mock_files_api)
-
-    # Create a mock KVStore
-    mock_kvstore = MagicMock()
-    mock_kvstore.values_in_range = AsyncMock(return_value=[])
-
-    # Patch the initialize method to avoid the kvstore_impl call
-    with patch.object(FaissVectorIOAdapter, "initialize"):
-        # Set the kvstore directly
-        adapter.kvstore = mock_kvstore
-        yield adapter
 
 
 async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_identical(

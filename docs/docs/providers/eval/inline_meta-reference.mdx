@@ -1,0 +1,25 @@
+---
+description: "Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics."
+sidebar_label: Meta-Reference
+title: inline::meta-reference
+---
+
+# inline::meta-reference
+
+## Description
+
+Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+
+## Sample Configuration
+
+```yaml
+kvstore:
+  namespace: eval
+  backend: kv_default
+```

@@ -7,7 +7,7 @@
 [![Unit Tests](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml?query=branch%3Amain)
 [![Integration Tests](https://github.com/meta-llama/llama-stack/actions/workflows/integration-tests.yml/badge.svg?branch=main)](https://github.com/meta-llama/llama-stack/actions/workflows/integration-tests.yml?query=branch%3Amain)
 
-[**Quick Start**](https://llamastack.github.io/latest/getting_started/index.html) | [**Documentation**](https://llamastack.github.io/latest/index.html) | [**Colab Notebook**](./docs/getting_started.ipynb) | [**Discord**](https://discord.gg/llama-stack)
+[**Quick Start**](https://llamastack.github.io/docs/getting_started/quickstart) | [**Documentation**](https://llamastack.github.io/docs) | [**Colab Notebook**](./docs/getting_started.ipynb) | [**Discord**](https://discord.gg/llama-stack)
 
 
 ### ✨🎉 Llama 4 Support  🎉✨
@@ -25,10 +25,13 @@ pip install -U llama_stack
 
 MODEL="Llama-4-Scout-17B-16E-Instruct"
 # get meta url from llama.com
-llama model download --source meta --model-id $MODEL --meta-url <META_URL>
+huggingface-cli download meta-llama/$MODEL --local-dir ~/.llama/$MODEL
+
+# install dependencies for the distribution
+llama stack list-deps meta-reference-gpu | xargs -L1 uv pip install
 
 # start a llama stack server
-INFERENCE_MODEL=meta-llama/$MODEL llama stack build --run --template meta-reference-gpu
+INFERENCE_MODEL=meta-llama/$MODEL llama stack run meta-reference-gpu
 
 # install client to interact with the server
 pip install llama-stack-client
@@ -43,10 +46,21 @@ inference chat-completion \
 --model-id meta-llama/$MODEL \
 --message "write a haiku for meta's llama 4 models"
 
-ChatCompletionResponse(
-    completion_message=CompletionMessage(content="Whispers in code born\nLlama's gentle, wise heartbeat\nFuture's soft unfold", role='assistant', stop_reason='end_of_turn', tool_calls=[]),
-    logprobs=None,
-    metrics=[Metric(metric='prompt_tokens', value=21.0, unit=None), Metric(metric='completion_tokens', value=28.0, unit=None), Metric(metric='total_tokens', value=49.0, unit=None)]
+OpenAIChatCompletion(
+    ...
+    choices=[
+        OpenAIChatCompletionChoice(
+            finish_reason='stop',
+            index=0,
+            message=OpenAIChatCompletionChoiceMessageOpenAIAssistantMessageParam(
+                role='assistant',
+                content='...**Silent minds awaken,**  \n**Whispers of billions of words,**  \n**Reasoning breaks the night.**  \n\n—  \n*This haiku blends the essence of LLaMA 4\'s capabilities with nature-inspired metaphor, evoking its vast training data and transformative potential.*',
+                ...
+            ),
+            ...
+        )
+    ],
+    ...
 )
 ```
 ### Python SDK
@@ -59,14 +73,14 @@ model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 prompt = "Write a haiku about coding"
 
 print(f"User> {prompt}")
-response = client.inference.chat_completion(
-    model_id=model_id,
+response = client.chat.completions.create(
+    model=model_id,
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": prompt},
     ],
 )
-print(f"Assistant> {response.completion_message.content}")
+print(f"Assistant> {response.choices[0].message.content}")
 ```
 As more providers start supporting Llama 4, you can use them in Llama Stack as well. We are adding to the list. Stay tuned!
 
@@ -78,14 +92,14 @@ As more providers start supporting Llama 4, you can use them in Llama Stack as w
 To try Llama Stack locally, run:
 
 ```bash
-curl -LsSf https://github.com/meta-llama/llama-stack/raw/main/scripts/install.sh | bash
+curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 ```
 
 ### Overview
 
 Llama Stack standardizes the core building blocks that simplify AI application development. It codifies best practices across the Llama ecosystem. More specifically, it provides
 
-- **Unified API layer** for Inference, RAG, Agents, Tools, Safety, Evals, and Telemetry.
+- **Unified API layer** for Inference, RAG, Agents, Tools, Safety, Evals.
 - **Plugin architecture** to support the rich ecosystem of different API implementations in various environments, including local development, on-premises, cloud, and mobile.
 - **Prepackaged verified distributions** which offer a one-stop solution for developers to get started quickly and reliably in any environment.
 - **Multiple developer interfaces** like CLI and SDKs for Python, Typescript, iOS, and Android.
@@ -109,38 +123,38 @@ By reducing friction and complexity, Llama Stack empowers developers to focus on
 
 ### API Providers
 Here is a list of the various API providers and available distributions that can help developers get started easily with Llama Stack.
-Please checkout for [full list](https://llamastack.github.io/latest/providers/index.html)
+Please checkout for [full list](https://llamastack.github.io/docs/providers)
 
-| API Provider Builder | Environments | Agents | Inference | VectorIO | Safety | Telemetry | Post Training | Eval | DatasetIO |
-|:--------------------:|:------------:|:------:|:---------:|:--------:|:------:|:---------:|:-------------:|:----:|:--------:|
-|    Meta Reference    | Single Node | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-|      SambaNova       | Hosted | | ✅ | | ✅ | | | | |
-|       Cerebras       | Hosted | | ✅ | | | | | | |
-|      Fireworks       | Hosted | ✅ | ✅ | ✅ | | | | | |
-|     AWS Bedrock      | Hosted | | ✅ | | ✅ | | | | |
-|       Together       | Hosted | ✅ | ✅ | | ✅ | | | | |
-|         Groq         | Hosted | | ✅ | | | | | | |
-|        Ollama        | Single Node | | ✅ | | | | | | |
-|         TGI          | Hosted/Single Node | | ✅ | | | | | | |
-|      NVIDIA NIM      | Hosted/Single Node | | ✅ | | ✅ | | | | |
-|       ChromaDB       | Hosted/Single Node | | | ✅ | | | | | |
-|        Milvus        | Hosted/Single Node | | | ✅ | | | | | |
-|        Qdrant        | Hosted/Single Node | | | ✅ | | | | | |
-|       Weaviate       | Hosted/Single Node | | | ✅ | | | | | |
-|      SQLite-vec      | Single Node | | | ✅ | | | | | |
-|      PG Vector       | Single Node | | | ✅ | | | | | |
-|  PyTorch ExecuTorch  | On-device iOS | ✅ | ✅ | | | | | | |
-|         vLLM         | Single Node | | ✅ | | | | | | |
-|        OpenAI        | Hosted | | ✅ | | | | | | |
-|      Anthropic       | Hosted | | ✅ | | | | | | |
-|        Gemini        | Hosted | | ✅ | | | | | | |
-|       WatsonX        | Hosted | | ✅ | | | | | | |
-|     HuggingFace      | Single Node | | | | | | ✅ | | ✅ |
-|      TorchTune       | Single Node | | | | | | ✅ | | |
-|     NVIDIA NEMO      | Hosted | | ✅ | ✅ | | | ✅ | ✅ | ✅ |
-|        NVIDIA        | Hosted | | | | | | ✅ | ✅ | ✅ |
+| API Provider Builder | Environments | Agents | Inference | VectorIO | Safety | Post Training | Eval | DatasetIO |
+|:--------------------:|:------------:|:------:|:---------:|:--------:|:------:|:-------------:|:----:|:--------:|
+|    Meta Reference    | Single Node | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|      SambaNova       | Hosted | | ✅ | | ✅ | | | |
+|       Cerebras       | Hosted | | ✅ | | | | | |
+|      Fireworks       | Hosted | ✅ | ✅ | ✅ | | | | |
+|     AWS Bedrock      | Hosted | | ✅ | | ✅ | | | |
+|       Together       | Hosted | ✅ | ✅ | | ✅ | | | |
+|         Groq         | Hosted | | ✅ | | | | | |
+|        Ollama        | Single Node | | ✅ | | | | | |
+|         TGI          | Hosted/Single Node | | ✅ | | | | | |
+|      NVIDIA NIM      | Hosted/Single Node | | ✅ | | ✅ | | | |
+|       ChromaDB       | Hosted/Single Node | | | ✅ | | | | |
+|        Milvus        | Hosted/Single Node | | | ✅ | | | | |
+|        Qdrant        | Hosted/Single Node | | | ✅ | | | | |
+|       Weaviate       | Hosted/Single Node | | | ✅ | | | | |
+|      SQLite-vec      | Single Node | | | ✅ | | | | |
+|      PG Vector       | Single Node | | | ✅ | | | | |
+|  PyTorch ExecuTorch  | On-device iOS | ✅ | ✅ | | | | | |
+|         vLLM         | Single Node | | ✅ | | | | | |
+|        OpenAI        | Hosted | | ✅ | | | | | |
+|      Anthropic       | Hosted | | ✅ | | | | | |
+|        Gemini        | Hosted | | ✅ | | | | | |
+|       WatsonX        | Hosted | | ✅ | | | | | |
+|     HuggingFace      | Single Node | | | | | ✅ | | ✅ |
+|      TorchTune       | Single Node | | | | | ✅ | | |
+|     NVIDIA NEMO      | Hosted | | ✅ | ✅ | | ✅ | ✅ | ✅ |
+|        NVIDIA        | Hosted | | | | | ✅ | ✅ | ✅ |
 
-> **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/latest/providers/external/index.html) documentation.
+> **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/docs/providers/external) documentation.
 
 ### Distributions
 

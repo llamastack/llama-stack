@@ -18,7 +18,8 @@ class TestOpenAIBaseURLConfig:
     def test_default_base_url_without_env_var(self):
         """Test that the adapter uses the default OpenAI base URL when no environment variable is set."""
         config = OpenAIConfig(api_key="test-key")
-        adapter = OpenAIInferenceAdapter(config)
+        adapter = OpenAIInferenceAdapter(config=config)
+        adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
         assert adapter.get_base_url() == "https://api.openai.com/v1"
 
@@ -26,7 +27,8 @@ class TestOpenAIBaseURLConfig:
         """Test that the adapter uses a custom base URL when provided in config."""
         custom_url = "https://custom.openai.com/v1"
         config = OpenAIConfig(api_key="test-key", base_url=custom_url)
-        adapter = OpenAIInferenceAdapter(config)
+        adapter = OpenAIInferenceAdapter(config=config)
+        adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
         assert adapter.get_base_url() == custom_url
 
@@ -37,7 +39,8 @@ class TestOpenAIBaseURLConfig:
         config_data = OpenAIConfig.sample_run_config(api_key="test-key")
         processed_config = replace_env_vars(config_data)
         config = OpenAIConfig.model_validate(processed_config)
-        adapter = OpenAIInferenceAdapter(config)
+        adapter = OpenAIInferenceAdapter(config=config)
+        adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
         assert adapter.get_base_url() == "https://env.openai.com/v1"
 
@@ -46,7 +49,8 @@ class TestOpenAIBaseURLConfig:
         """Test that explicit config value overrides environment variable."""
         custom_url = "https://config.openai.com/v1"
         config = OpenAIConfig(api_key="test-key", base_url=custom_url)
-        adapter = OpenAIInferenceAdapter(config)
+        adapter = OpenAIInferenceAdapter(config=config)
+        adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
         # Config should take precedence over environment variable
         assert adapter.get_base_url() == custom_url
@@ -56,7 +60,8 @@ class TestOpenAIBaseURLConfig:
         """Test that the OpenAI client is initialized with the configured base URL."""
         custom_url = "https://test.openai.com/v1"
         config = OpenAIConfig(api_key="test-key", base_url=custom_url)
-        adapter = OpenAIInferenceAdapter(config)
+        adapter = OpenAIInferenceAdapter(config=config)
+        adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
         # Mock the get_api_key method since it's delegated to LiteLLMOpenAIMixin
         adapter.get_api_key = MagicMock(return_value="test-key")
@@ -75,7 +80,8 @@ class TestOpenAIBaseURLConfig:
         """Test that check_model_availability uses the configured base URL."""
         custom_url = "https://test.openai.com/v1"
         config = OpenAIConfig(api_key="test-key", base_url=custom_url)
-        adapter = OpenAIInferenceAdapter(config)
+        adapter = OpenAIInferenceAdapter(config=config)
+        adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
         # Mock the get_api_key method
         adapter.get_api_key = MagicMock(return_value="test-key")
@@ -116,7 +122,8 @@ class TestOpenAIBaseURLConfig:
         config_data = OpenAIConfig.sample_run_config(api_key="test-key")
         processed_config = replace_env_vars(config_data)
         config = OpenAIConfig.model_validate(processed_config)
-        adapter = OpenAIInferenceAdapter(config)
+        adapter = OpenAIInferenceAdapter(config=config)
+        adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
         # Mock the get_api_key method
         adapter.get_api_key = MagicMock(return_value="test-key")

@@ -1,0 +1,38 @@
+---
+description: "Please refer to the inline provider documentation."
+sidebar_label: Remote - Qdrant
+title: remote::qdrant
+---
+
+# remote::qdrant
+
+## Description
+
+
+Please refer to the inline provider documentation.
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `location` | `str \| None` | No |  |  |
+| `url` | `str \| None` | No |  |  |
+| `port` | `int \| None` | No | 6333 |  |
+| `grpc_port` | `<class 'int'>` | No | 6334 |  |
+| `prefer_grpc` | `<class 'bool'>` | No | False |  |
+| `https` | `bool \| None` | No |  |  |
+| `api_key` | `str \| None` | No |  |  |
+| `prefix` | `str \| None` | No |  |  |
+| `timeout` | `int \| None` | No |  |  |
+| `host` | `str \| None` | No |  |  |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+
+## Sample Configuration
+
+```yaml
+api_key: ${env.QDRANT_API_KEY:=}
+persistence:
+  namespace: vector_io::qdrant_remote
+  backend: kv_default
+```

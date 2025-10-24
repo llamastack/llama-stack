@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import logging  # allow-direct-logging
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -13,6 +14,13 @@ from fastapi.testclient import TestClient
 
 from llama_stack.core.datatypes import AuthenticationConfig, AuthProviderType, GitHubTokenAuthConfig
 from llama_stack.core.server.auth import AuthenticationMiddleware
+
+
+@pytest.fixture
+def suppress_auth_errors(caplog):
+    """Suppress expected ERROR logs for tests that deliberately trigger authentication errors"""
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth")
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth_providers")
 
 
 class MockResponse:
@@ -119,7 +127,7 @@ def test_authenticated_endpoint_with_valid_github_token(mock_client_class, githu
 
 
 @patch("llama_stack.core.server.auth_providers.httpx.AsyncClient")
-def test_authenticated_endpoint_with_invalid_github_token(mock_client_class, github_token_client):
+def test_authenticated_endpoint_with_invalid_github_token(mock_client_class, github_token_client, suppress_auth_errors):
     """Test accessing protected endpoint with invalid GitHub token"""
     # Mock the GitHub API to return 401 Unauthorized
     mock_client = AsyncMock()

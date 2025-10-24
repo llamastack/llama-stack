@@ -56,7 +56,7 @@ def process_distro(distro_dir: Path, progress, change_tracker: ChangedPathTracke
             distro = template_func()
 
             yaml_output_dir = REPO_ROOT / "llama_stack" / "distributions" / distro.name
-            doc_output_dir = REPO_ROOT / "docs/source/distributions" / f"{distro.distro_type}_distro"
+            doc_output_dir = REPO_ROOT / "docs/docs/distributions" / f"{distro.distro_type}_distro"
             change_tracker.add_paths(yaml_output_dir, doc_output_dir)
             distro.save_distribution(
                 yaml_output_dir=yaml_output_dir,

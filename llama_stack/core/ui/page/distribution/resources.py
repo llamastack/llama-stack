@@ -11,19 +11,17 @@ from llama_stack.core.ui.page.distribution.eval_tasks import benchmarks
 from llama_stack.core.ui.page.distribution.models import models
 from llama_stack.core.ui.page.distribution.scoring_functions import scoring_functions
 from llama_stack.core.ui.page.distribution.shields import shields
-from llama_stack.core.ui.page.distribution.vector_dbs import vector_dbs
 
 
 def resources_page():
     options = [
         "Models",
-        "Vector Databases",
         "Shields",
         "Scoring Functions",
         "Datasets",
         "Benchmarks",
     ]
-    icons = ["magic", "memory", "shield", "file-bar-graph", "database", "list-task"]
+    icons = ["magic", "shield", "file-bar-graph", "database", "list-task"]
     selected_resource = option_menu(
         None,
         options,
@@ -37,8 +35,6 @@ def resources_page():
     )
     if selected_resource == "Benchmarks":
         benchmarks()
-    elif selected_resource == "Vector Databases":
-        vector_dbs()
     elif selected_resource == "Datasets":
         datasets()
     elif selected_resource == "Models":

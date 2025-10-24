@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
 from llama_stack.core.access_control.access_control import default_policy, is_action_allowed
@@ -12,10 +12,10 @@ from llama_stack.core.access_control.conditions import ProtectedResource
 from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
 from llama_stack.core.datatypes import User
 from llama_stack.core.request_headers import get_authenticated_user
+from llama_stack.core.storage.datatypes import StorageBackendType
 from llama_stack.log import get_logger
 
 from .api import ColumnDefinition, ColumnType, PaginatedResponse, SqlStore
-from .sqlstore import SqlStoreType
 
 logger = get_logger(name=__name__, category="providers::utils")
 
@@ -36,6 +36,18 @@ SQL_OPTIMIZED_POLICY = [
         when=["user in owners roles", "user in owners teams", "user in owners projects", "user in owners namespaces"],
     ),
 ]
+
+
+def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: User | None) -> Mapping[str, Any]:
+    """Add access control attributes to a data item."""
+    enhanced = dict(item)
+    if current_user:
+        enhanced["owner_principal"] = current_user.principal
+        enhanced["access_attributes"] = current_user.attributes
+    else:
+        enhanced["owner_principal"] = None
+        enhanced["access_attributes"] = None
+    return enhanced
 
 
 class SqlRecord(ProtectedResource):
@@ -70,8 +82,8 @@ class AuthorizedSqlStore:
         if not hasattr(self.sql_store, "config"):
             raise ValueError("SqlStore must have a config attribute to be used with AuthorizedSqlStore")
 
-        self.database_type = self.sql_store.config.type
-        if self.database_type not in [SqlStoreType.postgres, SqlStoreType.sqlite]:
+        self.database_type = self.sql_store.config.type.value
+        if self.database_type not in [StorageBackendType.SQL_POSTGRES.value, StorageBackendType.SQL_SQLITE.value]:
             raise ValueError(f"Unsupported database type: {self.database_type}")
 
     def _validate_sql_optimized_policy(self) -> None:
@@ -102,18 +114,14 @@ class AuthorizedSqlStore:
         await self.sql_store.add_column_if_not_exists(table, "access_attributes", ColumnType.JSON)
         await self.sql_store.add_column_if_not_exists(table, "owner_principal", ColumnType.STRING)
 
-    async def insert(self, table: str, data: Mapping[str, Any]) -> None:
-        """Insert a row with automatic access control attribute capture."""
-        enhanced_data = dict(data)
-
+    async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
+        """Insert a row or batch of rows with automatic access control attribute capture."""
         current_user = get_authenticated_user()
-        if current_user:
-            enhanced_data["owner_principal"] = current_user.principal
-            enhanced_data["access_attributes"] = current_user.attributes
+        enhanced_data: Mapping[str, Any] | Sequence[Mapping[str, Any]]
+        if isinstance(data, Mapping):
+            enhanced_data = _enhance_item_with_access_control(data, current_user)
         else:
-            enhanced_data["owner_principal"] = None
-            enhanced_data["access_attributes"] = None
-
+            enhanced_data = [_enhance_item_with_access_control(item, current_user) for item in data]
         await self.sql_store.insert(table, enhanced_data)
 
     async def fetch_all(
@@ -212,9 +220,9 @@ class AuthorizedSqlStore:
         Returns:
             SQL expression to extract JSON value
         """
-        if self.database_type == SqlStoreType.postgres:
+        if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             return f"{column}->'{path}'"
-        elif self.database_type == SqlStoreType.sqlite:
+        elif self.database_type == StorageBackendType.SQL_SQLITE.value:
             return f"JSON_EXTRACT({column}, '$.{path}')"
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")
@@ -229,9 +237,9 @@ class AuthorizedSqlStore:
         Returns:
             SQL expression to extract JSON value as text
         """
-        if self.database_type == SqlStoreType.postgres:
+        if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             return f"{column}->>'{path}'"
-        elif self.database_type == SqlStoreType.sqlite:
+        elif self.database_type == StorageBackendType.SQL_SQLITE.value:
             return f"JSON_EXTRACT({column}, '$.{path}')"
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")
@@ -240,10 +248,10 @@ class AuthorizedSqlStore:
         """Get the SQL conditions for public access."""
         # Public records are records that have no owner_principal or access_attributes
         conditions = ["owner_principal = ''"]
-        if self.database_type == SqlStoreType.postgres:
+        if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             # Postgres stores JSON null as 'null'
             conditions.append("access_attributes::text = 'null'")
-        elif self.database_type == SqlStoreType.sqlite:
+        elif self.database_type == StorageBackendType.SQL_SQLITE.value:
             conditions.append("access_attributes = 'null'")
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")

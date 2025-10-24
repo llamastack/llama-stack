@@ -1,0 +1,25 @@
+---
+description: "Anthropic inference provider for accessing Claude models and Anthropic's AI services."
+sidebar_label: Remote - Anthropic
+title: remote::anthropic
+---
+
+# remote::anthropic
+
+## Description
+
+Anthropic inference provider for accessing Claude models and Anthropic's AI services.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+
+## Sample Configuration
+
+```yaml
+api_key: ${env.ANTHROPIC_API_KEY:=}
+```

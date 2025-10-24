@@ -35,7 +35,7 @@ Model parameters can be influenced by the following options:
 - `--embedding-model`: comma-separated list of embedding models.
 - `--safety-shield`: comma-separated list of safety shields.
 - `--judge-model`: comma-separated list of judge models.
-- `--embedding-dimension`: output dimensionality of the embedding model to use for testing. Default: 384
+- `--embedding-dimension`: output dimensionality of the embedding model to use for testing. Default: 768
 
 Each of these are comma-separated lists and can be used to generate multiple parameter combinations. Note that tests will be skipped
 if no model is specified.
@@ -82,7 +82,7 @@ OLLAMA_URL=http://localhost:11434 \
   pytest -s -v tests/integration/inference/test_text_inference.py \
    --stack-config=server:starter \
    --text-model=ollama/llama3.2:3b-instruct-fp16 \
-   --embedding-model=sentence-transformers/all-MiniLM-L6-v2
+   --embedding-model=nomic-embed-text-v1.5
 ```
 
 Run tests with auto-server startup on a custom port:
@@ -92,7 +92,7 @@ OLLAMA_URL=http://localhost:11434 \
   pytest -s -v tests/integration/inference/ \
    --stack-config=server:starter:8322 \
    --text-model=ollama/llama3.2:3b-instruct-fp16 \
-   --embedding-model=sentence-transformers/all-MiniLM-L6-v2
+   --embedding-model=nomic-embed-text-v1.5
 ```
 
 ### Testing with Library Client
@@ -120,26 +120,33 @@ Another example: Running Vector IO tests for embedding models:
 ```bash
 pytest -s -v tests/integration/vector_io/ \
    --stack-config=inference=inline::sentence-transformers,vector_io=inline::sqlite-vec \
-   --embedding-model=sentence-transformers/all-MiniLM-L6-v2
+   --embedding-model=nomic-embed-text-v1.5
 ```
 
 ## Recording Modes
 
-The testing system supports three modes controlled by environment variables:
+The testing system supports four modes controlled by environment variables:
 
 ### REPLAY Mode (Default)
 Uses cached responses instead of making API calls:
 ```bash
 pytest tests/integration/
 ```
+
+### RECORD-IF-MISSING Mode (Recommended for adding new tests)
+Records only when no recording exists, otherwise replays. This is the preferred mode for iterative development:
+```bash
+pytest tests/integration/inference/test_new_feature.py --inference-mode=record-if-missing
+```
+
 ### RECORD Mode
-Captures API interactions for later replay:
+**Force-records all API interactions**, overwriting existing recordings. Use with caution as this will re-record everything:
 ```bash
 pytest tests/integration/inference/test_new_feature.py --inference-mode=record
 ```
 
 ### LIVE Mode
-Tests make real API calls (but not recorded):
+Tests make real API calls (not recorded):
 ```bash
 pytest tests/integration/ --inference-mode=live
 ```
@@ -178,16 +185,16 @@ Note that when re-recording tests, you must use a Stack pointing to a server (i.
 
 ### Basic Test Pattern
 ```python
-def test_basic_completion(llama_stack_client, text_model_id):
-    response = llama_stack_client.inference.completion(
-        model_id=text_model_id,
-        content=CompletionMessage(role="user", content="Hello"),
+def test_basic_chat_completion(llama_stack_client, text_model_id):
+    response = llama_stack_client.chat.completions.create(
+        model=text_model_id,
+        messages=[{"role": "user", "content": "Hello"}],
     )
 
     # Test structure, not AI output quality
-    assert response.completion_message is not None
-    assert isinstance(response.completion_message.content, str)
-    assert len(response.completion_message.content) > 0
+    assert response.choices[0].message is not None
+    assert isinstance(response.choices[0].message.content, str)
+    assert len(response.choices[0].message.content) > 0
 ```
 
 ### Provider-Specific Tests

@@ -10,7 +10,8 @@ from typing import Any, Literal, Protocol, runtime_checkable
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from llama_stack.apis.resource import Resource, ResourceType
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.apis.version import LLAMA_STACK_API_V1
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
@@ -26,10 +27,12 @@ class ModelType(StrEnum):
     """Enumeration of supported model types in Llama Stack.
     :cvar llm: Large language model for text generation and completion
     :cvar embedding: Embedding model for converting text to vector representations
+    :cvar rerank: Reranking model for reordering documents based on their relevance to a query
     """
 
     llm = "llm"
     embedding = "embedding"
+    rerank = "rerank"
 
 
 @json_schema_type
@@ -102,7 +105,7 @@ class OpenAIListModelsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Models(Protocol):
-    @webmethod(route="/models", method="GET")
+    @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
     async def list_models(self) -> ListModelsResponse:
         """List all models.
 
@@ -110,7 +113,7 @@ class Models(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/models", method="GET")
+    @webmethod(route="/openai/v1/models", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def openai_list_models(self) -> OpenAIListModelsResponse:
         """List models using the OpenAI API.
 
@@ -118,19 +121,21 @@ class Models(Protocol):
         """
         ...
 
-    @webmethod(route="/models/{model_id:path}", method="GET")
+    @webmethod(route="/models/{model_id:path}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_model(
         self,
         model_id: str,
     ) -> Model:
-        """Get a model by its identifier.
+        """Get model.
+
+        Get a model by its identifier.
 
         :param model_id: The identifier of the model to get.
         :returns: A Model.
         """
         ...
 
-    @webmethod(route="/models", method="POST")
+    @webmethod(route="/models", method="POST", level=LLAMA_STACK_API_V1)
     async def register_model(
         self,
         model_id: str,
@@ -139,7 +144,9 @@ class Models(Protocol):
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
     ) -> Model:
-        """Register a model.
+        """Register model.
+
+        Register a model.
 
         :param model_id: The identifier of the model to register.
         :param provider_model_id: The identifier of the model in the provider.
@@ -150,12 +157,14 @@ class Models(Protocol):
         """
         ...
 
-    @webmethod(route="/models/{model_id:path}", method="DELETE")
+    @webmethod(route="/models/{model_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def unregister_model(
         self,
         model_id: str,
     ) -> None:
-        """Unregister a model.
+        """Unregister model.
+
+        Unregister a model.
 
         :param model_id: The identifier of the model to unregister.
         """

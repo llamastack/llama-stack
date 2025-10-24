@@ -22,7 +22,7 @@ This provider enables fine-tuning of LLMs using NVIDIA's NeMo Customizer service
 Build the NVIDIA environment:
 
 ```bash
-llama stack build --distro nvidia --image-type venv
+uv run llama stack list-deps nvidia | xargs -L1 uv pip install
 ```
 
 ### Basic Usage using the LlamaStack Python Client
@@ -140,13 +140,11 @@ client.models.register(
 #### 2. Inference with the fine-tuned model
 
 ```python
-response = client.inference.completion(
-    content="Complete the sentence using one word: Roses are red, violets are ",
+response = client.completions.create(
+    prompt="Complete the sentence using one word: Roses are red, violets are ",
     stream=False,
-    model_id="test-example-model@v1",
-    sampling_params={
-        "max_tokens": 50,
-    },
+    model="test-example-model@v1",
+    max_tokens=50,
 )
-print(response.content)
+print(response.choices[0].text)
 ```

@@ -1,0 +1,25 @@
+---
+description: "Local filesystem-based dataset I/O provider for reading and writing datasets to local storage."
+sidebar_label: Localfs
+title: inline::localfs
+---
+
+# inline::localfs
+
+## Description
+
+Local filesystem-based dataset I/O provider for reading and writing datasets to local storage.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+
+## Sample Configuration
+
+```yaml
+kvstore:
+  namespace: datasetio::localfs
+  backend: kv_default
+```

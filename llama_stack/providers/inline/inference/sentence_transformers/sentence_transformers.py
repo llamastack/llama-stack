@@ -4,19 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncIterator
 
 from llama_stack.apis.inference import (
-    CompletionResponse,
     InferenceProvider,
-    LogProbConfig,
-    Message,
-    ResponseFormat,
-    SamplingParams,
-    ToolChoice,
-    ToolConfig,
-    ToolDefinition,
-    ToolPromptFormat,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletionRequestWithExtraBody,
+)
+from llama_stack.apis.inference.inference import (
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAICompletion,
 )
 from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
@@ -26,7 +24,6 @@ from llama_stack.providers.utils.inference.embedding_mixin import (
 )
 from llama_stack.providers.utils.inference.openai_compat import (
     OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompletionToLlamaStackMixin,
 )
 
 from .config import SentenceTransformersInferenceConfig
@@ -36,7 +33,6 @@ log = get_logger(name=__name__, category="inference")
 
 class SentenceTransformersInferenceImpl(
     OpenAIChatCompletionToLlamaStackMixin,
-    OpenAICompletionToLlamaStackMixin,
     SentenceTransformerEmbeddingMixin,
     InferenceProvider,
     ModelsProtocolPrivate,
@@ -58,11 +54,11 @@ class SentenceTransformersInferenceImpl(
     async def list_models(self) -> list[Model] | None:
         return [
             Model(
-                identifier="all-MiniLM-L6-v2",
-                provider_resource_id="all-MiniLM-L6-v2",
+                identifier="nomic-ai/nomic-embed-text-v1.5",
+                provider_resource_id="nomic-ai/nomic-embed-text-v1.5",
                 provider_id=self.__provider_id__,
                 metadata={
-                    "embedding_dimension": 384,
+                    "embedding_dimension": 768,
                 },
                 model_type=ModelType.embedding,
             ),
@@ -74,28 +70,14 @@ class SentenceTransformersInferenceImpl(
     async def unregister_model(self, model_id: str) -> None:
         pass
 
-    async def completion(
+    async def openai_completion(
         self,
-        model_id: str,
-        content: str,
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-    ) -> CompletionResponse | AsyncGenerator:
-        raise ValueError("Sentence transformers don't support completion")
+        params: OpenAICompletionRequestWithExtraBody,
+    ) -> OpenAICompletion:
+        raise NotImplementedError("OpenAI completion not supported by sentence transformers provider")
 
-    async def chat_completion(
+    async def openai_chat_completion(
         self,
-        model_id: str,
-        messages: list[Message],
-        sampling_params: SamplingParams | None = None,
-        response_format: ResponseFormat | None = None,
-        tools: list[ToolDefinition] | None = None,
-        tool_choice: ToolChoice | None = ToolChoice.auto,
-        tool_prompt_format: ToolPromptFormat | None = None,
-        stream: bool | None = False,
-        logprobs: LogProbConfig | None = None,
-        tool_config: ToolConfig | None = None,
-    ) -> AsyncGenerator:
-        raise ValueError("Sentence transformers don't support chat completion")
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        raise NotImplementedError("OpenAI chat completion not supported by sentence transformers provider")

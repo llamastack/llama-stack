@@ -7,10 +7,10 @@
 import json
 
 import pytest
-from llama_stack_client import Agent
+from llama_stack_client.lib.agents.agent import Agent
+from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
 
 from llama_stack import LlamaStackAsLibraryClient
-from llama_stack.core.datatypes import AuthenticationRequiredError
 
 AUTH_TOKEN = "test-token"
 
@@ -31,6 +31,11 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     uri = mcp_server["server_url"]
 
     # registering should not raise an error anymore even if you don't specify the auth token
+    try:
+        llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
+    except Exception:
+        pass
+
     llama_stack_client.toolgroups.register(
         toolgroup_id=test_toolgroup_id,
         provider_id="model-context-protocol",
@@ -49,14 +54,14 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     }
 
     with pytest.raises(Exception, match="Unauthorized"):
-        llama_stack_client.tools.list()
+        llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)
 
-    response = llama_stack_client.tools.list(
+    tools_list = llama_stack_client.tools.list(
         toolgroup_id=test_toolgroup_id,
         extra_headers=auth_headers,
     )
-    assert len(response) == 2
-    assert {t.identifier for t in response} == {"greet_everyone", "get_boiling_point"}
+    assert len(tools_list) == 2
+    assert {t.name for t in tools_list} == {"greet_everyone", "get_boiling_point"}
 
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="greet_everyone",
@@ -69,59 +74,60 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     assert content[0].text == "Hello, world!"
 
     print(f"Using model: {text_model_id}")
+    tool_defs = [
+        {
+            "type": "mcp",
+            "server_url": uri,
+            "server_label": test_toolgroup_id,
+            "require_approval": "never",
+            "allowed_tools": [tool.name for tool in tools_list],
+            "headers": {
+                "Authorization": f"Bearer {AUTH_TOKEN}",
+            },
+        }
+    ]
     agent = Agent(
         client=llama_stack_client,
         model=text_model_id,
         instructions="You are a helpful assistant.",
-        tools=[test_toolgroup_id],
+        tools=tool_defs,
     )
     session_id = agent.create_session("test-session")
-    response = agent.create_turn(
-        session_id=session_id,
-        messages=[
-            {
-                "role": "user",
-                "content": "Say hi to the world. Use tools to do so.",
-            }
-        ],
-        stream=False,
-        extra_headers=auth_headers,
+    chunks = list(
+        agent.create_turn(
+            session_id=session_id,
+            messages=[
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": "Say hi to the world. Use tools to do so.",
+                        }
+                    ],
+                }
+            ],
+            stream=True,
+            extra_headers=auth_headers,
+        )
     )
-    steps = response.steps
-    first = steps[0]
-    assert first.step_type == "inference"
-    assert len(first.api_model_response.tool_calls) == 1
-    tool_call = first.api_model_response.tool_calls[0]
-    assert tool_call.tool_name == "greet_everyone"
+    events = [chunk.event for chunk in chunks]
 
-    second = steps[1]
-    assert second.step_type == "tool_execution"
-    tool_response_content = second.tool_responses[0].content
-    assert len(tool_response_content) == 1
-    assert tool_response_content[0].type == "text"
-    assert tool_response_content[0].text == "Hello, world!"
+    final_response = next((chunk.response for chunk in reversed(chunks) if chunk.response), None)
+    assert final_response is not None
 
-    third = steps[2]
-    assert third.step_type == "inference"
+    issued_calls = [
+        event for event in events if isinstance(event, StepProgress) and isinstance(event.delta, ToolCallIssuedDelta)
+    ]
+    assert issued_calls
 
-    # when streaming, we currently don't check auth headers upfront and fail the request
-    # early. but we should at least be generating a 401 later in the process.
-    response = agent.create_turn(
-        session_id=session_id,
-        messages=[
-            {
-                "role": "user",
-                "content": "What is the boiling point of polyjuice? Use tools to answer.",
-            }
-        ],
-        stream=True,
-    )
-    if isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-        with pytest.raises(AuthenticationRequiredError):
-            for _ in response:
-                pass
-    else:
-        error_chunks = [chunk for chunk in response if "error" in chunk.model_dump()]
-        assert len(error_chunks) == 1
-        chunk = error_chunks[0].model_dump()
-        assert "Unauthorized" in chunk["error"]["message"]
+    assert issued_calls[-1].delta.tool_name == "greet_everyone"
+
+    tool_events = [
+        event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+    ]
+    assert tool_events
+    assert tool_events[-1].result.tool_calls[0].tool_name == "greet_everyone"
+
+    assert "hello" in final_response.output_text.lower()

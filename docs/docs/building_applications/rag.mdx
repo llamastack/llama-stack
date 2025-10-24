@@ -1,0 +1,123 @@
+---
+title: Retrieval Augmented Generation (RAG)
+description: Build knowledge-enhanced AI applications with external document retrieval
+sidebar_label: RAG (Retrieval Augmented Generation)
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Retrieval Augmented Generation (RAG)
+
+
+RAG enables your applications to reference and recall information from external documents. Llama Stack makes Agentic RAG available through OpenAI's Responses API.
+
+## Quick Start
+
+### 1. Start the Server
+
+In one terminal, start the Llama Stack server:
+
+```bash
+llama stack list-deps starter | xargs -L1 uv pip install
+llama stack run starter
+```
+
+### 2. Connect with OpenAI Client
+
+In another terminal, use the standard OpenAI client with the Responses API:
+
+```python
+import io, requests
+from openai import OpenAI
+
+url = "https://www.paulgraham.com/greatwork.html"
+client = OpenAI(base_url="http://localhost:8321/v1/", api_key="none")
+
+# Create vector store - auto-detects default embedding model
+vs = client.vector_stores.create()
+
+response = requests.get(url)
+pseudo_file = io.BytesIO(str(response.content).encode('utf-8'))
+file_id = client.files.create(file=(url, pseudo_file, "text/html"), purpose="assistants").id
+client.vector_stores.files.create(vector_store_id=vs.id, file_id=file_id)
+
+resp = client.responses.create(
+    model="gpt-4o",
+    input="How do you do great work? Use the existing knowledge_search tool.",
+    tools=[{"type": "file_search", "vector_store_ids": [vs.id]}],
+    include=["file_search_call.results"],
+)
+
+print(resp.output[-1].content[-1].text)
+```
+Which should give output like:
+```
+Doing great work is about more than just hard work and ambition; it involves combining several elements:
+
+1. **Pursue What Excites You**: Engage in projects that are both ambitious and exciting to you. It's important to work on something you have a natural aptitude for and a deep interest in.
+
+2. **Explore and Discover**: Great work often feels like a blend of discovery and creation. Focus on seeing possibilities and let ideas take their natural shape, rather than just executing a plan.
+
+3. **Be Bold Yet Flexible**: Take bold steps in your work without over-planning. An adaptable approach that evolves with new ideas can often lead to breakthroughs.
+
+4. **Work on Your Own Projects**: Develop a habit of working on projects of your own choosing, as these often lead to great achievements. These should be projects you find exciting and that challenge you intellectually.
+
+5. **Be Earnest and Authentic**: Approach your work with earnestness and authenticity. Trying to impress others with affectation can be counterproductive, as genuine effort and intellectual honesty lead to better work outcomes.
+
+6. **Build a Supportive Environment**: Work alongside great colleagues who inspire you and enhance your work. Surrounding yourself with motivating individuals creates a fertile environment for great work.
+
+7. **Maintain High Morale**: High morale significantly impacts your ability to do great work. Stay optimistic and protect your mental well-being to maintain progress and momentum.
+
+8. **Balance**: While hard work is essential, overworking can lead to diminishing returns. Balance periods of intensive work with rest to sustain productivity over time.
+
+This approach shows that great work is less about following a strict formula and more about aligning your interests, ambition, and environment to foster creativity and innovation.
+```
+
+## Architecture Overview
+
+Llama Stack provides OpenAI-compatible RAG capabilities through:
+
+- **Vector Stores API**: OpenAI-compatible vector storage with automatic embedding model detection
+- **Files API**: Document upload and processing using OpenAI's file format
+- **Responses API**: Enhanced chat completions with agentic tool calling via file search
+
+## Configuring Default Embedding Models
+
+To enable automatic vector store creation without specifying embedding models, configure a default embedding model in your run.yaml like so:
+
+```yaml
+vector_stores:
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: nomic-ai/nomic-embed-text-v1.5
+```
+
+With this configuration:
+- `client.vector_stores.create()` works without requiring embedding model or provider parameters
+- The system automatically uses the default vector store provider (`faiss`) when multiple providers are available
+- The system automatically uses the default embedding model (`sentence-transformers/nomic-ai/nomic-embed-text-v1.5`) for any newly created vector store
+- The `default_provider_id` specifies which vector storage backend to use
+- The `default_embedding_model` specifies both the inference provider and model for embeddings
+
+## Vector Store Operations
+
+### Creating Vector Stores
+
+You can create vector stores with automatic or explicit embedding model selection:
+
+```python
+# Automatic - uses default configured embedding model and vector store provider
+vs = client.vector_stores.create()
+
+# Explicit - specify embedding model and/or provider when you need specific ones
+vs = client.vector_stores.create(
+    extra_body={
+        "provider_id": "faiss",  # Optional: specify vector store provider
+        "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+        "embedding_dimension": 768  # Optional: will be auto-detected if not provided
+    }
+)
+```

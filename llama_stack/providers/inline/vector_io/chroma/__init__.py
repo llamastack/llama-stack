@@ -12,9 +12,7 @@ from .config import ChromaVectorIOConfig
 
 
 async def get_provider_impl(config: ChromaVectorIOConfig, deps: dict[Api, Any]):
-    from llama_stack.providers.remote.vector_io.chroma.chroma import (
-        ChromaVectorIOAdapter,
-    )
+    from llama_stack.providers.remote.vector_io.chroma.chroma import ChromaVectorIOAdapter
 
     impl = ChromaVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
     await impl.initialize()

@@ -1,0 +1,25 @@
+---
+description: "HuggingFace datasets provider for accessing and managing datasets from the HuggingFace Hub."
+sidebar_label: Remote - Huggingface
+title: remote::huggingface
+---
+
+# remote::huggingface
+
+## Description
+
+HuggingFace datasets provider for accessing and managing datasets from the HuggingFace Hub.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+
+## Sample Configuration
+
+```yaml
+kvstore:
+  namespace: datasetio::huggingface
+  backend: kv_default
+```

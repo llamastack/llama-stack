@@ -41,7 +41,7 @@ class AccessRule(BaseModel):
     A rule defines a list of action either to permit or to forbid. It may specify a
     principal or a resource that must match for the rule to take effect. The resource
     to match should be specified in the form of a type qualified identifier, e.g.
-    model::my-model or vector_db::some-db, or a wildcard for all resources of a type,
+    model::my-model or vector_store::some-db, or a wildcard for all resources of a type,
     e.g. model::*. If the principal or resource are not specified, they will match all
     requests.
 
@@ -79,9 +79,9 @@ class AccessRule(BaseModel):
       description: any user has read access to any resource created by a member of their team
     - forbid:
         actions: [create, read, delete]
-        resource: vector_db::*
+        resource: vector_store::*
       unless: user with admin in roles
-      description: only user with admin role can use vector_db resources
+      description: only user with admin role can use vector_store resources
 
     """
 

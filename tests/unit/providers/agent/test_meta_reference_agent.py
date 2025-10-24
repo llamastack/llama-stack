@@ -15,13 +15,29 @@ from llama_stack.apis.agents import (
     AgentCreateResponse,
 )
 from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.inference import Inference
 from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ToolGroups, ToolRuntime
+from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.providers.inline.agents.meta_reference.agent_instance import ChatAgent
 from llama_stack.providers.inline.agents.meta_reference.agents import MetaReferenceAgentsImpl
 from llama_stack.providers.inline.agents.meta_reference.config import MetaReferenceAgentsImplConfig
 from llama_stack.providers.inline.agents.meta_reference.persistence import AgentInfo
+
+
+@pytest.fixture(autouse=True)
+def setup_backends(tmp_path):
+    """Register KV and SQL store backends for testing."""
+    from llama_stack.core.storage.datatypes import SqliteKVStoreConfig, SqliteSqlStoreConfig
+    from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
+    from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+
+    kv_path = str(tmp_path / "test_kv.db")
+    sql_path = str(tmp_path / "test_sql.db")
+
+    register_kvstore_backends({"kv_default": SqliteKVStoreConfig(db_path=kv_path)})
+    register_sqlstore_backends({"sql_default": SqliteSqlStoreConfig(db_path=sql_path)})
 
 
 @pytest.fixture
@@ -32,20 +48,26 @@ def mock_apis():
         "safety_api": AsyncMock(spec=Safety),
         "tool_runtime_api": AsyncMock(spec=ToolRuntime),
         "tool_groups_api": AsyncMock(spec=ToolGroups),
+        "conversations_api": AsyncMock(spec=Conversations),
     }
 
 
 @pytest.fixture
 def config(tmp_path):
+    from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
+    from llama_stack.providers.inline.agents.meta_reference.config import AgentPersistenceConfig
+
     return MetaReferenceAgentsImplConfig(
-        persistence_store={
-            "type": "sqlite",
-            "db_path": str(tmp_path / "test.db"),
-        },
-        responses_store={
-            "type": "sqlite",
-            "db_path": str(tmp_path / "test.db"),
-        },
+        persistence=AgentPersistenceConfig(
+            agent_state=KVStoreReference(
+                backend="kv_default",
+                namespace="agents",
+            ),
+            responses=ResponsesStoreReference(
+                backend="sql_default",
+                table_name="responses",
+            ),
+        )
     )
 
 
@@ -58,7 +80,8 @@ async def agents_impl(config, mock_apis):
         mock_apis["safety_api"],
         mock_apis["tool_runtime_api"],
         mock_apis["tool_groups_api"],
-        {},
+        mock_apis["conversations_api"],
+        [],
     )
     await impl.initialize()
     yield impl
@@ -75,11 +98,11 @@ def sample_agent_config():
         },
         input_shields=["string"],
         output_shields=["string"],
-        toolgroups=["string"],
+        toolgroups=["mcp::my_mcp_server"],
         client_tools=[
             {
-                "name": "string",
-                "description": "string",
+                "name": "client_tool",
+                "description": "Client Tool",
                 "parameters": [
                     {
                         "name": "string",
@@ -226,3 +249,77 @@ async def test_delete_agent(agents_impl, sample_agent_config):
     # Verify the agent was deleted
     with pytest.raises(ValueError):
         await agents_impl.get_agent(agent_id)
+
+
+async def test__initialize_tools(agents_impl, sample_agent_config):
+    # Mock tool_groups_api.list_tools()
+    agents_impl.tool_groups_api.list_tools.return_value = ListToolDefsResponse(
+        data=[
+            ToolDef(
+                name="story_maker",
+                toolgroup_id="mcp::my_mcp_server",
+                description="Make a story",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "story_title": {"type": "string", "description": "Title of the story", "title": "Story Title"},
+                        "input_words": {
+                            "type": "array",
+                            "description": "Input words",
+                            "items": {"type": "string"},
+                            "title": "Input Words",
+                            "default": [],
+                        },
+                    },
+                    "required": ["story_title"],
+                },
+            )
+        ]
+    )
+
+    create_response = await agents_impl.create_agent(sample_agent_config)
+    agent_id = create_response.agent_id
+
+    # Get an instance of ChatAgent
+    chat_agent = await agents_impl._get_agent_impl(agent_id)
+    assert chat_agent is not None
+    assert isinstance(chat_agent, ChatAgent)
+
+    # Initialize tool definitions
+    await chat_agent._initialize_tools()
+    assert len(chat_agent.tool_defs) == 2
+
+    # Verify the first tool, which is a client tool
+    first_tool = chat_agent.tool_defs[0]
+    assert first_tool.tool_name == "client_tool"
+    assert first_tool.description == "Client Tool"
+
+    # Verify the second tool, which is an MCP tool that has an array-type property
+    second_tool = chat_agent.tool_defs[1]
+    assert second_tool.tool_name == "story_maker"
+    assert second_tool.description == "Make a story"
+
+    # Verify the input schema
+    input_schema = second_tool.input_schema
+    assert input_schema is not None
+    assert input_schema["type"] == "object"
+
+    properties = input_schema["properties"]
+    assert len(properties) == 2
+
+    # Verify a string property
+    story_title = properties["story_title"]
+    assert story_title["type"] == "string"
+    assert story_title["description"] == "Title of the story"
+    assert story_title["title"] == "Story Title"
+
+    # Verify an array property
+    input_words = properties["input_words"]
+    assert input_words["type"] == "array"
+    assert input_words["description"] == "Input words"
+    assert input_words["items"]["type"] == "string"
+    assert input_words["title"] == "Input Words"
+    assert input_words["default"] == []
+
+    # Verify required fields
+    assert input_schema["required"] == ["story_title"]

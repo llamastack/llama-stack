@@ -1,0 +1,25 @@
+---
+description: "Text Generation Inference (TGI) provider for HuggingFace model serving."
+sidebar_label: Remote - Tgi
+title: remote::tgi
+---
+
+# remote::tgi
+
+## Description
+
+Text Generation Inference (TGI) provider for HuggingFace model serving.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `url` | `<class 'str'>` | No |  | The URL for the TGI serving endpoint |
+
+## Sample Configuration
+
+```yaml
+url: ${env.TGI_URL:=}
+```

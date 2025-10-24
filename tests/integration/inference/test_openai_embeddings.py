@@ -12,6 +12,15 @@ from openai import OpenAI
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
+ASYMMETRIC_EMBEDDING_MODELS_BY_PROVIDER = {
+    "remote::nvidia": [
+        "nvidia/llama-3.2-nv-embedqa-1b-v2",
+        "nvidia/nv-embedqa-e5-v5",
+        "nvidia/nv-embedqa-mistral-7b-v2",
+        "snowflake/arctic-embed-l",
+    ],
+}
+
 
 def decode_base64_to_floats(base64_string: str) -> list[float]:
     """Helper function to decode base64 string to list of float32 values."""
@@ -29,6 +38,28 @@ def provider_from_model(client_with_models, model_id):
     return providers[provider_id]
 
 
+def is_asymmetric_model(client_with_models, model_id):
+    provider = provider_from_model(client_with_models, model_id)
+    provider_type = provider.provider_type
+
+    if provider_type not in ASYMMETRIC_EMBEDDING_MODELS_BY_PROVIDER:
+        return False
+
+    return model_id in ASYMMETRIC_EMBEDDING_MODELS_BY_PROVIDER[provider_type]
+
+
+def get_extra_body_for_model(client_with_models, model_id, input_type="query"):
+    if not is_asymmetric_model(client_with_models, model_id):
+        return None
+
+    provider = provider_from_model(client_with_models, model_id)
+
+    if provider.provider_type == "remote::nvidia":
+        return {"input_type": input_type}
+
+    return None
+
+
 def skip_if_model_doesnt_support_user_param(client, model_id):
     provider = provider_from_model(client, model_id)
     if provider.provider_type in (
@@ -40,23 +71,50 @@ def skip_if_model_doesnt_support_user_param(client, model_id):
 
 def skip_if_model_doesnt_support_encoding_format_base64(client, model_id):
     provider = provider_from_model(client, model_id)
-    if provider.provider_type in (
-        "remote::together",  # param silently ignored, always returns floats
+
+    should_skip = provider.provider_type in (
+        "remote::databricks",  # param silently ignored, always returns floats
         "remote::fireworks",  # param silently ignored, always returns list of floats
-    ):
+        "remote::ollama",  # param silently ignored, always returns list of floats
+    ) or (
+        provider.provider_type == "remote::nvidia"
+        and model_id
+        in [
+            "nvidia/nv-embedqa-e5-v5",
+            "nvidia/nv-embedqa-mistral-7b-v2",
+            "snowflake/arctic-embed-l",
+        ]
+    )
+
+    if should_skip:
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} does not support encoding_format='base64'.")
 
 
 def skip_if_model_doesnt_support_variable_dimensions(client_with_models, model_id):
     provider = provider_from_model(client_with_models, model_id)
-    if provider.provider_type in (
-        "remote::together",  # returns 400
-        "inline::sentence-transformers",
-    ):
-        pytest.skip(
-            f"Model {model_id} hosted by {provider.provider_type} does not support variable output embedding dimensions."
+
+    should_skip = (
+        provider.provider_type
+        in (
+            "remote::together",  # returns 400
+            "inline::sentence-transformers",
+            # Error code: 400 - {'error_code': 'BAD_REQUEST', 'message': 'Bad request: json: unknown field "dimensions"\n'}
+            "remote::databricks",
+            "remote::watsonx",  # openai.BadRequestError: Error code: 400 - {'detail': "litellm.UnsupportedParamsError: watsonx does not support parameters: {'dimensions': 384}
         )
-    if provider.provider_type == "remote::openai" and "text-embedding-3" not in model_id:
+        or (provider.provider_type == "remote::openai" and "text-embedding-3" not in model_id)
+        or (
+            provider.provider_type == "remote::nvidia"
+            and model_id
+            in [
+                "nvidia/nv-embedqa-e5-v5",
+                "nvidia/nv-embedqa-mistral-7b-v2",
+                "snowflake/arctic-embed-l",
+            ]
+        )
+    )
+
+    if should_skip:
         pytest.skip(
             f"Model {model_id} hosted by {provider.provider_type} does not support variable output embedding dimensions."
         )
@@ -75,7 +133,6 @@ def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
         "inline::meta-reference",
         "remote::bedrock",
         "remote::cerebras",
-        "remote::databricks",
         "remote::runpod",
         "remote::sambanova",
         "remote::tgi",
@@ -85,7 +142,7 @@ def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
 
 @pytest.fixture
 def openai_client(client_with_models):
-    base_url = f"{client_with_models.base_url}/v1/openai/v1"
+    base_url = f"{client_with_models.base_url}/v1"
     return OpenAI(base_url=base_url, api_key="fake")
 
 
@@ -99,10 +156,13 @@ def test_openai_embeddings_single_string(compat_client, client_with_models, embe
         model=embedding_model_id,
         input=input_text,
         encoding_format="float",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
     )
 
     assert response.object == "list"
-    assert response.model == embedding_model_id
+
+    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
+    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
     assert len(response.data) == 1
     assert response.data[0].object == "embedding"
     assert response.data[0].index == 0
@@ -121,10 +181,13 @@ def test_openai_embeddings_multiple_strings(compat_client, client_with_models, e
         model=embedding_model_id,
         input=input_texts,
         encoding_format="float",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
     )
 
     assert response.object == "list"
-    assert response.model == embedding_model_id
+
+    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
+    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
     assert len(response.data) == len(input_texts)
 
     for i, embedding_data in enumerate(response.data):
@@ -145,6 +208,7 @@ def test_openai_embeddings_with_encoding_format_float(compat_client, client_with
         model=embedding_model_id,
         input=input_text,
         encoding_format="float",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
     )
 
     assert response.object == "list"
@@ -165,6 +229,7 @@ def test_openai_embeddings_with_dimensions(compat_client, client_with_models, em
         model=embedding_model_id,
         input=input_text,
         dimensions=dimensions,
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
     )
 
     assert response.object == "list"
@@ -186,6 +251,7 @@ def test_openai_embeddings_with_user_parameter(compat_client, client_with_models
         model=embedding_model_id,
         input=input_text,
         user=user_id,
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
     )
 
     assert response.object == "list"
@@ -202,6 +268,7 @@ def test_openai_embeddings_empty_list_error(compat_client, client_with_models, e
         compat_client.embeddings.create(
             model=embedding_model_id,
             input=[],
+            extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
         )
 
 
@@ -213,6 +280,7 @@ def test_openai_embeddings_invalid_model_error(compat_client, client_with_models
         compat_client.embeddings.create(
             model="invalid-model-id",
             input="Test text",
+            extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
         )
 
 
@@ -223,16 +291,19 @@ def test_openai_embeddings_different_inputs_different_outputs(compat_client, cli
     input_text1 = "This is the first text"
     input_text2 = "This is completely different content"
 
+    extra_body = get_extra_body_for_model(client_with_models, embedding_model_id)
     response1 = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text1,
         encoding_format="float",
+        extra_body=extra_body,
     )
 
     response2 = compat_client.embeddings.create(
         model=embedding_model_id,
         input=input_text2,
         encoding_format="float",
+        extra_body=extra_body,
     )
 
     embedding1 = response1.data[0].embedding
@@ -257,6 +328,7 @@ def test_openai_embeddings_with_encoding_format_base64(compat_client, client_wit
         input=input_text,
         encoding_format="base64",
         dimensions=dimensions,
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
     )
 
     # Validate response structure
@@ -288,10 +360,13 @@ def test_openai_embeddings_base64_batch_processing(compat_client, client_with_mo
         model=embedding_model_id,
         input=input_texts,
         encoding_format="base64",
+        extra_body=get_extra_body_for_model(client_with_models, embedding_model_id),
     )
     # Validate response structure
     assert response.object == "list"
-    assert response.model == embedding_model_id
+
+    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
+    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
     assert len(response.data) == len(input_texts)
 
     # Validate each embedding in the batch

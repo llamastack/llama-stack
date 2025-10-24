@@ -39,7 +39,7 @@ class Setup(BaseModel):
 
     name: str
     description: str
-    defaults: dict[str, str] = Field(default_factory=dict)
+    defaults: dict[str, str | int] = Field(default_factory=dict)
     env: dict[str, str] = Field(default_factory=dict)
 
 
@@ -55,7 +55,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         },
         defaults={
             "text_model": "ollama/llama3.2:3b-instruct-fp16",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "ollama/nomic-embed-text:v1.5",
             "safety_model": "ollama/llama-guard3:1b",
             "safety_shield": "llama-guard",
         },
@@ -68,7 +68,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         },
         defaults={
             "vision_model": "ollama/llama3.2-vision:11b",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "ollama/nomic-embed-text:v1.5",
         },
     ),
     "vllm": Setup(
@@ -79,7 +79,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         },
         defaults={
             "text_model": "vllm/meta-llama/Llama-3.2-1B-Instruct",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
         },
     ),
     "gpt": Setup(
@@ -88,6 +88,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
+            "embedding_dimension": 1536,
         },
     ),
     "tgi": Setup(
@@ -108,13 +109,48 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "together/togethercomputer/m2-bert-80M-32k-retrieval",
         },
     ),
+    "cerebras": Setup(
+        name="cerebras",
+        description="Cerebras models",
+        defaults={
+            "text_model": "cerebras/llama-3.3-70b",
+        },
+    ),
+    "databricks": Setup(
+        name="databricks",
+        description="Databricks models",
+        defaults={
+            "text_model": "databricks/databricks-meta-llama-3-3-70b-instruct",
+            "embedding_model": "databricks/databricks-bge-large-en",
+        },
+    ),
     "fireworks": Setup(
         name="fireworks",
         description="Fireworks provider with a text model",
         defaults={
-            "text_model": "accounts/fireworks/models/llama-v3p1-8b-instruct",
-            "vision_model": "accounts/fireworks/models/llama-v3p2-90b-vision-instruct",
-            "embedding_model": "nomic-ai/nomic-embed-text-v1.5",
+            "text_model": "fireworks/accounts/fireworks/models/llama-v3p1-8b-instruct",
+            "embedding_model": "fireworks/accounts/fireworks/models/qwen3-embedding-8b",
+        },
+    ),
+    "anthropic": Setup(
+        name="anthropic",
+        description="Anthropic Claude models",
+        defaults={
+            "text_model": "anthropic/claude-3-5-haiku-20241022",
+        },
+    ),
+    "llama-api": Setup(
+        name="llama-openai-compat",
+        description="Llama models from https://api.llama.com",
+        defaults={
+            "text_model": "llama_openai_compat/Llama-3.3-8B-Instruct",
+        },
+    ),
+    "groq": Setup(
+        name="groq",
+        description="Groq models",
+        defaults={
+            "text_model": "groq/llama-3.3-70b-versatile",
         },
     ),
 }

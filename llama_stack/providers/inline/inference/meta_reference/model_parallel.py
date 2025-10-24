@@ -27,8 +27,6 @@ class ModelRunner:
     def __call__(self, task: Any):
         if task[0] == "chat_completion":
             return self.llama.chat_completion(task[1])
-        elif task[0] == "completion":
-            return self.llama.completion(task[1])
         else:
             raise ValueError(f"Unexpected task type {task[0]}")
 

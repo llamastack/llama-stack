@@ -1,0 +1,30 @@
+---
+description: "Meta's reference implementation of a vector database."
+sidebar_label: Meta-Reference
+title: inline::meta-reference
+---
+
+# inline::meta-reference
+
+## Description
+
+Meta's reference implementation of a vector database.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
+
+## Sample Configuration
+
+```yaml
+persistence:
+  namespace: vector_io::faiss
+  backend: kv_default
+```
+## Deprecation Notice
+
+:::warning
+Please use the `inline::faiss` provider instead.
+:::

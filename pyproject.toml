@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.2.22"
+version = "0.3.0"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
@@ -25,17 +25,16 @@ classifiers = [
 ]
 dependencies = [
     "aiohttp",
-    "fastapi>=0.115.0,<1.0",                  # server
-    "fire",                                   # for MCP in LLS client
+    "fastapi>=0.115.0,<1.0",                          # server
+    "fire",                                           # for MCP in LLS client
     "httpx",
-    "huggingface-hub>=0.34.0,<1.0",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-client>=0.2.22",
-    "openai>=1.100.0",                                # for expires_after support
+    "llama-stack-client>=0.3.0",
+    "openai>=1.107",                                  # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
-    "python-jose[cryptography]",
+    "pyjwt[crypto]>=2.10.0",                          # Pull crypto to support RS256 for jwt. Requires 2.10.0+ for ssl_context support.
     "pydantic>=2.11.9",
     "rich",
     "starlette",
@@ -43,19 +42,20 @@ dependencies = [
     "tiktoken",
     "pillow",
     "h11>=0.16.0",
-    "python-multipart>=0.0.20",               # For fastapi Form
-    "uvicorn>=0.34.0",                        # server
-    "opentelemetry-sdk>=1.30.0",              # server
+    "python-multipart>=0.0.20",                       # For fastapi Form
+    "uvicorn>=0.34.0",                                # server
+    "opentelemetry-sdk>=1.30.0",                      # server
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
-    "aiosqlite>=0.21.0",                      # server - for metadata store
-    "asyncpg",                                # for metadata store
+    "aiosqlite>=0.21.0",                              # server - for metadata store
+    "asyncpg",                                        # for metadata store
+    "sqlalchemy[asyncio]>=2.0.41",                    # server - for conversations
 ]
 
 [project.optional-dependencies]
 ui = [
     "streamlit",
     "pandas",
-    "llama-stack-client>=0.2.22",
+    "llama-stack-client>=0.3.0",
     "streamlit-option-menu",
 ]
 
@@ -67,14 +67,14 @@ dev = [
     "pytest-cov",
     "pytest-html",
     "pytest-json-report",
-    "pytest-socket", # For blocking network access in unit tests
-    "nbval", # For notebook testing
+    "pytest-socket",       # For blocking network access in unit tests
+    "nbval",               # For notebook testing
     "black",
     "ruff",
     "types-requests",
     "types-setuptools",
     "pre-commit",
-    "ruamel.yaml", # needed for openapi generator
+    "ruamel.yaml",         # needed for openapi generator
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -86,17 +86,13 @@ unit = [
     "pypdf",
     "mcp",
     "chardet",
-    "qdrant-client",
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
     "blobfile",
     "faiss-cpu",
-    "pymilvus>=2.6.1",
-    "milvus-lite>=2.5.0",
     "litellm",
     "together",
     "coverage",
-    "chromadb>=1.0.15",
     "moto[s3]>=5.1.10",
 ]
 # These are the core dependencies required for running integration tests. They are shared across all
@@ -118,6 +114,8 @@ test = [
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
     "requests",
+    "chromadb>=1.0.15",
+    "qdrant-client",
     "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "weaviate-client>=4.16.4",
@@ -142,12 +140,10 @@ docs = [
     "requests",
 ]
 codegen = ["rich", "pydantic>=2.11.9", "jinja2>=3.1.6"]
-benchmark = [
-    "locust>=2.39.1",
-]
+benchmark = ["locust>=2.39.1"]
 
 [project.urls]
-Homepage = "https://github.com/meta-llama/llama-stack"
+Homepage = "https://github.com/llamastack/llama-stack"
 
 [project.scripts]
 llama = "llama_stack.cli.llama:main"
@@ -177,6 +173,7 @@ exclude = [
     ".pre-commit-config.yaml",
     "*.md",
     ".flake8",
+    "benchmarking/k8s-benchmark/results",
 ]
 
 [tool.ruff.lint]
@@ -242,7 +239,6 @@ follow_imports = "silent"
 # to exclude the entire directory.
 exclude = [
     # As we fix more and more of these, we should remove them from the list
-    "^llama_stack/cli/download\\.py$",
     "^llama_stack.core/build\\.py$",
     "^llama_stack.core/client\\.py$",
     "^llama_stack.core/request_headers\\.py$",
@@ -258,15 +254,12 @@ exclude = [
     "^llama_stack/models/llama/llama3/tokenizer\\.py$",
     "^llama_stack/models/llama/llama3/tool_utils\\.py$",
     "^llama_stack/providers/inline/agents/meta_reference/",
-    "^llama_stack/providers/inline/agents/meta_reference/agent_instance\\.py$",
-    "^llama_stack/providers/inline/agents/meta_reference/agents\\.py$",
     "^llama_stack/providers/inline/datasetio/localfs/",
     "^llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
     "^llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
     "^llama_stack/models/llama/llama3/generation\\.py$",
     "^llama_stack/models/llama/llama3/multimodal/model\\.py$",
     "^llama_stack/models/llama/llama4/",
-    "^llama_stack/providers/inline/inference/meta_reference/quantization/fp8_impls\\.py$",
     "^llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
     "^llama_stack/providers/inline/post_training/common/validator\\.py$",
     "^llama_stack/providers/inline/safety/code_scanner/",
@@ -277,21 +270,11 @@ exclude = [
     "^llama_stack/providers/remote/agents/sample/",
     "^llama_stack/providers/remote/datasetio/huggingface/",
     "^llama_stack/providers/remote/datasetio/nvidia/",
-    "^llama_stack/providers/remote/inference/anthropic/",
     "^llama_stack/providers/remote/inference/bedrock/",
-    "^llama_stack/providers/remote/inference/cerebras/",
-    "^llama_stack/providers/remote/inference/databricks/",
-    "^llama_stack/providers/remote/inference/fireworks/",
-    "^llama_stack/providers/remote/inference/gemini/",
-    "^llama_stack/providers/remote/inference/groq/",
     "^llama_stack/providers/remote/inference/nvidia/",
-    "^llama_stack/providers/remote/inference/openai/",
     "^llama_stack/providers/remote/inference/passthrough/",
     "^llama_stack/providers/remote/inference/runpod/",
-    "^llama_stack/providers/remote/inference/sambanova/",
-    "^llama_stack/providers/remote/inference/sample/",
     "^llama_stack/providers/remote/inference/tgi/",
-    "^llama_stack/providers/remote/inference/together/",
     "^llama_stack/providers/remote/inference/watsonx/",
     "^llama_stack/providers/remote/safety/bedrock/",
     "^llama_stack/providers/remote/safety/nvidia/",
@@ -309,7 +292,6 @@ exclude = [
     "^llama_stack/providers/remote/vector_io/qdrant/",
     "^llama_stack/providers/remote/vector_io/sample/",
     "^llama_stack/providers/remote/vector_io/weaviate/",
-    "^llama_stack/providers/tests/conftest\\.py$",
     "^llama_stack/providers/utils/bedrock/client\\.py$",
     "^llama_stack/providers/utils/bedrock/refreshable_boto_session\\.py$",
     "^llama_stack/providers/utils/inference/embedding_mixin\\.py$",
@@ -317,12 +299,9 @@ exclude = [
     "^llama_stack/providers/utils/inference/model_registry\\.py$",
     "^llama_stack/providers/utils/inference/openai_compat\\.py$",
     "^llama_stack/providers/utils/inference/prompt_adapter\\.py$",
-    "^llama_stack/providers/utils/kvstore/config\\.py$",
     "^llama_stack/providers/utils/kvstore/kvstore\\.py$",
-    "^llama_stack/providers/utils/kvstore/mongodb/mongodb\\.py$",
     "^llama_stack/providers/utils/kvstore/postgres/postgres\\.py$",
     "^llama_stack/providers/utils/kvstore/redis/redis\\.py$",
-    "^llama_stack/providers/utils/kvstore/sqlite/sqlite\\.py$",
     "^llama_stack/providers/utils/memory/vector_store\\.py$",
     "^llama_stack/providers/utils/scoring/aggregation_utils\\.py$",
     "^llama_stack/providers/utils/scoring/base_scoring_fn\\.py$",
@@ -330,13 +309,6 @@ exclude = [
     "^llama_stack/providers/utils/telemetry/trace_protocol\\.py$",
     "^llama_stack/providers/utils/telemetry/tracing\\.py$",
     "^llama_stack/strong_typing/auxiliary\\.py$",
-    "^llama_stack/strong_typing/deserializer\\.py$",
-    "^llama_stack/strong_typing/inspection\\.py$",
-    "^llama_stack/strong_typing/schema\\.py$",
-    "^llama_stack/strong_typing/serializer\\.py$",
-    "^llama_stack/distributions/groq/groq\\.py$",
-    "^llama_stack/distributions/llama_api/llama_api\\.py$",
-    "^llama_stack/distributions/sambanova/sambanova\\.py$",
     "^llama_stack/distributions/template\\.py$",
 ]
 
@@ -356,6 +328,5 @@ classmethod-decorators = ["classmethod", "pydantic.field_validator"]
 [tool.pytest.ini_options]
 addopts = ["--durations=10"]
 asyncio_mode = "auto"
-markers = [
-    "allow_network: Allow network access for specific unit tests",
-]
+markers = ["allow_network: Allow network access for specific unit tests"]
+filterwarnings = "ignore::DeprecationWarning"

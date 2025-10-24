@@ -298,8 +298,7 @@ class ChatFormat:
                 ToolCall(
                     call_id=call_id,
                     tool_name=tool_name,
-                    arguments=tool_arguments,
-                    arguments_json=json.dumps(tool_arguments),
+                    arguments=json.dumps(tool_arguments),
                 )
             )
             content = ""

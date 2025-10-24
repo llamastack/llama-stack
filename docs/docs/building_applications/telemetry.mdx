@@ -1,0 +1,212 @@
+---
+title: Telemetry
+description: Monitor and observe Llama Stack applications with comprehensive telemetry capabilities
+sidebar_label: Telemetry
+sidebar_position: 8
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Telemetry
+
+The Llama Stack uses OpenTelemetry to provide comprehensive tracing, metrics, and logging capabilities.
+
+
+## Automatic Metrics Generation
+
+Llama Stack automatically generates metrics during inference operations. These metrics are aggregated at the **inference request level** and provide insights into token usage and model performance.
+
+### Available Metrics
+
+The following metrics are automatically generated for each inference request:
+
+| Metric Name | Type | Unit | Description | Labels |
+|-------------|------|------|-------------|--------|
+| `llama_stack_prompt_tokens_total` | Counter | `tokens` | Number of tokens in the input prompt | `model_id`, `provider_id` |
+| `llama_stack_completion_tokens_total` | Counter | `tokens` | Number of tokens in the generated response | `model_id`, `provider_id` |
+| `llama_stack_tokens_total` | Counter | `tokens` | Total tokens used (prompt + completion) | `model_id`, `provider_id` |
+
+### Metric Generation Flow
+
+1. **Token Counting**: During inference operations (chat completion, completion, etc.), the system counts tokens in both input prompts and generated responses
+2. **Metric Construction**: For each request, `MetricEvent` objects are created with the token counts
+3. **Telemetry Logging**: Metrics are sent to the configured telemetry sinks
+4. **OpenTelemetry Export**: When OpenTelemetry is enabled, metrics are exposed as standard OpenTelemetry counters
+
+### Metric Aggregation Level
+
+All metrics are generated and aggregated at the **inference request level**. This means:
+
+- Each individual inference request generates its own set of metrics
+- Metrics are not pre-aggregated across multiple requests
+- Aggregation (sums, averages, etc.) can be performed by your observability tools (Prometheus, Grafana, etc.)
+- Each metric includes labels for `model_id` and `provider_id` to enable filtering and grouping
+
+### Example Metric Event
+
+```python
+MetricEvent(
+    trace_id="1234567890abcdef",
+    span_id="abcdef1234567890",
+    metric="total_tokens",
+    value=150,
+    timestamp=1703123456.789,
+    unit="tokens",
+    attributes={
+        "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+        "provider_id": "tgi"
+    },
+)
+```
+
+## Telemetry Sinks
+
+Choose from multiple sink types based on your observability needs:
+
+<Tabs>
+<TabItem value="opentelemetry" label="OpenTelemetry">
+
+Send events to an OpenTelemetry Collector for integration with observability platforms:
+
+**Use Cases:**
+- Visualizing traces in tools like Jaeger
+- Collecting metrics for Prometheus
+- Integration with enterprise observability stacks
+
+**Features:**
+- Standard OpenTelemetry format
+- Compatible with all OpenTelemetry collectors
+- Supports both traces and metrics
+
+</TabItem>
+<TabItem value="console" label="Console">
+
+Print events to the console for immediate debugging:
+
+**Use Cases:**
+- Development and testing
+- Quick debugging sessions
+- Simple logging without external tools
+
+**Features:**
+- Immediate output visibility
+- No setup required
+- Human-readable format
+
+</TabItem>
+</Tabs>
+
+## Configuration
+
+### Meta-Reference Provider
+
+Currently, only the meta-reference provider is implemented. It can be configured to send events to multiple sink types:
+
+```yaml
+telemetry:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      service_name: "llama-stack-service"
+      sinks: ['console', 'otel_trace', 'otel_metric']
+      otel_exporter_otlp_endpoint: "http://localhost:4318"
+```
+
+### Environment Variables
+
+Configure telemetry behavior using environment variables:
+
+- **`OTEL_EXPORTER_OTLP_ENDPOINT`**: OpenTelemetry Collector endpoint (default: `http://localhost:4318`)
+- **`OTEL_SERVICE_NAME`**: Service name for telemetry (default: empty string)
+- **`TELEMETRY_SINKS`**: Comma-separated list of sinks (default: `[]`)
+
+### Quick Setup: Complete Telemetry Stack
+
+Use the automated setup script to launch the complete telemetry stack (Jaeger, OpenTelemetry Collector, Prometheus, and Grafana):
+
+```bash
+./scripts/telemetry/setup_telemetry.sh
+```
+
+This sets up:
+- **Jaeger UI**: http://localhost:16686 (traces visualization)
+- **Prometheus**: http://localhost:9090 (metrics)
+- **Grafana**: http://localhost:3000 (dashboards with auto-configured data sources)
+- **OTEL Collector**: http://localhost:4318 (OTLP endpoint)
+
+Once running, you can visualize traces by navigating to [Grafana](http://localhost:3000/) and login with login `admin` and password `admin`.
+
+## Querying Metrics
+
+When using the OpenTelemetry sink, metrics are exposed in standard format and can be queried through various tools:
+
+<Tabs>
+<TabItem value="prometheus" label="Prometheus Queries">
+
+Example Prometheus queries for analyzing token usage:
+
+```promql
+# Total tokens used across all models
+sum(llama_stack_tokens_total)
+
+# Tokens per model
+sum by (model_id) (llama_stack_tokens_total)
+
+# Average tokens per request over 5 minutes
+rate(llama_stack_tokens_total[5m])
+
+# Token usage by provider
+sum by (provider_id) (llama_stack_tokens_total)
+```
+
+</TabItem>
+<TabItem value="grafana" label="Grafana Dashboards">
+
+Create dashboards using Prometheus as a data source:
+
+- **Token Usage Over Time**: Line charts showing token consumption trends
+- **Model Performance**: Comparison of different models by token efficiency
+- **Provider Analysis**: Breakdown of usage across different providers
+- **Request Patterns**: Understanding peak usage times and patterns
+
+</TabItem>
+<TabItem value="otlp" label="OpenTelemetry Collector">
+
+Forward metrics to other observability systems:
+
+- Export to multiple backends simultaneously
+- Apply transformations and filtering
+- Integrate with existing monitoring infrastructure
+
+</TabItem>
+</Tabs>
+
+## Best Practices
+
+### 🔍 **Monitoring Strategy**
+- Use OpenTelemetry for production environments
+- Set up alerts on key metrics like token usage and error rates
+
+### 📊 **Metrics Analysis**
+- Track token usage trends to optimize costs
+- Monitor response times across different models
+- Analyze usage patterns to improve resource allocation
+
+### 🚨 **Alerting & Debugging**
+- Set up alerts for unusual token consumption spikes
+- Use trace data to debug performance issues
+- Monitor error rates and failure patterns
+
+### 🔧 **Configuration Management**
+- Use environment variables for flexible deployment
+- Ensure proper network access to OpenTelemetry collectors
+
+
+## Related Resources
+
+- **[Agents](./agent)** - Monitoring agent execution with telemetry
+- **[Evaluations](./evals)** - Using telemetry data for performance evaluation
+- **[Getting Started Notebook](https://github.com/meta-llama/llama-stack/blob/main/docs/getting_started.ipynb)** - Telemetry examples and queries
+- **[OpenTelemetry Documentation](https://opentelemetry.io/)** - Comprehensive observability framework
+- **[Jaeger Documentation](https://www.jaegertracing.io/)** - Distributed tracing visualization

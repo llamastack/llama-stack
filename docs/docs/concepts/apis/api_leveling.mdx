@@ -1,0 +1,105 @@
+---
+title: API Stability Leveling
+description: Understanding API stability levels and versioning in Llama Stack
+sidebar_label: API Stability
+sidebar_position: 4
+---
+
+# Llama Stack API Stability Leveling
+
+In order to provide a stable experience in Llama Stack, the various APIs need different stability levels indicating the level of support, backwards compatability, and overall production readiness.
+
+## Different Levels
+
+### v1alpha
+
+- Little to no expectation of support between versions
+- Breaking changes are permitted
+- Datatypes and parameters can break
+- Routes can be added and removed
+
+#### Graduation Criteria
+
+- an API can graduate from `v1alpha` to `v1beta` if the team has identified the extent of the non-optional routes and the shape of their parameters/return types for the API eg. `/v1/openai/chat/completions`. Optional types can change.
+- CRUD must stay stable once in `v1beta`. This is a commitment to backward compatibility, guaranteeing that most code you write against the v1beta version will not break during future updates. We may make additive changes (like adding a new, optional field to a response), but we will not make breaking changes (like renaming an existing "modelName" field to "name", changing an ID's data type from an integer to a string, or altering an endpoint URL).
+- for OpenAI APIs, a comparison to the OpenAI spec for the specific API can be done to ensure completeness.
+
+### v1beta
+
+- API routes remain consistent between versions
+- Parameters and return types are not ensured between versions
+- API, besides minor fixes and adjustments, should be _almost_ v1. Changes should not be drastic.
+
+#### Graduation Criteria
+
+- an API can graduate from `v1beta` to `v1` if the API surface and datatypes are complete as identified by the team. The parameters and return types that are mandatory for each route are stable. All aspects of graduating from `v1alpha1` to `v1beta` apply as well.
+- Optional parameters, routes, or parts of the return type can be added after graduating to `v1`
+
+### v1 (stable)
+
+- Considered stable
+- Backwards compatible between Z-streams
+  - Y-stream breaking changes must go through the proper approval and announcement process.
+- Datatypes for a route and its return types cannot change between Z-streams
+  - Y-stream datatype changes should be sparing, unless the changes are additional net-new parameters
+- Must have proper conformance testing as outlined in https://github.com/llamastack/llama-stack/issues/3237
+
+### v2+ (Major Versions)
+
+Introducing a new major version like `/v2` is a significant and disruptive event that should be treated as a last resort. It is reserved for essential changes to a stable `/v1` API that are fundamentally backward-incompatible and cannot be implemented through additive, non-breaking changes or breaking changes across X/Y-Stream releases (x.y.z).
+
+If a `/v2` version is deemed absolutely necessary, it must adhere to the following protocol to ensure a sane and predictable transition for users:
+
+#### Lifecycle Progression
+
+ A new major version must follow the same stability lifecycle as `/v1`. It will be introduced as `/v2alpha`, mature to `/v2beta`, and finally become stable as `/v2`.
+
+#### Coexistence:
+
+The new `/v2` API must be introduced alongside the existing `/v1` API and run in parallel. It must not replace the `/v1` API immediately.
+
+#### Deprecation Policy:
+
+When a `/v2` API is introduced, a clear and generous deprecation policy for the `/v1` API must be published simultaneously. This policy must outline the timeline for the eventual removal of the `/v1` API, giving users ample time to migrate.
+
+### Deprecated APIs
+
+Deprecated APIs are those that are no longer actively maintained or supported. Depreated APIs are marked with the flag `deprecated = True` in the OpenAPI spec. These APIs will be removed in a future release.
+
+### API Stability vs. Provider Stability
+
+The leveling introduced in this document relates to the stability of the API and not specifically the providers within the API.
+
+Providers can iterate as much as they want on functionality as long as they work within the bounds of an API. If they need to change the API, then the API should not be `/v1`, or those breaking changes can only happen on a y-stream release basis.
+
+### Approval and Announcement Process for Breaking Changes
+
+- **PR Labeling**: Any pull request that introduces a breaking API change must be clearly labeled with `breaking-change`.
+- **PR Title/Commit**: Any pull request that introduces a breaking API change must contain `BREAKING CHANGE` in the title and commit footer. Alternatively, the commit can include `!`, eg. `feat(api)!: title goes here` This is outlined in the [conventional commits documentation](https://www.conventionalcommits.org/en/v1.0.0/#specification)
+- **Maintainer Review**: At least one maintainer must explicitly acknowledge the breaking change during review by applying the `breaking-change` label. An approval must come with this label or the acknowledgement this label has already been applied.
+- **Announcement**: Breaking changes require inclusion in release notes and, if applicable, a separate communication (e.g., Discord, Github Issues, or GitHub Discussions) prior to release.
+
+If a PR has proper approvals, labels, and commit/title hygiene, the failing API conformance tests will be bypassed.
+
+
+## Enforcement
+
+### Migration of API routes under `/v1alpha`, `/v1beta`, and `/v1`
+
+Instead of placing every API under `/v1`, any API that is not fully stable or complete should go under `/v1alpha` or `/v1beta`. For example, at the time of this writing,  `post_training` belongs here, as well as any OpenAI-compatible API whose surface does not exactly match the upstream OpenAI API it mimics.
+
+This migration is crucial as we get Llama Stack in the hands of users who intend to productize various APIs. A clear view of what is stable and what is actively being developed will enable users to pick and choose various APIs to build their products on.
+
+This migration will be a breaking change for any API moving out of `/v1`. Ideally, this should happen before 0.3.0 and especially 1.0.0.
+
+### `x-stability` tags in the OpenAPI spec for oasdiff
+
+`x-stability` tags allow tools like oasdiff to enforce different rules for different stability levels; these tags should match the routes: [oasdiff stability](https://github.com/oasdiff/oasdiff/blob/main/docs/STABILITY.md)
+
+### Testing
+
+The testing of each stable API is already outlined in [issue #3237](https://github.com/llamastack/llama-stack/issues/3237) and is being worked on. These sorts of conformance tests should apply primarily to `/v1` APIs only, with `/v1alpha` and `/v1beta` having any tests the maintainers see fit as well as basic testing to ensure the routing works properly.
+
+### New APIs going forward
+
+Any subsequently introduced APIs should be introduced as `/v1alpha`

@@ -5,11 +5,12 @@
 # the root directory of this source tree.
 
 from .config import DatabricksImplConfig
-from .databricks import DatabricksInferenceAdapter
 
 
 async def get_adapter_impl(config: DatabricksImplConfig, _deps):
+    from .databricks import DatabricksInferenceAdapter
+
     assert isinstance(config, DatabricksImplConfig), f"Unexpected config type: {type(config)}"
-    impl = DatabricksInferenceAdapter(config)
+    impl = DatabricksInferenceAdapter(config=config)
     await impl.initialize()
     return impl

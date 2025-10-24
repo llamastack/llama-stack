@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from codeshield.cs import CodeShieldScanResult
 
-from llama_stack.apis.inference import Message
+from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.apis.safety import (
     RunShieldResponse,
     Safety,
@@ -53,7 +53,7 @@ class MetaReferenceCodeScannerSafetyImpl(Safety):
     async def run_shield(
         self,
         shield_id: str,
-        messages: list[Message],
+        messages: list[OpenAIMessageParam],
         params: dict[str, Any] = None,
     ) -> RunShieldResponse:
         shield = await self.shield_store.get_shield(shield_id)
@@ -101,7 +101,10 @@ class MetaReferenceCodeScannerSafetyImpl(Safety):
             metadata=metadata,
         )
 
-    async def run_moderation(self, input: str | list[str], model: str) -> ModerationObject:
+    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
+        if model is None:
+            raise ValueError("Code scanner moderation requires a model identifier.")
+
         inputs = input if isinstance(input, list) else [input]
         results = []
 

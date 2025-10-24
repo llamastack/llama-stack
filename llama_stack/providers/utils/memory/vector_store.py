@@ -20,11 +20,11 @@ from pydantic import BaseModel
 from llama_stack.apis.common.content_types import (
     URL,
     InterleavedContent,
-    TextContentItem,
 )
+from llama_stack.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
 from llama_stack.apis.tools import RAGDocument
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import Api
@@ -50,6 +50,7 @@ class ChunkForDeletion(BaseModel):
 # Constants for reranker types
 RERANKER_TYPE_RRF = "rrf"
 RERANKER_TYPE_WEIGHTED = "weighted"
+RERANKER_TYPE_NORMALIZED = "normalized"
 
 
 def parse_pdf(data: bytes) -> str:
@@ -128,26 +129,6 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
         return ""
 
 
-def concat_interleaved_content(content: list[InterleavedContent]) -> InterleavedContent:
-    """concatenate interleaved content into a single list. ensure that 'str's are converted to TextContentItem when in a list"""
-
-    ret = []
-
-    def _process(c):
-        if isinstance(c, str):
-            ret.append(TextContentItem(text=c))
-        elif isinstance(c, list):
-            for item in c:
-                _process(item)
-        else:
-            ret.append(c)
-
-    for c in content:
-        _process(c)
-
-    return ret
-
-
 async def content_from_doc(doc: RAGDocument) -> str:
     if isinstance(doc.content, URL):
         if doc.content.uri.startswith("data:"):
@@ -206,7 +187,7 @@ def make_overlapped_chunks(
             updated_timestamp=int(time.time()),
             chunk_window=chunk_window,
             chunk_tokenizer=default_tokenizer,
-            chunk_embedding_model=None,  # This will be set in `VectorDBWithIndex.insert_chunks`
+            chunk_embedding_model=None,  # This will be set in `VectorStoreWithIndex.insert_chunks`
             content_token_count=len(toks),
             metadata_token_count=len(metadata_tokens),
         )
@@ -274,8 +255,8 @@ class EmbeddingIndex(ABC):
 
 
 @dataclass
-class VectorDBWithIndex:
-    vector_db: VectorDB
+class VectorStoreWithIndex:
+    vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Api.inference
 
@@ -288,16 +269,17 @@ class VectorDBWithIndex:
             if c.embedding is None:
                 chunks_to_embed.append(c)
                 if c.chunk_metadata:
-                    c.chunk_metadata.chunk_embedding_model = self.vector_db.embedding_model
-                    c.chunk_metadata.chunk_embedding_dimension = self.vector_db.embedding_dimension
+                    c.chunk_metadata.chunk_embedding_model = self.vector_store.embedding_model
+                    c.chunk_metadata.chunk_embedding_dimension = self.vector_store.embedding_dimension
             else:
-                _validate_embedding(c.embedding, i, self.vector_db.embedding_dimension)
+                _validate_embedding(c.embedding, i, self.vector_store.embedding_dimension)
 
         if chunks_to_embed:
-            resp = await self.inference_api.openai_embeddings(
-                self.vector_db.embedding_model,
-                [c.content for c in chunks_to_embed],
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model=self.vector_store.embedding_model,
+                input=[c.content for c in chunks_to_embed],
             )
+            resp = await self.inference_api.openai_embeddings(params)
             for c, data in zip(chunks_to_embed, resp.data, strict=False):
                 c.embedding = data.embedding
 
@@ -325,6 +307,8 @@ class VectorDBWithIndex:
                 weights = ranker.get("params", {}).get("weights", [0.5, 0.5])
                 reranker_type = RERANKER_TYPE_WEIGHTED
                 reranker_params = {"alpha": weights[0] if len(weights) > 0 else 0.5}
+            elif strategy == "normalized":
+                reranker_type = RERANKER_TYPE_NORMALIZED
             else:
                 reranker_type = RERANKER_TYPE_RRF
                 k_value = ranker.get("params", {}).get("k", 60.0)
@@ -334,7 +318,11 @@ class VectorDBWithIndex:
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
 
-        embeddings_response = await self.inference_api.openai_embeddings(self.vector_db.embedding_model, [query_string])
+        params = OpenAIEmbeddingsRequestWithExtraBody(
+            model=self.vector_store.embedding_model,
+            input=[query_string],
+        )
+        embeddings_response = await self.inference_api.openai_embeddings(params)
         query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(

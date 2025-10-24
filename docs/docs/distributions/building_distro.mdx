@@ -1,0 +1,148 @@
+---
+title: Building Custom Distributions
+description: Building a Llama Stack distribution from scratch
+sidebar_label: Build your own Distribution
+sidebar_position: 3
+---
+
+This guide walks you through inspecting existing distributions, customising their configuration, and building runnable artefacts for your own deployment.
+
+### Explore existing distributions
+
+All first-party distributions live under `llama_stack/distributions/`. Each directory contains:
+
+- `build.yaml` – the distribution specification (providers, additional dependencies, optional external provider directories).
+- `run.yaml` – sample run configuration (when provided).
+- Documentation fragments that power this site.
+
+Browse that folder to understand available providers and copy a distribution to use as a starting point. When creating a new stack, duplicate an existing directory, rename it, and adjust the `build.yaml` file to match your requirements.
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+<TabItem value="container" label="Building a container">
+
+Use the Containerfile at `containers/Containerfile`, which installs `llama-stack`, resolves distribution dependencies via `llama stack list-deps`, and sets the entrypoint to `llama stack run`.
+
+```bash
+docker build . \
+  -f containers/Containerfile \
+  --build-arg DISTRO_NAME=starter \
+  --tag llama-stack:starter
+```
+
+Handy build arguments:
+
+- `DISTRO_NAME` – distribution directory name (defaults to `starter`).
+- `RUN_CONFIG_PATH` – absolute path inside the build context for a run config that should be baked into the image (e.g. `/workspace/run.yaml`).
+- `INSTALL_MODE=editable` – install the repository copied into `/workspace` with `uv pip install -e`. Pair it with `--build-arg LLAMA_STACK_DIR=/workspace`.
+- `LLAMA_STACK_CLIENT_DIR` – optional editable install of the Python client.
+- `PYPI_VERSION` / `TEST_PYPI_VERSION` – pin specific releases when not using editable installs.
+- `KEEP_WORKSPACE=1` – retain `/workspace` in the final image if you need to access additional files (such as sample configs or provider bundles).
+
+Make sure any custom `build.yaml`, run configs, or provider directories you reference are included in the Docker build context so the Containerfile can read them.
+
+</TabItem>
+<TabItem value="external" label="Building with external providers">
+
+External providers live outside the main repository but can be bundled by pointing `external_providers_dir` to a directory that contains your provider packages.
+
+1. Copy providers into the build context, for example `cp -R path/to/providers providers.d`.
+2. Update `build.yaml` with the directory and provider entries.
+3. Adjust run configs to use the in-container path (usually `/.llama/providers.d`). Pass `--build-arg RUN_CONFIG_PATH=/workspace/run.yaml` if you want to bake the config.
+
+Example `build.yaml` excerpt for a custom Ollama provider:
+
+```yaml
+distribution_spec:
+  providers:
+    inference:
+      - remote::custom_ollama
+external_providers_dir: /workspace/providers.d
+```
+
+Inside `providers.d/custom_ollama/provider.py`, define `get_provider_spec()` so the CLI can discover dependencies:
+
+```python
+from llama_stack.providers.datatypes import ProviderSpec
+
+
+def get_provider_spec() -> ProviderSpec:
+    return ProviderSpec(
+        provider_type="remote::custom_ollama",
+        module="llama_stack_ollama_provider",
+        config_class="llama_stack_ollama_provider.config.OllamaImplConfig",
+        pip_packages=[
+            "ollama",
+            "aiohttp",
+            "llama-stack-provider-ollama",
+        ],
+    )
+```
+
+Here's an example for a custom Ollama provider:
+
+```yaml
+adapter:
+  adapter_type: custom_ollama
+  pip_packages:
+    - ollama
+    - aiohttp
+    - llama-stack-provider-ollama  # This is the provider package
+  config_class: llama_stack_ollama_provider.config.OllamaImplConfig
+  module: llama_stack_ollama_provider
+api_dependencies: []
+optional_api_dependencies: []
+```
+
+The `pip_packages` section lists the Python packages required by the provider, as well as the
+provider package itself. The package must be available on PyPI or can be provided from a local
+directory or a git repository (git must be installed on the build environment).
+
+For deeper guidance, see the [External Providers documentation](../providers/external/).
+
+</TabItem>
+</Tabs>
+
+### Run your stack server
+
+After building the image, launch it directly with Docker or Podman—the entrypoint calls `llama stack run` using the baked distribution or the bundled run config:
+
+```bash
+docker run -d \
+  -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+  -v ~/.llama:/root/.llama \
+  -e INFERENCE_MODEL=$INFERENCE_MODEL \
+  -e OLLAMA_URL=http://host.docker.internal:11434 \
+  llama-stack:starter \
+  --port $LLAMA_STACK_PORT
+```
+
+Here are the docker flags and their uses:
+
+* `-d`: Runs the container in the detached mode as a background process
+
+* `-p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT`: Maps the container port to the host port for accessing the server
+
+* `-v ~/.llama:/root/.llama`: Mounts the local .llama directory to persist configurations and data
+
+* `localhost/distribution-ollama:dev`: The name and tag of the container image to run
+
+* `-e INFERENCE_MODEL=$INFERENCE_MODEL`: Sets the INFERENCE_MODEL environment variable in the container
+
+* `-e OLLAMA_URL=http://host.docker.internal:11434`: Sets the OLLAMA_URL environment variable in the container
+
+* `--port $LLAMA_STACK_PORT`: Port number for the server to listen on
+
+
+
+If you prepared a custom run config, mount it into the container and reference it explicitly:
+
+```bash
+docker run \
+  -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+  -v $(pwd)/run.yaml:/app/run.yaml \
+  llama-stack:starter \
+  /app/run.yaml
+```

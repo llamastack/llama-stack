@@ -11,11 +11,13 @@
 import uuid
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
+from fastapi import Body
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import InterleavedContent
-from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.apis.vector_stores import VectorStore
+from llama_stack.apis.version import LLAMA_STACK_API_V1
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack.schema_utils import json_schema_type, webmethod
 from llama_stack.strong_typing.schema import register_schema
@@ -91,6 +93,22 @@ class Chunk(BaseModel):
 
         return generate_chunk_id(str(uuid.uuid4()), str(self.content))
 
+    @property
+    def document_id(self) -> str | None:
+        """Returns the document_id from either metadata or chunk_metadata, with metadata taking precedence."""
+        # Check metadata first (takes precedence)
+        doc_id = self.metadata.get("document_id")
+        if doc_id is not None:
+            if not isinstance(doc_id, str):
+                raise TypeError(f"metadata['document_id'] must be a string, got {type(doc_id).__name__}: {doc_id!r}")
+            return doc_id
+
+        # Fall back to chunk_metadata if available (Pydantic ensures type safety)
+        if self.chunk_metadata is not None:
+            return self.chunk_metadata.document_id
+
+        return None
+
 
 @json_schema_type
 class QueryChunksResponse(BaseModel):
@@ -122,6 +140,7 @@ class VectorStoreFileCounts(BaseModel):
     total: int
 
 
+# TODO: rename this as OpenAIVectorStore
 @json_schema_type
 class VectorStoreObject(BaseModel):
     """OpenAI Vector Store object.
@@ -317,7 +336,8 @@ class VectorStoreChunkingStrategyStatic(BaseModel):
 
 
 VectorStoreChunkingStrategy = Annotated[
-    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic, Field(discriminator="type")
+    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic,
+    Field(discriminator="type"),
 ]
 register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
 
@@ -426,18 +446,91 @@ class VectorStoreFileDeleteResponse(BaseModel):
     deleted: bool = True
 
 
-class VectorDBStore(Protocol):
-    def get_vector_db(self, vector_db_id: str) -> VectorDB | None: ...
+@json_schema_type
+class VectorStoreFileBatchObject(BaseModel):
+    """OpenAI Vector Store File Batch object.
+
+    :param id: Unique identifier for the file batch
+    :param object: Object type identifier, always "vector_store.file_batch"
+    :param created_at: Timestamp when the file batch was created
+    :param vector_store_id: ID of the vector store containing the file batch
+    :param status: Current processing status of the file batch
+    :param file_counts: File processing status counts for the batch
+    """
+
+    id: str
+    object: str = "vector_store.file_batch"
+    created_at: int
+    vector_store_id: str
+    status: VectorStoreFileStatus
+    file_counts: VectorStoreFileCounts
+
+
+@json_schema_type
+class VectorStoreFilesListInBatchResponse(BaseModel):
+    """Response from listing files in a vector store file batch.
+
+    :param object: Object type identifier, always "list"
+    :param data: List of vector store file objects in the batch
+    :param first_id: (Optional) ID of the first file in the list for pagination
+    :param last_id: (Optional) ID of the last file in the list for pagination
+    :param has_more: Whether there are more files available beyond this page
+    """
+
+    object: str = "list"
+    data: list[VectorStoreFileObject]
+    first_id: str | None = None
+    last_id: str | None = None
+    has_more: bool = False
+
+
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request to create a vector store with extra_body support.
+
+    :param name: (Optional) A name for the vector store
+    :param file_ids: List of file IDs to include in the vector store
+    :param expires_after: (Optional) Expiration policy for the vector store
+    :param chunking_strategy: (Optional) Strategy for splitting files into chunks
+    :param metadata: Set of key-value pairs that can be attached to the vector store
+    """
+
+    name: str | None = None
+    file_ids: list[str] | None = None
+    expires_after: dict[str, Any] | None = None
+    chunking_strategy: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+
+
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAICreateVectorStoreFileBatchRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request to create a vector store file batch with extra_body support.
+
+    :param file_ids: A list of File IDs that the vector store should use
+    :param attributes: (Optional) Key-value attributes to store with the files
+    :param chunking_strategy: (Optional) The chunking strategy used to chunk the file(s). Defaults to auto
+    """
+
+    file_ids: list[str]
+    attributes: dict[str, Any] | None = None
+    chunking_strategy: VectorStoreChunkingStrategy | None = None
+
+
+class VectorStoreTable(Protocol):
+    def get_vector_store(self, vector_store_id: str) -> VectorStore | None: ...
 
 
 @runtime_checkable
 @trace_protocol
 class VectorIO(Protocol):
-    vector_db_store: VectorDBStore | None = None
+    vector_store_table: VectorStoreTable | None = None
 
     # this will just block now until chunks are inserted, but it should
     # probably return a Job instance which can be polled for completion
-    @webmethod(route="/vector-io/insert", method="POST")
+    # TODO: rename vector_db_id to vector_store_id once Stainless is working
+    @webmethod(route="/vector-io/insert", method="POST", level=LLAMA_STACK_API_V1)
     async def insert_chunks(
         self,
         vector_db_id: str,
@@ -455,7 +548,8 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/vector-io/query", method="POST")
+    # TODO: rename vector_db_id to vector_store_id once Stainless is working
+    @webmethod(route="/vector-io/query", method="POST", level=LLAMA_STACK_API_V1)
     async def query_chunks(
         self,
         vector_db_id: str,
@@ -472,33 +566,21 @@ class VectorIO(Protocol):
         ...
 
     # OpenAI Vector Stores API endpoints
-    @webmethod(route="/openai/v1/vector_stores", method="POST")
+    @webmethod(route="/openai/v1/vector_stores", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/vector_stores", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_create_vector_store(
         self,
-        name: str | None = None,
-        file_ids: list[str] | None = None,
-        expires_after: dict[str, Any] | None = None,
-        chunking_strategy: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-        embedding_model: str | None = None,
-        embedding_dimension: int | None = 384,
-        provider_id: str | None = None,
+        params: Annotated[OpenAICreateVectorStoreRequestWithExtraBody, Body(...)],
     ) -> VectorStoreObject:
         """Creates a vector store.
 
-        :param name: A name for the vector store.
-        :param file_ids: A list of File IDs that the vector store should use. Useful for tools like `file_search` that can access files.
-        :param expires_after: The expiration policy for a vector store.
-        :param chunking_strategy: The chunking strategy used to chunk the file(s). If not set, will use the `auto` strategy.
-        :param metadata: Set of 16 key-value pairs that can be attached to an object.
-        :param embedding_model: The embedding model to use for this vector store.
-        :param embedding_dimension: The dimension of the embedding vectors (default: 384).
-        :param provider_id: The ID of the provider to use for this vector store.
+        Generate an OpenAI-compatible vector store with the given parameters.
         :returns: A VectorStoreObject representing the created vector store.
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores", method="GET")
+    @webmethod(route="/openai/v1/vector_stores", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/vector_stores", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_vector_stores(
         self,
         limit: int | None = 20,
@@ -516,7 +598,10 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="GET")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True
+    )
+    @webmethod(route="/vector_stores/{vector_store_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_vector_store(
         self,
         vector_store_id: str,
@@ -528,7 +613,14 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="POST")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}", method="POST", level=LLAMA_STACK_API_V1, deprecated=True
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_update_vector_store(
         self,
         vector_store_id: str,
@@ -546,7 +638,14 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}", method="DELETE")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}",
+        method="DELETE",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_delete_vector_store(
         self,
         vector_store_id: str,
@@ -558,7 +657,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/search", method="POST")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/search",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/search",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_search_vector_store(
         self,
         vector_store_id: str,
@@ -567,7 +676,9 @@ class VectorIO(Protocol):
         max_num_results: int | None = 10,
         ranking_options: SearchRankingOptions | None = None,
         rewrite_query: bool | None = False,
-        search_mode: str | None = "vector",  # Using str instead of Literal due to OpenAPI schema generator limitations
+        search_mode: (
+            str | None
+        ) = "vector",  # Using str instead of Literal due to OpenAPI schema generator limitations
     ) -> VectorStoreSearchResponsePage:
         """Search for chunks in a vector store.
 
@@ -584,7 +695,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="POST")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/files",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
@@ -602,7 +723,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files", method="GET")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/files",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_list_files_in_vector_store(
         self,
         vector_store_id: str,
@@ -624,7 +755,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="GET")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/files/{file_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_retrieve_vector_store_file(
         self,
         vector_store_id: str,
@@ -638,7 +779,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content", method="GET")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/files/{file_id}/content",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_retrieve_vector_store_file_contents(
         self,
         vector_store_id: str,
@@ -652,7 +803,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="POST")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/files/{file_id}",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_update_vector_store_file(
         self,
         vector_store_id: str,
@@ -668,7 +829,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}", method="DELETE")
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/files/{file_id}",
+        method="DELETE",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/files/{file_id}",
+        method="DELETE",
+        level=LLAMA_STACK_API_V1,
+    )
     async def openai_delete_vector_store_file(
         self,
         vector_store_id: str,
@@ -679,5 +850,111 @@ class VectorIO(Protocol):
         :param vector_store_id: The ID of the vector store containing the file to delete.
         :param file_id: The ID of the file to delete.
         :returns: A VectorStoreFileDeleteResponse indicating the deletion status.
+        """
+        ...
+
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/file_batches",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/file_batches",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    async def openai_create_vector_store_file_batch(
+        self,
+        vector_store_id: str,
+        params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
+    ) -> VectorStoreFileBatchObject:
+        """Create a vector store file batch.
+
+        Generate an OpenAI-compatible vector store file batch for the given vector store.
+        :param vector_store_id: The ID of the vector store to create the file batch for.
+        :returns: A VectorStoreFileBatchObject representing the created file batch.
+        """
+        ...
+
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/file_batches/{batch_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    async def openai_retrieve_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Retrieve a vector store file batch.
+
+        :param batch_id: The ID of the file batch to retrieve.
+        :param vector_store_id: The ID of the vector store containing the file batch.
+        :returns: A VectorStoreFileBatchObject representing the file batch.
+        """
+        ...
+
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/file_batches/{batch_id}/files",
+        method="GET",
+        level=LLAMA_STACK_API_V1,
+    )
+    async def openai_list_files_in_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+        after: str | None = None,
+        before: str | None = None,
+        filter: str | None = None,
+        limit: int | None = 20,
+        order: str | None = "desc",
+    ) -> VectorStoreFilesListInBatchResponse:
+        """Returns a list of vector store files in a batch.
+
+        :param batch_id: The ID of the file batch to list files from.
+        :param vector_store_id: The ID of the vector store containing the file batch.
+        :param after: A cursor for use in pagination. `after` is an object ID that defines your place in the list.
+        :param before: A cursor for use in pagination. `before` is an object ID that defines your place in the list.
+        :param filter: Filter by file status. One of in_progress, completed, failed, cancelled.
+        :param limit: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.
+        :param order: Sort order by the `created_at` timestamp of the objects. `asc` for ascending order and `desc` for descending order.
+        :returns: A VectorStoreFilesListInBatchResponse containing the list of files in the batch.
+        """
+        ...
+
+    @webmethod(
+        route="/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+        deprecated=True,
+    )
+    @webmethod(
+        route="/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel",
+        method="POST",
+        level=LLAMA_STACK_API_V1,
+    )
+    async def openai_cancel_vector_store_file_batch(
+        self,
+        batch_id: str,
+        vector_store_id: str,
+    ) -> VectorStoreFileBatchObject:
+        """Cancels a vector store file batch.
+
+        :param batch_id: The ID of the file batch to cancel.
+        :param vector_store_id: The ID of the vector store containing the file batch.
+        :returns: A VectorStoreFileBatchObject representing the cancelled file batch.
         """
         ...

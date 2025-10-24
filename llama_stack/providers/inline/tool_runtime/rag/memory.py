@@ -8,8 +8,6 @@ import asyncio
 import base64
 import io
 import mimetypes
-import secrets
-import string
 from typing import Any
 
 import httpx
@@ -33,7 +31,6 @@ from llama_stack.apis.tools import (
     ToolDef,
     ToolGroup,
     ToolInvocationResult,
-    ToolParameter,
     ToolRuntime,
 )
 from llama_stack.apis.vector_io import (
@@ -51,10 +48,6 @@ from .config import RagToolRuntimeConfig
 from .context_retriever import generate_rag_query
 
 log = get_logger(name=__name__, category="tool_runtime")
-
-
-def make_random_string(length: int = 8):
-    return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
 async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
@@ -279,7 +272,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
         return RAGQueryResult(
             content=picked,
             metadata={
-                "document_ids": [c.metadata["document_id"] for c in chunks[: len(picked)]],
+                "document_ids": [c.document_id for c in chunks[: len(picked)]],
                 "chunks": [c.content for c in chunks[: len(picked)]],
                 "scores": scores[: len(picked)],
                 "vector_db_ids": [c.metadata["vector_db_id"] for c in chunks[: len(picked)]],
@@ -301,13 +294,16 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
                 ToolDef(
                     name="knowledge_search",
                     description="Search for information in a database.",
-                    parameters=[
-                        ToolParameter(
-                            name="query",
-                            description="The query to search for. Can be a natural language sentence or keywords.",
-                            parameter_type="string",
-                        ),
-                    ],
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The query to search for. Can be a natural language sentence or keywords.",
+                            }
+                        },
+                        "required": ["query"],
+                    },
                 ),
             ]
         )
@@ -329,5 +325,8 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
 
         return ToolInvocationResult(
             content=result.content or [],
-            metadata=result.metadata,
+            metadata={
+                **(result.metadata or {}),
+                "citation_files": getattr(result, "citation_files", None),
+            },
         )

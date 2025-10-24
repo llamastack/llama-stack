@@ -10,12 +10,13 @@ from .config import NVIDIAConfig
 
 
 async def get_adapter_impl(config: NVIDIAConfig, _deps) -> Inference:
-    # import dynamically so `llama stack build` does not fail due to missing dependencies
+    # import dynamically so `llama stack list-deps` does not fail due to missing dependencies
     from .nvidia import NVIDIAInferenceAdapter
 
     if not isinstance(config, NVIDIAConfig):
         raise RuntimeError(f"Unexpected config type: {type(config)}")
-    adapter = NVIDIAInferenceAdapter(config)
+    adapter = NVIDIAInferenceAdapter(config=config)
+    await adapter.initialize()
     return adapter
 
 

@@ -39,32 +39,22 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-3",
+          "id": "rec-3ca695048bee",
           "choices": [
             {
               "delta": {
-                "content": "",
+                "content": "{\"name\":\"get_water\", \"parameters\": {\"city\":\"Tokyo\"}}",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
-                "tool_calls": [
-                  {
-                    "index": 0,
-                    "id": "call_3kigugt3",
-                    "function": {
-                      "arguments": "{\"city\":\"Tokyo\"}",
-                      "name": "get_weather"
-                    },
-                    "type": "function"
-                  }
-                ]
+                "tool_calls": null
               },
               "finish_reason": null,
               "index": 0,
               "logprobs": null
             }
           ],
-          "created": 1756921361,
+          "created": 0,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,
@@ -75,7 +65,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "chatcmpl-3",
+          "id": "rec-3ca695048bee",
           "choices": [
             {
               "delta": {
@@ -85,12 +75,12 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "tool_calls",
+              "finish_reason": "stop",
               "index": 0,
               "logprobs": null
             }
           ],
-          "created": 1756921361,
+          "created": 0,
           "model": "llama3.2:3b-instruct-fp16",
           "object": "chat.completion.chunk",
           "service_tier": null,

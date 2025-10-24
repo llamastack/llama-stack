@@ -9,11 +9,12 @@ import uuid
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import File, Form, Response, UploadFile
+from fastapi import Depends, File, Form, Response, UploadFile
 
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.files import (
+    ExpiresAfter,
     Files,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
@@ -21,7 +22,9 @@ from llama_stack.apis.files import (
     OpenAIFilePurpose,
 )
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.files.form_data import parse_expires_after
 from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
 from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.providers.utils.sqlstore.sqlstore import sqlstore_impl
@@ -63,7 +66,7 @@ class LocalfsFilesImpl(Files):
 
     def _generate_file_id(self) -> str:
         """Generate a unique file ID for OpenAI API."""
-        return f"file-{uuid.uuid4().hex}"
+        return generate_object_id("file", lambda: f"file-{uuid.uuid4().hex}")
 
     def _get_file_path(self, file_id: str) -> Path:
         """Get the filesystem path for a file ID."""
@@ -86,15 +89,16 @@ class LocalfsFilesImpl(Files):
         self,
         file: Annotated[UploadFile, File()],
         purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after_anchor: Annotated[str | None, Form(alias="expires_after[anchor]")] = None,
-        expires_after_seconds: Annotated[int | None, Form(alias="expires_after[seconds]")] = None,
+        expires_after: Annotated[ExpiresAfter | None, Depends(parse_expires_after)] = None,
     ) -> OpenAIFileObject:
         """Upload a file that can be used across various endpoints."""
         if not self.sql_store:
             raise RuntimeError("Files provider not initialized")
 
-        if expires_after_anchor is not None or expires_after_seconds is not None:
-            raise NotImplementedError("File expiration is not supported by this provider")
+        if expires_after is not None:
+            logger.warning(
+                f"File expiration is not supported by this provider, ignoring expires_after: {expires_after}"
+            )
 
         file_id = self._generate_file_id()
         file_path = self._get_file_path(file_id)

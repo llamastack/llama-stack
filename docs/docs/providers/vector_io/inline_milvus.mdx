@@ -1,0 +1,30 @@
+---
+description: "Please refer to the remote provider documentation."
+sidebar_label: Milvus
+title: inline::milvus
+---
+
+# inline::milvus
+
+## Description
+
+
+Please refer to the remote provider documentation.
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `db_path` | `<class 'str'>` | No |  |  |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  | Config for KV store backend (SQLite only for now) |
+| `consistency_level` | `<class 'str'>` | No | Strong | The consistency level of the Milvus server |
+
+## Sample Configuration
+
+```yaml
+db_path: ${env.MILVUS_DB_PATH:=~/.llama/dummy}/milvus.db
+persistence:
+  namespace: vector_io::milvus
+  backend: kv_default
+```

@@ -1,0 +1,27 @@
+---
+description: "Fireworks AI inference provider for Llama models and other AI models on the Fireworks platform."
+sidebar_label: Remote - Fireworks
+title: remote::fireworks
+---
+
+# remote::fireworks
+
+## Description
+
+Fireworks AI inference provider for Llama models and other AI models on the Fireworks platform.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+| `url` | `<class 'str'>` | No | https://api.fireworks.ai/inference/v1 | The URL for the Fireworks server |
+
+## Sample Configuration
+
+```yaml
+url: https://api.fireworks.ai/inference/v1
+api_key: ${env.FIREWORKS_API_KEY:=}
+```

@@ -6,6 +6,7 @@
 
 from typing import Protocol
 
+from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.providers.datatypes import Api, ProviderSpec, RemoteProviderSpec
 from llama_stack.schema_utils import webmethod
 
@@ -28,7 +29,7 @@ class WeatherProvider(Protocol):
     A protocol for the Weather API.
     """
 
-    @webmethod(route="/weather/locations", method="GET")
+    @webmethod(route="/weather/locations", method="GET", level=LLAMA_STACK_API_V1)
     async def get_available_locations() -> dict[str, list[str]]:
         """
         Get the available locations.

@@ -50,6 +50,10 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeGuard
 
+
+from pydantic import BaseModel
+from pydantic.fields import FieldInfo
+
 S = TypeVar("S")
 T = TypeVar("T")
 K = TypeVar("K")
@@ -567,6 +571,23 @@ def get_class_properties(typ: type) -> Iterable[Tuple[str, type | str]]:
 
     if is_dataclass_type(typ):
         return ((field.name, field.type) for field in dataclasses.fields(typ))
+    elif hasattr(typ, "model_fields"):
+        # Pydantic BaseModel - use model_fields to exclude ClassVar and other non-field attributes
+        # Reconstruct Annotated type if discriminator exists to preserve metadata
+        from typing import Annotated, Any
+
+        from pydantic.fields import FieldInfo
+
+        def get_field_type(name: str, field: Any) -> type | str:
+            # If field has discriminator, wrap in Annotated to preserve it for schema generation
+            if field.discriminator:
+                field_info = FieldInfo(annotation=None, discriminator=field.discriminator)
+                # Annotated returns _AnnotatedAlias which isn't a type but is valid here
+                return Annotated[field.annotation, field_info]  # type: ignore[return-value]
+            # field.annotation can be Union types, Annotated, etc. which aren't type but are valid
+            return field.annotation  # type: ignore[return-value,no-any-return]
+
+        return ((name, get_field_type(name, field)) for name, field in typ.model_fields.items())
     else:
         resolved_hints = get_resolved_hints(typ)
         return resolved_hints.items()
@@ -1033,3 +1054,32 @@ def check_recursive(
         pred = lambda typ, obj: True  # noqa: E731
 
     return RecursiveChecker(pred).check(type(obj), obj)
+
+
+def is_unwrapped_body_param(param_type: Any) -> bool:
+    """
+    Check if a parameter type represents an unwrapped body parameter.
+    An unwrapped body parameter is an Annotated type with Body(embed=False)
+
+    This is used to determine whether request parameters should be flattened
+    in OpenAPI specs and client libraries (matching FastAPI's embed=False behavior).
+
+    Args:
+        param_type: The parameter type annotation to check
+
+    Returns:
+        True if the parameter should be treated as an unwrapped body parameter
+    """
+    # Check if it's Annotated with Body(embed=False)
+    if typing.get_origin(param_type) is Annotated:
+        args = typing.get_args(param_type)
+        base_type = args[0]
+        metadata = args[1:]
+
+        # Look for Body annotation with embed=False
+        # Body() returns a FieldInfo object, so we check for that type and the embed attribute
+        for item in metadata:
+            if isinstance(item, FieldInfo) and hasattr(item, "embed") and not item.embed:
+                return inspect.isclass(base_type) and issubclass(base_type, BaseModel)
+
+    return False

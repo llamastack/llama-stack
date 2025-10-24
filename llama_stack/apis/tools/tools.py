@@ -7,51 +7,16 @@
 from enum import Enum
 from typing import Any, Literal, Protocol
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing_extensions import runtime_checkable
 
 from llama_stack.apis.common.content_types import URL, InterleavedContent
 from llama_stack.apis.resource import Resource, ResourceType
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.apis.version import LLAMA_STACK_API_V1
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 from .rag_tool import RAGToolRuntime
-
-
-@json_schema_type
-class ToolParameter(BaseModel):
-    """Parameter definition for a tool.
-
-    :param name: Name of the parameter
-    :param parameter_type: Type of the parameter (e.g., string, integer)
-    :param description: Human-readable description of what the parameter does
-    :param required: Whether this parameter is required for tool invocation
-    :param default: (Optional) Default value for the parameter if not provided
-    """
-
-    name: str
-    parameter_type: str
-    description: str
-    required: bool = Field(default=True)
-    default: Any | None = None
-
-
-@json_schema_type
-class Tool(Resource):
-    """A tool that can be invoked by agents.
-
-    :param type: Type of resource, always 'tool'
-    :param toolgroup_id: ID of the tool group this tool belongs to
-    :param description: Human-readable description of what the tool does
-    :param parameters: List of parameters this tool accepts
-    :param metadata: (Optional) Additional metadata about the tool
-    """
-
-    type: Literal[ResourceType.tool] = ResourceType.tool
-    toolgroup_id: str
-    description: str
-    parameters: list[ToolParameter]
-    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -60,13 +25,17 @@ class ToolDef(BaseModel):
 
     :param name: Name of the tool
     :param description: (Optional) Human-readable description of what the tool does
-    :param parameters: (Optional) List of parameters this tool accepts
+    :param input_schema: (Optional) JSON Schema for tool inputs (MCP inputSchema)
+    :param output_schema: (Optional) JSON Schema for tool outputs (MCP outputSchema)
     :param metadata: (Optional) Additional metadata about the tool
+    :param toolgroup_id: (Optional) ID of the tool group this tool belongs to
     """
 
+    toolgroup_id: str | None = None
     name: str
     description: str | None = None
-    parameters: list[ToolParameter] | None = None
+    input_schema: dict[str, Any] | None = None
+    output_schema: dict[str, Any] | None = None
     metadata: dict[str, Any] | None = None
 
 
@@ -117,7 +86,7 @@ class ToolInvocationResult(BaseModel):
 
 
 class ToolStore(Protocol):
-    async def get_tool(self, tool_name: str) -> Tool: ...
+    async def get_tool(self, tool_name: str) -> ToolDef: ...
     async def get_tool_group(self, toolgroup_id: str) -> ToolGroup: ...
 
 
@@ -128,15 +97,6 @@ class ListToolGroupsResponse(BaseModel):
     """
 
     data: list[ToolGroup]
-
-
-class ListToolsResponse(BaseModel):
-    """Response containing a list of tools.
-
-    :param data: List of tools
-    """
-
-    data: list[Tool]
 
 
 class ListToolDefsResponse(BaseModel):
@@ -151,7 +111,7 @@ class ListToolDefsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class ToolGroups(Protocol):
-    @webmethod(route="/toolgroups", method="POST")
+    @webmethod(route="/toolgroups", method="POST", level=LLAMA_STACK_API_V1)
     async def register_tool_group(
         self,
         toolgroup_id: str,
@@ -168,7 +128,7 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="GET")
+    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_tool_group(
         self,
         toolgroup_id: str,
@@ -180,7 +140,7 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups", method="GET")
+    @webmethod(route="/toolgroups", method="GET", level=LLAMA_STACK_API_V1)
     async def list_tool_groups(self) -> ListToolGroupsResponse:
         """List tool groups with optional provider.
 
@@ -188,28 +148,28 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/tools", method="GET")
-    async def list_tools(self, toolgroup_id: str | None = None) -> ListToolsResponse:
+    @webmethod(route="/tools", method="GET", level=LLAMA_STACK_API_V1)
+    async def list_tools(self, toolgroup_id: str | None = None) -> ListToolDefsResponse:
         """List tools with optional tool group.
 
         :param toolgroup_id: The ID of the tool group to list tools for.
-        :returns: A ListToolsResponse.
+        :returns: A ListToolDefsResponse.
         """
         ...
 
-    @webmethod(route="/tools/{tool_name:path}", method="GET")
+    @webmethod(route="/tools/{tool_name:path}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_tool(
         self,
         tool_name: str,
-    ) -> Tool:
+    ) -> ToolDef:
         """Get a tool by its name.
 
         :param tool_name: The name of the tool to get.
-        :returns: A Tool.
+        :returns: A ToolDef.
         """
         ...
 
-    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="DELETE")
+    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def unregister_toolgroup(
         self,
         toolgroup_id: str,
@@ -238,7 +198,7 @@ class ToolRuntime(Protocol):
     rag_tool: RAGToolRuntime | None = None
 
     # TODO: This needs to be renamed once OPEN API generator name conflict issue is fixed.
-    @webmethod(route="/tool-runtime/list-tools", method="GET")
+    @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1)
     async def list_runtime_tools(
         self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
     ) -> ListToolDefsResponse:
@@ -250,7 +210,7 @@ class ToolRuntime(Protocol):
         """
         ...
 
-    @webmethod(route="/tool-runtime/invoke", method="POST")
+    @webmethod(route="/tool-runtime/invoke", method="POST", level=LLAMA_STACK_API_V1)
     async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
         """Run a tool with the given arguments.
 

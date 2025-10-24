@@ -13,7 +13,7 @@
 
 import textwrap
 
-from llama_stack.apis.inference import ToolDefinition, ToolParamDefinition
+from llama_stack.apis.inference import ToolDefinition
 from llama_stack.models.llama.llama3.prompt_templates.base import (
     PromptTemplate,
     PromptTemplateGeneratorBase,
@@ -81,11 +81,8 @@ class PythonListCustomToolGenerator(PromptTemplateGeneratorBase):  # noqa: N801
                 {# manually setting up JSON because jinja sorts keys in unexpected ways -#}
                 {%- set tname = t.tool_name -%}
                 {%- set tdesc = t.description -%}
-                {%- set tparams = t.parameters -%}
-                {%- set required_params = [] -%}
-                {%- for name, param in tparams.items() if param.required == true -%}
-                    {%- set _ = required_params.append(name) -%}
-                {%- endfor -%}
+                {%- set tprops = t.input_schema.get('properties', {}) -%}
+                {%- set required_params = t.input_schema.get('required', []) -%}
                 {
                     "name": "{{tname}}",
                     "description": "{{tdesc}}",
@@ -93,11 +90,11 @@ class PythonListCustomToolGenerator(PromptTemplateGeneratorBase):  # noqa: N801
                         "type": "dict",
                         "required": {{ required_params | tojson }},
                         "properties": {
-                            {%- for name, param in tparams.items() %}
+                            {%- for name, param in tprops.items() %}
                             "{{name}}": {
-                                "type": "{{param.param_type}}",
-                                "description": "{{param.description}}"{% if param.default %},
-                                "default": "{{param.default}}"{% endif %}
+                                "type": "{{param.get('type', 'string')}}",
+                                "description": "{{param.get('description', '')}}"{% if param.get('default') %},
+                                "default": "{{param.get('default')}}"{% endif %}
                             }{% if not loop.last %},{% endif %}
                             {%- endfor %}
                         }
@@ -119,18 +116,20 @@ class PythonListCustomToolGenerator(PromptTemplateGeneratorBase):  # noqa: N801
                 ToolDefinition(
                     tool_name="get_weather",
                     description="Get weather info for places",
-                    parameters={
-                        "city": ToolParamDefinition(
-                            param_type="string",
-                            description="The name of the city to get the weather for",
-                            required=True,
-                        ),
-                        "metric": ToolParamDefinition(
-                            param_type="string",
-                            description="The metric for weather. Options are: celsius, fahrenheit",
-                            required=False,
-                            default="celsius",
-                        ),
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "city": {
+                                "type": "string",
+                                "description": "The name of the city to get the weather for",
+                            },
+                            "metric": {
+                                "type": "string",
+                                "description": "The metric for weather. Options are: celsius, fahrenheit",
+                                "default": "celsius",
+                            },
+                        },
+                        "required": ["city"],
                     },
                 ),
             ]

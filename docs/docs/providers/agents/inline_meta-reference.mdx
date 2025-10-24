@@ -1,0 +1,31 @@
+---
+description: "Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks."
+sidebar_label: Meta-Reference
+title: inline::meta-reference
+---
+
+# inline::meta-reference
+
+## Description
+
+Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `persistence` | `<class 'inline.agents.meta_reference.config.AgentPersistenceConfig'>` | No |  |  |
+
+## Sample Configuration
+
+```yaml
+persistence:
+  agent_state:
+    namespace: agents
+    backend: kv_default
+  responses:
+    table_name: responses
+    backend: sql_default
+    max_write_queue_size: 10000
+    num_writers: 4
+```
