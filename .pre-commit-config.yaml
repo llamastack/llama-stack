@@ -153,7 +153,6 @@ repos:
         files: ^llama_stack/ui/.*\.(ts|tsx)$
         pass_filenames: false
         require_serial: true
-
       - id: check-log-usage
         name: Ensure 'llama_stack.log' usage for logging
         entry: bash
@@ -172,6 +171,13 @@ repos:
               exit 1
             fi
             exit 0
+      - id: fips-compliance
+        name: Ensure llama-stack remains FIPS compliant
+        entry: ./scripts/fips-check.py
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^llama_stack/.*$
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
