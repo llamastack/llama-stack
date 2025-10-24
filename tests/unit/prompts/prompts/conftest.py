@@ -18,7 +18,7 @@ from llama_stack.core.storage.datatypes import (
     SqlStoreReference,
     StorageConfig,
 )
-from llama_stack.providers.utils.kvstore import kvstore_impl, register_kvstore_backends
+from llama_stack.providers.utils.kvstore import register_kvstore_backends
 
 
 @pytest.fixture
@@ -38,6 +38,7 @@ async def temp_prompt_store(tmp_path_factory):
             metadata=KVStoreReference(backend="kv_test", namespace="registry"),
             inference=InferenceStoreReference(backend="sql_test", table_name="inference"),
             conversations=SqlStoreReference(backend="sql_test", table_name="conversations"),
+            prompts=KVStoreReference(backend="kv_test", namespace="prompts"),
         ),
     )
     mock_run_config = StackRunConfig(
@@ -50,6 +51,6 @@ async def temp_prompt_store(tmp_path_factory):
     store = PromptServiceImpl(config, deps={})
 
     register_kvstore_backends({"kv_test": storage.backends["kv_test"]})
-    store.kvstore = await kvstore_impl(KVStoreReference(backend="kv_test", namespace="prompts"))
+    await store.initialize()
 
     yield store

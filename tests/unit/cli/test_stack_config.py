@@ -44,6 +44,9 @@ def config_with_image_name_int():
             responses:
               backend: sql_default
               table_name: responses
+            prompts:
+              backend: kv_default
+              namespace: prompts
         providers:
           inference:
             - provider_id: provider1
