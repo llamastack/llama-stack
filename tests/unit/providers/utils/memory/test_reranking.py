@@ -5,8 +5,9 @@
 # the root directory of this source tree.
 
 
+from llama_stack_spec.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
 from llama_stack.providers.utils.memory.vector_store import RERANKER_TYPE_RRF, RERANKER_TYPE_WEIGHTED
-from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
 
 class TestNormalizeScores:

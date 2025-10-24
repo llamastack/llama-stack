@@ -5,10 +5,11 @@
 # the root directory of this source tree.
 from typing import Any
 
-from llama_stack.apis.common.responses import PaginatedResponse
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Dataset
-from llama_stack.providers.datatypes import DatasetsProtocolPrivate
+from llama_stack_spec.apis.common.responses import PaginatedResponse
+from llama_stack_spec.apis.datasetio import DatasetIO
+from llama_stack_spec.apis.datasets import Dataset
+from llama_stack_spec.providers.datatypes import DatasetsProtocolPrivate
+
 from llama_stack.providers.utils.datasetio.url_utils import get_dataframe_from_uri
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.pagination import paginate_records

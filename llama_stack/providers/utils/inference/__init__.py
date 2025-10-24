@@ -4,8 +4,15 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.models.llama.sku_list import all_registered_models
-from llama_stack.models.llama.sku_types import *  # noqa: F403
+from llama_stack_spec.models.llama.sku_list import all_registered_models
+from llama_stack_spec.models.llama.sku_types import (
+    CheckpointQuantizationFormat,
+    CoreModelId,
+    Model,
+    ModelFamily,
+)
+
+__all__ = ["CheckpointQuantizationFormat", "CoreModelId", "Model", "ModelFamily", "all_registered_models"]
 
 
 def is_supported_safety_model(model: Model) -> bool:

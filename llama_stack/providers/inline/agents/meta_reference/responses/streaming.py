@@ -8,7 +8,7 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_spec.apis.agents.openai_responses import (
     AllowedToolsFilter,
     ApprovalFilter,
     MCPListToolsTool,
@@ -55,7 +55,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseUsageOutputTokensDetails,
     WebSearchToolTypes,
 )
-from llama_stack.apis.inference import (
+from llama_stack_spec.apis.inference import (
     Inference,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
@@ -65,7 +65,8 @@ from llama_stack.apis.inference import (
     OpenAIChoice,
     OpenAIMessageParam,
 )
-from llama_stack.core.telemetry import tracing
+from llama_stack_spec.core.telemetry import tracing
+
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
@@ -89,7 +90,8 @@ def convert_tooldef_to_chat_tool(tool_def):
         ChatCompletionToolParam suitable for OpenAI chat completion
     """
 
-    from llama_stack.models.llama.datatypes import ToolDefinition
+    from llama_stack_spec.models.llama.datatypes import ToolDefinition
+
     from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
     internal_tool_def = ToolDefinition(
@@ -990,10 +992,10 @@ class StreamingResponseOrchestrator:
         self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process all tools and emit appropriate streaming events."""
+        from llama_stack_spec.apis.tools import ToolDef
+        from llama_stack_spec.models.llama.datatypes import ToolDefinition
         from openai.types.chat import ChatCompletionToolParam
 
-        from llama_stack.apis.tools import ToolDef
-        from llama_stack.models.llama.datatypes import ToolDefinition
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
         def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
@@ -1201,7 +1203,8 @@ class StreamingResponseOrchestrator:
         self, original: OpenAIResponseOutputMessageMCPListTools, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         for t in original.tools:
-            from llama_stack.models.llama.datatypes import ToolDefinition
+            from llama_stack_spec.models.llama.datatypes import ToolDefinition
+
             from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
             # convert from input_schema to map of ToolParamDefinitions...

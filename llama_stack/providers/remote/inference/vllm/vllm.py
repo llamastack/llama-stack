@@ -7,21 +7,21 @@ from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
 import httpx
+from llama_stack_spec.apis.inference import (
+    OpenAIChatCompletion,
+    OpenAIChatCompletionRequestWithExtraBody,
+    ToolChoice,
+)
+from llama_stack_spec.providers.datatypes import (
+    HealthResponse,
+    HealthStatus,
+)
 from openai.types.chat.chat_completion_chunk import (
     ChatCompletionChunk as OpenAIChatCompletionChunk,
 )
 from pydantic import ConfigDict
 
-from llama_stack.apis.inference import (
-    OpenAIChatCompletion,
-    OpenAIChatCompletionRequestWithExtraBody,
-    ToolChoice,
-)
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
-    HealthResponse,
-    HealthStatus,
-)
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import VLLMInferenceAdapterConfig

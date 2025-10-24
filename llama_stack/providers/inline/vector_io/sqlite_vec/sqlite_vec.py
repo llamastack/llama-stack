@@ -12,15 +12,16 @@ from typing import Any
 
 import numpy as np
 import sqlite_vec
+from llama_stack_spec.apis.common.errors import VectorStoreNotFoundError
+from llama_stack_spec.apis.files import Files
+from llama_stack_spec.apis.inference import Inference
+from llama_stack_spec.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack_spec.apis.vector_stores import VectorStore
+from llama_stack_spec.providers.datatypes import VectorStoresProtocolPrivate
+from llama_stack_spec.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 from numpy.typing import NDArray
 
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -30,7 +31,6 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
 logger = get_logger(name=__name__, category="vector_io")
 

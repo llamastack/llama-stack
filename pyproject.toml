@@ -30,6 +30,7 @@ dependencies = [
     "httpx",
     "jinja2>=3.1.6",
     "jsonschema",
+    "llama-stack-spec",  # API and provider specifications (local dev via tool.uv.sources)
     "llama-stack-client>=0.3.0",
     "openai>=1.107",                                  # for expires_after support
     "prompt-toolkit",
@@ -161,6 +162,7 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
+llama-stack-spec = [{ path = "llama-stack-spec", editable = true }]
 
 [tool.ruff]
 line-length = 120
@@ -227,8 +229,8 @@ unfixable = [
 ] # Using import * is acceptable (or at least tolerated) in an __init__.py of a package API
 
 [tool.mypy]
-mypy_path = ["llama_stack"]
-packages = ["llama_stack"]
+mypy_path = ["llama_stack", "llama-stack-spec"]
+packages = ["llama_stack", "llama_stack_spec"]
 plugins = ['pydantic.mypy']
 disable_error_code = []
 warn_return_any = true
@@ -250,16 +252,21 @@ exclude = [
     "^llama_stack.core/store/registry\\.py$",
     "^llama_stack.core/utils/exec\\.py$",
     "^llama_stack.core/utils/prompt_for_config\\.py$",
-    "^llama_stack/models/llama/llama3/interface\\.py$",
-    "^llama_stack/models/llama/llama3/tokenizer\\.py$",
-    "^llama_stack/models/llama/llama3/tool_utils\\.py$",
+    # Moved to llama-stack-spec but still excluded
+    "^llama-stack-spec/llama_stack_spec/models/llama/llama3/interface\\.py$",
+    "^llama-stack-spec/llama_stack_spec/models/llama/llama3/tokenizer\\.py$",
+    "^llama-stack-spec/llama_stack_spec/models/llama/llama3/tool_utils\\.py$",
+    "^llama-stack-spec/llama_stack_spec/models/llama/llama3/generation\\.py$",
+    "^llama-stack-spec/llama_stack_spec/models/llama/llama3/multimodal/model\\.py$",
+    "^llama-stack-spec/llama_stack_spec/models/llama/llama4/",
+    "^llama-stack-spec/llama_stack_spec/strong_typing/auxiliary\\.py$",
+    "^llama-stack-spec/llama_stack_spec/providers/utils/telemetry/trace_protocol\\.py$",
+    "^llama-stack-spec/llama_stack_spec/core/telemetry/trace_protocol\\.py$",
     "^llama_stack/providers/inline/agents/meta_reference/",
     "^llama_stack/providers/inline/datasetio/localfs/",
     "^llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
     "^llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
-    "^llama_stack/models/llama/llama3/generation\\.py$",
-    "^llama_stack/models/llama/llama3/multimodal/model\\.py$",
-    "^llama_stack/models/llama/llama4/",
+    "^llama_stack/providers/inline/inference/meta_reference/generators\\.py$",
     "^llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
     "^llama_stack/providers/inline/post_training/common/validator\\.py$",
     "^llama_stack/providers/inline/safety/code_scanner/",
@@ -307,7 +314,7 @@ exclude = [
     "^llama_stack/providers/utils/scoring/base_scoring_fn\\.py$",
     "^llama_stack/providers/utils/telemetry/dataset_mixin\\.py$",
     "^llama_stack/providers/utils/telemetry/trace_protocol\\.py$",
-    "^llama_stack/providers/utils/telemetry/tracing\\.py$",
+    "^llama-stack-spec/llama_stack_spec/providers/utils/telemetry/tracing\\.py$",
     "^llama_stack/strong_typing/auxiliary\\.py$",
     "^llama_stack/distributions/template\\.py$",
 ]

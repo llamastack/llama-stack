@@ -14,7 +14,7 @@
 import textwrap
 from datetime import datetime
 
-from llama_stack.models.llama.llama3.prompt_templates import (
+from llama_stack_spec.models.llama.llama3.prompt_templates import (
     BuiltinToolGenerator,
     FunctionTagCustomToolGenerator,
     JsonCustomToolGenerator,

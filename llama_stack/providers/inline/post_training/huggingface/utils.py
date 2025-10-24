@@ -14,10 +14,10 @@ from typing import Any
 import psutil
 import torch
 from datasets import Dataset
+from llama_stack_spec.apis.datasetio import DatasetIO
+from llama_stack_spec.apis.post_training import Checkpoint, TrainingConfig
 from transformers import AutoConfig, AutoModelForCausalLM
 
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.post_training import Checkpoint, TrainingConfig
 from llama_stack.log import get_logger
 
 from .config import HuggingFacePostTrainingConfig

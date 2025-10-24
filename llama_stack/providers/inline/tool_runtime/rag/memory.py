@@ -12,17 +12,15 @@ from typing import Any
 
 import httpx
 from fastapi import UploadFile
-from pydantic import TypeAdapter
-
-from llama_stack.apis.common.content_types import (
+from llama_stack_spec.apis.common.content_types import (
     URL,
     InterleavedContent,
     InterleavedContentItem,
     TextContentItem,
 )
-from llama_stack.apis.files import Files, OpenAIFilePurpose
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.tools import (
+from llama_stack_spec.apis.files import Files, OpenAIFilePurpose
+from llama_stack_spec.apis.inference import Inference
+from llama_stack_spec.apis.tools import (
     ListToolDefsResponse,
     RAGDocument,
     RAGQueryConfig,
@@ -33,14 +31,16 @@ from llama_stack.apis.tools import (
     ToolInvocationResult,
     ToolRuntime,
 )
-from llama_stack.apis.vector_io import (
+from llama_stack_spec.apis.vector_io import (
     QueryChunksResponse,
     VectorIO,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
 )
+from llama_stack_spec.providers.datatypes import ToolGroupsProtocolPrivate
+from pydantic import TypeAdapter
+
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.vector_store import parse_data_url
 

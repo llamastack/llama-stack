@@ -9,7 +9,8 @@ Unit tests for OpenAI compatibility tool conversion.
 Tests convert_tooldef_to_openai_tool with new JSON Schema approach.
 """
 
-from llama_stack.models.llama.datatypes import BuiltinTool, ToolDefinition
+from llama_stack_spec.models.llama.datatypes import BuiltinTool, ToolDefinition
+
 from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
 

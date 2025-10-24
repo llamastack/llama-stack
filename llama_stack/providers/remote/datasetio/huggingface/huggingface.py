@@ -6,10 +6,11 @@
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from llama_stack.apis.common.responses import PaginatedResponse
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Dataset
-from llama_stack.providers.datatypes import DatasetsProtocolPrivate
+from llama_stack_spec.apis.common.responses import PaginatedResponse
+from llama_stack_spec.apis.datasetio import DatasetIO
+from llama_stack_spec.apis.datasets import Dataset
+from llama_stack_spec.providers.datatypes import DatasetsProtocolPrivate
+
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.pagination import paginate_records
 

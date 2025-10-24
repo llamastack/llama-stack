@@ -6,8 +6,9 @@
 
 from unittest.mock import AsyncMock
 
-from llama_stack.apis.safety.safety import ModerationObject, ModerationObjectResults
-from llama_stack.apis.shields import ListShieldsResponse, Shield
+from llama_stack_spec.apis.safety.safety import ModerationObject, ModerationObjectResults
+from llama_stack_spec.apis.shields import ListShieldsResponse, Shield
+
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.core.routers.safety import SafetyRouter
 

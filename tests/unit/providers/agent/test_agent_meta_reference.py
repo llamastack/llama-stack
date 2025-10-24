@@ -9,8 +9,8 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from llama_stack_spec.apis.agents import Session
 
-from llama_stack.apis.agents import Session
 from llama_stack.core.datatypes import User
 from llama_stack.providers.inline.agents.meta_reference.persistence import (
     AgentPersistence,

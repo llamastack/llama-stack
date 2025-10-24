@@ -5,10 +5,10 @@
 # the root directory of this source tree.
 
 import pytest
+from llama_stack_spec.apis.agents import AgentConfig, Turn
+from llama_stack_spec.apis.inference import SamplingParams, UserMessage
+from llama_stack_spec.providers.datatypes import Api
 
-from llama_stack.apis.agents import AgentConfig, Turn
-from llama_stack.apis.inference import SamplingParams, UserMessage
-from llama_stack.providers.datatypes import Api
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 

@@ -14,24 +14,24 @@ from urllib.parse import unquote
 
 import httpx
 import numpy as np
-from numpy.typing import NDArray
-from pydantic import BaseModel
-
-from llama_stack.apis.common.content_types import (
+from llama_stack_spec.apis.common.content_types import (
     URL,
     InterleavedContent,
 )
-from llama_stack.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
-from llama_stack.apis.tools import RAGDocument
-from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
-from llama_stack.apis.vector_stores import VectorStore
+from llama_stack_spec.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
+from llama_stack_spec.apis.tools import RAGDocument
+from llama_stack_spec.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
+from llama_stack_spec.apis.vector_stores import VectorStore
+from llama_stack_spec.models.llama.llama3.tokenizer import Tokenizer
+from llama_stack_spec.providers.datatypes import Api
+from llama_stack_spec.providers.utils.vector_io.vector_utils import generate_chunk_id
+from numpy.typing import NDArray
+from pydantic import BaseModel
+
 from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
-from llama_stack.providers.datatypes import Api
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
 log = get_logger(name=__name__, category="providers::utils")
 

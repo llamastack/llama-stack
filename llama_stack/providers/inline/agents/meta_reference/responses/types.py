@@ -6,10 +6,7 @@
 
 from dataclasses import dataclass
 
-from openai.types.chat import ChatCompletionToolParam
-from pydantic import BaseModel
-
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_spec.apis.agents.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolFileSearch,
@@ -25,7 +22,9 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseTool,
     OpenAIResponseToolMCP,
 )
-from llama_stack.apis.inference import OpenAIChatCompletionToolCall, OpenAIMessageParam, OpenAIResponseFormatParam
+from llama_stack_spec.apis.inference import OpenAIChatCompletionToolCall, OpenAIMessageParam, OpenAIResponseFormatParam
+from openai.types.chat import ChatCompletionToolParam
+from pydantic import BaseModel
 
 
 class ToolExecutionResult(BaseModel):

@@ -10,9 +10,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from llama_stack_spec.models.llama.tokenizer_utils import load_bpe_file
 from tiktoken.load import load_tiktoken_bpe
-
-from llama_stack.models.llama.tokenizer_utils import load_bpe_file
 
 
 @pytest.fixture
@@ -115,7 +114,7 @@ invalid_base64!!! 2
     test_file = tmp_path / "malformed.model"
     test_file.write_text(malformed_content, encoding="utf-8")
 
-    with patch("llama_stack.models.llama.tokenizer_utils.logger") as mock_logger:
+    with patch("llama_stack_spec.models.llama.tokenizer_utils.logger") as mock_logger:
         result = load_bpe_file(test_file)
 
         # Should have 3 valid entries (skipping malformed ones)
@@ -135,7 +134,7 @@ def test_load_bpe_file_nonexistent_file():
 def test_tokenizer_integration():
     """Test that our load_bpe_file works correctly when used in actual tokenizers."""
     try:
-        from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
+        from llama_stack_spec.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
 
         tokenizer = Llama3Tokenizer.get_instance()
 
