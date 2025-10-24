@@ -13,9 +13,9 @@ self
 The `llamastack/distribution-tgi` distribution consists of the following provider configurations.
 
 
-| **API**         	| **Inference** 	| **Agents**     	| **Memory**                                       	| **Safety**     	| **Telemetry**  	|
-|-----------------	|---------------	|----------------	|--------------------------------------------------	|----------------	|----------------	|
-| **Provider(s)** 	| remote::tgi   	| meta-reference 	| meta-reference, remote::pgvector, remote::chroma 	| meta-reference 	| meta-reference 	|
+| **API**         	| **Inference** 	| **Agents**     	| **Memory**                                       	| **Safety**     	|
+|-----------------	|---------------	|----------------	|--------------------------------------------------	|----------------	|
+| **Provider(s)** 	| remote::tgi   	| meta-reference 	| meta-reference, remote::pgvector, remote::chroma 	| meta-reference 	|
 
 
 The only difference vs. the `tgi` distribution is that it runs the Dell-TGI server for inference.

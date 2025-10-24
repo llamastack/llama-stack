@@ -99,7 +99,7 @@ curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh
 
 Llama Stack standardizes the core building blocks that simplify AI application development. It codifies best practices across the Llama ecosystem. More specifically, it provides
 
-- **Unified API layer** for Inference, RAG, Agents, Tools, Safety, Evals, and Telemetry.
+- **Unified API layer** for Inference, RAG, Agents, Tools, Safety, Evals.
 - **Plugin architecture** to support the rich ecosystem of different API implementations in various environments, including local development, on-premises, cloud, and mobile.
 - **Prepackaged verified distributions** which offer a one-stop solution for developers to get started quickly and reliably in any environment.
 - **Multiple developer interfaces** like CLI and SDKs for Python, Typescript, iOS, and Android.
@@ -125,34 +125,34 @@ By reducing friction and complexity, Llama Stack empowers developers to focus on
 Here is a list of the various API providers and available distributions that can help developers get started easily with Llama Stack.
 Please checkout for [full list](https://llamastack.github.io/docs/providers)
 
-| API Provider Builder | Environments | Agents | Inference | VectorIO | Safety | Telemetry | Post Training | Eval | DatasetIO |
-|:--------------------:|:------------:|:------:|:---------:|:--------:|:------:|:---------:|:-------------:|:----:|:--------:|
-|    Meta Reference    | Single Node | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-|      SambaNova       | Hosted | | ✅ | | ✅ | | | | |
-|       Cerebras       | Hosted | | ✅ | | | | | | |
-|      Fireworks       | Hosted | ✅ | ✅ | ✅ | | | | | |
-|     AWS Bedrock      | Hosted | | ✅ | | ✅ | | | | |
-|       Together       | Hosted | ✅ | ✅ | | ✅ | | | | |
-|         Groq         | Hosted | | ✅ | | | | | | |
-|        Ollama        | Single Node | | ✅ | | | | | | |
-|         TGI          | Hosted/Single Node | | ✅ | | | | | | |
-|      NVIDIA NIM      | Hosted/Single Node | | ✅ | | ✅ | | | | |
-|       ChromaDB       | Hosted/Single Node | | | ✅ | | | | | |
-|        Milvus        | Hosted/Single Node | | | ✅ | | | | | |
-|        Qdrant        | Hosted/Single Node | | | ✅ | | | | | |
-|       Weaviate       | Hosted/Single Node | | | ✅ | | | | | |
-|      SQLite-vec      | Single Node | | | ✅ | | | | | |
-|      PG Vector       | Single Node | | | ✅ | | | | | |
-|  PyTorch ExecuTorch  | On-device iOS | ✅ | ✅ | | | | | | |
-|         vLLM         | Single Node | | ✅ | | | | | | |
-|        OpenAI        | Hosted | | ✅ | | | | | | |
-|      Anthropic       | Hosted | | ✅ | | | | | | |
-|        Gemini        | Hosted | | ✅ | | | | | | |
-|       WatsonX        | Hosted | | ✅ | | | | | | |
-|     HuggingFace      | Single Node | | | | | | ✅ | | ✅ |
-|      TorchTune       | Single Node | | | | | | ✅ | | |
-|     NVIDIA NEMO      | Hosted | | ✅ | ✅ | | | ✅ | ✅ | ✅ |
-|        NVIDIA        | Hosted | | | | | | ✅ | ✅ | ✅ |
+| API Provider Builder | Environments | Agents | Inference | VectorIO | Safety | Post Training | Eval | DatasetIO |
+|:--------------------:|:------------:|:------:|:---------:|:--------:|:------:|:-------------:|:----:|:--------:|
+|    Meta Reference    | Single Node | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|      SambaNova       | Hosted | | ✅ | | ✅ | | | |
+|       Cerebras       | Hosted | | ✅ | | | | | |
+|      Fireworks       | Hosted | ✅ | ✅ | ✅ | | | | |
+|     AWS Bedrock      | Hosted | | ✅ | | ✅ | | | |
+|       Together       | Hosted | ✅ | ✅ | | ✅ | | | |
+|         Groq         | Hosted | | ✅ | | | | | |
+|        Ollama        | Single Node | | ✅ | | | | | |
+|         TGI          | Hosted/Single Node | | ✅ | | | | | |
+|      NVIDIA NIM      | Hosted/Single Node | | ✅ | | ✅ | | | |
+|       ChromaDB       | Hosted/Single Node | | | ✅ | | | | |
+|        Milvus        | Hosted/Single Node | | | ✅ | | | | |
+|        Qdrant        | Hosted/Single Node | | | ✅ | | | | |
+|       Weaviate       | Hosted/Single Node | | | ✅ | | | | |
+|      SQLite-vec      | Single Node | | | ✅ | | | | |
+|      PG Vector       | Single Node | | | ✅ | | | | |
+|  PyTorch ExecuTorch  | On-device iOS | ✅ | ✅ | | | | | |
+|         vLLM         | Single Node | | ✅ | | | | | |
+|        OpenAI        | Hosted | | ✅ | | | | | |
+|      Anthropic       | Hosted | | ✅ | | | | | |
+|        Gemini        | Hosted | | ✅ | | | | | |
+|       WatsonX        | Hosted | | ✅ | | | | | |
+|     HuggingFace      | Single Node | | | | | ✅ | | ✅ |
+|      TorchTune       | Single Node | | | | | ✅ | | |
+|     NVIDIA NEMO      | Hosted | | ✅ | ✅ | | ✅ | ✅ | ✅ |
+|        NVIDIA        | Hosted | | | | | ✅ | ✅ | ✅ |
 
 > **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/docs/providers/external) documentation.
 
