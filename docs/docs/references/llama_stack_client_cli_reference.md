@@ -78,8 +78,6 @@ llama-stack-client providers list
 +-----------+----------------+-----------------+
 | agents    | meta-reference | meta-reference  |
 +-----------+----------------+-----------------+
-| telemetry | meta-reference | meta-reference  |
-+-----------+----------------+-----------------+
 | safety    | meta-reference | meta-reference  |
 +-----------+----------------+-----------------+
 ```
