@@ -1,0 +1,68 @@
+---
+id: register-a-tool-group
+title: "Register a tool group."
+description: "Register a tool group."
+sidebar_label: "Register a tool group."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81uGzcQfpUBT60hy06QIIluzk/boA5s2MqhsI1gxB3tMuGSmyFXtiDo2Lfo0/VJiiF3rZXtuE7RSwDrIK24nP/vmyFXiik03gUKarJST/f35aegoNk00XinJurod7UeqWd3vZpWBExfWwoRLjGAcQu0pgDPUKOde66pUCOlvYvkoshj01ijUeT3PgdRslJBV1SjPMVlQ2qi/Owz6ahGqmHfEEeTvQsRYxsG+4yLVBKr0Q23fptOjyHvBu0LEv+jiZYGsiGyceUt0XfMniFtHgFCqDxHCG1dIy/BzyFWBJT2XFZGV2By0GzQRZh7BnTd+2RnLfojGvtQy3m3mLbelcRQtTW6XSYscGYJBjJb7ogl40JEpx8Q5U9H6Qntz3AAH08Ou2A0OpgRtIEKiB6YIhtaENSeCYyTeqbKAc58G5Px0JA2c6PBa90yk9N0w6/1SGFRmGzveFDQOdpAIyX4MUyFmpz1Fe6rdZ28i+v65TR9I3k9lmHOvk4+HBy/H8OJb8vKLmHurfWXAU5+eQMvXu6/GEvS6ArrJiOjx9ez/f2NvddYwEmG+MafByJ/vZbonz19dTdztDXkIlQYIMhD9B5qdMtesWgFhNIsyAHWvnUx5dbU9EiqR1L9YKR6+mpjb+o9fBCkd8wKQ2r94VuocEFAV5qokLQJ2TASWFObOIZjSxgIIi8BSzQOLEbicce359+aVIF4QQzktFCJmAoBVuvoqiEdqeiS+0itR2r9UNR6PpxX7wXZDi2cZrRv7Hf0OrgN+T4ZxRiOWoZIWKepNCNy4Hw0c0NFT6+C5tjaeJti9yl+JNUjqX4sUu3fZe0BFEosEahhGSSaqff2V/ZtEySAbYdPqDQhEgPK2c9CKfvGAnlkrCkSi4qLnB4K8bUvluLj/0QlsZlMfjLFv8NFJuj7t31dN/5mkORAUjIb9gtTEP8Hrb2o6GylhEKhLWvJQq2bT+SKxpuchPvDbNk8zA/hQH4NSbU8RJ9PHxR8y5q+D8lieYDajyeHt+xm5jHNKdMmeqCrroN3ZU4hI5fhrlDv9mWlvKOjuZqcXUu41lq1Hl3/n3lvCd1wybX1jHi40iVrsILMuBwudJ6sL9a3QyuMTr7lrolctjW5GCTIBkPok7tV3e/J7xaAt4E3SHvPsmsm9te5xNONvsgtpSAaJo1RljqbNcXKF2qiGp9ugQ3GSk3U3uLJ3rUL0rDyATOktLcsnaKKsZns7aFb7lY+RCp2rcUad0NE/WWsfa3WFyKnWzZxmQTf9vP17ELeCalPNvR/t+lU2/TdAHuLf5vlm6RJtNhUuEfYOs2QuU8Wugweis9wKj7DadfrU8tRIyUB53ovntzBKhmNYWtI4HBsDTXHCmPfAcK5gxsfhEDp/tsHEQBduhsYBu059/1CSCtHAp6jppCVItO5k97tOQ2128pnco+3tCDGsvfqgy/IhvG5O3c7O3//9SecTg9eH77b2ZnAMfuiTdhOQ3kpIybApYkVzFB/uUQuQPu6wWhmxpq4hLJFRheJQu6RPsQaU7d2WNN9s2Aro4Pe/22JjpmRruJeY9EIyTMeVx10z3KxBuC9GCkBqLxarWYY6CPb9VqWv7bEyzyG0hFnJpA4E7pXhAVxAu0XWqqJepN9252KA7Ldtqln3JxR0j6yxIHW1MR7914M+Hd8dDpVIzXr5mAtx7qJYrxUo/Q9UWqkfMpV6oJpbaUsurLFUvZmnfL5BxosV2U=
+sidebar_class_name: "post api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Register a tool group."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1/toolgroups"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Register a tool group.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"type":"object","properties":{"toolgroup_id":{"type":"string","description":"The ID of the tool group to register."},"provider_id":{"type":"string","description":"The ID of the provider to use for the tool group."},"mcp_endpoint":{"type":"object","properties":{"uri":{"type":"string","description":"The URL string pointing to the resource"}},"additionalProperties":false,"required":["uri"],"title":"URL","description":"A URL reference to external content."},"args":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]},"description":"A dictionary of arguments to pass to the tool group."}},"additionalProperties":false,"required":["toolgroup_id","provider_id"],"title":"RegisterToolGroupRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"OK"},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

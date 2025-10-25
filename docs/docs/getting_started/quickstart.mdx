@@ -4,6 +4,7 @@ sidebar_label: Quickstart
 sidebar_position: 1
 title: Quickstart
 ---
+import 'prismjs/themes/prism.css';
 
 Get started with Llama Stack in minutes!
 
@@ -24,8 +25,12 @@ ollama run llama3.2:3b --keepalive 60m
 
 #### Step 2: Run the Llama Stack server
 
-```python file=./demo_script.py title="demo_script.py"
-```
+import CodeBlock from '@theme/CodeBlock';
+import DemoScript from '!!raw-loader!./demo_script.py';
+
+<CodeBlock language="python" title="demo_script.py" showLineNumbers>
+{DemoScript}
+</CodeBlock>
 
 We will use `uv` to install dependencies and run the Llama Stack server.
 ```bash

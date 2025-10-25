@@ -150,33 +150,33 @@ description: |
        - alpha=1: Only use vector scores
        - alpha=0.5: Equal weight to both (default)
 
-  Example using RAGQueryConfig with different search modes:
+  Example using FileSearchConfig with different search modes:
 
   ```python
-  from llama_stack.apis.tools import RAGQueryConfig, RRFRanker, WeightedRanker
+  from llama_stack.apis.tools import FileSearchConfig, RRFRanker, WeightedRanker
 
   # Vector search
-  config = RAGQueryConfig(mode="vector", max_chunks=5)
+  config = FileSearchConfig(mode="vector", max_chunks=5)
 
   # Keyword search
-  config = RAGQueryConfig(mode="keyword", max_chunks=5)
+  config = FileSearchConfig(mode="keyword", max_chunks=5)
 
   # Hybrid search with custom RRF ranker
-  config = RAGQueryConfig(
+  config = FileSearchConfig(
       mode="hybrid",
       max_chunks=5,
       ranker=RRFRanker(impact_factor=50.0),  # Custom impact factor
   )
 
   # Hybrid search with weighted ranker
-  config = RAGQueryConfig(
+  config = FileSearchConfig(
       mode="hybrid",
       max_chunks=5,
       ranker=WeightedRanker(alpha=0.7),  # 70% vector, 30% keyword
   )
 
   # Hybrid search with default RRF ranker
-  config = RAGQueryConfig(
+  config = FileSearchConfig(
       mode="hybrid", max_chunks=5
   )  # Will use RRF with impact_factor=60.0
   ```
@@ -355,33 +355,33 @@ Two ranker types are supported:
      - alpha=1: Only use vector scores
      - alpha=0.5: Equal weight to both (default)
 
-Example using RAGQueryConfig with different search modes:
+Example using FileSearchConfig with different search modes:
 
 ```python
-from llama_stack.apis.tools import RAGQueryConfig, RRFRanker, WeightedRanker
+from llama_stack.apis.tools import FileSearchConfig, RRFRanker, WeightedRanker
 
 # Vector search
-config = RAGQueryConfig(mode="vector", max_chunks=5)
+config = FileSearchConfig(mode="vector", max_chunks=5)
 
 # Keyword search
-config = RAGQueryConfig(mode="keyword", max_chunks=5)
+config = FileSearchConfig(mode="keyword", max_chunks=5)
 
 # Hybrid search with custom RRF ranker
-config = RAGQueryConfig(
+config = FileSearchConfig(
     mode="hybrid",
     max_chunks=5,
     ranker=RRFRanker(impact_factor=50.0),  # Custom impact factor
 )
 
 # Hybrid search with weighted ranker
-config = RAGQueryConfig(
+config = FileSearchConfig(
     mode="hybrid",
     max_chunks=5,
     ranker=WeightedRanker(alpha=0.7),  # 70% vector, 30% keyword
 )
 
 # Hybrid search with default RRF ranker
-config = RAGQueryConfig(
+config = FileSearchConfig(
     mode="hybrid", max_chunks=5
 )  # Will use RRF with impact_factor=60.0
 ```

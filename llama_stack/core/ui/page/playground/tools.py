@@ -54,7 +54,7 @@ def tool_chat_page():
             help="List of built-in tools from your llama stack server.",
         )
 
-        if "builtin::rag" in toolgroup_selection:
+        if "builtin::file_search" in toolgroup_selection:
             vector_stores = llama_stack_api.client.vector_stores.list() or []
             if not vector_stores:
                 st.info("No vector databases available for selection.")
@@ -115,9 +115,9 @@ def tool_chat_page():
         )
 
     for i, tool_name in enumerate(toolgroup_selection):
-        if tool_name == "builtin::rag":
+        if tool_name == "builtin::file_search":
             tool_dict = dict(
-                name="builtin::rag",
+                name="builtin::file_search",
                 args={
                     "vector_store_ids": list(selected_vector_stores),
                 },

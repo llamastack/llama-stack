@@ -20,7 +20,7 @@
               "id": "call_sAUKkfhm8BVYy8iVEtPfbhJq",
               "type": "function",
               "function": {
-                "name": "knowledge_search",
+                "name": "file_search",
                 "arguments": "{\"query\":\"Llama 4 Maverick model number of experts\"}"
               }
             }
@@ -32,7 +32,7 @@
           "content": [
             {
               "type": "text",
-              "text": "knowledge_search tool found 2 chunks:\nBEGIN of knowledge_search tool results.\n"
+              "text": "file_search tool found 2 chunks:\nBEGIN of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -44,7 +44,7 @@
             },
             {
               "type": "text",
-              "text": "END of knowledge_search tool results.\n"
+              "text": "END of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -61,7 +61,7 @@
         {
           "type": "function",
           "function": {
-            "name": "knowledge_search",
+            "name": "file_search",
             "description": "Search for information in a database.",
             "parameters": {
               "type": "object",

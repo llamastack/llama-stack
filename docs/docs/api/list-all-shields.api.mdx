@@ -1,0 +1,68 @@
+---
+id: list-all-shields
+title: "List all shields."
+description: "List all shields."
+sidebar_label: "List all shields."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1uGzcQfpUBT62xlp0gQRrdnDRtAySIYTuHQjaMETnSMuaSG3JWtiDo2Lfo0/VJiuGupJUspw7QSwDrsivuDOfv+7g7s1CRUh18oqSGC/X8+FguhpKOtmYbvBqqE/hgE5+XlpxJZ534QBVKB8/kWTSwrp3VKBpHX5KoLVTSJVUodzyvSQ1VGH8hzapQdQw1RbatUYPcl8IYca4KZZmq9N/a1pBnO7EUe7KJo/VTtczCM2soXkdKoYmarq35tuADz9uF3QeFIt9UajhSVTDkVKFSzpMq1Iw0h3idOERSRY4ykfifdBDd60njdU5xocbkdVlhvFGF4hBcd7mextDUbchVzeoq5zyx2F+ZMTTBxu0s9ct3URKsggfxvgB0tzhP0ClI8Bhxf7LRGCsboTvdSnvw9GmihqO1hm+cU8ti/X8cgiP0/SXfVGOK/ZV1eneq31voPFleLXcD++lT3Xr2M7wNfmKnTcwAhBwNMcUEkxCBS1qHunwoogm6RIWK9LWxkYxUtIesbXh0YLgqFFt24uT5/tSfQMIJ8bwz3ytDiQwaPYwJmkQGOIAuSd9Ax6mBWn6Xr5lDPYf2MFZ2XBbqxT6Ktxj52lBiuMUE1s/QWQMhQoVuEmJF5v8jfGLkpo8265mmOc3bbv1xcXEKrTToYCjzsI3wPhG3Vd/FKKUX4QIQUhkiQ2qqCuMcwiSDgrLMbWl1CbYNOlr0nFGDvnue7WTwMVr3WMuttJh2wU8pQtlU6A8jocGxI+jpbLkjlqxPjF4/IsoeBU7g89mHLpgdZEXiaGlGUIVIYL3Us2UKjkPDLUFq0nZiNQStmxjJa9rx63vg2FV4Va118noIzWl6IHmrdxJMYqiyDyen7wdwFppp6eYwCc6F2wRnv72FV78cvxpI0ugOq7pFxgpfL46PN/beoIGzFuIbfx6J/I45z1/vZ452ljxDiQmS3HAIUKGfrzaWXQFhamfkAavQeM65tRU9keqJVD8YqZ6/3ti7CAE+CtI7ZqU+tf4MDZQ4I6A7TWQkbUI2ZAJnK8sDOHWEiYDjHHCK1oNDpjjo+PbyoTdVojijCOS1UIkiGQFW4+muJs1kuuQ+UeuJWj8UtV7231fvBdkeHZy3aN/Y7+h1ch/yq2SYAXxqIjBhld9KYyIPPuSPWbOi17pxuNfvfWPjJ1I9kerHItXxPmuPoFBmiUANp0mi6bop8X7bW2m1AJ3rmrwkk5FNB6qGo6xRR9LIkpguUxVxGYwaqmkeCtTIpRqqo9mzo24fmRRk6qfcZjdRPC6Z6+HREfr5YRkSkzl0Dis8TIz6ZqBDpZZXoqebaHmeFX9d8Xx0Jc+k8hlTq05R9OFc9OG8qz92Ywkx3gY5e7ZnriB0SVvAwT6U+zvnhrfrodOlh50fQqL8TUze1MF6ToA+fy/YCDrEFgvG+inIMREnqCm1m2KkSy/1DDED/f7mY/m2dzSjiNOVVx9lWpMGl/7SHxz88/dfcH5x8ubDu4ODIZzGYJo8mMlEnQvsEtxaLmGM+uYWowEdqhrZjq2zPIdpgxE9E6UMwjokrjAfhh4regAiW8lcbE7VvcLdAcB0x0e1QytjlRYRiw45o7ZEaYNSwYesLxZjTPQ5uuVSlr82FOctKvNJNxYUjGS6UhIamaKNFuqG5kIPrakWcM7QNXk4s3veC6DWQP793YVaLv8FZwoajw==
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List all shields."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/shields"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List all shields.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListShieldsResponse.","content":{"application/json":{"schema":{"type":"object","properties":{"data":{"type":"array","items":{"type":"object","properties":{"identifier":{"type":"string"},"provider_resource_id":{"type":"string"},"provider_id":{"type":"string"},"type":{"type":"string","enum":["model","shield","vector_store","dataset","scoring_function","benchmark","tool","tool_group","prompt"],"const":"shield","default":"shield","description":"The resource type, always shield"},"params":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]},"description":"(Optional) Configuration parameters for the shield"}},"additionalProperties":false,"required":["identifier","provider_id","type"],"title":"Shield","description":"A safety shield resource that can be used to check content."}}},"additionalProperties":false,"required":["data"],"title":"ListShieldsResponse"}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

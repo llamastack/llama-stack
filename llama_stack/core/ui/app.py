@@ -23,7 +23,7 @@ def main():
 
     # Playground pages
     chat_page = st.Page("page/playground/chat.py", title="Chat", icon="💬", default=True)
-    rag_page = st.Page("page/playground/rag.py", title="RAG", icon="💬", default=False)
+    rag_page = st.Page("page/playground/file_search.py", title="RAG", icon="💬", default=False)
     tool_page = st.Page("page/playground/tools.py", title="Tools", icon="🛠", default=False)
 
     # Distribution pages

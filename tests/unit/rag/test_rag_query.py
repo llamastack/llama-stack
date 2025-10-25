@@ -8,25 +8,25 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.apis.tools.rag_tool import RAGQueryConfig
+from llama_stack.apis.tools.file_search_tool import FileSearchConfig
 from llama_stack.apis.vector_io import (
     Chunk,
     ChunkMetadata,
     QueryChunksResponse,
 )
-from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
+from llama_stack.providers.inline.tool_runtime.file_search.file_search import FileSearchToolRuntimeImpl
 
 
 class TestRagQuery:
     async def test_query_raises_on_empty_vector_store_ids(self):
-        rag_tool = MemoryToolRuntimeImpl(
+        rag_tool = FileSearchToolRuntimeImpl(
             config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         with pytest.raises(ValueError):
             await rag_tool.query(content=MagicMock(), vector_db_ids=[])
 
     async def test_query_chunk_metadata_handling(self):
-        rag_tool = MemoryToolRuntimeImpl(
+        rag_tool = FileSearchToolRuntimeImpl(
             config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         content = "test query content"
@@ -45,7 +45,7 @@ class TestRagQuery:
                 "key1": "value1",
                 "token_count": 10,
                 "metadata_token_count": 5,
-                # Note this is inserted into `metadata` during MemoryToolRuntimeImpl().insert()
+                # Note this is inserted into `metadata` during FileSearchToolRuntimeImpl().insert()
                 "document_id": "doc1",
             },
             stored_chunk_id="chunk1",
@@ -66,24 +66,24 @@ class TestRagQuery:
 
     async def test_query_raises_incorrect_mode(self):
         with pytest.raises(ValueError):
-            RAGQueryConfig(mode="invalid_mode")
+            FileSearchConfig(mode="invalid_mode")
 
     async def test_query_accepts_valid_modes(self):
-        default_config = RAGQueryConfig()  # Test default (vector)
+        default_config = FileSearchConfig()  # Test default (vector)
         assert default_config.mode == "vector"
-        vector_config = RAGQueryConfig(mode="vector")  # Test vector
+        vector_config = FileSearchConfig(mode="vector")  # Test vector
         assert vector_config.mode == "vector"
-        keyword_config = RAGQueryConfig(mode="keyword")  # Test keyword
+        keyword_config = FileSearchConfig(mode="keyword")  # Test keyword
         assert keyword_config.mode == "keyword"
-        hybrid_config = RAGQueryConfig(mode="hybrid")  # Test hybrid
+        hybrid_config = FileSearchConfig(mode="hybrid")  # Test hybrid
         assert hybrid_config.mode == "hybrid"
 
         # Test that invalid mode raises an error
         with pytest.raises(ValueError):
-            RAGQueryConfig(mode="wrong_mode")
+            FileSearchConfig(mode="wrong_mode")
 
     async def test_query_adds_vector_store_id_to_chunk_metadata(self):
-        rag_tool = MemoryToolRuntimeImpl(
+        rag_tool = FileSearchToolRuntimeImpl(
             config=MagicMock(),
             vector_io_api=MagicMock(),
             inference_api=MagicMock(),

@@ -104,12 +104,12 @@ class ToolExecutor:
             citation_files=result.metadata.get("citation_files") if result and result.metadata else None,
         )
 
-    async def _execute_knowledge_search_via_vector_store(
+    async def _execute_file_search_via_vector_store(
         self,
         query: str,
         response_file_search_tool: OpenAIResponseInputToolFileSearch,
     ) -> ToolInvocationResult:
-        """Execute knowledge search using vector_stores.search API with filters support."""
+        """Execute file search using vector_stores.search API with filters support."""
         search_results = []
 
         # Create search tasks for all vector stores
@@ -139,7 +139,7 @@ class ToolExecutor:
         content_items = []
         content_items.append(
             TextContentItem(
-                text=f"knowledge_search tool found {len(search_results)} chunks:\nBEGIN of knowledge_search tool results.\n"
+                text=f"file_search tool found {len(search_results)} chunks:\nBEGIN of file_search tool results.\n"
             )
         )
 
@@ -158,7 +158,7 @@ class ToolExecutor:
             content_items.append(TextContentItem(text=text_content))
             unique_files.add(file_id)
 
-        content_items.append(TextContentItem(text="END of knowledge_search tool results.\n"))
+        content_items.append(TextContentItem(text="END of file_search tool results.\n"))
 
         citation_instruction = ""
         if unique_files:
@@ -224,7 +224,7 @@ class ToolExecutor:
                 output_index=output_index,
                 sequence_number=sequence_number,
             )
-        elif function_name == "knowledge_search":
+        elif function_name == "file_search":
             sequence_number += 1
             progress_event = OpenAIResponseObjectStreamResponseFileSearchCallInProgress(
                 item_id=item_id,
@@ -246,7 +246,7 @@ class ToolExecutor:
             yield ToolExecutionResult(stream_event=searching_event, sequence_number=sequence_number)
 
         # For file search, emit searching event
-        if function_name == "knowledge_search":
+        if function_name == "file_search":
             sequence_number += 1
             searching_event = OpenAIResponseObjectStreamResponseFileSearchCallSearching(
                 item_id=item_id,
@@ -283,17 +283,17 @@ class ToolExecutor:
                         tool_name=function_name,
                         kwargs=tool_kwargs,
                     )
-            elif function_name == "knowledge_search":
+            elif function_name == "file_search":
                 response_file_search_tool = next(
                     (t for t in ctx.response_tools if isinstance(t, OpenAIResponseInputToolFileSearch)),
                     None,
                 )
                 if response_file_search_tool:
-                    # Use vector_stores.search API instead of knowledge_search tool
+                    # Use vector_stores.search API instead of file_search tool
                     # to support filters and ranking_options
                     query = tool_kwargs.get("query", "")
-                    async with tracing.span("knowledge_search", {}):
-                        result = await self._execute_knowledge_search_via_vector_store(
+                    async with tracing.span("file_search", {}):
+                        result = await self._execute_file_search_via_vector_store(
                             query=query,
                             response_file_search_tool=response_file_search_tool,
                         )
@@ -341,7 +341,7 @@ class ToolExecutor:
                 output_index=output_index,
                 sequence_number=sequence_number,
             )
-        elif function_name == "knowledge_search":
+        elif function_name == "file_search":
             sequence_number += 1
             completion_event = OpenAIResponseObjectStreamResponseFileSearchCallCompleted(
                 item_id=item_id,
@@ -395,7 +395,7 @@ class ToolExecutor:
                 )
                 if has_error:
                     message.status = "failed"
-            elif function.name == "knowledge_search":
+            elif function.name == "file_search":
                 message = OpenAIResponseOutputMessageFileSearchToolCall(
                     id=item_id,
                     queries=[tool_kwargs.get("query", "")],

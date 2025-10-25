@@ -13,7 +13,7 @@ from aiohttp import hdrs
 from starlette.routing import Route
 
 from llama_stack.apis.datatypes import Api, ExternalApiSpec
-from llama_stack.apis.tools import RAGToolRuntime, SpecialToolGroup
+from llama_stack.apis.tools import FileSearchToolRuntime, SpecialToolGroup
 from llama_stack.core.resolver import api_protocol_map
 from llama_stack.schema_utils import WebMethod
 
@@ -27,7 +27,7 @@ RouteMatch = tuple[EndpointFunc, PathParams, str, WebMethod]
 
 def toolgroup_protocol_map():
     return {
-        SpecialToolGroup.rag_tool: RAGToolRuntime,
+        SpecialToolGroup.rag_tool: FileSearchToolRuntime,
     }
 
 

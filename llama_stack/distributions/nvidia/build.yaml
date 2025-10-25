@@ -20,7 +20,7 @@ distribution_spec:
     scoring:
     - provider_type: inline::basic
     tool_runtime:
-    - provider_type: inline::rag-runtime
+    - provider_type: inline::file_search-runtime
     files:
     - provider_type: inline::localfs
 image_type: venv

@@ -500,7 +500,7 @@ rag_agent = Agent(
     instructions="You are a helpful assistant. Use the RAG tool to answer questions as needed.",
     tools=[
         {
-            "name": "builtin::rag/knowledge_search",
+            "name": "builtin::file_search/knowledge_search",
             "args": {"vector_db_ids": [vector_db_id]},
         }
     ],

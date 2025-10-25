@@ -1,0 +1,68 @@
+---
+id: create-a-new-session-for-an-agent
+title: "Create a new session for an agent."
+description: "Create a new session for an agent."
+sidebar_label: "Create a new session for an agent."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1uGzcQfpUBT4mxkpwgQRrdlMRFDSSNIMtAC1soRuRIy2SXXJNcyYKgZ+mxQJ+uj1AMuWutI7txilwCWBfLu+T8fd835GgrHPnKGk9eDLfi+fEx/1HkpdNV0NaIoRgZGC3JhDPyXlvz1hEGmjTb+iIT0ppAJvBOrKpCS+Sdg0+et2+FlzmVyN/CpiIxFHb+iWQQmaicrcgFnZz7ZP8PrTprfXDaLEX2RUznRl/VBFqRCXqhycHCOgg5gYzhKWisid0uE6iU5o1YjDseF1h4yoSjq1o7UmJ40Q1hlomgQ8Ex3J/9QVztC3AUamdIwTonk4LSZgkIhtaAbLCNsC92Ow7yxV21n+Zs6qomH2CNHrRZYaEVWAclFgvrSlLfEYGAofadddoEWpI7SPOX6XQMaTVIq0jsbqr1NeROnGOkeHEGCD63LoCvyxLdBuwiYkhxzTrXMgedknYaTYggo2neRz87th9QFw/1nFaz68KaJTnI6xJNzxEqnBcEnT23wmFP2viARj4gyycfq0S4pzCC88n7JhmJBuYEtScFwTJJnKYVQWkdgTaMZ0QOcG7rEJ37iqReaAlWyto5MpK+iOubCJ4QbtG6KV6H7bFM9xSvbRawcLaMMYzGp32Y2HqZFxtY2KKwaw+Tn9/Cq5+OX/W5aHSNZZWY0fLrxfHx3t8bVDBJFN/H80DmN8p5/vpu5chCs9By9OD5S7AWSjSb1jBbBYSlXpEBLG1tQqytLulRVI+i+sFE9fz13t/UWvjATG+U5bvS+t3WkOOKgK4lkeKysdgwEBS61KEP44LQEwS3AVyiNlBgINeeVC/vO6k8uRU5ICNZSuRIMbFqQ9cVST6UqSnDo7QepfUDSetl97w6ZWYbLOAssX3vv5HX6JDybTFUHz7WDgJhGU+lOZEBY+MVVrXyUrTAugh3XsTvNfwoqkdR/ViiOr7L2wMkFFXCVMOl52zidOY5+NvBpkmtmbiaWavlThzAeHSt0GFJgRyb2gqDJccTX/MQyGiLoagw5AfF4APv9F0LQxrpgm3mz4Ta3in72kMQXE3ZoSAbGu12s7SYfHhj1YZXfOcRO+X5Nf5yhryyzbHN5ybL/v+brqP3DtkSUt0pu50HItC36xa1XjmSPOXfuCkp5FYxVDaOERGxoRisnmFR5TiI8PjBtkV2N2h/H8hEurUkAtSO6ZeHUA0HAzSbXm59INUrCiyx5wPKz31pS8EQeZK102ETN75rm/bFjN8xMJM9hCcd+t+C4AZzZtrCRkyaqrxnl3DGLuGs0X/qCz04ua7I6ZJMwILVx2LmHBJuq2d3QMkt1N9qJthtb11vIccAlbMrrchfGvjig+ApzklkVGW1CR7QxDukdiCtS/1B8c8dfHS4BUryySg6ujSsceti8zs0Pud5r6AVOVy2UX2wigrfvzSX5ujonz//+htOfhufTE4/nPw6Hb0/OhrC2FHPUbq0cjngSQN8Bqtncwr4NPkvcQMyR7MkmNOC++2cpC05VB+488dmxRwqMQqrQelBveRWxTuSfdjuRoqBrsOgKlAbjiTScduw+UI0SYksdShGfdjpVS2lZ5lg2vKO7XaOns5dsdvx46uaHPN1lol4ms6ZaRdbobTn73s93ZvLk0mjxqfwzQ3wzhSbh2g2zGEsav5PZOIzbbqdeDfbZSInVORixOn12xRXb8pG9tsPWuQua3eMpKQq/OfaWaedjD+eTUUm5k0bLvmaMxQO19zPcZ1CtbFOscHGZ1tRoFnWuOS1ySZ//gVFyn38
+sidebar_class_name: "post api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Create a new session for an agent."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1alpha/agents/{agent_id}/session"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Create a new session for an agent.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"agent_id","in":"path","description":"The ID of the agent to create the session for.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"type":"object","properties":{"session_name":{"type":"string","description":"The name of the session to create."}},"additionalProperties":false,"required":["session_name"],"title":"CreateAgentSessionRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"An AgentSessionCreateResponse.","content":{"application/json":{"schema":{"type":"object","properties":{"session_id":{"type":"string","description":"Unique identifier for the created session"}},"additionalProperties":false,"required":["session_id"],"title":"AgentSessionCreateResponse","description":"Response returned when creating a new agent session."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

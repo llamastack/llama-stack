@@ -1,0 +1,68 @@
+---
+id: list-all-agents
+title: "List all agents."
+description: "List all agents."
+sidebar_label: "List all agents."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1uGzcQfpUBT4khy06QIIluauu2AZxGcBy0hW0EI+5olwmX3JCzigVDz9JjgT5dH6EYciWtLdlxgF4CWBdJu/PzzfD7yJ29UoFi412kqEZX6unhoXwVFHUwDRvv1EiNYYKlcchUnHTGQzVQ2jsmx2KPTWONRrE/+BjF6UpFXVGN8osXDamR8tOPpFkNVBN8Q4FNTlkg960wBFyogTJMddzljUVhJBHaybU43tHbmRqdrT1ca61aDtb/p95bQte/5Np6SqF/JXIwruxfyYB6Fzoky4vlcnCjU6cVgTWRwc8gFQAzH4ArAt2GQI6hwZLUcqAqjB9qH6hX4QrfzaC/V8QVpTCBAAOBOHbxcY7G4tQS4IyTkYkQiSVHG2wvfFfZLsjvT44TUNSaYjSuzGGkEiVF7m75DG2kgQr0uTWBCjU6y2vZK+5ioNiwlfRbFNpCMoaSHAWjpUnZFlbkBK6QYeat9V8iIERTN5YEdI08VMulwHy2i7xSn0CkyPAFIxg3R2sK8AFqtBKAiv+PzJGR2z5tjWMqKWwV++vp6QSyNWhfJE50rfraih2FIKQS44G0ovKBIbZ1jWEhxBO6UbL5UhldgclFB4OO8zK77n7Kk0jMaO7BlZw5W0tq611JAaq2RrcfCItExJ7PNTiSybjI6PQ9qnz0tsmUewzjRNBcjEYHU4I2UgHsIRAHQ/OVJFwmhGTGqW85JY8NaTMzGrzOKtR0A9e3ULxb4dVqrZvXo3pq0y3NWxN6FnydMIwnr4dw4tuysos1w09+/hFevDx8MZSm0SUK2/v8enZ4uMn3AxZwkim+wXNP5nfKefpqt3K0NbJrVSibimNg76FGt1gFlqiAUJo5OcDaty7tfWxqehDVg6i+M1E9fbXJd+o9vBGmd8qKfWn96VuocE5Al5qokLaJ2JDl+K8ND2FiCeXYCgvAEo0Di0xhdVI9v+2kihTmFICcFilRoEKI1Tq6bEjLgUhdGx6k9SCt70haz/vn1WthtkML7zLbN/k7eY23Kb9qRjGEt20AJqzTqTQlcuA8m5mhYiWvgmbYWt4xydwR+EFUD6L6vkR1uCvbPSSUVCJUwzJKNeOSHEcBfx3ssUyyaC1gMpCZv8GANTGFmCZth3VePQz8wbiCLmVyF9/PLYXFzmEzmcmyJa9UfTfvyYpJRyTRpttd+7fEtxLVUkbzDkg6fL8OIY/9sv65so5EbXDfmjr1rAmkZVpdO9TElS/USJWUdgfkSo3UwfwJ2qbCg5xUDVQ+7XMr07CuKuZmdHCAbrFf+chU7FuLNe5HRv1pqH2tJGUk3QbDi+T402qzO7uQe0L/BLVjxrH4wzvxh3edCHKr9+HosqFganKMVigomARQ7tT8yY7myT4SrykK+xrvZ0sjexP83BQUzx3c+KC8phA/ckXjjSwDuvQgZQJoH7JICnkbIf0OM9QUc1AMdO6E6D6kHWA7+FSGHktzCliuUL3xBdk4PHfnbm/v37/+/geO/pgcnbx+c/Tb6fh4b28Ek0D7gfKTm7QDHnVLNoD5kykxPs75a1yArtCVBFOayaYzJe1rgRpZtr+k2MZHrjGdHB09dwjqWn+vNifQLtuOfUyXfNBYNK73kidz7Ex1gOU92VrVwiS5d3U1xUjvg10u5XLWh1CoMFFQbwh8K6r7C3gn2E+02Nou5mhbsUyv2L4Nyd06vgPBap/Y5L6QP8FI8qSkgaoICwqpP9lprDU1fa+tZwSJstb+L0enarn8DwJqdDs=
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List all agents."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/agents"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List all agents.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"start_index","in":"query","description":"The index to start the pagination from.","required":false,"schema":{"type":"integer"}},{"name":"limit","in":"query","description":"The number of agents to return.","required":false,"schema":{"type":"integer"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A PaginatedResponse.","content":{"application/json":{"schema":{"type":"object","properties":{"data":{"type":"array","items":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]}},"description":"The list of items for the current page"},"has_more":{"type":"boolean","description":"Whether there are more items available after this set"},"url":{"type":"string","description":"The URL for accessing this list"}},"additionalProperties":false,"required":["data","has_more"],"title":"PaginatedResponse","description":"A generic paginated response that follows a simple format."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

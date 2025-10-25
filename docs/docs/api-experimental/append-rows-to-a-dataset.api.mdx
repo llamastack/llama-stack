@@ -1,0 +1,68 @@
+---
+id: append-rows-to-a-dataset
+title: "Append rows to a dataset."
+description: "Append rows to a dataset."
+sidebar_label: "Append rows to a dataset."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBnhKDkpwgQRrdnMRFjSa1ICtAC1sohsuRuMlyl9ldyhYEPUuPBfp0fYRidsmIthTDAXoJYF1EUfO3M9/3DbkRjnxtjScvxhvx/PiYvwry0qk6KGvEWJz/KraZeHHor1lJ4OhLQz7ANXpQZoVaFWAdVKgX1lVUiExIawKZwP5Y11pJZP/RJ89BNsLLkirkq7CuSYyFzT+RDCITtbM1uaBSdT5gaHzPTplAS3Iiu1PWL7PZBJI1SFsQ1x9U0NTz9cEps9xzPXXOOojGGSD40roAvqkqdGuwCwglAUWb61LJElQ6tFNoAiysAzTt/zHPluMHVPqhmZM1p9bWLMlB2VRoBo6wwFwT9HxulcOZlPEBjXzAKZ+cxyvUT+EEPk7ft4eRaCAnaDwVECw4Ck7RiqCyjkAZnmecHGBumxCT+5qkWigJVsrGOTKS7tS1zQQWhUr5Jr2BLlB7ygTjRzkqxPiym3A3ra/Nm3+dX2rTN5rXYRkWzlaxhpPJ2RCmtlmWeg0Lq7W99jD9+S28+un41ZCbRjdY1QkZHb5eHB/v8r3BAqYJ4rt6Hoj87ZZP/+L568PMkVqRCVCiB88XwVqo0Ky7wBwVEJZqRQawso0JsbeqokdSPZLqByPV89e7fDNr4QMjvWWW71PrD9tAiSsCupFEBbeNyYaBQKtKhSFMNKEnCG4NuERlQGMgN2z59vJbm8qTW5EDMpKpRI4KBlZj6KYmGahom/tIrUdq/VDUetnfV2eMbIMaLhLad/lbep3sQ75rRjGE88ZBIKziVsqJDBgb1EJR0dGroAU2OuxT7L7Aj6R6JNWPRarjQ9keQKHIEoYaLj2f5h0G9BTOzrn+O4SpazIFOC4nWEAoku2QQY8OKwrkOMhGGKy4ktbgT8WEUhyjxlDuNYKX3dm7bgStU0yRMsZ9mrJyrl3zg2so26diC6Dtdp6MyYc3tlizxf/Eaq6mZ4XO4ZqPGKjyh7wPg2kjrKHzRexY62EarcU2+/o7t1YTmv4t01Q5uf6d7rzZnYJ6N9pKtvMkiXsvxd1M24bb/iSG38eH2Jse+BNspvbad+8lEXC3pxirqh1JDHyrDVtRKG3BsLHxdSaiZyxGq2c5BRy19Sk7SnUPOPVos0PdVmQiPUUlWDaO6VCGUI9HIzTrQWl9oGKgNVY48AHl56G0lWDgeJKNU2EdHd91S+Ryzv8xXKY7YJ3u6JiAcbnZzqO2LWxEQ9uJ95wGLjgNXLQalLRpAKc3NTlVkQmoWQFYULjuNKPVswOkYRn3twQN+xLbzxZKDFA7u1IF+SsDdz4ITDi7ADJFbZUJHjDxTjmQ1iWNKpRZAq8vt0BJPgVFR1eGdca6KMD7wXN+59S0IofLrqoPtiDth1fmyhwd/fvX3//A6e+T0+nZh9PfZifvj47GMHE0cJQenLkd8GT1DHVdYgZp+k9T/grXIEs0S4KcFqz5OUlbcak+8PaJgsn4qTBSvJWm+8TsVqN7mnGvU0u0QDdhVGtUzNkEuE2L20uRKucMHXJZG3bYFZkY9zRzngkGKHtuNjl6+uj0dsu3vzTkGJnzTMQ9njO+LjeiUJ6vdwz65lGeTFv+PYXvlN+DB+10x7AMrlA3/Etk4jOtb++BSIySsCAXK04Gb1NdgxmH2QXYk2hWtORxIiXV4V7beU9AJucXM5GJvF0DFT9gjYXDa94neJ2KtbFPSeD53kZoNMsGl2ybYvLnPxaJJpg=
+sidebar_class_name: "post api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Append rows to a dataset."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1beta/datasetio/append-rows/{dataset_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Append rows to a dataset.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"dataset_id","in":"path","description":"The ID of the dataset to append the rows to.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"type":"object","properties":{"rows":{"type":"array","items":{"type":"object","additionalProperties":{"oneOf":[{"type":"null"},{"type":"boolean"},{"type":"number"},{"type":"string"},{"type":"array"},{"type":"object"}]}},"description":"The rows to append to the dataset."}},"additionalProperties":false,"required":["rows"],"title":"AppendRowsRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"OK"},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

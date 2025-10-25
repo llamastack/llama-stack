@@ -33,7 +33,7 @@ agent = Agent(
     llama_stack_client,
     model="meta-llama/Llama-3-70b-chat",
     instructions="You are a helpful assistant that can use tools to answer questions.",
-    tools=["builtin::code_interpreter", "builtin::rag/knowledge_search"],
+    tools=["builtin::code_interpreter", "builtin::file_search/knowledge_search"],
 )
 ```
 

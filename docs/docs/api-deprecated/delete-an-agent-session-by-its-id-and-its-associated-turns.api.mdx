@@ -1,0 +1,72 @@
+---
+id: delete-an-agent-session-by-its-id-and-its-associated-turns
+title: "Delete an agent session by its ID and its associated turns."
+description: "Delete an agent session by its ID and its associated turns."
+sidebar_label: "Delete an agent session by its ID and its associated turns."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81uGzcQfpUBT4mxlpwgQRvd3EhFjTqI4TiHwjaKETnSMuGSG3JWsSDsM/TeUx+jz9MX6CsUw139OHIKp+klgH3xapfDb+ab7xvurlSkVAefKKnRSj09OpJ/hpKOtmYbvBqp1z+rtlDP7np0URJE+tBQYviICaxfoLMGQoQK3SzEiowqlA6eybPEY107q1Hih++SbLJSSZdUoVzxsiY1UmH6jjSrQtUx1BTZdtklRm7SzjrrmeYUVfFJWj9dXJxBtxp0MCT5s2VHO7GJo/XzvdBJjCFCXlwAQipDZEhNVWFcQpgBlwSU13wsrS7BdkVHi55hFiKg759nnFb2Z7TuvsjdaoF2wc8pQtlU6A8jocGpI9iJuZWOIFmfGL2+R5WPXucrdI/hGN6en/bFaPQwJWgSGeAAkThaWhBUIRJYL/3MnQOchoYzeKpJ25nVELRuYiSv6ZO82kKhMbbDO9tp6AxdokKJfmwko0aX6w6vu7Uh73rTv46mz5C31jLMYqhyDsdnJwM4D828dEuYBefCxwTnP76E774/+m4gpNENVnWnjLW+nh0dbfF+QAPnncS3+dxT+W0r1T97+uJu52hnyTOUmCDJBYcAFfrlemPZFRDmdkEesAqN58ytrejBVA+m+sZM9fTFFu8iBHglSu+dlXat9UtooMQFAd1oIiO0idmQCZytLA/gzBEmAo5LwDlaDw6Z4qD32/PPnVSJ4oIikNdiJYpkRFiNp5uaNJPpyX2w1oO1vilrPd89r05E2R4dvOnUvsXv7XW8L/k1GWYAr5sITFjlU2lK5MEHtjNLZm0vQzNsHO9b7N82fjDVg6m+LVMd3YV2Dwtll4jUcJ6kmuM5eU6S/O1kx+SISZSCsgISpSSsTpdgOcHJGNCbfIkpBW1RoLiJPg3EExixIqYoGCvlscqN7vb41YrfrKDUyOUeT3IWnozXHVoDcwCTc5L9t/3g2FCx785eU21bbNBzHV+G3ZW+Qb6VzyzEL8skU1xH0kLVenlFXAajRqpDyNRxqUZquHgyzPBpuFpn3g578OFqS2WrCtW9OXRcN1EkUDLXo+EQ/fKwDInJHDqHFR4mRv1+oEOlJJ9EuomWlzlwvB6cl9fyTKyUy+hVdirx8Ebi4U1vqM5ohzDe1CViFm9IOh2jiyd3kCwTKd3yJu5Oi10sLpGhjmFhDaUrD5/8ISTKnx3kTR2sF0H6/EpmI+gQO7sZ6+cgkzjOUFPqNsVIV14sE2KeJfubT+XzydGCIs7XWb0KhlwaXPkrf3Dw1+9//P3nbzCenJ1PXh5fTMYHByM4pTnqZWaiA6pwKSMrUhUWZOSradZwEwl6ltIA3spAkI8zO48dFZFm1I8q75Z5DNQhcYX5OOo1/XUuvdWV1fYE/Mpte+Ez3fCwdmi95J5luerVfdmpotO3KtRox5s9ltzdmRfXhRIdS+hqNcVEb6NrW7n9oaEoAr4uVD7ipqLWy5UyNsm12czwz1b76Lz38GO4x+i5s7r+JvqlaB9dI79Uod7T8vbck3n0P2R2j8H0H/LcdKG9bgtVEhqKmcvu8bHWVPNO4N57ksyNzUQbT04nFxPVtv8A/bHhRA==
+sidebar_class_name: "delete api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete an agent session by its ID and its associated turns."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/agents/{agent_id}/session/{session_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Delete an agent session by its ID and its associated turns.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"session_id","in":"path","description":"The ID of the session to delete.","required":true,"schema":{"type":"string"}},{"name":"agent_id","in":"path","description":"The ID of the agent to delete the session for.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"OK"},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

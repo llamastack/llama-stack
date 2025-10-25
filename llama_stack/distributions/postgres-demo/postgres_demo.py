@@ -45,7 +45,7 @@ def get_distribution_template() -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file_search-runtime"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
     }
@@ -67,8 +67,8 @@ def get_distribution_template() -> DistributionTemplate:
             provider_id="tavily-search",
         ),
         ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
+            toolgroup_id="builtin::file_search",
+            provider_id="file_search-runtime",
         ),
     ]
 
