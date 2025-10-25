@@ -44,12 +44,19 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 class MilvusIndex(EmbeddingIndex):
     def __init__(
-        self, client: MilvusClient, collection_name: str, consistency_level="Strong", kvstore: KVStore | None = None
+        self,
+        client: MilvusClient,
+        collection_name: str,
+        consistency_level="Strong",
+        kvstore: KVStore | None = None,
+        distance_metric: str = "COSINE",
     ):
         self.client = client
         self.collection_name = sanitize_collection_name(collection_name)
         self.consistency_level = consistency_level
         self.kvstore = kvstore
+        self._check_distance_metric_support(distance_metric)
+        self.distance_metric = distance_metric
 
     async def initialize(self):
         # MilvusIndex does not require explicit initialization
@@ -260,6 +267,22 @@ class MilvusIndex(EmbeddingIndex):
             logger.error(f"Error deleting chunks from Milvus collection {self.collection_name}: {e}")
             raise
 
+    def _check_distance_metric_support(self, distance_metric: str) -> None:
+        """Check if the distance metric is supported by Milvus.
+
+        Args:
+            distance_metric: The distance metric to check
+
+        Raises:
+            NotImplementedError: If the distance metric is not supported yet
+        """
+        if distance_metric != "COSINE":
+            # TODO: Implement support for other distance metrics in Milvus
+            raise NotImplementedError(
+                f"Distance metric '{distance_metric}' is not yet supported by the Milvus provider. "
+                f"Currently only 'COSINE' is supported. Please use 'COSINE' or switch to a different provider."
+            )
+
 
 class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(
@@ -316,9 +339,15 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             consistency_level = self.config.consistency_level
         else:
             consistency_level = "Strong"
+        distance_metric = vector_store.distance_metric or "COSINE"
         index = VectorStoreWithIndex(
             vector_store=vector_store,
-            index=MilvusIndex(self.client, vector_store.identifier, consistency_level=consistency_level),
+            index=MilvusIndex(
+                self.client,
+                vector_store.identifier,
+                consistency_level=consistency_level,
+                distance_metric=distance_metric,
+            ),
             inference_api=self.inference_api,
         )
 

@@ -45,10 +45,18 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class WeaviateIndex(EmbeddingIndex):
-    def __init__(self, client: weaviate.WeaviateClient, collection_name: str, kvstore: KVStore | None = None):
+    def __init__(
+        self,
+        client: weaviate.WeaviateClient,
+        collection_name: str,
+        kvstore: KVStore | None = None,
+        distance_metric: str = "COSINE",
+    ):
         self.client = client
         self.collection_name = sanitize_collection_name(collection_name, weaviate_format=True)
         self.kvstore = kvstore
+        self._check_distance_metric_support(distance_metric)
+        self.distance_metric = distance_metric
 
     async def initialize(self):
         pass
@@ -81,6 +89,22 @@ class WeaviateIndex(EmbeddingIndex):
         collection = self.client.collections.get(sanitized_collection_name)
         chunk_ids = [chunk.chunk_id for chunk in chunks_for_deletion]
         collection.data.delete_many(where=Filter.by_property("chunk_id").contains_any(chunk_ids))
+
+    def _check_distance_metric_support(self, distance_metric: str) -> None:
+        """Check if the distance metric is supported by Weaviate.
+
+        Args:
+            distance_metric: The distance metric to check
+
+        Raises:
+            NotImplementedError: If the distance metric is not supported yet
+        """
+        if distance_metric != "COSINE":
+            # TODO: Implement support for other distance metrics in Weaviate
+            raise NotImplementedError(
+                f"Distance metric '{distance_metric}' is not yet supported by the Weaviate provider. "
+                f"Currently only 'COSINE' is supported. Please use 'COSINE' or switch to a different provider."
+            )
 
     async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
         """
@@ -329,8 +353,11 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
                 ],
             )
 
+        distance_metric = vector_store.distance_metric or "COSINE"
         self.cache[vector_store.identifier] = VectorStoreWithIndex(
-            vector_store, WeaviateIndex(client=client, collection_name=sanitized_collection_name), self.inference_api
+            vector_store,
+            WeaviateIndex(client=client, collection_name=sanitized_collection_name, distance_metric=distance_metric),
+            self.inference_api,
         )
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:

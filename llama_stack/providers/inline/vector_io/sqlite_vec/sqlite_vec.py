@@ -75,7 +75,14 @@ class SQLiteVecIndex(EmbeddingIndex):
       - An FTS5 table (fts_chunks_{bank_id}) for full-text keyword search.
     """
 
-    def __init__(self, dimension: int, db_path: str, bank_id: str, kvstore: KVStore | None = None):
+    def __init__(
+        self,
+        dimension: int,
+        db_path: str,
+        bank_id: str,
+        kvstore: KVStore | None = None,
+        distance_metric: str = "COSINE",
+    ):
         self.dimension = dimension
         self.db_path = db_path
         self.bank_id = bank_id
@@ -83,10 +90,12 @@ class SQLiteVecIndex(EmbeddingIndex):
         self.vector_table = _make_sql_identifier(f"vec_chunks_{bank_id}")
         self.fts_table = _make_sql_identifier(f"fts_chunks_{bank_id}")
         self.kvstore = kvstore
+        self._check_distance_metric_support(distance_metric)
+        self.distance_metric = distance_metric
 
     @classmethod
-    async def create(cls, dimension: int, db_path: str, bank_id: str):
-        instance = cls(dimension, db_path, bank_id)
+    async def create(cls, dimension: int, db_path: str, bank_id: str, distance_metric: str = "COSINE"):
+        instance = cls(dimension, db_path, bank_id, distance_metric=distance_metric)
         await instance.initialize()
         return instance
 
@@ -373,6 +382,22 @@ class SQLiteVecIndex(EmbeddingIndex):
 
         await asyncio.to_thread(_delete_chunks)
 
+    def _check_distance_metric_support(self, distance_metric: str) -> None:
+        """Check if the distance metric is supported by SQLite-vec.
+
+        Args:
+            distance_metric: The distance metric to check
+
+        Raises:
+            NotImplementedError: If the distance metric is not supported yet
+        """
+        if distance_metric != "COSINE":
+            # TODO: Implement support for other distance metrics in SQLite-vec
+            raise NotImplementedError(
+                f"Distance metric '{distance_metric}' is not yet supported by the SQLite-vec provider. "
+                f"Currently only 'COSINE' is supported. Please use 'COSINE' or switch to a different provider."
+            )
+
 
 class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     """
@@ -412,8 +437,9 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         return [v.vector_store for v in self.cache.values()]
 
     async def register_vector_store(self, vector_store: VectorStore) -> None:
+        distance_metric = vector_store.distance_metric or "COSINE"
         index = await SQLiteVecIndex.create(
-            vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
+            vector_store.embedding_dimension, self.config.db_path, vector_store.identifier, distance_metric
         )
         self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
