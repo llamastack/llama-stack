@@ -217,7 +217,9 @@ class StreamingResponseOrchestrator:
             while True:
                 # Text is the default response format for chat completion so don't need to pass it
                 # (some providers don't support non-empty response_format when tools are present)
-                response_format = None if self.ctx.response_format.type == "text" else self.ctx.response_format
+                response_format = (
+                    None if getattr(self.ctx.response_format, "type", None) == "text" else self.ctx.response_format
+                )
                 logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
 
                 params = OpenAIChatCompletionRequestWithExtraBody(

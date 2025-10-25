@@ -24,6 +24,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInputToolWebSearch,
     OpenAIResponseMessage,
     OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponseText,
@@ -1169,3 +1170,75 @@ async def test_create_openai_response_with_invalid_text_format(openai_responses_
             model=model,
             text=OpenAIResponseText(format={"type": "invalid"}),
         )
+
+
+async def test_create_openai_response_with_output_types_as_input(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that response outputs can be used as inputs in multi-turn conversations.
+
+    Before adding OpenAIResponseOutput types to OpenAIResponseInput,
+    creating a _OpenAIResponseObjectWithInputAndMessages with some output types
+    in the input field would fail with a Pydantic ValidationError.
+
+    This test simulates storing a response where the input contains output message
+    types (MCP calls, function calls), which happens in multi-turn conversations.
+    """
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock the inference response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Create a response with store=True to trigger the storage path
+    result = await openai_responses_impl.create_openai_response(
+        input="What's the weather?",
+        model=model,
+        stream=True,
+        temperature=0.1,
+        store=True,
+    )
+
+    # Consume the stream
+    _ = [chunk async for chunk in result]
+
+    # Verify store was called
+    assert mock_responses_store.store_response_object.called
+
+    # Get the stored data
+    store_call_args = mock_responses_store.store_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+
+    # Now simulate a multi-turn conversation where outputs become inputs
+    input_with_output_types = [
+        OpenAIResponseMessage(role="user", content="What's the weather?", name=None),
+        # These output types need to be valid OpenAIResponseInput
+        OpenAIResponseOutputMessageFunctionToolCall(
+            call_id="call_123",
+            name="get_weather",
+            arguments='{"city": "Tokyo"}',
+            type="function_call",
+        ),
+        OpenAIResponseOutputMessageMCPCall(
+            id="mcp_456",
+            type="mcp_call",
+            server_label="weather_server",
+            name="get_temperature",
+            arguments='{"location": "Tokyo"}',
+            output="25°C",
+        ),
+    ]
+
+    # This simulates storing a response in a multi-turn conversation
+    # where previous outputs are included in the input.
+    stored_with_outputs = _OpenAIResponseObjectWithInputAndMessages(
+        id=stored_response.id,
+        created_at=stored_response.created_at,
+        model=stored_response.model,
+        status=stored_response.status,
+        output=stored_response.output,
+        input=input_with_output_types,  # This will trigger Pydantic validation
+        messages=None,
+    )
+
+    assert stored_with_outputs.input == input_with_output_types
+    assert len(stored_with_outputs.input) == 3
