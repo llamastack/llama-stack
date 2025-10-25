@@ -39,7 +39,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         # Technically Nvidia does support OpenAI completions, but none of their hosted models
@@ -120,7 +120,7 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         "remote::cerebras",

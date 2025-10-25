@@ -1,0 +1,119 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestEdgeCases::test_multiple_tools_with_different_schemas[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use one of the available tools"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "simple",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "complex",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/$defs/Complex"
+                }
+              },
+              "$defs": {
+                "Complex": {
+                  "type": "object",
+                  "properties": {
+                    "nested": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "with_output",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-853f6a700b98",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, let's see. The user wants me to use one of the available tools. The tools provided are simple, complex, and with_output. The simple function takes an argument 'x' of type string. The complex function requires a 'data' parameter which is a Complex object with an array of numbers. The with_output function takes an input string.\n\nThe user's query is about using a tool, but their message doesn't specify which tool to use. They just said \"Use one of the available tools.\" Hmm, maybe they need to choose one. But since the tools are separate, perhaps I should ask for clarification. Wait, maybe the example in the tools shows that the complex function requires data. But without more context, I can't determine which tool to use. So perhaps I should ask the user to specify which tool they want to use. Alternatively, maybe the initial problem expects me to choose the complex function. But since the user didn't provide specific parameters, maybe I need to state that I can't proceed without more information. Let me check again. The tools are simple, complex, and with_output. The user's instruction is to use one of them. Since there's no specific question, maybe I should inform them that I can help with that.\n</think>\n\nThe available tools are `simple`, `complex`, and `with_output`. To proceed, could you clarify which tool you would like to use? For example, if you're referring to the `complex` function, it requires a `data` parameter. If you have specific parameters or context, please provide them so I can assist you.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 330,
+          "prompt_tokens": 265,
+          "total_tokens": 595,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

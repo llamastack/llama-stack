@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Humans currently live on Earth. It is the only known planet in our solar system that supports life.",
+              "content": "Humans do not currently live on any other planet besides Earth. However, there are plans and proposals for humans to potentially live on other planets or moons in the future, such as:\n\n1. Mars: NASA and other space agencies have been exploring ways to send humans to Mars in the coming decades.\n2. Moon: There have been several missions to the Moon in recent years, including lunar landings and establishment of a small research base.\n3. Other planets or dwarf planets: Some scientists have proposed plans for sending humans to other planets or dwarf planets like Enceladus (Saturn's moon) and Ganymede (Jupiter's moon).\n\nHowever, as of now, Earth remains the only known habitable planet with an atmosphere capable of supporting human life.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 21,
+          "completion_tokens": 154,
           "prompt_tokens": 32,
-          "total_tokens": 53,
+          "total_tokens": 186,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }
