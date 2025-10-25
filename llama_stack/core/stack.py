@@ -341,12 +341,21 @@ def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
     return config_dict
 
 
-def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConfig) -> None:
+def add_internal_implementations(
+    impls: dict[Api, Any],
+    run_config: StackRunConfig,
+    provider_registry=None,
+    dist_registry=None,
+    policy=None,
+) -> None:
     """Add internal implementations (inspect and providers) to the implementations dictionary.
 
     Args:
         impls: Dictionary of API implementations
         run_config: Stack run configuration
+        provider_registry: Provider registry for dynamic provider instantiation
+        dist_registry: Distribution registry
+        policy: Access control policy
     """
     inspect_impl = DistributionInspectImpl(
         DistributionInspectConfig(run_config=run_config),
@@ -355,7 +364,12 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     impls[Api.inspect] = inspect_impl
 
     providers_impl = ProviderImpl(
-        ProviderImplConfig(run_config=run_config),
+        ProviderImplConfig(
+            run_config=run_config,
+            provider_registry=provider_registry,
+            dist_registry=dist_registry,
+            policy=policy,
+        ),
         deps=impls,
     )
     impls[Api.providers] = providers_impl
@@ -416,13 +430,20 @@ class Stack:
             raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
         dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
+        provider_registry = self.provider_registry or get_provider_registry(self.run_config)
 
         internal_impls = {}
-        add_internal_implementations(internal_impls, self.run_config)
+        add_internal_implementations(
+            internal_impls,
+            self.run_config,
+            provider_registry=provider_registry,
+            dist_registry=dist_registry,
+            policy=policy,
+        )
 
         impls = await resolve_impls(
             self.run_config,
-            self.provider_registry or get_provider_registry(self.run_config),
+            provider_registry,
             dist_registry,
             policy,
             internal_impls,
