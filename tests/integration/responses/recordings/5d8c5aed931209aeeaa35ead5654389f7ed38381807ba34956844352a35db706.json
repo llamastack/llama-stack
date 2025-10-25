@@ -20,7 +20,7 @@
               "id": "call_cpbC1lb0MlCcVyxpYT10GvpE",
               "type": "function",
               "function": {
-                "name": "knowledge_search",
+                "name": "file_search",
                 "arguments": "{\"query\":\"engineering updates United States October 2023\"}"
               }
             }
@@ -32,7 +32,7 @@
           "content": [
             {
               "type": "text",
-              "text": "knowledge_search tool found 1 chunks:\nBEGIN of knowledge_search tool results.\n"
+              "text": "file_search tool found 1 chunks:\nBEGIN of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -40,7 +40,7 @@
             },
             {
               "type": "text",
-              "text": "END of knowledge_search tool results.\n"
+              "text": "END of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -57,7 +57,7 @@
         {
           "type": "function",
           "function": {
-            "name": "knowledge_search",
+            "name": "file_search",
             "description": "Search for information in a database.",
             "parameters": {
               "type": "object",

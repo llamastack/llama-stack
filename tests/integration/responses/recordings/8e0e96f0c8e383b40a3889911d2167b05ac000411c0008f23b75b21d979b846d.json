@@ -20,7 +20,7 @@
               "id": "call_UVmJRK8x8PZSXaGMP8YkWUTN",
               "type": "function",
               "function": {
-                "name": "knowledge_search",
+                "name": "file_search",
                 "arguments": "{\"query\":\"Llama 4 Maverick model number of experts\"}"
               }
             }
@@ -32,7 +32,7 @@
           "content": [
             {
               "type": "text",
-              "text": "knowledge_search tool found 1 chunks:\nBEGIN of knowledge_search tool results.\n"
+              "text": "file_search tool found 1 chunks:\nBEGIN of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -40,7 +40,7 @@
             },
             {
               "type": "text",
-              "text": "END of knowledge_search tool results.\n"
+              "text": "END of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -65,7 +65,7 @@
               "id": "call_5D3edO8yoUmeC523679kcOAC",
               "type": "function",
               "function": {
-                "name": "knowledge_search",
+                "name": "file_search",
                 "arguments": "{\"query\":\"Llama 4 Maverick model architecture\"}"
               }
             }
@@ -77,7 +77,7 @@
           "content": [
             {
               "type": "text",
-              "text": "knowledge_search tool found 1 chunks:\nBEGIN of knowledge_search tool results.\n"
+              "text": "file_search tool found 1 chunks:\nBEGIN of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -85,7 +85,7 @@
             },
             {
               "type": "text",
-              "text": "END of knowledge_search tool results.\n"
+              "text": "END of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -102,7 +102,7 @@
         {
           "type": "function",
           "function": {
-            "name": "knowledge_search",
+            "name": "file_search",
             "description": "Search for information in a database.",
             "parameters": {
               "type": "object",
