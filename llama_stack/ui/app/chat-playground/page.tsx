@@ -1167,7 +1167,10 @@ export default function ChatPlaygroundPage() {
 
     // find RAG toolgroups that have vector_db_ids configured
     const ragToolgroups = selectedAgentConfig.toolgroups.filter(toolgroup => {
-      if (typeof toolgroup === "object" && toolgroup.name?.includes("file_search")) {
+      if (
+        typeof toolgroup === "object" &&
+        toolgroup.name?.includes("file_search")
+      ) {
         return toolgroup.args && "vector_db_ids" in toolgroup.args;
       }
       return false;

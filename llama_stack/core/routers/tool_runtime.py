@@ -41,7 +41,7 @@ class ToolRuntimeRouter(ToolRuntime):
             query_config: FileSearchConfig | None = None,
         ) -> FileSearchResult:
             logger.debug(f"ToolRuntimeRouter.FileSearchToolImpl.query: {vector_store_ids}")
-            provider = await self.routing_table.get_provider_impl("knowledge_search")
+            provider = await self.routing_table.get_provider_impl("file_search")
             return await provider.query(content, vector_store_ids, query_config)
 
         async def insert(

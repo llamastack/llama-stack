@@ -226,9 +226,7 @@ class FileSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, FileSear
 
         tokens = 0
         picked: list[InterleavedContentItem] = [
-            TextContentItem(
-                text=f"knowledge_search tool found {len(chunks)} chunks:\nBEGIN of knowledge_search tool results.\n"
-            )
+            TextContentItem(text=f"file_search tool found {len(chunks)} chunks:\nBEGIN of file_search tool results.\n")
         ]
         for i, chunk in enumerate(chunks):
             metadata = chunk.metadata
@@ -262,7 +260,7 @@ class FileSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, FileSear
             text_content = query_config.chunk_template.format(index=i + 1, chunk=chunk, metadata=metadata_for_context)
             picked.append(TextContentItem(text=text_content))
 
-        picked.append(TextContentItem(text="END of knowledge_search tool results.\n"))
+        picked.append(TextContentItem(text="END of file_search tool results.\n"))
         picked.append(
             TextContentItem(
                 text=f'The above results were retrieved to help answer the user\'s query: "{interleaved_content_as_str(content)}". Use them as supporting information only in answering this query.\n',
@@ -292,7 +290,7 @@ class FileSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, FileSear
                     description="Insert documents into memory",
                 ),
                 ToolDef(
-                    name="knowledge_search",
+                    name="file_search",
                     description="Search for information in a database.",
                     input_schema={
                         "type": "object",

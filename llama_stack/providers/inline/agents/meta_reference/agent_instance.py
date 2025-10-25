@@ -84,7 +84,7 @@ from .persistence import AgentPersistence
 from .safety import SafetyException, ShieldRunnerMixin
 
 TOOLS_ATTACHMENT_KEY_REGEX = re.compile(r"__tools_attachment__=(\{.*?\})")
-MEMORY_QUERY_TOOL = "knowledge_search"
+MEMORY_QUERY_TOOL = "file_search"
 WEB_SEARCH_TOOL = "web_search"
 RAG_TOOL_GROUP = "builtin::file_search"
 
@@ -927,7 +927,7 @@ class ChatAgent(ShieldRunnerMixin):
         """Parse a toolgroup name into its components.
 
         Args:
-            toolgroup_name: The toolgroup name to parse (e.g. "builtin::file_search/knowledge_search")
+            toolgroup_name: The toolgroup name to parse (e.g. "builtin::file_search/file_search")
 
         Returns:
             A tuple of (tool_type, tool_group, tool_name)

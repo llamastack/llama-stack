@@ -18,7 +18,7 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 def parse_toolgroup_from_toolgroup_name_pair(toolgroup_name_with_maybe_tool_name: str) -> str | None:
-    # handle the funny case like "builtin::file_search/knowledge_search"
+    # handle the funny case like "builtin::file_search/file_search"
     parts = toolgroup_name_with_maybe_tool_name.split("/")
     if len(parts) == 2:
         return parts[0]
