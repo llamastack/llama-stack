@@ -97,7 +97,7 @@ class SamplingParams(BaseModel):
 
     strategy: SamplingStrategy = Field(default_factory=GreedySamplingStrategy)
 
-    max_tokens: int | None = 0
+    max_tokens: int | None = None
     repetition_penalty: float | None = 1.0
     stop: list[str] | None = None
 
