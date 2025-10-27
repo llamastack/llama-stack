@@ -20,11 +20,6 @@ class CerebrasInferenceAdapter(OpenAIMixin):
 
     provider_data_api_key_field: str = "cerebras_api_key"
 
-    def get_api_key(self) -> str:
-        if self.config.auth_credential is None:
-            raise ValueError("Cerebras API key is required")
-        return self.config.auth_credential.get_secret_value()
-
     def get_base_url(self) -> str:
         return urljoin(self.config.base_url, "v1")
 
