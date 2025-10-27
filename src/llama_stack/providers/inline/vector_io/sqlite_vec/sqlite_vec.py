@@ -447,20 +447,20 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         await self.cache[vector_store_id].index.delete()
         del self.cache[vector_store_id]
 
-    async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_db_id)
+    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_db_id)
+            raise VectorStoreNotFoundError(vector_store_id)
         # The VectorStoreWithIndex helper is expected to compute embeddings via the inference_api
         # and then call our index's add_chunks.
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self, vector_db_id: str, query: Any, params: dict[str, Any] | None = None
+        self, vector_store_id: str, query: Any, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_db_id)
+            raise VectorStoreNotFoundError(vector_store_id)
         return await index.query_chunks(query, params)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:

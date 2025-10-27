@@ -123,12 +123,12 @@ def test_insert_chunks(
     actual_vector_store_id = create_response.id
 
     client_with_empty_registry.vector_io.insert(
-        vector_db_id=actual_vector_store_id,
+        vector_store_id=actual_vector_store_id,
         chunks=sample_chunks,
     )
 
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_store_id,
+        vector_store_id=actual_vector_store_id,
         query="What is the capital of France?",
     )
     assert response is not None
@@ -137,7 +137,7 @@ def test_insert_chunks(
 
     query, expected_doc_id = test_case
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_store_id,
+        vector_store_id=actual_vector_store_id,
         query=query,
     )
     assert response is not None
@@ -174,13 +174,13 @@ def test_insert_chunks_with_precomputed_embeddings(
     ]
 
     client_with_empty_registry.vector_io.insert(
-        vector_db_id=actual_vector_store_id,
+        vector_store_id=actual_vector_store_id,
         chunks=chunks_with_embeddings,
     )
 
     provider = [p.provider_id for p in client_with_empty_registry.providers.list() if p.api == "vector_io"][0]
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_store_id,
+        vector_store_id=actual_vector_store_id,
         query="precomputed embedding test",
         params=vector_io_provider_params_dict.get(provider, None),
     )
@@ -224,13 +224,13 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
     ]
 
     client_with_empty_registry.vector_io.insert(
-        vector_db_id=actual_vector_store_id,
+        vector_store_id=actual_vector_store_id,
         chunks=chunks_with_embeddings,
     )
 
     provider = [p.provider_id for p in client_with_empty_registry.providers.list() if p.api == "vector_io"][0]
     response = client_with_empty_registry.vector_io.query(
-        vector_db_id=actual_vector_store_id,
+        vector_store_id=actual_vector_store_id,
         query="duplicate",
         params=vector_io_provider_params_dict.get(provider, None),
     )

@@ -163,14 +163,14 @@ The SQLite-vec provider supports three search modes:
 Example with hybrid search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "hybrid", "max_chunks": 3, "score_threshold": 0.7},
 )
 
 # Using RRF ranker
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={
         "mode": "hybrid",
@@ -182,7 +182,7 @@ response = await vector_io.query_chunks(
 
 # Using weighted ranker
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={
         "mode": "hybrid",
@@ -196,7 +196,7 @@ response = await vector_io.query_chunks(
 Example with explicit vector search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "vector", "max_chunks": 3, "score_threshold": 0.7},
 )
@@ -205,7 +205,7 @@ response = await vector_io.query_chunks(
 Example with keyword search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "keyword", "max_chunks": 3, "score_threshold": 0.7},
 )

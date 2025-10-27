@@ -248,19 +248,19 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         del self.cache[vector_store_id]
         await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
-    async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
-        index = self.cache.get(vector_db_id)
+    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+        index = self.cache.get(vector_store_id)
         if index is None:
-            raise ValueError(f"Vector DB {vector_db_id} not found. found: {self.cache.keys()}")
+            raise ValueError(f"Vector DB {vector_store_id} not found. found: {self.cache.keys()}")
 
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self, vector_db_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
+        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
-        index = self.cache.get(vector_db_id)
+        index = self.cache.get(vector_store_id)
         if index is None:
-            raise VectorStoreNotFoundError(vector_db_id)
+            raise VectorStoreNotFoundError(vector_store_id)
 
         return await index.query_chunks(query, params)
 
