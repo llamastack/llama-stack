@@ -32,9 +32,6 @@ class AzureProviderDataValidator(BaseModel):
 
 @json_schema_type
 class AzureConfig(RemoteInferenceProviderConfig):
-    api_key: SecretStr = Field(
-        description="Azure API key for Azure",
-    )
     api_base: HttpUrl = Field(
         description="Azure API base for Azure (e.g., https://your-resource-name.openai.azure.com)",
     )

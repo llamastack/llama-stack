@@ -17,12 +17,14 @@ from llama_stack.apis.inference import (
     Model,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletion,
+    OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingData,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
-    OpenAIResponseFormatParam,
 )
 from llama_stack.apis.models import ModelType
 from llama_stack.core.request_headers import NeedsRequestProviderData
@@ -40,13 +42,13 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     This class handles direct OpenAI API calls using the AsyncOpenAI client.
 
     This is an abstract base class that requires child classes to implement:
-    - get_api_key(): Method to retrieve the API key
     - get_base_url(): Method to retrieve the OpenAI-compatible API base URL
 
     The behavior of this class can be customized by child classes in the following ways:
     - overwrite_completion_id: If True, overwrites the 'id' field in OpenAI responses
     - download_images: If True, downloads images and converts to base64 for providers that require it
     - embedding_model_metadata: A dictionary mapping model IDs to their embedding metadata
+    - construct_model_from_identifier: Method to construct a Model instance corresponding to the given identifier
     - provider_data_api_key_field: Optional field name in provider data to look for API key
     - list_provider_model_ids: Method to list available models from the provider
     - get_extra_client_params: Method to provide extra parameters to the AsyncOpenAI client
@@ -87,17 +89,15 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
 
-    @abstractmethod
-    def get_api_key(self) -> str:
+    def get_api_key(self) -> str | None:
         """
         Get the API key.
 
-        This method must be implemented by child classes to provide the API key
-        for authenticating with the OpenAI API or compatible endpoints.
-
-        :return: The API key as a string
+        :return: The API key as a string, or None if not set
         """
-        pass
+        if self.config.auth_credential is None:
+            return None
+        return self.config.auth_credential.get_secret_value()
 
     @abstractmethod
     def get_base_url(self) -> str:
@@ -121,6 +121,30 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         :return: A dictionary of extra parameters
         """
         return {}
+
+    def construct_model_from_identifier(self, identifier: str) -> Model:
+        """
+        Construct a Model instance corresponding to the given identifier
+
+        Child classes can override this to customize model typing/metadata.
+
+        :param identifier: The provider's model identifier
+        :return: A Model instance
+        """
+        if metadata := self.embedding_model_metadata.get(identifier):
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.embedding,
+                metadata=metadata,
+            )
+        return Model(
+            provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+            provider_resource_id=identifier,
+            identifier=identifier,
+            model_type=ModelType.llm,
+        )
 
     async def list_provider_model_ids(self) -> Iterable[str]:
         """
@@ -169,6 +193,20 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         is used instead of any config API key.
         """
 
+        api_key = self._get_api_key_from_config_or_provider_data()
+        if not api_key:
+            message = "API key not provided."
+            if self.provider_data_api_key_field:
+                message += f' Please provide a valid API key in the provider data header, e.g. x-llamastack-provider-data: {{"{self.provider_data_api_key_field}": "<API_KEY>"}}.'
+            raise ValueError(message)
+
+        return AsyncOpenAI(
+            api_key=api_key,
+            base_url=self.get_base_url(),
+            **self.get_extra_client_params(),
+        )
+
+    def _get_api_key_from_config_or_provider_data(self) -> str | None:
         api_key = self.get_api_key()
 
         if self.provider_data_api_key_field:
@@ -176,19 +214,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
                 api_key = getattr(provider_data, self.provider_data_api_key_field)
 
-            if not api_key:  # TODO: let get_api_key return None
-                raise ValueError(
-                    "API key is not set. Please provide a valid API key in the "
-                    "provider data header, e.g. x-llamastack-provider-data: "
-                    f'{{"{self.provider_data_api_key_field}": "<API_KEY>"}}, '
-                    "or in the provider config."
-                )
-
-        return AsyncOpenAI(
-            api_key=api_key,
-            base_url=self.get_base_url(),
-            **self.get_extra_client_params(),
-        )
+        return api_key
 
     async def _get_provider_model_id(self, model: str) -> str:
         """
@@ -227,96 +253,47 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     async def openai_completion(
         self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         """
         Direct OpenAI completion API call.
         """
-        # Handle parameters that are not supported by OpenAI API, but may be by the provider
-        #  prompt_logprobs is supported by vLLM
-        #  guided_choice is supported by vLLM
-        # TODO: test coverage
-        extra_body: dict[str, Any] = {}
-        if prompt_logprobs is not None and prompt_logprobs >= 0:
-            extra_body["prompt_logprobs"] = prompt_logprobs
-        if guided_choice:
-            extra_body["guided_choice"] = guided_choice
-
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
-        resp = await self.client.completions.create(
-            **await prepare_openai_completion_params(
-                model=await self._get_provider_model_id(model),
-                prompt=prompt,
-                best_of=best_of,
-                echo=echo,
-                frequency_penalty=frequency_penalty,
-                logit_bias=logit_bias,
-                logprobs=logprobs,
-                max_tokens=max_tokens,
-                n=n,
-                presence_penalty=presence_penalty,
-                seed=seed,
-                stop=stop,
-                stream=stream,
-                stream_options=stream_options,
-                temperature=temperature,
-                top_p=top_p,
-                user=user,
-                suffix=suffix,
-            ),
-            extra_body=extra_body,
+        completion_kwargs = await prepare_openai_completion_params(
+            model=await self._get_provider_model_id(params.model),
+            prompt=params.prompt,
+            best_of=params.best_of,
+            echo=params.echo,
+            frequency_penalty=params.frequency_penalty,
+            logit_bias=params.logit_bias,
+            logprobs=params.logprobs,
+            max_tokens=params.max_tokens,
+            n=params.n,
+            presence_penalty=params.presence_penalty,
+            seed=params.seed,
+            stop=params.stop,
+            stream=params.stream,
+            stream_options=params.stream_options,
+            temperature=params.temperature,
+            top_p=params.top_p,
+            user=params.user,
+            suffix=params.suffix,
         )
+        if extra_body := params.model_extra:
+            completion_kwargs["extra_body"] = extra_body
+        resp = await self.client.completions.create(**completion_kwargs)
 
-        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
+        return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
 
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """
         Direct OpenAI chat completion API call.
         """
+        messages = params.messages
+
         if self.download_images:
 
             async def _localize_image_url(m: OpenAIMessageParam) -> OpenAIMessageParam:
@@ -335,55 +312,61 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
             messages = [await _localize_image_url(m) for m in messages]
 
-        params = await prepare_openai_completion_params(
-            model=await self._get_provider_model_id(model),
+        request_params = await prepare_openai_completion_params(
+            model=await self._get_provider_model_id(params.model),
             messages=messages,
-            frequency_penalty=frequency_penalty,
-            function_call=function_call,
-            functions=functions,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_completion_tokens=max_completion_tokens,
-            max_tokens=max_tokens,
-            n=n,
-            parallel_tool_calls=parallel_tool_calls,
-            presence_penalty=presence_penalty,
-            response_format=response_format,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_logprobs=top_logprobs,
-            top_p=top_p,
-            user=user,
+            frequency_penalty=params.frequency_penalty,
+            function_call=params.function_call,
+            functions=params.functions,
+            logit_bias=params.logit_bias,
+            logprobs=params.logprobs,
+            max_completion_tokens=params.max_completion_tokens,
+            max_tokens=params.max_tokens,
+            n=params.n,
+            parallel_tool_calls=params.parallel_tool_calls,
+            presence_penalty=params.presence_penalty,
+            response_format=params.response_format,
+            seed=params.seed,
+            stop=params.stop,
+            stream=params.stream,
+            stream_options=params.stream_options,
+            temperature=params.temperature,
+            tool_choice=params.tool_choice,
+            tools=params.tools,
+            top_logprobs=params.top_logprobs,
+            top_p=params.top_p,
+            user=params.user,
         )
 
-        resp = await self.client.chat.completions.create(**params)
+        if extra_body := params.model_extra:
+            request_params["extra_body"] = extra_body
+        resp = await self.client.chat.completions.create(**request_params)
 
-        return await self._maybe_overwrite_id(resp, stream)  # type: ignore[no-any-return]
+        return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         """
         Direct OpenAI embeddings API call.
         """
+        # Prepare request parameters
+        request_params = {
+            "model": await self._get_provider_model_id(params.model),
+            "input": params.input,
+            "encoding_format": params.encoding_format if params.encoding_format is not None else NOT_GIVEN,
+            "dimensions": params.dimensions if params.dimensions is not None else NOT_GIVEN,
+            "user": params.user if params.user is not None else NOT_GIVEN,
+        }
+
+        # Add extra_body if present
+        extra_body = params.model_extra
+        if extra_body:
+            request_params["extra_body"] = extra_body
+
         # Call OpenAI embeddings API with properly typed parameters
-        response = await self.client.embeddings.create(
-            model=await self._get_provider_model_id(model),
-            input=input,
-            encoding_format=encoding_format if encoding_format is not None else NOT_GIVEN,
-            dimensions=dimensions if dimensions is not None else NOT_GIVEN,
-            user=user if user is not None else NOT_GIVEN,
-        )
+        response = await self.client.embeddings.create(**request_params)
 
         data = []
         for i, embedding_data in enumerate(response.data):
@@ -401,7 +384,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         return OpenAIEmbeddingsResponse(
             data=data,
-            model=model,
+            model=params.model,
             usage=usage,
         )
 
@@ -433,6 +416,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         self._model_cache = {}
 
+        api_key = self._get_api_key_from_config_or_provider_data()
+        if not api_key:
+            logger.debug(f"{self.__class__.__name__}.list_provider_model_ids() disabled because API key not provided")
+            return None
+
         try:
             iterable = await self.list_provider_model_ids()
         except Exception as e:
@@ -453,21 +441,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             if self.allowed_models and provider_model_id not in self.allowed_models:
                 logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
                 continue
-            if metadata := self.embedding_model_metadata.get(provider_model_id):
-                model = Model(
-                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=provider_model_id,
-                    identifier=provider_model_id,
-                    model_type=ModelType.embedding,
-                    metadata=metadata,
-                )
-            else:
-                model = Model(
-                    provider_id=self.__provider_id__,  # type: ignore[attr-defined]
-                    provider_resource_id=provider_model_id,
-                    identifier=provider_model_id,
-                    model_type=ModelType.llm,
-                )
+            model = self.construct_model_from_identifier(provider_model_id)
             self._model_cache[provider_model_id] = model
 
         return list(self._model_cache.values())
@@ -481,7 +455,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         # First check if the model is pre-registered in the model store
         if hasattr(self, "model_store") and self.model_store:
-            if await self.model_store.has_model(model):
+            qualified_model = f"{self.__provider_id__}/{model}"  # type: ignore[attr-defined]
+            if await self.model_store.has_model(qualified_model):
                 return True
 
         # Then check the provider's dynamic model cache

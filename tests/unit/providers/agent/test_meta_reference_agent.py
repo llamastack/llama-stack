@@ -15,6 +15,7 @@ from llama_stack.apis.agents import (
     AgentCreateResponse,
 )
 from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.inference import Inference
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
@@ -25,6 +26,20 @@ from llama_stack.providers.inline.agents.meta_reference.config import MetaRefere
 from llama_stack.providers.inline.agents.meta_reference.persistence import AgentInfo
 
 
+@pytest.fixture(autouse=True)
+def setup_backends(tmp_path):
+    """Register KV and SQL store backends for testing."""
+    from llama_stack.core.storage.datatypes import SqliteKVStoreConfig, SqliteSqlStoreConfig
+    from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
+    from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+
+    kv_path = str(tmp_path / "test_kv.db")
+    sql_path = str(tmp_path / "test_sql.db")
+
+    register_kvstore_backends({"kv_default": SqliteKVStoreConfig(db_path=kv_path)})
+    register_sqlstore_backends({"sql_default": SqliteSqlStoreConfig(db_path=sql_path)})
+
+
 @pytest.fixture
 def mock_apis():
     return {
@@ -33,20 +48,26 @@ def mock_apis():
         "safety_api": AsyncMock(spec=Safety),
         "tool_runtime_api": AsyncMock(spec=ToolRuntime),
         "tool_groups_api": AsyncMock(spec=ToolGroups),
+        "conversations_api": AsyncMock(spec=Conversations),
     }
 
 
 @pytest.fixture
 def config(tmp_path):
+    from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
+    from llama_stack.providers.inline.agents.meta_reference.config import AgentPersistenceConfig
+
     return MetaReferenceAgentsImplConfig(
-        persistence_store={
-            "type": "sqlite",
-            "db_path": str(tmp_path / "test.db"),
-        },
-        responses_store={
-            "type": "sqlite",
-            "db_path": str(tmp_path / "test.db"),
-        },
+        persistence=AgentPersistenceConfig(
+            agent_state=KVStoreReference(
+                backend="kv_default",
+                namespace="agents",
+            ),
+            responses=ResponsesStoreReference(
+                backend="sql_default",
+                table_name="responses",
+            ),
+        )
     )
 
 
@@ -59,7 +80,8 @@ async def agents_impl(config, mock_apis):
         mock_apis["safety_api"],
         mock_apis["tool_runtime_api"],
         mock_apis["tool_groups_api"],
-        {},
+        mock_apis["conversations_api"],
+        [],
     )
     await impl.initialize()
     yield impl

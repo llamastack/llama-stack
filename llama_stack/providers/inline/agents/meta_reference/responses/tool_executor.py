@@ -11,6 +11,9 @@ from collections.abc import AsyncIterator
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolMCP,
+    OpenAIResponseObjectStreamResponseFileSearchCallCompleted,
+    OpenAIResponseObjectStreamResponseFileSearchCallInProgress,
+    OpenAIResponseObjectStreamResponseFileSearchCallSearching,
     OpenAIResponseObjectStreamResponseMcpCallCompleted,
     OpenAIResponseObjectStreamResponseMcpCallFailed,
     OpenAIResponseObjectStreamResponseMcpCallInProgress,
@@ -34,6 +37,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.apis.tools import ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
 
 from .types import ChatCompletionContext, ToolExecutionResult
@@ -89,7 +93,7 @@ class ToolExecutor:
 
         # Build result messages from tool execution
         output_message, input_message = await self._build_result_messages(
-            function, tool_call_id, tool_kwargs, ctx, error_exc, result, has_error, mcp_tool_to_server
+            function, tool_call_id, item_id, tool_kwargs, ctx, error_exc, result, has_error, mcp_tool_to_server
         )
 
         # Yield the final result
@@ -220,7 +224,13 @@ class ToolExecutor:
                 output_index=output_index,
                 sequence_number=sequence_number,
             )
-        # Note: knowledge_search and other custom tools don't have specific streaming events in OpenAI spec
+        elif function_name == "knowledge_search":
+            sequence_number += 1
+            progress_event = OpenAIResponseObjectStreamResponseFileSearchCallInProgress(
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
+            )
 
         if progress_event:
             yield ToolExecutionResult(stream_event=progress_event, sequence_number=sequence_number)
@@ -229,6 +239,16 @@ class ToolExecutor:
         if function_name == "web_search":
             sequence_number += 1
             searching_event = OpenAIResponseObjectStreamResponseWebSearchCallSearching(
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
+            )
+            yield ToolExecutionResult(stream_event=searching_event, sequence_number=sequence_number)
+
+        # For file search, emit searching event
+        if function_name == "knowledge_search":
+            sequence_number += 1
+            searching_event = OpenAIResponseObjectStreamResponseFileSearchCallSearching(
                 item_id=item_id,
                 output_index=output_index,
                 sequence_number=sequence_number,
@@ -251,12 +271,18 @@ class ToolExecutor:
                 from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool
 
                 mcp_tool = mcp_tool_to_server[function_name]
-                result = await invoke_mcp_tool(
-                    endpoint=mcp_tool.server_url,
-                    headers=mcp_tool.headers or {},
-                    tool_name=function_name,
-                    kwargs=tool_kwargs,
-                )
+                attributes = {
+                    "server_label": mcp_tool.server_label,
+                    "server_url": mcp_tool.server_url,
+                    "tool_name": function_name,
+                }
+                async with tracing.span("invoke_mcp_tool", attributes):
+                    result = await invoke_mcp_tool(
+                        endpoint=mcp_tool.server_url,
+                        headers=mcp_tool.headers or {},
+                        tool_name=function_name,
+                        kwargs=tool_kwargs,
+                    )
             elif function_name == "knowledge_search":
                 response_file_search_tool = next(
                     (t for t in ctx.response_tools if isinstance(t, OpenAIResponseInputToolFileSearch)),
@@ -266,15 +292,20 @@ class ToolExecutor:
                     # Use vector_stores.search API instead of knowledge_search tool
                     # to support filters and ranking_options
                     query = tool_kwargs.get("query", "")
-                    result = await self._execute_knowledge_search_via_vector_store(
-                        query=query,
-                        response_file_search_tool=response_file_search_tool,
-                    )
+                    async with tracing.span("knowledge_search", {}):
+                        result = await self._execute_knowledge_search_via_vector_store(
+                            query=query,
+                            response_file_search_tool=response_file_search_tool,
+                        )
             else:
-                result = await self.tool_runtime_api.invoke_tool(
-                    tool_name=function_name,
-                    kwargs=tool_kwargs,
-                )
+                attributes = {
+                    "tool_name": function_name,
+                }
+                async with tracing.span("invoke_tool", attributes):
+                    result = await self.tool_runtime_api.invoke_tool(
+                        tool_name=function_name,
+                        kwargs=tool_kwargs,
+                    )
         except Exception as e:
             error_exc = e
 
@@ -310,7 +341,13 @@ class ToolExecutor:
                 output_index=output_index,
                 sequence_number=sequence_number,
             )
-        # Note: knowledge_search and other custom tools don't have specific completion events in OpenAI spec
+        elif function_name == "knowledge_search":
+            sequence_number += 1
+            completion_event = OpenAIResponseObjectStreamResponseFileSearchCallCompleted(
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
+            )
 
         if completion_event:
             yield ToolExecutionResult(stream_event=completion_event, sequence_number=sequence_number)
@@ -319,6 +356,7 @@ class ToolExecutor:
         self,
         function,
         tool_call_id: str,
+        item_id: str,
         tool_kwargs: dict,
         ctx: ChatCompletionContext,
         error_exc: Exception | None,
@@ -338,7 +376,7 @@ class ToolExecutor:
             )
 
             message = OpenAIResponseOutputMessageMCPCall(
-                id=tool_call_id,
+                id=item_id,
                 arguments=function.arguments,
                 name=function.name,
                 server_label=mcp_tool_to_server[function.name].server_label,
@@ -352,14 +390,14 @@ class ToolExecutor:
         else:
             if function.name == "web_search":
                 message = OpenAIResponseOutputMessageWebSearchToolCall(
-                    id=tool_call_id,
+                    id=item_id,
                     status="completed",
                 )
                 if has_error:
                     message.status = "failed"
             elif function.name == "knowledge_search":
                 message = OpenAIResponseOutputMessageFileSearchToolCall(
-                    id=tool_call_id,
+                    id=item_id,
                     queries=[tool_kwargs.get("query", "")],
                     status="completed",
                 )

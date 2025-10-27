@@ -14,14 +14,14 @@ Meta's reference implementation of a vector database.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `kvstore` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig` | No | sqlite |  |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
 
 ## Sample Configuration
 
 ```yaml
-kvstore:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/faiss_store.db
+persistence:
+  namespace: vector_io::faiss
+  backend: kv_default
 ```
 ## Deprecation Notice
 

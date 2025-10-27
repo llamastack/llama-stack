@@ -4,14 +4,15 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from enum import StrEnum
 from typing import Annotated, Literal, Protocol, runtime_checkable
 
-from openai import NOT_GIVEN
-from openai._types import NotGiven
-from openai.types.responses.response_includable import ResponseIncludable
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.agents.openai_responses import (
+    OpenAIResponseInputFunctionToolCallOutput,
+    OpenAIResponseMCPApprovalRequest,
+    OpenAIResponseMCPApprovalResponse,
     OpenAIResponseMessage,
     OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFunctionToolCall,
@@ -20,7 +21,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageWebSearchToolCall,
 )
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 Metadata = dict[str, str]
@@ -61,9 +62,14 @@ class ConversationMessage(BaseModel):
 
 ConversationItem = Annotated[
     OpenAIResponseMessage
-    | OpenAIResponseOutputMessageFunctionToolCall
-    | OpenAIResponseOutputMessageFileSearchToolCall
     | OpenAIResponseOutputMessageWebSearchToolCall
+    | OpenAIResponseOutputMessageFileSearchToolCall
+    | OpenAIResponseOutputMessageFunctionToolCall
+    | OpenAIResponseInputFunctionToolCallOutput
+    | OpenAIResponseMCPApprovalRequest
+    | OpenAIResponseMCPApprovalResponse
+    | OpenAIResponseOutputMessageMCPCall
+    | OpenAIResponseOutputMessageMCPListTools
     | OpenAIResponseOutputMessageMCPCall
     | OpenAIResponseOutputMessageMCPListTools,
     Field(discriminator="type"),
@@ -142,6 +148,20 @@ class ConversationItemCreateRequest(BaseModel):
     )
 
 
+class ConversationItemInclude(StrEnum):
+    """
+    Specify additional output data to include in the model response.
+    """
+
+    web_search_call_action_sources = "web_search_call.action.sources"
+    code_interpreter_call_outputs = "code_interpreter_call.outputs"
+    computer_call_output_output_image_url = "computer_call_output.output.image_url"
+    file_search_call_results = "file_search_call.results"
+    message_input_image_image_url = "message.input_image.image_url"
+    message_output_text_logprobs = "message.output_text.logprobs"
+    reasoning_encrypted_content = "reasoning.encrypted_content"
+
+
 @json_schema_type
 class ConversationItemList(BaseModel):
     """List of conversation items with pagination."""
@@ -165,13 +185,17 @@ class ConversationItemDeletedResource(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Conversations(Protocol):
-    """Protocol for conversation management operations."""
+    """Conversations
+
+    Protocol for conversation management operations."""
 
     @webmethod(route="/conversations", method="POST", level=LLAMA_STACK_API_V1)
     async def create_conversation(
         self, items: list[ConversationItem] | None = None, metadata: Metadata | None = None
     ) -> Conversation:
         """Create a conversation.
+
+        Create a conversation.
 
         :param items: Initial items to include in the conversation context.
         :param metadata: Set of key-value pairs that can be attached to an object.
@@ -181,7 +205,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_conversation(self, conversation_id: str) -> Conversation:
-        """Get a conversation with the given ID.
+        """Retrieve a conversation.
+
+        Get a conversation with the given ID.
 
         :param conversation_id: The conversation identifier.
         :returns: The conversation object.
@@ -190,7 +216,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}", method="POST", level=LLAMA_STACK_API_V1)
     async def update_conversation(self, conversation_id: str, metadata: Metadata) -> Conversation:
-        """Update a conversation's metadata with the given ID.
+        """Update a conversation.
+
+        Update a conversation's metadata with the given ID.
 
         :param conversation_id: The conversation identifier.
         :param metadata: Set of key-value pairs that can be attached to an object.
@@ -200,7 +228,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_conversation(self, conversation_id: str) -> ConversationDeletedResource:
-        """Delete a conversation with the given ID.
+        """Delete a conversation.
+
+        Delete a conversation with the given ID.
 
         :param conversation_id: The conversation identifier.
         :returns: The deleted conversation resource.
@@ -209,7 +239,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}/items", method="POST", level=LLAMA_STACK_API_V1)
     async def add_items(self, conversation_id: str, items: list[ConversationItem]) -> ConversationItemList:
-        """Create items in the conversation.
+        """Create items.
+
+        Create items in the conversation.
 
         :param conversation_id: The conversation identifier.
         :param items: Items to include in the conversation context.
@@ -219,7 +251,9 @@ class Conversations(Protocol):
 
     @webmethod(route="/conversations/{conversation_id}/items/{item_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def retrieve(self, conversation_id: str, item_id: str) -> ConversationItem:
-        """Retrieve a conversation item.
+        """Retrieve an item.
+
+        Retrieve a conversation item.
 
         :param conversation_id: The conversation identifier.
         :param item_id: The item identifier.
@@ -228,15 +262,17 @@ class Conversations(Protocol):
         ...
 
     @webmethod(route="/conversations/{conversation_id}/items", method="GET", level=LLAMA_STACK_API_V1)
-    async def list(
+    async def list_items(
         self,
         conversation_id: str,
-        after: str | NotGiven = NOT_GIVEN,
-        include: list[ResponseIncludable] | NotGiven = NOT_GIVEN,
-        limit: int | NotGiven = NOT_GIVEN,
-        order: Literal["asc", "desc"] | NotGiven = NOT_GIVEN,
+        after: str | None = None,
+        include: list[ConversationItemInclude] | None = None,
+        limit: int | None = None,
+        order: Literal["asc", "desc"] | None = None,
     ) -> ConversationItemList:
-        """List items in the conversation.
+        """List items.
+
+        List items in the conversation.
 
         :param conversation_id: The conversation identifier.
         :param after: An item ID to list items after, used in pagination.
@@ -251,7 +287,9 @@ class Conversations(Protocol):
     async def openai_delete_conversation_item(
         self, conversation_id: str, item_id: str
     ) -> ConversationItemDeletedResource:
-        """Delete a conversation item.
+        """Delete an item.
+
+        Delete a conversation item.
 
         :param conversation_id: The conversation identifier.
         :param item_id: The item identifier.

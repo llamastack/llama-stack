@@ -33,16 +33,25 @@ from llama_stack.apis.shields import Shields
 from llama_stack.apis.synthetic_data_generation import SyntheticDataGeneration
 from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
-from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, StackRunConfig
+from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
 from llama_stack.core.providers import ProviderImpl, ProviderImplConfig
 from llama_stack.core.resolver import ProviderRegistry, resolve_impls
 from llama_stack.core.routing_tables.common import CommonRoutingTableImpl
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    ServerStoresConfig,
+    SqliteKVStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageBackendConfig,
+    StorageConfig,
+)
 from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
@@ -53,7 +62,6 @@ logger = get_logger(name=__name__, category="core")
 
 class LlamaStack(
     Providers,
-    VectorDBs,
     Inference,
     Agents,
     Safety,
@@ -83,7 +91,6 @@ class LlamaStack(
 RESOURCES = [
     ("models", Api.models, "register_model", "list_models"),
     ("shields", Api.shields, "register_shield", "list_shields"),
-    ("vector_dbs", Api.vector_dbs, "register_vector_db", "list_vector_dbs"),
     ("datasets", Api.datasets, "register_dataset", "list_datasets"),
     (
         "scoring_fns",
@@ -103,7 +110,7 @@ TEST_RECORDING_CONTEXT = None
 
 async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
-        objects = getattr(run_config, rsrc)
+        objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
 
@@ -130,6 +137,66 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
             logger.debug(
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
+
+
+async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
+    """Validate vector stores configuration."""
+    if vector_stores_config is None:
+        return
+
+    default_embedding_model = vector_stores_config.default_embedding_model
+    if default_embedding_model is None:
+        return
+
+    provider_id = default_embedding_model.provider_id
+    model_id = default_embedding_model.model_id
+    default_model_id = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
+
+    default_model = models_list.get(default_model_id)
+    if default_model is None:
+        raise ValueError(f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}")
+
+    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    if embedding_dimension is None:
+        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+
+    try:
+        int(embedding_dimension)
+    except ValueError as err:
+        raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
+
+    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+
+
+async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
+    if safety_config is None or safety_config.default_shield_id is None:
+        return
+
+    if Api.shields not in impls:
+        raise ValueError("Safety configuration requires the shields API to be enabled")
+
+    if Api.safety not in impls:
+        raise ValueError("Safety configuration requires the safety API to be enabled")
+
+    shields_impl = impls[Api.shields]
+    response = await shields_impl.list_shields()
+    shields_by_id = {shield.identifier: shield for shield in response.data}
+
+    default_shield_id = safety_config.default_shield_id
+    # don't validate if there are no shields registered
+    if shields_by_id and default_shield_id not in shields_by_id:
+        available = sorted(shields_by_id)
+        raise ValueError(
+            f"Configured default_shield_id '{default_shield_id}' not found among registered shields."
+            f" Available shields: {available}"
+        )
 
 
 class EnvVarError(Exception):
@@ -306,6 +373,25 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
     impls[Api.conversations] = conversations_impl
 
 
+def _initialize_storage(run_config: StackRunConfig):
+    kv_backends: dict[str, StorageBackendConfig] = {}
+    sql_backends: dict[str, StorageBackendConfig] = {}
+    for backend_name, backend_config in run_config.storage.backends.items():
+        type = backend_config.type.value
+        if type.startswith("kv_"):
+            kv_backends[backend_name] = backend_config
+        elif type.startswith("sql_"):
+            sql_backends[backend_name] = backend_config
+        else:
+            raise ValueError(f"Unknown storage backend type: {type}")
+
+    from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
+    from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+
+    register_kvstore_backends(kv_backends)
+    register_sqlstore_backends(sql_backends)
+
+
 class Stack:
     def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
@@ -316,22 +402,31 @@ class Stack:
     # asked for in the run config.
     async def initialize(self):
         if "LLAMA_STACK_TEST_INFERENCE_MODE" in os.environ:
-            from llama_stack.testing.inference_recorder import setup_inference_recording
+            from llama_stack.testing.api_recorder import setup_api_recording
 
             global TEST_RECORDING_CONTEXT
-            TEST_RECORDING_CONTEXT = setup_inference_recording()
+            TEST_RECORDING_CONTEXT = setup_api_recording()
             if TEST_RECORDING_CONTEXT:
                 TEST_RECORDING_CONTEXT.__enter__()
-                logger.info(f"Inference recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+                logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
 
-        dist_registry, _ = await create_dist_registry(self.run_config.metadata_store, self.run_config.image_name)
+        _initialize_storage(self.run_config)
+        stores = self.run_config.storage.stores
+        if not stores.metadata:
+            raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
+        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
-        impls = await resolve_impls(
-            self.run_config, self.provider_registry or get_provider_registry(self.run_config), dist_registry, policy
-        )
 
-        # Add internal implementations after all other providers are resolved
-        add_internal_implementations(impls, self.run_config)
+        internal_impls = {}
+        add_internal_implementations(internal_impls, self.run_config)
+
+        impls = await resolve_impls(
+            self.run_config,
+            self.provider_registry or get_provider_registry(self.run_config),
+            dist_registry,
+            policy,
+            internal_impls,
+        )
 
         if Api.prompts in impls:
             await impls[Api.prompts].initialize()
@@ -339,8 +434,9 @@ class Stack:
             await impls[Api.conversations].initialize()
 
         await register_resources(self.run_config, impls)
-
         await refresh_registry_once(impls)
+        await validate_vector_stores_config(self.run_config.vector_stores, impls)
+        await validate_safety_config(self.run_config.safety, impls)
         self.impls = impls
 
     def create_registry_refresh_task(self):
@@ -381,7 +477,7 @@ class Stack:
             try:
                 TEST_RECORDING_CONTEXT.__exit__(None, None, None)
             except Exception as e:
-                logger.error(f"Error during inference recording cleanup: {e}")
+                logger.error(f"Error during API recording cleanup: {e}")
 
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:
@@ -460,5 +556,17 @@ def run_config_from_adhoc_config_spec(
         image_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
+        storage=StorageConfig(
+            backends={
+                "kv_default": SqliteKVStoreConfig(db_path=f"{distro_dir}/kvstore.db"),
+                "sql_default": SqliteSqlStoreConfig(db_path=f"{distro_dir}/sql_store.db"),
+            },
+            stores=ServerStoresConfig(
+                metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+                inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+                conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
+                prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
+            ),
+        ),
     )
     return config

@@ -10,9 +10,10 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
+from fastapi import Body
 from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
-from pydantic import Field, TypeAdapter
+from pydantic import TypeAdapter
 
 from llama_stack.apis.common.content_types import (
     InterleavedContent,
@@ -31,27 +32,34 @@ from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
     OpenAICompletion,
+    OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
-    OpenAIResponseFormatParam,
     Order,
+    RerankResponse,
     StopReason,
     ToolPromptFormat,
 )
+from llama_stack.apis.inference.inference import (
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
+)
 from llama_stack.apis.models import Model, ModelType
-from llama_stack.apis.telemetry import MetricEvent, MetricInResponse, Telemetry
+from llama_stack.apis.telemetry import MetricEvent, MetricInResponse
+from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.chat_format import ChatFormat
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
-from llama_stack.providers.utils.telemetry.tracing import enqueue_event, get_current_span
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -62,14 +70,14 @@ class InferenceRouter(Inference):
     def __init__(
         self,
         routing_table: RoutingTable,
-        telemetry: Telemetry | None = None,
         store: InferenceStore | None = None,
+        telemetry_enabled: bool = False,
     ) -> None:
         logger.debug("Initializing InferenceRouter")
         self.routing_table = routing_table
-        self.telemetry = telemetry
+        self.telemetry_enabled = telemetry_enabled
         self.store = store
-        if self.telemetry:
+        if self.telemetry_enabled:
             self.tokenizer = Tokenizer.get_instance()
             self.formatter = ChatFormat(self.tokenizer)
 
@@ -151,7 +159,7 @@ class InferenceRouter(Inference):
         model: Model,
     ) -> list[MetricInResponse]:
         metrics = self._construct_metrics(prompt_tokens, completion_tokens, total_tokens, model)
-        if self.telemetry:
+        if self.telemetry_enabled:
             for metric in metrics:
                 enqueue_event(metric)
         return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in metrics]
@@ -179,64 +187,43 @@ class InferenceRouter(Inference):
             raise ModelTypeError(model_id, model.model_type, expected_model_type)
         return model
 
-    async def openai_completion(
+    async def rerank(
         self,
         model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
+        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
+        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
+        max_num_results: int | None = None,
+    ) -> RerankResponse:
+        logger.debug(f"InferenceRouter.rerank: {model}")
+        model_obj = await self._get_model(model, ModelType.rerank)
+        provider = await self.routing_table.get_provider_impl(model_obj.identifier)
+        return await provider.rerank(
+            model=model_obj.identifier,
+            query=query,
+            items=items,
+            max_num_results=max_num_results,
+        )
+
+    async def openai_completion(
+        self,
+        params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAICompletion:
         logger.debug(
-            f"InferenceRouter.openai_completion: {model=}, {stream=}, {prompt=}",
+            f"InferenceRouter.openai_completion: model={params.model}, stream={params.stream}, prompt={params.prompt}",
         )
-        model_obj = await self._get_model(model, ModelType.llm)
-        params = dict(
-            model=model_obj.identifier,
-            prompt=prompt,
-            best_of=best_of,
-            echo=echo,
-            frequency_penalty=frequency_penalty,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_tokens=max_tokens,
-            n=n,
-            presence_penalty=presence_penalty,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            top_p=top_p,
-            user=user,
-            guided_choice=guided_choice,
-            prompt_logprobs=prompt_logprobs,
-            suffix=suffix,
-        )
+        model_obj = await self._get_model(params.model, ModelType.llm)
+
+        # Update params with the resolved model identifier
+        params.model = model_obj.identifier
+
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
-        if stream:
-            return await provider.openai_completion(**params)
+        if params.stream:
+            return await provider.openai_completion(params)
             # TODO: Metrics do NOT work with openai_completion stream=True due to the fact
             # that we do not return an AsyncIterator, our tests expect a stream of chunks we cannot intercept currently.
-            # response_stream = await provider.openai_completion(**params)
 
-        response = await provider.openai_completion(**params)
-        if self.telemetry:
+        response = await provider.openai_completion(params)
+        if self.telemetry_enabled:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
@@ -254,95 +241,51 @@ class InferenceRouter(Inference):
 
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: Annotated[list[OpenAIMessageParam], Field(..., min_length=1)],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         logger.debug(
-            f"InferenceRouter.openai_chat_completion: {model=}, {stream=}, {messages=}",
+            f"InferenceRouter.openai_chat_completion: model={params.model}, stream={params.stream}, messages={params.messages}",
         )
-        model_obj = await self._get_model(model, ModelType.llm)
+        model_obj = await self._get_model(params.model, ModelType.llm)
 
         # Use the OpenAI client for a bit of extra input validation without
         # exposing the OpenAI client itself as part of our API surface
-        if tool_choice:
-            TypeAdapter(OpenAIChatCompletionToolChoiceOptionParam).validate_python(tool_choice)
-            if tools is None:
+        if params.tool_choice:
+            TypeAdapter(OpenAIChatCompletionToolChoiceOptionParam).validate_python(params.tool_choice)
+            if params.tools is None:
                 raise ValueError("'tool_choice' is only allowed when 'tools' is also provided")
-        if tools:
-            for tool in tools:
+        if params.tools:
+            for tool in params.tools:
                 TypeAdapter(OpenAIChatCompletionToolParam).validate_python(tool)
 
         # Some providers make tool calls even when tool_choice is "none"
         # so just clear them both out to avoid unexpected tool calls
-        if tool_choice == "none" and tools is not None:
-            tool_choice = None
-            tools = None
+        if params.tool_choice == "none" and params.tools is not None:
+            params.tool_choice = None
+            params.tools = None
 
-        params = dict(
-            model=model_obj.identifier,
-            messages=messages,
-            frequency_penalty=frequency_penalty,
-            function_call=function_call,
-            functions=functions,
-            logit_bias=logit_bias,
-            logprobs=logprobs,
-            max_completion_tokens=max_completion_tokens,
-            max_tokens=max_tokens,
-            n=n,
-            parallel_tool_calls=parallel_tool_calls,
-            presence_penalty=presence_penalty,
-            response_format=response_format,
-            seed=seed,
-            stop=stop,
-            stream=stream,
-            stream_options=stream_options,
-            temperature=temperature,
-            tool_choice=tool_choice,
-            tools=tools,
-            top_logprobs=top_logprobs,
-            top_p=top_p,
-            user=user,
-        )
+        # Update params with the resolved model identifier
+        params.model = model_obj.identifier
+
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
-        if stream:
-            response_stream = await provider.openai_chat_completion(**params)
+        if params.stream:
+            response_stream = await provider.openai_chat_completion(params)
 
             # For streaming, the provider returns AsyncIterator[OpenAIChatCompletionChunk]
             # We need to add metrics to each chunk and store the final completion
             return self.stream_tokens_and_compute_metrics_openai_chat(
                 response=response_stream,
                 model=model_obj,
-                messages=messages,
+                messages=params.messages,
             )
 
         response = await self._nonstream_openai_chat_completion(provider, params)
 
         # Store the response with the ID that will be returned to the client
         if self.store:
-            asyncio.create_task(self.store.store_chat_completion(response, messages))
+            asyncio.create_task(self.store.store_chat_completion(response, params.messages))
 
-        if self.telemetry:
+        if self.telemetry_enabled:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
@@ -359,26 +302,18 @@ class InferenceRouter(Inference):
 
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIEmbeddingsRequestWithExtraBody, Body(...)],
     ) -> OpenAIEmbeddingsResponse:
         logger.debug(
-            f"InferenceRouter.openai_embeddings: {model=}, input_type={type(input)}, {encoding_format=}, {dimensions=}",
+            f"InferenceRouter.openai_embeddings: model={params.model}, input_type={type(params.input)}, encoding_format={params.encoding_format}, dimensions={params.dimensions}",
         )
-        model_obj = await self._get_model(model, ModelType.embedding)
-        params = dict(
-            model=model_obj.identifier,
-            input=input,
-            encoding_format=encoding_format,
-            dimensions=dimensions,
-            user=user,
-        )
+        model_obj = await self._get_model(params.model, ModelType.embedding)
+
+        # Update model to use resolved identifier
+        params.model = model_obj.identifier
 
         provider = await self.routing_table.get_provider_impl(model_obj.identifier)
-        return await provider.openai_embeddings(**params)
+        return await provider.openai_embeddings(params)
 
     async def list_chat_completions(
         self,
@@ -396,8 +331,10 @@ class InferenceRouter(Inference):
             return await self.store.get_chat_completion(completion_id)
         raise NotImplementedError("Get chat completion is not supported: inference store is not configured.")
 
-    async def _nonstream_openai_chat_completion(self, provider: Inference, params: dict) -> OpenAIChatCompletion:
-        response = await provider.openai_chat_completion(**params)
+    async def _nonstream_openai_chat_completion(
+        self, provider: Inference, params: OpenAIChatCompletionRequestWithExtraBody
+    ) -> OpenAIChatCompletion:
+        response = await provider.openai_chat_completion(params)
         for choice in response.choices:
             # some providers return an empty list for no tool calls in non-streaming responses
             # but the OpenAI API returns None. So, set tool_calls to None if it's empty
@@ -456,7 +393,7 @@ class InferenceRouter(Inference):
             else:
                 if hasattr(chunk, "delta"):
                     completion_text += chunk.delta
-                if hasattr(chunk, "stop_reason") and chunk.stop_reason and self.telemetry:
+                if hasattr(chunk, "stop_reason") and chunk.stop_reason and self.telemetry_enabled:
                     complete = True
                     completion_tokens = await self._count_tokens(completion_text)
             # if we are done receiving tokens
@@ -464,7 +401,7 @@ class InferenceRouter(Inference):
                 total_tokens = (prompt_tokens or 0) + (completion_tokens or 0)
 
                 # Create a separate span for streaming completion metrics
-                if self.telemetry:
+                if self.telemetry_enabled:
                     # Log metrics in the new span context
                     completion_metrics = self._construct_metrics(
                         prompt_tokens=prompt_tokens,
@@ -513,7 +450,7 @@ class InferenceRouter(Inference):
         total_tokens = (prompt_tokens or 0) + (completion_tokens or 0)
 
         # Create a separate span for completion metrics
-        if self.telemetry:
+        if self.telemetry_enabled:
             # Log metrics in the new span context
             completion_metrics = self._construct_metrics(
                 prompt_tokens=prompt_tokens,
@@ -611,7 +548,7 @@ class InferenceRouter(Inference):
                         completion_text += "".join(choice_data["content_parts"])
 
                     # Add metrics to the chunk
-                    if self.telemetry and hasattr(chunk, "usage") and chunk.usage:
+                    if self.telemetry_enabled and hasattr(chunk, "usage") and chunk.usage:
                         metrics = self._construct_metrics(
                             prompt_tokens=chunk.usage.prompt_tokens,
                             completion_tokens=chunk.usage.completion_tokens,

@@ -19,9 +19,6 @@ class SambaNovaInferenceAdapter(OpenAIMixin):
     SambaNova Inference Adapter for Llama Stack.
     """
 
-    def get_api_key(self) -> str:
-        return self.config.api_key.get_secret_value() if self.config.api_key else ""
-
     def get_base_url(self) -> str:
         """
         Get the base URL for OpenAI mixin.

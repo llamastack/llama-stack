@@ -6,12 +6,16 @@
 
 from typing import Any
 
+from pydantic import Field, SecretStr
+
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 
 
 class OllamaImplConfig(RemoteInferenceProviderConfig):
+    auth_credential: SecretStr | None = Field(default=None, exclude=True)
+
     url: str = DEFAULT_OLLAMA_URL
 
     @classmethod

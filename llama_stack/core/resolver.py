@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import importlib
+import importlib.metadata
 import inspect
 from typing import Any
 
@@ -26,10 +27,9 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFunctions
 from llama_stack.apis.shields import Shields
-from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
-from llama_stack.apis.vector_dbs import VectorDBs
 from llama_stack.apis.vector_io import VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.core.client import get_client_impl
 from llama_stack.core.datatypes import (
@@ -55,7 +55,6 @@ from llama_stack.providers.datatypes import (
     ScoringFunctionsProtocolPrivate,
     ShieldsProtocolPrivate,
     ToolGroupsProtocolPrivate,
-    VectorDBsProtocolPrivate,
 )
 
 logger = get_logger(name=__name__, category="core")
@@ -81,11 +80,10 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.inspect: Inspect,
         Api.batches: Batches,
         Api.vector_io: VectorIO,
-        Api.vector_dbs: VectorDBs,
+        Api.vector_stores: VectorStore,
         Api.models: Models,
         Api.safety: Safety,
         Api.shields: Shields,
-        Api.telemetry: Telemetry,
         Api.datasetio: DatasetIO,
         Api.datasets: Datasets,
         Api.scoring: Scoring,
@@ -125,7 +123,6 @@ def additional_protocols_map() -> dict[Api, Any]:
     return {
         Api.inference: (ModelsProtocolPrivate, Models, Api.models),
         Api.tool_groups: (ToolGroupsProtocolPrivate, ToolGroups, Api.tool_groups),
-        Api.vector_io: (VectorDBsProtocolPrivate, VectorDBs, Api.vector_dbs),
         Api.safety: (ShieldsProtocolPrivate, Shields, Api.shields),
         Api.datasetio: (DatasetsProtocolPrivate, Datasets, Api.datasets),
         Api.scoring: (
@@ -150,6 +147,7 @@ async def resolve_impls(
     provider_registry: ProviderRegistry,
     dist_registry: DistributionRegistry,
     policy: list[AccessRule],
+    internal_impls: dict[Api, Any] | None = None,
 ) -> dict[Api, Any]:
     """
     Resolves provider implementations by:
@@ -172,7 +170,7 @@ async def resolve_impls(
 
     sorted_providers = sort_providers_by_deps(providers_with_specs, run_config)
 
-    return await instantiate_providers(sorted_providers, router_apis, dist_registry, run_config, policy)
+    return await instantiate_providers(sorted_providers, router_apis, dist_registry, run_config, policy, internal_impls)
 
 
 def specs_for_autorouted_apis(apis_to_serve: list[str] | set[str]) -> dict[str, dict[str, ProviderWithSpec]]:
@@ -207,9 +205,7 @@ def specs_for_autorouted_apis(apis_to_serve: list[str] | set[str]) -> dict[str, 
                     module="llama_stack.core.routers",
                     routing_table_api=info.routing_table_api,
                     api_dependencies=[info.routing_table_api],
-                    # Add telemetry as an optional dependency to all auto-routed providers
-                    optional_api_dependencies=[Api.telemetry],
-                    deps__=([info.routing_table_api.value, Api.telemetry.value]),
+                    deps__=([info.routing_table_api.value]),
                 ),
             )
         }
@@ -280,9 +276,10 @@ async def instantiate_providers(
     dist_registry: DistributionRegistry,
     run_config: StackRunConfig,
     policy: list[AccessRule],
+    internal_impls: dict[Api, Any] | None = None,
 ) -> dict[Api, Any]:
     """Instantiates providers asynchronously while managing dependencies."""
-    impls: dict[Api, Any] = {}
+    impls: dict[Api, Any] = internal_impls.copy() if internal_impls else {}
     inner_impls_by_provider_id: dict[str, dict[str, Any]] = {f"inner-{x.value}": {} for x in router_apis}
     for api_str, provider in sorted_providers:
         # Skip providers that are not enabled
@@ -391,6 +388,8 @@ async def instantiate_provider(
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:
             args.append(policy)
+        if "telemetry_enabled" in inspect.signature(getattr(module, method)).parameters and run_config.telemetry:
+            args.append(run_config.telemetry.enabled)
 
     fn = getattr(module, method)
     impl = await fn(*args)

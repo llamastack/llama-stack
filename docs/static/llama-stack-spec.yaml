@@ -98,7 +98,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiChatCompletionRequest'
+              $ref: '#/components/schemas/OpenAIChatCompletionRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/chat/completions/{completion_id}:
@@ -167,7 +167,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCompletionRequest'
+              $ref: '#/components/schemas/OpenAICompletionRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/conversations:
@@ -192,7 +192,10 @@ paths:
       tags:
         - Conversations
       summary: Create a conversation.
-      description: Create a conversation.
+      description: >-
+        Create a conversation.
+
+        Create a conversation.
       parameters: []
       requestBody:
         content:
@@ -222,8 +225,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Get a conversation with the given ID.
-      description: Get a conversation with the given ID.
+      summary: Retrieve a conversation.
+      description: >-
+        Retrieve a conversation.
+
+        Get a conversation with the given ID.
       parameters:
         - name: conversation_id
           in: path
@@ -252,9 +258,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: >-
-        Update a conversation's metadata with the given ID.
+      summary: Update a conversation.
       description: >-
+        Update a conversation.
+
         Update a conversation's metadata with the given ID.
       parameters:
         - name: conversation_id
@@ -290,8 +297,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Delete a conversation with the given ID.
-      description: Delete a conversation with the given ID.
+      summary: Delete a conversation.
+      description: >-
+        Delete a conversation.
+
+        Delete a conversation with the given ID.
       parameters:
         - name: conversation_id
           in: path
@@ -321,8 +331,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: List items in the conversation.
-      description: List items in the conversation.
+      summary: List items.
+      description: >-
+        List items.
+
+        List items in the conversation.
       parameters:
         - name: conversation_id
           in: path
@@ -334,146 +347,46 @@ paths:
           in: query
           description: >-
             An item ID to list items after, used in pagination.
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: string
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: string
         - name: include
           in: query
           description: >-
             Specify additional output data to include in the response.
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: array
-                items:
-                  type: string
-                  enum:
-                    - code_interpreter_call.outputs
-                    - computer_call_output.output.image_url
-                    - file_search_call.results
-                    - message.input_image.image_url
-                    - message.output_text.logprobs
-                    - reasoning.encrypted_content
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: array
+            items:
+              type: string
+              enum:
+                - web_search_call.action.sources
+                - code_interpreter_call.outputs
+                - computer_call_output.output.image_url
+                - file_search_call.results
+                - message.input_image.image_url
+                - message.output_text.logprobs
+                - reasoning.encrypted_content
+              title: ConversationItemInclude
+              description: >-
+                Specify additional output data to include in the model response.
         - name: limit
           in: query
           description: >-
             A limit on the number of objects to be returned (1-100, default 20).
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: integer
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: integer
         - name: order
           in: query
           description: >-
             The order to return items in (asc or desc, default desc).
-          required: true
+          required: false
           schema:
-            oneOf:
-              - type: string
-                enum:
-                  - asc
-                  - desc
-              - type: object
-                title: NotGiven
-                description: >-
-                  A sentinel singleton class used to distinguish omitted keyword arguments
-                  from those passed in with the value None (which may have different
-                  behavior).
-
-                  For example:
-
-
-                  ```py
-
-                  def get(timeout: Union[int, NotGiven, None] = NotGiven()) -> Response:
-                  ...
-
-
-
-                  get(timeout=1)  # 1s timeout
-
-                  get(timeout=None)  # No timeout
-
-                  get()  # Default timeout behavior, which may not be statically known
-                  at the method definition.
-
-                  ```
+            type: string
+            enum:
+              - asc
+              - desc
       deprecated: false
     post:
       responses:
@@ -495,8 +408,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Create items in the conversation.
-      description: Create items in the conversation.
+      summary: Create items.
+      description: >-
+        Create items.
+
+        Create items in the conversation.
       parameters:
         - name: conversation_id
           in: path
@@ -532,8 +448,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Retrieve a conversation item.
-      description: Retrieve a conversation item.
+      summary: Retrieve an item.
+      description: >-
+        Retrieve an item.
+
+        Retrieve a conversation item.
       parameters:
         - name: conversation_id
           in: path
@@ -568,8 +487,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Conversations
-      summary: Delete a conversation item.
-      description: Delete a conversation item.
+      summary: Delete an item.
+      description: >-
+        Delete an item.
+
+        Delete a conversation item.
       parameters:
         - name: conversation_id
           in: path
@@ -617,7 +539,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiEmbeddingsRequest'
+              $ref: '#/components/schemas/OpenAIEmbeddingsRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/files:
@@ -1448,16 +1370,16 @@ paths:
         required: true
       deprecated: false
       x-llama-stack-extra-body-params:
-        - name: shields
+        - name: guardrails
           schema:
             type: array
             items:
               oneOf:
                 - type: string
-                - $ref: '#/components/schemas/ResponseShieldSpec'
+                - $ref: '#/components/schemas/ResponseGuardrailSpec'
           description: >-
-            List of shields to apply during response generation. Shields provide safety
-            and content moderation.
+            List of guardrails to apply during response generation. Guardrails provide
+            safety and content moderation.
           required: false
   /v1/responses/{response_id}:
     get:
@@ -1944,33 +1866,6 @@ paths:
               $ref: '#/components/schemas/SyntheticDataGenerateRequest'
         required: true
       deprecated: false
-  /v1/telemetry/events:
-    post:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Log an event.
-      description: Log an event.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LogEventRequest'
-        required: true
-      deprecated: false
   /v1/tool-runtime/invoke:
     post:
       responses:
@@ -2275,120 +2170,6 @@ paths:
           schema:
             type: string
       deprecated: false
-  /v1/vector-dbs:
-    get:
-      responses:
-        '200':
-          description: A ListVectorDBsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListVectorDBsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - VectorDBs
-      summary: List all vector databases.
-      description: List all vector databases.
-      parameters: []
-      deprecated: false
-    post:
-      responses:
-        '200':
-          description: A VectorDB.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorDB'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - VectorDBs
-      summary: Register a vector database.
-      description: Register a vector database.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterVectorDbRequest'
-        required: true
-      deprecated: false
-  /v1/vector-dbs/{vector_db_id}:
-    get:
-      responses:
-        '200':
-          description: A VectorDB.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorDB'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - VectorDBs
-      summary: Get a vector database by its identifier.
-      description: Get a vector database by its identifier.
-      parameters:
-        - name: vector_db_id
-          in: path
-          description: >-
-            The identifier of the vector database to get.
-          required: true
-          schema:
-            type: string
-      deprecated: false
-    delete:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - VectorDBs
-      summary: Unregister a vector database.
-      description: Unregister a vector database.
-      parameters:
-        - name: vector_db_id
-          in: path
-          description: >-
-            The identifier of the vector database to unregister.
-          required: true
-          schema:
-            type: string
-      deprecated: false
   /v1/vector-io/insert:
     post:
       responses:
@@ -2527,13 +2308,16 @@ paths:
       tags:
         - VectorIO
       summary: Creates a vector store.
-      description: Creates a vector store.
+      description: >-
+        Creates a vector store.
+
+        Generate an OpenAI-compatible vector store with the given parameters.
       parameters: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCreateVectorStoreRequest'
+              $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/vector_stores/{vector_store_id}:
@@ -2659,7 +2443,11 @@ paths:
       tags:
         - VectorIO
       summary: Create a vector store file batch.
-      description: Create a vector store file batch.
+      description: >-
+        Create a vector store file batch.
+
+        Generate an OpenAI-compatible vector store file batch for the given vector
+        store.
       parameters:
         - name: vector_store_id
           in: path
@@ -2672,7 +2460,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCreateVectorStoreFileBatchRequest'
+              $ref: '#/components/schemas/OpenAICreateVectorStoreFileBatchRequestWithExtraBody'
         required: true
       deprecated: false
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}:
@@ -3248,6 +3036,10 @@ components:
                 type: string
                 description: >-
                   The model that was used to generate the chat completion
+              usage:
+                $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+                description: >-
+                  Token usage information for the completion
               input_messages:
                 type: array
                 items:
@@ -3414,6 +3206,49 @@ components:
       title: OpenAIChatCompletionToolCallFunction
       description: >-
         Function call details for OpenAI-compatible tool calls.
+    OpenAIChatCompletionUsage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+          description: Number of tokens in the prompt
+        completion_tokens:
+          type: integer
+          description: Number of tokens in the completion
+        total_tokens:
+          type: integer
+          description: Total tokens used (prompt + completion)
+        prompt_tokens_details:
+          type: object
+          properties:
+            cached_tokens:
+              type: integer
+              description: Number of tokens retrieved from cache
+          additionalProperties: false
+          title: >-
+            OpenAIChatCompletionUsagePromptTokensDetails
+          description: >-
+            Token details for prompt tokens in OpenAI chat completion usage.
+        completion_tokens_details:
+          type: object
+          properties:
+            reasoning_tokens:
+              type: integer
+              description: >-
+                Number of tokens used for reasoning (o1/o3 models)
+          additionalProperties: false
+          title: >-
+            OpenAIChatCompletionUsageCompletionTokensDetails
+          description: >-
+            Token details for output tokens in OpenAI chat completion usage.
+      additionalProperties: false
+      required:
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+      title: OpenAIChatCompletionUsage
+      description: >-
+        Usage information for OpenAI chat completion.
     OpenAIChoice:
       type: object
       properties:
@@ -3777,7 +3612,7 @@ components:
       title: OpenAIResponseFormatText
       description: >-
         Text response format for OpenAI-compatible chat completion requests.
-    OpenaiChatCompletionRequest:
+    OpenAIChatCompletionRequestWithExtraBody:
       type: object
       properties:
         model:
@@ -3919,7 +3754,9 @@ components:
       required:
         - model
         - messages
-      title: OpenaiChatCompletionRequest
+      title: OpenAIChatCompletionRequestWithExtraBody
+      description: >-
+        Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletion:
       type: object
       properties:
@@ -3945,6 +3782,10 @@ components:
           type: string
           description: >-
             The model that was used to generate the chat completion
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+          description: >-
+            Token usage information for the completion
       additionalProperties: false
       required:
         - id
@@ -3980,6 +3821,10 @@ components:
           type: string
           description: >-
             The model that was used to generate the chat completion
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+          description: >-
+            Token usage information (typically included in final chunk with stream_options)
       additionalProperties: false
       required:
         - id
@@ -4007,6 +3852,11 @@ components:
           items:
             $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
           description: (Optional) The tool calls of the delta
+        reasoning_content:
+          type: string
+          description: >-
+            (Optional) The reasoning content from the model (non-standard, for o1/o3
+            models)
       additionalProperties: false
       title: OpenAIChoiceDelta
       description: >-
@@ -4060,6 +3910,10 @@ components:
           type: string
           description: >-
             The model that was used to generate the chat completion
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
+          description: >-
+            Token usage information for the completion
         input_messages:
           type: array
           items:
@@ -4073,7 +3927,7 @@ components:
         - model
         - input_messages
       title: OpenAICompletionWithInputMessages
-    OpenaiCompletionRequest:
+    OpenAICompletionRequestWithExtraBody:
       type: object
       properties:
         model:
@@ -4161,12 +4015,6 @@ components:
         user:
           type: string
           description: (Optional) The user to use.
-        guided_choice:
-          type: array
-          items:
-            type: string
-        prompt_logprobs:
-          type: integer
         suffix:
           type: string
           description: >-
@@ -4175,7 +4023,9 @@ components:
       required:
         - model
         - prompt
-      title: OpenaiCompletionRequest
+      title: OpenAICompletionRequestWithExtraBody
+      description: >-
+        Request parameters for OpenAI-compatible completion endpoint.
     OpenAICompletion:
       type: object
       properties:
@@ -4225,18 +4075,24 @@ components:
     ConversationItem:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseMessage'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
       discriminator:
         propertyName: type
         mapping:
           message: '#/components/schemas/OpenAIResponseMessage'
-          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+          function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+          mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
     OpenAIResponseAnnotationCitation:
@@ -4357,6 +4213,50 @@ components:
           url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
           container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
           file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+    OpenAIResponseContentPartRefusal:
+      type: object
+      properties:
+        type:
+          type: string
+          const: refusal
+          default: refusal
+          description: >-
+            Content part type identifier, always "refusal"
+        refusal:
+          type: string
+          description: Refusal text supplied by the model
+      additionalProperties: false
+      required:
+        - type
+        - refusal
+      title: OpenAIResponseContentPartRefusal
+      description: >-
+        Refusal content within a streamed response part.
+    "OpenAIResponseInputFunctionToolCallOutput":
+      type: object
+      properties:
+        call_id:
+          type: string
+        output:
+          type: string
+        type:
+          type: string
+          const: function_call_output
+          default: function_call_output
+        id:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+      required:
+        - call_id
+        - output
+        - type
+      title: >-
+        OpenAIResponseInputFunctionToolCallOutput
+      description: >-
+        This represents the output of a function call that gets passed back to the
+        model.
     OpenAIResponseInputMessageContent:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
@@ -4415,6 +4315,53 @@ components:
       title: OpenAIResponseInputMessageContentText
       description: >-
         Text content for input messages in OpenAI response format.
+    OpenAIResponseMCPApprovalRequest:
+      type: object
+      properties:
+        arguments:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        server_label:
+          type: string
+        type:
+          type: string
+          const: mcp_approval_request
+          default: mcp_approval_request
+      additionalProperties: false
+      required:
+        - arguments
+        - id
+        - name
+        - server_label
+        - type
+      title: OpenAIResponseMCPApprovalRequest
+      description: >-
+        A request for human approval of a tool invocation.
+    OpenAIResponseMCPApprovalResponse:
+      type: object
+      properties:
+        approval_request_id:
+          type: string
+        approve:
+          type: boolean
+        type:
+          type: string
+          const: mcp_approval_response
+          default: mcp_approval_response
+        id:
+          type: string
+        reason:
+          type: string
+      additionalProperties: false
+      required:
+        - approval_request_id
+        - approve
+        - type
+      title: OpenAIResponseMCPApprovalResponse
+      description: A response to an MCP approval request.
     OpenAIResponseMessage:
       type: object
       properties:
@@ -4456,6 +4403,15 @@ components:
         under one type because the Responses API gives them all the same "type" value,
         and there is no way to tell them apart in certain scenarios.
     OpenAIResponseOutputMessageContent:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+        - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+      discriminator:
+        propertyName: type
+        mapping:
+          output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+          refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+    "OpenAIResponseOutputMessageContentOutputText":
       type: object
       properties:
         text:
@@ -4849,7 +4805,7 @@ components:
         - deleted
       title: ConversationItemDeletedResource
       description: Response for deleted conversation item.
-    OpenaiEmbeddingsRequest:
+    OpenAIEmbeddingsRequestWithExtraBody:
       type: object
       properties:
         model:
@@ -4868,6 +4824,7 @@ components:
             multiple inputs in a single request, pass an array of strings.
         encoding_format:
           type: string
+          default: float
           description: >-
             (Optional) The format to return the embeddings in. Can be either "float"
             or "base64". Defaults to "float".
@@ -4885,7 +4842,9 @@ components:
       required:
         - model
         - input
-      title: OpenaiEmbeddingsRequest
+      title: OpenAIEmbeddingsRequestWithExtraBody
+      description: >-
+        Request parameters for OpenAI-compatible embeddings endpoint.
     OpenAIEmbeddingData:
       type: object
       properties:
@@ -5168,7 +5127,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -5210,6 +5169,7 @@ components:
       enum:
         - llm
         - embedding
+        - rerank
       title: ModelType
       description: >-
         Enumeration of supported model types in Llama Stack.
@@ -5270,11 +5230,10 @@ components:
         model:
           type: string
           description: >-
-            The content moderation model you would like to use.
+            (Optional) The content moderation model you would like to use.
       additionalProperties: false
       required:
         - input
-        - model
       title: RunModerationRequest
     ModerationObject:
       type: object
@@ -5563,259 +5522,10 @@ components:
         Error details for failed OpenAI response requests.
     OpenAIResponseInput:
       oneOf:
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutput'
         - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
         - $ref: '#/components/schemas/OpenAIResponseMessage'
-    "OpenAIResponseInputFunctionToolCallOutput":
-      type: object
-      properties:
-        call_id:
-          type: string
-        output:
-          type: string
-        type:
-          type: string
-          const: function_call_output
-          default: function_call_output
-        id:
-          type: string
-        status:
-          type: string
-      additionalProperties: false
-      required:
-        - call_id
-        - output
-        - type
-      title: >-
-        OpenAIResponseInputFunctionToolCallOutput
-      description: >-
-        This represents the output of a function call that gets passed back to the
-        model.
-    OpenAIResponseMCPApprovalRequest:
-      type: object
-      properties:
-        arguments:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        server_label:
-          type: string
-        type:
-          type: string
-          const: mcp_approval_request
-          default: mcp_approval_request
-      additionalProperties: false
-      required:
-        - arguments
-        - id
-        - name
-        - server_label
-        - type
-      title: OpenAIResponseMCPApprovalRequest
-      description: >-
-        A request for human approval of a tool invocation.
-    OpenAIResponseMCPApprovalResponse:
-      type: object
-      properties:
-        approval_request_id:
-          type: string
-        approve:
-          type: boolean
-        type:
-          type: string
-          const: mcp_approval_response
-          default: mcp_approval_response
-        id:
-          type: string
-        reason:
-          type: string
-      additionalProperties: false
-      required:
-        - approval_request_id
-        - approve
-        - type
-      title: OpenAIResponseMCPApprovalResponse
-      description: A response to an MCP approval request.
-    OpenAIResponseObjectWithInput:
-      type: object
-      properties:
-        created_at:
-          type: integer
-          description: >-
-            Unix timestamp when the response was created
-        error:
-          $ref: '#/components/schemas/OpenAIResponseError'
-          description: >-
-            (Optional) Error details if the response generation failed
-        id:
-          type: string
-          description: Unique identifier for this response
-        model:
-          type: string
-          description: Model identifier used for generation
-        object:
-          type: string
-          const: response
-          default: response
-          description: >-
-            Object type identifier, always "response"
-        output:
-          type: array
-          items:
-            $ref: '#/components/schemas/OpenAIResponseOutput'
-          description: >-
-            List of generated output items (messages, tool calls, etc.)
-        parallel_tool_calls:
-          type: boolean
-          default: false
-          description: >-
-            Whether tool calls can be executed in parallel
-        previous_response_id:
-          type: string
-          description: >-
-            (Optional) ID of the previous response in a conversation
-        status:
-          type: string
-          description: >-
-            Current status of the response generation
-        temperature:
-          type: number
-          description: >-
-            (Optional) Sampling temperature used for generation
-        text:
-          $ref: '#/components/schemas/OpenAIResponseText'
-          description: >-
-            Text formatting configuration for the response
-        top_p:
-          type: number
-          description: >-
-            (Optional) Nucleus sampling parameter used for generation
-        truncation:
-          type: string
-          description: >-
-            (Optional) Truncation strategy applied to the response
-        input:
-          type: array
-          items:
-            $ref: '#/components/schemas/OpenAIResponseInput'
-          description: >-
-            List of input items that led to this response
-      additionalProperties: false
-      required:
-        - created_at
-        - id
-        - model
-        - object
-        - output
-        - parallel_tool_calls
-        - status
-        - text
-        - input
-      title: OpenAIResponseObjectWithInput
-      description: >-
-        OpenAI response object extended with input context information.
-    OpenAIResponseOutput:
-      oneOf:
-        - $ref: '#/components/schemas/OpenAIResponseMessage'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-      discriminator:
-        propertyName: type
-        mapping:
-          message: '#/components/schemas/OpenAIResponseMessage'
-          web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-          mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-          mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-          mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-    OpenAIResponseText:
-      type: object
-      properties:
-        format:
-          type: object
-          properties:
-            type:
-              oneOf:
-                - type: string
-                  const: text
-                - type: string
-                  const: json_schema
-                - type: string
-                  const: json_object
-              description: >-
-                Must be "text", "json_schema", or "json_object" to identify the format
-                type
-            name:
-              type: string
-              description: >-
-                The name of the response format. Only used for json_schema.
-            schema:
-              type: object
-              additionalProperties:
-                oneOf:
-                  - type: 'null'
-                  - type: boolean
-                  - type: number
-                  - type: string
-                  - type: array
-                  - type: object
-              description: >-
-                The JSON schema the response should conform to. In a Python SDK, this
-                is often a `pydantic` model. Only used for json_schema.
-            description:
-              type: string
-              description: >-
-                (Optional) A description of the response format. Only used for json_schema.
-            strict:
-              type: boolean
-              description: >-
-                (Optional) Whether to strictly enforce the JSON schema. If true, the
-                response must match the schema exactly. Only used for json_schema.
-          additionalProperties: false
-          required:
-            - type
-          description: >-
-            (Optional) Text format configuration specifying output format requirements
-      additionalProperties: false
-      title: OpenAIResponseText
-      description: >-
-        Text response configuration for OpenAI responses.
-    ResponseShieldSpec:
-      type: object
-      properties:
-        type:
-          type: string
-          description: The type/identifier of the shield.
-      additionalProperties: false
-      required:
-        - type
-      title: ResponseShieldSpec
-      description: >-
-        Specification for a shield to apply during response generation.
-    OpenAIResponseInputTool:
-      oneOf:
-        - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-        - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-        - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-        - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
-      discriminator:
-        propertyName: type
-        mapping:
-          web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-          file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-          function: '#/components/schemas/OpenAIResponseInputToolFunction'
-          mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
     OpenAIResponseInputToolFileSearch:
       type: object
       properties:
@@ -5908,6 +5618,304 @@ components:
       title: OpenAIResponseInputToolFunction
       description: >-
         Function tool configuration for OpenAI response inputs.
+    OpenAIResponseInputToolWebSearch:
+      type: object
+      properties:
+        type:
+          oneOf:
+            - type: string
+              const: web_search
+            - type: string
+              const: web_search_preview
+            - type: string
+              const: web_search_preview_2025_03_11
+          default: web_search
+          description: Web search tool type variant to use
+        search_context_size:
+          type: string
+          default: medium
+          description: >-
+            (Optional) Size of search context, must be "low", "medium", or "high"
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIResponseInputToolWebSearch
+      description: >-
+        Web search tool configuration for OpenAI response inputs.
+    OpenAIResponseObjectWithInput:
+      type: object
+      properties:
+        created_at:
+          type: integer
+          description: >-
+            Unix timestamp when the response was created
+        error:
+          $ref: '#/components/schemas/OpenAIResponseError'
+          description: >-
+            (Optional) Error details if the response generation failed
+        id:
+          type: string
+          description: Unique identifier for this response
+        model:
+          type: string
+          description: Model identifier used for generation
+        object:
+          type: string
+          const: response
+          default: response
+          description: >-
+            Object type identifier, always "response"
+        output:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseOutput'
+          description: >-
+            List of generated output items (messages, tool calls, etc.)
+        parallel_tool_calls:
+          type: boolean
+          default: false
+          description: >-
+            Whether tool calls can be executed in parallel
+        previous_response_id:
+          type: string
+          description: >-
+            (Optional) ID of the previous response in a conversation
+        status:
+          type: string
+          description: >-
+            Current status of the response generation
+        temperature:
+          type: number
+          description: >-
+            (Optional) Sampling temperature used for generation
+        text:
+          $ref: '#/components/schemas/OpenAIResponseText'
+          description: >-
+            Text formatting configuration for the response
+        top_p:
+          type: number
+          description: >-
+            (Optional) Nucleus sampling parameter used for generation
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseTool'
+          description: >-
+            (Optional) An array of tools the model may call while generating a response.
+        truncation:
+          type: string
+          description: >-
+            (Optional) Truncation strategy applied to the response
+        usage:
+          $ref: '#/components/schemas/OpenAIResponseUsage'
+          description: >-
+            (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
+        input:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseInput'
+          description: >-
+            List of input items that led to this response
+      additionalProperties: false
+      required:
+        - created_at
+        - id
+        - model
+        - object
+        - output
+        - parallel_tool_calls
+        - status
+        - text
+        - input
+      title: OpenAIResponseObjectWithInput
+      description: >-
+        OpenAI response object extended with input context information.
+    OpenAIResponseOutput:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseMessage'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+      discriminator:
+        propertyName: type
+        mapping:
+          message: '#/components/schemas/OpenAIResponseMessage'
+          web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+          mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+          mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+          mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+    OpenAIResponseText:
+      type: object
+      properties:
+        format:
+          type: object
+          properties:
+            type:
+              oneOf:
+                - type: string
+                  const: text
+                - type: string
+                  const: json_schema
+                - type: string
+                  const: json_object
+              description: >-
+                Must be "text", "json_schema", or "json_object" to identify the format
+                type
+            name:
+              type: string
+              description: >-
+                The name of the response format. Only used for json_schema.
+            schema:
+              type: object
+              additionalProperties:
+                oneOf:
+                  - type: 'null'
+                  - type: boolean
+                  - type: number
+                  - type: string
+                  - type: array
+                  - type: object
+              description: >-
+                The JSON schema the response should conform to. In a Python SDK, this
+                is often a `pydantic` model. Only used for json_schema.
+            description:
+              type: string
+              description: >-
+                (Optional) A description of the response format. Only used for json_schema.
+            strict:
+              type: boolean
+              description: >-
+                (Optional) Whether to strictly enforce the JSON schema. If true, the
+                response must match the schema exactly. Only used for json_schema.
+          additionalProperties: false
+          required:
+            - type
+          description: >-
+            (Optional) Text format configuration specifying output format requirements
+      additionalProperties: false
+      title: OpenAIResponseText
+      description: >-
+        Text response configuration for OpenAI responses.
+    OpenAIResponseTool:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+        - $ref: '#/components/schemas/OpenAIResponseToolMCP'
+      discriminator:
+        propertyName: type
+        mapping:
+          web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+          file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+          function: '#/components/schemas/OpenAIResponseInputToolFunction'
+          mcp: '#/components/schemas/OpenAIResponseToolMCP'
+    OpenAIResponseToolMCP:
+      type: object
+      properties:
+        type:
+          type: string
+          const: mcp
+          default: mcp
+          description: Tool type identifier, always "mcp"
+        server_label:
+          type: string
+          description: Label to identify this MCP server
+        allowed_tools:
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: object
+              properties:
+                tool_names:
+                  type: array
+                  items:
+                    type: string
+                  description: >-
+                    (Optional) List of specific tool names that are allowed
+              additionalProperties: false
+              title: AllowedToolsFilter
+              description: >-
+                Filter configuration for restricting which MCP tools can be used.
+          description: >-
+            (Optional) Restriction on which tools can be used from this server
+      additionalProperties: false
+      required:
+        - type
+        - server_label
+      title: OpenAIResponseToolMCP
+      description: >-
+        Model Context Protocol (MCP) tool configuration for OpenAI response object.
+    OpenAIResponseUsage:
+      type: object
+      properties:
+        input_tokens:
+          type: integer
+          description: Number of tokens in the input
+        output_tokens:
+          type: integer
+          description: Number of tokens in the output
+        total_tokens:
+          type: integer
+          description: Total tokens used (input + output)
+        input_tokens_details:
+          type: object
+          properties:
+            cached_tokens:
+              type: integer
+              description: Number of tokens retrieved from cache
+          additionalProperties: false
+          description: Detailed breakdown of input token usage
+        output_tokens_details:
+          type: object
+          properties:
+            reasoning_tokens:
+              type: integer
+              description: >-
+                Number of tokens used for reasoning (o1/o3 models)
+          additionalProperties: false
+          description: Detailed breakdown of output token usage
+      additionalProperties: false
+      required:
+        - input_tokens
+        - output_tokens
+        - total_tokens
+      title: OpenAIResponseUsage
+      description: Usage information for OpenAI response.
+    ResponseGuardrailSpec:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type/identifier of the guardrail.
+      additionalProperties: false
+      required:
+        - type
+      title: ResponseGuardrailSpec
+      description: >-
+        Specification for a guardrail to apply during response generation.
+    OpenAIResponseInputTool:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+        - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+      discriminator:
+        propertyName: type
+        mapping:
+          web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+          file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+          function: '#/components/schemas/OpenAIResponseInputToolFunction'
+          mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
     OpenAIResponseInputToolMCP:
       type: object
       properties:
@@ -5989,30 +5997,6 @@ components:
       title: OpenAIResponseInputToolMCP
       description: >-
         Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
-    OpenAIResponseInputToolWebSearch:
-      type: object
-      properties:
-        type:
-          oneOf:
-            - type: string
-              const: web_search
-            - type: string
-              const: web_search_preview
-            - type: string
-              const: web_search_preview_2025_03_11
-          default: web_search
-          description: Web search tool type variant to use
-        search_context_size:
-          type: string
-          default: medium
-          description: >-
-            (Optional) Size of search context, must be "low", "medium", or "high"
-      additionalProperties: false
-      required:
-        - type
-      title: OpenAIResponseInputToolWebSearch
-      description: >-
-        Web search tool configuration for OpenAI response inputs.
     CreateOpenaiResponseRequest:
       type: object
       properties:
@@ -6034,6 +6018,12 @@ components:
             (Optional) if specified, the new response will be a continuation of the
             previous response. This can be used to easily fork-off new responses from
             existing responses.
+        conversation:
+          type: string
+          description: >-
+            (Optional) The ID of a conversation to add the response to. Must begin
+            with 'conv_'. Input and output messages will be automatically added to
+            the conversation.
         store:
           type: boolean
         stream:
@@ -6113,10 +6103,24 @@ components:
           type: number
           description: >-
             (Optional) Nucleus sampling parameter used for generation
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseTool'
+          description: >-
+            (Optional) An array of tools the model may call while generating a response.
         truncation:
           type: string
           description: >-
             (Optional) Truncation strategy applied to the response
+        usage:
+          $ref: '#/components/schemas/OpenAIResponseUsage'
+          description: >-
+            (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
       additionalProperties: false
       required:
         - created_at
@@ -6137,30 +6141,81 @@ components:
           type: string
           const: output_text
           default: output_text
+          description: >-
+            Content part type identifier, always "output_text"
         text:
           type: string
+          description: Text emitted for this content part
+        annotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIResponseAnnotations'
+          description: >-
+            Structured annotations associated with the text
+        logprobs:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: 'null'
+                - type: boolean
+                - type: number
+                - type: string
+                - type: array
+                - type: object
+          description: (Optional) Token log probability details
       additionalProperties: false
       required:
         - type
         - text
+        - annotations
       title: OpenAIResponseContentPartOutputText
-    OpenAIResponseContentPartRefusal:
+      description: >-
+        Text content within a streamed response part.
+    "OpenAIResponseContentPartReasoningSummary":
       type: object
       properties:
         type:
           type: string
-          const: refusal
-          default: refusal
-        refusal:
+          const: summary_text
+          default: summary_text
+          description: >-
+            Content part type identifier, always "summary_text"
+        text:
           type: string
+          description: Summary text
       additionalProperties: false
       required:
         - type
-        - refusal
-      title: OpenAIResponseContentPartRefusal
+        - text
+      title: >-
+        OpenAIResponseContentPartReasoningSummary
+      description: >-
+        Reasoning summary part in a streamed response.
+    OpenAIResponseContentPartReasoningText:
+      type: object
+      properties:
+        type:
+          type: string
+          const: reasoning_text
+          default: reasoning_text
+          description: >-
+            Content part type identifier, always "reasoning_text"
+        text:
+          type: string
+          description: Reasoning text supplied by the model
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: OpenAIResponseContentPartReasoningText
+      description: >-
+        Reasoning text emitted as part of a streamed response.
     OpenAIResponseObjectStream:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseInProgress'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta'
@@ -6180,11 +6235,26 @@ components:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallInProgress'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallSearching'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallCompleted'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
       discriminator:
         propertyName: type
         mapping:
           response.created: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
+          response.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseInProgress'
           response.output_item.added: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded'
           response.output_item.done: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone'
           response.output_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta'
@@ -6204,13 +6274,27 @@ components:
           response.mcp_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
           response.content_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
           response.content_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+          response.reasoning_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDelta'
+          response.reasoning_text.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDone'
+          response.reasoning_summary_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded'
+          response.reasoning_summary_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartDone'
+          response.reasoning_summary_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta'
+          response.reasoning_summary_text.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDone'
+          response.refusal.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDelta'
+          response.refusal.done: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDone'
+          response.output_text.annotation.added: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded'
+          response.file_search_call.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallInProgress'
+          response.file_search_call.searching: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallSearching'
+          response.file_search_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallCompleted'
+          response.incomplete: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
+          response.failed: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
           response.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
     "OpenAIResponseObjectStreamResponseCompleted":
       type: object
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
-          description: The completed response object
+          description: Completed response object
         type:
           type: string
           const: response.completed
@@ -6228,6 +6312,10 @@ components:
     "OpenAIResponseObjectStreamResponseContentPartAdded":
       type: object
       properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the part within the content array
         response_id:
           type: string
           description: >-
@@ -6236,15 +6324,21 @@ components:
           type: string
           description: >-
             Unique identifier of the output item containing this content part
+        output_index:
+          type: integer
+          description: >-
+            Index position of the output item in the response
         part:
           oneOf:
             - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
             - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+            - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           discriminator:
             propertyName: type
             mapping:
               output_text: '#/components/schemas/OpenAIResponseContentPartOutputText'
               refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+              reasoning_text: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           description: The content part that was added
         sequence_number:
           type: integer
@@ -6258,8 +6352,10 @@ components:
             Event type identifier, always "response.content_part.added"
       additionalProperties: false
       required:
+        - content_index
         - response_id
         - item_id
+        - output_index
         - part
         - sequence_number
         - type
@@ -6270,6 +6366,10 @@ components:
     "OpenAIResponseObjectStreamResponseContentPartDone":
       type: object
       properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the part within the content array
         response_id:
           type: string
           description: >-
@@ -6278,15 +6378,21 @@ components:
           type: string
           description: >-
             Unique identifier of the output item containing this content part
+        output_index:
+          type: integer
+          description: >-
+            Index position of the output item in the response
         part:
           oneOf:
             - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
             - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+            - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           discriminator:
             propertyName: type
             mapping:
               output_text: '#/components/schemas/OpenAIResponseContentPartOutputText'
               refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+              reasoning_text: '#/components/schemas/OpenAIResponseContentPartReasoningText'
           description: The completed content part
         sequence_number:
           type: integer
@@ -6300,8 +6406,10 @@ components:
             Event type identifier, always "response.content_part.done"
       additionalProperties: false
       required:
+        - content_index
         - response_id
         - item_id
+        - output_index
         - part
         - sequence_number
         - type
@@ -6314,7 +6422,7 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
-          description: The newly created response object
+          description: The response object that was created
         type:
           type: string
           const: response.created
@@ -6329,6 +6437,123 @@ components:
         OpenAIResponseObjectStreamResponseCreated
       description: >-
         Streaming event indicating a new response has been created.
+    OpenAIResponseObjectStreamResponseFailed:
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: Response object describing the failure
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.failed
+          default: response.failed
+          description: >-
+            Event type identifier, always "response.failed"
+      additionalProperties: false
+      required:
+        - response
+        - sequence_number
+        - type
+      title: OpenAIResponseObjectStreamResponseFailed
+      description: >-
+        Streaming event emitted when a response fails.
+    "OpenAIResponseObjectStreamResponseFileSearchCallCompleted":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.completed
+          default: response.file_search_call.completed
+          description: >-
+            Event type identifier, always "response.file_search_call.completed"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallCompleted
+      description: >-
+        Streaming event for completed file search calls.
+    "OpenAIResponseObjectStreamResponseFileSearchCallInProgress":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.in_progress
+          default: response.file_search_call.in_progress
+          description: >-
+            Event type identifier, always "response.file_search_call.in_progress"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallInProgress
+      description: >-
+        Streaming event for file search calls in progress.
+    "OpenAIResponseObjectStreamResponseFileSearchCallSearching":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.searching
+          default: response.file_search_call.searching
+          description: >-
+            Event type identifier, always "response.file_search_call.searching"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallSearching
+      description: >-
+        Streaming event for file search currently searching.
     "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta":
       type: object
       properties:
@@ -6401,6 +6626,57 @@ components:
         OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone
       description: >-
         Streaming event for when function call arguments are completed.
+    "OpenAIResponseObjectStreamResponseInProgress":
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: Current response state while in progress
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.in_progress
+          default: response.in_progress
+          description: >-
+            Event type identifier, always "response.in_progress"
+      additionalProperties: false
+      required:
+        - response
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseInProgress
+      description: >-
+        Streaming event indicating the response remains in progress.
+    "OpenAIResponseObjectStreamResponseIncomplete":
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/OpenAIResponseObject'
+          description: >-
+            Response object describing the incomplete state
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.incomplete
+          default: response.incomplete
+          description: >-
+            Event type identifier, always "response.incomplete"
+      additionalProperties: false
+      required:
+        - response
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseIncomplete
+      description: >-
+        Streaming event emitted when a response ends in an incomplete state.
     "OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta":
       type: object
       properties:
@@ -6670,6 +6946,62 @@ components:
         OpenAIResponseObjectStreamResponseOutputItemDone
       description: >-
         Streaming event for when an output item is completed.
+    "OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the item to which the annotation is being added
+        output_index:
+          type: integer
+          description: >-
+            Index position of the output item in the response's output array
+        content_index:
+          type: integer
+          description: >-
+            Index position of the content part within the output item
+        annotation_index:
+          type: integer
+          description: >-
+            Index of the annotation within the content part
+        annotation:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+          discriminator:
+            propertyName: type
+            mapping:
+              file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+          description: The annotation object being added
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.output_text.annotation.added
+          default: response.output_text.annotation.added
+          description: >-
+            Event type identifier, always "response.output_text.annotation.added"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - content_index
+        - annotation_index
+        - annotation
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded
+      description: >-
+        Streaming event for when an annotation is added to output text.
     "OpenAIResponseObjectStreamResponseOutputTextDelta":
       type: object
       properties:
@@ -6749,6 +7081,314 @@ components:
         OpenAIResponseObjectStreamResponseOutputTextDone
       description: >-
         Streaming event for when text output is completed.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        part:
+          $ref: '#/components/schemas/OpenAIResponseContentPartReasoningSummary'
+          description: The summary part that was added
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_part.added
+          default: response.reasoning_summary_part.added
+          description: >-
+            Event type identifier, always "response.reasoning_summary_part.added"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - part
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded
+      description: >-
+        Streaming event for when a new reasoning summary part is added.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryPartDone":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        part:
+          $ref: '#/components/schemas/OpenAIResponseContentPartReasoningSummary'
+          description: The completed summary part
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_part.done
+          default: response.reasoning_summary_part.done
+          description: >-
+            Event type identifier, always "response.reasoning_summary_part.done"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - part
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryPartDone
+      description: >-
+        Streaming event for when a reasoning summary part is completed.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta":
+      type: object
+      properties:
+        delta:
+          type: string
+          description: Incremental summary text being added
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_text.delta
+          default: response.reasoning_summary_text.delta
+          description: >-
+            Event type identifier, always "response.reasoning_summary_text.delta"
+      additionalProperties: false
+      required:
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta
+      description: >-
+        Streaming event for incremental reasoning summary text updates.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryTextDone":
+      type: object
+      properties:
+        text:
+          type: string
+          description: Final complete summary text
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_text.done
+          default: response.reasoning_summary_text.done
+          description: >-
+            Event type identifier, always "response.reasoning_summary_text.done"
+      additionalProperties: false
+      required:
+        - text
+        - item_id
+        - output_index
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryTextDone
+      description: >-
+        Streaming event for when reasoning summary text is completed.
+    "OpenAIResponseObjectStreamResponseReasoningTextDelta":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the reasoning content part
+        delta:
+          type: string
+          description: Incremental reasoning text being added
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the output item being updated
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.reasoning_text.delta
+          default: response.reasoning_text.delta
+          description: >-
+            Event type identifier, always "response.reasoning_text.delta"
+      additionalProperties: false
+      required:
+        - content_index
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningTextDelta
+      description: >-
+        Streaming event for incremental reasoning text updates.
+    "OpenAIResponseObjectStreamResponseReasoningTextDone":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the reasoning content part
+        text:
+          type: string
+          description: Final complete reasoning text
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.reasoning_text.done
+          default: response.reasoning_text.done
+          description: >-
+            Event type identifier, always "response.reasoning_text.done"
+      additionalProperties: false
+      required:
+        - content_index
+        - text
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningTextDone
+      description: >-
+        Streaming event for when reasoning text is completed.
+    "OpenAIResponseObjectStreamResponseRefusalDelta":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position of the content part
+        delta:
+          type: string
+          description: Incremental refusal text being added
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.refusal.delta
+          default: response.refusal.delta
+          description: >-
+            Event type identifier, always "response.refusal.delta"
+      additionalProperties: false
+      required:
+        - content_index
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseRefusalDelta
+      description: >-
+        Streaming event for incremental refusal text updates.
+    "OpenAIResponseObjectStreamResponseRefusalDone":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position of the content part
+        refusal:
+          type: string
+          description: Final complete refusal text
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.refusal.done
+          default: response.refusal.done
+          description: >-
+            Event type identifier, always "response.refusal.done"
+      additionalProperties: false
+      required:
+        - content_index
+        - refusal
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseRefusalDone
+      description: >-
+        Streaming event for when refusal text is completed.
     "OpenAIResponseObjectStreamResponseWebSearchCallCompleted":
       type: object
       properties:
@@ -6876,227 +7516,6 @@ components:
       title: ListOpenAIResponseInputItem
       description: >-
         List container for OpenAI response input items.
-    CompletionMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: assistant
-          default: assistant
-          description: >-
-            Must be "assistant" to identify this as the model's response
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The content of the model's response
-        stop_reason:
-          type: string
-          enum:
-            - end_of_turn
-            - end_of_message
-            - out_of_tokens
-          description: >-
-            Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`:
-            The model finished generating the entire response. - `StopReason.end_of_message`:
-            The model finished generating but generated a partial response -- usually,
-            a tool call. The user may call the tool and continue the conversation
-            with the tool's response. - `StopReason.out_of_tokens`: The model ran
-            out of token budget.
-        tool_calls:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolCall'
-          description: >-
-            List of tool calls. Each tool call is a ToolCall object.
-      additionalProperties: false
-      required:
-        - role
-        - content
-        - stop_reason
-      title: CompletionMessage
-      description: >-
-        A message containing the model's (assistant) response in a chat conversation.
-    ImageContentItem:
-      type: object
-      properties:
-        type:
-          type: string
-          const: image
-          default: image
-          description: >-
-            Discriminator type of the content item. Always "image"
-        image:
-          type: object
-          properties:
-            url:
-              $ref: '#/components/schemas/URL'
-              description: >-
-                A URL of the image or data URL in the format of data:image/{type};base64,{data}.
-                Note that URL could have length limits.
-            data:
-              type: string
-              contentEncoding: base64
-              description: base64 encoded image data as string
-          additionalProperties: false
-          description: >-
-            Image as a base64 encoded string or an URL
-      additionalProperties: false
-      required:
-        - type
-        - image
-      title: ImageContentItem
-      description: A image content item
-    InterleavedContent:
-      oneOf:
-        - type: string
-        - $ref: '#/components/schemas/InterleavedContentItem'
-        - type: array
-          items:
-            $ref: '#/components/schemas/InterleavedContentItem'
-    InterleavedContentItem:
-      oneOf:
-        - $ref: '#/components/schemas/ImageContentItem'
-        - $ref: '#/components/schemas/TextContentItem'
-      discriminator:
-        propertyName: type
-        mapping:
-          image: '#/components/schemas/ImageContentItem'
-          text: '#/components/schemas/TextContentItem'
-    Message:
-      oneOf:
-        - $ref: '#/components/schemas/UserMessage'
-        - $ref: '#/components/schemas/SystemMessage'
-        - $ref: '#/components/schemas/ToolResponseMessage'
-        - $ref: '#/components/schemas/CompletionMessage'
-      discriminator:
-        propertyName: role
-        mapping:
-          user: '#/components/schemas/UserMessage'
-          system: '#/components/schemas/SystemMessage'
-          tool: '#/components/schemas/ToolResponseMessage'
-          assistant: '#/components/schemas/CompletionMessage'
-    SystemMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: system
-          default: system
-          description: >-
-            Must be "system" to identify this as a system message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the "system prompt". If multiple system messages are provided,
-            they are concatenated. The underlying Llama Stack code may also add other
-            system messages (for example, for formatting tool definitions).
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: SystemMessage
-      description: >-
-        A system message providing instructions or context to the model.
-    TextContentItem:
-      type: object
-      properties:
-        type:
-          type: string
-          const: text
-          default: text
-          description: >-
-            Discriminator type of the content item. Always "text"
-        text:
-          type: string
-          description: Text content
-      additionalProperties: false
-      required:
-        - type
-        - text
-      title: TextContentItem
-      description: A text content item
-    ToolCall:
-      type: object
-      properties:
-        call_id:
-          type: string
-        tool_name:
-          oneOf:
-            - type: string
-              enum:
-                - brave_search
-                - wolfram_alpha
-                - photogen
-                - code_interpreter
-              title: BuiltinTool
-            - type: string
-        arguments:
-          type: string
-      additionalProperties: false
-      required:
-        - call_id
-        - tool_name
-        - arguments
-      title: ToolCall
-    ToolResponseMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: tool
-          default: tool
-          description: >-
-            Must be "tool" to identify this as a tool response
-        call_id:
-          type: string
-          description: >-
-            Unique identifier for the tool call this response is for
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The response content from the tool
-      additionalProperties: false
-      required:
-        - role
-        - call_id
-        - content
-      title: ToolResponseMessage
-      description: >-
-        A message representing the result of a tool invocation.
-    URL:
-      type: object
-      properties:
-        uri:
-          type: string
-          description: The URL string pointing to the resource
-      additionalProperties: false
-      required:
-        - uri
-      title: URL
-      description: A URL reference to external content.
-    UserMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: user
-          default: user
-          description: >-
-            Must be "user" to identify this as a user message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the message, which can include text and other media
-        context:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            (Optional) This field is used internally by Llama Stack to pass RAG context.
-            This field may be removed in the API in the future.
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: UserMessage
-      description: >-
-        A message from the user in a chat conversation.
     RunShieldRequest:
       type: object
       properties:
@@ -7106,7 +7525,7 @@ components:
         messages:
           type: array
           items:
-            $ref: '#/components/schemas/Message'
+            $ref: '#/components/schemas/OpenAIMessageParam'
           description: The messages to run the shield on.
         params:
           type: object
@@ -7395,7 +7814,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -7703,7 +8122,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -7773,6 +8192,227 @@ components:
       required:
         - shield_id
       title: RegisterShieldRequest
+    CompletionMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: assistant
+          default: assistant
+          description: >-
+            Must be "assistant" to identify this as the model's response
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: The content of the model's response
+        stop_reason:
+          type: string
+          enum:
+            - end_of_turn
+            - end_of_message
+            - out_of_tokens
+          description: >-
+            Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`:
+            The model finished generating the entire response. - `StopReason.end_of_message`:
+            The model finished generating but generated a partial response -- usually,
+            a tool call. The user may call the tool and continue the conversation
+            with the tool's response. - `StopReason.out_of_tokens`: The model ran
+            out of token budget.
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          description: >-
+            List of tool calls. Each tool call is a ToolCall object.
+      additionalProperties: false
+      required:
+        - role
+        - content
+        - stop_reason
+      title: CompletionMessage
+      description: >-
+        A message containing the model's (assistant) response in a chat conversation.
+    ImageContentItem:
+      type: object
+      properties:
+        type:
+          type: string
+          const: image
+          default: image
+          description: >-
+            Discriminator type of the content item. Always "image"
+        image:
+          type: object
+          properties:
+            url:
+              $ref: '#/components/schemas/URL'
+              description: >-
+                A URL of the image or data URL in the format of data:image/{type};base64,{data}.
+                Note that URL could have length limits.
+            data:
+              type: string
+              contentEncoding: base64
+              description: base64 encoded image data as string
+          additionalProperties: false
+          description: >-
+            Image as a base64 encoded string or an URL
+      additionalProperties: false
+      required:
+        - type
+        - image
+      title: ImageContentItem
+      description: A image content item
+    InterleavedContent:
+      oneOf:
+        - type: string
+        - $ref: '#/components/schemas/InterleavedContentItem'
+        - type: array
+          items:
+            $ref: '#/components/schemas/InterleavedContentItem'
+    InterleavedContentItem:
+      oneOf:
+        - $ref: '#/components/schemas/ImageContentItem'
+        - $ref: '#/components/schemas/TextContentItem'
+      discriminator:
+        propertyName: type
+        mapping:
+          image: '#/components/schemas/ImageContentItem'
+          text: '#/components/schemas/TextContentItem'
+    Message:
+      oneOf:
+        - $ref: '#/components/schemas/UserMessage'
+        - $ref: '#/components/schemas/SystemMessage'
+        - $ref: '#/components/schemas/ToolResponseMessage'
+        - $ref: '#/components/schemas/CompletionMessage'
+      discriminator:
+        propertyName: role
+        mapping:
+          user: '#/components/schemas/UserMessage'
+          system: '#/components/schemas/SystemMessage'
+          tool: '#/components/schemas/ToolResponseMessage'
+          assistant: '#/components/schemas/CompletionMessage'
+    SystemMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: system
+          default: system
+          description: >-
+            Must be "system" to identify this as a system message
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            The content of the "system prompt". If multiple system messages are provided,
+            they are concatenated. The underlying Llama Stack code may also add other
+            system messages (for example, for formatting tool definitions).
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: SystemMessage
+      description: >-
+        A system message providing instructions or context to the model.
+    TextContentItem:
+      type: object
+      properties:
+        type:
+          type: string
+          const: text
+          default: text
+          description: >-
+            Discriminator type of the content item. Always "text"
+        text:
+          type: string
+          description: Text content
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: TextContentItem
+      description: A text content item
+    ToolCall:
+      type: object
+      properties:
+        call_id:
+          type: string
+        tool_name:
+          oneOf:
+            - type: string
+              enum:
+                - brave_search
+                - wolfram_alpha
+                - photogen
+                - code_interpreter
+              title: BuiltinTool
+            - type: string
+        arguments:
+          type: string
+      additionalProperties: false
+      required:
+        - call_id
+        - tool_name
+        - arguments
+      title: ToolCall
+    ToolResponseMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: tool
+          default: tool
+          description: >-
+            Must be "tool" to identify this as a tool response
+        call_id:
+          type: string
+          description: >-
+            Unique identifier for the tool call this response is for
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: The response content from the tool
+      additionalProperties: false
+      required:
+        - role
+        - call_id
+        - content
+      title: ToolResponseMessage
+      description: >-
+        A message representing the result of a tool invocation.
+    URL:
+      type: object
+      properties:
+        uri:
+          type: string
+          description: The URL string pointing to the resource
+      additionalProperties: false
+      required:
+        - uri
+      title: URL
+      description: A URL reference to external content.
+    UserMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: user
+          default: user
+          description: >-
+            Must be "user" to identify this as a user message
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            The content of the message, which can include text and other media
+        context:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            (Optional) This field is used internally by Llama Stack to pass RAG context.
+            This field may be removed in the API in the future.
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: UserMessage
+      description: >-
+        A message from the user in a chat conversation.
     SyntheticDataGenerateRequest:
       type: object
       properties:
@@ -7840,267 +8480,6 @@ components:
       description: >-
         Response from the synthetic data generation. Batch of (prompt, response, score)
         tuples that pass the threshold.
-    Event:
-      oneOf:
-        - $ref: '#/components/schemas/UnstructuredLogEvent'
-        - $ref: '#/components/schemas/MetricEvent'
-        - $ref: '#/components/schemas/StructuredLogEvent'
-      discriminator:
-        propertyName: type
-        mapping:
-          unstructured_log: '#/components/schemas/UnstructuredLogEvent'
-          metric: '#/components/schemas/MetricEvent'
-          structured_log: '#/components/schemas/StructuredLogEvent'
-    EventType:
-      type: string
-      enum:
-        - unstructured_log
-        - structured_log
-        - metric
-      title: EventType
-      description: >-
-        The type of telemetry event being logged.
-    LogSeverity:
-      type: string
-      enum:
-        - verbose
-        - debug
-        - info
-        - warn
-        - error
-        - critical
-      title: LogSeverity
-      description: The severity level of a log message.
-    MetricEvent:
-      type: object
-      properties:
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this event belongs to
-        span_id:
-          type: string
-          description: >-
-            Unique identifier for the span this event belongs to
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the event occurred
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: integer
-              - type: number
-              - type: boolean
-              - type: 'null'
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the event
-        type:
-          $ref: '#/components/schemas/EventType'
-          const: metric
-          default: metric
-          description: Event type identifier set to METRIC
-        metric:
-          type: string
-          description: The name of the metric being measured
-        value:
-          oneOf:
-            - type: integer
-            - type: number
-          description: >-
-            The numeric value of the metric measurement
-        unit:
-          type: string
-          description: >-
-            The unit of measurement for the metric value
-      additionalProperties: false
-      required:
-        - trace_id
-        - span_id
-        - timestamp
-        - type
-        - metric
-        - value
-        - unit
-      title: MetricEvent
-      description: >-
-        A metric event containing a measured value.
-    SpanEndPayload:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/StructuredLogType'
-          const: span_end
-          default: span_end
-          description: Payload type identifier set to SPAN_END
-        status:
-          $ref: '#/components/schemas/SpanStatus'
-          description: >-
-            The final status of the span indicating success or failure
-      additionalProperties: false
-      required:
-        - type
-        - status
-      title: SpanEndPayload
-      description: Payload for a span end event.
-    SpanStartPayload:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/StructuredLogType'
-          const: span_start
-          default: span_start
-          description: >-
-            Payload type identifier set to SPAN_START
-        name:
-          type: string
-          description: >-
-            Human-readable name describing the operation this span represents
-        parent_span_id:
-          type: string
-          description: >-
-            (Optional) Unique identifier for the parent span, if this is a child span
-      additionalProperties: false
-      required:
-        - type
-        - name
-      title: SpanStartPayload
-      description: Payload for a span start event.
-    SpanStatus:
-      type: string
-      enum:
-        - ok
-        - error
-      title: SpanStatus
-      description: >-
-        The status of a span indicating whether it completed successfully or with
-        an error.
-    StructuredLogEvent:
-      type: object
-      properties:
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this event belongs to
-        span_id:
-          type: string
-          description: >-
-            Unique identifier for the span this event belongs to
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the event occurred
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: integer
-              - type: number
-              - type: boolean
-              - type: 'null'
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the event
-        type:
-          $ref: '#/components/schemas/EventType'
-          const: structured_log
-          default: structured_log
-          description: >-
-            Event type identifier set to STRUCTURED_LOG
-        payload:
-          oneOf:
-            - $ref: '#/components/schemas/SpanStartPayload'
-            - $ref: '#/components/schemas/SpanEndPayload'
-          discriminator:
-            propertyName: type
-            mapping:
-              span_start: '#/components/schemas/SpanStartPayload'
-              span_end: '#/components/schemas/SpanEndPayload'
-          description: >-
-            The structured payload data for the log event
-      additionalProperties: false
-      required:
-        - trace_id
-        - span_id
-        - timestamp
-        - type
-        - payload
-      title: StructuredLogEvent
-      description: >-
-        A structured log event containing typed payload data.
-    StructuredLogType:
-      type: string
-      enum:
-        - span_start
-        - span_end
-      title: StructuredLogType
-      description: >-
-        The type of structured log event payload.
-    UnstructuredLogEvent:
-      type: object
-      properties:
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this event belongs to
-        span_id:
-          type: string
-          description: >-
-            Unique identifier for the span this event belongs to
-        timestamp:
-          type: string
-          format: date-time
-          description: Timestamp when the event occurred
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: string
-              - type: integer
-              - type: number
-              - type: boolean
-              - type: 'null'
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the event
-        type:
-          $ref: '#/components/schemas/EventType'
-          const: unstructured_log
-          default: unstructured_log
-          description: >-
-            Event type identifier set to UNSTRUCTURED_LOG
-        message:
-          type: string
-          description: The log message text
-        severity:
-          $ref: '#/components/schemas/LogSeverity'
-          description: The severity level of the log message
-      additionalProperties: false
-      required:
-        - trace_id
-        - span_id
-        - timestamp
-        - type
-        - message
-        - severity
-      title: UnstructuredLogEvent
-      description: >-
-        An unstructured log event containing a simple text message.
-    LogEventRequest:
-      type: object
-      properties:
-        event:
-          $ref: '#/components/schemas/Event'
-          description: The event to log.
-        ttl_seconds:
-          type: integer
-          description: The time to live of the event.
-      additionalProperties: false
-      required:
-        - event
-        - ttl_seconds
-      title: LogEventRequest
     InvokeToolRequest:
       type: object
       properties:
@@ -8506,7 +8885,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -8585,91 +8964,6 @@ components:
         - toolgroup_id
         - provider_id
       title: RegisterToolGroupRequest
-    VectorDB:
-      type: object
-      properties:
-        identifier:
-          type: string
-        provider_resource_id:
-          type: string
-        provider_id:
-          type: string
-        type:
-          type: string
-          enum:
-            - model
-            - shield
-            - vector_db
-            - dataset
-            - scoring_function
-            - benchmark
-            - tool
-            - tool_group
-            - prompt
-          const: vector_db
-          default: vector_db
-          description: >-
-            Type of resource, always 'vector_db' for vector databases
-        embedding_model:
-          type: string
-          description: >-
-            Name of the embedding model to use for vector generation
-        embedding_dimension:
-          type: integer
-          description: Dimension of the embedding vectors
-        vector_db_name:
-          type: string
-      additionalProperties: false
-      required:
-        - identifier
-        - provider_id
-        - type
-        - embedding_model
-        - embedding_dimension
-      title: VectorDB
-      description: >-
-        Vector database resource for storing and querying vector embeddings.
-    ListVectorDBsResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/VectorDB'
-          description: List of vector databases
-      additionalProperties: false
-      required:
-        - data
-      title: ListVectorDBsResponse
-      description: Response from listing vector databases.
-    RegisterVectorDbRequest:
-      type: object
-      properties:
-        vector_db_id:
-          type: string
-          description: >-
-            The identifier of the vector database to register.
-        embedding_model:
-          type: string
-          description: The embedding model to use.
-        embedding_dimension:
-          type: integer
-          description: The dimension of the embedding model.
-        provider_id:
-          type: string
-          description: The identifier of the provider.
-        vector_db_name:
-          type: string
-          description: The name of the vector database.
-        provider_vector_db_id:
-          type: string
-          description: >-
-            The identifier of the vector database in the provider.
-      additionalProperties: false
-      required:
-        - vector_db_id
-        - embedding_model
-      title: RegisterVectorDbRequest
     Chunk:
       type: object
       properties:
@@ -8982,19 +9276,18 @@ components:
         - metadata
       title: VectorStoreObject
       description: OpenAI Vector Store object.
-    OpenaiCreateVectorStoreRequest:
+    "OpenAICreateVectorStoreRequestWithExtraBody":
       type: object
       properties:
         name:
           type: string
-          description: A name for the vector store.
+          description: (Optional) A name for the vector store
         file_ids:
           type: array
           items:
             type: string
           description: >-
-            A list of File IDs that the vector store should use. Useful for tools
-            like `file_search` that can access files.
+            List of file IDs to include in the vector store
         expires_after:
           type: object
           additionalProperties:
@@ -9006,7 +9299,7 @@ components:
               - type: array
               - type: object
           description: >-
-            The expiration policy for a vector store.
+            (Optional) Expiration policy for the vector store
         chunking_strategy:
           type: object
           additionalProperties:
@@ -9018,8 +9311,7 @@ components:
               - type: array
               - type: object
           description: >-
-            The chunking strategy used to chunk the file(s). If not set, will use
-            the `auto` strategy.
+            (Optional) Strategy for splitting files into chunks
         metadata:
           type: object
           additionalProperties:
@@ -9031,21 +9323,12 @@ components:
               - type: array
               - type: object
           description: >-
-            Set of 16 key-value pairs that can be attached to an object.
-        embedding_model:
-          type: string
-          description: >-
-            The embedding model to use for this vector store.
-        embedding_dimension:
-          type: integer
-          description: >-
-            The dimension of the embedding vectors (default: 384).
-        provider_id:
-          type: string
-          description: >-
-            The ID of the provider to use for this vector store.
+            Set of key-value pairs that can be attached to the vector store
       additionalProperties: false
-      title: OpenaiCreateVectorStoreRequest
+      title: >-
+        OpenAICreateVectorStoreRequestWithExtraBody
+      description: >-
+        Request to create a vector store with extra_body support.
     OpenaiUpdateVectorStoreRequest:
       type: object
       properties:
@@ -9166,7 +9449,7 @@ components:
       title: VectorStoreChunkingStrategyStaticConfig
       description: >-
         Configuration for static chunking strategy.
-    OpenaiCreateVectorStoreFileBatchRequest:
+    "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
       type: object
       properties:
         file_ids:
@@ -9174,7 +9457,7 @@ components:
           items:
             type: string
           description: >-
-            A list of File IDs that the vector store should use.
+            A list of File IDs that the vector store should use
         attributes:
           type: object
           additionalProperties:
@@ -9186,16 +9469,19 @@ components:
               - type: array
               - type: object
           description: >-
-            (Optional) Key-value attributes to store with the files.
+            (Optional) Key-value attributes to store with the files
         chunking_strategy:
           $ref: '#/components/schemas/VectorStoreChunkingStrategy'
           description: >-
             (Optional) The chunking strategy used to chunk the file(s). Defaults to
-            auto.
+            auto
       additionalProperties: false
       required:
         - file_ids
-      title: OpenaiCreateVectorStoreFileBatchRequest
+      title: >-
+        OpenAICreateVectorStoreFileBatchRequestWithExtraBody
+      description: >-
+        Request to create a vector store file batch with extra_body support.
     VectorStoreFileBatchObject:
       type: object
       properties:
@@ -9785,9 +10071,9 @@ tags:
       - `background`
     x-displayName: Agents
   - name: Conversations
-    description: ''
-    x-displayName: >-
+    description: >-
       Protocol for conversation management operations.
+    x-displayName: Conversations
   - name: Files
     description: >-
       This API is used to upload documents that can be used with other Llama Stack
@@ -9799,13 +10085,16 @@ tags:
       embeddings.
 
 
-      This API provides the raw interface to the underlying models. Two kinds of models
-      are supported:
+      This API provides the raw interface to the underlying models. Three kinds of
+      models are supported:
 
       - LLM models: these models generate "raw" and "chat" (conversational) completions.
 
       - Embedding models: these models generate embeddings to be used for semantic
       search.
+
+      - Rerank models: these models reorder the documents based on their relevance
+      to a query.
     x-displayName: Inference
   - name: Inspect
     description: >-
@@ -9833,13 +10122,9 @@ tags:
     description: ''
   - name: SyntheticDataGeneration (Coming Soon)
     description: ''
-  - name: Telemetry
-    description: ''
   - name: ToolGroups
     description: ''
   - name: ToolRuntime
-    description: ''
-  - name: VectorDBs
     description: ''
   - name: VectorIO
     description: ''
@@ -9859,8 +10144,6 @@ x-tagGroups:
       - ScoringFunctions
       - Shields
       - SyntheticDataGeneration (Coming Soon)
-      - Telemetry
       - ToolGroups
       - ToolRuntime
-      - VectorDBs
       - VectorIO

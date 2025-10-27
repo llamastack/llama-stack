@@ -29,9 +29,6 @@ class AnthropicInferenceAdapter(OpenAIMixin):
     #     "voyage-multimodal-3": {"embedding_dimension": 1024, "context_length": 32000},
     # }
 
-    def get_api_key(self) -> str:
-        return self.config.api_key or ""
-
     def get_base_url(self):
         return "https://api.anthropic.com/v1"
 

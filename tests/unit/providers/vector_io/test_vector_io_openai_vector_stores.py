@@ -12,14 +12,16 @@ import numpy as np
 import pytest
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
+    OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
+    OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
     VectorStoreChunkingStrategyAuto,
     VectorStoreFileObject,
 )
-from llama_stack.providers.remote.vector_io.milvus.milvus import VECTOR_DBS_PREFIX
+from llama_stack.apis.vector_stores import VectorStore
+from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectorIO providers. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -69,7 +71,7 @@ async def test_chunk_id_conflict(vector_index, sample_chunks, embedding_dimensio
 
 async def test_initialize_adapter_with_existing_kvstore(vector_io_adapter):
     key = f"{VECTOR_DBS_PREFIX}db1"
-    dummy = VectorDB(
+    dummy = VectorStore(
         identifier="foo_db", provider_id="test_provider", embedding_model="test_model", embedding_dimension=128
     )
     await vector_io_adapter.kvstore.set(key=key, value=json.dumps(dummy.model_dump()))
@@ -79,10 +81,10 @@ async def test_initialize_adapter_with_existing_kvstore(vector_io_adapter):
 
 async def test_persistence_across_adapter_restarts(vector_io_adapter):
     await vector_io_adapter.initialize()
-    dummy = VectorDB(
+    dummy = VectorStore(
         identifier="foo_db", provider_id="test_provider", embedding_model="test_model", embedding_dimension=128
     )
-    await vector_io_adapter.register_vector_db(dummy)
+    await vector_io_adapter.register_vector_store(dummy)
     await vector_io_adapter.shutdown()
 
     await vector_io_adapter.initialize()
@@ -90,26 +92,22 @@ async def test_persistence_across_adapter_restarts(vector_io_adapter):
     await vector_io_adapter.shutdown()
 
 
-async def test_register_and_unregister_vector_db(vector_io_adapter):
+async def test_register_and_unregister_vector_store(vector_io_adapter):
     unique_id = f"foo_db_{np.random.randint(1e6)}"
-    dummy = VectorDB(
+    dummy = VectorStore(
         identifier=unique_id, provider_id="test_provider", embedding_model="test_model", embedding_dimension=128
     )
 
-    await vector_io_adapter.register_vector_db(dummy)
+    await vector_io_adapter.register_vector_store(dummy)
     assert dummy.identifier in vector_io_adapter.cache
-    await vector_io_adapter.unregister_vector_db(dummy.identifier)
+    await vector_io_adapter.unregister_vector_store(dummy.identifier)
     assert dummy.identifier not in vector_io_adapter.cache
 
 
 async def test_query_unregistered_raises(vector_io_adapter, vector_provider):
     fake_emb = np.zeros(8, dtype=np.float32)
-    if vector_provider == "chroma":
-        with pytest.raises(AttributeError):
-            await vector_io_adapter.query_chunks("no_such_db", fake_emb)
-    else:
-        with pytest.raises(ValueError):
-            await vector_io_adapter.query_chunks("no_such_db", fake_emb)
+    with pytest.raises(ValueError):
+        await vector_io_adapter.query_chunks("no_such_db", fake_emb)
 
 
 async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
@@ -123,10 +121,41 @@ async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
 
 
 async def test_insert_chunks_missing_db_raises(vector_io_adapter):
-    vector_io_adapter._get_and_cache_vector_db_index = AsyncMock(return_value=None)
+    vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
     with pytest.raises(ValueError):
         await vector_io_adapter.insert_chunks("db_not_exist", [])
+
+
+async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
+    """Ensure no KeyError when document_id is missing or in different places."""
+    from llama_stack.apis.vector_io import Chunk, ChunkMetadata
+
+    fake_index = AsyncMock()
+    vector_io_adapter.cache["db1"] = fake_index
+
+    # Various document_id scenarios that shouldn't crash
+    chunks = [
+        Chunk(content="has doc_id in metadata", metadata={"document_id": "doc-1"}),
+        Chunk(content="no doc_id anywhere", metadata={"source": "test"}),
+        Chunk(content="doc_id in chunk_metadata", chunk_metadata=ChunkMetadata(document_id="doc-3")),
+    ]
+
+    # Should work without KeyError
+    await vector_io_adapter.insert_chunks("db1", chunks)
+    fake_index.insert_chunks.assert_awaited_once()
+
+
+async def test_document_id_with_invalid_type_raises_error():
+    """Ensure TypeError is raised when document_id is not a string."""
+    from llama_stack.apis.vector_io import Chunk
+
+    # Integer document_id should raise TypeError
+    chunk = Chunk(content="test", metadata={"document_id": 12345})
+    with pytest.raises(TypeError) as exc_info:
+        _ = chunk.document_id
+    assert "metadata['document_id'] must be a string" in str(exc_info.value)
+    assert "got int" in str(exc_info.value)
 
 
 async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter):
@@ -141,7 +170,7 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
 
 
 async def test_query_chunks_missing_db_raises(vector_io_adapter):
-    vector_io_adapter._get_and_cache_vector_db_index = AsyncMock(return_value=None)
+    vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
     with pytest.raises(ValueError):
         await vector_io_adapter.query_chunks("db_missing", "q", None)
@@ -153,7 +182,7 @@ async def test_save_openai_vector_store(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -169,7 +198,7 @@ async def test_update_openai_vector_store(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -185,7 +214,7 @@ async def test_delete_openai_vector_store(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -200,7 +229,7 @@ async def test_load_openai_vector_stores(vector_io_adapter):
         "id": store_id,
         "name": "Test Store",
         "description": "A test OpenAI vector store",
-        "vector_db_id": "test_db",
+        "vector_store_id": "test_db",
         "embedding_model": "test_model",
     }
 
@@ -330,8 +359,7 @@ async def test_create_vector_store_file_batch(vector_io_adapter):
     vector_io_adapter._process_file_batch_async = AsyncMock()
 
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     assert batch.vector_store_id == store_id
@@ -358,8 +386,7 @@ async def test_retrieve_vector_store_file_batch(vector_io_adapter):
 
     # Create batch first
     created_batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Retrieve batch
@@ -392,8 +419,7 @@ async def test_cancel_vector_store_file_batch(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Cancel batch
@@ -438,8 +464,7 @@ async def test_list_files_in_vector_store_file_batch(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # List files
@@ -459,7 +484,7 @@ async def test_file_batch_validation_errors(vector_io_adapter):
     with pytest.raises(VectorStoreNotFoundError):
         await vector_io_adapter.openai_create_vector_store_file_batch(
             vector_store_id="nonexistent",
-            file_ids=["file_1"],
+            params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_1"]),
         )
 
     # Setup store for remaining tests
@@ -476,8 +501,7 @@ async def test_file_batch_validation_errors(vector_io_adapter):
     # Test wrong vector store for batch
     vector_io_adapter.openai_attach_file_to_vector_store = AsyncMock()
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=["file_1"],
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_1"])
     )
 
     # Create wrong_store so it exists but the batch doesn't belong to it
@@ -524,8 +548,7 @@ async def test_file_batch_pagination(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Test pagination with limit
@@ -597,8 +620,7 @@ async def test_file_batch_status_filtering(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Test filtering by completed status
@@ -640,8 +662,7 @@ async def test_cancel_completed_batch_fails(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Manually update status to completed
@@ -675,8 +696,7 @@ async def test_file_batch_persistence_across_restarts(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
     batch_id = batch.id
 
@@ -731,8 +751,7 @@ async def test_cancelled_batch_persists_in_storage(vector_io_adapter):
 
     # Create batch
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
     batch_id = batch.id
 
@@ -779,10 +798,10 @@ async def test_only_in_progress_batches_resumed(vector_io_adapter):
 
     # Create multiple batches
     batch1 = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id, file_ids=["file_1"]
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_1"])
     )
     batch2 = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id, file_ids=["file_2"]
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_2"])
     )
 
     # Complete one batch (should persist with completed status)
@@ -795,7 +814,7 @@ async def test_only_in_progress_batches_resumed(vector_io_adapter):
 
     # Create a third batch that stays in progress
     batch3 = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id, file_ids=["file_3"]
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=["file_3"])
     )
 
     # Simulate restart - clear memory and reload from persistence
@@ -956,8 +975,7 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
     file_ids = [f"file_{i}" for i in range(8)]  # 8 files, but limit should be 5
 
     batch = await vector_io_adapter.openai_create_vector_store_file_batch(
-        vector_store_id=store_id,
-        file_ids=file_ids,
+        vector_store_id=store_id, params=OpenAICreateVectorStoreFileBatchRequestWithExtraBody(file_ids=file_ids)
     )
 
     # Give time for the semaphore logic to start processing files
@@ -975,3 +993,130 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
     assert batch.status == "in_progress"
     assert batch.file_counts.total == 8
     assert batch.file_counts.in_progress == 8
+
+
+async def test_embedding_config_from_metadata(vector_io_adapter):
+    """Test that embedding configuration is correctly extracted from metadata."""
+
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
+    # Set provider_id attribute for the adapter
+    vector_io_adapter.__provider_id__ = "test_provider"
+
+    # Test with embedding config in metadata
+    params = OpenAICreateVectorStoreRequestWithExtraBody(
+        name="test_store",
+        metadata={
+            "embedding_model": "test-embedding-model",
+            "embedding_dimension": "512",
+        },
+        model_extra={},
+    )
+
+    await vector_io_adapter.openai_create_vector_store(params)
+
+    # Verify VectorStore was registered with correct embedding config from metadata
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
+    assert call_args.embedding_model == "test-embedding-model"
+    assert call_args.embedding_dimension == 512
+
+
+async def test_embedding_config_from_extra_body(vector_io_adapter):
+    """Test that embedding configuration is correctly extracted from extra_body when metadata is empty."""
+
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
+    # Set provider_id attribute for the adapter
+    vector_io_adapter.__provider_id__ = "test_provider"
+
+    # Test with embedding config in extra_body only (metadata has no embedding_model)
+    params = OpenAICreateVectorStoreRequestWithExtraBody(
+        name="test_store",
+        metadata={},  # Empty metadata to ensure extra_body is used
+        **{
+            "embedding_model": "extra-body-model",
+            "embedding_dimension": 1024,
+        },
+    )
+
+    await vector_io_adapter.openai_create_vector_store(params)
+
+    # Verify VectorStore was registered with correct embedding config from extra_body
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
+    assert call_args.embedding_model == "extra-body-model"
+    assert call_args.embedding_dimension == 1024
+
+
+async def test_embedding_config_consistency_check_passes(vector_io_adapter):
+    """Test that consistent embedding config in both metadata and extra_body passes validation."""
+
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
+    # Set provider_id attribute for the adapter
+    vector_io_adapter.__provider_id__ = "test_provider"
+
+    # Test with consistent embedding config in both metadata and extra_body
+    params = OpenAICreateVectorStoreRequestWithExtraBody(
+        name="test_store",
+        metadata={
+            "embedding_model": "consistent-model",
+            "embedding_dimension": "768",
+        },
+        **{
+            "embedding_model": "consistent-model",
+            "embedding_dimension": 768,
+        },
+    )
+
+    await vector_io_adapter.openai_create_vector_store(params)
+
+    # Should not raise any error and use metadata config
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
+    assert call_args.embedding_model == "consistent-model"
+    assert call_args.embedding_dimension == 768
+
+
+async def test_embedding_config_defaults_when_missing(vector_io_adapter):
+    """Test that embedding dimension defaults to 768 when not provided."""
+
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
+    # Set provider_id attribute for the adapter
+    vector_io_adapter.__provider_id__ = "test_provider"
+
+    # Test with only embedding model, no dimension (metadata empty to use extra_body)
+    params = OpenAICreateVectorStoreRequestWithExtraBody(
+        name="test_store",
+        metadata={},  # Empty metadata to ensure extra_body is used
+        **{
+            "embedding_model": "model-without-dimension",
+        },
+    )
+
+    await vector_io_adapter.openai_create_vector_store(params)
+
+    # Should default to 768 dimensions
+    vector_io_adapter.register_vector_store.assert_called_once()
+    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
+    assert call_args.embedding_model == "model-without-dimension"
+    assert call_args.embedding_dimension == 768
+
+
+async def test_embedding_config_required_model_missing(vector_io_adapter):
+    """Test that missing embedding model raises error."""
+
+    # Mock register_vector_store to avoid actual registration
+    vector_io_adapter.register_vector_store = AsyncMock()
+    # Set provider_id attribute for the adapter
+    vector_io_adapter.__provider_id__ = "test_provider"
+    # Mock the default model lookup to return None (no default model available)
+    vector_io_adapter._get_default_embedding_model_and_dimension = AsyncMock(return_value=None)
+
+    # Test with no embedding model provided
+    params = OpenAICreateVectorStoreRequestWithExtraBody(name="test_store", metadata={})
+
+    with pytest.raises(ValueError, match="embedding_model is required"):
+        await vector_io_adapter.openai_create_vector_store(params)

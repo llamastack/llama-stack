@@ -10,15 +10,17 @@ import mimetypes
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Body
 from pydantic import TypeAdapter
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.files import Files, OpenAIFileObject
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import (
     Chunk,
+    OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
+    OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
@@ -40,6 +42,8 @@ from llama_stack.apis.vector_io import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
+from llama_stack.apis.vector_stores import VectorStore
+from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.vector_store import (
@@ -47,6 +51,8 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
 )
+
+EMBEDDING_DIMENSION = 768
 
 logger = get_logger(name=__name__, category="providers::utils")
 
@@ -57,7 +63,7 @@ MAX_CONCURRENT_FILES_PER_BATCH = 3  # Maximum concurrent file processing within 
 FILE_BATCH_CHUNK_SIZE = 10  # Process files in chunks of this size
 
 VERSION = "v3"
-VECTOR_DBS_PREFIX = f"vector_dbs:{VERSION}::"
+VECTOR_DBS_PREFIX = f"vector_stores:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_contents:{VERSION}::"
@@ -73,7 +79,11 @@ class OpenAIVectorStoreMixin(ABC):
 
     # Implementing classes should call super().__init__() in their __init__ method
     # to properly initialize the mixin attributes.
-    def __init__(self, files_api: Files | None = None, kvstore: KVStore | None = None):
+    def __init__(
+        self,
+        files_api: Files | None = None,
+        kvstore: KVStore | None = None,
+    ):
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
@@ -311,12 +321,12 @@ class OpenAIVectorStoreMixin(ABC):
         pass
 
     @abstractmethod
-    async def register_vector_db(self, vector_db: VectorDB) -> None:
+    async def register_vector_store(self, vector_store: VectorStore) -> None:
         """Register a vector database (provider-specific implementation)."""
         pass
 
     @abstractmethod
-    async def unregister_vector_db(self, vector_db_id: str) -> None:
+    async def unregister_vector_store(self, vector_store_id: str) -> None:
         """Unregister a vector database (provider-specific implementation)."""
         pass
 
@@ -339,41 +349,59 @@ class OpenAIVectorStoreMixin(ABC):
 
     async def openai_create_vector_store(
         self,
-        name: str | None = None,
-        file_ids: list[str] | None = None,
-        expires_after: dict[str, Any] | None = None,
-        chunking_strategy: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-        embedding_model: str | None = None,
-        embedding_dimension: int | None = 384,
-        provider_id: str | None = None,
-        provider_vector_db_id: str | None = None,
+        params: Annotated[OpenAICreateVectorStoreRequestWithExtraBody, Body(...)],
     ) -> VectorStoreObject:
         """Creates a vector store."""
         created_at = int(time.time())
-        # Derive the canonical vector_db_id (allow override, else generate)
-        vector_db_id = provider_vector_db_id or f"vs_{uuid.uuid4()}"
 
-        if provider_id is None:
-            raise ValueError("Provider ID is required")
+        # Extract llama-stack-specific parameters from extra_body
+        extra_body = params.model_extra or {}
+        metadata = params.metadata or {}
+
+        provider_vector_store_id = extra_body.get("provider_vector_store_id")
+
+        # Use embedding info from metadata if available, otherwise from extra_body
+        if metadata.get("embedding_model"):
+            # If either is in metadata, use metadata as source
+            embedding_model = metadata.get("embedding_model")
+            embedding_dimension = (
+                int(metadata["embedding_dimension"]) if metadata.get("embedding_dimension") else EMBEDDING_DIMENSION
+            )
+            logger.debug(
+                f"Using embedding config from metadata (takes precedence over extra_body): model='{embedding_model}', dimension={embedding_dimension}"
+            )
+        else:
+            embedding_model = extra_body.get("embedding_model")
+            embedding_dimension = extra_body.get("embedding_dimension", EMBEDDING_DIMENSION)
+            logger.debug(
+                f"Using embedding config from extra_body: model='{embedding_model}', dimension={embedding_dimension}"
+            )
+
+        # use provider_id set by router; fallback to provider's own ID when used directly via --stack-config
+        provider_id = extra_body.get("provider_id") or getattr(self, "__provider_id__", None)
+        # Derive the canonical vector_store_id (allow override, else generate)
+        vector_store_id = provider_vector_store_id or generate_object_id("vector_store", lambda: f"vs_{uuid.uuid4()}")
 
         if embedding_model is None:
-            raise ValueError("Embedding model is required")
+            raise ValueError("embedding_model is required")
 
-        # Embedding dimension is required (defaulted to 384 if not provided)
         if embedding_dimension is None:
             raise ValueError("Embedding dimension is required")
 
-        # Register the VectorDB backing this vector store
-        vector_db = VectorDB(
-            identifier=vector_db_id,
+        # Register the VectorStore backing this vector store
+        if provider_id is None:
+            raise ValueError("Provider ID is required but was not provided")
+
+        # call to the provider to create any index, etc.
+        vector_store = VectorStore(
+            identifier=vector_store_id,
             embedding_dimension=embedding_dimension,
             embedding_model=embedding_model,
             provider_id=provider_id,
-            provider_resource_id=vector_db_id,
-            vector_db_name=name,
+            provider_resource_id=vector_store_id,
+            vector_store_name=params.name,
         )
-        await self.register_vector_db(vector_db)
+        await self.register_vector_store(vector_store)
 
         # Create OpenAI vector store metadata
         status = "completed"
@@ -387,41 +415,40 @@ class OpenAIVectorStoreMixin(ABC):
             total=0,
         )
         store_info: dict[str, Any] = {
-            "id": vector_db_id,
+            "id": vector_store_id,
             "object": "vector_store",
             "created_at": created_at,
-            "name": name,
+            "name": params.name,
             "usage_bytes": 0,
             "file_counts": file_counts.model_dump(),
             "status": status,
-            "expires_after": expires_after,
+            "expires_after": params.expires_after,
             "expires_at": None,
             "last_active_at": created_at,
             "file_ids": [],
-            "chunking_strategy": chunking_strategy,
+            "chunking_strategy": params.chunking_strategy,
         }
 
         # Add provider information to metadata if provided
-        metadata = metadata or {}
         if provider_id:
             metadata["provider_id"] = provider_id
-        if provider_vector_db_id:
-            metadata["provider_vector_db_id"] = provider_vector_db_id
+        if provider_vector_store_id:
+            metadata["provider_vector_store_id"] = provider_vector_store_id
         store_info["metadata"] = metadata
 
         # Save to persistent storage (provider-specific)
-        await self._save_openai_vector_store(vector_db_id, store_info)
+        await self._save_openai_vector_store(vector_store_id, store_info)
 
         # Store in memory cache
-        self.openai_vector_stores[vector_db_id] = store_info
+        self.openai_vector_stores[vector_store_id] = store_info
 
         # Now that our vector store is created, attach any files that were provided
-        file_ids = file_ids or []
-        tasks = [self.openai_attach_file_to_vector_store(vector_db_id, file_id) for file_id in file_ids]
+        file_ids = params.file_ids or []
+        tasks = [self.openai_attach_file_to_vector_store(vector_store_id, file_id) for file_id in file_ids]
         await asyncio.gather(*tasks)
 
         # Get the updated store info and return it
-        store_info = self.openai_vector_stores[vector_db_id]
+        store_info = self.openai_vector_stores[vector_store_id]
         return VectorStoreObject.model_validate(store_info)
 
     async def openai_list_vector_stores(
@@ -531,7 +558,7 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Also delete the underlying vector DB
         try:
-            await self.unregister_vector_db(vector_store_id)
+            await self.unregister_vector_store(vector_store_id)
         except Exception as e:
             logger.warning(f"Failed to delete underlying vector DB {vector_store_id}: {e}")
 
@@ -975,18 +1002,16 @@ class OpenAIVectorStoreMixin(ABC):
     async def openai_create_vector_store_file_batch(
         self,
         vector_store_id: str,
-        file_ids: list[str],
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+        params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         """Create a vector store file batch."""
         if vector_store_id not in self.openai_vector_stores:
             raise VectorStoreNotFoundError(vector_store_id)
 
-        chunking_strategy = chunking_strategy or VectorStoreChunkingStrategyAuto()
+        chunking_strategy = params.chunking_strategy or VectorStoreChunkingStrategyAuto()
 
         created_at = int(time.time())
-        batch_id = f"batch_{uuid.uuid4()}"
+        batch_id = generate_object_id("vector_store_file_batch", lambda: f"batch_{uuid.uuid4()}")
         # File batches expire after 7 days
         expires_at = created_at + (7 * 24 * 60 * 60)
 
@@ -995,8 +1020,8 @@ class OpenAIVectorStoreMixin(ABC):
             completed=0,
             cancelled=0,
             failed=0,
-            in_progress=len(file_ids),
-            total=len(file_ids),
+            in_progress=len(params.file_ids),
+            total=len(params.file_ids),
         )
 
         # Create batch object immediately with in_progress status
@@ -1010,8 +1035,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         batch_info = {
             **batch_object.model_dump(),
-            "file_ids": file_ids,
-            "attributes": attributes,
+            "file_ids": params.file_ids,
+            "attributes": params.attributes,
             "chunking_strategy": chunking_strategy.model_dump(),
             "expires_at": expires_at,
         }

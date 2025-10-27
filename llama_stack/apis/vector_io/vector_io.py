@@ -11,12 +11,13 @@
 import uuid
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
+from fastapi import Body
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.inference import InterleavedContent
-from llama_stack.apis.vector_dbs import VectorDB
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack.schema_utils import json_schema_type, webmethod
 from llama_stack.strong_typing.schema import register_schema
@@ -92,6 +93,22 @@ class Chunk(BaseModel):
 
         return generate_chunk_id(str(uuid.uuid4()), str(self.content))
 
+    @property
+    def document_id(self) -> str | None:
+        """Returns the document_id from either metadata or chunk_metadata, with metadata taking precedence."""
+        # Check metadata first (takes precedence)
+        doc_id = self.metadata.get("document_id")
+        if doc_id is not None:
+            if not isinstance(doc_id, str):
+                raise TypeError(f"metadata['document_id'] must be a string, got {type(doc_id).__name__}: {doc_id!r}")
+            return doc_id
+
+        # Fall back to chunk_metadata if available (Pydantic ensures type safety)
+        if self.chunk_metadata is not None:
+            return self.chunk_metadata.document_id
+
+        return None
+
 
 @json_schema_type
 class QueryChunksResponse(BaseModel):
@@ -123,6 +140,7 @@ class VectorStoreFileCounts(BaseModel):
     total: int
 
 
+# TODO: rename this as OpenAIVectorStore
 @json_schema_type
 class VectorStoreObject(BaseModel):
     """OpenAI Vector Store object.
@@ -466,17 +484,52 @@ class VectorStoreFilesListInBatchResponse(BaseModel):
     has_more: bool = False
 
 
-class VectorDBStore(Protocol):
-    def get_vector_db(self, vector_db_id: str) -> VectorDB | None: ...
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request to create a vector store with extra_body support.
+
+    :param name: (Optional) A name for the vector store
+    :param file_ids: List of file IDs to include in the vector store
+    :param expires_after: (Optional) Expiration policy for the vector store
+    :param chunking_strategy: (Optional) Strategy for splitting files into chunks
+    :param metadata: Set of key-value pairs that can be attached to the vector store
+    """
+
+    name: str | None = None
+    file_ids: list[str] | None = None
+    expires_after: dict[str, Any] | None = None
+    chunking_strategy: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+
+
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAICreateVectorStoreFileBatchRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request to create a vector store file batch with extra_body support.
+
+    :param file_ids: A list of File IDs that the vector store should use
+    :param attributes: (Optional) Key-value attributes to store with the files
+    :param chunking_strategy: (Optional) The chunking strategy used to chunk the file(s). Defaults to auto
+    """
+
+    file_ids: list[str]
+    attributes: dict[str, Any] | None = None
+    chunking_strategy: VectorStoreChunkingStrategy | None = None
+
+
+class VectorStoreTable(Protocol):
+    def get_vector_store(self, vector_store_id: str) -> VectorStore | None: ...
 
 
 @runtime_checkable
 @trace_protocol
 class VectorIO(Protocol):
-    vector_db_store: VectorDBStore | None = None
+    vector_store_table: VectorStoreTable | None = None
 
     # this will just block now until chunks are inserted, but it should
     # probably return a Job instance which can be polled for completion
+    # TODO: rename vector_db_id to vector_store_id once Stainless is working
     @webmethod(route="/vector-io/insert", method="POST", level=LLAMA_STACK_API_V1)
     async def insert_chunks(
         self,
@@ -495,6 +548,7 @@ class VectorIO(Protocol):
         """
         ...
 
+    # TODO: rename vector_db_id to vector_store_id once Stainless is working
     @webmethod(route="/vector-io/query", method="POST", level=LLAMA_STACK_API_V1)
     async def query_chunks(
         self,
@@ -516,25 +570,11 @@ class VectorIO(Protocol):
     @webmethod(route="/vector_stores", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_create_vector_store(
         self,
-        name: str | None = None,
-        file_ids: list[str] | None = None,
-        expires_after: dict[str, Any] | None = None,
-        chunking_strategy: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-        embedding_model: str | None = None,
-        embedding_dimension: int | None = 384,
-        provider_id: str | None = None,
+        params: Annotated[OpenAICreateVectorStoreRequestWithExtraBody, Body(...)],
     ) -> VectorStoreObject:
         """Creates a vector store.
 
-        :param name: A name for the vector store.
-        :param file_ids: A list of File IDs that the vector store should use. Useful for tools like `file_search` that can access files.
-        :param expires_after: The expiration policy for a vector store.
-        :param chunking_strategy: The chunking strategy used to chunk the file(s). If not set, will use the `auto` strategy.
-        :param metadata: Set of 16 key-value pairs that can be attached to an object.
-        :param embedding_model: The embedding model to use for this vector store.
-        :param embedding_dimension: The dimension of the embedding vectors (default: 384).
-        :param provider_id: The ID of the provider to use for this vector store.
+        Generate an OpenAI-compatible vector store with the given parameters.
         :returns: A VectorStoreObject representing the created vector store.
         """
         ...
@@ -827,16 +867,12 @@ class VectorIO(Protocol):
     async def openai_create_vector_store_file_batch(
         self,
         vector_store_id: str,
-        file_ids: list[str],
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+        params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         """Create a vector store file batch.
 
+        Generate an OpenAI-compatible vector store file batch for the given vector store.
         :param vector_store_id: The ID of the vector store to create the file batch for.
-        :param file_ids: A list of File IDs that the vector store should use.
-        :param attributes: (Optional) Key-value attributes to store with the files.
-        :param chunking_strategy: (Optional) The chunking strategy used to chunk the file(s). Defaults to auto.
         :returns: A VectorStoreFileBatchObject representing the created file batch.
         """
         ...

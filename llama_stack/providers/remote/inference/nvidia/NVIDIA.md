@@ -18,7 +18,7 @@ This provider enables running inference using NVIDIA NIM.
 Build the NVIDIA environment:
 
 ```bash
-llama stack build --distro nvidia --image-type venv
+uv run llama stack list-deps nvidia | xargs -L1 uv pip install
 ```
 
 ### Basic Usage using the LlamaStack Python Client
@@ -45,7 +45,7 @@ The following example shows how to create a chat completion for an NVIDIA NIM.
 
 ```python
 response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
+    model="nvidia/meta/llama-3.1-8b-instruct",
     messages=[
         {
             "role": "system",
@@ -67,37 +67,40 @@ print(f"Response: {response.choices[0].message.content}")
 The following example shows how to do tool calling for an NVIDIA NIM.
 
 ```python
-from llama_stack.models.llama.datatypes import ToolDefinition, ToolParamDefinition
-
-tool_definition = ToolDefinition(
-    tool_name="get_weather",
-    description="Get current weather information for a location",
-    parameters={
-        "location": ToolParamDefinition(
-            param_type="string",
-            description="The city and state, e.g. San Francisco, CA",
-            required=True,
-        ),
-        "unit": ToolParamDefinition(
-            param_type="string",
-            description="Temperature unit (celsius or fahrenheit)",
-            required=False,
-            default="celsius",
-        ),
+tool_definition = {
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "Get current weather information for a location",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+                "unit": {
+                    "type": "string",
+                    "description": "Temperature unit (celsius or fahrenheit)",
+                    "default": "celsius",
+                },
+            },
+            "required": ["location"],
+        },
     },
-)
+}
 
 tool_response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
+    model="nvidia/meta/llama-3.1-8b-instruct",
     messages=[{"role": "user", "content": "What's the weather like in San Francisco?"}],
     tools=[tool_definition],
 )
 
-print(f"Tool Response: {tool_response.choices[0].message.content}")
+print(f"Response content: {tool_response.choices[0].message.content}")
 if tool_response.choices[0].message.tool_calls:
     for tool_call in tool_response.choices[0].message.tool_calls:
-        print(f"Tool Called: {tool_call.tool_name}")
-        print(f"Arguments: {tool_call.arguments}")
+        print(f"Tool Called: {tool_call.function.name}")
+        print(f"Arguments: {tool_call.function.arguments}")
 ```
 
 ### Structured Output Example
@@ -105,33 +108,26 @@ if tool_response.choices[0].message.tool_calls:
 The following example shows how to do structured output for an NVIDIA NIM.
 
 ```python
-from llama_stack.apis.inference import JsonSchemaResponseFormat, ResponseFormatType
-
 person_schema = {
     "type": "object",
     "properties": {
         "name": {"type": "string"},
-        "age": {"type": "integer"},
+        "age": {"type": "number"},
         "occupation": {"type": "string"},
     },
     "required": ["name", "age", "occupation"],
 }
 
-response_format = JsonSchemaResponseFormat(
-    type=ResponseFormatType.json_schema, json_schema=person_schema
-)
-
 structured_response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
+    model="nvidia/meta/llama-3.1-8b-instruct",
     messages=[
         {
             "role": "user",
             "content": "Create a profile for a fictional person named Alice who is 30 years old and is a software engineer. ",
         }
     ],
-    response_format=response_format,
+    extra_body={"nvext": {"guided_json": person_schema}},
 )
-
 print(f"Structured Response: {structured_response.choices[0].message.content}")
 ```
 
@@ -139,16 +135,13 @@ print(f"Structured Response: {structured_response.choices[0].message.content}")
 
 The following example shows how to create embeddings for an NVIDIA NIM.
 
-> [!NOTE]
-> NVIDIA asymmetric embedding models (e.g., `nvidia/llama-3.2-nv-embedqa-1b-v2`) require an `input_type` parameter not present in the standard OpenAI embeddings API. The NVIDIA Inference Adapter automatically sets `input_type="query"` when using the OpenAI-compatible embeddings endpoint for NVIDIA. For passage embeddings, use the `embeddings` API with `task_type="document"`.
-
 ```python
-response = client.inference.embeddings(
-    model_id="nvidia/llama-3.2-nv-embedqa-1b-v2",
-    contents=["What is the capital of France?"],
-    task_type="query",
+response = client.embeddings.create(
+    model="nvidia/nvidia/llama-3.2-nv-embedqa-1b-v2",
+    input=["What is the capital of France?"],
+    extra_body={"input_type": "query"},
 )
-print(f"Embeddings: {response.embeddings}")
+print(f"Embeddings: {response.data}")
 ```
 
 ### Vision Language Models Example
@@ -166,15 +159,15 @@ image_path = {path_to_the_image}
 demo_image_b64 = load_image_as_base64(image_path)
 
 vlm_response = client.chat.completions.create(
-    model="nvidia/vila",
+    model="nvidia/meta/llama-3.2-11b-vision-instruct",
     messages=[
         {
             "role": "user",
             "content": [
                 {
-                    "type": "image",
-                    "image": {
-                        "data": demo_image_b64,
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{demo_image_b64}",
                     },
                 },
                 {

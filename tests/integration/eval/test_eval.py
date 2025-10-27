@@ -17,17 +17,17 @@ from ..datasets.test_datasets import data_url_from_file
 
 @pytest.mark.parametrize("scoring_fn_id", ["basic::equality"])
 def test_evaluate_rows(llama_stack_client, text_model_id, scoring_fn_id):
-    dataset = llama_stack_client.datasets.register(
+    dataset = llama_stack_client.beta.datasets.register(
         purpose="eval/messages-answer",
         source={
             "type": "uri",
             "uri": data_url_from_file(Path(__file__).parent.parent / "datasets" / "test_dataset.csv"),
         },
     )
-    response = llama_stack_client.datasets.list()
+    response = llama_stack_client.beta.datasets.list()
     assert any(x.identifier == dataset.identifier for x in response)
 
-    rows = llama_stack_client.datasets.iterrows(
+    rows = llama_stack_client.beta.datasets.iterrows(
         dataset_id=dataset.identifier,
         limit=3,
     )
@@ -37,12 +37,12 @@ def test_evaluate_rows(llama_stack_client, text_model_id, scoring_fn_id):
         scoring_fn_id,
     ]
     benchmark_id = str(uuid.uuid4())
-    llama_stack_client.benchmarks.register(
+    llama_stack_client.alpha.benchmarks.register(
         benchmark_id=benchmark_id,
         dataset_id=dataset.identifier,
         scoring_functions=scoring_functions,
     )
-    list_benchmarks = llama_stack_client.benchmarks.list()
+    list_benchmarks = llama_stack_client.alpha.benchmarks.list()
     assert any(x.identifier == benchmark_id for x in list_benchmarks)
 
     response = llama_stack_client.alpha.eval.evaluate_rows(
@@ -55,6 +55,7 @@ def test_evaluate_rows(llama_stack_client, text_model_id, scoring_fn_id):
                 "model": text_model_id,
                 "sampling_params": {
                     "temperature": 0.0,
+                    "max_tokens": 512,
                 },
             },
         },
@@ -66,7 +67,7 @@ def test_evaluate_rows(llama_stack_client, text_model_id, scoring_fn_id):
 
 @pytest.mark.parametrize("scoring_fn_id", ["basic::subset_of"])
 def test_evaluate_benchmark(llama_stack_client, text_model_id, scoring_fn_id):
-    dataset = llama_stack_client.datasets.register(
+    dataset = llama_stack_client.beta.datasets.register(
         purpose="eval/messages-answer",
         source={
             "type": "uri",
@@ -74,7 +75,7 @@ def test_evaluate_benchmark(llama_stack_client, text_model_id, scoring_fn_id):
         },
     )
     benchmark_id = str(uuid.uuid4())
-    llama_stack_client.benchmarks.register(
+    llama_stack_client.alpha.benchmarks.register(
         benchmark_id=benchmark_id,
         dataset_id=dataset.identifier,
         scoring_functions=[scoring_fn_id],
@@ -88,6 +89,7 @@ def test_evaluate_benchmark(llama_stack_client, text_model_id, scoring_fn_id):
                 "model": text_model_id,
                 "sampling_params": {
                     "temperature": 0.0,
+                    "max_tokens": 512,
                 },
             },
         },

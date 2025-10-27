@@ -82,7 +82,9 @@ class EvaluateResponse(BaseModel):
 
 
 class Eval(Protocol):
-    """Llama Stack Evaluation API for running evaluations on model and agent candidates."""
+    """Evaluations
+
+    Llama Stack Evaluation API for running evaluations on model and agent candidates."""
 
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST", level=LLAMA_STACK_API_V1ALPHA)

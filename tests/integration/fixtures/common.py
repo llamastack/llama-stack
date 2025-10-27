@@ -21,6 +21,7 @@ from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
 from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
 from llama_stack.env import get_env_or_fail
 
@@ -39,7 +40,12 @@ def is_port_available(port: int, host: str = "localhost") -> bool:
 
 def start_llama_stack_server(config_name: str) -> subprocess.Popen:
     """Start a llama stack server with the given config."""
-    cmd = f"uv run --with llama-stack llama stack build --distro {config_name} --image-type venv --run"
+
+    # remove server.log if it exists
+    if os.path.exists("server.log"):
+        os.remove("server.log")
+
+    cmd = f"llama stack run {config_name}"
     devnull = open(os.devnull, "w")
     process = subprocess.Popen(
         shlex.split(cmd),
@@ -117,40 +123,24 @@ def client_with_models(
     text_model_id,
     vision_model_id,
     embedding_model_id,
-    embedding_dimension,
     judge_model_id,
 ):
     client = llama_stack_client
 
     providers = [p for p in client.providers.list() if p.api == "inference"]
     assert len(providers) > 0, "No inference providers found"
-    inference_providers = [p.provider_id for p in providers if p.provider_type != "inline::sentence-transformers"]
 
     model_ids = {m.identifier for m in client.models.list()}
-    model_ids.update(m.provider_resource_id for m in client.models.list())
 
     if text_model_id and text_model_id not in model_ids:
-        client.models.register(model_id=text_model_id, provider_id=inference_providers[0])
+        raise ValueError(f"text_model_id {text_model_id} not found")
     if vision_model_id and vision_model_id not in model_ids:
-        client.models.register(model_id=vision_model_id, provider_id=inference_providers[0])
+        raise ValueError(f"vision_model_id {vision_model_id} not found")
     if judge_model_id and judge_model_id not in model_ids:
-        client.models.register(model_id=judge_model_id, provider_id=inference_providers[0])
+        raise ValueError(f"judge_model_id {judge_model_id} not found")
 
     if embedding_model_id and embedding_model_id not in model_ids:
-        # try to find a provider that supports embeddings, if sentence-transformers is not available
-        selected_provider = None
-        for p in providers:
-            if p.provider_type == "inline::sentence-transformers":
-                selected_provider = p
-                break
-
-        selected_provider = selected_provider or providers[0]
-        client.models.register(
-            model_id=embedding_model_id,
-            provider_id=selected_provider.provider_id,
-            model_type="embedding",
-            metadata={"embedding_dimension": embedding_dimension or 384},
-        )
+        raise ValueError(f"embedding_model_id {embedding_model_id} not found")
     return client
 
 
@@ -183,6 +173,12 @@ def llama_stack_client(request):
     # would be forced to use llama_stack_client, which is not what we want.
     print("\ninstantiating llama_stack_client")
     start_time = time.time()
+
+    # Patch httpx to inject test ID for server-mode test isolation
+    from llama_stack.testing.api_recorder import patch_httpx_for_test_id
+
+    patch_httpx_for_test_id()
+
     client = instantiate_llama_stack_client(request.session)
     print(f"llama_stack_client instantiated in {time.time() - start_time:.3f}s")
     return client
@@ -246,9 +242,16 @@ def instantiate_llama_stack_client(session):
 
     if "=" in config:
         run_config = run_config_from_adhoc_config_spec(config)
+
+        # --stack-config bypasses template so need this to set default embedding model
+        if "vector_io" in config and "inference" in config:
+            run_config.vector_stores = VectorStoresConfig(
+                embedding_model_id="inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+            )
+
         run_config_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")
         with open(run_config_file.name, "w") as f:
-            yaml.dump(run_config.model_dump(), f)
+            yaml.dump(run_config.model_dump(mode="json"), f)
         config = run_config_file.name
 
     client = LlamaStackAsLibraryClient(

@@ -5,11 +5,10 @@
 # the root directory of this source tree.
 
 from collections.abc import Iterable
-from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
-from llama_stack.apis.inference import OpenAICompletion
+from llama_stack.apis.inference import OpenAICompletion, OpenAICompletionRequestWithExtraBody
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
@@ -29,9 +28,6 @@ class DatabricksInferenceAdapter(OpenAIMixin):
         "databricks-bge-large-en": {"embedding_dimension": 1024, "context_length": 512},
     }
 
-    def get_api_key(self) -> str:
-        return self.config.api_token.get_secret_value()
-
     def get_base_url(self) -> str:
         return f"{self.config.url}/serving-endpoints"
 
@@ -45,25 +41,6 @@ class DatabricksInferenceAdapter(OpenAIMixin):
 
     async def openai_completion(
         self,
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        suffix: str | None = None,
+        params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
         raise NotImplementedError()

@@ -10,8 +10,6 @@ distribution_spec:
     - provider_type: remote::nvidia
     agents:
     - provider_type: inline::meta-reference
-    telemetry:
-    - provider_type: inline::meta-reference
     eval:
     - provider_type: remote::nvidia
     post_training:

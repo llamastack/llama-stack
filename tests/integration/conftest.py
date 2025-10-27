@@ -5,7 +5,9 @@
 # the root directory of this source tree.
 import inspect
 import itertools
+import logging  # allow-direct-logging
 import os
+import tempfile
 import textwrap
 import time
 from pathlib import Path
@@ -14,6 +16,7 @@ import pytest
 from dotenv import load_dotenv
 
 from llama_stack.log import get_logger
+from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 
 from .suites import SETUP_DEFINITIONS, SUITE_DEFINITIONS
 
@@ -35,6 +38,32 @@ def pytest_sessionstart(session):
     if "LLAMA_STACK_TEST_INFERENCE_MODE" not in os.environ:
         os.environ["LLAMA_STACK_TEST_INFERENCE_MODE"] = "replay"
 
+    if "LLAMA_STACK_LOGGING" not in os.environ:
+        os.environ["LLAMA_STACK_LOGGING"] = "all=warning"
+
+    if "SQLITE_STORE_DIR" not in os.environ:
+        os.environ["SQLITE_STORE_DIR"] = tempfile.mkdtemp()
+        logger.info(f"Setting SQLITE_STORE_DIR: {os.environ['SQLITE_STORE_DIR']}")
+
+    # Set test stack config type for api_recorder test isolation
+    stack_config = session.config.getoption("--stack-config", default=None)
+    if stack_config and (
+        stack_config.startswith("server:") or stack_config.startswith("docker:") or stack_config.startswith("http")
+    ):
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "server"
+        logger.info(f"Test stack config type: server (stack_config={stack_config})")
+    else:
+        os.environ["LLAMA_STACK_TEST_STACK_CONFIG_TYPE"] = "library_client"
+        logger.info(f"Test stack config type: library_client (stack_config={stack_config})")
+
+    patch_httpx_for_test_id()
+
+
+@pytest.fixture(autouse=True)
+def suppress_httpx_logs(caplog):
+    """Suppress httpx INFO logs for all integration tests"""
+    caplog.set_level(logging.WARNING, logger="httpx")
+
 
 @pytest.fixture(autouse=True)
 def _track_test_context(request):
@@ -43,15 +72,13 @@ def _track_test_context(request):
     This fixture runs for every test and stores the test's nodeid in a contextvar
     that the recording system can access to determine which subdirectory to use.
     """
-    from llama_stack.testing.inference_recorder import _test_context
+    from llama_stack.core.testing_context import reset_test_context, set_test_context
 
-    # Store the test nodeid (e.g., "tests/integration/responses/test_basic.py::test_foo[params]")
-    token = _test_context.set(request.node.nodeid)
+    token = set_test_context(request.node.nodeid)
 
     yield
 
-    # Cleanup
-    _test_context.reset(token)
+    reset_test_context(token)
 
 
 def pytest_runtest_teardown(item):
@@ -109,8 +136,12 @@ def pytest_configure(config):
         # Apply defaults if not provided explicitly
         for dest, value in setup_obj.defaults.items():
             current = getattr(config.option, dest, None)
-            if not current:
+            if current is None:
                 setattr(config.option, dest, value)
+
+    # Apply global fallback for embedding_dimension if still not set
+    if getattr(config.option, "embedding_dimension", None) is None:
+        config.option.embedding_dimension = 384
 
 
 def pytest_addoption(parser):
@@ -121,7 +152,9 @@ def pytest_addoption(parser):
             a 'pointer' to the stack. this can be either be:
             (a) a template name like `starter`, or
             (b) a path to a run.yaml file, or
-            (c) an adhoc config spec, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`
+            (c) an adhoc config spec, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`, or
+            (d) a server config like `server:ci-tests`, or
+            (e) a docker config like `docker:ci-tests` (builds and runs container)
             """
         ),
     )
@@ -149,8 +182,8 @@ def pytest_addoption(parser):
     parser.addoption(
         "--embedding-dimension",
         type=int,
-        default=384,
-        help="Output dimensionality of the embedding model to use for testing. Default: 384",
+        default=768,
+        help="Output dimensionality of the embedding model to use for testing. Default: 768",
     )
 
     parser.addoption(
@@ -189,7 +222,7 @@ MODEL_SHORT_IDS = {
     "meta-llama/Llama-3.3-70B-Instruct": "70B",
     "meta-llama/Llama-Guard-3-1B": "Guard1B",
     "meta-llama/Llama-Guard-3-8B": "Guard8B",
-    "all-MiniLM-L6-v2": "MiniLM",
+    "nomic-ai/nomic-embed-text-v1.5": "Nomic-v1.5",
 }
 
 
@@ -224,7 +257,9 @@ def pytest_generate_tests(metafunc):
             continue
 
         params.append(fixture_name)
-        val = metafunc.config.getoption(option)
+        # Use getattr on config.option to see values set by pytest_configure fallbacks
+        dest = option.lstrip("-").replace("-", "_")
+        val = getattr(metafunc.config.option, dest, None)
 
         values = [v.strip() for v in str(val).split(",")] if val else [None]
         param_values[fixture_name] = values
@@ -293,3 +328,72 @@ def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
             if p.is_relative_to(rp):
                 return False
     return True
+
+
+def get_vector_io_provider_ids(client):
+    """Get all available vector_io provider IDs."""
+    providers = [p for p in client.providers.list() if p.api == "vector_io"]
+    return [p.provider_id for p in providers]
+
+
+def vector_provider_wrapper(func):
+    """Decorator to run a test against all available vector_io providers."""
+    import functools
+    import os
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Get the vector_io_provider_id from the test arguments
+        import inspect
+
+        sig = inspect.signature(func)
+        bound_args = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+
+        vector_io_provider_id = bound_args.arguments.get("vector_io_provider_id")
+        if not vector_io_provider_id:
+            pytest.skip("No vector_io_provider_id provided")
+
+        # Get client_with_models to check available providers
+        client_with_models = bound_args.arguments.get("client_with_models")
+        if client_with_models:
+            available_providers = get_vector_io_provider_ids(client_with_models)
+            if vector_io_provider_id not in available_providers:
+                pytest.skip(f"Provider '{vector_io_provider_id}' not available. Available: {available_providers}")
+
+        return func(*args, **kwargs)
+
+    # For CI tests (replay/record), only use providers that are available in ci-tests environment
+    if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") in ("replay", "record"):
+        all_providers = ["faiss", "sqlite-vec"]
+    else:
+        # For live tests, try all providers (they'll skip if not available)
+        all_providers = [
+            "faiss",
+            "sqlite-vec",
+            "milvus",
+            "chromadb",
+            "pgvector",
+            "weaviate",
+            "qdrant",
+        ]
+
+    return pytest.mark.parametrize("vector_io_provider_id", all_providers)(wrapper)
+
+
+@pytest.fixture
+def vector_io_provider_id(request, client_with_models):
+    """Fixture that provides a specific vector_io provider ID, skipping if not available."""
+    if hasattr(request, "param"):
+        requested_provider = request.param
+        available_providers = get_vector_io_provider_ids(client_with_models)
+
+        if requested_provider not in available_providers:
+            pytest.skip(f"Provider '{requested_provider}' not available. Available: {available_providers}")
+
+        return requested_provider
+    else:
+        provider_ids = get_vector_io_provider_ids(client_with_models)
+        if not provider_ids:
+            pytest.skip("No vector_io providers available")
+        return provider_ids[0]

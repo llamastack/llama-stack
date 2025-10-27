@@ -49,6 +49,7 @@ from llama_stack.apis.inference import (
     Inference,
     Message,
     OpenAIAssistantMessageParam,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIDeveloperMessageParam,
     OpenAIMessageParam,
     OpenAISystemMessageParam,
@@ -66,6 +67,7 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
@@ -77,7 +79,6 @@ from llama_stack.providers.utils.inference.openai_compat import (
     convert_tooldef_to_openai_tool,
 )
 from llama_stack.providers.utils.kvstore import KVStore
-from llama_stack.providers.utils.telemetry import tracing
 
 from .persistence import AgentPersistence
 from .safety import SafetyException, ShieldRunnerMixin
@@ -582,7 +583,7 @@ class ChatAgent(ShieldRunnerMixin):
                 max_tokens = getattr(sampling_params, "max_tokens", None)
 
                 # Use OpenAI chat completion
-                openai_stream = await self.inference_api.openai_chat_completion(
+                params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.agent_config.model,
                     messages=openai_messages,
                     tools=openai_tools if openai_tools else None,
@@ -593,6 +594,7 @@ class ChatAgent(ShieldRunnerMixin):
                     max_tokens=max_tokens,
                     stream=True,
                 )
+                openai_stream = await self.inference_api.openai_chat_completion(params)
 
                 # Convert OpenAI stream back to Llama Stack format
                 response_stream = convert_openai_chat_completion_stream(

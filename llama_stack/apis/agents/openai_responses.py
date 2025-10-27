@@ -131,8 +131,20 @@ class OpenAIResponseOutputMessageContentOutputText(BaseModel):
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
 
 
+@json_schema_type
+class OpenAIResponseContentPartRefusal(BaseModel):
+    """Refusal content within a streamed response part.
+
+    :param type: Content part type identifier, always "refusal"
+    :param refusal: Refusal text supplied by the model
+    """
+
+    type: Literal["refusal"] = "refusal"
+    refusal: str
+
+
 OpenAIResponseOutputMessageContent = Annotated[
-    OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseOutputMessageContent, name="OpenAIResponseOutputMessageContent")
@@ -346,6 +358,174 @@ class OpenAIResponseText(BaseModel):
     format: OpenAIResponseTextFormat | None = None
 
 
+# Must match type Literals of OpenAIResponseInputToolWebSearch below
+WebSearchToolTypes = ["web_search", "web_search_preview", "web_search_preview_2025_03_11"]
+
+
+@json_schema_type
+class OpenAIResponseInputToolWebSearch(BaseModel):
+    """Web search tool configuration for OpenAI response inputs.
+
+    :param type: Web search tool type variant to use
+    :param search_context_size: (Optional) Size of search context, must be "low", "medium", or "high"
+    """
+
+    # Must match values of WebSearchToolTypes above
+    type: Literal["web_search"] | Literal["web_search_preview"] | Literal["web_search_preview_2025_03_11"] = (
+        "web_search"
+    )
+    # TODO: actually use search_context_size somewhere...
+    search_context_size: str | None = Field(default="medium", pattern="^low|medium|high$")
+    # TODO: add user_location
+
+
+@json_schema_type
+class OpenAIResponseInputToolFunction(BaseModel):
+    """Function tool configuration for OpenAI response inputs.
+
+    :param type: Tool type identifier, always "function"
+    :param name: Name of the function that can be called
+    :param description: (Optional) Description of what the function does
+    :param parameters: (Optional) JSON schema defining the function's parameters
+    :param strict: (Optional) Whether to enforce strict parameter validation
+    """
+
+    type: Literal["function"] = "function"
+    name: str
+    description: str | None = None
+    parameters: dict[str, Any] | None
+    strict: bool | None = None
+
+
+@json_schema_type
+class OpenAIResponseInputToolFileSearch(BaseModel):
+    """File search tool configuration for OpenAI response inputs.
+
+    :param type: Tool type identifier, always "file_search"
+    :param vector_store_ids: List of vector store identifiers to search within
+    :param filters: (Optional) Additional filters to apply to the search
+    :param max_num_results: (Optional) Maximum number of search results to return (1-50)
+    :param ranking_options: (Optional) Options for ranking and scoring search results
+    """
+
+    type: Literal["file_search"] = "file_search"
+    vector_store_ids: list[str]
+    filters: dict[str, Any] | None = None
+    max_num_results: int | None = Field(default=10, ge=1, le=50)
+    ranking_options: FileSearchRankingOptions | None = None
+
+
+class ApprovalFilter(BaseModel):
+    """Filter configuration for MCP tool approval requirements.
+
+    :param always: (Optional) List of tool names that always require approval
+    :param never: (Optional) List of tool names that never require approval
+    """
+
+    always: list[str] | None = None
+    never: list[str] | None = None
+
+
+class AllowedToolsFilter(BaseModel):
+    """Filter configuration for restricting which MCP tools can be used.
+
+    :param tool_names: (Optional) List of specific tool names that are allowed
+    """
+
+    tool_names: list[str] | None = None
+
+
+@json_schema_type
+class OpenAIResponseInputToolMCP(BaseModel):
+    """Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
+
+    :param type: Tool type identifier, always "mcp"
+    :param server_label: Label to identify this MCP server
+    :param server_url: URL endpoint of the MCP server
+    :param headers: (Optional) HTTP headers to include when connecting to the server
+    :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
+    :param allowed_tools: (Optional) Restriction on which tools can be used from this server
+    """
+
+    type: Literal["mcp"] = "mcp"
+    server_label: str
+    server_url: str
+    headers: dict[str, Any] | None = None
+
+    require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
+    allowed_tools: list[str] | AllowedToolsFilter | None = None
+
+
+OpenAIResponseInputTool = Annotated[
+    OpenAIResponseInputToolWebSearch
+    | OpenAIResponseInputToolFileSearch
+    | OpenAIResponseInputToolFunction
+    | OpenAIResponseInputToolMCP,
+    Field(discriminator="type"),
+]
+register_schema(OpenAIResponseInputTool, name="OpenAIResponseInputTool")
+
+
+@json_schema_type
+class OpenAIResponseToolMCP(BaseModel):
+    """Model Context Protocol (MCP) tool configuration for OpenAI response object.
+
+    :param type: Tool type identifier, always "mcp"
+    :param server_label: Label to identify this MCP server
+    :param allowed_tools: (Optional) Restriction on which tools can be used from this server
+    """
+
+    type: Literal["mcp"] = "mcp"
+    server_label: str
+    allowed_tools: list[str] | AllowedToolsFilter | None = None
+
+
+OpenAIResponseTool = Annotated[
+    OpenAIResponseInputToolWebSearch
+    | OpenAIResponseInputToolFileSearch
+    | OpenAIResponseInputToolFunction
+    | OpenAIResponseToolMCP,  # The only type that differes from that in the inputs is the MCP tool
+    Field(discriminator="type"),
+]
+register_schema(OpenAIResponseTool, name="OpenAIResponseTool")
+
+
+class OpenAIResponseUsageOutputTokensDetails(BaseModel):
+    """Token details for output tokens in OpenAI response usage.
+
+    :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
+    """
+
+    reasoning_tokens: int | None = None
+
+
+class OpenAIResponseUsageInputTokensDetails(BaseModel):
+    """Token details for input tokens in OpenAI response usage.
+
+    :param cached_tokens: Number of tokens retrieved from cache
+    """
+
+    cached_tokens: int | None = None
+
+
+@json_schema_type
+class OpenAIResponseUsage(BaseModel):
+    """Usage information for OpenAI response.
+
+    :param input_tokens: Number of tokens in the input
+    :param output_tokens: Number of tokens in the output
+    :param total_tokens: Total tokens used (input + output)
+    :param input_tokens_details: Detailed breakdown of input token usage
+    :param output_tokens_details: Detailed breakdown of output token usage
+    """
+
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    input_tokens_details: OpenAIResponseUsageInputTokensDetails | None = None
+    output_tokens_details: OpenAIResponseUsageOutputTokensDetails | None = None
+
+
 @json_schema_type
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
@@ -362,7 +542,10 @@ class OpenAIResponseObject(BaseModel):
     :param temperature: (Optional) Sampling temperature used for generation
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
+    :param tools: (Optional) An array of tools the model may call while generating a response.
     :param truncation: (Optional) Truncation strategy applied to the response
+    :param usage: (Optional) Token usage information for the response
+    :param instructions: (Optional) System message inserted into the model's context
     """
 
     created_at: int
@@ -379,7 +562,10 @@ class OpenAIResponseObject(BaseModel):
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
+    tools: list[OpenAIResponseTool] | None = None
     truncation: str | None = None
+    usage: OpenAIResponseUsage | None = None
+    instructions: str | None = None
 
 
 @json_schema_type
@@ -400,7 +586,7 @@ class OpenAIDeleteResponseObject(BaseModel):
 class OpenAIResponseObjectStreamResponseCreated(BaseModel):
     """Streaming event indicating a new response has been created.
 
-    :param response: The newly created response object
+    :param response: The response object that was created
     :param type: Event type identifier, always "response.created"
     """
 
@@ -409,15 +595,57 @@ class OpenAIResponseObjectStreamResponseCreated(BaseModel):
 
 
 @json_schema_type
+class OpenAIResponseObjectStreamResponseInProgress(BaseModel):
+    """Streaming event indicating the response remains in progress.
+
+    :param response: Current response state while in progress
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.in_progress"
+    """
+
+    response: OpenAIResponseObject
+    sequence_number: int
+    type: Literal["response.in_progress"] = "response.in_progress"
+
+
+@json_schema_type
 class OpenAIResponseObjectStreamResponseCompleted(BaseModel):
     """Streaming event indicating a response has been completed.
 
-    :param response: The completed response object
+    :param response: Completed response object
     :param type: Event type identifier, always "response.completed"
     """
 
     response: OpenAIResponseObject
     type: Literal["response.completed"] = "response.completed"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseIncomplete(BaseModel):
+    """Streaming event emitted when a response ends in an incomplete state.
+
+    :param response: Response object describing the incomplete state
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.incomplete"
+    """
+
+    response: OpenAIResponseObject
+    sequence_number: int
+    type: Literal["response.incomplete"] = "response.incomplete"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseFailed(BaseModel):
+    """Streaming event emitted when a response fails.
+
+    :param response: Response object describing the failure
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.failed"
+    """
+
+    response: OpenAIResponseObject
+    sequence_number: int
+    type: Literal["response.failed"] = "response.failed"
 
 
 @json_schema_type
@@ -650,19 +878,34 @@ class OpenAIResponseObjectStreamResponseMcpCallCompleted(BaseModel):
 
 @json_schema_type
 class OpenAIResponseContentPartOutputText(BaseModel):
+    """Text content within a streamed response part.
+
+    :param type: Content part type identifier, always "output_text"
+    :param text: Text emitted for this content part
+    :param annotations: Structured annotations associated with the text
+    :param logprobs: (Optional) Token log probability details
+    """
+
     type: Literal["output_text"] = "output_text"
     text: str
-    # TODO: add annotations, logprobs, etc.
+    annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
+    logprobs: list[dict[str, Any]] | None = None
 
 
 @json_schema_type
-class OpenAIResponseContentPartRefusal(BaseModel):
-    type: Literal["refusal"] = "refusal"
-    refusal: str
+class OpenAIResponseContentPartReasoningText(BaseModel):
+    """Reasoning text emitted as part of a streamed response.
+
+    :param type: Content part type identifier, always "reasoning_text"
+    :param text: Reasoning text supplied by the model
+    """
+
+    type: Literal["reasoning_text"] = "reasoning_text"
+    text: str
 
 
 OpenAIResponseContentPart = Annotated[
-    OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal,
+    OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseContentPart, name="OpenAIResponseContentPart")
@@ -672,15 +915,19 @@ register_schema(OpenAIResponseContentPart, name="OpenAIResponseContentPart")
 class OpenAIResponseObjectStreamResponseContentPartAdded(BaseModel):
     """Streaming event for when a new content part is added to a response item.
 
+    :param content_index: Index position of the part within the content array
     :param response_id: Unique identifier of the response containing this content
     :param item_id: Unique identifier of the output item containing this content part
+    :param output_index: Index position of the output item in the response
     :param part: The content part that was added
     :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.content_part.added"
     """
 
+    content_index: int
     response_id: str
     item_id: str
+    output_index: int
     part: OpenAIResponseContentPart
     sequence_number: int
     type: Literal["response.content_part.added"] = "response.content_part.added"
@@ -690,22 +937,269 @@ class OpenAIResponseObjectStreamResponseContentPartAdded(BaseModel):
 class OpenAIResponseObjectStreamResponseContentPartDone(BaseModel):
     """Streaming event for when a content part is completed.
 
+    :param content_index: Index position of the part within the content array
     :param response_id: Unique identifier of the response containing this content
     :param item_id: Unique identifier of the output item containing this content part
+    :param output_index: Index position of the output item in the response
     :param part: The completed content part
     :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.content_part.done"
     """
 
+    content_index: int
     response_id: str
     item_id: str
+    output_index: int
     part: OpenAIResponseContentPart
     sequence_number: int
     type: Literal["response.content_part.done"] = "response.content_part.done"
 
 
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningTextDelta(BaseModel):
+    """Streaming event for incremental reasoning text updates.
+
+    :param content_index: Index position of the reasoning content part
+    :param delta: Incremental reasoning text being added
+    :param item_id: Unique identifier of the output item being updated
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.reasoning_text.delta"
+    """
+
+    content_index: int
+    delta: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.reasoning_text.delta"] = "response.reasoning_text.delta"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningTextDone(BaseModel):
+    """Streaming event for when reasoning text is completed.
+
+    :param content_index: Index position of the reasoning content part
+    :param text: Final complete reasoning text
+    :param item_id: Unique identifier of the completed output item
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.reasoning_text.done"
+    """
+
+    content_index: int
+    text: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.reasoning_text.done"] = "response.reasoning_text.done"
+
+
+@json_schema_type
+class OpenAIResponseContentPartReasoningSummary(BaseModel):
+    """Reasoning summary part in a streamed response.
+
+    :param type: Content part type identifier, always "summary_text"
+    :param text: Summary text
+    """
+
+    type: Literal["summary_text"] = "summary_text"
+    text: str
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(BaseModel):
+    """Streaming event for when a new reasoning summary part is added.
+
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param part: The summary part that was added
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_part.added"
+    """
+
+    item_id: str
+    output_index: int
+    part: OpenAIResponseContentPartReasoningSummary
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_part.added"] = "response.reasoning_summary_part.added"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryPartDone(BaseModel):
+    """Streaming event for when a reasoning summary part is completed.
+
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param part: The completed summary part
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_part.done"
+    """
+
+    item_id: str
+    output_index: int
+    part: OpenAIResponseContentPartReasoningSummary
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_part.done"] = "response.reasoning_summary_part.done"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(BaseModel):
+    """Streaming event for incremental reasoning summary text updates.
+
+    :param delta: Incremental summary text being added
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_text.delta"
+    """
+
+    delta: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_text.delta"] = "response.reasoning_summary_text.delta"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(BaseModel):
+    """Streaming event for when reasoning summary text is completed.
+
+    :param text: Final complete summary text
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the output item
+    :param sequence_number: Sequential number for ordering streaming events
+    :param summary_index: Index of the summary part within the reasoning summary
+    :param type: Event type identifier, always "response.reasoning_summary_text.done"
+    """
+
+    text: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    summary_index: int
+    type: Literal["response.reasoning_summary_text.done"] = "response.reasoning_summary_text.done"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseRefusalDelta(BaseModel):
+    """Streaming event for incremental refusal text updates.
+
+    :param content_index: Index position of the content part
+    :param delta: Incremental refusal text being added
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.refusal.delta"
+    """
+
+    content_index: int
+    delta: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.refusal.delta"] = "response.refusal.delta"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseRefusalDone(BaseModel):
+    """Streaming event for when refusal text is completed.
+
+    :param content_index: Index position of the content part
+    :param refusal: Final complete refusal text
+    :param item_id: Unique identifier of the output item
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.refusal.done"
+    """
+
+    content_index: int
+    refusal: str
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.refusal.done"] = "response.refusal.done"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded(BaseModel):
+    """Streaming event for when an annotation is added to output text.
+
+    :param item_id: Unique identifier of the item to which the annotation is being added
+    :param output_index: Index position of the output item in the response's output array
+    :param content_index: Index position of the content part within the output item
+    :param annotation_index: Index of the annotation within the content part
+    :param annotation: The annotation object being added
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.output_text.annotation.added"
+    """
+
+    item_id: str
+    output_index: int
+    content_index: int
+    annotation_index: int
+    annotation: OpenAIResponseAnnotations
+    sequence_number: int
+    type: Literal["response.output_text.annotation.added"] = "response.output_text.annotation.added"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseFileSearchCallInProgress(BaseModel):
+    """Streaming event for file search calls in progress.
+
+    :param item_id: Unique identifier of the file search call
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.file_search_call.in_progress"
+    """
+
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.file_search_call.in_progress"] = "response.file_search_call.in_progress"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseFileSearchCallSearching(BaseModel):
+    """Streaming event for file search currently searching.
+
+    :param item_id: Unique identifier of the file search call
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.file_search_call.searching"
+    """
+
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.file_search_call.searching"] = "response.file_search_call.searching"
+
+
+@json_schema_type
+class OpenAIResponseObjectStreamResponseFileSearchCallCompleted(BaseModel):
+    """Streaming event for completed file search calls.
+
+    :param item_id: Unique identifier of the completed file search call
+    :param output_index: Index position of the item in the output list
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "response.file_search_call.completed"
+    """
+
+    item_id: str
+    output_index: int
+    sequence_number: int
+    type: Literal["response.file_search_call.completed"] = "response.file_search_call.completed"
+
+
 OpenAIResponseObjectStream = Annotated[
     OpenAIResponseObjectStreamResponseCreated
+    | OpenAIResponseObjectStreamResponseInProgress
     | OpenAIResponseObjectStreamResponseOutputItemAdded
     | OpenAIResponseObjectStreamResponseOutputItemDone
     | OpenAIResponseObjectStreamResponseOutputTextDelta
@@ -725,6 +1219,20 @@ OpenAIResponseObjectStream = Annotated[
     | OpenAIResponseObjectStreamResponseMcpCallCompleted
     | OpenAIResponseObjectStreamResponseContentPartAdded
     | OpenAIResponseObjectStreamResponseContentPartDone
+    | OpenAIResponseObjectStreamResponseReasoningTextDelta
+    | OpenAIResponseObjectStreamResponseReasoningTextDone
+    | OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded
+    | OpenAIResponseObjectStreamResponseReasoningSummaryPartDone
+    | OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta
+    | OpenAIResponseObjectStreamResponseReasoningSummaryTextDone
+    | OpenAIResponseObjectStreamResponseRefusalDelta
+    | OpenAIResponseObjectStreamResponseRefusalDone
+    | OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded
+    | OpenAIResponseObjectStreamResponseFileSearchCallInProgress
+    | OpenAIResponseObjectStreamResponseFileSearchCallSearching
+    | OpenAIResponseObjectStreamResponseFileSearchCallCompleted
+    | OpenAIResponseObjectStreamResponseIncomplete
+    | OpenAIResponseObjectStreamResponseFailed
     | OpenAIResponseObjectStreamResponseCompleted,
     Field(discriminator="type"),
 ]
@@ -746,126 +1254,13 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
 
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
-    OpenAIResponseOutputMessageWebSearchToolCall
-    | OpenAIResponseOutputMessageFileSearchToolCall
-    | OpenAIResponseOutputMessageFunctionToolCall
+    OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
-    | OpenAIResponseMCPApprovalRequest
     | OpenAIResponseMCPApprovalResponse
-    |
-    # Fallback to the generic message type as a last resort
-    OpenAIResponseMessage,
+    | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")
-
-
-# Must match type Literals of OpenAIResponseInputToolWebSearch below
-WebSearchToolTypes = ["web_search", "web_search_preview", "web_search_preview_2025_03_11"]
-
-
-@json_schema_type
-class OpenAIResponseInputToolWebSearch(BaseModel):
-    """Web search tool configuration for OpenAI response inputs.
-
-    :param type: Web search tool type variant to use
-    :param search_context_size: (Optional) Size of search context, must be "low", "medium", or "high"
-    """
-
-    # Must match values of WebSearchToolTypes above
-    type: Literal["web_search"] | Literal["web_search_preview"] | Literal["web_search_preview_2025_03_11"] = (
-        "web_search"
-    )
-    # TODO: actually use search_context_size somewhere...
-    search_context_size: str | None = Field(default="medium", pattern="^low|medium|high$")
-    # TODO: add user_location
-
-
-@json_schema_type
-class OpenAIResponseInputToolFunction(BaseModel):
-    """Function tool configuration for OpenAI response inputs.
-
-    :param type: Tool type identifier, always "function"
-    :param name: Name of the function that can be called
-    :param description: (Optional) Description of what the function does
-    :param parameters: (Optional) JSON schema defining the function's parameters
-    :param strict: (Optional) Whether to enforce strict parameter validation
-    """
-
-    type: Literal["function"] = "function"
-    name: str
-    description: str | None = None
-    parameters: dict[str, Any] | None
-    strict: bool | None = None
-
-
-@json_schema_type
-class OpenAIResponseInputToolFileSearch(BaseModel):
-    """File search tool configuration for OpenAI response inputs.
-
-    :param type: Tool type identifier, always "file_search"
-    :param vector_store_ids: List of vector store identifiers to search within
-    :param filters: (Optional) Additional filters to apply to the search
-    :param max_num_results: (Optional) Maximum number of search results to return (1-50)
-    :param ranking_options: (Optional) Options for ranking and scoring search results
-    """
-
-    type: Literal["file_search"] = "file_search"
-    vector_store_ids: list[str]
-    filters: dict[str, Any] | None = None
-    max_num_results: int | None = Field(default=10, ge=1, le=50)
-    ranking_options: FileSearchRankingOptions | None = None
-
-
-class ApprovalFilter(BaseModel):
-    """Filter configuration for MCP tool approval requirements.
-
-    :param always: (Optional) List of tool names that always require approval
-    :param never: (Optional) List of tool names that never require approval
-    """
-
-    always: list[str] | None = None
-    never: list[str] | None = None
-
-
-class AllowedToolsFilter(BaseModel):
-    """Filter configuration for restricting which MCP tools can be used.
-
-    :param tool_names: (Optional) List of specific tool names that are allowed
-    """
-
-    tool_names: list[str] | None = None
-
-
-@json_schema_type
-class OpenAIResponseInputToolMCP(BaseModel):
-    """Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
-
-    :param type: Tool type identifier, always "mcp"
-    :param server_label: Label to identify this MCP server
-    :param server_url: URL endpoint of the MCP server
-    :param headers: (Optional) HTTP headers to include when connecting to the server
-    :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
-    :param allowed_tools: (Optional) Restriction on which tools can be used from this server
-    """
-
-    type: Literal["mcp"] = "mcp"
-    server_label: str
-    server_url: str
-    headers: dict[str, Any] | None = None
-
-    require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
-    allowed_tools: list[str] | AllowedToolsFilter | None = None
-
-
-OpenAIResponseInputTool = Annotated[
-    OpenAIResponseInputToolWebSearch
-    | OpenAIResponseInputToolFileSearch
-    | OpenAIResponseInputToolFunction
-    | OpenAIResponseInputToolMCP,
-    Field(discriminator="type"),
-]
-register_schema(OpenAIResponseInputTool, name="OpenAIResponseInputTool")
 
 
 class ListOpenAIResponseInputItem(BaseModel):

@@ -47,12 +47,14 @@ def test_response_text_format(compat_client, text_model_id, text_format):
 
 
 @pytest.fixture
-def vector_store_with_filtered_files(compat_client, text_model_id, tmp_path_factory):
-    """Create a vector store with multiple files that have different attributes for filtering tests."""
+def vector_store_with_filtered_files(compat_client, embedding_model_id, embedding_dimension, tmp_path_factory):
+    # """Create a vector store with multiple files that have different attributes for filtering tests."""
     if isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
+        pytest.skip("upload_file() is not yet supported in library client somehow?")
 
-    vector_store = new_vector_store(compat_client, "test_vector_store_with_filters")
+    vector_store = new_vector_store(
+        compat_client, "test_vector_store_with_filters", embedding_model_id, embedding_dimension
+    )
     tmp_path = tmp_path_factory.mktemp("filter_test_files")
 
     # Create multiple files with different attributes
@@ -316,3 +318,48 @@ def test_response_file_search_filter_compound_or(compat_client, text_model_id, v
     # Verify we got at least one of the expected categories
     assert len(categories_found) > 0, "Should have found at least one marketing or sales file"
     assert categories_found.issubset({"marketing", "sales"}), f"Found unexpected categories: {categories_found}"
+
+
+def test_response_file_search_streaming_events(compat_client, text_model_id, vector_store_with_filtered_files):
+    """Test that file search emits proper streaming events (in_progress, searching, completed)."""
+    tools = [
+        {
+            "type": "file_search",
+            "vector_store_ids": [vector_store_with_filtered_files.id],
+        }
+    ]
+
+    stream = compat_client.responses.create(
+        model=text_model_id,
+        input="What are the marketing updates?",
+        tools=tools,
+        stream=True,
+    )
+
+    chunks = []
+    for chunk in stream:
+        chunks.append(chunk)
+
+    event_types = [chunk.type for chunk in chunks]
+
+    # Verify file search streaming events are present
+    file_search_in_progress = [chunk for chunk in chunks if chunk.type == "response.file_search_call.in_progress"]
+    file_search_searching = [chunk for chunk in chunks if chunk.type == "response.file_search_call.searching"]
+    file_search_completed = [chunk for chunk in chunks if chunk.type == "response.file_search_call.completed"]
+
+    assert len(file_search_in_progress) > 0, (
+        f"Expected response.file_search_call.in_progress events, got chunk types: {event_types}"
+    )
+    assert len(file_search_searching) > 0, (
+        f"Expected response.file_search_call.searching events, got chunk types: {event_types}"
+    )
+    assert len(file_search_completed) > 0, (
+        f"Expected response.file_search_call.completed events, got chunk types: {event_types}"
+    )
+
+    # Verify final response has file search call
+    final_chunk = chunks[-1]
+    if hasattr(final_chunk, "response"):
+        file_search_calls = [output for output in final_chunk.response.output if output.type == "file_search_call"]
+        assert len(file_search_calls) > 0, "Expected at least one file_search_call in final response"
+        assert file_search_calls[0].status == "completed"

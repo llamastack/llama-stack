@@ -7,8 +7,8 @@ from aiohttp import hdrs
 
 from llama_stack.core.external import ExternalApiSpec
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
+from llama_stack.core.telemetry.tracing import end_trace, start_trace
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry.tracing import end_trace, start_trace
 
 logger = get_logger(name=__name__, category="core::server")
 

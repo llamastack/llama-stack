@@ -9,6 +9,7 @@ import base64
 import io
 import json
 import re
+from typing import Any
 
 import httpx
 from PIL import Image as PIL_Image
@@ -23,6 +24,9 @@ from llama_stack.apis.inference import (
     ChatCompletionRequest,
     CompletionRequest,
     Message,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
+    OpenAIFile,
     ResponseFormat,
     ResponseFormatType,
     SystemMessage,
@@ -74,14 +78,22 @@ def decode_assistant_message(content: str, stop_reason: StopReason) -> RawMessag
     return formatter.decode_assistant_message_from_content(content, stop_reason)
 
 
-def interleaved_content_as_str(content: InterleavedContent, sep: str = " ") -> str:
+def interleaved_content_as_str(
+    content: Any,
+    sep: str = " ",
+) -> str:
+    if content is None:
+        return ""
+
     def _process(c) -> str:
         if isinstance(c, str):
             return c
-        elif isinstance(c, ImageContentItem):
-            return "<image>"
-        elif isinstance(c, TextContentItem):
+        elif isinstance(c, TextContentItem) or isinstance(c, OpenAIChatCompletionContentPartTextParam):
             return c.text
+        elif isinstance(c, ImageContentItem) or isinstance(c, OpenAIChatCompletionContentPartImageParam):
+            return "<image>"
+        elif isinstance(c, OpenAIFile):
+            return "<file>"
         else:
             raise ValueError(f"Unsupported content type: {type(c)}")
 

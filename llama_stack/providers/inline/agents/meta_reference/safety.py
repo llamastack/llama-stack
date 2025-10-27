@@ -8,8 +8,8 @@ import asyncio
 
 from llama_stack.apis.inference import Message
 from llama_stack.apis.safety import Safety, SafetyViolation, ViolationLevel
+from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.telemetry import tracing
 
 log = get_logger(name=__name__, category="agents::meta_reference")
 

@@ -9,14 +9,22 @@ import os
 import re
 from logging.config import dictConfig  # allow-direct-logging
 
+from pydantic import BaseModel, Field
 from rich.console import Console
 from rich.errors import MarkupError
 from rich.logging import RichHandler
 
-from llama_stack.core.datatypes import LoggingConfig
-
 # Default log level
 DEFAULT_LOG_LEVEL = logging.INFO
+
+
+class LoggingConfig(BaseModel):
+    category_levels: dict[str, str] = Field(
+        default_factory=dict,
+        description="""
+Dictionary of different logging configurations for different portions (ex: core, server) of llama stack""",
+    )
+
 
 # Predefined categories
 CATEGORIES = [
@@ -30,6 +38,7 @@ CATEGORIES = [
     "tools",
     "client",
     "telemetry",
+    "openai",
     "openai_responses",
     "openai_conversations",
     "testing",
@@ -133,7 +142,11 @@ def strip_rich_markup(text):
 
 class CustomRichHandler(RichHandler):
     def __init__(self, *args, **kwargs):
-        kwargs["console"] = Console()
+        # Set a reasonable default width for console output, especially when redirected to files
+        console_width = int(os.environ.get("LLAMA_STACK_LOG_WIDTH", "120"))
+        # Don't force terminal codes to avoid ANSI escape codes in log files
+        # Ensure logs go to stderr, not stdout
+        kwargs["console"] = Console(width=console_width, stderr=True)
         super().__init__(*args, **kwargs)
 
     def emit(self, record):
@@ -162,14 +175,30 @@ class CustomFileHandler(logging.FileHandler):
         super().emit(record)
 
 
-def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None:
+def setup_logging(category_levels: dict[str, int] | None = None, log_file: str | None = None) -> None:
     """
     Configure logging based on the provided category log levels and an optional log file.
+    If category_levels or log_file are not provided, they will be read from environment variables.
 
     Parameters:
-        category_levels (Dict[str, int]): A dictionary mapping categories to their log levels.
-        log_file (str): Path to a log file to additionally pipe the logs into
+        category_levels (Dict[str, int] | None): A dictionary mapping categories to their log levels.
+            If None, reads from LLAMA_STACK_LOGGING environment variable and uses defaults.
+        log_file (str | None): Path to a log file to additionally pipe the logs into.
+            If None, reads from LLAMA_STACK_LOG_FILE environment variable.
     """
+    global _category_levels
+    # Read from environment variables if not explicitly provided
+    if category_levels is None:
+        category_levels = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
+        env_config = os.environ.get("LLAMA_STACK_LOGGING", "")
+        if env_config:
+            category_levels.update(parse_environment_config(env_config))
+
+    # Update the module-level _category_levels so that already-created loggers pick up the new levels
+    _category_levels.update(category_levels)
+
+    if log_file is None:
+        log_file = os.environ.get("LLAMA_STACK_LOG_FILE")
     log_format = "%(asctime)s %(name)s:%(lineno)d %(category)s: %(message)s"
 
     class CategoryFilter(logging.Filter):
@@ -220,12 +249,30 @@ def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None
             }
         },
         "loggers": {
-            category: {
-                "handlers": list(handlers.keys()),  # Apply all handlers
-                "level": category_levels.get(category, DEFAULT_LOG_LEVEL),
-                "propagate": False,  # Disable propagation to root logger
-            }
-            for category in CATEGORIES
+            **{
+                category: {
+                    "handlers": list(handlers.keys()),  # Apply all handlers
+                    "level": category_levels.get(category, DEFAULT_LOG_LEVEL),
+                    "propagate": False,  # Disable propagation to root logger
+                }
+                for category in CATEGORIES
+            },
+            # Explicitly configure uvicorn loggers to preserve their INFO level
+            "uvicorn": {
+                "handlers": list(handlers.keys()),
+                "level": logging.INFO,
+                "propagate": False,
+            },
+            "uvicorn.error": {
+                "handlers": list(handlers.keys()),
+                "level": logging.INFO,
+                "propagate": False,
+            },
+            "uvicorn.access": {
+                "handlers": list(handlers.keys()),
+                "level": logging.INFO,
+                "propagate": False,
+            },
         },
         "root": {
             "handlers": list(handlers.keys()),
@@ -234,10 +281,18 @@ def setup_logging(category_levels: dict[str, int], log_file: str | None) -> None
     }
     dictConfig(logging_config)
 
-    # Ensure third-party libraries follow the root log level
-    for _, logger in logging.root.manager.loggerDict.items():
+    # Update log levels for all loggers that were created before setup_logging was called
+    for name, logger in logging.root.manager.loggerDict.items():
         if isinstance(logger, logging.Logger):
-            logger.setLevel(root_level)
+            # Skip infrastructure loggers (uvicorn, fastapi) to preserve their configured levels
+            if name.startswith(("uvicorn", "fastapi")):
+                continue
+            # Update llama_stack loggers if root level was explicitly set (e.g., via all=CRITICAL)
+            if name.startswith("llama_stack") and "root" in category_levels:
+                logger.setLevel(root_level)
+            # Update third-party library loggers
+            elif not name.startswith("llama_stack"):
+                logger.setLevel(root_level)
 
 
 def get_logger(
@@ -274,12 +329,3 @@ def get_logger(
             log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
     logger.setLevel(log_level)
     return logging.LoggerAdapter(logger, {"category": category})
-
-
-env_config = os.environ.get("LLAMA_STACK_LOGGING", "")
-if env_config:
-    _category_levels.update(parse_environment_config(env_config))
-
-log_file = os.environ.get("LLAMA_STACK_LOG_FILE")
-
-setup_logging(_category_levels, log_file)

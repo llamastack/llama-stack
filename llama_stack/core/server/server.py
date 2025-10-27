@@ -36,7 +36,6 @@ from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
-    LoggingConfig,
     StackRunConfig,
     process_cors_config,
 )
@@ -53,19 +52,13 @@ from llama_stack.core.stack import (
     cast_image_name_to_string,
     replace_env_vars,
 )
+from llama_stack.core.telemetry import Telemetry
+from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, setup_logger
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
-from llama_stack.log import get_logger
+from llama_stack.log import LoggingConfig, get_logger, setup_logging
 from llama_stack.providers.datatypes import Api
-from llama_stack.providers.inline.telemetry.meta_reference.config import TelemetryConfig
-from llama_stack.providers.inline.telemetry.meta_reference.telemetry import (
-    TelemetryAdapter,
-)
-from llama_stack.providers.utils.telemetry.tracing import (
-    CURRENT_TRACE_CONTEXT,
-    setup_logger,
-)
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
@@ -138,6 +131,13 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
         return HTTPException(status_code=httpx.codes.NOT_IMPLEMENTED, detail=f"Not implemented: {str(exc)}")
     elif isinstance(exc, AuthenticationRequiredError):
         return HTTPException(status_code=httpx.codes.UNAUTHORIZED, detail=f"Authentication required: {str(exc)}")
+    elif hasattr(exc, "status_code") and isinstance(getattr(exc, "status_code", None), int):
+        # Handle provider SDK exceptions (e.g., OpenAI's APIStatusError and subclasses)
+        # These include AuthenticationError (401), PermissionDeniedError (403), etc.
+        # This preserves the actual HTTP status code from the provider
+        status_code = exc.status_code
+        detail = str(exc)
+        return HTTPException(status_code=status_code, detail=detail)
     else:
         return HTTPException(
             status_code=httpx.codes.INTERNAL_SERVER_ERROR,
@@ -167,7 +167,9 @@ class StackApp(FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: StackApp):
-    logger.info("Starting up")
+    server_version = parse_version("llama-stack")
+
+    logger.info(f"Starting up Llama Stack server (version: {server_version})")
     assert app.stack is not None
     app.stack.create_registry_refresh_task()
     yield
@@ -177,7 +179,17 @@ async def lifespan(app: StackApp):
 
 def is_streaming_request(func_name: str, request: Request, **kwargs):
     # TODO: pass the api method and punt it to the Protocol definition directly
-    return kwargs.get("stream", False)
+    # If there's a stream parameter at top level, use it
+    if "stream" in kwargs:
+        return kwargs["stream"]
+
+    # If there's a stream parameter inside a "params" parameter, e.g. openai_chat_completion() use it
+    if "params" in kwargs:
+        params = kwargs["params"]
+        if hasattr(params, "stream"):
+            return params.stream
+
+    return False
 
 
 async def maybe_await(value):
@@ -232,15 +244,31 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
         await log_request_pre_validation(request)
 
+        test_context_token = None
+        test_context_var = None
+        reset_test_context_fn = None
+
         # Use context manager with both provider data and auth attributes
         with request_provider_data_context(request.headers, user):
+            if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
+                from llama_stack.core.testing_context import (
+                    TEST_CONTEXT,
+                    reset_test_context,
+                    sync_test_context_from_provider_data,
+                )
+
+                test_context_token = sync_test_context_from_provider_data()
+                test_context_var = TEST_CONTEXT
+                reset_test_context_fn = reset_test_context
+
             is_streaming = is_streaming_request(func.__name__, request, **kwargs)
 
             try:
                 if is_streaming:
-                    gen = preserve_contexts_async_generator(
-                        sse_generator(func(**kwargs)), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
-                    )
+                    context_vars = [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
+                    if test_context_var is not None:
+                        context_vars.append(test_context_var)
+                    gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
                     return StreamingResponse(gen, media_type="text/event-stream")
                 else:
                     value = func(**kwargs)
@@ -258,6 +286,9 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                 else:
                     logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
                 raise translate_exception(e) from e
+            finally:
+                if test_context_token is not None and reset_test_context_fn is not None:
+                    reset_test_context_fn(test_context_token)
 
     sig = inspect.signature(func)
 
@@ -338,6 +369,9 @@ def create_app() -> StackApp:
     Returns:
         Configured StackApp instance.
     """
+    # Initialize logging from environment variables first
+    setup_logging()
+
     config_file = os.getenv("LLAMA_STACK_CONFIG")
     if config_file is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
@@ -409,10 +443,8 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
-    if Api.telemetry in impls:
-        setup_logger(impls[Api.telemetry])
-    else:
-        setup_logger(TelemetryAdapter(TelemetryConfig(), {}))
+    if config.telemetry.enabled:
+        setup_logger(Telemetry())
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)
@@ -470,7 +502,8 @@ def create_app() -> StackApp:
     app.exception_handler(RequestValidationError)(global_exception_handler)
     app.exception_handler(Exception)(global_exception_handler)
 
-    app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
+    if config.telemetry.enabled:
+        app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 

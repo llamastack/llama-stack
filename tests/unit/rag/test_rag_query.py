@@ -18,7 +18,7 @@ from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRunti
 
 
 class TestRagQuery:
-    async def test_query_raises_on_empty_vector_db_ids(self):
+    async def test_query_raises_on_empty_vector_store_ids(self):
         rag_tool = MemoryToolRuntimeImpl(
             config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
@@ -82,7 +82,7 @@ class TestRagQuery:
         with pytest.raises(ValueError):
             RAGQueryConfig(mode="wrong_mode")
 
-    async def test_query_adds_vector_db_id_to_chunk_metadata(self):
+    async def test_query_adds_vector_store_id_to_chunk_metadata(self):
         rag_tool = MemoryToolRuntimeImpl(
             config=MagicMock(),
             vector_io_api=MagicMock(),

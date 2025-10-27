@@ -14,6 +14,7 @@ from typing import (
     runtime_checkable,
 )
 
+from fastapi import Body
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
@@ -22,6 +23,7 @@ from llama_stack.apis.common.responses import Order
 from llama_stack.apis.models import Model
 from llama_stack.apis.telemetry import MetricResponseMixin
 from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     StopReason,
@@ -29,7 +31,6 @@ from llama_stack.models.llama.datatypes import (
     ToolDefinition,
     ToolPromptFormat,
 )
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 register_schema(ToolCall)
@@ -96,7 +97,7 @@ class SamplingParams(BaseModel):
 
     strategy: SamplingStrategy = Field(default_factory=GreedySamplingStrategy)
 
-    max_tokens: int | None = 0
+    max_tokens: int | None = None
     repetition_penalty: float | None = 1.0
     stop: list[str] | None = None
 
@@ -776,12 +777,14 @@ class OpenAIChoiceDelta(BaseModel):
     :param refusal: (Optional) The refusal of the delta
     :param role: (Optional) The role of the delta
     :param tool_calls: (Optional) The tool calls of the delta
+    :param reasoning_content: (Optional) The reasoning content from the model (non-standard, for o1/o3 models)
     """
 
     content: str | None = None
     refusal: str | None = None
     role: str | None = None
     tool_calls: list[OpenAIChatCompletionToolCall] | None = None
+    reasoning_content: str | None = None
 
 
 @json_schema_type
@@ -816,6 +819,42 @@ class OpenAIChoice(BaseModel):
     logprobs: OpenAIChoiceLogprobs | None = None
 
 
+class OpenAIChatCompletionUsageCompletionTokensDetails(BaseModel):
+    """Token details for output tokens in OpenAI chat completion usage.
+
+    :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
+    """
+
+    reasoning_tokens: int | None = None
+
+
+class OpenAIChatCompletionUsagePromptTokensDetails(BaseModel):
+    """Token details for prompt tokens in OpenAI chat completion usage.
+
+    :param cached_tokens: Number of tokens retrieved from cache
+    """
+
+    cached_tokens: int | None = None
+
+
+@json_schema_type
+class OpenAIChatCompletionUsage(BaseModel):
+    """Usage information for OpenAI chat completion.
+
+    :param prompt_tokens: Number of tokens in the prompt
+    :param completion_tokens: Number of tokens in the completion
+    :param total_tokens: Total tokens used (prompt + completion)
+    :param input_tokens_details: Detailed breakdown of input token usage
+    :param output_tokens_details: Detailed breakdown of output token usage
+    """
+
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    prompt_tokens_details: OpenAIChatCompletionUsagePromptTokensDetails | None = None
+    completion_tokens_details: OpenAIChatCompletionUsageCompletionTokensDetails | None = None
+
+
 @json_schema_type
 class OpenAIChatCompletion(BaseModel):
     """Response from an OpenAI-compatible chat completion request.
@@ -825,6 +864,7 @@ class OpenAIChatCompletion(BaseModel):
     :param object: The object type, which will be "chat.completion"
     :param created: The Unix timestamp in seconds when the chat completion was created
     :param model: The model that was used to generate the chat completion
+    :param usage: Token usage information for the completion
     """
 
     id: str
@@ -832,6 +872,7 @@ class OpenAIChatCompletion(BaseModel):
     object: Literal["chat.completion"] = "chat.completion"
     created: int
     model: str
+    usage: OpenAIChatCompletionUsage | None = None
 
 
 @json_schema_type
@@ -843,6 +884,7 @@ class OpenAIChatCompletionChunk(BaseModel):
     :param object: The object type, which will be "chat.completion.chunk"
     :param created: The Unix timestamp in seconds when the chat completion was created
     :param model: The model that was used to generate the chat completion
+    :param usage: Token usage information (typically included in final chunk with stream_options)
     """
 
     id: str
@@ -850,6 +892,7 @@ class OpenAIChatCompletionChunk(BaseModel):
     object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
     created: int
     model: str
+    usage: OpenAIChatCompletionUsage | None = None
 
 
 @json_schema_type
@@ -995,6 +1038,127 @@ class ListOpenAIChatCompletionResponse(BaseModel):
     object: Literal["list"] = "list"
 
 
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAICompletionRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request parameters for OpenAI-compatible completion endpoint.
+
+    :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
+    :param prompt: The prompt to generate a completion for.
+    :param best_of: (Optional) The number of completions to generate.
+    :param echo: (Optional) Whether to echo the prompt.
+    :param frequency_penalty: (Optional) The penalty for repeated tokens.
+    :param logit_bias: (Optional) The logit bias to use.
+    :param logprobs: (Optional) The log probabilities to use.
+    :param max_tokens: (Optional) The maximum number of tokens to generate.
+    :param n: (Optional) The number of completions to generate.
+    :param presence_penalty: (Optional) The penalty for repeated tokens.
+    :param seed: (Optional) The seed to use.
+    :param stop: (Optional) The stop tokens to use.
+    :param stream: (Optional) Whether to stream the response.
+    :param stream_options: (Optional) The stream options to use.
+    :param temperature: (Optional) The temperature to use.
+    :param top_p: (Optional) The top p to use.
+    :param user: (Optional) The user to use.
+    :param suffix: (Optional) The suffix that should be appended to the completion.
+    """
+
+    # Standard OpenAI completion parameters
+    model: str
+    prompt: str | list[str] | list[int] | list[list[int]]
+    best_of: int | None = None
+    echo: bool | None = None
+    frequency_penalty: float | None = None
+    logit_bias: dict[str, float] | None = None
+    logprobs: bool | None = None
+    max_tokens: int | None = None
+    n: int | None = None
+    presence_penalty: float | None = None
+    seed: int | None = None
+    stop: str | list[str] | None = None
+    stream: bool | None = None
+    stream_options: dict[str, Any] | None = None
+    temperature: float | None = None
+    top_p: float | None = None
+    user: str | None = None
+    suffix: str | None = None
+
+
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request parameters for OpenAI-compatible chat completion endpoint.
+
+    :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
+    :param messages: List of messages in the conversation.
+    :param frequency_penalty: (Optional) The penalty for repeated tokens.
+    :param function_call: (Optional) The function call to use.
+    :param functions: (Optional) List of functions to use.
+    :param logit_bias: (Optional) The logit bias to use.
+    :param logprobs: (Optional) The log probabilities to use.
+    :param max_completion_tokens: (Optional) The maximum number of tokens to generate.
+    :param max_tokens: (Optional) The maximum number of tokens to generate.
+    :param n: (Optional) The number of completions to generate.
+    :param parallel_tool_calls: (Optional) Whether to parallelize tool calls.
+    :param presence_penalty: (Optional) The penalty for repeated tokens.
+    :param response_format: (Optional) The response format to use.
+    :param seed: (Optional) The seed to use.
+    :param stop: (Optional) The stop tokens to use.
+    :param stream: (Optional) Whether to stream the response.
+    :param stream_options: (Optional) The stream options to use.
+    :param temperature: (Optional) The temperature to use.
+    :param tool_choice: (Optional) The tool choice to use.
+    :param tools: (Optional) The tools to use.
+    :param top_logprobs: (Optional) The top log probabilities to use.
+    :param top_p: (Optional) The top p to use.
+    :param user: (Optional) The user to use.
+    """
+
+    # Standard OpenAI chat completion parameters
+    model: str
+    messages: Annotated[list[OpenAIMessageParam], Field(..., min_length=1)]
+    frequency_penalty: float | None = None
+    function_call: str | dict[str, Any] | None = None
+    functions: list[dict[str, Any]] | None = None
+    logit_bias: dict[str, float] | None = None
+    logprobs: bool | None = None
+    max_completion_tokens: int | None = None
+    max_tokens: int | None = None
+    n: int | None = None
+    parallel_tool_calls: bool | None = None
+    presence_penalty: float | None = None
+    response_format: OpenAIResponseFormatParam | None = None
+    seed: int | None = None
+    stop: str | list[str] | None = None
+    stream: bool | None = None
+    stream_options: dict[str, Any] | None = None
+    temperature: float | None = None
+    tool_choice: str | dict[str, Any] | None = None
+    tools: list[dict[str, Any]] | None = None
+    top_logprobs: int | None = None
+    top_p: float | None = None
+    user: str | None = None
+
+
+# extra_body can be accessed via .model_extra
+@json_schema_type
+class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
+    """Request parameters for OpenAI-compatible embeddings endpoint.
+
+    :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
+    :param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.
+    :param encoding_format: (Optional) The format to return the embeddings in. Can be either "float" or "base64". Defaults to "float".
+    :param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.
+    :param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+    """
+
+    model: str
+    input: str | list[str]
+    encoding_format: str | None = "float"
+    dimensions: int | None = None
+    user: str | None = None
+
+
 @runtime_checkable
 @trace_protocol
 class InferenceProvider(Protocol):
@@ -1029,52 +1193,11 @@ class InferenceProvider(Protocol):
     @webmethod(route="/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_completion(
         self,
-        # Standard OpenAI completion parameters
-        model: str,
-        prompt: str | list[str] | list[int] | list[list[int]],
-        best_of: int | None = None,
-        echo: bool | None = None,
-        frequency_penalty: float | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        presence_penalty: float | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
-        # vLLM-specific parameters
-        guided_choice: list[str] | None = None,
-        prompt_logprobs: int | None = None,
-        # for fill-in-the-middle type completion
-        suffix: str | None = None,
+        params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAICompletion:
         """Create completion.
 
         Generate an OpenAI-compatible completion for the given prompt using the specified model.
-
-        :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param prompt: The prompt to generate a completion for.
-        :param best_of: (Optional) The number of completions to generate.
-        :param echo: (Optional) Whether to echo the prompt.
-        :param frequency_penalty: (Optional) The penalty for repeated tokens.
-        :param logit_bias: (Optional) The logit bias to use.
-        :param logprobs: (Optional) The log probabilities to use.
-        :param max_tokens: (Optional) The maximum number of tokens to generate.
-        :param n: (Optional) The number of completions to generate.
-        :param presence_penalty: (Optional) The penalty for repeated tokens.
-        :param seed: (Optional) The seed to use.
-        :param stop: (Optional) The stop tokens to use.
-        :param stream: (Optional) Whether to stream the response.
-        :param stream_options: (Optional) The stream options to use.
-        :param temperature: (Optional) The temperature to use.
-        :param top_p: (Optional) The top p to use.
-        :param user: (Optional) The user to use.
-        :param suffix: (Optional) The suffix that should be appended to the completion.
         :returns: An OpenAICompletion.
         """
         ...
@@ -1083,57 +1206,11 @@ class InferenceProvider(Protocol):
     @webmethod(route="/chat/completions", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_chat_completion(
         self,
-        model: str,
-        messages: list[OpenAIMessageParam],
-        frequency_penalty: float | None = None,
-        function_call: str | dict[str, Any] | None = None,
-        functions: list[dict[str, Any]] | None = None,
-        logit_bias: dict[str, float] | None = None,
-        logprobs: bool | None = None,
-        max_completion_tokens: int | None = None,
-        max_tokens: int | None = None,
-        n: int | None = None,
-        parallel_tool_calls: bool | None = None,
-        presence_penalty: float | None = None,
-        response_format: OpenAIResponseFormatParam | None = None,
-        seed: int | None = None,
-        stop: str | list[str] | None = None,
-        stream: bool | None = None,
-        stream_options: dict[str, Any] | None = None,
-        temperature: float | None = None,
-        tool_choice: str | dict[str, Any] | None = None,
-        tools: list[dict[str, Any]] | None = None,
-        top_logprobs: int | None = None,
-        top_p: float | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Create chat completions.
 
         Generate an OpenAI-compatible chat completion for the given messages using the specified model.
-
-        :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-        :param messages: List of messages in the conversation.
-        :param frequency_penalty: (Optional) The penalty for repeated tokens.
-        :param function_call: (Optional) The function call to use.
-        :param functions: (Optional) List of functions to use.
-        :param logit_bias: (Optional) The logit bias to use.
-        :param logprobs: (Optional) The log probabilities to use.
-        :param max_completion_tokens: (Optional) The maximum number of tokens to generate.
-        :param max_tokens: (Optional) The maximum number of tokens to generate.
-        :param n: (Optional) The number of completions to generate.
-        :param parallel_tool_calls: (Optional) Whether to parallelize tool calls.
-        :param presence_penalty: (Optional) The penalty for repeated tokens.
-        :param response_format: (Optional) The response format to use.
-        :param seed: (Optional) The seed to use.
-        :param stop: (Optional) The stop tokens to use.
-        :param stream: (Optional) Whether to stream the response.
-        :param stream_options: (Optional) The stream options to use.
-        :param temperature: (Optional) The temperature to use.
-        :param tool_choice: (Optional) The tool choice to use.
-        :param tools: (Optional) The tools to use.
-        :param top_logprobs: (Optional) The top log probabilities to use.
-        :param top_p: (Optional) The top p to use.
-        :param user: (Optional) The user to use.
         :returns: An OpenAIChatCompletion.
         """
         ...
@@ -1142,21 +1219,11 @@ class InferenceProvider(Protocol):
     @webmethod(route="/embeddings", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_embeddings(
         self,
-        model: str,
-        input: str | list[str],
-        encoding_format: str | None = "float",
-        dimensions: int | None = None,
-        user: str | None = None,
+        params: Annotated[OpenAIEmbeddingsRequestWithExtraBody, Body(...)],
     ) -> OpenAIEmbeddingsResponse:
         """Create embeddings.
 
         Generate OpenAI-compatible embeddings for the given input using the specified model.
-
-        :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
-        :param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.
-        :param encoding_format: (Optional) The format to return the embeddings in. Can be either "float" or "base64". Defaults to "float".
-        :param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.
-        :param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
         :returns: An OpenAIEmbeddingsResponse containing the embeddings.
         """
         ...
@@ -1167,9 +1234,10 @@ class Inference(InferenceProvider):
 
     Llama Stack Inference API for generating completions, chat completions, and embeddings.
 
-    This API provides the raw interface to the underlying models. Two kinds of models are supported:
+    This API provides the raw interface to the underlying models. Three kinds of models are supported:
     - LLM models: these models generate "raw" and "chat" (conversational) completions.
     - Embedding models: these models generate embeddings to be used for semantic search.
+    - Rerank models: these models reorder the documents based on their relevance to a query.
     """
 
     @webmethod(route="/openai/v1/chat/completions", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)

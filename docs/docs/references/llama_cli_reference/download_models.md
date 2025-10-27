@@ -25,141 +25,42 @@ You have two ways to install Llama Stack:
     cd llama-stack
     pip install -e .
 
-## Downloading models via CLI
+## Downloading models via Hugging Face CLI
 
-You first need to have models downloaded locally.
+You first need to have models downloaded locally. We recommend using the [Hugging Face CLI](https://huggingface.co/docs/huggingface_hub/guides/cli) to download models.
 
-To download any model you need the **Model Descriptor**.
-This can be obtained by running the command
-```
-llama model list
-```
+### Install Hugging Face CLI
 
-You should see a table like this:
-
-```
-+----------------------------------+------------------------------------------+----------------+
-| Model Descriptor(ID)             | Hugging Face Repo                        | Context Length |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-8B                      | meta-llama/Llama-3.1-8B                  | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-70B                     | meta-llama/Llama-3.1-70B                 | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-405B:bf16-mp8           | meta-llama/Llama-3.1-405B                | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-405B                    | meta-llama/Llama-3.1-405B-FP8            | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-405B:bf16-mp16          | meta-llama/Llama-3.1-405B                | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-8B-Instruct             | meta-llama/Llama-3.1-8B-Instruct         | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-70B-Instruct            | meta-llama/Llama-3.1-70B-Instruct        | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-405B-Instruct:bf16-mp8  | meta-llama/Llama-3.1-405B-Instruct       | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-405B-Instruct           | meta-llama/Llama-3.1-405B-Instruct-FP8   | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.1-405B-Instruct:bf16-mp16 | meta-llama/Llama-3.1-405B-Instruct       | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-1B                      | meta-llama/Llama-3.2-1B                  | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-3B                      | meta-llama/Llama-3.2-3B                  | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-11B-Vision              | meta-llama/Llama-3.2-11B-Vision          | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-90B-Vision              | meta-llama/Llama-3.2-90B-Vision          | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-1B-Instruct             | meta-llama/Llama-3.2-1B-Instruct         | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-3B-Instruct             | meta-llama/Llama-3.2-3B-Instruct         | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-11B-Vision-Instruct     | meta-llama/Llama-3.2-11B-Vision-Instruct | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama3.2-90B-Vision-Instruct     | meta-llama/Llama-3.2-90B-Vision-Instruct | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama-Guard-3-11B-Vision         | meta-llama/Llama-Guard-3-11B-Vision      | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama-Guard-3-1B:int4-mp1        | meta-llama/Llama-Guard-3-1B-INT4         | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama-Guard-3-1B                 | meta-llama/Llama-Guard-3-1B              | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama-Guard-3-8B                 | meta-llama/Llama-Guard-3-8B              | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama-Guard-3-8B:int8-mp1        | meta-llama/Llama-Guard-3-8B-INT8         | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Prompt-Guard-86M                 | meta-llama/Prompt-Guard-86M              | 128K           |
-+----------------------------------+------------------------------------------+----------------+
-| Llama-Guard-2-8B                 | meta-llama/Llama-Guard-2-8B              | 4K             |
-+----------------------------------+------------------------------------------+----------------+
-```
-
-To download models, you can use the llama download command.
-
-#### Downloading from [Meta](https://llama.meta.com/llama-downloads/)
-
-Here is an example download command to get the 3B-Instruct/11B-Vision-Instruct model. You will need META_URL which can be obtained from [here](https://llama.meta.com/docs/getting_the_models/meta/). Note: You need to quote the META_URL
-
-Download the required checkpoints using the following commands:
+First, install the Hugging Face CLI:
 ```bash
-# download the 8B model, this can be run on a single GPU
-llama download --source meta --model-id Llama3.2-3B-Instruct --meta-url 'META_URL'
-
-# you can also get the 70B model, this will require 8 GPUs however
-llama download --source meta --model-id Llama3.2-11B-Vision-Instruct --meta-url 'META_URL'
-
-# llama-agents have safety enabled by default. For this, you will need
-# safety models -- Llama-Guard and Prompt-Guard
-llama download --source meta --model-id Prompt-Guard-86M --meta-url 'META_URL'
-llama download --source meta --model-id Llama-Guard-3-1B --meta-url 'META_URL'
+pip install huggingface_hub[cli]
 ```
 
-#### Downloading from [Hugging Face](https://huggingface.co/meta-llama)
+### Download models from Hugging Face
 
-Essentially, the same commands above work, just replace `--source meta` with `--source huggingface`.
+You can download models using the `huggingface-cli download` command. Here are some examples:
 
 ```bash
-llama download --source huggingface --model-id  Llama3.1-8B-Instruct --hf-token <HF_TOKEN>
+# Download Llama 3.2 3B Instruct model
+huggingface-cli download meta-llama/Llama-3.2-3B-Instruct --local-dir ~/.llama/Llama-3.2-3B-Instruct
 
-llama download --source huggingface --model-id Llama3.1-70B-Instruct --hf-token <HF_TOKEN>
+# Download Llama 3.2 1B Instruct model
+huggingface-cli download meta-llama/Llama-3.2-1B-Instruct --local-dir ~/.llama/Llama-3.2-1B-Instruct
 
-llama download --source huggingface --model-id Llama-Guard-3-1B --ignore-patterns *original*
-llama download --source huggingface --model-id Prompt-Guard-86M --ignore-patterns *original*
+# Download Llama Guard 3 1B model
+huggingface-cli download meta-llama/Llama-Guard-3-1B --local-dir ~/.llama/Llama-Guard-3-1B
+
+# Download Prompt Guard model
+huggingface-cli download meta-llama/Prompt-Guard-86M --local-dir ~/.llama/Prompt-Guard-86M
 ```
 
-**Important:** Set your environment variable `HF_TOKEN` or pass in `--hf-token` to the command to validate your access. You can find your token at [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
-
-```{tip}
-Default for `llama download` is to run with `--ignore-patterns *.safetensors` since we use the `.pth` files in the `original` folder. For Llama Guard and Prompt Guard, however, we need safetensors. Hence, please run with `--ignore-patterns original` so that safetensors are downloaded and `.pth` files are ignored.
-```
-
+**Important:** You need to authenticate with Hugging Face to download models. You can do this by:
+1. Getting your token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+2. Running `huggingface-cli login` and entering your token
 ## List the downloaded models
 
-To list the downloaded models with the following command:
-```
-llama model list --downloaded
-```
-
-You should see a table like this:
-```
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
-┃ Model                                   ┃ Size     ┃ Modified Time       ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━┩
-│ Llama3.2-1B-Instruct:int4-qlora-eo8     │ 1.53 GB  │ 2025-02-26 11:22:28 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Llama3.2-1B                             │ 2.31 GB  │ 2025-02-18 21:48:52 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Prompt-Guard-86M                        │ 0.02 GB  │ 2025-02-26 11:29:28 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Llama3.2-3B-Instruct:int4-spinquant-eo8 │ 3.69 GB  │ 2025-02-26 11:37:41 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Llama3.2-3B                             │ 5.99 GB  │ 2025-02-18 21:51:26 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Llama3.1-8B                             │ 14.97 GB │ 2025-02-16 10:36:37 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Llama3.2-1B-Instruct:int4-spinquant-eo8 │ 1.51 GB  │ 2025-02-26 11:35:02 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Llama-Guard-3-1B                        │ 2.80 GB  │ 2025-02-26 11:20:46 │
-├─────────────────────────────────────────┼──────────┼─────────────────────┤
-│ Llama-Guard-3-1B:int4                   │ 0.43 GB  │ 2025-02-26 11:33:33 │
-└─────────────────────────────────────────┴──────────┴─────────────────────┘
+To list the downloaded models, you can use the Hugging Face CLI:
+```bash
+# List all downloaded models in your local cache
+huggingface-cli scan-cache
 ```

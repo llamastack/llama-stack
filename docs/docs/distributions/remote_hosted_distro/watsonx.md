@@ -21,7 +21,6 @@ The `llamastack/distribution-watsonx` distribution consists of the following pro
 | inference | `remote::watsonx`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard` |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |
-| telemetry | `inline::meta-reference` |
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::rag-runtime`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss` |
 

@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from llama_stack.apis.resource import Resource, ResourceType
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.providers.utils.telemetry.trace_protocol import trace_protocol
+from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
@@ -27,10 +27,12 @@ class ModelType(StrEnum):
     """Enumeration of supported model types in Llama Stack.
     :cvar llm: Large language model for text generation and completion
     :cvar embedding: Embedding model for converting text to vector representations
+    :cvar rerank: Reranking model for reordering documents based on their relevance to a query
     """
 
     llm = "llm"
     embedding = "embedding"
+    rerank = "rerank"
 
 
 @json_schema_type

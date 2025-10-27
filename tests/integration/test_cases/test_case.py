@@ -12,7 +12,6 @@ class TestCase:
     _apis = [
         "inference/chat_completion",
         "inference/completion",
-        "openai/responses",
     ]
     _jsonblob = {}
 

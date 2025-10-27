@@ -12,7 +12,7 @@ This avoids the overhead of setting up a server.
 ```bash
 # setup
 uv pip install llama-stack
-llama stack build --distro starter --image-type venv
+llama stack list-deps starter | xargs -L1 uv pip install
 ```
 
 ```python

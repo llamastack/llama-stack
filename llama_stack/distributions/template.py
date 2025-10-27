@@ -24,10 +24,19 @@ from llama_stack.core.datatypes import (
     DistributionSpec,
     ModelInput,
     Provider,
+    SafetyConfig,
     ShieldInput,
+    TelemetryConfig,
     ToolGroupInput,
+    VectorStoresConfig,
 )
 from llama_stack.core.distribution import get_provider_registry
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    SqlStoreReference,
+    StorageBackendType,
+)
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
@@ -179,8 +188,11 @@ class RunConfigSettings(BaseModel):
     default_tool_groups: list[ToolGroupInput] | None = None
     default_datasets: list[DatasetInput] | None = None
     default_benchmarks: list[BenchmarkInput] | None = None
-    metadata_store: dict | None = None
-    inference_store: dict | None = None
+    vector_stores_config: VectorStoresConfig | None = None
+    safety_config: SafetyConfig | None = None
+    telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig(enabled=True))
+    storage_backends: dict[str, Any] | None = None
+    storage_stores: dict[str, Any] | None = None
 
     def run_config(
         self,
@@ -223,34 +235,71 @@ class RunConfigSettings(BaseModel):
         # Get unique set of APIs from providers
         apis = sorted(providers.keys())
 
+        storage_backends = self.storage_backends or {
+            "kv_default": SqliteKVStoreConfig.sample_run_config(
+                __distro_dir__=f"~/.llama/distributions/{name}",
+                db_name="kvstore.db",
+            ),
+            "sql_default": SqliteSqlStoreConfig.sample_run_config(
+                __distro_dir__=f"~/.llama/distributions/{name}",
+                db_name="sql_store.db",
+            ),
+        }
+
+        storage_stores = self.storage_stores or {
+            "metadata": KVStoreReference(
+                backend="kv_default",
+                namespace="registry",
+            ).model_dump(exclude_none=True),
+            "inference": InferenceStoreReference(
+                backend="sql_default",
+                table_name="inference_store",
+            ).model_dump(exclude_none=True),
+            "conversations": SqlStoreReference(
+                backend="sql_default",
+                table_name="openai_conversations",
+            ).model_dump(exclude_none=True),
+            "prompts": KVStoreReference(
+                backend="kv_default",
+                namespace="prompts",
+            ).model_dump(exclude_none=True),
+        }
+
+        storage_config = dict(
+            backends=storage_backends,
+            stores=storage_stores,
+        )
+
         # Return a dict that matches StackRunConfig structure
-        return {
+        config = {
             "version": LLAMA_STACK_RUN_CONFIG_VERSION,
             "image_name": name,
             "container_image": container_image,
             "apis": apis,
             "providers": provider_configs,
-            "metadata_store": self.metadata_store
-            or SqliteKVStoreConfig.sample_run_config(
-                __distro_dir__=f"~/.llama/distributions/{name}",
-                db_name="registry.db",
-            ),
-            "inference_store": self.inference_store
-            or SqliteSqlStoreConfig.sample_run_config(
-                __distro_dir__=f"~/.llama/distributions/{name}",
-                db_name="inference_store.db",
-            ),
-            "models": [m.model_dump(exclude_none=True) for m in (self.default_models or [])],
-            "shields": [s.model_dump(exclude_none=True) for s in (self.default_shields or [])],
-            "vector_dbs": [],
-            "datasets": [d.model_dump(exclude_none=True) for d in (self.default_datasets or [])],
-            "scoring_fns": [],
-            "benchmarks": [b.model_dump(exclude_none=True) for b in (self.default_benchmarks or [])],
-            "tool_groups": [t.model_dump(exclude_none=True) for t in (self.default_tool_groups or [])],
+            "storage": storage_config,
+            "registered_resources": {
+                "models": [m.model_dump(exclude_none=True) for m in (self.default_models or [])],
+                "shields": [s.model_dump(exclude_none=True) for s in (self.default_shields or [])],
+                "vector_dbs": [],
+                "datasets": [d.model_dump(exclude_none=True) for d in (self.default_datasets or [])],
+                "scoring_fns": [],
+                "benchmarks": [b.model_dump(exclude_none=True) for b in (self.default_benchmarks or [])],
+                "tool_groups": [t.model_dump(exclude_none=True) for t in (self.default_tool_groups or [])],
+            },
             "server": {
                 "port": 8321,
             },
+            "telemetry": self.telemetry.model_dump(exclude_none=True) if self.telemetry else None,
         }
+
+        if self.vector_stores_config:
+            config["vector_stores"] = self.vector_stores_config.model_dump(exclude_none=True)
+
+        if self.safety_config:
+            config["safety"] = self.safety_config.model_dump(exclude_none=True)
+
+        return config
 
 
 class DistributionTemplate(BaseModel):
@@ -288,11 +337,15 @@ class DistributionTemplate(BaseModel):
             # We should have a better way to do this by formalizing the concept of "internal" APIs
             # and providers, with a way to specify dependencies for them.
 
-            if run_config_.get("inference_store"):
-                additional_pip_packages.extend(get_sql_pip_packages(run_config_["inference_store"]))
-
-            if run_config_.get("metadata_store"):
-                additional_pip_packages.extend(get_kv_pip_packages(run_config_["metadata_store"]))
+            storage_cfg = run_config_.get("storage", {})
+            for backend_cfg in storage_cfg.get("backends", {}).values():
+                store_type = backend_cfg.get("type")
+                if not store_type:
+                    continue
+                if str(store_type).startswith("kv_"):
+                    additional_pip_packages.extend(get_kv_pip_packages(backend_cfg))
+                elif str(store_type).startswith("sql_"):
+                    additional_pip_packages.extend(get_sql_pip_packages(backend_cfg))
 
         if self.additional_pip_packages:
             additional_pip_packages.extend(self.additional_pip_packages)
@@ -378,11 +431,13 @@ class DistributionTemplate(BaseModel):
         def enum_representer(dumper, data):
             return dumper.represent_scalar("tag:yaml.org,2002:str", data.value)
 
-        # Register YAML representer for ModelType
+        # Register YAML representer for enums
         yaml.add_representer(ModelType, enum_representer)
         yaml.add_representer(DatasetPurpose, enum_representer)
+        yaml.add_representer(StorageBackendType, enum_representer)
         yaml.SafeDumper.add_representer(ModelType, enum_representer)
         yaml.SafeDumper.add_representer(DatasetPurpose, enum_representer)
+        yaml.SafeDumper.add_representer(StorageBackendType, enum_representer)
 
         for output_dir in [yaml_output_dir, doc_output_dir]:
             output_dir.mkdir(parents=True, exist_ok=True)

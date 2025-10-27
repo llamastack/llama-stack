@@ -20,7 +20,6 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "telemetry": [BuildProvider(provider_type="inline::meta-reference")],
         "eval": [BuildProvider(provider_type="inline::meta-reference")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),

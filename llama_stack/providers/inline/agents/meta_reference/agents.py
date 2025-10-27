@@ -28,8 +28,10 @@ from llama_stack.apis.agents import (
     Session,
     Turn,
 )
+from llama_stack.apis.agents.agents import ResponseGuardrail
 from llama_stack.apis.agents.openai_responses import OpenAIResponseText
 from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.inference import (
     Inference,
     ToolConfig,
@@ -63,6 +65,7 @@ class MetaReferenceAgentsImpl(Agents):
         safety_api: Safety,
         tool_runtime_api: ToolRuntime,
         tool_groups_api: ToolGroups,
+        conversations_api: Conversations,
         policy: list[AccessRule],
         telemetry_enabled: bool = False,
     ):
@@ -72,6 +75,7 @@ class MetaReferenceAgentsImpl(Agents):
         self.safety_api = safety_api
         self.tool_runtime_api = tool_runtime_api
         self.tool_groups_api = tool_groups_api
+        self.conversations_api = conversations_api
         self.telemetry_enabled = telemetry_enabled
 
         self.in_memory_store = InmemoryKVStoreImpl()
@@ -79,8 +83,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.policy = policy
 
     async def initialize(self) -> None:
-        self.persistence_store = await kvstore_impl(self.config.persistence_store)
-        self.responses_store = ResponsesStore(self.config.responses_store, self.policy)
+        self.persistence_store = await kvstore_impl(self.config.persistence.agent_state)
+        self.responses_store = ResponsesStore(self.config.persistence.responses, self.policy)
         await self.responses_store.initialize()
         self.openai_responses_impl = OpenAIResponsesImpl(
             inference_api=self.inference_api,
@@ -88,6 +92,8 @@ class MetaReferenceAgentsImpl(Agents):
             tool_runtime_api=self.tool_runtime_api,
             responses_store=self.responses_store,
             vector_io_api=self.vector_io_api,
+            safety_api=self.safety_api,
+            conversations_api=self.conversations_api,
         )
 
     async def create_agent(
@@ -325,6 +331,7 @@ class MetaReferenceAgentsImpl(Agents):
         model: str,
         instructions: str | None = None,
         previous_response_id: str | None = None,
+        conversation: str | None = None,
         store: bool | None = True,
         stream: bool | None = False,
         temperature: float | None = None,
@@ -332,13 +339,14 @@ class MetaReferenceAgentsImpl(Agents):
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
-        shields: list | None = None,
+        guardrails: list[ResponseGuardrail] | None = None,
     ) -> OpenAIResponseObject:
         return await self.openai_responses_impl.create_openai_response(
             input,
             model,
             instructions,
             previous_response_id,
+            conversation,
             store,
             stream,
             temperature,
@@ -346,7 +354,7 @@ class MetaReferenceAgentsImpl(Agents):
             tools,
             include,
             max_infer_iters,
-            shields,
+            guardrails,
         )
 
     async def list_openai_responses(

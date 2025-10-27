@@ -4,6 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import logging  # allow-direct-logging
+from uuid import uuid4
+
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
@@ -11,7 +14,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from llama_stack.core.datatypes import QuotaConfig, QuotaPeriod
 from llama_stack.core.server.quota import QuotaMiddleware
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
+from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
+from llama_stack.providers.utils.kvstore import register_kvstore_backends
+
+
+@pytest.fixture
+def suppress_quota_warnings(caplog):
+    """Suppress expected WARNING logs for SQLite backend and quota exceeded"""
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.quota")
 
 
 class InjectClientIDMiddleware(BaseHTTPMiddleware):
@@ -29,8 +39,10 @@ class InjectClientIDMiddleware(BaseHTTPMiddleware):
 
 
 def build_quota_config(db_path) -> QuotaConfig:
+    backend_name = f"kv_quota_{uuid4().hex}"
+    register_kvstore_backends({backend_name: SqliteKVStoreConfig(db_path=str(db_path))})
     return QuotaConfig(
-        kvstore=SqliteKVStoreConfig(db_path=str(db_path)),
+        kvstore=KVStoreReference(backend=backend_name, namespace="quota"),
         anonymous_max_requests=1,
         authenticated_max_requests=2,
         period=QuotaPeriod.DAY,
@@ -65,13 +77,13 @@ def auth_app(tmp_path, request):
     return app
 
 
-def test_authenticated_quota_allows_up_to_limit(auth_app):
+def test_authenticated_quota_allows_up_to_limit(auth_app, suppress_quota_warnings):
     client = TestClient(auth_app)
     assert client.get("/test").status_code == 200
     assert client.get("/test").status_code == 200
 
 
-def test_authenticated_quota_blocks_after_limit(auth_app):
+def test_authenticated_quota_blocks_after_limit(auth_app, suppress_quota_warnings):
     client = TestClient(auth_app)
     client.get("/test")
     client.get("/test")
@@ -80,7 +92,7 @@ def test_authenticated_quota_blocks_after_limit(auth_app):
     assert resp.json()["error"]["message"] == "Quota exceeded"
 
 
-def test_anonymous_quota_allows_up_to_limit(tmp_path, request):
+def test_anonymous_quota_allows_up_to_limit(tmp_path, request, suppress_quota_warnings):
     inner_app = FastAPI()
 
     @inner_app.get("/test")
@@ -102,7 +114,7 @@ def test_anonymous_quota_allows_up_to_limit(tmp_path, request):
     assert client.get("/test").status_code == 200
 
 
-def test_anonymous_quota_blocks_after_limit(tmp_path, request):
+def test_anonymous_quota_blocks_after_limit(tmp_path, request, suppress_quota_warnings):
     inner_app = FastAPI()
 
     @inner_app.get("/test")
