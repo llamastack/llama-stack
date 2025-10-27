@@ -39,7 +39,11 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class FaissIndex(EmbeddingIndex):
-    def __init__(self, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
+    def __init__(
+        self, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None, distance_metric: str = "L2"
+    ):
+        self._check_distance_metric_support(distance_metric)
+        self.distance_metric = distance_metric
         self.index = faiss.IndexFlatL2(dimension)
         self.chunk_by_index: dict[int, Chunk] = {}
         self.kvstore = kvstore
@@ -51,8 +55,10 @@ class FaissIndex(EmbeddingIndex):
         self.chunk_ids: list[Any] = []
 
     @classmethod
-    async def create(cls, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
-        instance = cls(dimension, kvstore, bank_id)
+    async def create(
+        cls, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None, distance_metric: str = "L2"
+    ):
+        instance = cls(dimension, kvstore, bank_id, distance_metric)
         await instance.initialize()
         return instance
 
@@ -175,6 +181,22 @@ class FaissIndex(EmbeddingIndex):
             "Hybrid search is not supported - underlying DB FAISS does not support this search mode"
         )
 
+    def _check_distance_metric_support(self, distance_metric: str) -> None:
+        """Check if the distance metric is supported by FAISS.
+
+        Args:
+            distance_metric: The distance metric to check
+
+        Raises:
+            NotImplementedError: If the distance metric is not supported yet
+        """
+        if distance_metric != "L2":
+            # TODO: Implement support for other distance metrics in FAISS
+            raise NotImplementedError(
+                f"Distance metric '{distance_metric}' is not yet supported by the FAISS provider. "
+                f"Currently only 'L2' is supported. Please use 'L2' or switch to a different provider."
+            )
+
 
 class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
@@ -229,9 +251,12 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         await self.kvstore.set(key=key, value=vector_store.model_dump_json())
 
         # Store in cache
+        distance_metric = vector_store.distance_metric or "L2"
         self.cache[vector_store.identifier] = VectorStoreWithIndex(
             vector_store=vector_store,
-            index=await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
+            index=await FaissIndex.create(
+                vector_store.embedding_dimension, self.kvstore, vector_store.identifier, distance_metric
+            ),
             inference_api=self.inference_api,
         )
 
