@@ -36,14 +36,6 @@ providers:
       persistence:
         namespace: vector_io::chroma_remote
         backend: kv_default
-  files:
-  - provider_id: meta-reference-files
-    provider_type: inline::localfs
-    config:
-      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
-      metadata_store:
-        table_name: files_metadata
-        backend: sql_default
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
