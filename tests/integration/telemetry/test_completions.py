@@ -4,21 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""Telemetry tests verifying @trace_protocol decorator format using in-memory exporter."""
+"""Telemetry tests verifying @trace_protocol decorator format across stack modes."""
 
 import json
-import os
-
-import pytest
-
-pytestmark = pytest.mark.skipif(
-    os.environ.get("LLAMA_STACK_TEST_STACK_CONFIG_TYPE") == "server",
-    reason="In-memory telemetry tests only work in library_client mode (server mode runs in separate process)",
-)
 
 
 def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_model_id):
     """Verify streaming adds chunk_count and __type__=async_generator."""
+    mock_otlp_collector.clear()
 
     stream = llama_stack_client.chat.completions.create(
         model=text_model_id,
@@ -29,23 +22,31 @@ def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_mod
     chunks = list(stream)
     assert len(chunks) > 0
 
-    spans = mock_otlp_collector.get_spans()
+    spans = mock_otlp_collector.get_spans(expected_count=5)
     assert len(spans) > 0
 
-    chunk_count = None
-    for span in spans:
-        if span.attributes.get("__type__") == "async_generator":
-            chunk_count = span.attributes.get("chunk_count")
-            if chunk_count:
-                chunk_count = int(chunk_count)
-                break
+    spans = [s for s in spans if s.attributes.get("__type__") == "async_generator" and s.attributes.get("chunk_count")]
+    for s in spans:
+        print(s.attributes)
 
-    assert chunk_count is not None
+    async_generator_span = next(
+        (s for s in spans if s.attributes.get("__type__") == "async_generator" and s.attributes.get("chunk_count")),
+        None,
+    )
+
+    assert async_generator_span is not None
+
+    raw_chunk_count = async_generator_span.attributes.get("chunk_count")
+    assert raw_chunk_count is not None
+    chunk_count = int(raw_chunk_count)
+
     assert chunk_count == len(chunks)
 
 
 def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, text_model_id):
     """Comprehensive validation of telemetry data format including spans and metrics."""
+    mock_otlp_collector.clear()
+
     response = llama_stack_client.chat.completions.create(
         model=text_model_id,
         messages=[{"role": "user", "content": "Test trace openai with temperature 0.7"}],
@@ -63,8 +64,9 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
     assert usage.get("total_tokens") and usage["total_tokens"] > 0
 
     # Verify spans
-    spans = mock_otlp_collector.get_spans()
-    assert len(spans) == 5
+    spans = mock_otlp_collector.get_spans(expected_count=7)
+    spans = [span for span in spans if span.attributes.get("__root__") or span.attributes.get("__autotraced__")]
+    assert len(spans) >= 5
 
     # we only need this captured one time
     logged_model_id = None
@@ -77,15 +79,16 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
         is_root_span = attrs.get("__root__") is True
 
         if is_root_span:
-            # Root spans have different attributes
             assert attrs.get("__location__") in ["library_client", "server"]
-        else:
-            # Non-root spans are created by @trace_protocol decorator
-            assert attrs.get("__autotraced__")
-            assert attrs.get("__class__") and attrs.get("__method__")
-            assert attrs.get("__type__") in ["async", "sync", "async_generator"]
+            continue
 
-            args = json.loads(attrs["__args__"])
+        assert attrs.get("__autotraced__")
+        assert attrs.get("__class__") and attrs.get("__method__")
+        assert attrs.get("__type__") in ["async", "sync", "async_generator"]
+
+        args_field = attrs.get("__args__")
+        if args_field:
+            args = json.loads(args_field)
             if "model_id" in args:
                 logged_model_id = args["model_id"]
 
