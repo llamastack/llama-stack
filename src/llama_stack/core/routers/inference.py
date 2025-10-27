@@ -53,7 +53,7 @@ from llama_stack.apis.inference.inference import (
     OpenAIChatCompletionContentPartTextParam,
 )
 from llama_stack.apis.models import Model, ModelType
-from llama_stack.apis.telemetry import MetricEvent, MetricInResponse
+from llama_stack.core.telemetry.telemetry import MetricEvent, MetricInResponse
 from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.chat_format import ChatFormat

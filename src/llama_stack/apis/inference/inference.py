@@ -21,8 +21,8 @@ from typing_extensions import TypedDict
 from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.models import Model
-from llama_stack.apis.telemetry import MetricResponseMixin
 from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
+from llama_stack.core.telemetry.telemetry import MetricResponseMixin
 from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,
