@@ -15,6 +15,9 @@ from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 from tests.integration.fixtures.common import instantiate_llama_stack_client
 from tests.integration.telemetry.collectors import InMemoryTelemetryManager, OtlpHttpTestCollector
 
+    def clear_spans(self) -> None:
+        self.span_exporter.clear()
+
 
 @pytest.fixture(scope="session")
 def telemetry_test_collector():
