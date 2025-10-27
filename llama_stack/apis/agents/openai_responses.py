@@ -1254,14 +1254,9 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
 
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
-    OpenAIResponseOutputMessageWebSearchToolCall
-    | OpenAIResponseOutputMessageFileSearchToolCall
-    | OpenAIResponseOutputMessageFunctionToolCall
+    OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
-    | OpenAIResponseMCPApprovalRequest
     | OpenAIResponseMCPApprovalResponse
-    | OpenAIResponseOutputMessageMCPCall
-    | OpenAIResponseOutputMessageMCPListTools
     | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]

@@ -3901,7 +3901,6 @@
                     },
                     "max_tokens": {
                         "type": "integer",
-                        "default": 0,
                         "description": "The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length."
                     },
                     "repetition_penalty": {
@@ -8527,28 +8526,13 @@
             "OpenAIResponseInput": {
                 "oneOf": [
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall"
+                        "$ref": "#/components/schemas/OpenAIResponseOutput"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseInputFunctionToolCallOutput"
                     },
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseMCPApprovalRequest"
-                    },
-                    {
                         "$ref": "#/components/schemas/OpenAIResponseMCPApprovalResponse"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPCall"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseMessage"
