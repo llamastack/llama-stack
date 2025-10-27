@@ -18,10 +18,13 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
+from llama_stack.core.telemetry.tracing import get_current_span
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
-from llama_stack.providers.utils.telemetry.tracing import get_current_span
 
 from .config import BedrockConfig
+
+logger = get_logger(name=__name__, category="inference::bedrock")
 
 
 class BedrockInferenceAdapter(OpenAIMixin):
