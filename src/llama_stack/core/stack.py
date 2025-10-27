@@ -31,7 +31,6 @@ from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFunctions
 from llama_stack.apis.shields import Shields
 from llama_stack.apis.synthetic_data_generation import SyntheticDataGeneration
-from llama_stack.apis.telemetry import Telemetry
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
@@ -67,7 +66,6 @@ class LlamaStack(
     Safety,
     SyntheticDataGeneration,
     Datasets,
-    Telemetry,
     PostTraining,
     VectorIO,
     Eval,

@@ -47,6 +47,9 @@ class TestCollector:
         self.span_exporter.clear()
         self.metric_reader.get_metrics_data()
 
+    def clear_spans(self) -> None:
+        self.span_exporter.clear()
+
 
 @pytest.fixture(scope="session")
 def _telemetry_providers():
