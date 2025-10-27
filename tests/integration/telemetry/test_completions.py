@@ -64,7 +64,7 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
 
     # Verify spans
     spans = mock_otlp_collector.get_spans()
-    assert len(spans) == 5
+    assert len(spans) == 5, f"Expected 5 spans, got {len(spans)}"
 
     # we only need this captured one time
     logged_model_id = None
