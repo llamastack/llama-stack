@@ -42,7 +42,7 @@ repos:
     hooks:
     -   id: ruff
         args: [ --fix ]
-        exclude: ^llama_stack/strong_typing/.*$
+        exclude: ^src/llama_stack/strong_typing/.*$
     -   id: ruff-format
 
 -   repo: https://github.com/adamchainz/blacken-docs
@@ -86,7 +86,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/distributions/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
+        files: ^src/llama_stack/distributions/.*$|^src/llama_stack/providers/.*/inference/.*/models\.py$
       - id: provider-codegen
         name: Provider Codegen
         additional_dependencies:
@@ -95,7 +95,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/providers/.*$
+        files: ^src/llama_stack/providers/.*$
       - id: openapi-codegen
         name: API Spec Codegen
         additional_dependencies:
@@ -104,7 +104,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/apis/|^docs/openapi_generator/
+        files: ^src/llama_stack/apis/|^docs/openapi_generator/
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh
@@ -120,7 +120,7 @@ repos:
         pass_filenames: false
         require_serial: true
         always_run: true
-        files: ^llama_stack/.*$
+        files: ^src/llama_stack/.*$
       - id: forbid-pytest-asyncio
         name: Block @pytest.mark.asyncio and @pytest_asyncio.fixture
         entry: bash
@@ -150,7 +150,7 @@ repos:
         name: Format & Lint UI
         entry: bash ./scripts/run-ui-linter.sh
         language: system
-        files: ^llama_stack/ui/.*\.(ts|tsx)$
+        files: ^src/llama_stack/ui/.*\.(ts|tsx)$
         pass_filenames: false
         require_serial: true
 

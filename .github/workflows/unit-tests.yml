@@ -8,8 +8,8 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'llama_stack/**'
-      - '!llama_stack/ui/**'
+      - 'src/llama_stack/**'
+      - '!src/llama_stack/ui/**'
       - 'tests/unit/**'
       - 'uv.lock'
       - 'pyproject.toml'

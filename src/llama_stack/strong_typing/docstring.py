@@ -18,14 +18,15 @@ import re
 import sys
 import types
 import typing
+from collections.abc import Callable
 from dataclasses import dataclass
 from io import StringIO
-from typing import Any, Callable, Dict, Optional, Protocol, Type, TypeVar
+from typing import Any, Protocol, TypeVar
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
 else:
-    from typing_extensions import TypeGuard
+    from typing import TypeGuard
 
 from .inspection import (
     DataclassInstance,
@@ -110,14 +111,14 @@ class Docstring:
     :param returns: The returns declaration extracted from a docstring.
     """
 
-    short_description: Optional[str] = None
-    long_description: Optional[str] = None
-    params: Dict[str, DocstringParam] = dataclasses.field(default_factory=dict)
-    returns: Optional[DocstringReturns] = None
-    raises: Dict[str, DocstringRaises] = dataclasses.field(default_factory=dict)
+    short_description: str | None = None
+    long_description: str | None = None
+    params: dict[str, DocstringParam] = dataclasses.field(default_factory=dict)
+    returns: DocstringReturns | None = None
+    raises: dict[str, DocstringRaises] = dataclasses.field(default_factory=dict)
 
     @property
-    def full_description(self) -> Optional[str]:
+    def full_description(self) -> str | None:
         if self.short_description and self.long_description:
             return f"{self.short_description}\n\n{self.long_description}"
         elif self.short_description:
@@ -158,18 +159,18 @@ class Docstring:
         return s
 
 
-def is_exception(member: object) -> TypeGuard[Type[BaseException]]:
+def is_exception(member: object) -> TypeGuard[type[BaseException]]:
     return isinstance(member, type) and issubclass(member, BaseException)
 
 
-def get_exceptions(module: types.ModuleType) -> Dict[str, Type[BaseException]]:
+def get_exceptions(module: types.ModuleType) -> dict[str, type[BaseException]]:
     "Returns all exception classes declared in a module."
 
     return {name: class_type for name, class_type in inspect.getmembers(module, is_exception)}
 
 
 class SupportsDoc(Protocol):
-    __doc__: Optional[str]
+    __doc__: str | None
 
 
 def _maybe_unwrap_async_iterator(t):
@@ -213,7 +214,7 @@ def parse_type(typ: SupportsDoc) -> Docstring:
     # assign exception types
     defining_module = inspect.getmodule(typ)
     if defining_module:
-        context: Dict[str, type] = {}
+        context: dict[str, type] = {}
         context.update(get_exceptions(builtins))
         context.update(get_exceptions(defining_module))
         for exc_name, exc in docstring.raises.items():
@@ -262,8 +263,8 @@ def parse_text(text: str) -> Docstring:
     else:
         long_description = None
 
-    params: Dict[str, DocstringParam] = {}
-    raises: Dict[str, DocstringRaises] = {}
+    params: dict[str, DocstringParam] = {}
+    raises: dict[str, DocstringRaises] = {}
     returns = None
     for match in re.finditer(r"(^:.*?)(?=^:|\Z)", meta_chunk, flags=re.DOTALL | re.MULTILINE):
         chunk = match.group(0)
@@ -325,7 +326,7 @@ def has_docstring(typ: SupportsDoc) -> bool:
     return bool(typ.__doc__)
 
 
-def get_docstring(typ: SupportsDoc) -> Optional[str]:
+def get_docstring(typ: SupportsDoc) -> str | None:
     if typ.__doc__ is None:
         return None
 
@@ -348,7 +349,7 @@ def check_docstring(typ: SupportsDoc, docstring: Docstring, strict: bool = False
         check_function_docstring(typ, docstring, strict)
 
 
-def check_dataclass_docstring(typ: Type[DataclassInstance], docstring: Docstring, strict: bool = False) -> None:
+def check_dataclass_docstring(typ: type[DataclassInstance], docstring: Docstring, strict: bool = False) -> None:
     """
     Verifies the doc-string of a data-class type.
 

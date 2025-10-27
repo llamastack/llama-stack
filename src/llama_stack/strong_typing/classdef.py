@@ -17,7 +17,7 @@ import types
 import typing
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Literal, TypeVar, Union
 
 from .auxiliary import (
     Alias,
@@ -40,57 +40,57 @@ T = TypeVar("T")
 
 @dataclass
 class JsonSchemaNode:
-    title: Optional[str]
-    description: Optional[str]
+    title: str | None
+    description: str | None
 
 
 @dataclass
 class JsonSchemaType(JsonSchemaNode):
     type: str
-    format: Optional[str]
+    format: str | None
 
 
 @dataclass
 class JsonSchemaBoolean(JsonSchemaType):
     type: Literal["boolean"]
-    const: Optional[bool]
-    default: Optional[bool]
-    examples: Optional[List[bool]]
+    const: bool | None
+    default: bool | None
+    examples: list[bool] | None
 
 
 @dataclass
 class JsonSchemaInteger(JsonSchemaType):
     type: Literal["integer"]
-    const: Optional[int]
-    default: Optional[int]
-    examples: Optional[List[int]]
-    enum: Optional[List[int]]
-    minimum: Optional[int]
-    maximum: Optional[int]
+    const: int | None
+    default: int | None
+    examples: list[int] | None
+    enum: list[int] | None
+    minimum: int | None
+    maximum: int | None
 
 
 @dataclass
 class JsonSchemaNumber(JsonSchemaType):
     type: Literal["number"]
-    const: Optional[float]
-    default: Optional[float]
-    examples: Optional[List[float]]
-    minimum: Optional[float]
-    maximum: Optional[float]
-    exclusiveMinimum: Optional[float]
-    exclusiveMaximum: Optional[float]
-    multipleOf: Optional[float]
+    const: float | None
+    default: float | None
+    examples: list[float] | None
+    minimum: float | None
+    maximum: float | None
+    exclusiveMinimum: float | None
+    exclusiveMaximum: float | None
+    multipleOf: float | None
 
 
 @dataclass
 class JsonSchemaString(JsonSchemaType):
     type: Literal["string"]
-    const: Optional[str]
-    default: Optional[str]
-    examples: Optional[List[str]]
-    enum: Optional[List[str]]
-    minLength: Optional[int]
-    maxLength: Optional[int]
+    const: str | None
+    default: str | None
+    examples: list[str] | None
+    enum: list[str] | None
+    minLength: int | None
+    maxLength: int | None
 
 
 @dataclass
@@ -102,9 +102,9 @@ class JsonSchemaArray(JsonSchemaType):
 @dataclass
 class JsonSchemaObject(JsonSchemaType):
     type: Literal["object"]
-    properties: Optional[Dict[str, "JsonSchemaAny"]]
-    additionalProperties: Optional[bool]
-    required: Optional[List[str]]
+    properties: dict[str, "JsonSchemaAny"] | None
+    additionalProperties: bool | None
+    required: list[str] | None
 
 
 @dataclass
@@ -114,24 +114,24 @@ class JsonSchemaRef(JsonSchemaNode):
 
 @dataclass
 class JsonSchemaAllOf(JsonSchemaNode):
-    allOf: List["JsonSchemaAny"]
+    allOf: list["JsonSchemaAny"]
 
 
 @dataclass
 class JsonSchemaAnyOf(JsonSchemaNode):
-    anyOf: List["JsonSchemaAny"]
+    anyOf: list["JsonSchemaAny"]
 
 
 @dataclass
 class Discriminator:
     propertyName: str
-    mapping: Dict[str, str]
+    mapping: dict[str, str]
 
 
 @dataclass
 class JsonSchemaOneOf(JsonSchemaNode):
-    oneOf: List["JsonSchemaAny"]
-    discriminator: Optional[Discriminator]
+    oneOf: list["JsonSchemaAny"]
+    discriminator: Discriminator | None
 
 
 JsonSchemaAny = Union[
@@ -149,7 +149,7 @@ JsonSchemaAny = Union[
 @dataclass
 class JsonSchemaTopLevelObject(JsonSchemaObject):
     schema: Annotated[str, Alias("$schema")]
-    definitions: Optional[Dict[str, JsonSchemaAny]]
+    definitions: dict[str, JsonSchemaAny] | None
 
 
 def integer_range_to_type(min_value: float, max_value: float) -> type:
@@ -173,11 +173,11 @@ def enum_safe_name(name: str) -> str:
 def enum_values_to_type(
     module: types.ModuleType,
     name: str,
-    values: Dict[str, Any],
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-) -> Type[enum.Enum]:
-    enum_class: Type[enum.Enum] = enum.Enum(name, values)  # type: ignore
+    values: dict[str, Any],
+    title: str | None = None,
+    description: str | None = None,
+) -> type[enum.Enum]:
+    enum_class: type[enum.Enum] = enum.Enum(name, values)  # type: ignore
 
     # assign the newly created type to the same module where the defining class is
     enum_class.__module__ = module.__name__
@@ -330,7 +330,7 @@ def node_to_typedef(module: types.ModuleType, context: str, node: JsonSchemaNode
         type_def = node_to_typedef(module, context, node.items)
         if type_def.default is not dataclasses.MISSING:
             raise TypeError("disallowed: `default` for array element type")
-        list_type = List[(type_def.type,)]  # type: ignore
+        list_type = list[(type_def.type,)]  # type: ignore
         return TypeDef(list_type, dataclasses.MISSING)
 
     elif isinstance(node, JsonSchemaObject):
@@ -344,8 +344,8 @@ def node_to_typedef(module: types.ModuleType, context: str, node: JsonSchemaNode
 
         class_name = context
 
-        fields: List[Tuple[str, Any, dataclasses.Field]] = []
-        params: Dict[str, DocstringParam] = {}
+        fields: list[tuple[str, Any, dataclasses.Field]] = []
+        params: dict[str, DocstringParam] = {}
         for prop_name, prop_node in node.properties.items():
             type_def = node_to_typedef(module, f"{class_name}__{prop_name}", prop_node)
             if prop_name in required:
@@ -388,7 +388,7 @@ class SchemaFlatteningOptions:
     recursive: bool = False
 
 
-def flatten_schema(schema: Schema, *, options: Optional[SchemaFlatteningOptions] = None) -> Schema:
+def flatten_schema(schema: Schema, *, options: SchemaFlatteningOptions | None = None) -> Schema:
     top_node = typing.cast(JsonSchemaTopLevelObject, json_to_object(JsonSchemaTopLevelObject, schema))
     flattener = SchemaFlattener(options)
     obj = flattener.flatten(top_node)
@@ -398,7 +398,7 @@ def flatten_schema(schema: Schema, *, options: Optional[SchemaFlatteningOptions]
 class SchemaFlattener:
     options: SchemaFlatteningOptions
 
-    def __init__(self, options: Optional[SchemaFlatteningOptions] = None) -> None:
+    def __init__(self, options: SchemaFlatteningOptions | None = None) -> None:
         self.options = options or SchemaFlatteningOptions()
 
     def flatten(self, source_node: JsonSchemaObject) -> JsonSchemaObject:
@@ -406,10 +406,10 @@ class SchemaFlattener:
             return source_node
 
         source_props = source_node.properties or {}
-        target_props: Dict[str, JsonSchemaAny] = {}
+        target_props: dict[str, JsonSchemaAny] = {}
 
         source_reqs = source_node.required or []
-        target_reqs: List[str] = []
+        target_reqs: list[str] = []
 
         for name, prop in source_props.items():
             if not isinstance(prop, JsonSchemaObject):

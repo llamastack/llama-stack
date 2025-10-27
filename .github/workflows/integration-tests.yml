@@ -9,8 +9,8 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened]
     paths:
-      - 'llama_stack/**'
-      - '!llama_stack/ui/**'
+      - 'src/llama_stack/**'
+      - '!src/llama_stack/ui/**'
       - 'tests/**'
       - 'uv.lock'
       - 'pyproject.toml'

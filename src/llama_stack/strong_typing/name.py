@@ -11,7 +11,7 @@ Type-safe data interchange for Python data classes.
 """
 
 import typing
-from typing import Any, Literal, Optional, Tuple, Union
+from typing import Any, Literal, Union
 
 from .auxiliary import _auxiliary_types
 from .inspection import (
@@ -39,7 +39,7 @@ class TypeFormatter:
     def __init__(self, use_union_operator: bool = False) -> None:
         self.use_union_operator = use_union_operator
 
-    def union_to_str(self, data_type_args: Tuple[TypeLike, ...]) -> str:
+    def union_to_str(self, data_type_args: tuple[TypeLike, ...]) -> str:
         if self.use_union_operator:
             return " | ".join(self.python_type_to_str(t) for t in data_type_args)
         else:
@@ -100,7 +100,7 @@ class TypeFormatter:
         metadata = getattr(data_type, "__metadata__", None)
         if metadata is not None:
             # type is Annotated[T, ...]
-            metatuple: Tuple[Any, ...] = metadata
+            metatuple: tuple[Any, ...] = metadata
             arg = typing.get_args(data_type)[0]
 
             # check for auxiliary types with user-defined annotations
@@ -110,7 +110,7 @@ class TypeFormatter:
                 if arg is not auxiliary_arg:
                     continue
 
-                auxiliary_metatuple: Optional[Tuple[Any, ...]] = getattr(auxiliary_type, "__metadata__", None)
+                auxiliary_metatuple: tuple[Any, ...] | None = getattr(auxiliary_type, "__metadata__", None)
                 if auxiliary_metatuple is None:
                     continue
 

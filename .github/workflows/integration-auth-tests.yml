@@ -9,8 +9,8 @@ on:
     branches: [ main ]
     paths:
       - 'distributions/**'
-      - 'llama_stack/**'
-      - '!llama_stack/ui/**'
+      - 'src/llama_stack/**'
+      - '!src/llama_stack/ui/**'
       - 'tests/integration/**'
       - 'uv.lock'
       - 'pyproject.toml'

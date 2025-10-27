@@ -14,7 +14,7 @@ import inspect
 import json
 import sys
 from types import ModuleType
-from typing import Any, Optional, TextIO, TypeVar
+from typing import Any, TextIO, TypeVar
 
 from .core import JsonType
 from .deserializer import create_deserializer
@@ -42,7 +42,7 @@ def object_to_json(obj: Any) -> JsonType:
     return generator.generate(obj)
 
 
-def json_to_object(typ: TypeLike, data: JsonType, *, context: Optional[ModuleType] = None) -> object:
+def json_to_object(typ: TypeLike, data: JsonType, *, context: ModuleType | None = None) -> object:
     """
     Creates an object from a representation that has been de-serialized from JSON.
 

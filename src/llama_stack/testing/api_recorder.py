@@ -43,7 +43,7 @@ from llama_stack.core.testing_context import get_test_context, is_debug_mode
 CompletionChoice.model_fields["finish_reason"].annotation = Literal["stop", "length", "content_filter"] | None
 CompletionChoice.model_rebuild()
 
-REPO_ROOT = Path(__file__).parent.parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent.parent
 DEFAULT_STORAGE_DIR = REPO_ROOT / "tests/integration/common"
 
 

@@ -41,11 +41,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'llama_stack/ui/'
+          cache-dependency-path: 'src/llama_stack/ui/'
 
       - name: Install npm dependencies
         run: npm ci
-        working-directory: llama_stack/ui
+        working-directory: src/llama_stack/ui
 
       - name: Run pre-commit
         id: precommit
