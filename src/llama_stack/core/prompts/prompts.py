@@ -230,3 +230,6 @@ class PromptServiceImpl(Prompts):
         await self.kvstore.set(default_key, str(version))
 
         return self._deserialize_prompt(data)
+
+    async def shutdown(self) -> None:
+        pass

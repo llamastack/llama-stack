@@ -73,27 +73,27 @@ class VectorIORouter(VectorIO):
 
     async def insert_chunks(
         self,
-        vector_db_id: str,
+        vector_store_id: str,
         chunks: list[Chunk],
         ttl_seconds: int | None = None,
     ) -> None:
         doc_ids = [chunk.document_id for chunk in chunks[:3]]
         logger.debug(
-            f"VectorIORouter.insert_chunks: {vector_db_id}, {len(chunks)} chunks, "
+            f"VectorIORouter.insert_chunks: {vector_store_id}, {len(chunks)} chunks, "
             f"ttl_seconds={ttl_seconds}, chunk_ids={doc_ids}{' and more...' if len(chunks) > 3 else ''}"
         )
-        provider = await self.routing_table.get_provider_impl(vector_db_id)
-        return await provider.insert_chunks(vector_db_id, chunks, ttl_seconds)
+        provider = await self.routing_table.get_provider_impl(vector_store_id)
+        return await provider.insert_chunks(vector_store_id, chunks, ttl_seconds)
 
     async def query_chunks(
         self,
-        vector_db_id: str,
+        vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
-        logger.debug(f"VectorIORouter.query_chunks: {vector_db_id}")
-        provider = await self.routing_table.get_provider_impl(vector_db_id)
-        return await provider.query_chunks(vector_db_id, query, params)
+        logger.debug(f"VectorIORouter.query_chunks: {vector_store_id}")
+        provider = await self.routing_table.get_provider_impl(vector_store_id)
+        return await provider.query_chunks(vector_store_id, query, params)
 
     # OpenAI Vector Stores API endpoints
     async def openai_create_vector_store(

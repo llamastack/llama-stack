@@ -22,7 +22,7 @@ log = get_logger(name=__name__, category="agents::meta_reference")
 
 class AgentSessionInfo(Session):
     # TODO: is this used anywhere?
-    vector_db_id: str | None = None
+    vector_store_id: str | None = None
     started_at: datetime
     owner: User | None = None
     identifier: str | None = None
@@ -93,12 +93,12 @@ class AgentPersistence:
 
         return session_info
 
-    async def add_vector_db_to_session(self, session_id: str, vector_db_id: str):
+    async def add_vector_db_to_session(self, session_id: str, vector_store_id: str):
         session_info = await self.get_session_if_accessible(session_id)
         if session_info is None:
             raise SessionNotFoundError(session_id)
 
-        session_info.vector_db_id = vector_db_id
+        session_info.vector_store_id = vector_store_id
         await self.kvstore.set(
             key=f"session:{self.agent_id}:{session_id}",
             value=session_info.model_dump_json(),

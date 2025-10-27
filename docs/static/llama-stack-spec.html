@@ -11412,7 +11412,7 @@
                         },
                         "description": "List of documents to index in the RAG system"
                     },
-                    "vector_db_id": {
+                    "vector_store_id": {
                         "type": "string",
                         "description": "ID of the vector database to store the document embeddings"
                     },
@@ -11424,7 +11424,7 @@
                 "additionalProperties": false,
                 "required": [
                     "documents",
-                    "vector_db_id",
+                    "vector_store_id",
                     "chunk_size_in_tokens"
                 ],
                 "title": "InsertRequest"
@@ -11615,7 +11615,7 @@
                         "$ref": "#/components/schemas/InterleavedContent",
                         "description": "The query content to search for in the indexed documents"
                     },
-                    "vector_db_ids": {
+                    "vector_store_ids": {
                         "type": "array",
                         "items": {
                             "type": "string"
@@ -11630,7 +11630,7 @@
                 "additionalProperties": false,
                 "required": [
                     "content",
-                    "vector_db_ids"
+                    "vector_store_ids"
                 ],
                 "title": "QueryRequest"
             },
@@ -11923,7 +11923,7 @@
             "InsertChunksRequest": {
                 "type": "object",
                 "properties": {
-                    "vector_db_id": {
+                    "vector_store_id": {
                         "type": "string",
                         "description": "The identifier of the vector database to insert the chunks into."
                     },
@@ -11941,7 +11941,7 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                    "vector_db_id",
+                    "vector_store_id",
                     "chunks"
                 ],
                 "title": "InsertChunksRequest"
@@ -11949,7 +11949,7 @@
             "QueryChunksRequest": {
                 "type": "object",
                 "properties": {
-                    "vector_db_id": {
+                    "vector_store_id": {
                         "type": "string",
                         "description": "The identifier of the vector database to query."
                     },
@@ -11986,7 +11986,7 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                    "vector_db_id",
+                    "vector_store_id",
                     "query"
                 ],
                 "title": "QueryChunksRequest"

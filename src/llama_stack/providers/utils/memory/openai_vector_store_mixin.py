@@ -333,7 +333,7 @@ class OpenAIVectorStoreMixin(ABC):
     @abstractmethod
     async def insert_chunks(
         self,
-        vector_db_id: str,
+        vector_store_id: str,
         chunks: list[Chunk],
         ttl_seconds: int | None = None,
     ) -> None:
@@ -342,7 +342,7 @@ class OpenAIVectorStoreMixin(ABC):
 
     @abstractmethod
     async def query_chunks(
-        self, vector_db_id: str, query: Any, params: dict[str, Any] | None = None
+        self, vector_store_id: str, query: Any, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
         """Query chunks from a vector database (provider-specific implementation)."""
         pass
@@ -609,7 +609,7 @@ class OpenAIVectorStoreMixin(ABC):
             # TODO: Add support for ranking_options.ranker
 
             response = await self.query_chunks(
-                vector_db_id=vector_store_id,
+                vector_store_id=vector_store_id,
                 query=search_query,
                 params=params,
             )
@@ -803,7 +803,7 @@ class OpenAIVectorStoreMixin(ABC):
                 )
             else:
                 await self.insert_chunks(
-                    vector_db_id=vector_store_id,
+                    vector_store_id=vector_store_id,
                     chunks=chunks,
                 )
                 vector_store_file_object.status = "completed"
