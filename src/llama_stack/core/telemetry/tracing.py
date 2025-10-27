@@ -17,7 +17,8 @@ from datetime import UTC, datetime
 from functools import wraps
 from typing import Any, Self
 
-from llama_stack.apis.telemetry import (
+from llama_stack.core.telemetry.telemetry import (
+    ROOT_SPAN_MARKERS,
     Event,
     LogSeverity,
     Span,
@@ -47,7 +48,6 @@ if not _fallback_logger.handlers:
 INVALID_SPAN_ID = 0x0000000000000000
 INVALID_TRACE_ID = 0x00000000000000000000000000000000
 
-ROOT_SPAN_MARKERS = ["__root__", "__root_span__"]
 # The logical root span may not be visible to this process if a parent context
 # is passed in. The local root span is the first local span in a trace.
 LOCAL_ROOT_SPAN_MARKER = "__local_root_span__"
