@@ -27,4 +27,4 @@ fi
 
 # Run unit tests with coverage
 uv run --python "$PYTHON_VERSION" --with-editable . --group unit \
-    coverage run --source=llama_stack -m pytest -s -v tests/unit/ "$@"
+    coverage run --source=src/llama_stack -m pytest -s -v tests/unit/ "$@"
