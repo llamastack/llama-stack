@@ -55,6 +55,7 @@ def test_evaluate_rows(llama_stack_client, text_model_id, scoring_fn_id):
                 "model": text_model_id,
                 "sampling_params": {
                     "temperature": 0.0,
+                    "max_tokens": 512,
                 },
             },
         },
@@ -88,6 +89,7 @@ def test_evaluate_benchmark(llama_stack_client, text_model_id, scoring_fn_id):
                 "model": text_model_id,
                 "sampling_params": {
                     "temperature": 0.0,
+                    "max_tokens": 512,
                 },
             },
         },
