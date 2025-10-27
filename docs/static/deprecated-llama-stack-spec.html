@@ -3526,6 +3526,51 @@
                 },
                 "deprecated": true
             }
+        },
+        "/v1/providers/{provider_id}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "A ListProvidersResponse containing all providers with matching provider_id.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListProvidersResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Providers"
+                ],
+                "summary": "Get providers by ID (deprecated - use /providers/{api}/{provider_id} instead).",
+                "description": "Get providers by ID (deprecated - use /providers/{api}/{provider_id} instead).\nDEPRECATED: Returns all providers with the given provider_id across all APIs.\nThis can return multiple providers if the same ID is used for different APIs.\nUse /providers/{api}/{provider_id} for unambiguous access.",
+                "parameters": [
+                    {
+                        "name": "provider_id",
+                        "in": "path",
+                        "description": "The ID of the provider(s) to inspect.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "deprecated": true
+            }
         }
     },
     "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
@@ -13350,6 +13395,103 @@
                     "logger_config"
                 ],
                 "title": "SupervisedFineTuneRequest"
+            },
+            "ProviderInfo": {
+                "type": "object",
+                "properties": {
+                    "api": {
+                        "type": "string",
+                        "description": "The API name this provider implements"
+                    },
+                    "provider_id": {
+                        "type": "string",
+                        "description": "Unique identifier for the provider"
+                    },
+                    "provider_type": {
+                        "type": "string",
+                        "description": "The type of provider implementation"
+                    },
+                    "config": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "Configuration parameters for the provider"
+                    },
+                    "health": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "null"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "description": "Current health status of the provider"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "api",
+                    "provider_id",
+                    "provider_type",
+                    "config",
+                    "health"
+                ],
+                "title": "ProviderInfo",
+                "description": "Information about a registered provider including its configuration and health status."
+            },
+            "ListProvidersResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProviderInfo"
+                        },
+                        "description": "List of provider information objects"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "data"
+                ],
+                "title": "ListProvidersResponse",
+                "description": "Response containing a list of all available providers."
             }
         },
         "responses": {
@@ -13462,6 +13604,11 @@
             "description": ""
         },
         {
+            "name": "Providers",
+            "description": "Providers API for inspecting, listing, and modifying providers and their configurations.",
+            "x-displayName": "Providers"
+        },
+        {
             "name": "Safety",
             "description": "OpenAI-compatible Moderations API.",
             "x-displayName": "Safety"
@@ -13484,6 +13631,7 @@
                 "Inference",
                 "Models",
                 "PostTraining (Coming Soon)",
+                "Providers",
                 "Safety",
                 "VectorIO"
             ]
