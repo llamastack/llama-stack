@@ -1,0 +1,69 @@
+---
+id: retrieve-file
+title: "Retrieve file."
+description: "Retrieve file."
+sidebar_label: "Retrieve file."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWMFu3DYQ/ZUBT4khr50gQZq9OU3SGkhgw3YOhW0Es+TsiglFKuRo7e1Cx/5Fv65fUgwleXftNeqg7SGAfbFWGs7jzLw31GipIqU6+ERJjZfq+f6+/DOUdLQ12+DVWB14OKrJHxy+t46OJl9IM+jgGa23fgZT6wisn4ZYoawYqULJY/IsvrCundX5yd6XJA6XKumSKpQrXtSkxipkr6pQdQw1RbbddvrbK7vE0fpZB5BYjZWAq0IZmmLjNm6sR3BWEnS+QBwVcFVaXYJNgO4KFwku8roLpdpCWbMN8K7DLm5Dnu3UUhycavQwIYg0pUhekwHrgUuCg+NDIG/qYD0nAZosuAuzx7KeaUZxK1iyvxOEaXYkwIV47Ry0hdKRkMl8Rn6gu0/eXgPbihJjVcMT6yGRDt6kpzANEa5K8jdYcIUJeghBo+vaRkr/F1rvXpDkt8eKHlYQsVzPkXiom1iHtNUB+aZS43OFKdnEKEUp1ARZl+pym3uJ0Bsy0PvchGoLhcZYsUd3vMbiKbpEhYr0rbGRjCDesN0aNdBgo4gbOV5Lwyqey0KxZScB3dbmndx0BiAWgwowgaGp9St2rhkloepIta0E9WJbR5B0SECUOJPD+jk6ayBEqNBJJyDz33WBxMjNQ4Ty69nZMXTWoIPJBOiz9E/8eRdjiJCNC0BIZYgMqakqjIuh0JRtblqHBB0tes4cRt8/zzit+Ge07qHInbVAu+BnFKFsKvS7kdDgxBGsrdnYTm5YXuirHxDlk6O6I+hTOIBPJx82W1aTyAAHiMTR0pygCnGjswNOQsMZPNWk7dRqCFo3MTe6W/v6HkH0FR6qdZO8NZbnNN2TvOEIg2kM1dBrR3ASmlnpFjANzoWrBCfvf4ZXP+2/GnVNDKu6Y8bArxf7+yu8N2jgpKP4aj8PZH6vnOevtytHO0ueocQESS44BKjQLwbH4hUQZnZOHrAKjeecW5s7wKOoHkX1I4nq+esV3lkI8FGY3isrrUvrt9BAiXN5AdBEctAKaEQmcLayPIJjR5gIOC4AZ2g9OGSKw0n18r6TKlGcUwTyWqREkYwQq/F0XZNmMn1yH6X1KK0fSlov18+rQ2G2RwenHdtX+L28Du5SfkiGGcFRE4EJq3wqTYg8+JDnGjPI62bE2jIe3uv4UVSPovqxRLW/De0BEsoqEarhLEk0eZC6O0ieDGmVmW504U+Im+jTlgTjKr3ZVhSBEStiioKwVN1knKfDz3mStIJQI5dbx+PDt+sTq9S4kWwJW0ubhpdPwVlVhWNDxV2N9sxq2xxfHUnnbwNDVSviMhg1VjPKQpYdjdXe/NmeIKe9Zb/lVhWqO5y7gJooWS6Z6/HeHvrFbhkSk9l1DivcTYz660iHSglsIt1Ey4u88O3Qm84v5ZkkM++2L+QHWQ+nsh5O+6TmVKtCCXiXo/mzLWkTiacNsuO6/NY9c4kMdQxzayhdeLj1h5Aov8fffAMC9Pkdx0bQIXb8NfJFTVpbnKKm1DnFSBfyuc2FmMV51/lE5hFHc4o4G3b1MRhyaXThL/zOzl9//gGnZwdvPrzb2RnDcQym0RJIbi4LkUqCK8slTFB/vcJoQIeqRrYT6ywvYNZgRM9EKQunDokrzA28Z+EmsW9ncrk6Bv6dBHoCMl3zXu3QetlN5s2y59l5V8jMNFWo8SCPy0IJncRguZxgok/Rta3c/tZQFB5dFio384mQ5nypjE1yveL1vSE9OekV8xS+T2lbw+lvol8IP9E18ksV6ist1uTeXraFKgkNxbzb7umB1lTz2ro7Z64I5Eagv7w7U237N1bzq40=
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve file."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/files/{file_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Retrieve file.
+Returns information about a specific file.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"file_id","in":"path","description":"The ID of the file to use for this request.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"An OpenAIFileObject containing file information.","content":{"application/json":{"schema":{"type":"object","properties":{"object":{"type":"string","const":"file","default":"file","description":"The object type, which is always \"file\""},"id":{"type":"string","description":"The file identifier, which can be referenced in the API endpoints"},"bytes":{"type":"integer","description":"The size of the file, in bytes"},"created_at":{"type":"integer","description":"The Unix timestamp (in seconds) for when the file was created"},"expires_at":{"type":"integer","description":"The Unix timestamp (in seconds) for when the file expires"},"filename":{"type":"string","description":"The name of the file"},"purpose":{"type":"string","enum":["assistants","batch"],"description":"The intended purpose of the file"}},"additionalProperties":false,"required":["object","id","bytes","created_at","expires_at","filename","purpose"],"title":"OpenAIFileObject","description":"OpenAI File object as defined in the OpenAI Files API."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>

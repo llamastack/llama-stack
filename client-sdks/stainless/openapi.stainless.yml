@@ -121,9 +121,9 @@ resources:
       tool_response_message: ToolResponseMessage
       system_message: SystemMessage
       tool_call: ToolCall
-      query_result: RAGQueryResult
+      query_result: FileSearchResult
       document: RAGDocument
-      query_config: RAGQueryConfig
+      query_config: FileSearchConfig
       response_format: ResponseFormat
   toolgroups:
     models:
@@ -153,8 +153,8 @@ resources:
     subresources:
       rag_tool:
         methods:
-          insert: post /v1/tool-runtime/rag-tool/insert
-          query: post /v1/tool-runtime/rag-tool/query
+          insert: post /v1/tool-runtime/file_search-tool/insert
+          query: post /v1/tool-runtime/file_search-tool/query
 
   responses:
     models:

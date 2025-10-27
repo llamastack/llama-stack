@@ -20,7 +20,7 @@
               "id": "call_u8kC9t9arrSV758kavJmcZE7",
               "type": "function",
               "function": {
-                "name": "knowledge_search",
+                "name": "file_search",
                 "arguments": "{\"query\": \"marketing documents\"}"
               }
             },
@@ -29,7 +29,7 @@
               "id": "call_jnsNgiHFvrr6kNsUUFsiCSdh",
               "type": "function",
               "function": {
-                "name": "knowledge_search",
+                "name": "file_search",
                 "arguments": "{\"query\": \"sales documents\"}"
               }
             }
@@ -41,7 +41,7 @@
           "content": [
             {
               "type": "text",
-              "text": "knowledge_search tool found 3 chunks:\nBEGIN of knowledge_search tool results.\n"
+              "text": "file_search tool found 3 chunks:\nBEGIN of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -57,7 +57,7 @@
             },
             {
               "type": "text",
-              "text": "END of knowledge_search tool results.\n"
+              "text": "END of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -71,7 +71,7 @@
           "content": [
             {
               "type": "text",
-              "text": "knowledge_search tool found 3 chunks:\nBEGIN of knowledge_search tool results.\n"
+              "text": "file_search tool found 3 chunks:\nBEGIN of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -87,7 +87,7 @@
             },
             {
               "type": "text",
-              "text": "END of knowledge_search tool results.\n"
+              "text": "END of file_search tool results.\n"
             },
             {
               "type": "text",
@@ -104,7 +104,7 @@
         {
           "type": "function",
           "function": {
-            "name": "knowledge_search",
+            "name": "file_search",
             "description": "Search for information in a database.",
             "parameters": {
               "type": "object",

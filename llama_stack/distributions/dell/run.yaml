@@ -83,8 +83,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file_search-runtime
+    provider_type: inline::file_search-runtime
 storage:
   backends:
     kv_default:
@@ -124,8 +124,8 @@ registered_resources:
   tool_groups:
   - toolgroup_id: builtin::websearch
     provider_id: brave-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
+  - toolgroup_id: builtin::file_search
+    provider_id: file_search-runtime
 server:
   port: 8321
 telemetry:

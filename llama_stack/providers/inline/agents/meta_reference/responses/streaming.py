@@ -677,7 +677,7 @@ class StreamingResponseOrchestrator:
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
                             is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
-                            if not is_mcp_tool and tool_call.function.name not in ["web_search", "knowledge_search"]:
+                            if not is_mcp_tool and tool_call.function.name not in ["web_search", "file_search"]:
                                 # for MCP tools (and even other non-function tools) we emit an output message item later
                                 function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
                                     arguments="",  # Will be filled incrementally via delta events
@@ -902,7 +902,7 @@ class StreamingResponseOrchestrator:
                     id=matching_item_id,
                     status="in_progress",
                 )
-            elif tool_call.function.name == "knowledge_search":
+            elif tool_call.function.name == "file_search":
                 item = OpenAIResponseOutputMessageFileSearchToolCall(
                     id=matching_item_id,
                     status="in_progress",
@@ -1021,7 +1021,7 @@ class StreamingResponseOrchestrator:
                     raise ValueError(f"Tool {tool_name} not found")
                 self.ctx.chat_tools.append(make_openai_tool(tool_name, tool))
             elif input_tool.type == "file_search":
-                tool_name = "knowledge_search"
+                tool_name = "file_search"
                 tool = await self.tool_executor.tool_groups_api.get_tool(tool_name)
                 if not tool:
                     raise ValueError(f"Tool {tool_name} not found")

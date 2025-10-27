@@ -11,11 +11,11 @@ from llama_stack.apis.common.content_types import (
     InterleavedContent,
 )
 from llama_stack.apis.tools import (
+    FileSearchConfig,
+    FileSearchResult,
+    FileSearchToolRuntime,
     ListToolDefsResponse,
     RAGDocument,
-    RAGQueryConfig,
-    RAGQueryResult,
-    RAGToolRuntime,
     ToolRuntime,
 )
 from llama_stack.log import get_logger
@@ -26,22 +26,22 @@ logger = get_logger(name=__name__, category="core::routers")
 
 
 class ToolRuntimeRouter(ToolRuntime):
-    class RagToolImpl(RAGToolRuntime):
+    class FileSearchToolImpl(FileSearchToolRuntime):
         def __init__(
             self,
             routing_table: ToolGroupsRoutingTable,
         ) -> None:
-            logger.debug("Initializing ToolRuntimeRouter.RagToolImpl")
+            logger.debug("Initializing ToolRuntimeRouter.FileSearchToolImpl")
             self.routing_table = routing_table
 
         async def query(
             self,
             content: InterleavedContent,
             vector_store_ids: list[str],
-            query_config: RAGQueryConfig | None = None,
-        ) -> RAGQueryResult:
-            logger.debug(f"ToolRuntimeRouter.RagToolImpl.query: {vector_store_ids}")
-            provider = await self.routing_table.get_provider_impl("knowledge_search")
+            query_config: FileSearchConfig | None = None,
+        ) -> FileSearchResult:
+            logger.debug(f"ToolRuntimeRouter.FileSearchToolImpl.query: {vector_store_ids}")
+            provider = await self.routing_table.get_provider_impl("file_search")
             return await provider.query(content, vector_store_ids, query_config)
 
         async def insert(
@@ -51,7 +51,7 @@ class ToolRuntimeRouter(ToolRuntime):
             chunk_size_in_tokens: int = 512,
         ) -> None:
             logger.debug(
-                f"ToolRuntimeRouter.RagToolImpl.insert: {vector_store_id}, {len(documents)} documents, chunk_size={chunk_size_in_tokens}"
+                f"ToolRuntimeRouter.FileSearchToolImpl.insert: {vector_store_id}, {len(documents)} documents, chunk_size={chunk_size_in_tokens}"
             )
             provider = await self.routing_table.get_provider_impl("insert_into_memory")
             return await provider.insert(documents, vector_store_id, chunk_size_in_tokens)
@@ -64,7 +64,7 @@ class ToolRuntimeRouter(ToolRuntime):
         self.routing_table = routing_table
 
         # HACK ALERT this should be in sync with "get_all_api_endpoints()"
-        self.rag_tool = self.RagToolImpl(routing_table)
+        self.rag_tool = self.FileSearchToolImpl(routing_table)
         for method in ("query", "insert"):
             setattr(self, f"rag_tool.{method}", getattr(self.rag_tool, method))
 

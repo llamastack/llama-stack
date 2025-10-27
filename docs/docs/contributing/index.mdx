@@ -8,6 +8,28 @@ hide_title: true
 
 import Contributing from '!!raw-loader!../../../CONTRIBUTING.md';
 import ReactMarkdown from 'react-markdown';
+import rehypePrism from 'rehype-prism-plus';
+import CodeBlock from '@theme/CodeBlock';
+import 'prismjs/themes/prism.css';
 
+<ReactMarkdown
+  rehypePlugins={[rehypePrism]}
+  components={{
+    code({node, inline, className, children, ...props}) {
+      const match = /language-(\w+)/.exec(className || '');
+      const language = match ? match[1] : '';
 
-<ReactMarkdown>{Contributing}</ReactMarkdown>
+      return !inline && language ? (
+        <CodeBlock language={language} {...props}>
+          {Array.isArray(children) ? children.join('') : String(children)}
+        </CodeBlock>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    }
+  }}
+>
+  {Contributing}
+</ReactMarkdown>

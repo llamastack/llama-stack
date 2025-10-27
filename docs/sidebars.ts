@@ -279,7 +279,7 @@ const sidebars: SidebarsConfig = {
       collapsed: true,
       items: [
         'building_applications/index',
-        'building_applications/rag',
+        'building_applications/file_search',
         'building_applications/agent',
         'building_applications/agent_execution_loop',
         'building_applications/responses_vs_agents',

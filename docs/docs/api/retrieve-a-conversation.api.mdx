@@ -1,0 +1,69 @@
+---
+id: retrieve-a-conversation
+title: "Retrieve a conversation."
+description: "Retrieve a conversation."
+sidebar_label: "Retrieve a conversation."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1uGzcQfpUBL7WNtewYCdIIcAHntwYS2LCdQ2EbwYgcaRnvkhtyVrIq6Ni36NP1SYrhrqyVZDcukEsA70Urcv44833kcmYqUKy8ixRVf6YO9vflx1DUwVZsvVN9dZETaO/GFCLKEPjBV9LcU5nS3jE5Fh2sqsLqJLD3NYriTEWdU4nyxtOKVF81mipTVfAVBbaNW2s6MpGDdSM1zxbSG1PJb2TVV92wVKYMDbEuNibmmdKBkMl8wa4565hGFGS+JEaDfG+saIwVO1icrkS9Fu88U5ap7E5hCDhVm+N3ptlyIQPGpr+reZfBrW3Y/Q0cTYDKiqcgYxJKaF63Sqwq60Z3Up156yxbLOyfZGAYfAkIrXRbwF8iyLN1Q9MMxljUtA0V2hAb05Yp4KCg79nGCHYIY4v9ZM7AIczm6XXoA9xkMAbrYGGtEUqClzfXcAjjxtvOzs0Ewyh+z9vEcg6cEzgs6TBF3QYtj3Vp7oamEx8MYBjVJTmGwkbuAbz3AegWyyrFkfx6R4fPMuCJPzzYVnOp4v31HmIRKVOBvtU2kFH9S4FttqxlB2LXy8q+WUdot8InFbmj413tywrZDooHeDZPYT1/iJsSEkWGiVTCjbGwBnyAEouhDyWZH8fTyMh1vIdB6wv7/eLiFBpp0N6QUKzNyCaZV1XfheADJOEMEGLuA0Osy1KQ4IepvpRkJrnVOdhm0cGi44Q4dO188jMX+4y2eKznRlpcF96NKEBel+h2A6ER/EJHZyUc8WRdZHT6EavcOqkaiG3DEXw++9guRqODAUEdyQB7CMTB0pig9IHAOqlnAw0c+JqT81iRtkOrwWtdh0BO01pc/wfSbYUX1bpLXgfRKU0PJG9xmDQbjsRwdHrcgzNfj/JiCkNfFH4S4ez9G3j56/7LniStJWQXX8/395f+XqOBswbiy3geifyWOQevHjjVCiu7Q44Roryw91Cimy4Mi1VAGNkxOcDS145Tbm1JT6R6ItVPRqqDV0t/F97DJ0F6y6zYpdYfvoYcxwR0q4mMpE3IhkxQ2NJyD04LwkjAYQo4QuugQKawOKlePHRSRQpjCkBOC5UoyNeDg9rRbUWaybTJfaLWE7V+Kmq96J5Xx4JshwWcN2hf+m/pdbQJ+UUyTA9O6gBMWKZTaUDkwHm2Q0tmQa+7W846xf7L8BOpnkj1c5Fq/z5vj6BQYolADUdRVtO9gUVZw2rMZ4v04srlq3flPhCvDS5vn80n4fFbaYJUGLAkpiDuZkoupmsdiC/ppmjFXYWcb+Rto8NiDblE+iAOlrXhUFO2ydS7FkRaXRVIy030rrYlce6N6qsRJTpLCH21N36213Ua92ZrMc9Vppoju1lZHST3OXPV39tDN93NfWQyu0WBJe5GRn3T075UEkYkXQfL06T4drFjXV7LnGA4Rd+W96Pow7now3mL5MWFWZw3SRo/uydvQvy4QgHskrJrmXNkqIIfW0PxysHagxApfd2TM5W3jiOgS18+NoD2oUG1kfaJbHhhiJpiYxQDXTlBpg+JspvGB3JLKWhMAUeLqD55Q0XsXbkrt7Pzz99/wfnF0euP73Z2+nAavKlT+yNtOVMhUGzAN0AtjRIDi6aBLSxPYVRjQMdEMdGp8pFLTNt6C8eHYL6e09nymPgB1GjxyXTLe1WBNvXiEoxmLQwvm7quAFFlqr9On+tMCdpEYTYbYKTPoZjPZfhbTUFgdp2pdAIMBFOXM2VslPclDR5c59ZZS7Bt+A4T713PotnnpNWXOlKqr1Smbmh6zz4wv55nKic0FFKYjdSR1lRxR3/jhBbi3BH5w7sLNZ//C8+Alr0=
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve a conversation."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/conversations/{conversation_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Retrieve a conversation.
+Get a conversation with the given ID.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"conversation_id","in":"path","description":"The conversation identifier.","required":true,"schema":{"type":"string"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The conversation object.","content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"},"object":{"type":"string","const":"conversation","default":"conversation"},"created_at":{"type":"integer"},"metadata":{"type":"object","additionalProperties":{"type":"string"}},"items":{"type":"array","items":{"type":"object","title":"dict","description":"dict() -> new empty dictionary dict(mapping) -> new dictionary initialized from a mapping object's     (key, value) pairs dict(iterable) -> new dictionary initialized as if via:     d = {}     for k, v in iterable:         d[k] = v dict(**kwargs) -> new dictionary initialized with the name=value pairs     in the keyword argument list.  For example:  dict(one=1, two=2)"}}},"additionalProperties":false,"required":["id","object","created_at"],"title":"Conversation","description":"OpenAI-compatible conversation object."}}}},"400":{"description":"The request was invalid or malformed","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"The client has sent too many requests in a given amount of time","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"The server encountered an unexpected error","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred. Our team has been notified."}}}},"default":{"description":"An unexpected error occurred","content":{"application/json":{"schema":{"type":"object","properties":{"status":{"type":"integer","description":"HTTP status code"},"title":{"type":"string","description":"Error title, a short summary of the error which is invariant for an error type"},"detail":{"type":"string","description":"Error detail, a longer human-readable description of the error"},"instance":{"type":"string","description":"(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"}},"additionalProperties":false,"required":["status","title","detail"],"title":"Error","description":"Error response from the API. Roughly follows RFC 7807."},"example":{"status":0,"title":"Error","detail":"An unexpected error occurred"}}}}}}
+>
+
+</StatusCodes>
