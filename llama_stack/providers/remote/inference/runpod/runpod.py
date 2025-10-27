@@ -23,7 +23,6 @@ class RunpodInferenceAdapter(OpenAIMixin):
     """
 
     config: RunpodImplConfig
-
     provider_data_api_key_field: str = "runpod_api_token"
 
     def get_api_key(self) -> str:
