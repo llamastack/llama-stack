@@ -7,7 +7,7 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr, field_validator
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -47,10 +47,6 @@ class NVIDIAConfig(RemoteInferenceProviderConfig):
         default_factory=lambda: os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com"),
         description="A base url for accessing the NVIDIA NIM",
     )
-    api_key: SecretStr | None = Field(
-        default=None,
-        description="The NVIDIA API key, only needed of using the hosted service",
-    )
     timeout: int = Field(
         default=60,
         description="Timeout for the HTTP requests",
@@ -59,22 +55,6 @@ class NVIDIAConfig(RemoteInferenceProviderConfig):
         default_factory=lambda: os.getenv("NVIDIA_APPEND_API_VERSION", "True").lower() != "false",
         description="When set to false, the API version will not be appended to the base_url. By default, it is true.",
     )
-
-    @field_validator("api_key", mode="before")
-    @classmethod
-    def _default_api_key_from_env(cls, value: SecretStr | str | None) -> SecretStr | None:
-        """Populate the API key from the NVIDIA_API_KEY environment variable when absent."""
-        if value is None:
-            env_value = os.getenv("NVIDIA_API_KEY")
-            return SecretStr(env_value) if env_value else None
-
-        if isinstance(value, SecretStr):
-            return value
-
-        if isinstance(value, str):
-            return SecretStr(value)
-
-        return value
 
     @classmethod
     def sample_run_config(
