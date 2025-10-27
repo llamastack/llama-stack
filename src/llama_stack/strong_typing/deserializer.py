@@ -20,19 +20,14 @@ import ipaddress
 import sys
 import typing
 import uuid
+from collections.abc import Callable
 from types import ModuleType
 from typing import (
     Any,
-    Callable,
-    Dict,
     Generic,
-    List,
     Literal,
     NamedTuple,
     Optional,
-    Set,
-    Tuple,
-    Type,
     TypeVar,
     Union,
 )
@@ -70,7 +65,7 @@ V = TypeVar("V")
 class Deserializer(abc.ABC, Generic[T]):
     "Parses a JSON value into a Python type."
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         """
         Creates auxiliary parsers that this parser is depending on.
 
@@ -203,19 +198,19 @@ class IPv6Deserializer(Deserializer[ipaddress.IPv6Address]):
         return ipaddress.IPv6Address(data)
 
 
-class ListDeserializer(Deserializer[List[T]]):
+class ListDeserializer(Deserializer[list[T]]):
     "Recursively de-serializes a JSON array into a Python `list`."
 
-    item_type: Type[T]
+    item_type: type[T]
     item_parser: Deserializer
 
-    def __init__(self, item_type: Type[T]) -> None:
+    def __init__(self, item_type: type[T]) -> None:
         self.item_type = item_type
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         self.item_parser = _get_deserializer(self.item_type, context)
 
-    def parse(self, data: JsonType) -> List[T]:
+    def parse(self, data: JsonType) -> list[T]:
         if not isinstance(data, list):
             type_name = python_type_to_str(self.item_type)
             raise JsonTypeError(f"type `List[{type_name}]` expects JSON `array` data but instead received: {data}")
@@ -223,19 +218,19 @@ class ListDeserializer(Deserializer[List[T]]):
         return [self.item_parser.parse(item) for item in data]
 
 
-class DictDeserializer(Deserializer[Dict[K, V]]):
+class DictDeserializer(Deserializer[dict[K, V]]):
     "Recursively de-serializes a JSON object into a Python `dict`."
 
-    key_type: Type[K]
-    value_type: Type[V]
+    key_type: type[K]
+    value_type: type[V]
     value_parser: Deserializer[V]
 
-    def __init__(self, key_type: Type[K], value_type: Type[V]) -> None:
+    def __init__(self, key_type: type[K], value_type: type[V]) -> None:
         self.key_type = key_type
         self.value_type = value_type
         self._check_key_type()
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         self.value_parser = _get_deserializer(self.value_type, context)
 
     def _check_key_type(self) -> None:
@@ -264,7 +259,7 @@ class DictDeserializer(Deserializer[Dict[K, V]]):
         value_type_name = python_type_to_str(self.value_type)
         return f"Dict[{key_type_name}, {value_type_name}]"
 
-    def parse(self, data: JsonType) -> Dict[K, V]:
+    def parse(self, data: JsonType) -> dict[K, V]:
         if not isinstance(data, dict):
             raise JsonTypeError(
                 f"`type `{self.container_type}` expects JSON `object` data but instead received: {data}"
@@ -276,19 +271,19 @@ class DictDeserializer(Deserializer[Dict[K, V]]):
         )
 
 
-class SetDeserializer(Deserializer[Set[T]]):
+class SetDeserializer(Deserializer[set[T]]):
     "Recursively de-serializes a JSON list into a Python `set`."
 
-    member_type: Type[T]
+    member_type: type[T]
     member_parser: Deserializer
 
-    def __init__(self, member_type: Type[T]) -> None:
+    def __init__(self, member_type: type[T]) -> None:
         self.member_type = member_type
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         self.member_parser = _get_deserializer(self.member_type, context)
 
-    def parse(self, data: JsonType) -> Set[T]:
+    def parse(self, data: JsonType) -> set[T]:
         if not isinstance(data, list):
             type_name = python_type_to_str(self.member_type)
             raise JsonTypeError(f"type `Set[{type_name}]` expects JSON `array` data but instead received: {data}")
@@ -296,16 +291,16 @@ class SetDeserializer(Deserializer[Set[T]]):
         return set(self.member_parser.parse(item) for item in data)
 
 
-class TupleDeserializer(Deserializer[Tuple[Any, ...]]):
+class TupleDeserializer(Deserializer[tuple[Any, ...]]):
     "Recursively de-serializes a JSON list into a Python `tuple`."
 
-    item_types: Tuple[Type[Any], ...]
-    item_parsers: Tuple[Deserializer[Any], ...]
+    item_types: tuple[type[Any], ...]
+    item_parsers: tuple[Deserializer[Any], ...]
 
-    def __init__(self, item_types: Tuple[Type[Any], ...]) -> None:
+    def __init__(self, item_types: tuple[type[Any], ...]) -> None:
         self.item_types = item_types
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         self.item_parsers = tuple(_get_deserializer(item_type, context) for item_type in self.item_types)
 
     @property
@@ -313,7 +308,7 @@ class TupleDeserializer(Deserializer[Tuple[Any, ...]]):
         type_names = ", ".join(python_type_to_str(item_type) for item_type in self.item_types)
         return f"Tuple[{type_names}]"
 
-    def parse(self, data: JsonType) -> Tuple[Any, ...]:
+    def parse(self, data: JsonType) -> tuple[Any, ...]:
         if not isinstance(data, list) or len(data) != len(self.item_parsers):
             if not isinstance(data, list):
                 raise JsonTypeError(
@@ -331,13 +326,13 @@ class TupleDeserializer(Deserializer[Tuple[Any, ...]]):
 class UnionDeserializer(Deserializer):
     "De-serializes a JSON value (of any type) into a Python union type."
 
-    member_types: Tuple[type, ...]
-    member_parsers: Tuple[Deserializer, ...]
+    member_types: tuple[type, ...]
+    member_parsers: tuple[Deserializer, ...]
 
-    def __init__(self, member_types: Tuple[type, ...]) -> None:
+    def __init__(self, member_types: tuple[type, ...]) -> None:
         self.member_types = member_types
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         self.member_parsers = tuple(_get_deserializer(member_type, context) for member_type in self.member_types)
 
     def parse(self, data: JsonType) -> Any:
@@ -354,7 +349,7 @@ class UnionDeserializer(Deserializer):
         raise JsonKeyError(f"type `Union[{type_names}]` could not be instantiated from: {data}")
 
 
-def get_literal_properties(typ: type) -> Set[str]:
+def get_literal_properties(typ: type) -> set[str]:
     "Returns the names of all properties in a class that are of a literal type."
 
     return set(
@@ -362,7 +357,7 @@ def get_literal_properties(typ: type) -> Set[str]:
     )
 
 
-def get_discriminating_properties(types: Tuple[type, ...]) -> Set[str]:
+def get_discriminating_properties(types: tuple[type, ...]) -> set[str]:
     "Returns a set of properties with literal type that are common across all specified classes."
 
     if not types or not all(isinstance(typ, type) for typ in types):
@@ -378,15 +373,15 @@ def get_discriminating_properties(types: Tuple[type, ...]) -> Set[str]:
 class TaggedUnionDeserializer(Deserializer):
     "De-serializes a JSON value with one or more disambiguating properties into a Python union type."
 
-    member_types: Tuple[type, ...]
-    disambiguating_properties: Set[str]
-    member_parsers: Dict[Tuple[str, Any], Deserializer]
+    member_types: tuple[type, ...]
+    disambiguating_properties: set[str]
+    member_parsers: dict[tuple[str, Any], Deserializer]
 
-    def __init__(self, member_types: Tuple[type, ...]) -> None:
+    def __init__(self, member_types: tuple[type, ...]) -> None:
         self.member_types = member_types
         self.disambiguating_properties = get_discriminating_properties(member_types)
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         self.member_parsers = {}
         for member_type in self.member_types:
             for property_name in self.disambiguating_properties:
@@ -435,13 +430,13 @@ class TaggedUnionDeserializer(Deserializer):
 class LiteralDeserializer(Deserializer):
     "De-serializes a JSON value into a Python literal type."
 
-    values: Tuple[Any, ...]
+    values: tuple[Any, ...]
     parser: Deserializer
 
-    def __init__(self, values: Tuple[Any, ...]) -> None:
+    def __init__(self, values: tuple[Any, ...]) -> None:
         self.values = values
 
-    def build(self, context: Optional[ModuleType]) -> None:
+    def build(self, context: ModuleType | None) -> None:
         literal_type_tuple = tuple(type(value) for value in self.values)
         literal_type_set = set(literal_type_tuple)
         if len(literal_type_set) != 1:
@@ -464,9 +459,9 @@ class LiteralDeserializer(Deserializer):
 class EnumDeserializer(Deserializer[E]):
     "Returns an enumeration instance based on the enumeration value read from a JSON value."
 
-    enum_type: Type[E]
+    enum_type: type[E]
 
-    def __init__(self, enum_type: Type[E]) -> None:
+    def __init__(self, enum_type: type[E]) -> None:
         self.enum_type = enum_type
 
     def parse(self, data: JsonType) -> E:
@@ -504,13 +499,13 @@ class FieldDeserializer(abc.ABC, Generic[T, R]):
         self.parser = parser
 
     @abc.abstractmethod
-    def parse_field(self, data: Dict[str, JsonType]) -> R: ...
+    def parse_field(self, data: dict[str, JsonType]) -> R: ...
 
 
 class RequiredFieldDeserializer(FieldDeserializer[T, T]):
     "Deserializes a JSON property into a mandatory Python object field."
 
-    def parse_field(self, data: Dict[str, JsonType]) -> T:
+    def parse_field(self, data: dict[str, JsonType]) -> T:
         if self.property_name not in data:
             raise JsonKeyError(f"missing required property `{self.property_name}` from JSON object: {data}")
 
@@ -520,7 +515,7 @@ class RequiredFieldDeserializer(FieldDeserializer[T, T]):
 class OptionalFieldDeserializer(FieldDeserializer[T, Optional[T]]):
     "Deserializes a JSON property into an optional Python object field with a default value of `None`."
 
-    def parse_field(self, data: Dict[str, JsonType]) -> Optional[T]:
+    def parse_field(self, data: dict[str, JsonType]) -> T | None:
         value = data.get(self.property_name)
         if value is not None:
             return self.parser.parse(value)
@@ -543,7 +538,7 @@ class DefaultFieldDeserializer(FieldDeserializer[T, T]):
         super().__init__(property_name, field_name, parser)
         self.default_value = default_value
 
-    def parse_field(self, data: Dict[str, JsonType]) -> T:
+    def parse_field(self, data: dict[str, JsonType]) -> T:
         value = data.get(self.property_name)
         if value is not None:
             return self.parser.parse(value)
@@ -566,7 +561,7 @@ class DefaultFactoryFieldDeserializer(FieldDeserializer[T, T]):
         super().__init__(property_name, field_name, parser)
         self.default_factory = default_factory
 
-    def parse_field(self, data: Dict[str, JsonType]) -> T:
+    def parse_field(self, data: dict[str, JsonType]) -> T:
         value = data.get(self.property_name)
         if value is not None:
             return self.parser.parse(value)
@@ -578,13 +573,13 @@ class ClassDeserializer(Deserializer[T]):
     "Base class for de-serializing class-like types such as data classes, named tuples and regular classes."
 
     class_type: type
-    property_parsers: List[FieldDeserializer]
-    property_fields: Set[str]
+    property_parsers: list[FieldDeserializer]
+    property_fields: set[str]
 
-    def __init__(self, class_type: Type[T]) -> None:
+    def __init__(self, class_type: type[T]) -> None:
         self.class_type = class_type
 
-    def assign(self, property_parsers: List[FieldDeserializer]) -> None:
+    def assign(self, property_parsers: list[FieldDeserializer]) -> None:
         self.property_parsers = property_parsers
         self.property_fields = set(property_parser.property_name for property_parser in property_parsers)
 
@@ -593,7 +588,7 @@ class ClassDeserializer(Deserializer[T]):
             type_name = python_type_to_str(self.class_type)
             raise JsonTypeError(f"`type `{type_name}` expects JSON `object` data but instead received: {data}")
 
-        object_data: Dict[str, JsonType] = typing.cast(Dict[str, JsonType], data)
+        object_data: dict[str, JsonType] = typing.cast(dict[str, JsonType], data)
 
         field_values = {}
         for property_parser in self.property_parsers:
@@ -619,8 +614,8 @@ class ClassDeserializer(Deserializer[T]):
 class NamedTupleDeserializer(ClassDeserializer[NamedTuple]):
     "De-serializes a named tuple from a JSON `object`."
 
-    def build(self, context: Optional[ModuleType]) -> None:
-        property_parsers: List[FieldDeserializer] = [
+    def build(self, context: ModuleType | None) -> None:
+        property_parsers: list[FieldDeserializer] = [
             RequiredFieldDeserializer(field_name, field_name, _get_deserializer(field_type, context))
             for field_name, field_type in get_resolved_hints(self.class_type).items()
         ]
@@ -634,13 +629,13 @@ class NamedTupleDeserializer(ClassDeserializer[NamedTuple]):
 class DataclassDeserializer(ClassDeserializer[T]):
     "De-serializes a data class from a JSON `object`."
 
-    def __init__(self, class_type: Type[T]) -> None:
+    def __init__(self, class_type: type[T]) -> None:
         if not dataclasses.is_dataclass(class_type):
             raise TypeError("expected: data-class type")
         super().__init__(class_type)  # type: ignore[arg-type]
 
-    def build(self, context: Optional[ModuleType]) -> None:
-        property_parsers: List[FieldDeserializer] = []
+    def build(self, context: ModuleType | None) -> None:
+        property_parsers: list[FieldDeserializer] = []
         resolved_hints = get_resolved_hints(self.class_type)
         for field in dataclasses.fields(self.class_type):
             field_type = resolved_hints[field.name]
@@ -651,7 +646,7 @@ class DataclassDeserializer(ClassDeserializer[T]):
             has_default_factory = field.default_factory is not dataclasses.MISSING
 
             if is_optional:
-                required_type: Type[T] = unwrap_optional_type(field_type)
+                required_type: type[T] = unwrap_optional_type(field_type)
             else:
                 required_type = field_type
 
@@ -691,15 +686,15 @@ class FrozenDataclassDeserializer(DataclassDeserializer[T]):
 class TypedClassDeserializer(ClassDeserializer[T]):
     "De-serializes a class with type annotations from a JSON `object` by iterating over class properties."
 
-    def build(self, context: Optional[ModuleType]) -> None:
-        property_parsers: List[FieldDeserializer] = []
+    def build(self, context: ModuleType | None) -> None:
+        property_parsers: list[FieldDeserializer] = []
         for field_name, field_type in get_resolved_hints(self.class_type).items():
             property_name = python_field_to_json_property(field_name, field_type)
 
             is_optional = is_type_optional(field_type)
 
             if is_optional:
-                required_type: Type[T] = unwrap_optional_type(field_type)
+                required_type: type[T] = unwrap_optional_type(field_type)
             else:
                 required_type = field_type
 
@@ -715,7 +710,7 @@ class TypedClassDeserializer(ClassDeserializer[T]):
         super().assign(property_parsers)
 
 
-def create_deserializer(typ: TypeLike, context: Optional[ModuleType] = None) -> Deserializer:
+def create_deserializer(typ: TypeLike, context: ModuleType | None = None) -> Deserializer:
     """
     Creates a de-serializer engine to produce a Python object from an object obtained from a JSON string.
 
@@ -741,10 +736,10 @@ def create_deserializer(typ: TypeLike, context: Optional[ModuleType] = None) -> 
     return _get_deserializer(typ, context)
 
 
-_CACHE: Dict[Tuple[str, str], Deserializer] = {}
+_CACHE: dict[tuple[str, str], Deserializer] = {}
 
 
-def _get_deserializer(typ: TypeLike, context: Optional[ModuleType]) -> Deserializer:
+def _get_deserializer(typ: TypeLike, context: ModuleType | None) -> Deserializer:
     "Creates or re-uses a de-serializer engine to parse an object obtained from a JSON string."
 
     cache_key = None

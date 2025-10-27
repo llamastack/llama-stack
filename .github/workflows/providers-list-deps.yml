@@ -7,22 +7,22 @@ on:
     branches:
       - main
     paths:
-      - 'llama_stack/cli/stack/list_deps.py'
-      - 'llama_stack/cli/stack/_list_deps.py'
-      - 'llama_stack/core/build.*'
-      - 'llama_stack/core/*.sh'
+      - 'src/llama_stack/cli/stack/list_deps.py'
+      - 'src/llama_stack/cli/stack/_list_deps.py'
+      - 'src/llama_stack/core/build.*'
+      - 'src/llama_stack/core/*.sh'
       - '.github/workflows/providers-list-deps.yml'
-      - 'llama_stack/templates/**'
+      - 'src/llama_stack/templates/**'
       - 'pyproject.toml'
 
   pull_request:
     paths:
-      - 'llama_stack/cli/stack/list_deps.py'
-      - 'llama_stack/cli/stack/_list_deps.py'
-      - 'llama_stack/core/build.*'
-      - 'llama_stack/core/*.sh'
+      - 'src/llama_stack/cli/stack/list_deps.py'
+      - 'src/llama_stack/cli/stack/_list_deps.py'
+      - 'src/llama_stack/core/build.*'
+      - 'src/llama_stack/core/*.sh'
       - '.github/workflows/providers-list-deps.yml'
-      - 'llama_stack/templates/**'
+      - 'src/llama_stack/templates/**'
       - 'pyproject.toml'
 
 concurrency:
@@ -41,7 +41,7 @@ jobs:
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(ls llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
+          distros=$(ls src/llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
           echo "distros=$distros" >> "$GITHUB_OUTPUT"
 
   list-deps:
@@ -102,4 +102,4 @@ jobs:
           USE_COPY_NOT_MOUNT: "true"
           LLAMA_STACK_DIR: "."
         run: |
-          uv run llama stack list-deps llama_stack/distributions/ci-tests/build.yaml
+          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/build.yaml

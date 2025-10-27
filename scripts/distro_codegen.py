@@ -93,7 +93,7 @@ def pre_import_distros(distro_dirs: list[Path]) -> None:
 
 
 def main():
-    distros_dir = REPO_ROOT / "llama_stack" / "distributions"
+    distros_dir = REPO_ROOT / "src" / "llama_stack" / "distributions"
     change_tracker = ChangedPathTracker()
 
     with Progress(

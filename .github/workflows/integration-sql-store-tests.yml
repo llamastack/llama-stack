@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'llama_stack/providers/utils/sqlstore/**'
+      - 'src/llama_stack/providers/utils/sqlstore/**'
       - 'tests/integration/sqlstore/**'
       - 'uv.lock'
       - 'pyproject.toml'

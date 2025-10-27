@@ -10,7 +10,7 @@ Type-safe data interchange for Python data classes.
 :see: https://github.com/hunyadi/strong_typing
 """
 
-from typing import Dict, List, Union
+from typing import Union
 
 
 class JsonObject:
@@ -28,8 +28,8 @@ JsonType = Union[
     int,
     float,
     str,
-    Dict[str, "JsonType"],
-    List["JsonType"],
+    dict[str, "JsonType"],
+    list["JsonType"],
 ]
 
 # a JSON type that cannot contain `null` values
@@ -38,9 +38,9 @@ StrictJsonType = Union[
     int,
     float,
     str,
-    Dict[str, "StrictJsonType"],
-    List["StrictJsonType"],
+    dict[str, "StrictJsonType"],
+    list["StrictJsonType"],
 ]
 
 # a meta-type that captures the object type in a JSON schema
-Schema = Dict[str, JsonType]
+Schema = dict[str, JsonType]
