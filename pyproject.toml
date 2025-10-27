@@ -31,7 +31,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "jsonschema",
     "llama-stack-client>=0.3.0",
-    "openai>=1.107",                                  # for expires_after support
+    "openai>=2.5.0",
     "prompt-toolkit",
     "python-dotenv",
     "pyjwt[crypto]>=2.10.0",                          # Pull crypto to support RS256 for jwt. Requires 2.10.0+ for ssl_context support.
