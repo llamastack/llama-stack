@@ -399,14 +399,14 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         assert self.kvstore is not None
         await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
-    async def insert_chunks(self, vector_db_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_db_id)
+    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self, vector_db_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
+        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
     ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_db_id)
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         return await index.query_chunks(query, params)
 
     async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex:

@@ -149,13 +149,13 @@ class ShieldCallStep(StepCommon):
 class MemoryRetrievalStep(StepCommon):
     """A memory retrieval step in an agent turn.
 
-    :param vector_db_ids: The IDs of the vector databases to retrieve context from.
+    :param vector_store_ids: The IDs of the vector databases to retrieve context from.
     :param inserted_context: The context retrieved from the vector databases.
     """
 
     step_type: Literal[StepType.memory_retrieval] = StepType.memory_retrieval
     # TODO: should this be List[str]?
-    vector_db_ids: str
+    vector_store_ids: str
     inserted_context: InterleavedContent
 
 

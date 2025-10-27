@@ -367,7 +367,7 @@ def test_openai_vector_store_with_chunks(
 
     # Insert chunks using the native LlamaStack API (since OpenAI API doesn't have direct chunk insertion)
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -434,7 +434,7 @@ def test_openai_vector_store_search_relevance(
 
     # Insert chunks using native API
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -484,7 +484,7 @@ def test_openai_vector_store_search_with_ranking_options(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -544,7 +544,7 @@ def test_openai_vector_store_search_with_high_score_filter(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -610,7 +610,7 @@ def test_openai_vector_store_search_with_max_num_results(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -1175,7 +1175,7 @@ def test_openai_vector_store_search_modes(
     )
 
     client_with_models.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
     query = "Python programming language"

@@ -7,12 +7,19 @@
 import os
 from typing import Any
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
 
 DEFAULT_BASE_URL = "https://api.cerebras.ai"
+
+
+class CerebrasProviderDataValidator(BaseModel):
+    cerebras_api_key: str | None = Field(
+        default=None,
+        description="API key for Cerebras models",
+    )
 
 
 @json_schema_type

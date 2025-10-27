@@ -7,10 +7,17 @@
 import os
 from typing import Any
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
+
+
+class NVIDIAProviderDataValidator(BaseModel):
+    nvidia_api_key: str | None = Field(
+        default=None,
+        description="API key for NVIDIA NIM models",
+    )
 
 
 @json_schema_type

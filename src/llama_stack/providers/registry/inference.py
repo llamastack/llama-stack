@@ -61,6 +61,7 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=[],
             module="llama_stack.providers.remote.inference.cerebras",
             config_class="llama_stack.providers.remote.inference.cerebras.CerebrasImplConfig",
+            provider_data_validator="llama_stack.providers.remote.inference.cerebras.config.CerebrasProviderDataValidator",
             description="Cerebras inference provider for running models on Cerebras Cloud platform.",
         ),
         RemoteProviderSpec(
@@ -149,6 +150,7 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=["databricks-sdk"],
             module="llama_stack.providers.remote.inference.databricks",
             config_class="llama_stack.providers.remote.inference.databricks.DatabricksImplConfig",
+            provider_data_validator="llama_stack.providers.remote.inference.databricks.config.DatabricksProviderDataValidator",
             description="Databricks inference provider for running models on Databricks' unified analytics platform.",
         ),
         RemoteProviderSpec(
@@ -158,6 +160,7 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=[],
             module="llama_stack.providers.remote.inference.nvidia",
             config_class="llama_stack.providers.remote.inference.nvidia.NVIDIAConfig",
+            provider_data_validator="llama_stack.providers.remote.inference.nvidia.config.NVIDIAProviderDataValidator",
             description="NVIDIA inference provider for accessing NVIDIA NIM models and AI services.",
         ),
         RemoteProviderSpec(
@@ -167,6 +170,7 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=[],
             module="llama_stack.providers.remote.inference.runpod",
             config_class="llama_stack.providers.remote.inference.runpod.RunpodImplConfig",
+            provider_data_validator="llama_stack.providers.remote.inference.runpod.config.RunpodProviderDataValidator",
             description="RunPod inference provider for running models on RunPod's cloud GPU platform.",
         ),
         RemoteProviderSpec(

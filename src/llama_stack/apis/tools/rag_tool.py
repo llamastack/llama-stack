@@ -190,13 +190,13 @@ class RAGToolRuntime(Protocol):
     async def insert(
         self,
         documents: list[RAGDocument],
-        vector_db_id: str,
+        vector_store_id: str,
         chunk_size_in_tokens: int = 512,
     ) -> None:
         """Index documents so they can be used by the RAG system.
 
         :param documents: List of documents to index in the RAG system
-        :param vector_db_id: ID of the vector database to store the document embeddings
+        :param vector_store_id: ID of the vector database to store the document embeddings
         :param chunk_size_in_tokens: (Optional) Size in tokens for document chunking during indexing
         """
         ...
@@ -205,13 +205,13 @@ class RAGToolRuntime(Protocol):
     async def query(
         self,
         content: InterleavedContent,
-        vector_db_ids: list[str],
+        vector_store_ids: list[str],
         query_config: RAGQueryConfig | None = None,
     ) -> RAGQueryResult:
         """Query the RAG system for context; typically invoked by the agent.
 
         :param content: The query content to search for in the indexed documents
-        :param vector_db_ids: List of vector database IDs to search within
+        :param vector_store_ids: List of vector database IDs to search within
         :param query_config: (Optional) Configuration parameters for the query operation
         :returns: RAGQueryResult containing the retrieved content and metadata
         """

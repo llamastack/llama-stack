@@ -20,6 +20,8 @@ logger = get_logger(name=__name__, category="inference::databricks")
 class DatabricksInferenceAdapter(OpenAIMixin):
     config: DatabricksImplConfig
 
+    provider_data_api_key_field: str = "databricks_api_token"
+
     # source: https://docs.databricks.com/aws/en/machine-learning/foundation-model-apis/supported-models
     embedding_model_metadata: dict[str, dict[str, int]] = {
         "databricks-gte-large-en": {"embedding_dimension": 1024, "context_length": 8192},

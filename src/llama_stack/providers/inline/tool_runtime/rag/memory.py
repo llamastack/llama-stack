@@ -119,7 +119,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
     async def insert(
         self,
         documents: list[RAGDocument],
-        vector_db_id: str,
+        vector_store_id: str,
         chunk_size_in_tokens: int = 512,
     ) -> None:
         if not documents:
@@ -158,14 +158,14 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
 
                 try:
                     await self.vector_io_api.openai_attach_file_to_vector_store(
-                        vector_store_id=vector_db_id,
+                        vector_store_id=vector_store_id,
                         file_id=created_file.id,
                         attributes=doc.metadata,
                         chunking_strategy=chunking_strategy,
                     )
                 except Exception as e:
                     log.error(
-                        f"Failed to attach file {created_file.id} to vector store {vector_db_id} for document {doc.document_id}: {e}"
+                        f"Failed to attach file {created_file.id} to vector store {vector_store_id} for document {doc.document_id}: {e}"
                     )
                     continue
 
@@ -176,10 +176,10 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
     async def query(
         self,
         content: InterleavedContent,
-        vector_db_ids: list[str],
+        vector_store_ids: list[str],
         query_config: RAGQueryConfig | None = None,
     ) -> RAGQueryResult:
-        if not vector_db_ids:
+        if not vector_store_ids:
             raise ValueError(
                 "No vector DBs were provided to the knowledge search tool. Please provide at least one vector DB ID."
             )
@@ -192,7 +192,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
         )
         tasks = [
             self.vector_io_api.query_chunks(
-                vector_db_id=vector_db_id,
+                vector_store_id=vector_store_id,
                 query=query,
                 params={
                     "mode": query_config.mode,
@@ -201,18 +201,18 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
                     "ranker": query_config.ranker,
                 },
             )
-            for vector_db_id in vector_db_ids
+            for vector_store_id in vector_store_ids
         ]
         results: list[QueryChunksResponse] = await asyncio.gather(*tasks)
 
         chunks = []
         scores = []
 
-        for vector_db_id, result in zip(vector_db_ids, results, strict=False):
+        for vector_store_id, result in zip(vector_store_ids, results, strict=False):
             for chunk, score in zip(result.chunks, result.scores, strict=False):
                 if not hasattr(chunk, "metadata") or chunk.metadata is None:
                     chunk.metadata = {}
-                chunk.metadata["vector_db_id"] = vector_db_id
+                chunk.metadata["vector_store_id"] = vector_store_id
 
                 chunks.append(chunk)
                 scores.append(score)
@@ -250,7 +250,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
             metadata_keys_to_exclude_from_context = [
                 "token_count",
                 "metadata_token_count",
-                "vector_db_id",
+                "vector_store_id",
             ]
             metadata_for_context = {}
             for k in chunk_metadata_keys_to_include_from_context:
@@ -275,7 +275,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
                 "document_ids": [c.document_id for c in chunks[: len(picked)]],
                 "chunks": [c.content for c in chunks[: len(picked)]],
                 "scores": scores[: len(picked)],
-                "vector_db_ids": [c.metadata["vector_db_id"] for c in chunks[: len(picked)]],
+                "vector_store_ids": [c.metadata["vector_store_id"] for c in chunks[: len(picked)]],
             },
         )
 
@@ -309,7 +309,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
         )
 
     async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
-        vector_db_ids = kwargs.get("vector_db_ids", [])
+        vector_store_ids = kwargs.get("vector_store_ids", [])
         query_config = kwargs.get("query_config")
         if query_config:
             query_config = TypeAdapter(RAGQueryConfig).validate_python(query_config)
@@ -319,7 +319,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRunti
         query = kwargs["query"]
         result = await self.query(
             content=query,
-            vector_db_ids=vector_db_ids,
+            vector_store_ids=vector_store_ids,
             query_config=query_config,
         )
 

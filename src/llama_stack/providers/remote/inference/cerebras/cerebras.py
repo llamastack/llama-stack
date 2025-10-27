@@ -18,6 +18,8 @@ from .config import CerebrasImplConfig
 class CerebrasInferenceAdapter(OpenAIMixin):
     config: CerebrasImplConfig
 
+    provider_data_api_key_field: str = "cerebras_api_key"
+
     def get_base_url(self) -> str:
         return urljoin(self.config.base_url, "v1")
 

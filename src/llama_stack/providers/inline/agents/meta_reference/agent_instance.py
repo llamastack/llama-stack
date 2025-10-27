@@ -488,13 +488,13 @@ class ChatAgent(ShieldRunnerMixin):
 
         session_info = await self.storage.get_session_info(session_id)
         # if the session has a memory bank id, let the memory tool use it
-        if session_info and session_info.vector_db_id:
+        if session_info and session_info.vector_store_id:
             for tool_name in self.tool_name_to_args.keys():
                 if tool_name == MEMORY_QUERY_TOOL:
-                    if "vector_db_ids" not in self.tool_name_to_args[tool_name]:
-                        self.tool_name_to_args[tool_name]["vector_db_ids"] = [session_info.vector_db_id]
+                    if "vector_store_ids" not in self.tool_name_to_args[tool_name]:
+                        self.tool_name_to_args[tool_name]["vector_store_ids"] = [session_info.vector_store_id]
                     else:
-                        self.tool_name_to_args[tool_name]["vector_db_ids"].append(session_info.vector_db_id)
+                        self.tool_name_to_args[tool_name]["vector_store_ids"].append(session_info.vector_store_id)
 
         output_attachments = []
 

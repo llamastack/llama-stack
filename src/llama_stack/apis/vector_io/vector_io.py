@@ -529,17 +529,17 @@ class VectorIO(Protocol):
 
     # this will just block now until chunks are inserted, but it should
     # probably return a Job instance which can be polled for completion
-    # TODO: rename vector_db_id to vector_store_id once Stainless is working
+    # TODO: rename vector_store_id to vector_store_id once Stainless is working
     @webmethod(route="/vector-io/insert", method="POST", level=LLAMA_STACK_API_V1)
     async def insert_chunks(
         self,
-        vector_db_id: str,
+        vector_store_id: str,
         chunks: list[Chunk],
         ttl_seconds: int | None = None,
     ) -> None:
         """Insert chunks into a vector database.
 
-        :param vector_db_id: The identifier of the vector database to insert the chunks into.
+        :param vector_store_id: The identifier of the vector database to insert the chunks into.
         :param chunks: The chunks to insert. Each `Chunk` should contain content which can be interleaved text, images, or other types.
             `metadata`: `dict[str, Any]` and `embedding`: `List[float]` are optional.
             If `metadata` is provided, you configure how Llama Stack formats the chunk during generation.
@@ -548,17 +548,17 @@ class VectorIO(Protocol):
         """
         ...
 
-    # TODO: rename vector_db_id to vector_store_id once Stainless is working
+    # TODO: rename vector_store_id to vector_store_id once Stainless is working
     @webmethod(route="/vector-io/query", method="POST", level=LLAMA_STACK_API_V1)
     async def query_chunks(
         self,
-        vector_db_id: str,
+        vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
         """Query chunks from a vector database.
 
-        :param vector_db_id: The identifier of the vector database to query.
+        :param vector_store_id: The identifier of the vector database to query.
         :param query: The query to search for.
         :param params: The parameters of the query.
         :returns: A QueryChunksResponse.
