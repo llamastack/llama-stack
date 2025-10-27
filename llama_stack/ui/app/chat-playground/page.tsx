@@ -792,6 +792,26 @@ export default function ChatPlaygroundPage() {
       ): { text: string | null; isToolCall: boolean } => {
         const chunkObj = chunk as Record<string, unknown>;
 
+        // Skip turn_complete events to avoid duplicate content
+        // These events contain the full accumulated content which we already have from streaming deltas
+        if (
+          chunkObj?.event &&
+          typeof chunkObj.event === "object" &&
+          chunkObj.event !== null
+        ) {
+          const event = chunkObj.event as Record<string, unknown>;
+          if (
+            event?.payload &&
+            typeof event.payload === "object" &&
+            event.payload !== null
+          ) {
+            const payload = event.payload as Record<string, unknown>;
+            if (payload.event_type === "turn_complete") {
+              return { text: null, isToolCall: false };
+            }
+          }
+        }
+
         // helper to check if content contains function call JSON
         const containsToolCall = (content: string): boolean => {
           return (
@@ -1464,7 +1484,7 @@ export default function ChatPlaygroundPage() {
                 <label className="text-sm font-medium block mb-2">
                   Agent Instructions
                 </label>
-                <div className="w-full h-24 px-3 py-2 text-sm border border-input rounded-md bg-muted text-muted-foreground">
+                <div className="w-full h-24 px-3 py-2 text-sm border border-input rounded-md bg-muted text-muted-foreground overflow-y-auto">
                   {(selectedAgentId &&
                     agents.find(a => a.agent_id === selectedAgentId)
                       ?.agent_config?.instructions) ||
