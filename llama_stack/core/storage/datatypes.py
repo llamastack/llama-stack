@@ -271,6 +271,10 @@ class ServerStoresConfig(BaseModel):
         default=None,
         description="Responses store configuration (uses SQL backend)",
     )
+    prompts: KVStoreReference | None = Field(
+        default=None,
+        description="Prompts store configuration (uses KV backend)",
+    )
 
 
 class StorageConfig(BaseModel):

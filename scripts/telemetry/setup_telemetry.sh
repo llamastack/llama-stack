@@ -135,6 +135,8 @@ $CONTAINER_RUNTIME run -d --name grafana \
   -e GF_SECURITY_ADMIN_PASSWORD=admin \
   -e GF_USERS_ALLOW_SIGN_UP=false \
   -v "$SCRIPT_DIR/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z" \
+  -v "$SCRIPT_DIR/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:Z" \
+  -v "$SCRIPT_DIR/llama-stack-dashboard.json:/etc/grafana/provisioning/dashboards/llama-stack-dashboard.json:Z" \
   docker.io/grafana/grafana:11.0.0
 
 # Wait for services to start

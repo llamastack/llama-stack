@@ -91,6 +91,9 @@ jobs:
               conversations:
                 table_name: openai_conversations
                 backend: sql_default
+              prompts:
+                namespace: prompts
+                backend: kv_default
           server:
             port: 8321
           EOF

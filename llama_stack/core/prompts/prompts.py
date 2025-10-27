@@ -11,7 +11,6 @@ from pydantic import BaseModel
 
 from llama_stack.apis.prompts import ListPromptsResponse, Prompt, Prompts
 from llama_stack.core.datatypes import StackRunConfig
-from llama_stack.core.storage.datatypes import KVStoreReference
 from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
 
 
@@ -40,11 +39,10 @@ class PromptServiceImpl(Prompts):
         self.kvstore: KVStore
 
     async def initialize(self) -> None:
-        # Use metadata store backend with prompts-specific namespace
-        metadata_ref = self.config.run_config.storage.stores.metadata
-        if not metadata_ref:
-            raise ValueError("storage.stores.metadata must be configured in run config")
-        prompts_ref = KVStoreReference(namespace="prompts", backend=metadata_ref.backend)
+        # Use prompts store reference from run config
+        prompts_ref = self.config.run_config.storage.stores.prompts
+        if not prompts_ref:
+            raise ValueError("storage.stores.prompts must be configured in run config")
         self.kvstore = await kvstore_impl(prompts_ref)
 
     def _get_default_key(self, prompt_id: str) -> str:

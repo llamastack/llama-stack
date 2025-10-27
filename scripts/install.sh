@@ -30,8 +30,10 @@ materialize_telemetry_configs() {
   local otel_cfg="${dest}/otel-collector-config.yaml"
   local prom_cfg="${dest}/prometheus.yml"
   local graf_cfg="${dest}/grafana-datasources.yaml"
+  local graf_dash_cfg="${dest}/grafana-dashboards.yaml"
+  local dash_json="${dest}/llama-stack-dashboard.json"
 
-  for asset in "$otel_cfg" "$prom_cfg" "$graf_cfg"; do
+  for asset in "$otel_cfg" "$prom_cfg" "$graf_cfg" "$graf_dash_cfg" "$dash_json"; do
     if [ -e "$asset" ]; then
       die "Telemetry asset ${asset} already exists; refusing to overwrite"
     fi
@@ -103,6 +105,7 @@ datasources:
     type: prometheus
     access: proxy
     url: http://prometheus:9090
+    uid: prometheus
     isDefault: true
     editable: true
 
@@ -112,6 +115,224 @@ datasources:
     url: http://jaeger:16686
     editable: true
 EOF
+
+  cat <<'EOF' > "$graf_dash_cfg"
+apiVersion: 1
+
+providers:
+  - name: 'Llama Stack'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+EOF
+
+  # Copy the dashboard JSON inline to avoid line-length issues
+  cat > "$dash_json" <<'DASHBOARD_JSON'
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "showPoints": "auto",
+            "fillOpacity": 10
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "table", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "expr": "llama_stack_completion_tokens_total",
+          "legendFormat": "{{model_id}} ({{provider_id}})",
+          "refId": "A"
+        }
+      ],
+      "title": "Completion Tokens",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "lineInterpolation": "linear", "showPoints": "auto", "fillOpacity": 10},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "table", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "llama_stack_prompt_tokens_total", "legendFormat": "Prompt - {{model_id}}", "refId": "A"},
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "llama_stack_tokens_total", "legendFormat": "Total - {{model_id}}", "refId": "B"}
+      ],
+      "title": "Prompt & Total Tokens",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "lineInterpolation": "linear", "showPoints": "auto", "fillOpacity": 10},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "ms"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "histogram_quantile(0.95, rate(llama_stack_http_server_duration_milliseconds_bucket[5m]))", "legendFormat": "p95", "refId": "A"},
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "histogram_quantile(0.99, rate(llama_stack_http_server_duration_milliseconds_bucket[5m]))", "legendFormat": "p99", "refId": "B"}
+      ],
+      "title": "HTTP Request Duration (p95, p99)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        }
+      },
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8},
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "sum(llama_stack_http_server_duration_milliseconds_count)", "refId": "A"}
+      ],
+      "title": "Total Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        }
+      },
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8},
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "sum(llama_stack_http_server_active_requests)", "refId": "A"}
+      ],
+      "title": "Active Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "lineInterpolation": "linear", "showPoints": "auto", "fillOpacity": 10},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "id": 6,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "rate(llama_stack_http_server_duration_milliseconds_count[5m])", "legendFormat": "{{http_target}} - {{http_status_code}}", "refId": "A"}
+      ],
+      "title": "Request Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "lineInterpolation": "linear", "showPoints": "auto", "fillOpacity": 10},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "Bps"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "id": 7,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "rate(llama_stack_http_server_request_size_bytes_sum[5m])", "legendFormat": "Request", "refId": "A"},
+        {"datasource": {"type": "prometheus", "uid": "$(DS_PROMETHEUS}"}, "expr": "rate(llama_stack_http_server_response_size_bytes_sum[5m])", "legendFormat": "Response", "refId": "B"}
+      ],
+      "title": "Request/Response Sizes",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "tags": ["llama-stack"],
+  "templating": {"list": []},
+  "time": {"from": "now-15m", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Llama Stack Metrics",
+  "uid": "llama-stack-metrics",
+  "version": 0,
+  "weekStart": ""
+}
+DASHBOARD_JSON
 }
 
 # Cleanup function to remove temporary files
@@ -372,6 +593,8 @@ if [ "$WITH_TELEMETRY" = true ]; then
     -e GF_SECURITY_ADMIN_PASSWORD=admin \
     -e GF_USERS_ALLOW_SIGN_UP=false \
     -v "${TELEMETRY_ASSETS_DIR}/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z" \
+    -v "${TELEMETRY_ASSETS_DIR}/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:Z" \
+    -v "${TELEMETRY_ASSETS_DIR}/llama-stack-dashboard.json:/etc/grafana/provisioning/dashboards/llama-stack-dashboard.json:Z" \
     docker.io/grafana/grafana:11.0.0 > /dev/null 2>&1; then
     die "Grafana startup failed"
   fi
