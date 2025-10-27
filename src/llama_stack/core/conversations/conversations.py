@@ -312,3 +312,6 @@ class ConversationServiceImpl(Conversations):
 
         logger.debug(f"Deleted item {item_id} from conversation {conversation_id}")
         return ConversationItemDeletedResource(id=item_id)
+
+    async def shutdown(self) -> None:
+        pass
