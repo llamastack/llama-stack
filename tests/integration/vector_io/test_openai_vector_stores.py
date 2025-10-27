@@ -61,6 +61,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::milvus",
             "remote::pgvector",
             "remote::weaviate",
+            "remote::chromadb",
         ],
         "hybrid": [
             "inline::milvus",
@@ -68,6 +69,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::milvus",
             "remote::pgvector",
             "remote::weaviate",
+            "remote::chromadb",
         ],
     }
     supported_providers = search_mode_support.get(search_mode, [])
