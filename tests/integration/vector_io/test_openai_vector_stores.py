@@ -80,6 +80,13 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
     )
 
 
+# TODO
+def skip_if_files_provider_is_openai(llama_stack_client):
+    providers = [provider for provider in llama_stack_client.providers.list() if provider.api == "files"]
+    assert len(providers) == 1, "Expected exactly one files provider"
+    return providers[0].provider_type == "remote::openai"
+
+
 @pytest.fixture(scope="session")
 def sample_chunks():
     return [
