@@ -128,7 +128,9 @@ class StreamingResponseOrchestrator:
         self.prompt = prompt
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
-        self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = ctx.tool_context.previous_tools if ctx.tool_context else {}
+        self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
+            ctx.tool_context.previous_tools if ctx.tool_context else {}
+        )
         # Track final messages after all tool executions
         self.final_messages: list[OpenAIMessageParam] = []
         # mapping for annotations
@@ -1138,7 +1140,9 @@ class StreamingResponseOrchestrator:
                     yield evt
             # Process all remaining tools (including MCP tools) and emit streaming events
             if self.ctx.tool_context.tools_to_process:
-                async for stream_event in self._process_new_tools(self.ctx.tool_context.tools_to_process, output_messages):
+                async for stream_event in self._process_new_tools(
+                    self.ctx.tool_context.tools_to_process, output_messages
+                ):
                     yield stream_event
 
     def _approval_required(self, tool_name: str) -> bool:

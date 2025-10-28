@@ -330,8 +330,8 @@ async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[
 
     # Look up shields to get their provider_resource_id (actual model ID)
     model_ids = []
-    # list_shields not in Safety interface but available at runtime via API routing
-    shields_list = await safety_api.list_shields()  # type: ignore[attr-defined]
+    # TODO: list_shields not in Safety interface but available at runtime via API routing
+    shields_list = await safety_api.routing_table.list_shields()  # type: ignore[attr-defined]
 
     for guardrail_id in guardrail_ids:
         matching_shields = [shield for shield in shields_list.data if shield.identifier == guardrail_id]
@@ -348,9 +348,9 @@ async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[
         for result in response.results:
             if result.flagged:
                 message = result.user_message or "Content blocked by safety guardrails"
-                flagged_categories = [
-                    cat for cat, flagged in result.categories.items() if flagged
-                ] if result.categories else []
+                flagged_categories = (
+                    [cat for cat, flagged in result.categories.items() if flagged] if result.categories else []
+                )
                 violation_type = result.metadata.get("violation_type", []) if result.metadata else []
 
                 if flagged_categories:
