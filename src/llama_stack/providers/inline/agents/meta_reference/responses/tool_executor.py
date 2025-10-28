@@ -28,7 +28,6 @@ from llama_stack.apis.agents.openai_responses import (
 )
 from llama_stack.apis.common.content_types import (
     ImageContentItem,
-    InterleavedContent,
     TextContentItem,
 )
 from llama_stack.apis.inference import (
@@ -114,9 +113,7 @@ class ToolExecutor:
             final_output_message=output_message,
             final_input_message=input_message,
             citation_files=(
-                metadata.get("citation_files")
-                if result and (metadata := getattr(result, "metadata", None))
-                else None
+                metadata.get("citation_files") if result and (metadata := getattr(result, "metadata", None)) else None
             ),
         )
 
@@ -399,9 +396,9 @@ class ToolExecutor:
             )
             if error_exc:
                 message.error = str(error_exc)
-            elif (
-                result and (error_code := getattr(result, "error_code", None)) and error_code > 0
-            ) or (result and (error_message := getattr(result, "error_message", None))):
+            elif (result and (error_code := getattr(result, "error_code", None)) and error_code > 0) or (
+                result and getattr(result, "error_message", None)
+            ):
                 ec = getattr(result, "error_code", "unknown")
                 em = getattr(result, "error_message", "")
                 message.error = f"Error (code {ec}): {em}"
