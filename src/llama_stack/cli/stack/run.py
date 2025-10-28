@@ -168,7 +168,7 @@ class StackRun(Subcommand):
         # Another approach would be to ignore SIGINT entirely - let uvicorn handle it through its own
         # signal handling but this is quite intrusive and not worth the effort.
         try:
-            uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)
+            uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
 
