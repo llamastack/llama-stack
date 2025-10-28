@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Annotated, Any, cast
