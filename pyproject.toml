@@ -103,9 +103,9 @@ type_checking = [
     "torchvision",  # For multimodal model type checking
     "sqlite-vec",  # For SQLite vector store type checking
     "faiss-cpu",  # For Faiss vector store type checking
+    "lm-format-enforcer",  # For constrained generation type checking
     "mcp",  # For Model Context Protocol tools type checking
     "ollama",  # For Ollama provider type checking
-    # Note: lmformatenforcer is not available in PyPI, so it remains an import-not-found error
 ]
 # These are the dependencies required for running unit tests.
 unit = [

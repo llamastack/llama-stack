@@ -57,18 +57,17 @@ repos:
     hooks:
     -   id: uv-lock
 
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.1
+-   repo: local
     hooks:
     -   id: mypy
+        name: mypy
         additional_dependencies:
-          - uv==0.6.2
-          - mypy
-          - pytest
-          - rich
-          - types-requests
-          - pydantic
+          - uv==0.7.8
+        entry: uv run --group dev --group type_checking mypy
+        language: python
+        types: [python]
         pass_filenames: false
+        require_serial: true
 
 # - repo: https://github.com/tcort/markdown-link-check
 #   rev: v3.11.2
