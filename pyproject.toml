@@ -347,7 +347,17 @@ exclude = [
 
 [[tool.mypy.overrides]]
 # packages that lack typing annotations, do not have stubs, or are unavailable.
-module = ["yaml", "fire"]
+module = [
+    "yaml",
+    "fire",
+    "torchtune.*",
+    "fairscale.*",
+    "torchvision.*",
+    "datasets",
+    "nest_asyncio",
+    "streamlit_option_menu",
+    "lmformatenforcer.*",
+]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]

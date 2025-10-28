@@ -8,8 +8,8 @@
 from collections.abc import Iterable
 from typing import Any, cast
 
-from together import AsyncTogether
-from together.constants import BASE_URL
+from together import AsyncTogether  # type: ignore[import-untyped]
+from together.constants import BASE_URL  # type: ignore[import-untyped]
 
 from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
