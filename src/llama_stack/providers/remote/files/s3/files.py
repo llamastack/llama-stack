@@ -6,11 +6,14 @@
 
 import uuid
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 from fastapi import Depends, File, Form, Response, UploadFile
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
 
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
@@ -34,7 +37,7 @@ from .config import S3FilesImplConfig
 # TODO: provider data for S3 credentials
 
 
-def _create_s3_client(config: S3FilesImplConfig) -> boto3.client:
+def _create_s3_client(config: S3FilesImplConfig) -> S3Client:
     try:
         s3_config = {
             "region_name": config.region,
@@ -52,13 +55,13 @@ def _create_s3_client(config: S3FilesImplConfig) -> boto3.client:
                 }
             )
 
-        return boto3.client("s3", **s3_config)
+        return cast("S3Client", boto3.client("s3", **s3_config))  # type: ignore[call-overload]
 
     except (BotoCoreError, NoCredentialsError) as e:
         raise RuntimeError(f"Failed to initialize S3 client: {e}") from e
 
 
-async def _create_bucket_if_not_exists(client: boto3.client, config: S3FilesImplConfig) -> None:
+async def _create_bucket_if_not_exists(client: S3Client, config: S3FilesImplConfig) -> None:
     try:
         client.head_bucket(Bucket=config.bucket_name)
     except ClientError as e:
@@ -76,7 +79,7 @@ async def _create_bucket_if_not_exists(client: boto3.client, config: S3FilesImpl
                 else:
                     client.create_bucket(
                         Bucket=config.bucket_name,
-                        CreateBucketConfiguration={"LocationConstraint": config.region},
+                        CreateBucketConfiguration=cast(Any, {"LocationConstraint": config.region}),
                     )
             except ClientError as create_error:
                 raise RuntimeError(
@@ -128,7 +131,7 @@ class S3FilesImpl(Files):
     def __init__(self, config: S3FilesImplConfig, policy: list[AccessRule]) -> None:
         self._config = config
         self.policy = policy
-        self._client: boto3.client | None = None
+        self._client: S3Client | None = None
         self._sql_store: AuthorizedSqlStore | None = None
 
     def _now(self) -> int:
@@ -184,7 +187,7 @@ class S3FilesImpl(Files):
         pass
 
     @property
-    def client(self) -> boto3.client:
+    def client(self) -> S3Client:
         assert self._client is not None, "Provider not initialized"
         return self._client
 
