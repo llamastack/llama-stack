@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/collapsible";
 import { FilePreview } from "@/components/ui/file-preview";
 import { MarkdownRenderer } from "@/components/chat-playground/markdown-renderer";
+import {
+  ThinkingBlock,
+  type ThinkingPart,
+} from "@/components/chat-playground/thinking-block";
 
 const chatBubbleVariants = cva(
   "group/message relative break-words rounded-lg p-3 text-sm sm:max-w-[70%]",
@@ -117,6 +121,7 @@ interface StepStartPart {
 type MessagePart =
   | TextPart
   | ReasoningPart
+  | ThinkingPart
   | ToolInvocationPart
   | SourcePart
   | FilePart
@@ -235,6 +240,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         );
       } else if (part.type === "reasoning") {
         return <ReasoningBlock key={`reasoning-${index}`} part={part} />;
+      } else if (part.type === "thinking") {
+        return <ThinkingBlock key={`thinking-${index}`} part={part} />;
       } else if (part.type === "tool-invocation") {
         return (
           <ToolCall

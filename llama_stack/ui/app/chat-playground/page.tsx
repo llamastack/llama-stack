@@ -27,6 +27,12 @@ import {
   cleanMessageContent,
   extractCleanText,
 } from "@/lib/message-content-utils";
+import {
+  extractThinkTags,
+  extractStreamingThinking,
+  sanitizeThinkingContent,
+} from "@/lib/xml-parser";
+import type { ThinkingPart } from "@/components/chat-playground/thinking-block";
 export default function ChatPlaygroundPage() {
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(
     null
@@ -1057,6 +1063,9 @@ export default function ChatPlaygroundPage() {
       });
 
       let fullContent = "";
+      let thinkingBuffer = "";
+      const thinkingParts: ThinkingPart[] = [];
+      let currentThinkingStartTime: number | null = null;
 
       for await (const chunk of response) {
         const { text: deltaText } = processChunk(chunk);
@@ -1087,7 +1096,36 @@ export default function ChatPlaygroundPage() {
         }
 
         if (deltaText) {
+          // Add to buffer for thinking extraction
+          thinkingBuffer += deltaText;
+
+          // Try to extract thinking content from buffer
+          const streamingResult = extractStreamingThinking(thinkingBuffer);
+
+          if (streamingResult.isComplete && streamingResult.thinking) {
+            // We have a complete thinking block
+            const endTime = Date.now();
+            const thinkingPart: ThinkingPart = {
+              type: "thinking",
+              content: sanitizeThinkingContent(streamingResult.thinking),
+              startTime: currentThinkingStartTime || endTime,
+              endTime: endTime,
+            };
+            thinkingParts.push(thinkingPart);
+            thinkingBuffer = streamingResult.remainingBuffer;
+            currentThinkingStartTime = null;
+          } else if (
+            !streamingResult.isComplete &&
+            streamingResult.thinking &&
+            !currentThinkingStartTime
+          ) {
+            // Start of a thinking block
+            currentThinkingStartTime = Date.now();
+          }
+
+          // Update full content with text that doesn't include thinking tags
           fullContent += deltaText;
+          const cleanedFullContent = extractThinkTags(fullContent).cleanText;
 
           flushSync(() => {
             setCurrentSession(prev => {
@@ -1095,7 +1133,16 @@ export default function ChatPlaygroundPage() {
               const newMessages = [...prev.messages];
               const last = newMessages[newMessages.length - 1];
               if (last.role === "assistant") {
-                last.content = fullContent;
+                // Update content with cleaned text (without thinking tags)
+                last.content = cleanedFullContent;
+
+                // Add thinking parts to the message
+                if (thinkingParts.length > 0) {
+                  last.parts = [
+                    ...thinkingParts,
+                    { type: "text", text: cleanedFullContent },
+                  ];
+                }
               }
               const updatedSession = {
                 ...prev,

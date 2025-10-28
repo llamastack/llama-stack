@@ -30,7 +30,7 @@ dependencies = [
     "httpx",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-client>=0.3.0",
+    "llama-stack-client>=0.2.23",
     "openai>=1.107",                                  # for expires_after support
     "prompt-toolkit",
     "python-dotenv",
@@ -57,7 +57,6 @@ dependencies = [
 ui = [
     "streamlit",
     "pandas",
-    "llama-stack-client>=0.3.0",
     "streamlit-option-menu",
 ]
 

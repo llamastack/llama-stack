@@ -34,7 +34,14 @@ export default function ContentDetailPage() {
   const getTextFromContent = (content: unknown): string => {
     if (typeof content === "string") {
       return content;
-    } else if (content && content.type === "text") {
+    } else if (
+      content &&
+      typeof content === "object" &&
+      "type" in content &&
+      content.type === "text" &&
+      "text" in content &&
+      typeof content.text === "string"
+    ) {
       return content.text;
     }
     return "";
