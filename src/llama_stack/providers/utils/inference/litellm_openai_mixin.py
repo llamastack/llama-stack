@@ -161,11 +161,7 @@ class LiteLLMOpenAIMixin(
         if request.tools:
             input_dict["tools"] = [convert_tooldef_to_openai_tool(tool) for tool in request.tools]
             if request.tool_config and (tool_choice := request.tool_config.tool_choice):
-                input_dict["tool_choice"] = (
-                    tool_choice.value
-                    if isinstance(tool_choice, ToolChoice)
-                    else tool_choice
-                )
+                input_dict["tool_choice"] = tool_choice.value if isinstance(tool_choice, ToolChoice) else tool_choice
 
         return {
             "model": request.model,
