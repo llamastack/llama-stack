@@ -80,14 +80,7 @@ async def convert_chat_choice_to_response_message(
 
 
 async def convert_response_content_to_chat_content(
-    content: (
-        str
-        # List types for exact matches (invariant)
-        | list[OpenAIResponseInputMessageContent]
-        | list[OpenAIResponseOutputMessageContent]
-        # Sequence for mixed content types (covariant - accepts list of subtypes)
-        | Sequence[OpenAIResponseInputMessageContent | OpenAIResponseOutputMessageContent]
-    ),
+    content: str | Sequence[OpenAIResponseInputMessageContent | OpenAIResponseOutputMessageContent],
 ) -> str | list[OpenAIChatCompletionContentPartParam]:
     """
     Convert the content parts from an OpenAI Response API request into OpenAI Chat Completion content parts.
