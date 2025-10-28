@@ -141,15 +141,15 @@ def build_encoder_attention_mask(
     """
     Build vision encoder attention mask that omits padding tokens.
     """
-    masks = []
+    masks_list = []
     for arx in ar:
         mask_i = torch.ones((num_chunks, x.shape[2], 1), dtype=x.dtype)
         mask_i[: arx[0] * arx[1], :ntok] = 0
         mask_i = mask_i.view(num_chunks * x.shape[2], -1)
         mask_i = mask_i @ mask_i.T * get_negative_inf_value(x.dtype)
         mask_i = mask_i.unsqueeze(0)
-        masks.append(mask_i)
-    masks = torch.stack(masks).to(x.device).expand(-1, n_heads, -1, -1)
+        masks_list.append(mask_i)
+    masks = torch.stack(masks_list).to(x.device).expand(-1, n_heads, -1, -1)
     return masks
 
 
