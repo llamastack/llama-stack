@@ -7,7 +7,6 @@
 from collections.abc import AsyncGenerator
 from contextvars import ContextVar
 
-
 _MISSING = object()
 
 
@@ -35,9 +34,9 @@ def preserve_contexts_async_generator[T](
                     previous_values[context_var] = _MISSING
                 tokens[context_var] = context_var.set(initial_context_values[context_var.name])
 
-            def _restore_context_var(context_var: ContextVar) -> None:
-                token = tokens.get(context_var)
-                previous_value = previous_values.get(context_var, _MISSING)
+            def _restore_context_var(context_var: ContextVar, *, _tokens=tokens, _prev=previous_values) -> None:
+                token = _tokens.get(context_var)
+                previous_value = _prev.get(context_var, _MISSING)
                 if token is not None:
                     try:
                         context_var.reset(token)

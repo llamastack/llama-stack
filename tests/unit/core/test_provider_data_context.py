@@ -1,8 +1,13 @@
-import json
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 import asyncio
-import pytest
-from contextvars import ContextVar
+import json
 from contextlib import contextmanager
+from contextvars import ContextVar
 
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 
@@ -39,22 +44,16 @@ async def async_event_gen():
     return event_gen()
 
 
-@pytest.mark.asyncio
 async def test_provider_data_context_cleared_between_sse_requests():
     headers = {"X-LlamaStack-Provider-Data": json.dumps({"api_key": "abc"})}
     with request_provider_data_context(headers):
-        gen1 = preserve_contexts_async_generator(
-            sse_generator(async_event_gen()), [PROVIDER_DATA_VAR]
-        )
+        gen1 = preserve_contexts_async_generator(sse_generator(async_event_gen()), [PROVIDER_DATA_VAR])
 
     events1 = [event async for event in gen1]
     assert events1 == [create_sse_event({"api_key": "abc"})]
     assert PROVIDER_DATA_VAR.get() is None
 
-    gen2 = preserve_contexts_async_generator(
-        sse_generator(async_event_gen()), [PROVIDER_DATA_VAR]
-    )
+    gen2 = preserve_contexts_async_generator(sse_generator(async_event_gen()), [PROVIDER_DATA_VAR])
     events2 = [event async for event in gen2]
     assert events2 == [create_sse_event(None)]
     assert PROVIDER_DATA_VAR.get() is None
-
