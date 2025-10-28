@@ -260,8 +260,12 @@ jobs:
         run: |
           RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
 
+          # Try with src/ prefix first (newer releases), then without (older releases)
           if git show "$RELEASE_TAG:src/llama_stack/distributions/ci-tests/run.yaml" > /tmp/release-ci-tests-run.yaml 2>/dev/null; then
-            echo "Extracted ci-tests run.yaml from release $RELEASE_TAG"
+            echo "Extracted ci-tests run.yaml from release $RELEASE_TAG (src/ path)"
+            echo "has_config=true" >> $GITHUB_OUTPUT
+          elif git show "$RELEASE_TAG:llama_stack/distributions/ci-tests/run.yaml" > /tmp/release-ci-tests-run.yaml 2>/dev/null; then
+            echo "Extracted ci-tests run.yaml from release $RELEASE_TAG (old path)"
             echo "has_config=true" >> $GITHUB_OUTPUT
           else
             echo "::warning::ci-tests/run.yaml not found in release $RELEASE_TAG"
@@ -342,8 +346,8 @@ jobs:
         run: |
           RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
 
-          # Get run.yaml files from the release
-          CONFIG_PATHS=$(git ls-tree -r --name-only "$RELEASE_TAG" | grep "src/llama_stack/distributions/.*/run.yaml$" || true)
+          # Get run.yaml files from the release (try both src/ and old path)
+          CONFIG_PATHS=$(git ls-tree -r --name-only "$RELEASE_TAG" | grep "llama_stack/distributions/.*/run.yaml$" || true)
 
           if [ -z "$CONFIG_PATHS" ]; then
             echo "::warning::No run.yaml files found in release $RELEASE_TAG"
