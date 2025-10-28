@@ -358,11 +358,10 @@ class ReferenceBatchesImpl(Batches):
 
         # TODO(SECURITY): do something about large files
         file_content_response = await self.files_api.openai_retrieve_file_content(batch.input_file_id)
-        # Handle both bytes and memoryview types
-        body = file_content_response.body
-        if isinstance(body, memoryview):
-            body = bytes(body)
-        file_content = body.decode("utf-8")
+        # Handle both bytes and memoryview types - convert to bytes unconditionally
+        # (bytes(x) returns x if already bytes, creates new bytes from memoryview otherwise)
+        body_bytes = bytes(file_content_response.body)
+        file_content = body_bytes.decode("utf-8")
         for line_num, line in enumerate(file_content.strip().split("\n"), 1):
             if line.strip():  # skip empty lines
                 try:
