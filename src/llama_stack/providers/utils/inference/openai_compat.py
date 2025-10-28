@@ -966,12 +966,12 @@ def openai_messages_to_messages(
     for message in messages:
         converted_message: Message
         if message.role == "system":
-            converted_message = SystemMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
+            converted_message = SystemMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # OpenAI SDK uses aliased types internally that mypy sees as incompatible with base types
         elif message.role == "user":
-            converted_message = UserMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
+            converted_message = UserMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # OpenAI SDK uses aliased types internally that mypy sees as incompatible with base types
         elif message.role == "assistant":
             converted_message = CompletionMessage(
-                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
+                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # OpenAI SDK uses aliased types internally that mypy sees as incompatible with base types
                 tool_calls=_convert_openai_tool_calls(message.tool_calls) if message.tool_calls else [],  # type: ignore[arg-type]  # OpenAI tool_calls type incompatible with conversion function
                 stop_reason=StopReason.end_of_turn,
             )
@@ -979,7 +979,7 @@ def openai_messages_to_messages(
             converted_message = ToolResponseMessage(
                 role="tool",
                 call_id=message.tool_call_id,
-                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
+                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # OpenAI SDK uses aliased types internally that mypy sees as incompatible with base types
             )
         else:
             raise ValueError(f"Unknown role {message.role}")
