@@ -289,16 +289,19 @@ class OpenAIResponsesImpl:
             failed_response = None
 
             async for stream_chunk in stream_gen:
-                if stream_chunk.type in {"response.completed", "response.incomplete"}:
-                    if final_response is not None:
-                        raise ValueError(
-                            "The response stream produced multiple terminal responses! "
-                            f"Earlier response from {final_event_type}"
-                        )
-                    final_response = stream_chunk.response
-                    final_event_type = stream_chunk.type
-                elif stream_chunk.type == "response.failed":
-                    failed_response = stream_chunk.response
+                match stream_chunk.type:
+                    case "response.completed" | "response.incomplete":
+                        if final_response is not None:
+                            raise ValueError(
+                                "The response stream produced multiple terminal responses! "
+                                f"Earlier response from {final_event_type}"
+                            )
+                        final_response = stream_chunk.response
+                        final_event_type = stream_chunk.type
+                    case "response.failed":
+                        failed_response = stream_chunk.response
+                    case _:
+                        pass  # Other event types don't have .response
 
             if failed_response is not None:
                 error_message = (
@@ -370,14 +373,16 @@ class OpenAIResponsesImpl:
 
         output_items = []
         async for stream_chunk in orchestrator.create_response():
-            if stream_chunk.type in {"response.completed", "response.incomplete"}:
-                final_response = stream_chunk.response
-            elif stream_chunk.type == "response.failed":
-                failed_response = stream_chunk.response
-
-            if stream_chunk.type == "response.output_item.done":
-                item = stream_chunk.item
-                output_items.append(item)
+            match stream_chunk.type:
+                case "response.completed" | "response.incomplete":
+                    final_response = stream_chunk.response
+                case "response.failed":
+                    failed_response = stream_chunk.response
+                case "response.output_item.done":
+                    item = stream_chunk.item
+                    output_items.append(item)
+                case _:
+                    pass  # Other event types
 
             # Store and sync before yielding terminal events
             # This ensures the storage/syncing happens even if the consumer breaks after receiving the event
