@@ -430,6 +430,32 @@ def _unwrap_generic_list(typ: type[list[T]]) -> type[T]:
     return list_type  # type: ignore[no-any-return]
 
 
+def is_generic_sequence(typ: object) -> bool:
+    "True if the specified type is a generic Sequence, i.e. `Sequence[T]`."
+    import collections.abc
+
+    typ = unwrap_annotated_type(typ)
+    return typing.get_origin(typ) is collections.abc.Sequence
+
+
+def unwrap_generic_sequence(typ: object) -> type:
+    """
+    Extracts the item type of a Sequence type.
+
+    :param typ: The Sequence type `Sequence[T]`.
+    :returns: The item type `T`.
+    """
+
+    return rewrap_annotated_type(_unwrap_generic_sequence, typ)  # type: ignore[arg-type]
+
+
+def _unwrap_generic_sequence(typ: object) -> type:
+    "Extracts the item type of a Sequence type (e.g. returns `T` for `Sequence[T]`)."
+
+    (sequence_type,) = typing.get_args(typ)  # unpack single tuple element
+    return sequence_type  # type: ignore[no-any-return]
+
+
 def is_generic_set(typ: object) -> TypeGuard[type[set]]:
     "True if the specified type is a generic set, i.e. `Set[T]`."
 
