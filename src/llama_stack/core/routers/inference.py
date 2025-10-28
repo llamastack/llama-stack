@@ -119,7 +119,7 @@ class InferenceRouter(Inference):
             prompt_tokens: Number of tokens in the prompt
             completion_tokens: Number of tokens in the completion
             total_tokens: Total number of tokens used
-            model_id: The model identifier
+            fully_qualified_model_id: 
             provider_id: The provider identifier
 
         Returns:
