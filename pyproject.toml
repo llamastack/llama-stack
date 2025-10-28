@@ -72,6 +72,13 @@ dev = [
     "black",
     "ruff",
     "mypy",
+    "pre-commit",
+    "ruamel.yaml", # needed for openapi generator
+]
+# Type checking dependencies - includes type stubs and optional runtime dependencies
+# needed for complete mypy coverage across all optional features
+type_checking = [
+    # Type stubs
     "types-requests",
     "types-setuptools",
     "types-jsonschema",
@@ -79,8 +86,26 @@ dev = [
     "types-psutil",
     "types-tqdm",
     "boto3-stubs[s3]",
-    "pre-commit",
-    "ruamel.yaml", # needed for openapi generator
+    # Optional runtime dependencies for type checking
+    "streamlit",  # For UI type checking
+    "streamlit-option-menu",  # For UI type checking
+    "pandas",  # For UI and data processing type checking
+    "anthropic",  # For Anthropic provider type checking
+    "databricks-sdk",  # For Databricks provider type checking
+    "fairscale",  # For model parallelism type checking
+    "torchtune",  # For fine-tuning type checking
+    "trl",  # For HuggingFace training type checking
+    "peft",  # For HuggingFace LoRA/QLoRA fine-tuning type checking
+    "datasets",  # For dataset loading type checking
+    "together",  # For Together AI provider type checking
+    "nest-asyncio",  # For library client type checking
+    "pymongo",  # For MongoDB kvstore type checking
+    "torchvision",  # For multimodal model type checking
+    "sqlite-vec",  # For SQLite vector store type checking
+    "faiss-cpu",  # For Faiss vector store type checking
+    "mcp",  # For Model Context Protocol tools type checking
+    "ollama",  # For Ollama provider type checking
+    # Note: lmformatenforcer is not available in PyPI, so it remains an import-not-found error
 ]
 # These are the dependencies required for running unit tests.
 unit = [
