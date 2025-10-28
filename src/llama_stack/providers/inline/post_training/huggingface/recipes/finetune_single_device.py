@@ -358,6 +358,10 @@ class HFFinetuningSingleDevice:
         if peft_config:
             logger.info("Merging LoRA weights with base model")
             # TRL's merge_and_unload returns a HuggingFace model
+            # Both cast() and type: ignore are needed here:
+            # - cast() tells mypy the return type is HFAutoModel for downstream code
+            # - type: ignore suppresses errors on the merge_and_unload() call itself,
+            #   which mypy can't type-check due to TRL library's incomplete type stubs
             model_obj = cast(HFAutoModel, trainer.model.merge_and_unload())  # type: ignore[union-attr,operator]
         else:
             # trainer.model is the trained HuggingFace model
