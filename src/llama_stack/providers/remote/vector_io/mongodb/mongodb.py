@@ -17,12 +17,8 @@ from pymongo.server_api import ServerApi
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.inference import InterleavedContent
+from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
 from llama_stack.apis.vector_stores import VectorStore
-from llama_stack.apis.vector_io import (
-    Chunk,
-    QueryChunksResponse,
-    VectorIO,
-)
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import (
     HealthResponse,
@@ -267,7 +263,7 @@ class MongoDBIndex(EmbeddingIndex):
             # Ensure text index exists
             await self._ensure_text_index()
 
-            pipeline = [
+            pipeline: list[dict[str, Any]] = [
                 {"$match": {"$text": {"$search": query_string}}},
                 {
                     "$project": {
