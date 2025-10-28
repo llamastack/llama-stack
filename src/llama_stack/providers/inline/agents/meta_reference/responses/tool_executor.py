@@ -225,48 +225,58 @@ class ToolExecutor:
         # Emit in_progress event based on tool type (only for tools with specific streaming events)
         if mcp_tool_to_server and function_name in mcp_tool_to_server:
             sequence_number += 1
-            mcp_progress_event = OpenAIResponseObjectStreamResponseMcpCallInProgress(
-                item_id=item_id,
-                output_index=output_index,
+            yield ToolExecutionResult(
+                stream_event=OpenAIResponseObjectStreamResponseMcpCallInProgress(
+                    item_id=item_id,
+                    output_index=output_index,
+                    sequence_number=sequence_number,
+                ),
                 sequence_number=sequence_number,
             )
-            yield ToolExecutionResult(stream_event=mcp_progress_event, sequence_number=sequence_number)
         elif function_name == "web_search":
             sequence_number += 1
-            web_progress_event = OpenAIResponseObjectStreamResponseWebSearchCallInProgress(
-                item_id=item_id,
-                output_index=output_index,
+            yield ToolExecutionResult(
+                stream_event=OpenAIResponseObjectStreamResponseWebSearchCallInProgress(
+                    item_id=item_id,
+                    output_index=output_index,
+                    sequence_number=sequence_number,
+                ),
                 sequence_number=sequence_number,
             )
-            yield ToolExecutionResult(stream_event=web_progress_event, sequence_number=sequence_number)
         elif function_name == "knowledge_search":
             sequence_number += 1
-            file_progress_event = OpenAIResponseObjectStreamResponseFileSearchCallInProgress(
-                item_id=item_id,
-                output_index=output_index,
+            yield ToolExecutionResult(
+                stream_event=OpenAIResponseObjectStreamResponseFileSearchCallInProgress(
+                    item_id=item_id,
+                    output_index=output_index,
+                    sequence_number=sequence_number,
+                ),
                 sequence_number=sequence_number,
             )
-            yield ToolExecutionResult(stream_event=file_progress_event, sequence_number=sequence_number)
 
         # For web search, emit searching event
         if function_name == "web_search":
             sequence_number += 1
-            web_searching_event = OpenAIResponseObjectStreamResponseWebSearchCallSearching(
-                item_id=item_id,
-                output_index=output_index,
+            yield ToolExecutionResult(
+                stream_event=OpenAIResponseObjectStreamResponseWebSearchCallSearching(
+                    item_id=item_id,
+                    output_index=output_index,
+                    sequence_number=sequence_number,
+                ),
                 sequence_number=sequence_number,
             )
-            yield ToolExecutionResult(stream_event=web_searching_event, sequence_number=sequence_number)
 
         # For file search, emit searching event
         if function_name == "knowledge_search":
             sequence_number += 1
-            file_searching_event = OpenAIResponseObjectStreamResponseFileSearchCallSearching(
-                item_id=item_id,
-                output_index=output_index,
+            yield ToolExecutionResult(
+                stream_event=OpenAIResponseObjectStreamResponseFileSearchCallSearching(
+                    item_id=item_id,
+                    output_index=output_index,
+                    sequence_number=sequence_number,
+                ),
                 sequence_number=sequence_number,
             )
-            yield ToolExecutionResult(stream_event=file_searching_event, sequence_number=sequence_number)
 
     async def _execute_tool(
         self,
@@ -440,6 +450,7 @@ class ToolExecutor:
         # Build input message
         input_message: OpenAIToolMessageParam | None = None
         if result and (result_content := getattr(result, "content", None)):
+            # all the mypy contortions here are still unsatisfactory with random Any typing
             if isinstance(result_content, str):
                 msg_content: str | list[Any] = result_content
             elif isinstance(result_content, list):
