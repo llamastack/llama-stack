@@ -10,7 +10,7 @@ import hashlib
 import json
 import os
 import re
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Sequence
 from contextlib import contextmanager
 from enum import StrEnum
 from pathlib import Path
@@ -599,7 +599,7 @@ def _combine_model_list_responses(endpoint: str, records: list[dict[str, Any]]) 
     if endpoint == "/api/tags":
         from ollama import ListResponse
 
-        body = ListResponse(models=ordered)
+        body = ListResponse(models=cast(Any, ordered))  # type: ignore[arg-type]
     return {"request": canonical_req, "response": {"body": body, "is_streaming": False}}
 
 

@@ -193,7 +193,7 @@ class LoraFinetuningSingleDevice:
         log.info("Optimizer is initialized.")
 
         self._loss_fn = CEWithChunkedOutputLoss()
-        self._model.set_num_output_chunks(self._loss_fn.num_output_chunks)
+        self._model.set_num_output_chunks(self._loss_fn.num_output_chunks)  # type: ignore[operator]
         log.info("Loss is initialized.")
 
         assert isinstance(self.training_config.data_config, DataConfig), "DataConfig must be initialized"
@@ -284,7 +284,7 @@ class LoraFinetuningSingleDevice:
         if self._is_dora:
             for m in model.modules():
                 if hasattr(m, "initialize_dora_magnitude"):
-                    m.initialize_dora_magnitude()
+                    m.initialize_dora_magnitude()  # type: ignore[operator]
         if lora_weights_state_dict:
             lora_missing, lora_unexpected = model.load_state_dict(lora_weights_state_dict, strict=False)
         else:
@@ -353,7 +353,7 @@ class LoraFinetuningSingleDevice:
             dataset_type=self._data_format.value,
         )
 
-        sampler = DistributedSampler(
+        sampler: DistributedSampler = DistributedSampler(
             ds,
             num_replicas=1,
             rank=0,
@@ -389,7 +389,7 @@ class LoraFinetuningSingleDevice:
             num_training_steps=num_training_steps,
             last_epoch=last_epoch,
         )
-        return lr_scheduler
+        return lr_scheduler  # type: ignore[no-any-return]
 
     async def save_checkpoint(self, epoch: int) -> str:
         ckpt_dict = {}
@@ -447,7 +447,7 @@ class LoraFinetuningSingleDevice:
         # free logits otherwise it peaks backward memory
         del logits
 
-        return loss
+        return loss  # type: ignore[no-any-return]
 
     async def train(self) -> tuple[dict[str, Any], list[Checkpoint]]:
         """
