@@ -10,7 +10,7 @@ import hashlib
 import json
 import os
 import re
-from collections.abc import Callable, Generator, Sequence
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from enum import StrEnum
 from pathlib import Path

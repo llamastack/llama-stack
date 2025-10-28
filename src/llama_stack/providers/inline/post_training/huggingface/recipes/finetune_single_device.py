@@ -14,7 +14,6 @@ import torch
 from datasets import Dataset
 from peft import LoraConfig
 from transformers import (
-    AutoModelForCausalLM,
     AutoTokenizer,
 )
 from trl import SFTConfig, SFTTrainer
