@@ -40,7 +40,9 @@ from openai.types.completion_choice import CompletionChoice
 from llama_stack.core.testing_context import get_test_context, is_debug_mode
 
 # update the "finish_reason" field, since its type definition is wrong (no None is accepted)
-CompletionChoice.model_fields["finish_reason"].annotation = Literal["stop", "length", "content_filter"] | None
+CompletionChoice.model_fields["finish_reason"].annotation = cast(
+    type[Any] | None, Literal["stop", "length", "content_filter"] | None
+)
 CompletionChoice.model_rebuild()
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent

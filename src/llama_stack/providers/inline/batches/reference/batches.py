@@ -419,8 +419,8 @@ class ReferenceBatchesImpl(Batches):
                         )
                         valid = False
 
-                    if (body := request.get("body")) and isinstance(body, dict):
-                        if body.get("stream", False):
+                    if (request_body := request.get("body")) and isinstance(request_body, dict):
+                        if request_body.get("stream", False):
                             errors.append(
                                 BatchError(
                                     code="streaming_unsupported",

@@ -15,7 +15,7 @@ from mcp import types as mcp_types
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamablehttp_client
 
-from llama_stack.apis.common.content_types import ImageContentItem, InterleavedContentItem, TextContentItem
+from llama_stack.apis.common.content_types import ImageContentItem, InterleavedContentItem, TextContentItem, _URLOrData
 from llama_stack.apis.tools import (
     ListToolDefsResponse,
     ToolDef,
@@ -49,7 +49,9 @@ async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerat
         try:
             client = streamablehttp_client
             if strategy == MCPProtol.SSE:
-                client = sse_client
+                # sse_client and streamablehttp_client have different signatures, but both
+                # are called the same way here, so we cast to Any to avoid type errors
+                client = cast(Any, sse_client)
             async with client(endpoint, headers=headers) as client_streams:
                 async with ClientSession(read_stream=client_streams[0], write_stream=client_streams[1]) as session:
                     await session.initialize()
@@ -137,7 +139,7 @@ async def invoke_mcp_tool(
             if isinstance(item, mcp_types.TextContent):
                 content.append(TextContentItem(text=item.text))
             elif isinstance(item, mcp_types.ImageContent):
-                content.append(ImageContentItem(image=item.data))
+                content.append(ImageContentItem(image=_URLOrData(data=item.data)))
             elif isinstance(item, mcp_types.EmbeddedResource):
                 logger.warning(f"EmbeddedResource is not supported: {item}")
             else:
