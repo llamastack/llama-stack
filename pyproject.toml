@@ -78,7 +78,6 @@ dev = [
 # Type checking dependencies - includes type stubs and optional runtime dependencies
 # needed for complete mypy coverage across all optional features
 type_checking = [
-    # Type stubs
     "types-requests",
     "types-setuptools",
     "types-jsonschema",
@@ -86,26 +85,25 @@ type_checking = [
     "types-psutil",
     "types-tqdm",
     "boto3-stubs[s3]",
-    # Optional runtime dependencies for type checking
-    "streamlit",  # For UI type checking
-    "streamlit-option-menu",  # For UI type checking
-    "pandas",  # For UI and data processing type checking
-    "anthropic",  # For Anthropic provider type checking
-    "databricks-sdk",  # For Databricks provider type checking
-    "fairscale",  # For model parallelism type checking
-    "torchtune",  # For fine-tuning type checking
-    "trl",  # For HuggingFace training type checking
-    "peft",  # For HuggingFace LoRA/QLoRA fine-tuning type checking
-    "datasets",  # For dataset loading type checking
-    "together",  # For Together AI provider type checking
-    "nest-asyncio",  # For library client type checking
-    "pymongo",  # For MongoDB kvstore type checking
-    "torchvision",  # For multimodal model type checking
-    "sqlite-vec",  # For SQLite vector store type checking
-    "faiss-cpu",  # For Faiss vector store type checking
-    "lm-format-enforcer",  # For constrained generation type checking
-    "mcp",  # For Model Context Protocol tools type checking
-    "ollama",  # For Ollama provider type checking
+    "streamlit",
+    "streamlit-option-menu",
+    "pandas",
+    "anthropic",
+    "databricks-sdk",
+    "fairscale",
+    "torchtune",
+    "trl",
+    "peft",
+    "datasets",
+    "together",
+    "nest-asyncio",
+    "pymongo",
+    "torchvision",
+    "sqlite-vec",
+    "faiss-cpu",
+    "lm-format-enforcer",
+    "mcp",
+    "ollama",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
