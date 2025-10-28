@@ -1,0 +1,27 @@
+---
+description: "OpenAI Files API provider for managing files through OpenAI's native file storage service."
+sidebar_label: Remote - Openai
+title: remote::openai
+---
+
+# remote::openai
+
+## Description
+
+OpenAI Files API provider for managing files through OpenAI's native file storage service.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `api_key` | `<class 'str'>` | No |  | OpenAI API key for authentication |
+| `metadata_store` | `<class 'llama_stack.core.storage.datatypes.SqlStoreReference'>` | No |  | SQL store configuration for file metadata |
+
+## Sample Configuration
+
+```yaml
+api_key: ${env.OPENAI_API_KEY}
+metadata_store:
+  table_name: openai_files_metadata
+  backend: sql_default
+```

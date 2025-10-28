@@ -28,4 +28,13 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.remote.files.s3.config.S3FilesImplConfig",
             description="AWS S3-based file storage provider for scalable cloud file management with metadata persistence.",
         ),
+        RemoteProviderSpec(
+            api=Api.files,
+            provider_type="remote::openai",
+            adapter_type="openai",
+            pip_packages=["openai"] + sql_store_pip_packages,
+            module="llama_stack.providers.remote.files.openai",
+            config_class="llama_stack.providers.remote.files.openai.config.OpenAIFilesImplConfig",
+            description="OpenAI Files API provider for managing files through OpenAI's native file storage service.",
+        ),
     ]
