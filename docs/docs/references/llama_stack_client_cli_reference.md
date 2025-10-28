@@ -32,7 +32,6 @@ Commands:
   scoring_functions  Manage scoring functions.
   shields            Manage safety shield services.
   toolgroups         Manage available tool groups.
-  vector_dbs         Manage vector databases.
 ```
 
 ### `llama-stack-client configure`
@@ -78,8 +77,6 @@ llama-stack-client providers list
 | memory    | meta-reference | meta-reference  |
 +-----------+----------------+-----------------+
 | agents    | meta-reference | meta-reference  |
-+-----------+----------------+-----------------+
-| telemetry | meta-reference | meta-reference  |
 +-----------+----------------+-----------------+
 | safety    | meta-reference | meta-reference  |
 +-----------+----------------+-----------------+
@@ -210,53 +207,6 @@ Unregister a model from distribution endpoint
 ```bash
 llama-stack-client models unregister <model_id>
 ```
-
-## Vector DB Management
-Manage vector databases.
-
-
-### `llama-stack-client vector_dbs list`
-Show available vector dbs on distribution endpoint
-```bash
-llama-stack-client vector_dbs list
-```
-```
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ identifier               ┃ provider_id ┃ provider_resource_id     ┃ vector_db_type ┃ params                            ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ my_demo_vector_db        │ faiss       │ my_demo_vector_db        │                │ embedding_dimension: 384          │
-│                          │             │                          │                │ embedding_model: all-MiniLM-L6-v2 │
-│                          │             │                          │                │ type: vector_db                   │
-│                          │             │                          │                │                                   │
-└──────────────────────────┴─────────────┴──────────────────────────┴────────────────┴───────────────────────────────────┘
-```
-
-### `llama-stack-client vector_dbs register`
-Create a new vector db
-```bash
-llama-stack-client vector_dbs register <vector-db-id> [--provider-id <provider-id>] [--provider-vector-db-id <provider-vector-db-id>] [--embedding-model <embedding-model>] [--embedding-dimension <embedding-dimension>]
-```
-
-
-Required arguments:
-- `VECTOR_DB_ID`: Vector DB ID
-
-Optional arguments:
-- `--provider-id`: Provider ID for the vector db
-- `--provider-vector-db-id`: Provider's vector db ID
-- `--embedding-model`: Embedding model to use. Default: `all-MiniLM-L6-v2`
-- `--embedding-dimension`: Dimension of embeddings. Default: 384
-
-### `llama-stack-client vector_dbs unregister`
-Delete a vector db
-```bash
-llama-stack-client vector_dbs unregister <vector-db-id>
-```
-
-
-Required arguments:
-- `VECTOR_DB_ID`: Vector DB ID
-
 
 ## Shield Management
 Manage safety shield services.

@@ -1,0 +1,29 @@
+version: 2
+distribution_spec:
+  description: Use NVIDIA NIM for running LLM inference, evaluation and safety
+  providers:
+    inference:
+    - provider_type: remote::nvidia
+    vector_io:
+    - provider_type: inline::faiss
+    safety:
+    - provider_type: remote::nvidia
+    agents:
+    - provider_type: inline::meta-reference
+    eval:
+    - provider_type: remote::nvidia
+    post_training:
+    - provider_type: remote::nvidia
+    datasetio:
+    - provider_type: inline::localfs
+    - provider_type: remote::nvidia
+    scoring:
+    - provider_type: inline::basic
+    tool_runtime:
+    - provider_type: inline::rag-runtime
+    files:
+    - provider_type: inline::localfs
+image_type: venv
+additional_pip_packages:
+- aiosqlite
+- sqlalchemy[asyncio]

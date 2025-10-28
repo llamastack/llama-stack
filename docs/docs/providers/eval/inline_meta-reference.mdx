@@ -14,12 +14,12 @@ Meta's reference implementation of evaluation tasks with support for multiple la
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `kvstore` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig` | No | sqlite |  |
+| `kvstore` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  |  |
 
 ## Sample Configuration
 
 ```yaml
 kvstore:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/meta_reference_eval.db
+  namespace: eval
+  backend: kv_default
 ```

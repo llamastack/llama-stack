@@ -8,8 +8,8 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'llama_stack/**'
-      - '!llama_stack/ui/**'
+      - 'src/llama_stack/**'
+      - '!src/llama_stack/ui/**'
       - 'tests/integration/vector_io/**'
       - 'uv.lock'
       - 'pyproject.toml'
@@ -144,7 +144,7 @@ jobs:
 
       - name: Build Llama Stack
         run: |
-          uv run --no-sync llama stack build --template ci-tests --image-type venv
+          uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
 
       - name: Check Storage and Memory Available Before Tests
         if: ${{ always() }}
@@ -169,8 +169,7 @@ jobs:
         run: |
           uv run --no-sync \
             pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
-            tests/integration/vector_io \
-            --embedding-model inline::sentence-transformers/all-MiniLM-L6-v2
+            tests/integration/vector_io
 
       - name: Check Storage and Memory Available After Tests
         if: ${{ always() }}
@@ -195,7 +194,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: vector-io-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.SANITIZED_PROVIDER }}-${{ matrix.python-version }}
           path: |

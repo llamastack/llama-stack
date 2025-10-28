@@ -72,14 +72,14 @@ description: |
   Example with hybrid search:
   ```python
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={"mode": "hybrid", "max_chunks": 3, "score_threshold": 0.7},
   )
 
   # Using RRF ranker
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={
           "mode": "hybrid",
@@ -91,7 +91,7 @@ description: |
 
   # Using weighted ranker
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={
           "mode": "hybrid",
@@ -105,7 +105,7 @@ description: |
   Example with explicit vector search:
   ```python
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={"mode": "vector", "max_chunks": 3, "score_threshold": 0.7},
   )
@@ -114,7 +114,7 @@ description: |
   Example with keyword search:
   ```python
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={"mode": "keyword", "max_chunks": 3, "score_threshold": 0.7},
   )
@@ -277,14 +277,14 @@ The SQLite-vec provider supports three search modes:
 Example with hybrid search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "hybrid", "max_chunks": 3, "score_threshold": 0.7},
 )
 
 # Using RRF ranker
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={
         "mode": "hybrid",
@@ -296,7 +296,7 @@ response = await vector_io.query_chunks(
 
 # Using weighted ranker
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={
         "mode": "hybrid",
@@ -310,7 +310,7 @@ response = await vector_io.query_chunks(
 Example with explicit vector search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "vector", "max_chunks": 3, "score_threshold": 0.7},
 )
@@ -319,7 +319,7 @@ response = await vector_io.query_chunks(
 Example with keyword search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "keyword", "max_chunks": 3, "score_threshold": 0.7},
 )
@@ -408,13 +408,13 @@ See [sqlite-vec's GitHub repo](https://github.com/asg017/sqlite-vec/tree/main) f
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `db_path` | `<class 'str'>` | No |  | Path to the SQLite database file |
-| `kvstore` | `utils.kvstore.config.RedisKVStoreConfig \| utils.kvstore.config.SqliteKVStoreConfig \| utils.kvstore.config.PostgresKVStoreConfig \| utils.kvstore.config.MongoDBKVStoreConfig` | No | sqlite | Config for KV store backend (SQLite only for now) |
+| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  | Config for KV store backend (SQLite only for now) |
 
 ## Sample Configuration
 
 ```yaml
 db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/sqlite_vec.db
-kvstore:
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/sqlite_vec_registry.db
+persistence:
+  namespace: vector_io::sqlite_vec
+  backend: kv_default
 ```

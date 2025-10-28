@@ -15,16 +15,16 @@ from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOp
 
 
 # Test fixtures and helper classes
-class TestConfig(BaseModel):
+class FakeConfig(BaseModel):
     api_key: str | None = Field(default=None)
 
 
-class TestProviderDataValidator(BaseModel):
+class FakeProviderDataValidator(BaseModel):
     test_api_key: str | None = Field(default=None)
 
 
-class TestLiteLLMAdapter(LiteLLMOpenAIMixin):
-    def __init__(self, config: TestConfig):
+class FakeLiteLLMAdapter(LiteLLMOpenAIMixin):
+    def __init__(self, config: FakeConfig):
         super().__init__(
             litellm_provider_name="test",
             api_key_from_config=config.api_key,
@@ -36,11 +36,11 @@ class TestLiteLLMAdapter(LiteLLMOpenAIMixin):
 @pytest.fixture
 def adapter_with_config_key():
     """Fixture to create adapter with API key in config"""
-    config = TestConfig(api_key="config-api-key")
-    adapter = TestLiteLLMAdapter(config)
+    config = FakeConfig(api_key="config-api-key")
+    adapter = FakeLiteLLMAdapter(config)
     adapter.__provider_spec__ = MagicMock()
     adapter.__provider_spec__.provider_data_validator = (
-        "tests.unit.providers.inference.test_litellm_openai_mixin.TestProviderDataValidator"
+        "tests.unit.providers.inference.test_litellm_openai_mixin.FakeProviderDataValidator"
     )
     return adapter
 
@@ -48,11 +48,11 @@ def adapter_with_config_key():
 @pytest.fixture
 def adapter_without_config_key():
     """Fixture to create adapter without API key in config"""
-    config = TestConfig(api_key=None)
-    adapter = TestLiteLLMAdapter(config)
+    config = FakeConfig(api_key=None)
+    adapter = FakeLiteLLMAdapter(config)
     adapter.__provider_spec__ = MagicMock()
     adapter.__provider_spec__.provider_data_validator = (
-        "tests.unit.providers.inference.test_litellm_openai_mixin.TestProviderDataValidator"
+        "tests.unit.providers.inference.test_litellm_openai_mixin.FakeProviderDataValidator"
     )
     return adapter
 

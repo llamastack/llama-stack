@@ -15,7 +15,8 @@
     "gen-api-docs": "docusaurus gen-api-docs",
     "clean-api-docs": "docusaurus clean-api-docs",
     "gen-api-docs:version": "docusaurus gen-api-docs:version",
-    "clean-api-docs:version": "docusaurus clean-api-docs:version"
+    "clean-api-docs:version": "docusaurus clean-api-docs:version",
+    "sync-files": "node scripts/sync-files.js"
   },
   "dependencies": {
     "@docusaurus/core": "3.8.1",
@@ -27,7 +28,8 @@
     "docusaurus-theme-openapi-docs": "4.3.7",
     "prism-react-renderer": "^2.3.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "remark-code-import": "^1.2.0"
   },
   "browserslist": {
     "production": [
@@ -40,5 +42,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "raw-loader": "^4.0.2",
+    "react-markdown": "^10.1.0"
   }
 }

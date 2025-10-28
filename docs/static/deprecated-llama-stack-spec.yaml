@@ -1098,7 +1098,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiChatCompletionRequest'
+              $ref: '#/components/schemas/OpenAIChatCompletionRequestWithExtraBody'
         required: true
       deprecated: true
   /v1/openai/v1/chat/completions/{completion_id}:
@@ -1167,7 +1167,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCompletionRequest'
+              $ref: '#/components/schemas/OpenAICompletionRequestWithExtraBody'
         required: true
       deprecated: true
   /v1/openai/v1/embeddings:
@@ -1203,7 +1203,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiEmbeddingsRequest'
+              $ref: '#/components/schemas/OpenAIEmbeddingsRequestWithExtraBody'
         required: true
       deprecated: true
   /v1/openai/v1/files:
@@ -1569,16 +1569,16 @@ paths:
         required: true
       deprecated: true
       x-llama-stack-extra-body-params:
-        - name: shields
+        - name: guardrails
           schema:
             type: array
             items:
               oneOf:
                 - type: string
-                - $ref: '#/components/schemas/ResponseShieldSpec'
+                - $ref: '#/components/schemas/ResponseGuardrailSpec'
           description: >-
-            List of shields to apply during response generation. Shields provide safety
-            and content moderation.
+            List of guardrails to apply during response generation. Guardrails provide
+            safety and content moderation.
           required: false
   /v1/openai/v1/responses/{response_id}:
     get:
@@ -1792,13 +1792,16 @@ paths:
       tags:
         - VectorIO
       summary: Creates a vector store.
-      description: Creates a vector store.
+      description: >-
+        Creates a vector store.
+
+        Generate an OpenAI-compatible vector store with the given parameters.
       parameters: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCreateVectorStoreRequest'
+              $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
         required: true
       deprecated: true
   /v1/openai/v1/vector_stores/{vector_store_id}:
@@ -1924,7 +1927,11 @@ paths:
       tags:
         - VectorIO
       summary: Create a vector store file batch.
-      description: Create a vector store file batch.
+      description: >-
+        Create a vector store file batch.
+
+        Generate an OpenAI-compatible vector store file batch for the given vector
+        store.
       parameters:
         - name: vector_store_id
           in: path
@@ -1937,7 +1944,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenaiCreateVectorStoreFileBatchRequest'
+              $ref: '#/components/schemas/OpenAICreateVectorStoreFileBatchRequestWithExtraBody'
         required: true
       deprecated: true
   /v1/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}:
@@ -2593,238 +2600,6 @@ paths:
               $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
       deprecated: true
-  /v1/telemetry/metrics/{metric_name}:
-    post:
-      responses:
-        '200':
-          description: A QueryMetricsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryMetricsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Query metrics.
-      description: Query metrics.
-      parameters:
-        - name: metric_name
-          in: path
-          description: The name of the metric to query.
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryMetricsRequest'
-        required: true
-      deprecated: true
-  /v1/telemetry/spans:
-    post:
-      responses:
-        '200':
-          description: A QuerySpansResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuerySpansResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Query spans.
-      description: Query spans.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuerySpansRequest'
-        required: true
-      deprecated: true
-  /v1/telemetry/spans/export:
-    post:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Save spans to a dataset.
-      description: Save spans to a dataset.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SaveSpansToDatasetRequest'
-        required: true
-      deprecated: true
-  /v1/telemetry/spans/{span_id}/tree:
-    post:
-      responses:
-        '200':
-          description: A QuerySpanTreeResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuerySpanTreeResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Get a span tree by its ID.
-      description: Get a span tree by its ID.
-      parameters:
-        - name: span_id
-          in: path
-          description: The ID of the span to get the tree from.
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetSpanTreeRequest'
-        required: true
-      deprecated: true
-  /v1/telemetry/traces:
-    post:
-      responses:
-        '200':
-          description: A QueryTracesResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryTracesResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Query traces.
-      description: Query traces.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryTracesRequest'
-        required: true
-      deprecated: true
-  /v1/telemetry/traces/{trace_id}:
-    get:
-      responses:
-        '200':
-          description: A Trace.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Trace'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Get a trace by its ID.
-      description: Get a trace by its ID.
-      parameters:
-        - name: trace_id
-          in: path
-          description: The ID of the trace to get.
-          required: true
-          schema:
-            type: string
-      deprecated: true
-  /v1/telemetry/traces/{trace_id}/spans/{span_id}:
-    get:
-      responses:
-        '200':
-          description: A Span.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Span'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Telemetry
-      summary: Get a span by its ID.
-      description: Get a span by its ID.
-      parameters:
-        - name: trace_id
-          in: path
-          description: >-
-            The ID of the trace to get the span from.
-          required: true
-          schema:
-            type: string
-        - name: span_id
-          in: path
-          description: The ID of the span to get.
-          required: true
-          schema:
-            type: string
-      deprecated: true
 jsonSchemaDialect: >-
   https://json-schema.org/draft/2020-12/schema
 components:
@@ -3087,7 +2862,6 @@ components:
           description: The sampling strategy.
         max_tokens:
           type: integer
-          default: 0
           description: >-
             The maximum number of tokens that can be generated in the completion.
             The token count of your prompt plus max_tokens cannot exceed the model's
@@ -3478,7 +3252,7 @@ components:
           description: Type of the step in an agent turn.
           const: memory_retrieval
           default: memory_retrieval
-        vector_db_ids:
+        vector_store_ids:
           type: string
           description: >-
             The IDs of the vector databases to retrieve context from.
@@ -3491,7 +3265,7 @@ components:
         - turn_id
         - step_id
         - step_type
-        - vector_db_ids
+        - vector_store_ids
         - inserted_context
       title: MemoryRetrievalStep
       description: >-
@@ -4339,7 +4113,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -4528,7 +4302,7 @@ components:
           enum:
             - model
             - shield
-            - vector_db
+            - vector_store
             - dataset
             - scoring_function
             - benchmark
@@ -5575,7 +5349,7 @@ components:
       title: OpenAIResponseFormatText
       description: >-
         Text response format for OpenAI-compatible chat completion requests.
-    OpenaiChatCompletionRequest:
+    OpenAIChatCompletionRequestWithExtraBody:
       type: object
       properties:
         model:
@@ -5717,7 +5491,9 @@ components:
       required:
         - model
         - messages
-      title: OpenaiChatCompletionRequest
+      title: OpenAIChatCompletionRequestWithExtraBody
+      description: >-
+        Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletion:
       type: object
       properties:
@@ -5813,6 +5589,11 @@ components:
           items:
             $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
           description: (Optional) The tool calls of the delta
+        reasoning_content:
+          type: string
+          description: >-
+            (Optional) The reasoning content from the model (non-standard, for o1/o3
+            models)
       additionalProperties: false
       title: OpenAIChoiceDelta
       description: >-
@@ -5883,7 +5664,7 @@ components:
         - model
         - input_messages
       title: OpenAICompletionWithInputMessages
-    OpenaiCompletionRequest:
+    OpenAICompletionRequestWithExtraBody:
       type: object
       properties:
         model:
@@ -5971,12 +5752,6 @@ components:
         user:
           type: string
           description: (Optional) The user to use.
-        guided_choice:
-          type: array
-          items:
-            type: string
-        prompt_logprobs:
-          type: integer
         suffix:
           type: string
           description: >-
@@ -5985,7 +5760,9 @@ components:
       required:
         - model
         - prompt
-      title: OpenaiCompletionRequest
+      title: OpenAICompletionRequestWithExtraBody
+      description: >-
+        Request parameters for OpenAI-compatible completion endpoint.
     OpenAICompletion:
       type: object
       properties:
@@ -6032,7 +5809,7 @@ components:
       title: OpenAICompletionChoice
       description: >-
         A choice from an OpenAI-compatible completion response.
-    OpenaiEmbeddingsRequest:
+    OpenAIEmbeddingsRequestWithExtraBody:
       type: object
       properties:
         model:
@@ -6051,6 +5828,7 @@ components:
             multiple inputs in a single request, pass an array of strings.
         encoding_format:
           type: string
+          default: float
           description: >-
             (Optional) The format to return the embeddings in. Can be either "float"
             or "base64". Defaults to "float".
@@ -6068,7 +5846,9 @@ components:
       required:
         - model
         - input
-      title: OpenaiEmbeddingsRequest
+      title: OpenAIEmbeddingsRequestWithExtraBody
+      description: >-
+        Request parameters for OpenAI-compatible embeddings endpoint.
     OpenAIEmbeddingData:
       type: object
       properties:
@@ -6323,11 +6103,10 @@ components:
         model:
           type: string
           description: >-
-            The content moderation model you would like to use.
+            (Optional) The content moderation model you would like to use.
       additionalProperties: false
       required:
         - input
-        - model
       title: RunModerationRequest
     ModerationObject:
       type: object
@@ -6551,6 +6330,25 @@ components:
           url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
           container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
           file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+    OpenAIResponseContentPartRefusal:
+      type: object
+      properties:
+        type:
+          type: string
+          const: refusal
+          default: refusal
+          description: >-
+            Content part type identifier, always "refusal"
+        refusal:
+          type: string
+          description: Refusal text supplied by the model
+      additionalProperties: false
+      required:
+        - type
+        - refusal
+      title: OpenAIResponseContentPartRefusal
+      description: >-
+        Refusal content within a streamed response part.
     OpenAIResponseError:
       type: object
       properties:
@@ -6571,11 +6369,8 @@ components:
         Error details for failed OpenAI response requests.
     OpenAIResponseInput:
       oneOf:
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        - $ref: '#/components/schemas/OpenAIResponseOutput'
         - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
         - $ref: '#/components/schemas/OpenAIResponseMessage'
     "OpenAIResponseInputFunctionToolCallOutput":
@@ -6607,11 +6402,44 @@ components:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
         - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+        - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
       discriminator:
         propertyName: type
         mapping:
           input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
           input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+          input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+    OpenAIResponseInputMessageContentFile:
+      type: object
+      properties:
+        type:
+          type: string
+          const: input_file
+          default: input_file
+          description: >-
+            The type of the input item. Always `input_file`.
+        file_data:
+          type: string
+          description: >-
+            The data of the file to be sent to the model.
+        file_id:
+          type: string
+          description: >-
+            (Optional) The ID of the file to be sent to the model.
+        file_url:
+          type: string
+          description: >-
+            The URL of the file to be sent to the model.
+        filename:
+          type: string
+          description: >-
+            The name of the file to be sent to the model.
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIResponseInputMessageContentFile
+      description: >-
+        File content for input messages in OpenAI response format.
     OpenAIResponseInputMessageContentImage:
       type: object
       properties:
@@ -6632,6 +6460,10 @@ components:
           default: input_image
           description: >-
             Content type identifier, always "input_image"
+        file_id:
+          type: string
+          description: >-
+            (Optional) The ID of the file to be sent to the model.
         image_url:
           type: string
           description: (Optional) URL of the image content
@@ -6902,6 +6734,10 @@ components:
           type: string
           description: >-
             (Optional) ID of the previous response in a conversation
+        prompt:
+          $ref: '#/components/schemas/OpenAIResponsePrompt'
+          description: >-
+            (Optional) Reference to a prompt template and its variables.
         status:
           type: string
           description: >-
@@ -6932,6 +6768,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
         input:
           type: array
           items:
@@ -6972,6 +6812,15 @@ components:
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
     OpenAIResponseOutputMessageContent:
+      oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+        - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+      discriminator:
+        propertyName: type
+        mapping:
+          output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+          refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+    "OpenAIResponseOutputMessageContentOutputText":
       type: object
       properties:
         text:
@@ -7228,6 +7077,30 @@ components:
         OpenAIResponseOutputMessageWebSearchToolCall
       description: >-
         Web search tool call output message for OpenAI responses.
+    OpenAIResponsePrompt:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the prompt template
+        variables:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OpenAIResponseInputMessageContent'
+          description: >-
+            Dictionary of variable names to OpenAIResponseInputMessageContent structure
+            for template substitution. The substitution values can either be strings,
+            or other Response input types like images or files.
+        version:
+          type: string
+          description: >-
+            Version number of the prompt to use (defaults to latest if not specified)
+      additionalProperties: false
+      required:
+        - id
+      title: OpenAIResponsePrompt
+      description: >-
+        OpenAI compatible Prompt object that is used in OpenAI responses.
     OpenAIResponseText:
       type: object
       properties:
@@ -7366,18 +7239,18 @@ components:
         - total_tokens
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
-    ResponseShieldSpec:
+    ResponseGuardrailSpec:
       type: object
       properties:
         type:
           type: string
-          description: The type/identifier of the shield.
+          description: The type/identifier of the guardrail.
       additionalProperties: false
       required:
         - type
-      title: ResponseShieldSpec
+      title: ResponseGuardrailSpec
       description: >-
-        Specification for a shield to apply during response generation.
+        Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
@@ -7485,6 +7358,10 @@ components:
         model:
           type: string
           description: The underlying LLM used for completions.
+        prompt:
+          $ref: '#/components/schemas/OpenAIResponsePrompt'
+          description: >-
+            (Optional) Prompt object with ID, version, and variables.
         instructions:
           type: string
         previous_response_id:
@@ -7493,6 +7370,12 @@ components:
             (Optional) if specified, the new response will be a continuation of the
             previous response. This can be used to easily fork-off new responses from
             existing responses.
+        conversation:
+          type: string
+          description: >-
+            (Optional) The ID of a conversation to add the response to. Must begin
+            with 'conv_'. Input and output messages will be automatically added to
+            the conversation.
         store:
           type: boolean
         stream:
@@ -7556,6 +7439,10 @@ components:
           type: string
           description: >-
             (Optional) ID of the previous response in a conversation
+        prompt:
+          $ref: '#/components/schemas/OpenAIResponsePrompt'
+          description: >-
+            (Optional) Reference to a prompt template and its variables.
         status:
           type: string
           description: >-
@@ -7586,6 +7473,10 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsage'
           description: >-
             (Optional) Token usage information for the response
+        instructions:
+          type: string
+          description: >-
+            (Optional) System message inserted into the model's context
       additionalProperties: false
       required:
         - created_at
@@ -7638,6 +7529,26 @@ components:
       title: OpenAIResponseContentPartOutputText
       description: >-
         Text content within a streamed response part.
+    "OpenAIResponseContentPartReasoningSummary":
+      type: object
+      properties:
+        type:
+          type: string
+          const: summary_text
+          default: summary_text
+          description: >-
+            Content part type identifier, always "summary_text"
+        text:
+          type: string
+          description: Summary text
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: >-
+        OpenAIResponseContentPartReasoningSummary
+      description: >-
+        Reasoning summary part in a streamed response.
     OpenAIResponseContentPartReasoningText:
       type: object
       properties:
@@ -7657,25 +7568,6 @@ components:
       title: OpenAIResponseContentPartReasoningText
       description: >-
         Reasoning text emitted as part of a streamed response.
-    OpenAIResponseContentPartRefusal:
-      type: object
-      properties:
-        type:
-          type: string
-          const: refusal
-          default: refusal
-          description: >-
-            Content part type identifier, always "refusal"
-        refusal:
-          type: string
-          description: Refusal text supplied by the model
-      additionalProperties: false
-      required:
-        - type
-        - refusal
-      title: OpenAIResponseContentPartRefusal
-      description: >-
-        Refusal content within a streamed response part.
     OpenAIResponseObjectStream:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
@@ -7699,6 +7591,18 @@ components:
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDelta'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDone'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallInProgress'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallSearching'
+        - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallCompleted'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
         - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
@@ -7726,6 +7630,18 @@ components:
           response.mcp_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
           response.content_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
           response.content_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
+          response.reasoning_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDelta'
+          response.reasoning_text.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDone'
+          response.reasoning_summary_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded'
+          response.reasoning_summary_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartDone'
+          response.reasoning_summary_text.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta'
+          response.reasoning_summary_text.done: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDone'
+          response.refusal.delta: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDelta'
+          response.refusal.done: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDone'
+          response.output_text.annotation.added: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded'
+          response.file_search_call.in_progress: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallInProgress'
+          response.file_search_call.searching: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallSearching'
+          response.file_search_call.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallCompleted'
           response.incomplete: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
           response.failed: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
           response.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
@@ -7901,6 +7817,99 @@ components:
       title: OpenAIResponseObjectStreamResponseFailed
       description: >-
         Streaming event emitted when a response fails.
+    "OpenAIResponseObjectStreamResponseFileSearchCallCompleted":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.completed
+          default: response.file_search_call.completed
+          description: >-
+            Event type identifier, always "response.file_search_call.completed"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallCompleted
+      description: >-
+        Streaming event for completed file search calls.
+    "OpenAIResponseObjectStreamResponseFileSearchCallInProgress":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.in_progress
+          default: response.file_search_call.in_progress
+          description: >-
+            Event type identifier, always "response.file_search_call.in_progress"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallInProgress
+      description: >-
+        Streaming event for file search calls in progress.
+    "OpenAIResponseObjectStreamResponseFileSearchCallSearching":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the file search call
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.file_search_call.searching
+          default: response.file_search_call.searching
+          description: >-
+            Event type identifier, always "response.file_search_call.searching"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseFileSearchCallSearching
+      description: >-
+        Streaming event for file search currently searching.
     "OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta":
       type: object
       properties:
@@ -8293,6 +8302,62 @@ components:
         OpenAIResponseObjectStreamResponseOutputItemDone
       description: >-
         Streaming event for when an output item is completed.
+    "OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the item to which the annotation is being added
+        output_index:
+          type: integer
+          description: >-
+            Index position of the output item in the response's output array
+        content_index:
+          type: integer
+          description: >-
+            Index position of the content part within the output item
+        annotation_index:
+          type: integer
+          description: >-
+            Index of the annotation within the content part
+        annotation:
+          oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+          discriminator:
+            propertyName: type
+            mapping:
+              file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+          description: The annotation object being added
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.output_text.annotation.added
+          default: response.output_text.annotation.added
+          description: >-
+            Event type identifier, always "response.output_text.annotation.added"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - content_index
+        - annotation_index
+        - annotation
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded
+      description: >-
+        Streaming event for when an annotation is added to output text.
     "OpenAIResponseObjectStreamResponseOutputTextDelta":
       type: object
       properties:
@@ -8372,6 +8437,314 @@ components:
         OpenAIResponseObjectStreamResponseOutputTextDone
       description: >-
         Streaming event for when text output is completed.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        part:
+          $ref: '#/components/schemas/OpenAIResponseContentPartReasoningSummary'
+          description: The summary part that was added
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_part.added
+          default: response.reasoning_summary_part.added
+          description: >-
+            Event type identifier, always "response.reasoning_summary_part.added"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - part
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded
+      description: >-
+        Streaming event for when a new reasoning summary part is added.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryPartDone":
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        part:
+          $ref: '#/components/schemas/OpenAIResponseContentPartReasoningSummary'
+          description: The completed summary part
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_part.done
+          default: response.reasoning_summary_part.done
+          description: >-
+            Event type identifier, always "response.reasoning_summary_part.done"
+      additionalProperties: false
+      required:
+        - item_id
+        - output_index
+        - part
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryPartDone
+      description: >-
+        Streaming event for when a reasoning summary part is completed.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta":
+      type: object
+      properties:
+        delta:
+          type: string
+          description: Incremental summary text being added
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_text.delta
+          default: response.reasoning_summary_text.delta
+          description: >-
+            Event type identifier, always "response.reasoning_summary_text.delta"
+      additionalProperties: false
+      required:
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta
+      description: >-
+        Streaming event for incremental reasoning summary text updates.
+    "OpenAIResponseObjectStreamResponseReasoningSummaryTextDone":
+      type: object
+      properties:
+        text:
+          type: string
+          description: Final complete summary text
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: Index position of the output item
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        summary_index:
+          type: integer
+          description: >-
+            Index of the summary part within the reasoning summary
+        type:
+          type: string
+          const: response.reasoning_summary_text.done
+          default: response.reasoning_summary_text.done
+          description: >-
+            Event type identifier, always "response.reasoning_summary_text.done"
+      additionalProperties: false
+      required:
+        - text
+        - item_id
+        - output_index
+        - sequence_number
+        - summary_index
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningSummaryTextDone
+      description: >-
+        Streaming event for when reasoning summary text is completed.
+    "OpenAIResponseObjectStreamResponseReasoningTextDelta":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the reasoning content part
+        delta:
+          type: string
+          description: Incremental reasoning text being added
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the output item being updated
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.reasoning_text.delta
+          default: response.reasoning_text.delta
+          description: >-
+            Event type identifier, always "response.reasoning_text.delta"
+      additionalProperties: false
+      required:
+        - content_index
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningTextDelta
+      description: >-
+        Streaming event for incremental reasoning text updates.
+    "OpenAIResponseObjectStreamResponseReasoningTextDone":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: >-
+            Index position of the reasoning content part
+        text:
+          type: string
+          description: Final complete reasoning text
+        item_id:
+          type: string
+          description: >-
+            Unique identifier of the completed output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.reasoning_text.done
+          default: response.reasoning_text.done
+          description: >-
+            Event type identifier, always "response.reasoning_text.done"
+      additionalProperties: false
+      required:
+        - content_index
+        - text
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseReasoningTextDone
+      description: >-
+        Streaming event for when reasoning text is completed.
+    "OpenAIResponseObjectStreamResponseRefusalDelta":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position of the content part
+        delta:
+          type: string
+          description: Incremental refusal text being added
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.refusal.delta
+          default: response.refusal.delta
+          description: >-
+            Event type identifier, always "response.refusal.delta"
+      additionalProperties: false
+      required:
+        - content_index
+        - delta
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseRefusalDelta
+      description: >-
+        Streaming event for incremental refusal text updates.
+    "OpenAIResponseObjectStreamResponseRefusalDone":
+      type: object
+      properties:
+        content_index:
+          type: integer
+          description: Index position of the content part
+        refusal:
+          type: string
+          description: Final complete refusal text
+        item_id:
+          type: string
+          description: Unique identifier of the output item
+        output_index:
+          type: integer
+          description: >-
+            Index position of the item in the output list
+        sequence_number:
+          type: integer
+          description: >-
+            Sequential number for ordering streaming events
+        type:
+          type: string
+          const: response.refusal.done
+          default: response.refusal.done
+          description: >-
+            Event type identifier, always "response.refusal.done"
+      additionalProperties: false
+      required:
+        - content_index
+        - refusal
+        - item_id
+        - output_index
+        - sequence_number
+        - type
+      title: >-
+        OpenAIResponseObjectStreamResponseRefusalDone
+      description: >-
+        Streaming event for when refusal text is completed.
     "OpenAIResponseObjectStreamResponseWebSearchCallCompleted":
       type: object
       properties:
@@ -8637,19 +9010,18 @@ components:
         - metadata
       title: VectorStoreObject
       description: OpenAI Vector Store object.
-    OpenaiCreateVectorStoreRequest:
+    "OpenAICreateVectorStoreRequestWithExtraBody":
       type: object
       properties:
         name:
           type: string
-          description: A name for the vector store.
+          description: (Optional) A name for the vector store
         file_ids:
           type: array
           items:
             type: string
           description: >-
-            A list of File IDs that the vector store should use. Useful for tools
-            like `file_search` that can access files.
+            List of file IDs to include in the vector store
         expires_after:
           type: object
           additionalProperties:
@@ -8661,7 +9033,7 @@ components:
               - type: array
               - type: object
           description: >-
-            The expiration policy for a vector store.
+            (Optional) Expiration policy for the vector store
         chunking_strategy:
           type: object
           additionalProperties:
@@ -8673,8 +9045,7 @@ components:
               - type: array
               - type: object
           description: >-
-            The chunking strategy used to chunk the file(s). If not set, will use
-            the `auto` strategy.
+            (Optional) Strategy for splitting files into chunks
         metadata:
           type: object
           additionalProperties:
@@ -8686,21 +9057,12 @@ components:
               - type: array
               - type: object
           description: >-
-            Set of 16 key-value pairs that can be attached to an object.
-        embedding_model:
-          type: string
-          description: >-
-            The embedding model to use for this vector store.
-        embedding_dimension:
-          type: integer
-          description: >-
-            The dimension of the embedding vectors (default: 384).
-        provider_id:
-          type: string
-          description: >-
-            The ID of the provider to use for this vector store.
+            Set of key-value pairs that can be attached to the vector store
       additionalProperties: false
-      title: OpenaiCreateVectorStoreRequest
+      title: >-
+        OpenAICreateVectorStoreRequestWithExtraBody
+      description: >-
+        Request to create a vector store with extra_body support.
     OpenaiUpdateVectorStoreRequest:
       type: object
       properties:
@@ -8821,7 +9183,7 @@ components:
       title: VectorStoreChunkingStrategyStaticConfig
       description: >-
         Configuration for static chunking strategy.
-    OpenaiCreateVectorStoreFileBatchRequest:
+    "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
       type: object
       properties:
         file_ids:
@@ -8829,7 +9191,7 @@ components:
           items:
             type: string
           description: >-
-            A list of File IDs that the vector store should use.
+            A list of File IDs that the vector store should use
         attributes:
           type: object
           additionalProperties:
@@ -8841,16 +9203,19 @@ components:
               - type: array
               - type: object
           description: >-
-            (Optional) Key-value attributes to store with the files.
+            (Optional) Key-value attributes to store with the files
         chunking_strategy:
           $ref: '#/components/schemas/VectorStoreChunkingStrategy'
           description: >-
             (Optional) The chunking strategy used to chunk the file(s). Defaults to
-            auto.
+            auto
       additionalProperties: false
       required:
         - file_ids
-      title: OpenaiCreateVectorStoreFileBatchRequest
+      title: >-
+        OpenAICreateVectorStoreFileBatchRequestWithExtraBody
+      description: >-
+        Request to create a vector store file batch with extra_body support.
     VectorStoreFileBatchObject:
       type: object
       properties:
@@ -9829,434 +10194,6 @@ components:
         - hyperparam_search_config
         - logger_config
       title: SupervisedFineTuneRequest
-    QueryMetricsRequest:
-      type: object
-      properties:
-        start_time:
-          type: integer
-          description: The start time of the metric to query.
-        end_time:
-          type: integer
-          description: The end time of the metric to query.
-        granularity:
-          type: string
-          description: The granularity of the metric to query.
-        query_type:
-          type: string
-          enum:
-            - range
-            - instant
-          description: The type of query to perform.
-        label_matchers:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: The name of the label to match
-              value:
-                type: string
-                description: The value to match against
-              operator:
-                type: string
-                enum:
-                  - '='
-                  - '!='
-                  - =~
-                  - '!~'
-                description: >-
-                  The comparison operator to use for matching
-                default: '='
-            additionalProperties: false
-            required:
-              - name
-              - value
-              - operator
-            title: MetricLabelMatcher
-            description: >-
-              A matcher for filtering metrics by label values.
-          description: >-
-            The label matchers to apply to the metric.
-      additionalProperties: false
-      required:
-        - start_time
-        - query_type
-      title: QueryMetricsRequest
-    MetricDataPoint:
-      type: object
-      properties:
-        timestamp:
-          type: integer
-          description: >-
-            Unix timestamp when the metric value was recorded
-        value:
-          type: number
-          description: >-
-            The numeric value of the metric at this timestamp
-        unit:
-          type: string
-      additionalProperties: false
-      required:
-        - timestamp
-        - value
-        - unit
-      title: MetricDataPoint
-      description: >-
-        A single data point in a metric time series.
-    MetricLabel:
-      type: object
-      properties:
-        name:
-          type: string
-          description: The name of the label
-        value:
-          type: string
-          description: The value of the label
-      additionalProperties: false
-      required:
-        - name
-        - value
-      title: MetricLabel
-      description: A label associated with a metric.
-    MetricSeries:
-      type: object
-      properties:
-        metric:
-          type: string
-          description: The name of the metric
-        labels:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetricLabel'
-          description: >-
-            List of labels associated with this metric series
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetricDataPoint'
-          description: >-
-            List of data points in chronological order
-      additionalProperties: false
-      required:
-        - metric
-        - labels
-        - values
-      title: MetricSeries
-      description: A time series of metric data points.
-    QueryMetricsResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetricSeries'
-          description: >-
-            List of metric series matching the query criteria
-      additionalProperties: false
-      required:
-        - data
-      title: QueryMetricsResponse
-      description: >-
-        Response containing metric time series data.
-    QueryCondition:
-      type: object
-      properties:
-        key:
-          type: string
-          description: The attribute key to filter on
-        op:
-          $ref: '#/components/schemas/QueryConditionOp'
-          description: The comparison operator to apply
-        value:
-          oneOf:
-            - type: 'null'
-            - type: boolean
-            - type: number
-            - type: string
-            - type: array
-            - type: object
-          description: The value to compare against
-      additionalProperties: false
-      required:
-        - key
-        - op
-        - value
-      title: QueryCondition
-      description: A condition for filtering query results.
-    QueryConditionOp:
-      type: string
-      enum:
-        - eq
-        - ne
-        - gt
-        - lt
-      title: QueryConditionOp
-      description: >-
-        Comparison operators for query conditions.
-    QuerySpansRequest:
-      type: object
-      properties:
-        attribute_filters:
-          type: array
-          items:
-            $ref: '#/components/schemas/QueryCondition'
-          description: >-
-            The attribute filters to apply to the spans.
-        attributes_to_return:
-          type: array
-          items:
-            type: string
-          description: The attributes to return in the spans.
-        max_depth:
-          type: integer
-          description: The maximum depth of the tree.
-      additionalProperties: false
-      required:
-        - attribute_filters
-        - attributes_to_return
-      title: QuerySpansRequest
-    Span:
-      type: object
-      properties:
-        span_id:
-          type: string
-          description: Unique identifier for the span
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this span belongs to
-        parent_span_id:
-          type: string
-          description: >-
-            (Optional) Unique identifier for the parent span, if this is a child span
-        name:
-          type: string
-          description: >-
-            Human-readable name describing the operation this span represents
-        start_time:
-          type: string
-          format: date-time
-          description: Timestamp when the operation began
-        end_time:
-          type: string
-          format: date-time
-          description: >-
-            (Optional) Timestamp when the operation finished, if completed
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the span
-      additionalProperties: false
-      required:
-        - span_id
-        - trace_id
-        - name
-        - start_time
-      title: Span
-      description: >-
-        A span representing a single operation within a trace.
-    QuerySpansResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Span'
-          description: >-
-            List of spans matching the query criteria
-      additionalProperties: false
-      required:
-        - data
-      title: QuerySpansResponse
-      description: Response containing a list of spans.
-    SaveSpansToDatasetRequest:
-      type: object
-      properties:
-        attribute_filters:
-          type: array
-          items:
-            $ref: '#/components/schemas/QueryCondition'
-          description: >-
-            The attribute filters to apply to the spans.
-        attributes_to_save:
-          type: array
-          items:
-            type: string
-          description: The attributes to save to the dataset.
-        dataset_id:
-          type: string
-          description: >-
-            The ID of the dataset to save the spans to.
-        max_depth:
-          type: integer
-          description: The maximum depth of the tree.
-      additionalProperties: false
-      required:
-        - attribute_filters
-        - attributes_to_save
-        - dataset_id
-      title: SaveSpansToDatasetRequest
-    GetSpanTreeRequest:
-      type: object
-      properties:
-        attributes_to_return:
-          type: array
-          items:
-            type: string
-          description: The attributes to return in the tree.
-        max_depth:
-          type: integer
-          description: The maximum depth of the tree.
-      additionalProperties: false
-      title: GetSpanTreeRequest
-    SpanStatus:
-      type: string
-      enum:
-        - ok
-        - error
-      title: SpanStatus
-      description: >-
-        The status of a span indicating whether it completed successfully or with
-        an error.
-    SpanWithStatus:
-      type: object
-      properties:
-        span_id:
-          type: string
-          description: Unique identifier for the span
-        trace_id:
-          type: string
-          description: >-
-            Unique identifier for the trace this span belongs to
-        parent_span_id:
-          type: string
-          description: >-
-            (Optional) Unique identifier for the parent span, if this is a child span
-        name:
-          type: string
-          description: >-
-            Human-readable name describing the operation this span represents
-        start_time:
-          type: string
-          format: date-time
-          description: Timestamp when the operation began
-        end_time:
-          type: string
-          format: date-time
-          description: >-
-            (Optional) Timestamp when the operation finished, if completed
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            (Optional) Key-value pairs containing additional metadata about the span
-        status:
-          $ref: '#/components/schemas/SpanStatus'
-          description: >-
-            (Optional) The current status of the span
-      additionalProperties: false
-      required:
-        - span_id
-        - trace_id
-        - name
-        - start_time
-      title: SpanWithStatus
-      description: A span that includes status information.
-    QuerySpanTreeResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/SpanWithStatus'
-          description: >-
-            Dictionary mapping span IDs to spans with status information
-      additionalProperties: false
-      required:
-        - data
-      title: QuerySpanTreeResponse
-      description: >-
-        Response containing a tree structure of spans.
-    QueryTracesRequest:
-      type: object
-      properties:
-        attribute_filters:
-          type: array
-          items:
-            $ref: '#/components/schemas/QueryCondition'
-          description: >-
-            The attribute filters to apply to the traces.
-        limit:
-          type: integer
-          description: The limit of traces to return.
-        offset:
-          type: integer
-          description: The offset of the traces to return.
-        order_by:
-          type: array
-          items:
-            type: string
-          description: The order by of the traces to return.
-      additionalProperties: false
-      title: QueryTracesRequest
-    Trace:
-      type: object
-      properties:
-        trace_id:
-          type: string
-          description: Unique identifier for the trace
-        root_span_id:
-          type: string
-          description: >-
-            Unique identifier for the root span that started this trace
-        start_time:
-          type: string
-          format: date-time
-          description: Timestamp when the trace began
-        end_time:
-          type: string
-          format: date-time
-          description: >-
-            (Optional) Timestamp when the trace finished, if completed
-      additionalProperties: false
-      required:
-        - trace_id
-        - root_span_id
-        - start_time
-      title: Trace
-      description: >-
-        A trace representing the complete execution path of a request across multiple
-        operations.
-    QueryTracesResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Trace'
-          description: >-
-            List of traces matching the query criteria
-      additionalProperties: false
-      required:
-        - data
-      title: QueryTracesResponse
-      description: Response containing a list of traces.
   responses:
     BadRequest400:
       description: The request was invalid or malformed
@@ -10333,9 +10270,9 @@ tags:
   - name: Datasets
     description: ''
   - name: Eval
-    description: ''
-    x-displayName: >-
+    description: >-
       Llama Stack Evaluation API for running evaluations on model and agent candidates.
+    x-displayName: Evaluations
   - name: Files
     description: >-
       This API is used to upload documents that can be used with other Llama Stack
@@ -10347,13 +10284,16 @@ tags:
       embeddings.
 
 
-      This API provides the raw interface to the underlying models. Two kinds of models
-      are supported:
+      This API provides the raw interface to the underlying models. Three kinds of
+      models are supported:
 
       - LLM models: these models generate "raw" and "chat" (conversational) completions.
 
       - Embedding models: these models generate embeddings to be used for semantic
       search.
+
+      - Rerank models: these models reorder the documents based on their relevance
+      to a query.
     x-displayName: Inference
   - name: Models
     description: ''
@@ -10362,8 +10302,6 @@ tags:
   - name: Safety
     description: OpenAI-compatible Moderations API.
     x-displayName: Safety
-  - name: Telemetry
-    description: ''
   - name: VectorIO
     description: ''
 x-tagGroups:
@@ -10379,5 +10317,4 @@ x-tagGroups:
       - Models
       - PostTraining (Coming Soon)
       - Safety
-      - Telemetry
       - VectorIO

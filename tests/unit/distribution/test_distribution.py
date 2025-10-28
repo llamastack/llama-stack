@@ -13,6 +13,15 @@ from pydantic import BaseModel, Field, ValidationError
 
 from llama_stack.core.datatypes import Api, Provider, StackRunConfig
 from llama_stack.core.distribution import INTERNAL_APIS, get_provider_registry, providable_apis
+from llama_stack.core.storage.datatypes import (
+    InferenceStoreReference,
+    KVStoreReference,
+    ServerStoresConfig,
+    SqliteKVStoreConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageConfig,
+)
 from llama_stack.providers.datatypes import ProviderSpec
 
 
@@ -27,6 +36,33 @@ class SampleConfig(BaseModel):
         return {
             "foo": "baz",
         }
+
+
+def _default_storage() -> StorageConfig:
+    return StorageConfig(
+        backends={
+            "kv_default": SqliteKVStoreConfig(db_path=":memory:"),
+            "sql_default": SqliteSqlStoreConfig(db_path=":memory:"),
+        },
+        stores=ServerStoresConfig(
+            metadata=KVStoreReference(backend="kv_default", namespace="registry"),
+            inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
+            conversations=SqlStoreReference(backend="sql_default", table_name="conversations"),
+            prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
+        ),
+    )
+
+
+def make_stack_config(**overrides) -> StackRunConfig:
+    storage = overrides.pop("storage", _default_storage())
+    defaults = dict(
+        image_name="test_image",
+        apis=[],
+        providers={},
+        storage=storage,
+    )
+    defaults.update(overrides)
+    return StackRunConfig(**defaults)
 
 
 @pytest.fixture
@@ -47,8 +83,8 @@ def mock_providers():
 @pytest.fixture
 def base_config(tmp_path):
     """Create a base StackRunConfig with common settings."""
-    return StackRunConfig(
-        image_name="test_image",
+    return make_stack_config(
+        apis=["inference"],
         providers={
             "inference": [
                 Provider(
@@ -220,8 +256,8 @@ class TestProviderRegistry:
 
     def test_missing_directory(self, mock_providers):
         """Test handling of missing external providers directory."""
-        config = StackRunConfig(
-            image_name="test_image",
+        config = make_stack_config(
+            apis=["inference"],
             providers={
                 "inference": [
                     Provider(
@@ -276,7 +312,6 @@ pip_packages:
         """Test loading an external provider from a module (success path)."""
         from types import SimpleNamespace
 
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.providers.datatypes import Api, ProviderSpec
 
         # Simulate a provider module with get_provider_spec
@@ -291,7 +326,7 @@ pip_packages:
         import_module_side_effect = make_import_module_side_effect(external_module=fake_module)
 
         with patch("importlib.import_module", side_effect=import_module_side_effect) as mock_import:
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -315,12 +350,11 @@ pip_packages:
 
     def test_external_provider_from_module_not_found(self, mock_providers):
         """Test handling ModuleNotFoundError for missing provider module."""
-        from llama_stack.core.datatypes import Provider, StackRunConfig
 
         import_module_side_effect = make_import_module_side_effect(raise_for_external=True)
 
         with patch("importlib.import_module", side_effect=import_module_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -339,12 +373,11 @@ pip_packages:
 
     def test_external_provider_from_module_missing_get_provider_spec(self, mock_providers):
         """Test handling missing get_provider_spec in provider module (should raise ValueError)."""
-        from llama_stack.core.datatypes import Provider, StackRunConfig
 
         import_module_side_effect = make_import_module_side_effect(missing_get_provider_spec=True)
 
         with patch("importlib.import_module", side_effect=import_module_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -397,13 +430,12 @@ class TestGetExternalProvidersFromModule:
 
     def test_stackrunconfig_provider_without_module(self, mock_providers):
         """Test that providers without module attribute are skipped."""
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
 
         import_module_side_effect = make_import_module_side_effect()
 
         with patch("importlib.import_module", side_effect=import_module_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -424,7 +456,6 @@ class TestGetExternalProvidersFromModule:
         """Test provider with module containing version spec (e.g., package==1.0.0)."""
         from types import SimpleNamespace
 
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
         from llama_stack.providers.datatypes import ProviderSpec
 
@@ -442,7 +473,7 @@ class TestGetExternalProvidersFromModule:
             raise ModuleNotFoundError(name)
 
         with patch("importlib.import_module", side_effect=import_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -562,7 +593,6 @@ class TestGetExternalProvidersFromModule:
         """Test when get_provider_spec returns a list of specs."""
         from types import SimpleNamespace
 
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
         from llama_stack.providers.datatypes import ProviderSpec
 
@@ -587,7 +617,7 @@ class TestGetExternalProvidersFromModule:
             raise ModuleNotFoundError(name)
 
         with patch("importlib.import_module", side_effect=import_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -611,7 +641,6 @@ class TestGetExternalProvidersFromModule:
         """Test that list return filters specs by provider_type."""
         from types import SimpleNamespace
 
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
         from llama_stack.providers.datatypes import ProviderSpec
 
@@ -636,7 +665,7 @@ class TestGetExternalProvidersFromModule:
             raise ModuleNotFoundError(name)
 
         with patch("importlib.import_module", side_effect=import_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -660,7 +689,6 @@ class TestGetExternalProvidersFromModule:
         """Test that list return adds multiple different provider_types when config requests them."""
         from types import SimpleNamespace
 
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
         from llama_stack.providers.datatypes import ProviderSpec
 
@@ -686,7 +714,7 @@ class TestGetExternalProvidersFromModule:
             raise ModuleNotFoundError(name)
 
         with patch("importlib.import_module", side_effect=import_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -716,7 +744,6 @@ class TestGetExternalProvidersFromModule:
 
     def test_module_not_found_raises_value_error(self, mock_providers):
         """Test that ModuleNotFoundError raises ValueError with helpful message."""
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
 
         def import_side_effect(name):
@@ -725,7 +752,7 @@ class TestGetExternalProvidersFromModule:
             raise ModuleNotFoundError(name)
 
         with patch("importlib.import_module", side_effect=import_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -749,7 +776,6 @@ class TestGetExternalProvidersFromModule:
         """Test that generic exceptions are properly raised."""
         from types import SimpleNamespace
 
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
 
         def bad_spec():
@@ -763,7 +789,7 @@ class TestGetExternalProvidersFromModule:
             raise ModuleNotFoundError(name)
 
         with patch("importlib.import_module", side_effect=import_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [
@@ -785,10 +811,9 @@ class TestGetExternalProvidersFromModule:
 
     def test_empty_provider_list(self, mock_providers):
         """Test with empty provider list."""
-        from llama_stack.core.datatypes import StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
 
-        config = StackRunConfig(
+        config = make_stack_config(
             image_name="test_image",
             providers={},
         )
@@ -803,7 +828,6 @@ class TestGetExternalProvidersFromModule:
         """Test multiple APIs with providers."""
         from types import SimpleNamespace
 
-        from llama_stack.core.datatypes import Provider, StackRunConfig
         from llama_stack.core.distribution import get_external_providers_from_module
         from llama_stack.providers.datatypes import ProviderSpec
 
@@ -828,7 +852,7 @@ class TestGetExternalProvidersFromModule:
             raise ModuleNotFoundError(name)
 
         with patch("importlib.import_module", side_effect=import_side_effect):
-            config = StackRunConfig(
+            config = make_stack_config(
                 image_name="test_image",
                 providers={
                     "inference": [

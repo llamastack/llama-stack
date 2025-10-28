@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 import pytest
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.inference import Model, OpenAIUserMessageParam
+from llama_stack.apis.inference import Model, OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
 from llama_stack.apis.models import ModelType
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
@@ -23,10 +23,10 @@ class OpenAIMixinImpl(OpenAIMixin):
     __provider_id__: str = "test-provider"
 
     def get_api_key(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
+        return "test-api-key"
 
     def get_base_url(self) -> str:
-        raise NotImplementedError("This method should be mocked in tests")
+        return "http://test-base-url"
 
 
 class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
@@ -36,6 +36,28 @@ class OpenAIMixinWithEmbeddingsImpl(OpenAIMixinImpl):
         "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
         "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
     }
+
+
+class OpenAIMixinWithCustomModelConstruction(OpenAIMixinImpl):
+    """Test implementation that uses construct_model_from_identifier to add rerank models"""
+
+    embedding_model_metadata: dict[str, dict[str, int]] = {
+        "text-embedding-3-small": {"embedding_dimension": 1536, "context_length": 8192},
+        "text-embedding-ada-002": {"embedding_dimension": 1536, "context_length": 8192},
+    }
+
+    # Adds rerank models via construct_model_from_identifier
+    rerank_model_ids: set[str] = {"rerank-model-1", "rerank-model-2"}
+
+    def construct_model_from_identifier(self, identifier: str) -> Model:
+        if identifier in self.rerank_model_ids:
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.rerank,
+            )
+        return super().construct_model_from_identifier(identifier)
 
 
 @pytest.fixture
@@ -60,6 +82,13 @@ def mixin_with_embeddings():
     """Create a test instance of OpenAIMixin with embedding model metadata"""
     config = RemoteInferenceProviderConfig()
     return OpenAIMixinWithEmbeddingsImpl(config=config)
+
+
+@pytest.fixture
+def mixin_with_custom_model_construction():
+    """Create a test instance using custom construct_model_from_identifier"""
+    config = RemoteInferenceProviderConfig()
+    return OpenAIMixinWithCustomModelConstruction(config=config)
 
 
 @pytest.fixture
@@ -111,6 +140,19 @@ def mock_client_context():
         return patch.object(type(mixin), "client", new_callable=PropertyMock, return_value=mock_client)
 
     return _mock_client_context
+
+
+def _assert_models_match_expected(actual_models, expected_models):
+    """Verify the models match expected attributes.
+
+    Args:
+        actual_models: List of models to verify
+        expected_models: Mapping of model identifier to expected attribute values
+    """
+    for identifier, expected_attrs in expected_models.items():
+        model = next(m for m in actual_models if m.identifier == identifier)
+        for attr_name, expected_value in expected_attrs.items():
+            assert getattr(model, attr_name) == expected_value
 
 
 class TestOpenAIMixinListModels:
@@ -205,7 +247,7 @@ class TestOpenAIMixinCheckModelAvailability:
             assert await mixin.check_model_availability("pre-registered-model")
             # Should not call the provider's list_models since model was found in store
             mock_client_with_models.models.list.assert_not_called()
-            mock_model_store.has_model.assert_called_once_with("pre-registered-model")
+            mock_model_store.has_model.assert_called_once_with("test-provider/pre-registered-model")
 
     async def test_check_model_availability_fallback_to_provider_when_not_in_store(
         self, mixin, mock_client_with_models, mock_client_context
@@ -222,7 +264,7 @@ class TestOpenAIMixinCheckModelAvailability:
             assert await mixin.check_model_availability("some-mock-model-id")
             # Should call the provider's list_models since model was not found in store
             mock_client_with_models.models.list.assert_called_once()
-            mock_model_store.has_model.assert_called_once_with("some-mock-model-id")
+            mock_model_store.has_model.assert_called_once_with("test-provider/some-mock-model-id")
 
 
 class TestOpenAIMixinCacheBehavior:
@@ -271,7 +313,8 @@ class TestOpenAIMixinImagePreprocessing:
             with patch("llama_stack.providers.utils.inference.openai_mixin.localize_image_content") as mock_localize:
                 mock_localize.return_value = (b"fake_image_data", "jpeg")
 
-                await mixin.openai_chat_completion(model="test-model", messages=[message])
+                params = OpenAIChatCompletionRequestWithExtraBody(model="test-model", messages=[message])
+                await mixin.openai_chat_completion(params)
 
             mock_localize.assert_called_once_with("http://example.com/image.jpg")
 
@@ -303,7 +346,8 @@ class TestOpenAIMixinImagePreprocessing:
 
         with patch.object(type(mixin), "client", new_callable=PropertyMock, return_value=mock_client):
             with patch("llama_stack.providers.utils.inference.openai_mixin.localize_image_content") as mock_localize:
-                await mixin.openai_chat_completion(model="test-model", messages=[message])
+                params = OpenAIChatCompletionRequestWithExtraBody(model="test-model", messages=[message])
+                await mixin.openai_chat_completion(params)
 
             mock_localize.assert_not_called()
 
@@ -340,21 +384,71 @@ class TestOpenAIMixinEmbeddingModelMetadata:
             assert result is not None
             assert len(result) == 2
 
-            # Find the models in the result
-            embedding_model = next(m for m in result if m.identifier == "text-embedding-3-small")
-            llm_model = next(m for m in result if m.identifier == "gpt-4")
+            expected_models = {
+                "text-embedding-3-small": {
+                    "model_type": ModelType.embedding,
+                    "metadata": {"embedding_dimension": 1536, "context_length": 8192},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "text-embedding-3-small",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
 
-            # Check embedding model
-            assert embedding_model.model_type == ModelType.embedding
-            assert embedding_model.metadata == {"embedding_dimension": 1536, "context_length": 8192}
-            assert embedding_model.provider_id == "test-provider"
-            assert embedding_model.provider_resource_id == "text-embedding-3-small"
+            _assert_models_match_expected(result, expected_models)
 
-            # Check LLM model
-            assert llm_model.model_type == ModelType.llm
-            assert llm_model.metadata == {}  # No metadata for LLMs
-            assert llm_model.provider_id == "test-provider"
-            assert llm_model.provider_resource_id == "gpt-4"
+
+class TestOpenAIMixinCustomModelConstruction:
+    """Test cases for mixed model types (LLM, embedding, rerank) through construct_model_from_identifier"""
+
+    async def test_mixed_model_types_identification(self, mixin_with_custom_model_construction, mock_client_context):
+        """Test that LLM, embedding, and rerank models are correctly identified with proper types and metadata"""
+        # Create mock models: 1 embedding, 1 rerank, 1 LLM
+        mock_embedding_model = MagicMock(id="text-embedding-3-small")
+        mock_rerank_model = MagicMock(id="rerank-model-1")
+        mock_llm_model = MagicMock(id="gpt-4")
+        mock_models = [mock_embedding_model, mock_rerank_model, mock_llm_model]
+
+        mock_client = MagicMock()
+
+        async def mock_models_list():
+            for model in mock_models:
+                yield model
+
+        mock_client.models.list.return_value = mock_models_list()
+
+        with mock_client_context(mixin_with_custom_model_construction, mock_client):
+            result = await mixin_with_custom_model_construction.list_models()
+
+            assert result is not None
+            assert len(result) == 3
+
+            expected_models = {
+                "text-embedding-3-small": {
+                    "model_type": ModelType.embedding,
+                    "metadata": {"embedding_dimension": 1536, "context_length": 8192},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "text-embedding-3-small",
+                },
+                "rerank-model-1": {
+                    "model_type": ModelType.rerank,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "rerank-model-1",
+                },
+                "gpt-4": {
+                    "model_type": ModelType.llm,
+                    "metadata": {},
+                    "provider_id": "test-provider",
+                    "provider_resource_id": "gpt-4",
+                },
+            }
+
+            _assert_models_match_expected(result, expected_models)
 
 
 class TestOpenAIMixinAllowedModels:

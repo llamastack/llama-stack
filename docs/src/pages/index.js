@@ -47,11 +47,11 @@ function QuickStart() {
               <pre><code>{`# Install uv and start Ollama
 ollama run llama3.2:3b --keepalive 60m
 
+# Install server dependencies
+uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
+
 # Run Llama Stack server
-OLLAMA_URL=http://localhost:11434 \\
-  uv run --with llama-stack \\
-  llama stack build --distro starter \\
-  --image-type venv --run
+OLLAMA_URL=http://localhost:11434 uv run --with llama-stack llama stack run starter
 
 # Try the Python SDK
 from llama_stack_client import LlamaStackClient

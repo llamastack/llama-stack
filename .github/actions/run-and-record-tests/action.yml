@@ -66,11 +66,11 @@ runs:
       shell: bash
       run: |
         echo "Checking for recording changes"
-        git status --porcelain tests/integration/recordings/
+        git status --porcelain tests/integration/
 
-        if [[ -n $(git status --porcelain tests/integration/recordings/) ]]; then
+        if [[ -n $(git status --porcelain tests/integration/) ]]; then
           echo "New recordings detected, committing and pushing"
-          git add tests/integration/recordings/
+          git add tests/integration/
 
           git commit -m "Recordings update from CI (suite: ${{ inputs.suite }})"
           git fetch origin ${{ github.ref_name }}
@@ -82,11 +82,13 @@ runs:
           echo "No recording changes"
         fi
 
-    - name: Write inference logs to file
+    - name: Write docker logs to file
       if: ${{ always() }}
       shell: bash
       run: |
-        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log || true
+        # Ollama logs (if ollama container exists)
+        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log 2>&1 || true
+        # Note: distro container logs are now dumped in integration-tests.sh before container is removed
 
     - name: Upload logs
       if: ${{ always() }}

@@ -20,7 +20,14 @@ from llama_stack.core.conversations.conversations import (
     ConversationServiceConfig,
     ConversationServiceImpl,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.storage.datatypes import (
+    ServerStoresConfig,
+    SqliteSqlStoreConfig,
+    SqlStoreReference,
+    StorageConfig,
+)
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
 
 @pytest.fixture
@@ -28,7 +35,18 @@ async def service():
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test_conversations.db"
 
-        config = ConversationServiceConfig(conversations_store=SqliteSqlStoreConfig(db_path=str(db_path)), policy=[])
+        storage = StorageConfig(
+            backends={
+                "sql_test": SqliteSqlStoreConfig(db_path=str(db_path)),
+            },
+            stores=ServerStoresConfig(
+                conversations=SqlStoreReference(backend="sql_test", table_name="openai_conversations"),
+            ),
+        )
+        register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
+        run_config = StackRunConfig(image_name="test", apis=[], providers={}, storage=storage)
+
+        config = ConversationServiceConfig(run_config=run_config, policy=[])
         service = ConversationServiceImpl(config, {})
         await service.initialize()
         yield service
@@ -64,7 +82,7 @@ async def test_conversation_items(service):
     assert len(item_list.data) == 1
     assert item_list.data[0].id == "msg_test123"
 
-    items = await service.list(conversation.id)
+    items = await service.list_items(conversation.id)
     assert len(items.data) == 1
 
 
@@ -102,7 +120,7 @@ async def test_openai_type_compatibility(service):
         assert hasattr(item_list, attr)
     assert item_list.object == "list"
 
-    items = await service.list(conversation.id)
+    items = await service.list_items(conversation.id)
     item = await service.retrieve(conversation.id, items.data[0].id)
     item_dict = item.model_dump()
 
@@ -121,9 +139,18 @@ async def test_policy_configuration():
             AccessRule(forbid=Scope(principal="test_user", actions=[Action.CREATE, Action.READ], resource="*"))
         ]
 
-        config = ConversationServiceConfig(
-            conversations_store=SqliteSqlStoreConfig(db_path=str(db_path)), policy=restrictive_policy
+        storage = StorageConfig(
+            backends={
+                "sql_test": SqliteSqlStoreConfig(db_path=str(db_path)),
+            },
+            stores=ServerStoresConfig(
+                conversations=SqlStoreReference(backend="sql_test", table_name="openai_conversations"),
+            ),
         )
+        register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
+        run_config = StackRunConfig(image_name="test", apis=[], providers={}, storage=storage)
+
+        config = ConversationServiceConfig(run_config=run_config, policy=restrictive_policy)
         service = ConversationServiceImpl(config, {})
         await service.initialize()
 

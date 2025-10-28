@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'llama_stack/**'
+      - 'src/llama_stack/**'
       - 'tests/integration/**'
       - 'uv.lock'
       - 'pyproject.toml'
@@ -46,9 +46,9 @@ jobs:
           yq -i '.image_type = "${{ matrix.image-type }}"' tests/external/ramalama-stack/run.yaml
           cat tests/external/ramalama-stack/run.yaml
 
-      - name: Build distro from config file
+      - name: Install distribution dependencies
         run: |
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run llama stack build --config tests/external/ramalama-stack/build.yaml
+          uv run llama stack list-deps tests/external/ramalama-stack/build.yaml | xargs -L1 uv pip install
 
       - name: Start Llama Stack server in background
         if: ${{ matrix.image-type }} == 'venv'
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: logs-${{ github.run_id }}-${{ github.run_attempt }}-external-provider-module-test
           path: |

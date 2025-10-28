@@ -22,7 +22,6 @@ The `llamastack/distribution-dell` distribution consists of the following provid
 | inference | `remote::tgi`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard` |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |
-| telemetry | `inline::meta-reference` |
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::rag-runtime` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
 
@@ -166,10 +165,10 @@ docker run \
 
 ### Via venv
 
-Make sure you have done `pip install llama-stack` and have the Llama Stack CLI available.
+Install the distribution dependencies before launching:
 
 ```bash
-llama stack build --distro dell --image-type venv
+llama stack list-deps dell | xargs -L1 uv pip install
 INFERENCE_MODEL=$INFERENCE_MODEL \
 DEH_URL=$DEH_URL \
 CHROMA_URL=$CHROMA_URL \

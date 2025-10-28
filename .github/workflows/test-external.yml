@@ -8,8 +8,8 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'llama_stack/**'
-      - '!llama_stack/ui/**'
+      - 'src/llama_stack/**'
+      - '!src/llama_stack/ui/**'
       - 'tests/integration/**'
       - 'uv.lock'
       - 'pyproject.toml'
@@ -44,11 +44,14 @@ jobs:
 
       - name: Print distro dependencies
         run: |
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack build --config tests/external/build.yaml --print-deps-only
+          uv run --no-sync llama stack list-deps tests/external/build.yaml
 
       - name: Build distro from config file
         run: |
-          USE_COPY_NOT_MOUNT=true LLAMA_STACK_DIR=. uv run --no-sync llama stack build --config tests/external/build.yaml
+          uv venv ci-test
+          source ci-test/bin/activate
+          uv pip install -e .
+          LLAMA_STACK_LOGGING=all=CRITICAL llama stack list-deps tests/external/build.yaml | xargs -L1 uv pip install
 
       - name: Start Llama Stack server in background
         if: ${{ matrix.image-type }} == 'venv'
@@ -81,7 +84,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: logs-${{ github.run_id }}-${{ github.run_attempt }}-external-test
           path: |

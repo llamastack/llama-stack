@@ -21,7 +21,6 @@ apis:
 - inference
 - vector_io
 - safety
-- telemetry
 providers:
   inference:
   - provider_id: ollama
@@ -44,18 +43,36 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sqlite
-        namespace: null
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/agents_store.db
-  telemetry:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
-    config: {}
-metadata_store:
-  namespace: null
-  type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/registry.db
+      persistence:
+        agent_state:
+          backend: kv_default
+          namespace: agents
+        responses:
+          backend: sql_default
+          table_name: responses
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/kvstore.db
+    sql_default:
+      type: sql_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/sqlstore.db
+  stores:
+    metadata:
+      backend: kv_default
+      namespace: registry
+    inference:
+      backend: sql_default
+      table_name: inference_store
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      backend: sql_default
+      table_name: openai_conversations
+    prompts:
+      backend: kv_default
+      namespace: prompts
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}
@@ -78,7 +95,6 @@ apis:
 - inference
 - vector_io
 - safety
-- telemetry
 ```
 
 ## Providers
@@ -575,24 +591,13 @@ created by users sharing a team with them:
 
 In addition to resource-based access control, Llama Stack supports endpoint-level authorization using OAuth 2.0 style scopes. When authentication is enabled, specific API endpoints require users to have particular scopes in their authentication token.
 
-**Scope-Gated APIs:**
-The following APIs are currently gated by scopes:
-
-- **Telemetry API** (scope: `telemetry.read`):
-  - `POST /telemetry/traces` - Query traces
-  - `GET /telemetry/traces/{trace_id}` - Get trace by ID
-  - `GET /telemetry/traces/{trace_id}/spans/{span_id}` - Get span by ID
-  - `POST /telemetry/spans/{span_id}/tree` - Get span tree
-  - `POST /telemetry/spans` - Query spans
-  - `POST /telemetry/metrics/{metric_name}` - Query metrics
-
 **Authentication Configuration:**
 
 For **JWT/OAuth2 providers**, scopes should be included in the JWT's claims:
 ```json
 {
   "sub": "user123",
-  "scope": "telemetry.read",
+  "scope": "<scope>",
   "aud": "llama-stack"
 }
 ```
@@ -602,7 +607,7 @@ For **custom authentication providers**, the endpoint must return user attribute
 {
   "principal": "user123",
   "attributes": {
-    "scopes": ["telemetry.read"]
+    "scopes": ["<scope>"]
   }
 }
 ```

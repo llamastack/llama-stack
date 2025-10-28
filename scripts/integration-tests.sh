@@ -42,8 +42,11 @@ Setups are defined in tests/integration/setups.py and provide global configurati
 You can also specify subdirectories (of tests/integration) to select tests from, which will override the suite.
 
 Examples:
-    # Basic inference tests with ollama
+    # Basic inference tests with ollama (server mode)
     $0 --stack-config server:ci-tests --suite base --setup ollama
+
+    # Basic inference tests with docker
+    $0 --stack-config docker:ci-tests --suite base --setup ollama
 
     # Multiple test directories with vllm
     $0 --stack-config server:ci-tests --subdirs 'inference,agents' --setup vllm
@@ -153,7 +156,7 @@ echo "Setting SQLITE_STORE_DIR: $SQLITE_STORE_DIR"
 
 # Determine stack config type for api_recorder test isolation
 if [[ "$COLLECT_ONLY" == false ]]; then
-    if [[ "$STACK_CONFIG" == server:* ]]; then
+    if [[ "$STACK_CONFIG" == server:* ]] || [[ "$STACK_CONFIG" == docker:* ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
         echo "Setting stack config type: server"
     else
@@ -229,6 +232,110 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     trap stop_server EXIT ERR INT TERM
 fi
 
+# Start Docker Container if needed
+if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
+    stop_container() {
+        echo "Stopping Docker container..."
+        container_name="llama-stack-test-$DISTRO"
+        if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo "Dumping container logs before stopping..."
+            docker logs "$container_name" > "docker-${DISTRO}-${INFERENCE_MODE}.log" 2>&1 || true
+            echo "Stopping and removing container: $container_name"
+            docker stop "$container_name" 2>/dev/null || true
+            docker rm "$container_name" 2>/dev/null || true
+        else
+            echo "No container named $container_name found"
+        fi
+        echo "Docker container stopped"
+    }
+
+    # Extract distribution name from docker:distro format
+    DISTRO=$(echo "$STACK_CONFIG" | sed 's/^docker://')
+    export LLAMA_STACK_PORT=8321
+
+    echo "=== Building Docker Image for distribution: $DISTRO ==="
+    containerfile="$ROOT_DIR/containers/Containerfile"
+    if [[ ! -f "$containerfile" ]]; then
+        echo "❌ Containerfile not found at $containerfile"
+        exit 1
+    fi
+
+    build_cmd=(
+        docker
+        build
+        "$ROOT_DIR"
+        -f "$containerfile"
+        --tag "localhost/distribution-$DISTRO:dev"
+        --build-arg "DISTRO_NAME=$DISTRO"
+        --build-arg "INSTALL_MODE=editable"
+        --build-arg "LLAMA_STACK_DIR=/workspace"
+    )
+
+    if ! "${build_cmd[@]}"; then
+        echo "❌ Failed to build Docker image"
+        exit 1
+    fi
+
+    echo ""
+    echo "=== Starting Docker Container ==="
+    container_name="llama-stack-test-$DISTRO"
+
+    # Stop and remove existing container if it exists
+    docker stop "$container_name" 2>/dev/null || true
+    docker rm "$container_name" 2>/dev/null || true
+
+    # Build environment variables for docker run
+    DOCKER_ENV_VARS=""
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
+
+    # Pass through API keys if they exist
+    [ -n "${TOGETHER_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e TOGETHER_API_KEY=$TOGETHER_API_KEY"
+    [ -n "${FIREWORKS_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e FIREWORKS_API_KEY=$FIREWORKS_API_KEY"
+    [ -n "${TAVILY_SEARCH_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e TAVILY_SEARCH_API_KEY=$TAVILY_SEARCH_API_KEY"
+    [ -n "${OPENAI_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OPENAI_API_KEY=$OPENAI_API_KEY"
+    [ -n "${ANTHROPIC_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY"
+    [ -n "${GROQ_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e GROQ_API_KEY=$GROQ_API_KEY"
+    [ -n "${GEMINI_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e GEMINI_API_KEY=$GEMINI_API_KEY"
+    [ -n "${OLLAMA_URL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OLLAMA_URL=$OLLAMA_URL"
+    [ -n "${SAFETY_MODEL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e SAFETY_MODEL=$SAFETY_MODEL"
+
+    # Determine the actual image name (may have localhost/ prefix)
+    IMAGE_NAME=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "distribution-$DISTRO:dev$" | head -1)
+    if [[ -z "$IMAGE_NAME" ]]; then
+        echo "❌ Error: Could not find image for distribution-$DISTRO:dev"
+        exit 1
+    fi
+    echo "Using image: $IMAGE_NAME"
+
+    docker run -d --network host --name "$container_name" \
+        -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+        $DOCKER_ENV_VARS \
+        "$IMAGE_NAME" \
+        --port $LLAMA_STACK_PORT
+
+    echo "Waiting for Docker container to start..."
+    for i in {1..30}; do
+        if curl -s http://localhost:$LLAMA_STACK_PORT/v1/health 2>/dev/null | grep -q "OK"; then
+            echo "✅ Docker container started successfully"
+            break
+        fi
+        if [[ $i -eq 30 ]]; then
+            echo "❌ Docker container failed to start"
+            echo "Container logs:"
+            docker logs "$container_name"
+            exit 1
+        fi
+        sleep 1
+    done
+    echo ""
+
+    # Update STACK_CONFIG to point to the running container
+    STACK_CONFIG="http://localhost:$LLAMA_STACK_PORT"
+
+    trap stop_container EXIT ERR INT TERM
+fi
+
 # Run tests
 echo "=== Running Integration Tests ==="
 EXCLUDE_TESTS="builtin_tool or safety_with_image or code_interpreter or test_rag"
@@ -290,6 +397,8 @@ pytest -s -v $PYTEST_TARGET \
     -k "$PYTEST_PATTERN" \
     $EXTRA_PARAMS \
     --color=yes \
+    --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
+    --color=yes $EXTRA_PARAMS \
     --capture=tee-sys
 exit_code=$?
 set +x
@@ -301,6 +410,21 @@ elif [ $exit_code -eq 5 ]; then
     echo "⚠️ No tests collected (pattern matched no tests)"
 else
     echo "❌ Tests failed"
+    echo ""
+    echo "=== Dumping last 100 lines of logs for debugging ==="
+
+    # Output server or container logs based on stack config
+    if [[ "$STACK_CONFIG" == *"server:"* && -f "server.log" ]]; then
+        echo "--- Last 100 lines of server.log ---"
+        tail -100 server.log
+    elif [[ "$STACK_CONFIG" == *"docker:"* ]]; then
+        docker_log_file="docker-${DISTRO}-${INFERENCE_MODE}.log"
+        if [[ -f "$docker_log_file" ]]; then
+            echo "--- Last 100 lines of $docker_log_file ---"
+            tail -100 "$docker_log_file"
+        fi
+    fi
+
     exit 1
 fi
 

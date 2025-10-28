@@ -71,6 +71,11 @@ const config: Config = {
         docs: {
           sidebarPath: require.resolve("./sidebars.ts"),
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
+          remarkPlugins: [
+            [require('remark-code-import'), {
+              rootDir: require('path').join(__dirname, '..') // Repository root
+            }]
+          ],
         },
         blog: false,
         theme: {

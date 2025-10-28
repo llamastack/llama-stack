@@ -1,0 +1,140 @@
+version: 2
+image_name: nvidia
+apis:
+- agents
+- datasetio
+- eval
+- files
+- inference
+- post_training
+- safety
+- scoring
+- tool_runtime
+- vector_io
+providers:
+  inference:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      url: ${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com}
+      api_key: ${env.NVIDIA_API_KEY:=}
+      append_api_version: ${env.NVIDIA_APPEND_API_VERSION:=True}
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      guardrails_service_url: ${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}
+      config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
+  vector_io:
+  - provider_id: faiss
+    provider_type: inline::faiss
+    config:
+      persistence:
+        namespace: vector_io::faiss
+        backend: kv_default
+  safety:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      guardrails_service_url: ${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}
+      config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
+  agents:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      persistence:
+        agent_state:
+          namespace: agents
+          backend: kv_default
+        responses:
+          table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
+  eval:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      evaluator_url: ${env.NVIDIA_EVALUATOR_URL:=http://localhost:7331}
+  post_training:
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      api_key: ${env.NVIDIA_API_KEY:=}
+      dataset_namespace: ${env.NVIDIA_DATASET_NAMESPACE:=default}
+      project_id: ${env.NVIDIA_PROJECT_ID:=test-project}
+      customizer_url: ${env.NVIDIA_CUSTOMIZER_URL:=http://nemo.test}
+  datasetio:
+  - provider_id: localfs
+    provider_type: inline::localfs
+    config:
+      kvstore:
+        namespace: datasetio::localfs
+        backend: kv_default
+  - provider_id: nvidia
+    provider_type: remote::nvidia
+    config:
+      api_key: ${env.NVIDIA_API_KEY:=}
+      dataset_namespace: ${env.NVIDIA_DATASET_NAMESPACE:=default}
+      project_id: ${env.NVIDIA_PROJECT_ID:=test-project}
+      datasets_url: ${env.NVIDIA_DATASETS_URL:=http://nemo.test}
+  scoring:
+  - provider_id: basic
+    provider_type: inline::basic
+  tool_runtime:
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
+  files:
+  - provider_id: meta-reference-files
+    provider_type: inline::localfs
+    config:
+      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/nvidia/files}
+      metadata_store:
+        table_name: files_metadata
+        backend: sql_default
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/kvstore.db
+    sql_default:
+      type: sql_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/nvidia}/sql_store.db
+  stores:
+    metadata:
+      namespace: registry
+      backend: kv_default
+    inference:
+      table_name: inference_store
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
+    prompts:
+      namespace: prompts
+      backend: kv_default
+registered_resources:
+  models:
+  - metadata: {}
+    model_id: ${env.INFERENCE_MODEL}
+    provider_id: nvidia
+    model_type: llm
+  - metadata: {}
+    model_id: ${env.SAFETY_MODEL}
+    provider_id: nvidia
+    model_type: llm
+  shields:
+  - shield_id: ${env.SAFETY_MODEL}
+    provider_id: nvidia
+  vector_dbs: []
+  datasets: []
+  scoring_fns: []
+  benchmarks: []
+  tool_groups:
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
+server:
+  port: 8321
+telemetry:
+  enabled: true

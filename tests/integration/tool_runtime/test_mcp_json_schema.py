@@ -348,7 +348,8 @@ class TestAgentWithMCPTools:
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
             pytest.skip("Library client required for local MCP server")
 
-        from llama_stack_client import Agent
+        from llama_stack_client.lib.agents.agent import Agent
+        from llama_stack_client.lib.agents.turn_events import StepCompleted
 
         test_toolgroup_id = "mcp::complex_agent"
         uri = mcp_server_with_complex_schemas["server_url"]
@@ -369,36 +370,56 @@ class TestAgentWithMCPTools:
             "X-LlamaStack-Provider-Data": json.dumps(provider_data),
         }
 
-        # Create agent with MCP tools
+        tools_list = llama_stack_client.tools.list(
+            toolgroup_id=test_toolgroup_id,
+            extra_headers=auth_headers,
+        )
+        tool_defs = [
+            {
+                "type": "mcp",
+                "server_url": uri,
+                "server_label": test_toolgroup_id,
+                "require_approval": "never",
+                "allowed_tools": [tool.name for tool in tools_list],
+            }
+        ]
+
         agent = Agent(
             client=llama_stack_client,
             model=text_model_id,
             instructions="You are a helpful assistant that can process orders and book flights.",
-            tools=[test_toolgroup_id],
+            tools=tool_defs,
             extra_headers=auth_headers,
         )
 
         session_id = agent.create_session("test-session-complex")
 
         # Ask agent to use a tool with complex schema
-        response = agent.create_turn(
-            session_id=session_id,
-            messages=[
-                {"role": "user", "content": "Process an order with 2 widgets going to 123 Main St, San Francisco"}
-            ],
-            stream=False,
-            extra_headers=auth_headers,
+        chunks = list(
+            agent.create_turn(
+                session_id=session_id,
+                messages=[
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": "Process an order with 2 widgets going to 123 Main St, San Francisco",
+                            }
+                        ],
+                    }
+                ],
+                stream=True,
+                extra_headers=auth_headers,
+            )
         )
 
-        steps = response.steps
+        events = [chunk.event for chunk in chunks]
+        tool_execution_steps = [
+            event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+        ]
 
-        # Verify agent was able to call the tool
-        # (The LLM should have been able to understand the schema and formulate a valid call)
-        tool_execution_steps = [s for s in steps if s.step_type == "tool_execution"]
-
-        # Agent might or might not call the tool depending on the model
-        # But if it does, there should be no errors
         for step in tool_execution_steps:
-            if step.tool_responses:
-                for tool_response in step.tool_responses:
-                    assert tool_response.content is not None
+            for tool_response in step.result.tool_responses:
+                assert tool_response.get("content") is not None
