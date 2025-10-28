@@ -82,8 +82,10 @@ async def convert_chat_choice_to_response_message(
 async def convert_response_content_to_chat_content(
     content: (
         str
+        # List types for exact matches (invariant)
         | list[OpenAIResponseInputMessageContent]
         | list[OpenAIResponseOutputMessageContent]
+        # Sequence for mixed content types (covariant - accepts list of subtypes)
         | Sequence[OpenAIResponseInputMessageContent | OpenAIResponseOutputMessageContent]
     ),
 ) -> str | list[OpenAIChatCompletionContentPartParam]:
@@ -335,7 +337,8 @@ async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[
 
     # Look up shields to get their provider_resource_id (actual model ID)
     model_ids = []
-    shields_list = await safety_api.list_shields()  # type: ignore[attr-defined]  # Safety API routing_table access
+    # list_shields not in Safety interface but available at runtime via API routing
+    shields_list = await safety_api.list_shields()  # type: ignore[attr-defined]
 
     for guardrail_id in guardrail_ids:
         matching_shields = [shield for shield in shields_list.data if shield.identifier == guardrail_id]
