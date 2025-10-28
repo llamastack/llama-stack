@@ -194,12 +194,12 @@ def get_sampling_options(params: SamplingParams | None) -> dict:
 
 def text_from_choice(choice) -> str:
     if hasattr(choice, "delta") and choice.delta:
-        return choice.delta.content  # type: ignore[no-any-return]
+        return choice.delta.content  # type: ignore[no-any-return]  # external OpenAI types lack precise annotations
 
     if hasattr(choice, "message"):
-        return choice.message.content  # type: ignore[no-any-return]
+        return choice.message.content  # type: ignore[no-any-return]  # external OpenAI types lack precise annotations
 
-    return choice.text  # type: ignore[no-any-return]
+    return choice.text  # type: ignore[no-any-return]  # external OpenAI types lack precise annotations
 
 
 def get_stop_reason(finish_reason: str) -> StopReason:
@@ -275,10 +275,10 @@ def process_chat_completion_response(
 ) -> ChatCompletionResponse:
     choice = response.choices[0]
     if choice.finish_reason == "tool_calls":
-        if not hasattr(choice, "message") or not choice.message or not choice.message.tool_calls:  # type: ignore[attr-defined]
+        if not hasattr(choice, "message") or not choice.message or not choice.message.tool_calls:  # type: ignore[attr-defined]  # OpenAICompatCompletionChoice is runtime duck-typed
             raise ValueError("Tool calls are not present in the response")
 
-        tool_calls = [convert_tool_call(tool_call) for tool_call in choice.message.tool_calls]  # type: ignore[attr-defined]
+        tool_calls = [convert_tool_call(tool_call) for tool_call in choice.message.tool_calls]  # type: ignore[attr-defined]  # OpenAICompatCompletionChoice is runtime duck-typed
         if any(isinstance(tool_call, UnparseableToolCall) for tool_call in tool_calls):
             # If we couldn't parse a tool call, jsonify the tool calls and return them
             return ChatCompletionResponse(
@@ -329,7 +329,7 @@ def process_chat_completion_response(
 
     return ChatCompletionResponse(
         completion_message=CompletionMessage(
-            content=raw_message.content,  # type: ignore[arg-type]
+            content=raw_message.content,  # type: ignore[arg-type]  # decode_assistant_message returns Union[str, InterleavedContent]
             stop_reason=raw_message.stop_reason or StopReason.end_of_turn,
             tool_calls=raw_message.tool_calls,
         ),
@@ -530,7 +530,7 @@ async def convert_message_to_openai_dict(message: Message, download: bool = Fals
     }
 
     if hasattr(message, "tool_calls") and message.tool_calls:
-        result["tool_calls"] = []  # type: ignore[assignment]
+        result["tool_calls"] = []  # type: ignore[assignment]  # dict allows Any value, stricter type expected
         for tc in message.tool_calls:
             # The tool.tool_name can be a str or a BuiltinTool enum. If
             # it's the latter, convert to a string.
@@ -538,7 +538,7 @@ async def convert_message_to_openai_dict(message: Message, download: bool = Fals
             if isinstance(tool_name, BuiltinTool):
                 tool_name = tool_name.value
 
-            result["tool_calls"].append(  # type: ignore[union-attr]
+            result["tool_calls"].append(  # type: ignore[union-attr]  # reassigned as list above, mypy can't track
                 {
                     "id": tc.call_id,
                     "type": "function",
@@ -613,7 +613,7 @@ async def convert_message_to_openai_dict_new(
                     ),
                 )
             elif isinstance(content_, list):
-                return [await impl(item) for item in content_]  # type: ignore[misc]
+                return [await impl(item) for item in content_]  # type: ignore[misc]  # recursive list comprehension confuses mypy's type narrowing
             else:
                 raise ValueError(f"Unsupported content type: {type(content_)}")
 
@@ -649,18 +649,18 @@ async def convert_message_to_openai_dict_new(
         out = OpenAIChatCompletionAssistantMessage(
             role="assistant",
             content=await _convert_message_content(message.content),
-            **params,  # type: ignore[typeddict-item]
+            **params,  # type: ignore[typeddict-item]  # tool_calls dict expansion conflicts with TypedDict optional field
         )
     elif isinstance(message, ToolResponseMessage):
         out = OpenAIChatCompletionToolMessage(
             role="tool",
             tool_call_id=message.call_id,
-            content=await _convert_message_content(message.content),  # type: ignore[typeddict-item]
+            content=await _convert_message_content(message.content),  # type: ignore[typeddict-item]  # content union type incompatible with TypedDict str requirement
         )
     elif isinstance(message, SystemMessage):
         out = OpenAIChatCompletionSystemMessage(
             role="system",
-            content=await _convert_message_content(message.content),  # type: ignore[typeddict-item]
+            content=await _convert_message_content(message.content),  # type: ignore[typeddict-item]  # content union type incompatible with TypedDict str requirement
         )
     else:
         raise ValueError(f"Unsupported message type: {type(message)}")
@@ -763,16 +763,16 @@ def convert_tooldef_to_openai_tool(tool: ToolDefinition) -> dict:
     function = out["function"]
 
     if isinstance(tool.tool_name, BuiltinTool):
-        function["name"] = tool.tool_name.value  # type: ignore[index]
+        function["name"] = tool.tool_name.value  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
     else:
-        function["name"] = tool.tool_name  # type: ignore[index]
+        function["name"] = tool.tool_name  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
 
     if tool.description:
-        function["description"] = tool.description  # type: ignore[index]
+        function["description"] = tool.description  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
 
     if tool.input_schema:
         # Pass through the entire JSON Schema as-is
-        function["parameters"] = tool.input_schema  # type: ignore[index]
+        function["parameters"] = tool.input_schema  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
 
     # NOTE: OpenAI does not support output_schema, so we drop it here
     # It's stored in LlamaStack for validation and other provider usage
@@ -820,10 +820,10 @@ def _convert_openai_request_tool_config(tool_choice: str | dict[str, Any] | None
     tool_config = ToolConfig()
     if tool_choice:
         try:
-            tool_choice = ToolChoice(tool_choice)  # type: ignore[assignment]
+            tool_choice = ToolChoice(tool_choice)  # type: ignore[assignment]  # reassigning to enum narrows union but mypy can't track after exception
         except ValueError:
             pass
-        tool_config.tool_choice = tool_choice  # type: ignore[assignment]
+        tool_config.tool_choice = tool_choice  # type: ignore[assignment]  # ToolConfig.tool_choice accepts Union[ToolChoice, dict] but mypy tracks narrower type
     return tool_config
 
 
@@ -853,11 +853,11 @@ def _convert_openai_request_response_format(
     if not response_format:
         return None
     # response_format can be a dict or a pydantic model
-    response_format = dict(response_format)  # type: ignore[assignment]
-    if response_format.get("type", "") == "json_schema":  # type: ignore[union-attr]
+    response_format = dict(response_format)  # type: ignore[assignment]  # OpenAIResponseFormatParam union needs dict conversion
+    if response_format.get("type", "") == "json_schema":  # type: ignore[union-attr]  # narrowed to dict but mypy doesn't track .get()
         return JsonSchemaResponseFormat(
-            type="json_schema",  # type: ignore[arg-type]
-            json_schema=response_format.get("json_schema", {}).get("schema", ""),  # type: ignore[union-attr]
+            type="json_schema",  # type: ignore[arg-type]  # Literal["json_schema"] incompatible with expected type
+            json_schema=response_format.get("json_schema", {}).get("schema", ""),  # type: ignore[union-attr]  # chained .get() on reassigned dict confuses mypy
         )
     return None
 
@@ -950,7 +950,7 @@ def _convert_openai_sampling_params(
             temperature = 1.0
         if top_p is None:
             top_p = 1.0
-        sampling_params.strategy = TopPSamplingStrategy(temperature=temperature, top_p=top_p)  # type: ignore[assignment]
+        sampling_params.strategy = TopPSamplingStrategy(temperature=temperature, top_p=top_p)  # type: ignore[assignment]  # SamplingParams.strategy union accepts this type
 
     return sampling_params
 
@@ -965,20 +965,20 @@ def openai_messages_to_messages(
     for message in messages:
         converted_message: Message
         if message.role == "system":
-            converted_message = SystemMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]
+            converted_message = SystemMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
         elif message.role == "user":
-            converted_message = UserMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]
+            converted_message = UserMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
         elif message.role == "assistant":
             converted_message = CompletionMessage(
-                content=openai_content_to_content(message.content),  # type: ignore[arg-type]
-                tool_calls=_convert_openai_tool_calls(message.tool_calls) if message.tool_calls else [],  # type: ignore[arg-type]
+                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
+                tool_calls=_convert_openai_tool_calls(message.tool_calls) if message.tool_calls else [],  # type: ignore[arg-type]  # OpenAI tool_calls type incompatible with conversion function
                 stop_reason=StopReason.end_of_turn,
             )
         elif message.role == "tool":
             converted_message = ToolResponseMessage(
                 role="tool",
                 call_id=message.tool_call_id,
-                content=openai_content_to_content(message.content),  # type: ignore[arg-type]
+                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
             )
         else:
             raise ValueError(f"Unknown role {message.role}")
@@ -995,9 +995,9 @@ def openai_content_to_content(content: str | Iterable[OpenAIChatCompletionConten
         return [openai_content_to_content(c) for c in content]
     elif hasattr(content, "type"):
         if content.type == "text":
-            return TextContentItem(type="text", text=content.text)  # type: ignore[attr-defined]
+            return TextContentItem(type="text", text=content.text)  # type: ignore[attr-defined]  # Iterable narrowed by hasattr check but mypy doesn't track
         elif content.type == "image_url":
-            return ImageContentItem(type="image", image=_URLOrData(url=URL(uri=content.image_url.url)))  # type: ignore[attr-defined]
+            return ImageContentItem(type="image", image=_URLOrData(url=URL(uri=content.image_url.url)))  # type: ignore[attr-defined]  # Iterable narrowed by hasattr check but mypy doesn't track
         else:
             raise ValueError(f"Unknown content type: {content.type}")
     else:
@@ -1046,9 +1046,9 @@ def convert_openai_chat_completion_choice(
         completion_message=CompletionMessage(
             content=choice.message.content or "",  # CompletionMessage content is not optional
             stop_reason=_convert_openai_finish_reason(choice.finish_reason),
-            tool_calls=_convert_openai_tool_calls(choice.message.tool_calls) if choice.message.tool_calls else [],  # type: ignore[arg-type]
+            tool_calls=_convert_openai_tool_calls(choice.message.tool_calls) if choice.message.tool_calls else [],  # type: ignore[arg-type]  # OpenAI tool_calls Optional type broadens union
         ),
-        logprobs=_convert_openai_logprobs(getattr(choice, "logprobs", None)),  # type: ignore[arg-type]
+        logprobs=_convert_openai_logprobs(getattr(choice, "logprobs", None)),  # type: ignore[arg-type]  # getattr returns Any, can't narrow without inspection
     )
 
 
@@ -1088,7 +1088,7 @@ async def convert_openai_chat_completion_stream(
                     event=ChatCompletionResponseEvent(
                         event_type=event_type,
                         delta=TextDelta(text=choice.delta.content),
-                        logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]
+                        logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]  # logprobs type broadened from getattr result
                     )
                 )
 
@@ -1106,10 +1106,10 @@ async def convert_openai_chat_completion_stream(
                         event=ChatCompletionResponseEvent(
                             event_type=event_type,
                             delta=ToolCallDelta(
-                                tool_call=_convert_openai_tool_calls([tool_call])[0],  # type: ignore[arg-type, list-item]
+                                tool_call=_convert_openai_tool_calls([tool_call])[0],  # type: ignore[arg-type, list-item]  # delta tool_call type differs from complete tool_call
                                 parse_status=ToolCallParseStatus.succeeded,
                             ),
-                            logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]
+                            logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]  # logprobs type broadened from getattr result
                         )
                     )
             else:
@@ -1147,7 +1147,7 @@ async def convert_openai_chat_completion_stream(
                                     tool_call=delta,
                                     parse_status=ToolCallParseStatus.in_progress,
                                 ),
-                                logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]
+                                logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]  # logprobs type broadened from getattr result
                             )
                         )
         elif choice.delta.content:
@@ -1155,7 +1155,7 @@ async def convert_openai_chat_completion_stream(
                 event=ChatCompletionResponseEvent(
                     event_type=event_type,
                     delta=TextDelta(text=choice.delta.content or ""),
-                    logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]
+                    logprobs=_convert_openai_logprobs(logprobs),  # type: ignore[arg-type]  # logprobs type broadened from getattr result
                 )
             )
 
@@ -1186,7 +1186,7 @@ async def convert_openai_chat_completion_stream(
                     event=ChatCompletionResponseEvent(
                         event_type=ChatCompletionResponseEventType.progress,
                         delta=ToolCallDelta(
-                            tool_call=parsed_tool_call,  # type: ignore[arg-type]
+                            tool_call=parsed_tool_call,  # type: ignore[arg-type]  # ToolCallDelta.tool_call accepts Union[str, ToolCall]
                             parse_status=ToolCallParseStatus.succeeded,
                         ),
                         stop_reason=stop_reason,
@@ -1198,7 +1198,7 @@ async def convert_openai_chat_completion_stream(
                     event=ChatCompletionResponseEvent(
                         event_type=ChatCompletionResponseEventType.progress,
                         delta=ToolCallDelta(
-                            tool_call=buffer["content"],  # type: ignore[arg-type]
+                            tool_call=buffer["content"],  # type: ignore[arg-type]  # ToolCallDelta.tool_call accepts Union[str, ToolCall]
                             parse_status=ToolCallParseStatus.failed,
                         ),
                         stop_reason=stop_reason,
@@ -1259,7 +1259,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
         top_p: float | None = None,
         user: str | None = None,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        messages = openai_messages_to_messages(messages)  # type: ignore[assignment]
+        messages = openai_messages_to_messages(messages)  # type: ignore[assignment]  # converted from OpenAI to LlamaStack message format
         response_format = _convert_openai_request_response_format(response_format)
         sampling_params = _convert_openai_sampling_params(
             max_tokens=max_tokens,
@@ -1268,15 +1268,15 @@ class OpenAIChatCompletionToLlamaStackMixin:
         )
         tool_config = _convert_openai_request_tool_config(tool_choice)
 
-        tools = _convert_openai_request_tools(tools)  # type: ignore[assignment]
+        tools = _convert_openai_request_tools(tools)  # type: ignore[assignment]  # converted from OpenAI to LlamaStack tool format
         if tool_config.tool_choice == ToolChoice.none:
-            tools = []  # type: ignore[assignment]
+            tools = []  # type: ignore[assignment]  # empty list narrows return type but mypy tracks broader type
 
         outstanding_responses = []
         # "n" is the number of completions to generate per prompt
         n = n or 1
         for _i in range(0, n):
-            response = self.chat_completion(  # type: ignore[attr-defined]
+            response = self.chat_completion(  # type: ignore[attr-defined]  # mixin expects class to implement chat_completion
                 model_id=model,
                 messages=messages,
                 sampling_params=sampling_params,
@@ -1288,7 +1288,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
             outstanding_responses.append(response)
 
         if stream:
-            return OpenAIChatCompletionToLlamaStackMixin._process_stream_response(self, model, outstanding_responses)  # type: ignore[no-any-return]
+            return OpenAIChatCompletionToLlamaStackMixin._process_stream_response(self, model, outstanding_responses)  # type: ignore[no-any-return]  # mixin async generator return type too complex for mypy
 
         return await OpenAIChatCompletionToLlamaStackMixin._process_non_stream_response(
             self, model, outstanding_responses
@@ -1313,7 +1313,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
                     delta = OpenAIChoiceDelta(content=text_delta)
                     yield OpenAIChatCompletionChunk(
                         id=id,
-                        choices=[OpenAIChatCompletionChunkChoice(index=i, finish_reason=finish_reason, delta=delta)],  # type: ignore[arg-type]
+                        choices=[OpenAIChatCompletionChunkChoice(index=i, finish_reason=finish_reason, delta=delta)],  # type: ignore[arg-type]  # finish_reason Optional[str] incompatible with Literal union
                         created=int(time.time()),
                         model=model,
                         object="chat.completion.chunk",
@@ -1331,7 +1331,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
                             function=OpenAIChoiceDeltaToolCallFunction(
                                 name=tool_call.tool_name
                                 if isinstance(tool_call.tool_name, str)
-                                else tool_call.tool_name.value,  # type: ignore[arg-type]
+                                else tool_call.tool_name.value,  # type: ignore[arg-type]  # enum .value extraction on Union confuses mypy
                                 arguments="",
                             ),
                         )
@@ -1339,7 +1339,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
                         yield OpenAIChatCompletionChunk(
                             id=id,
                             choices=[
-                                OpenAIChatCompletionChunkChoice(index=i, finish_reason=finish_reason, delta=delta)  # type: ignore[arg-type]
+                                OpenAIChatCompletionChunkChoice(index=i, finish_reason=finish_reason, delta=delta)  # type: ignore[arg-type]  # finish_reason Optional[str] incompatible with Literal union
                             ],
                             created=int(time.time()),
                             model=model,
@@ -1356,7 +1356,7 @@ class OpenAIChatCompletionToLlamaStackMixin:
                         yield OpenAIChatCompletionChunk(
                             id=id,
                             choices=[
-                                OpenAIChatCompletionChunkChoice(index=i, finish_reason=finish_reason, delta=delta)  # type: ignore[arg-type]
+                                OpenAIChatCompletionChunkChoice(index=i, finish_reason=finish_reason, delta=delta)  # type: ignore[arg-type]  # finish_reason Optional[str] incompatible with Literal union
                             ],
                             created=int(time.time()),
                             model=model,
@@ -1375,14 +1375,14 @@ class OpenAIChatCompletionToLlamaStackMixin:
 
             choice = OpenAIChatCompletionChoice(
                 index=len(choices),
-                message=message,  # type: ignore[arg-type]
+                message=message,  # type: ignore[arg-type]  # OpenAIChatCompletionMessage union incompatible with narrower Message type
                 finish_reason=finish_reason,
             )
-            choices.append(choice)  # type: ignore[arg-type]
+            choices.append(choice)  # type: ignore[arg-type]  # OpenAIChatCompletionChoice type annotation mismatch
 
         return OpenAIChatCompletion(
             id=f"chatcmpl-{uuid.uuid4()}",
-            choices=choices,  # type: ignore[arg-type]
+            choices=choices,  # type: ignore[arg-type]  # list[OpenAIChatCompletionChoice] union incompatible
             created=int(time.time()),
             model=model,
             object="chat.completion",

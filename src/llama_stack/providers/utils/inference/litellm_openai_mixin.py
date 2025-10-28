@@ -176,7 +176,7 @@ class LiteLLMOpenAIMixin(
         provider_data = self.get_request_provider_data()
         key_field = self.provider_data_api_key_field
         if provider_data and key_field and (api_key := getattr(provider_data, key_field, None)):
-            return str(api_key)  # type: ignore[no-any-return]
+            return str(api_key)  # type: ignore[no-any-return]  # getattr returns Any, can't narrow without runtime type inspection
 
         api_key = self.api_key_from_config
         if not api_key:
@@ -259,7 +259,7 @@ class LiteLLMOpenAIMixin(
             api_base=self.api_base,
         )
         # LiteLLM returns compatible type but mypy can't verify external library
-        return await litellm.atext_completion(**request_params)  # type: ignore[no-any-return]
+        return await litellm.atext_completion(**request_params)  # type: ignore[no-any-return]  # external lib lacks type stubs
 
     async def openai_chat_completion(
         self,
@@ -310,7 +310,7 @@ class LiteLLMOpenAIMixin(
             api_base=self.api_base,
         )
         # LiteLLM returns compatible type but mypy can't verify external library
-        return await litellm.acompletion(**request_params)  # type: ignore[no-any-return]
+        return await litellm.acompletion(**request_params)  # type: ignore[no-any-return]  # external lib lacks type stubs
 
     async def check_model_availability(self, model: str) -> bool:
         """
