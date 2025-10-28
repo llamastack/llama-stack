@@ -451,7 +451,7 @@ class ReferenceBatchesImpl(Batches):
                             ]
 
                         for param, expected_type, type_string in required_params:
-                            if param not in body:
+                            if param not in request_body:
                                 errors.append(
                                     BatchError(
                                         code="invalid_request",
@@ -461,7 +461,7 @@ class ReferenceBatchesImpl(Batches):
                                     )
                                 )
                                 valid = False
-                            elif not isinstance(body[param], expected_type):
+                            elif not isinstance(request_body[param], expected_type):
                                 errors.append(
                                     BatchError(
                                         code="invalid_request",
@@ -472,15 +472,15 @@ class ReferenceBatchesImpl(Batches):
                                 )
                                 valid = False
 
-                        if "model" in body and isinstance(body["model"], str):
+                        if "model" in request_body and isinstance(request_body["model"], str):
                             try:
-                                await self.models_api.get_model(body["model"])
+                                await self.models_api.get_model(request_body["model"])
                             except Exception:
                                 errors.append(
                                     BatchError(
                                         code="model_not_found",
                                         line=line_num,
-                                        message=f"Model '{body['model']}' does not exist or is not supported",
+                                        message=f"Model '{request_body['model']}' does not exist or is not supported",
                                         param="body.model",
                                     )
                                 )
@@ -488,14 +488,14 @@ class ReferenceBatchesImpl(Batches):
 
                     if valid:
                         assert isinstance(url, str), "URL must be a string"  # for mypy
-                        assert isinstance(body, dict), "Body must be a dictionary"  # for mypy
+                        assert isinstance(request_body, dict), "Body must be a dictionary"  # for mypy
                         requests.append(
                             BatchRequest(
                                 line_num=line_num,
                                 url=url,
                                 method=request["method"],
                                 custom_id=request["custom_id"],
-                                body=body,
+                                body=request_body,
                             ),
                         )
                 except json.JSONDecodeError:

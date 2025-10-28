@@ -6,6 +6,7 @@
 
 
 from collections.abc import Iterable
+from typing import Any, cast
 
 from together import AsyncTogether
 from together.constants import BASE_URL
@@ -81,10 +82,11 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
         if params.dimensions is not None:
             raise ValueError("Together's embeddings endpoint does not support dimensions param.")
 
+        # Cast encoding_format to match OpenAI SDK's expected Literal type
         response = await self.client.embeddings.create(
             model=await self._get_provider_model_id(params.model),
             input=params.input,
-            encoding_format=params.encoding_format,
+            encoding_format=cast(Any, params.encoding_format),
         )
 
         response.model = (
@@ -97,6 +99,8 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
             logger.warning(
                 f"Together's embedding endpoint for {params.model} did not return usage information, substituting -1s."
             )
-            response.usage = OpenAIEmbeddingUsage(prompt_tokens=-1, total_tokens=-1)
+            # Cast to allow monkey-patching the response object
+            response.usage = cast(Any, OpenAIEmbeddingUsage(prompt_tokens=-1, total_tokens=-1))
 
-        return response  # type: ignore[no-any-return]
+        # Together's CreateEmbeddingResponse is compatible with OpenAIEmbeddingsResponse after monkey-patching
+        return cast(OpenAIEmbeddingsResponse, response)
