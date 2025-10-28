@@ -88,6 +88,35 @@ def wait_for_server_ready(base_url: str, timeout: int = 30, process: subprocess.
     return False
 
 
+def stop_server_on_port(port: int, timeout: float = 10.0) -> None:
+    """Terminate any server processes bound to the given port."""
+
+    try:
+        output = subprocess.check_output(["lsof", "-ti", f":{port}"], text=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return
+
+    pids = {int(line) for line in output.splitlines() if line.strip()}
+    if not pids:
+        return
+
+    deadline = time.time() + timeout
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        for pid in list(pids):
+            try:
+                os.kill(pid, sig)
+            except ProcessLookupError:
+                pids.discard(pid)
+
+        while not is_port_available(port) and time.time() < deadline:
+            time.sleep(0.1)
+
+        if is_port_available(port):
+            return
+
+    raise RuntimeError(f"Unable to free port {port} for test server restart")
+
+
 def get_provider_data():
     # TODO: this needs to be generalized so each provider can have a sample provider data just
     # like sample run config on which we can do replace_env_vars()
@@ -198,6 +227,10 @@ def instantiate_llama_stack_client(session):
         config_name = parts[1]
         port = int(parts[2]) if len(parts) > 2 else int(os.environ.get("LLAMA_STACK_PORT", DEFAULT_PORT))
         base_url = f"http://localhost:{port}"
+
+        force_restart = os.environ.get("LLAMA_STACK_TEST_FORCE_SERVER_RESTART") == "1"
+        if force_restart:
+            stop_server_on_port(port)
 
         # Check if port is available
         if is_port_available(port):
