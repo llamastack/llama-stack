@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from typing import Any
+
 from openai import NOT_GIVEN
 
 from llama_stack.apis.inference import (
@@ -37,22 +39,21 @@ class GeminiInferenceAdapter(OpenAIMixin):
         Override embeddings method to handle Gemini's missing usage statistics.
         Gemini's embedding API doesn't return usage information, so we provide default values.
         """
-        # Prepare request parameters
-        request_params = {
+        # Build kwargs conditionally to avoid NotGiven/Omit type mismatch
+        kwargs: dict[str, Any] = {
             "model": await self._get_provider_model_id(params.model),
             "input": params.input,
-            "encoding_format": params.encoding_format if params.encoding_format is not None else NOT_GIVEN,
-            "dimensions": params.dimensions if params.dimensions is not None else NOT_GIVEN,
-            "user": params.user if params.user is not None else NOT_GIVEN,
         }
+        if params.encoding_format is not None:
+            kwargs["encoding_format"] = params.encoding_format
+        if params.dimensions is not None:
+            kwargs["dimensions"] = params.dimensions
+        if params.user is not None:
+            kwargs["user"] = params.user
+        if params.model_extra:
+            kwargs["extra_body"] = params.model_extra
 
-        # Add extra_body if present
-        extra_body = params.model_extra
-        if extra_body:
-            request_params["extra_body"] = extra_body
-
-        # Call OpenAI embeddings API with properly typed parameters
-        response = await self.client.embeddings.create(**request_params)
+        response = await self.client.embeddings.create(**kwargs)
 
         data = []
         for i, embedding_data in enumerate(response.data):
