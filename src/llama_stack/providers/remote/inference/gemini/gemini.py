@@ -6,8 +6,6 @@
 
 from typing import Any
 
-from openai import NOT_GIVEN
-
 from llama_stack.apis.inference import (
     OpenAIEmbeddingData,
     OpenAIEmbeddingsRequestWithExtraBody,

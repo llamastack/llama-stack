@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
-from openai import NOT_GIVEN, AsyncOpenAI
+from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict
 
 from llama_stack.apis.inference import (
