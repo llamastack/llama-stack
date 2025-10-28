@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 from collections.abc import Mapping, Sequence
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from sqlalchemy import (
     JSON,
@@ -55,17 +55,17 @@ def _build_where_expr(column: ColumnElement, value: Any) -> ColumnElement:
             raise ValueError(f"Operator mapping must have a single operator, got: {value}")
         op, operand = next(iter(value.items()))
         if op == "==" or op == "=":
-            return column == operand
+            return cast(ColumnElement[Any], column == operand)
         if op == ">":
-            return column > operand
+            return cast(ColumnElement[Any], column > operand)
         if op == "<":
-            return column < operand
+            return cast(ColumnElement[Any], column < operand)
         if op == ">=":
-            return column >= operand
+            return cast(ColumnElement[Any], column >= operand)
         if op == "<=":
-            return column <= operand
+            return cast(ColumnElement[Any], column <= operand)
         raise ValueError(f"Unsupported operator '{op}' in where mapping")
-    return column == value
+    return cast(ColumnElement[Any], column == value)
 
 
 class SqlAlchemySqlStoreImpl(SqlStore):
@@ -210,10 +210,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
                 query = query.limit(fetch_limit)
 
             result = await session.execute(query)
-            if result.rowcount == 0:
-                rows = []
-            else:
-                rows = [dict(row._mapping) for row in result]
+            # Iterate directly - if no rows, list comprehension yields empty list
+            rows = [dict(row._mapping) for row in result]
 
             # Always return pagination result
             has_more = False
