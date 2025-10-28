@@ -37,21 +37,21 @@ class GeminiInferenceAdapter(OpenAIMixin):
         Override embeddings method to handle Gemini's missing usage statistics.
         Gemini's embedding API doesn't return usage information, so we provide default values.
         """
-        # Build kwargs conditionally to avoid NotGiven/Omit type mismatch
-        kwargs: dict[str, Any] = {
+        # Build request params conditionally to avoid NotGiven/Omit type mismatch
+        request_params: dict[str, Any] = {
             "model": await self._get_provider_model_id(params.model),
             "input": params.input,
         }
         if params.encoding_format is not None:
-            kwargs["encoding_format"] = params.encoding_format
+            request_params["encoding_format"] = params.encoding_format
         if params.dimensions is not None:
-            kwargs["dimensions"] = params.dimensions
+            request_params["dimensions"] = params.dimensions
         if params.user is not None:
-            kwargs["user"] = params.user
+            request_params["user"] = params.user
         if params.model_extra:
-            kwargs["extra_body"] = params.model_extra
+            request_params["extra_body"] = params.model_extra
 
-        response = await self.client.embeddings.create(**kwargs)
+        response = await self.client.embeddings.create(**request_params)
 
         data = []
         for i, embedding_data in enumerate(response.data):

@@ -351,22 +351,22 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI embeddings API call.
         """
-        # Build kwargs conditionally to avoid NotGiven/Omit type mismatch
+        # Build request params conditionally to avoid NotGiven/Omit type mismatch
         # The OpenAI SDK uses Omit in signatures but NOT_GIVEN has type NotGiven
-        kwargs: dict[str, Any] = {
+        request_params: dict[str, Any] = {
             "model": await self._get_provider_model_id(params.model),
             "input": params.input,
         }
         if params.encoding_format is not None:
-            kwargs["encoding_format"] = params.encoding_format
+            request_params["encoding_format"] = params.encoding_format
         if params.dimensions is not None:
-            kwargs["dimensions"] = params.dimensions
+            request_params["dimensions"] = params.dimensions
         if params.user is not None:
-            kwargs["user"] = params.user
+            request_params["user"] = params.user
         if params.model_extra:
-            kwargs["extra_body"] = params.model_extra
+            request_params["extra_body"] = params.model_extra
 
-        response = await self.client.embeddings.create(**kwargs)
+        response = await self.client.embeddings.create(**request_params)
 
         data = []
         for i, embedding_data in enumerate(response.data):

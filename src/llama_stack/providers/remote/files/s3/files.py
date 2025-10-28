@@ -55,6 +55,9 @@ def _create_s3_client(config: S3FilesImplConfig) -> S3Client:
                 }
             )
 
+        # Both cast and type:ignore are needed here:
+        # - cast tells mypy the return type for downstream usage (S3Client vs generic client)
+        # - type:ignore suppresses the call-overload error from boto3's complex overloaded signatures
         return cast("S3Client", boto3.client("s3", **s3_config))  # type: ignore[call-overload]
 
     except (BotoCoreError, NoCredentialsError) as e:
