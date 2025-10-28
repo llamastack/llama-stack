@@ -95,7 +95,7 @@ class VariableSizeImageTransform:
                 factors_set.add(n // i)
         return factors_set
 
-    def find_supported_resolutions(self, max_num_chunks: int, patch_size: int) -> torch.Tensor:
+    def find_supported_resolutions(self, max_num_chunks: int, patch_size: int) -> list[tuple[int, int]]:
         """
         Computes all of the allowed resoltuions for a fixed number of chunks
         and patch_size. Useful for when dividing an image into chunks.
@@ -198,10 +198,10 @@ class VariableSizeImageTransform:
 
     def resize_without_distortion(
         self,
-        image: torch.Tensor,
+        image: Image.Image,
         target_size: tuple[int, int],
         max_upscaling_size: int | None,
-    ) -> torch.Tensor:
+    ) -> Image.Image:
         """
         Used to resize an image to target_resolution, without distortion.
 
@@ -380,12 +380,12 @@ class VariableSizeImageTransform:
         assert isinstance(image, Image.Image), type(image)
         w, h = image.size
 
-        possible_resolutions = self.find_supported_resolutions(max_num_chunks=max_num_chunks, patch_size=self.size)
-        possible_resolutions = torch.tensor(possible_resolutions)
+        possible_resolutions_list = self.find_supported_resolutions(max_num_chunks=max_num_chunks, patch_size=self.size)
+        possible_resolutions_tensor = torch.tensor(possible_resolutions_list)
 
         best_resolution = self.get_best_fit(
             image_size=(w, h),
-            possible_resolutions=possible_resolutions,
+            possible_resolutions=possible_resolutions_tensor,
             resize_to_max_canvas=resize_to_max_canvas,
         )
 
