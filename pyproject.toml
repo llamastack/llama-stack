@@ -71,8 +71,14 @@ dev = [
     "nbval",               # For notebook testing
     "black",
     "ruff",
+    "mypy",
     "types-requests",
     "types-setuptools",
+    "types-jsonschema",
+    "pandas-stubs",
+    "types-psutil",
+    "types-tqdm",
+    "boto3-stubs",
     "pre-commit",
     "ruamel.yaml",         # needed for openapi generator
 ]
