@@ -111,7 +111,7 @@ class StreamingResponseOrchestrator:
         text: OpenAIResponseText,
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
-        instructions: str,
+        instructions: str | None,
         safety_api,
         guardrail_ids: list[str] | None = None,
         prompt: OpenAIResponsePrompt | None = None,
