@@ -289,9 +289,9 @@ def process_chat_completion_response(
                 logprobs=None,
             )
         else:
+            # Otherwise, return tool calls as normal
             # Filter to only valid ToolCall objects
             valid_tool_calls = [tc for tc in tool_calls if isinstance(tc, ToolCall)]
-            # Otherwise, return tool calls as normal
             return ChatCompletionResponse(
                 completion_message=CompletionMessage(
                     tool_calls=valid_tool_calls,
@@ -530,7 +530,7 @@ async def convert_message_to_openai_dict(message: Message, download: bool = Fals
     }
 
     if hasattr(message, "tool_calls") and message.tool_calls:
-        result["tool_calls"] = []  # type: ignore[assignment]  # dict allows Any value, stricter type expected
+        tool_calls_list = []
         for tc in message.tool_calls:
             # The tool.tool_name can be a str or a BuiltinTool enum. If
             # it's the latter, convert to a string.
@@ -538,7 +538,7 @@ async def convert_message_to_openai_dict(message: Message, download: bool = Fals
             if isinstance(tool_name, BuiltinTool):
                 tool_name = tool_name.value
 
-            result["tool_calls"].append(  # type: ignore[union-attr]  # reassigned as list above, mypy can't track
+            tool_calls_list.append(
                 {
                     "id": tc.call_id,
                     "type": "function",
@@ -548,6 +548,7 @@ async def convert_message_to_openai_dict(message: Message, download: bool = Fals
                     },
                 }
             )
+        result["tool_calls"] = tool_calls_list  # type: ignore[assignment]  # dict allows Any value, stricter type expected
     return result
 
 
@@ -853,11 +854,11 @@ def _convert_openai_request_response_format(
     if not response_format:
         return None
     # response_format can be a dict or a pydantic model
-    response_format = dict(response_format)  # type: ignore[assignment]  # OpenAIResponseFormatParam union needs dict conversion
-    if response_format.get("type", "") == "json_schema":  # type: ignore[union-attr]  # narrowed to dict but mypy doesn't track .get()
+    response_format_dict = dict(response_format)  # type: ignore[arg-type]  # OpenAIResponseFormatParam union needs dict conversion
+    if response_format_dict.get("type", "") == "json_schema":
         return JsonSchemaResponseFormat(
             type="json_schema",  # type: ignore[arg-type]  # Literal["json_schema"] incompatible with expected type
-            json_schema=response_format.get("json_schema", {}).get("schema", ""),  # type: ignore[union-attr]  # chained .get() on reassigned dict confuses mypy
+            json_schema=response_format_dict.get("json_schema", {}).get("schema", ""),
         )
     return None
 
@@ -965,12 +966,12 @@ def openai_messages_to_messages(
     for message in messages:
         converted_message: Message
         if message.role == "system":
-            converted_message = SystemMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
+            converted_message = SystemMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
         elif message.role == "user":
-            converted_message = UserMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
+            converted_message = UserMessage(content=openai_content_to_content(message.content))  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
         elif message.role == "assistant":
             converted_message = CompletionMessage(
-                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
+                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
                 tool_calls=_convert_openai_tool_calls(message.tool_calls) if message.tool_calls else [],  # type: ignore[arg-type]  # OpenAI tool_calls type incompatible with conversion function
                 stop_reason=StopReason.end_of_turn,
             )
@@ -978,7 +979,7 @@ def openai_messages_to_messages(
             converted_message = ToolResponseMessage(
                 role="tool",
                 call_id=message.tool_call_id,
-                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # OpenAI content union broader than Message content union
+                content=openai_content_to_content(message.content),  # type: ignore[arg-type]  # message.content uses list[AliasType] but mypy expects Iterable[BaseType] due to OpenAI SDK type alias resolution
             )
         else:
             raise ValueError(f"Unknown role {message.role}")

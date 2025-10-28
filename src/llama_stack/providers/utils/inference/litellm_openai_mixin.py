@@ -195,8 +195,9 @@ class LiteLLMOpenAIMixin(
             raise ValueError("Model store is not initialized")
 
         model_obj = await self.model_store.get_model(params.model)
-        # Fallback to params.model ensures provider_resource_id is always str
-        provider_resource_id: str = (model_obj.provider_resource_id if model_obj else None) or params.model
+        if model_obj.provider_resource_id is None:
+            raise ValueError(f"Model {params.model} has no provider_resource_id")
+        provider_resource_id = model_obj.provider_resource_id
 
         # Convert input to list if it's a string
         input_list = [params.input] if isinstance(params.input, str) else params.input
@@ -233,8 +234,9 @@ class LiteLLMOpenAIMixin(
             raise ValueError("Model store is not initialized")
 
         model_obj = await self.model_store.get_model(params.model)
-        # Fallback to params.model ensures provider_resource_id is always str
-        provider_resource_id: str = (model_obj.provider_resource_id if model_obj else None) or params.model
+        if model_obj.provider_resource_id is None:
+            raise ValueError(f"Model {params.model} has no provider_resource_id")
+        provider_resource_id = model_obj.provider_resource_id
 
         request_params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(provider_resource_id),
@@ -279,8 +281,9 @@ class LiteLLMOpenAIMixin(
             raise ValueError("Model store is not initialized")
 
         model_obj = await self.model_store.get_model(params.model)
-        # Fallback to params.model ensures provider_resource_id is always str
-        provider_resource_id: str = (model_obj.provider_resource_id if model_obj else None) or params.model
+        if model_obj.provider_resource_id is None:
+            raise ValueError(f"Model {params.model} has no provider_resource_id")
+        provider_resource_id = model_obj.provider_resource_id
 
         request_params = await prepare_openai_completion_params(
             model=self.get_litellm_model_name(provider_resource_id),
