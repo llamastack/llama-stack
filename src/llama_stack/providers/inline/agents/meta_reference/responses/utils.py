@@ -72,8 +72,7 @@ async def convert_chat_choice_to_response_message(
 
     return OpenAIResponseMessage(
         id=message_id or f"msg_{uuid.uuid4()}",
-        # List invariance: annotations is list of specific type, but parameter expects union
-        content=[OpenAIResponseOutputMessageContentOutputText(text=clean_text, annotations=list(annotations))],  # type: ignore[arg-type]
+        content=[OpenAIResponseOutputMessageContentOutputText(text=clean_text, annotations=list(annotations))],
         status="completed",
         role="assistant",
     )
