@@ -7,13 +7,11 @@ from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
 import httpx
-from openai.types.chat.chat_completion_chunk import (
-    ChatCompletionChunk as OpenAIChatCompletionChunk,
-)
 from pydantic import ConfigDict
 
 from llama_stack.apis.inference import (
     OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     ToolChoice,
 )
