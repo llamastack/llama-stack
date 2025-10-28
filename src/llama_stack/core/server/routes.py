@@ -68,8 +68,9 @@ def get_all_api_routes(
                 else:
                     http_method = hdrs.METH_POST
                 routes.append(
-                    (Route(path=path, methods=[http_method], name=name, endpoint=None), webmethod)
-                )  # setting endpoint to None since don't use a Router object
+                    # setting endpoint to None since don't use a Router object
+                    (Route(path=path, methods=[http_method], name=name, endpoint=None), webmethod)  # type: ignore[arg-type]
+                )
 
         apis[api] = routes
 
@@ -98,7 +99,7 @@ def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | No
             impl = impls[api]
             func = getattr(impl, route.name)
             # Get the first (and typically only) method from the set, filtering out HEAD
-            available_methods = [m for m in route.methods if m != "HEAD"]
+            available_methods = [m for m in (route.methods or []) if m != "HEAD"]
             if not available_methods:
                 continue  # Skip if only HEAD method is available
             method = available_methods[0].lower()
