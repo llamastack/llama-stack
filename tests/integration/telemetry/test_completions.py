@@ -64,10 +64,11 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
 
     # Verify spans
     spans = mock_otlp_collector.get_spans()
-    assert len(spans) == 5
+    # Expected spans: 1 root span + 3 autotraced method calls from routing/inference
+    assert len(spans) == 4, f"Expected 4 spans, got {len(spans)}"
 
-    # we only need this captured one time
-    logged_model_id = None
+    # Collect all model_ids found in spans
+    logged_model_ids = []
 
     for span in spans:
         attrs = span.attributes
@@ -87,10 +88,10 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
 
             args = json.loads(attrs["__args__"])
             if "model_id" in args:
-                logged_model_id = args["model_id"]
+                logged_model_ids.append(args["model_id"])
 
-    assert logged_model_id is not None
-    assert logged_model_id == text_model_id
+    # At least one span should capture the fully qualified model ID
+    assert text_model_id in logged_model_ids, f"Expected to find {text_model_id} in spans, but got {logged_model_ids}"
 
     # TODO: re-enable this once metrics get fixed
     """

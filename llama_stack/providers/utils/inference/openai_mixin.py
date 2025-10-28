@@ -201,8 +201,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         :param model: The registered model name/identifier
         :return: The provider-specific model ID (e.g., "gpt-4")
         """
-        # Look up the registered model to get the provider-specific model ID
         # self.model_store is injected by the distribution system at runtime
+        if not await self.model_store.has_model(model):  # type: ignore[attr-defined]
+            return model
+
+        # Look up the registered model to get the provider-specific model ID
         model_obj: Model = await self.model_store.get_model(model)  # type: ignore[attr-defined]
         # provider_resource_id is str | None, but we expect it to be str for OpenAI calls
         if model_obj.provider_resource_id is None:
