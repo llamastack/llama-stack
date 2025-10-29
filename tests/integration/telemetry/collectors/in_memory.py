@@ -6,8 +6,6 @@
 
 """In-memory telemetry collector for library-client tests."""
 
-from typing import Any
-
 import opentelemetry.metrics as otel_metrics
 import opentelemetry.trace as otel_trace
 from opentelemetry import metrics, trace
@@ -19,7 +17,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 import llama_stack.core.telemetry.telemetry as telemetry_module
 
-from .base import BaseTelemetryCollector, SpanStub
+from .base import BaseTelemetryCollector, MetricStub, SpanStub
 
 
 class InMemoryTelemetryCollector(BaseTelemetryCollector):
@@ -36,48 +34,24 @@ class InMemoryTelemetryCollector(BaseTelemetryCollector):
     def _snapshot_spans(self) -> tuple[SpanStub, ...]:
         spans = []
         for span in self._span_exporter.get_finished_spans():
-            # Extract trace_id and span_id
-            trace_id = None
-            span_id = None
-            context = getattr(span, "context", None)
-            if context:
-                trace_id = f"{context.trace_id:032x}"
-                span_id = f"{context.span_id:016x}"
-            else:
-                trace_id = getattr(span, "trace_id", None)
-                span_id = getattr(span, "span_id", None)
-
-            # Convert attributes to dict if needed
-            attrs = span.attributes
-            if attrs is not None and hasattr(attrs, "items"):
-                attrs = dict(attrs.items())
-            elif attrs is not None and not isinstance(attrs, dict):
-                attrs = dict(attrs)
-            elif attrs is None:
-                attrs = {}
-
-            spans.append(
-                SpanStub(
-                    name=span.name,
-                    attributes=attrs,
-                    trace_id=trace_id,
-                    span_id=span_id,
-                )
-            )
-
+            spans.append(self._create_span_stub_from_opentelemetry(span))
         return tuple(spans)
 
-    def _snapshot_metrics(self) -> Any | None:
+    def _snapshot_metrics(self) -> tuple[MetricStub, ...] | None:
         data = self._metric_reader.get_metrics_data()
         if not data or not data.resource_metrics:
             return None
 
-        all_metrics = []
+        metric_stubs = []
         for resource_metric in data.resource_metrics:
             if resource_metric.scope_metrics:
                 for scope_metric in resource_metric.scope_metrics:
-                    all_metrics.extend(scope_metric.metrics)
-        return all_metrics if all_metrics else None
+                    for metric in scope_metric.metrics:
+                        metric_stub = self._extract_metric_from_opentelemetry(metric)
+                        if metric_stub:
+                            metric_stubs.append(metric_stub)
+
+        return tuple(metric_stubs) if metric_stubs else None
 
     def _clear_impl(self) -> None:
         self._span_exporter.clear()
