@@ -282,8 +282,8 @@ jobs:
           suite: 'base'
           inference-mode: 'replay'
 
-      - name: Run integration tests with release config
-        id: test_release
+      - name: Run integration tests with release config (PR branch)
+        id: test_release_pr
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
         continue-on-error: true
         uses: ./.github/actions/run-and-record-tests
@@ -293,31 +293,98 @@ jobs:
           inference-mode: 'replay'
           suite: 'base'
 
-      - name: Report results
+      - name: Checkout main branch to test baseline
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        run: |
+          git checkout origin/main
+
+      - name: Setup test environment for main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        uses: ./.github/actions/setup-test-environment
+        with:
+          python-version: '3.12'
+          client-version: 'latest'
+          setup: 'ollama'
+          suite: 'base'
+          inference-mode: 'replay'
+
+      - name: Run integration tests with release config (main branch)
+        id: test_release_main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        continue-on-error: true
+        uses: ./.github/actions/run-and-record-tests
+        with:
+          stack-config: /tmp/release-ci-tests-run.yaml
+          setup: 'ollama'
+          inference-mode: 'replay'
+          suite: 'base'
+
+      - name: Report results and post PR comment
         if: always() && steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
         run: |
           RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
-          TEST_OUTCOME="${{ steps.test_release.outcome }}"
+          PR_OUTCOME="${{ steps.test_release_pr.outcome }}"
+          MAIN_OUTCOME="${{ steps.test_release_main.outcome }}"
 
-          if [[ "$TEST_OUTCOME" == "failure" ]]; then
-            echo "::error::❌ Integration tests against release $RELEASE_TAG FAILED"
-            echo "::error::⚠️  This PR may break compatibility with the latest release"
+          if [[ "$PR_OUTCOME" == "failure" && "$MAIN_OUTCOME" == "success" ]]; then
+            # NEW breaking change - PR fails but main passes
+            echo "::error::🚨 This PR introduces a NEW breaking change!"
 
-            # Write to job summary for high visibility
+            # Check if we already posted a comment (to avoid spam on every push)
+            EXISTING_COMMENT=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("🚨 New Breaking Change Detected") and contains("Integration tests")) | .id' | head -1)
+
+            if [[ -z "$EXISTING_COMMENT" ]]; then
+              gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 New Breaking Change Detected
+
+          **Integration tests against release \`$RELEASE_TAG\` are now failing**
+
+          ⚠️  This PR introduces a breaking change that affects compatibility with the latest release.
+
+          - Users on release \`$RELEASE_TAG\` may not be able to upgrade
+          - Existing configurations may break
+
+          The tests pass on \`main\` but fail with this PR's changes.
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users."
+            else
+              echo "Comment already exists, skipping to avoid spam"
+            fi
+
             cat >> $GITHUB_STEP_SUMMARY <<EOF
-          ## 🚨 Release Compatibility Test Failed
+          ## 🚨 NEW Breaking Change Detected
 
           **Integration tests against release \`$RELEASE_TAG\` FAILED**
 
-          ⚠️  **This PR may break compatibility with the latest release**
+          ⚠️  **This PR introduces a NEW breaking change**
 
+          - Tests **PASS** on main branch ✅
+          - Tests **FAIL** on PR branch ❌
           - Users on release \`$RELEASE_TAG\` may not be able to upgrade
           - Existing configurations may break
 
           > **Note:** This is informational only and does not block merge.
           > Consider whether this breaking change is acceptable for users.
           EOF
+
+          elif [[ "$PR_OUTCOME" == "failure" ]]; then
+            # Existing breaking change - both PR and main fail
+            echo "::warning::Breaking change already exists in main branch"
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ⚠️ Release Compatibility Test Failed (Existing Issue)
+
+          **Integration tests against release \`$RELEASE_TAG\` FAILED**
+
+          - Tests **FAIL** on main branch ❌
+          - Tests **FAIL** on PR branch ❌
+          - This breaking change already exists in main (not introduced by this PR)
+
+          > **Note:** This is informational only.
+          EOF
+
           else
+            # Success - tests pass
             cat >> $GITHUB_STEP_SUMMARY <<EOF
           ## ✅ Release Compatibility Test Passed
 
@@ -325,6 +392,8 @@ jobs:
           This PR maintains compatibility with the latest release.
           EOF
           fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   check-schema-release-compatibility:
     name: Check Schema Compatibility with Latest Release (Informational)
@@ -402,36 +471,104 @@ jobs:
           echo "Extracted $(ls /tmp/release_configs/*.yaml 2>/dev/null | wc -l) config files"
           echo "has_configs=true" >> $GITHUB_OUTPUT
 
-      - name: Test against release configs
+      - name: Test against release configs (PR branch)
+        id: test_schema_pr
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        continue-on-error: true
         run: |
           RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+          COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
 
-          # Run pytest with all release configs
-          if COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short; then
-            echo "::notice::✅ All configs from release $RELEASE_TAG are compatible"
+      - name: Checkout main branch to test baseline
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        run: |
+          git checkout origin/main
+
+      - name: Install dependencies for main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        run: |
+          uv sync --group dev
+
+      - name: Test against release configs (main branch)
+        id: test_schema_main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        continue-on-error: true
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+          COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
+
+      - name: Report results and post PR comment
+        if: always() && steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+          PR_OUTCOME="${{ steps.test_schema_pr.outcome }}"
+          MAIN_OUTCOME="${{ steps.test_schema_main.outcome }}"
+
+          if [[ "$PR_OUTCOME" == "failure" && "$MAIN_OUTCOME" == "success" ]]; then
+            # NEW breaking change - PR fails but main passes
+            echo "::error::🚨 This PR introduces a NEW schema breaking change!"
+
+            # Check if we already posted a comment (to avoid spam on every push)
+            EXISTING_COMMENT=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("🚨 New Schema Breaking Change Detected")) | .id' | head -1)
+
+            if [[ -z "$EXISTING_COMMENT" ]]; then
+              gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 New Schema Breaking Change Detected
+
+          **Schema validation against release \`$RELEASE_TAG\` is now failing**
+
+          ⚠️  This PR introduces a schema breaking change that affects compatibility with the latest release.
+
+          - Users on release \`$RELEASE_TAG\` will not be able to upgrade
+          - Existing run.yaml configurations will fail validation
+
+          The tests pass on \`main\` but fail with this PR's changes.
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users."
+            else
+              echo "Comment already exists, skipping to avoid spam"
+            fi
 
             cat >> $GITHUB_STEP_SUMMARY <<EOF
-          ## ✅ Release Schema Compatibility Passed
+          ## 🚨 NEW Schema Breaking Change Detected
 
-          All run.yaml configs from release \`$RELEASE_TAG\` are compatible.
-          This PR maintains backward compatibility with the latest release.
-          EOF
-          else
-            echo "::error::❌ Schema incompatibility detected with release $RELEASE_TAG"
-            echo "::error::⚠️  This PR breaks backward compatibility with existing run.yaml configs"
+          **Schema validation against release \`$RELEASE_TAG\` FAILED**
 
-            cat >> $GITHUB_STEP_SUMMARY <<EOF
-          ## 🚨 Release Schema Compatibility Failed
+          ⚠️  **This PR introduces a NEW schema breaking change**
 
-          **Schema incompatibility detected with release \`$RELEASE_TAG\`**
-
-          ⚠️  **This PR breaks backward compatibility with existing run.yaml configs**
-
+          - Tests **PASS** on main branch ✅
+          - Tests **FAIL** on PR branch ❌
           - Users on release \`$RELEASE_TAG\` will not be able to upgrade
           - Existing run.yaml configurations will fail validation
 
           > **Note:** This is informational only and does not block merge.
           > Consider whether this breaking change is acceptable for users.
           EOF
+
+          elif [[ "$PR_OUTCOME" == "failure" ]]; then
+            # Existing breaking change - both PR and main fail
+            echo "::warning::Schema breaking change already exists in main branch"
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ⚠️ Release Schema Compatibility Failed (Existing Issue)
+
+          **Schema validation against release \`$RELEASE_TAG\` FAILED**
+
+          - Tests **FAIL** on main branch ❌
+          - Tests **FAIL** on PR branch ❌
+          - This schema breaking change already exists in main (not introduced by this PR)
+
+          > **Note:** This is informational only.
+          EOF
+
+          else
+            # Success - tests pass
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ✅ Release Schema Compatibility Passed
+
+          All run.yaml configs from release \`$RELEASE_TAG\` are compatible.
+          This PR maintains backward compatibility with the latest release.
+          EOF
           fi
+        env:
+          GH_TOKEN: ${{ github.token }}
