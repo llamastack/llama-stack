@@ -10258,6 +10258,10 @@ components:
           description: >-
             The content of the chunk, which can be interleaved text, images, or other
             types.
+        chunk_id:
+          type: string
+          description: >-
+            Unique identifier for the chunk. Must be provided explicitly.
         metadata:
           type: object
           additionalProperties:
@@ -10278,10 +10282,6 @@ components:
           description: >-
             Optional embedding for the chunk. If not provided, it will be computed
             later.
-        stored_chunk_id:
-          type: string
-          description: >-
-            The chunk ID that is stored in the vector database. Used for backend functionality.
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
           description: >-
@@ -10290,6 +10290,7 @@ components:
       additionalProperties: false
       required:
         - content
+        - chunk_id
         - metadata
       title: Chunk
       description: >-
