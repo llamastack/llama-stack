@@ -6,12 +6,13 @@
 
 import json
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import cast
 
 from llama_stack.apis.agents import AgentConfig, Session, ToolExecutionStep, Turn
 from llama_stack.apis.common.errors import SessionNotFoundError
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
+from llama_stack.core.access_control.conditions import User as ProtocolUser
 from llama_stack.core.access_control.datatypes import AccessRule, Action
 from llama_stack.core.datatypes import User
 from llama_stack.core.request_headers import get_authenticated_user
@@ -32,6 +33,14 @@ class AgentSessionInfo(Session):
 
 class AgentInfo(AgentConfig):
     created_at: datetime
+
+
+@dataclass
+class SessionResource:
+    """Concrete implementation of ProtectedResource for session access control."""
+    type: str
+    identifier: str
+    owner: ProtocolUser  # Use the protocol type for structural compatibility
 
 
 class AgentPersistence:
@@ -56,8 +65,11 @@ class AgentPersistence:
         )
         # Both identifier and owner are set above, safe to use for access control
         assert session_info.identifier is not None and session_info.owner is not None
-        from llama_stack.core.access_control.conditions import ProtectedResource
-        resource = cast(ProtectedResource, session_info)
+        resource = SessionResource(
+            type=session_info.type,
+            identifier=session_info.identifier,
+            owner=session_info.owner,
+        )
         if not is_action_allowed(self.policy, Action.CREATE, resource, user):
             raise AccessDeniedError(Action.CREATE, resource, user)
 
@@ -94,8 +106,11 @@ class AgentPersistence:
 
         # At this point, both identifier and owner are guaranteed to be non-None
         assert session_info.identifier is not None and session_info.owner is not None
-        from llama_stack.core.access_control.conditions import ProtectedResource
-        resource = cast(ProtectedResource, session_info)
+        resource = SessionResource(
+            type=session_info.type,
+            identifier=session_info.identifier,
+            owner=session_info.owner,
+        )
         return is_action_allowed(self.policy, Action.READ, resource, get_authenticated_user())
 
     async def get_session_if_accessible(self, session_id: str) -> AgentSessionInfo | None:
