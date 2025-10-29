@@ -254,7 +254,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
-        guardrails: list[ResponseGuardrailSpec] | None = None,
+        guardrails: list[str | ResponseGuardrailSpec] | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text

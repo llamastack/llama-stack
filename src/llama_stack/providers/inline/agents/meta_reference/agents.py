@@ -349,10 +349,6 @@ class MetaReferenceAgentsImpl(Agents):
         guardrails: list[ResponseGuardrail] | None = None,
     ) -> OpenAIResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
-        from llama_stack.apis.agents.agents import ResponseGuardrailSpec
-        from typing import cast as typing_cast
-        # Cast guardrails to the more specific type expected by the implementation
-        guardrails_spec = typing_cast(list[ResponseGuardrailSpec] | None, guardrails)
         result = await self.openai_responses_impl.create_openai_response(
             input,
             model,
@@ -367,9 +363,9 @@ class MetaReferenceAgentsImpl(Agents):
             tools,
             include,
             max_infer_iters,
-            guardrails_spec,
+            guardrails,
         )
-        return typing_cast(OpenAIResponseObject, result)
+        return result  # type: ignore[no-any-return]
 
     async def list_openai_responses(
         self,
