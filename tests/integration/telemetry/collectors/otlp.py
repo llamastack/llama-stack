@@ -11,18 +11,17 @@ import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-from typing import Any
 
 from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import ExportMetricsServiceRequest
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
 
-from .base import BaseTelemetryCollector, SpanStub, attributes_to_dict, events_to_list
+from .base import BaseTelemetryCollector, MetricStub, SpanStub, attributes_to_dict
 
 
 class OtlpHttpTestCollector(BaseTelemetryCollector):
     def __init__(self) -> None:
         self._spans: list[SpanStub] = []
-        self._metrics: list[Any] = []
+        self._metrics: list[MetricStub] = []
         self._lock = threading.Lock()
 
         class _ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -47,11 +46,7 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
 
             for scope_spans in resource_spans.scope_spans:
                 for span in scope_spans.spans:
-                    attributes = attributes_to_dict(span.attributes)
-                    events = events_to_list(span.events) if span.events else None
-                    trace_id = span.trace_id.hex() if span.trace_id else None
-                    span_id = span.span_id.hex() if span.span_id else None
-                    new_spans.append(SpanStub(span.name, attributes, resource_attrs or None, events, trace_id, span_id))
+                    new_spans.append(self._create_span_stub_from_protobuf(span, resource_attrs or None))
 
         if not new_spans:
             return
@@ -60,10 +55,13 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
             self._spans.extend(new_spans)
 
     def _handle_metrics(self, request: ExportMetricsServiceRequest) -> None:
-        new_metrics: list[Any] = []
+        new_metrics: list[MetricStub] = []
         for resource_metrics in request.resource_metrics:
             for scope_metrics in resource_metrics.scope_metrics:
-                new_metrics.extend(scope_metrics.metrics)
+                for metric in scope_metrics.metrics:
+                    metric_stub = self._extract_metric_from_opentelemetry(metric)
+                    if metric_stub:
+                        new_metrics.append(metric_stub)
 
         if not new_metrics:
             return
@@ -75,9 +73,9 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
         with self._lock:
             return tuple(self._spans)
 
-    def _snapshot_metrics(self) -> Any | None:
+    def _snapshot_metrics(self) -> tuple[MetricStub, ...] | None:
         with self._lock:
-            return list(self._metrics) if self._metrics else None
+            return tuple(self._metrics) if self._metrics else None
 
     def _clear_impl(self) -> None:
         with self._lock:
