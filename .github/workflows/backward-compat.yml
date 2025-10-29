@@ -283,6 +283,7 @@ jobs:
           inference-mode: 'replay'
 
       - name: Run integration tests with release config
+        id: test_release
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
         continue-on-error: true
         uses: ./.github/actions/run-and-record-tests
@@ -296,8 +297,20 @@ jobs:
         if: always() && steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
         run: |
           RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
-          echo "::warning::Integration tests against release $RELEASE_TAG completed"
-          echo "::warning::This is informational only - does not block merge"
+          TEST_OUTCOME="${{ steps.test_release.outcome }}"
+
+          if [[ "$TEST_OUTCOME" == "failure" ]]; then
+            echo ""
+            echo "::error::❌ FAILED: Integration tests against release $RELEASE_TAG FAILED"
+            echo "::error::⚠️  This PR may break compatibility with the latest release"
+            echo "::error::⚠️  Users on release $RELEASE_TAG may not be able to upgrade"
+            echo ""
+            echo "::warning::This is informational only - does not block merge"
+            echo "::warning::Consider whether this breaking change is acceptable for users"
+          else
+            echo "::notice::✅ Integration tests against release $RELEASE_TAG passed"
+            echo "::notice::This PR is compatible with the latest release"
+          fi
 
   check-schema-release-compatibility:
     name: Check Schema Compatibility with Latest Release (Informational)
@@ -382,8 +395,15 @@ jobs:
 
           # Run pytest with all release configs
           if COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short; then
-            echo "✓ All configs from release $RELEASE_TAG are compatible"
+            echo ""
+            echo "::notice::✅ All configs from release $RELEASE_TAG are compatible"
+            echo "::notice::This PR maintains backward compatibility with the latest release"
           else
-            echo "::warning::Some configs from release $RELEASE_TAG are incompatible"
+            echo ""
+            echo "::error::❌ FAILED: Schema incompatibility detected with release $RELEASE_TAG"
+            echo "::error::⚠️  This PR breaks backward compatibility with existing run.yaml configs"
+            echo "::error::⚠️  Users on release $RELEASE_TAG will not be able to upgrade"
+            echo ""
             echo "::warning::This is informational only - does not block merge"
+            echo "::warning::Consider whether this breaking change is acceptable for users"
           fi
