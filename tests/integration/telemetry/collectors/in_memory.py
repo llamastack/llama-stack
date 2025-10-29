@@ -23,13 +23,20 @@ from .base import BaseTelemetryCollector, SpanStub
 
 
 class InMemoryTelemetryCollector(BaseTelemetryCollector):
+    """In-memory telemetry collector for library-client tests.
+
+    Converts OpenTelemetry span objects to SpanStub objects to ensure
+    consistent interface with OTLP collector used in server mode.
+    """
+
     def __init__(self, span_exporter: InMemorySpanExporter, metric_reader: InMemoryMetricReader) -> None:
         self._span_exporter = span_exporter
         self._metric_reader = metric_reader
 
-    def _snapshot_spans(self) -> tuple[Any, ...]:
+    def _snapshot_spans(self) -> tuple[SpanStub, ...]:
         spans = []
         for span in self._span_exporter.get_finished_spans():
+            # Extract trace_id and span_id
             trace_id = None
             span_id = None
             context = getattr(span, "context", None)
@@ -40,28 +47,37 @@ class InMemoryTelemetryCollector(BaseTelemetryCollector):
                 trace_id = getattr(span, "trace_id", None)
                 span_id = getattr(span, "span_id", None)
 
-            stub = SpanStub(
-                span.name,
-                span.attributes,
-                getattr(span, "resource", None),
-                getattr(span, "events", None),
-                trace_id,
-                span_id,
+            # Convert attributes to dict if needed
+            attrs = span.attributes
+            if attrs is not None and hasattr(attrs, "items"):
+                attrs = dict(attrs.items())
+            elif attrs is not None and not isinstance(attrs, dict):
+                attrs = dict(attrs)
+            elif attrs is None:
+                attrs = {}
+
+            spans.append(
+                SpanStub(
+                    name=span.name,
+                    attributes=attrs,
+                    trace_id=trace_id,
+                    span_id=span_id,
+                )
             )
-            spans.append(stub)
 
         return tuple(spans)
 
     def _snapshot_metrics(self) -> Any | None:
         data = self._metric_reader.get_metrics_data()
-        if data and data.resource_metrics:
-            all_metrics = []
-            for resource_metric in data.resource_metrics:
-                if resource_metric.scope_metrics:
-                    for scope_metric in resource_metric.scope_metrics:
-                        all_metrics.extend(scope_metric.metrics)
-            return all_metrics if all_metrics else None
-        return None
+        if not data or not data.resource_metrics:
+            return None
+
+        all_metrics = []
+        for resource_metric in data.resource_metrics:
+            if resource_metric.scope_metrics:
+                for scope_metric in resource_metric.scope_metrics:
+                    all_metrics.extend(scope_metric.metrics)
+        return all_metrics if all_metrics else None
 
     def _clear_impl(self) -> None:
         self._span_exporter.clear()
