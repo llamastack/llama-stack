@@ -300,16 +300,30 @@ jobs:
           TEST_OUTCOME="${{ steps.test_release.outcome }}"
 
           if [[ "$TEST_OUTCOME" == "failure" ]]; then
-            echo ""
-            echo "::error::❌ FAILED: Integration tests against release $RELEASE_TAG FAILED"
+            echo "::error::❌ Integration tests against release $RELEASE_TAG FAILED"
             echo "::error::⚠️  This PR may break compatibility with the latest release"
-            echo "::error::⚠️  Users on release $RELEASE_TAG may not be able to upgrade"
-            echo ""
-            echo "::warning::This is informational only - does not block merge"
-            echo "::warning::Consider whether this breaking change is acceptable for users"
+
+            # Write to job summary for high visibility
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## 🚨 Release Compatibility Test Failed
+
+          **Integration tests against release \`$RELEASE_TAG\` FAILED**
+
+          ⚠️  **This PR may break compatibility with the latest release**
+
+          - Users on release \`$RELEASE_TAG\` may not be able to upgrade
+          - Existing configurations may break
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users.
+          EOF
           else
-            echo "::notice::✅ Integration tests against release $RELEASE_TAG passed"
-            echo "::notice::This PR is compatible with the latest release"
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ✅ Release Compatibility Test Passed
+
+          Integration tests against release \`$RELEASE_TAG\` passed successfully.
+          This PR maintains compatibility with the latest release.
+          EOF
           fi
 
   check-schema-release-compatibility:
@@ -395,15 +409,29 @@ jobs:
 
           # Run pytest with all release configs
           if COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short; then
-            echo ""
             echo "::notice::✅ All configs from release $RELEASE_TAG are compatible"
-            echo "::notice::This PR maintains backward compatibility with the latest release"
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ✅ Release Schema Compatibility Passed
+
+          All run.yaml configs from release \`$RELEASE_TAG\` are compatible.
+          This PR maintains backward compatibility with the latest release.
+          EOF
           else
-            echo ""
-            echo "::error::❌ FAILED: Schema incompatibility detected with release $RELEASE_TAG"
+            echo "::error::❌ Schema incompatibility detected with release $RELEASE_TAG"
             echo "::error::⚠️  This PR breaks backward compatibility with existing run.yaml configs"
-            echo "::error::⚠️  Users on release $RELEASE_TAG will not be able to upgrade"
-            echo ""
-            echo "::warning::This is informational only - does not block merge"
-            echo "::warning::Consider whether this breaking change is acceptable for users"
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## 🚨 Release Schema Compatibility Failed
+
+          **Schema incompatibility detected with release \`$RELEASE_TAG\`**
+
+          ⚠️  **This PR breaks backward compatibility with existing run.yaml configs**
+
+          - Users on release \`$RELEASE_TAG\` will not be able to upgrade
+          - Existing run.yaml configurations will fail validation
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users.
+          EOF
           fi
