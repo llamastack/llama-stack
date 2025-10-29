@@ -55,9 +55,12 @@ class InMemoryTelemetryCollector(BaseTelemetryCollector):
     def _snapshot_metrics(self) -> Any | None:
         data = self._metric_reader.get_metrics_data()
         if data and data.resource_metrics:
-            resource_metric = data.resource_metrics[0]
-            if resource_metric.scope_metrics:
-                return resource_metric.scope_metrics[0].metrics
+            all_metrics = []
+            for resource_metric in data.resource_metrics:
+                if resource_metric.scope_metrics:
+                    for scope_metric in resource_metric.scope_metrics:
+                        all_metrics.extend(scope_metric.metrics)
+            return all_metrics if all_metrics else None
         return None
 
     def _clear_impl(self) -> None:

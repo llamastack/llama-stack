@@ -6,7 +6,7 @@
 
 """Shared helpers for telemetry test collectors."""
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -14,7 +14,7 @@ from typing import Any
 @dataclass
 class SpanStub:
     name: str
-    attributes: dict[str, Any]
+    attributes: Mapping[str, Any] | None = None
     resource_attributes: dict[str, Any] | None = None
     events: list[dict[str, Any]] | None = None
     trace_id: str | None = None

@@ -140,21 +140,26 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
     # At least one span should capture the fully qualified model ID
     assert text_model_id in logged_model_ids, f"Expected to find {text_model_id} in spans, but got {logged_model_ids}"
 
-    # TODO: re-enable this once metrics get fixed
-    """
     # Verify token usage metrics in response
     metrics = mock_otlp_collector.get_metrics()
 
-    assert metrics
+    assert metrics, "Expected metrics to be generated"
+
+    # Convert metrics to a dictionary for easier lookup
+    metrics_dict = {}
     for metric in metrics:
-        assert metric.name in ["completion_tokens", "total_tokens", "prompt_tokens"]
-        assert metric.unit == "tokens"
-        assert metric.data.data_points and len(metric.data.data_points) == 1
-        match metric.name:
-            case "completion_tokens":
-                assert metric.data.data_points[0].value == usage["completion_tokens"]
-            case "total_tokens":
-                assert metric.data.data_points[0].value == usage["total_tokens"]
-            case "prompt_tokens":
-                assert metric.data.data_points[0].value == usage["prompt_tokens"
-    """
+        if hasattr(metric, "name") and hasattr(metric, "data") and hasattr(metric.data, "data_points"):
+            if metric.data.data_points and len(metric.data.data_points) > 0:
+                # Get the value from the first data point
+                value = metric.data.data_points[0].value
+                metrics_dict[metric.name] = value
+
+    # Verify expected metrics are present
+    expected_metrics = ["completion_tokens", "total_tokens", "prompt_tokens"]
+    for metric_name in expected_metrics:
+        assert metric_name in metrics_dict, f"Expected metric {metric_name} not found in {list(metrics_dict.keys())}"
+
+    # Verify metric values match usage data
+    assert metrics_dict["completion_tokens"] == usage["completion_tokens"]
+    assert metrics_dict["total_tokens"] == usage["total_tokens"]
+    assert metrics_dict["prompt_tokens"] == usage["prompt_tokens"]
