@@ -80,7 +80,6 @@ class InlineSchedulerImpl(Scheduler):
                 job["started_at"] = datetime.fromisoformat(job["started_at"])
             if job.get("completed_at"):
                 job["completed_at"] = datetime.fromisoformat(job["completed_at"])
-            # Deserialize JobStatus enum
             job["status"] = JobStatus(job["status"])
 
             self._jobs[job["job_id"]] = job
@@ -171,8 +170,6 @@ class InlineSchedulerImpl(Scheduler):
                 await self._save_job_to_storage(job)
 
                 # Execute the job based on job_type
-                # This is where job-specific logic would be called
-                # For now, we'll simulate a simple job execution
                 result = await self._execute_job(job)
 
                 # Mark as completed
@@ -215,9 +212,8 @@ class InlineSchedulerImpl(Scheduler):
         # Check if a custom executor is registered for this job type
         if job_type in self._job_executors:
             executor = self._job_executors[job_type]
-            return await executor(job_data)  # Call the registered executor
+            return await executor(job_data)
 
-        # No executor registered for this job type
         raise ValueError(f"No executor registered for job type: {job_type}")
 
     async def get_job_info(self, job_id: str) -> dict:

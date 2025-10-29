@@ -74,7 +74,6 @@ class InlineSchedulerImpl(Scheduler):
 
         for value in stored_values:
             job = json.loads(value)
-            # Deserialize datetime strings back to datetime objects
             job["created_at"] = datetime.fromisoformat(job["created_at"])
             if job.get("started_at"):
                 job["started_at"] = datetime.fromisoformat(job["started_at"])

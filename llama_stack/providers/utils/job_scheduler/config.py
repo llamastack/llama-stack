@@ -52,7 +52,6 @@ class CelerySchedulerConfig(SchedulerConfig):
     )
 
 
-# Union type for all scheduler configs with discriminator
 SchedulerConfigUnion = Annotated[
     InlineSchedulerConfig | CelerySchedulerConfig,
     Field(discriminator="type"),
