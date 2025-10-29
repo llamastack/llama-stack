@@ -13,12 +13,21 @@ from typing import Any
 
 @dataclass
 class SpanStub:
+    """Unified span interface for both in-memory and OTLP collectors."""
+
     name: str
     attributes: Mapping[str, Any] | None = None
     resource_attributes: dict[str, Any] | None = None
     events: list[dict[str, Any]] | None = None
     trace_id: str | None = None
     span_id: str | None = None
+
+    @property
+    def context(self):
+        """Provide context-like interface for trace_id compatibility."""
+        if self.trace_id is None:
+            return None
+        return type("Context", (), {"trace_id": int(self.trace_id, 16)})()
 
 
 def _value_to_python(value: Any) -> Any:
@@ -56,12 +65,18 @@ def events_to_list(events: Iterable[Any]) -> list[dict[str, Any]]:
 
 
 class BaseTelemetryCollector:
+    """Base class for telemetry collectors that ensures consistent return types.
+
+    All collectors must return SpanStub objects to ensure test compatibility
+    across both library-client and server modes.
+    """
+
     def get_spans(
         self,
         expected_count: int | None = None,
         timeout: float = 5.0,
         poll_interval: float = 0.05,
-    ) -> tuple[Any, ...]:
+    ) -> tuple[SpanStub, ...]:
         import time
 
         deadline = time.time() + timeout
@@ -97,7 +112,7 @@ class BaseTelemetryCollector:
     def clear(self) -> None:
         self._clear_impl()
 
-    def _snapshot_spans(self) -> tuple[Any, ...]:  # pragma: no cover - interface hook
+    def _snapshot_spans(self) -> tuple[SpanStub, ...]:  # pragma: no cover - interface hook
         raise NotImplementedError
 
     def _snapshot_metrics(self) -> Any | None:  # pragma: no cover - interface hook

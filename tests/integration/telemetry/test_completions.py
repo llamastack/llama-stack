@@ -4,7 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""Telemetry tests verifying @trace_protocol decorator format across stack modes."""
+"""Telemetry tests verifying @trace_protocol decorator format across stack modes.
+
+Note: The mock_otlp_collector fixture automatically clears telemetry data
+before and after each test, ensuring test isolation.
+"""
 
 import json
 
@@ -44,8 +48,6 @@ def _span_has_message(span, text: str) -> bool:
 
 def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_model_id):
     """Verify streaming adds chunk_count and __type__=async_generator."""
-    mock_otlp_collector.clear()
-
     stream = llama_stack_client.chat.completions.create(
         model=text_model_id,
         messages=[{"role": "user", "content": "Test trace openai 1"}],
@@ -80,8 +82,6 @@ def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_mod
 
 def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, text_model_id):
     """Comprehensive validation of telemetry data format including spans and metrics."""
-    mock_otlp_collector.clear()
-
     response = llama_stack_client.chat.completions.create(
         model=text_model_id,
         messages=[{"role": "user", "content": "Test trace openai with temperature 0.7"}],
