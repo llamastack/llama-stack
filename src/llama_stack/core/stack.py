@@ -55,6 +55,7 @@ from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import Api
+from llama_stack.apis.file_processors import FileProcessors
 
 logger = get_logger(name=__name__, category="core")
 
@@ -82,6 +83,7 @@ class LlamaStack(
     Files,
     Prompts,
     Conversations,
+    FileProcessors,
 ):
     pass
 
