@@ -1,16 +1,8 @@
 openapi: 3.1.0
 info:
-  title: >-
-    Llama Stack Specification - Deprecated APIs
-  version: v1
-  description: >-
-    This is the specification of the Llama Stack that provides
-                    a set of endpoints and their corresponding interfaces that are
-    tailored to
-                    best leverage Llama Models.
-
-    **⚠️ DEPRECATED**: Legacy APIs that may be removed in future versions. Use for
-    migration reference only.
+  title: Llama Stack API
+  description: A comprehensive API for building and deploying AI applications
+  version: 1.0.0
 servers:
   - url: http://any-hosted-llama-stack.com
 paths: {}
@@ -58,8 +50,7 @@ components:
             title: Bad Request
             detail: The request was invalid or malformed
     TooManyRequests429:
-      description: >-
-        The client has sent too many requests in a given amount of time
+      description: The client has sent too many requests in a given amount of time
       content:
         application/json:
           schema:
@@ -67,11 +58,9 @@ components:
           example:
             status: 429
             title: Too Many Requests
-            detail: >-
-              You have exceeded the rate limit. Please try again later.
+            detail: You have exceeded the rate limit. Please try again later.
     InternalServerError500:
-      description: >-
-        The server encountered an unexpected error
+      description: The server encountered an unexpected error
       content:
         application/json:
           schema:
@@ -79,10 +68,9 @@ components:
           example:
             status: 500
             title: Internal Server Error
-            detail: >-
-              An unexpected error occurred. Our team has been notified.
+            detail: An unexpected error occurred
     DefaultError:
-      description: An unexpected error occurred
+      description: An error occurred
       content:
         application/json:
           schema:
