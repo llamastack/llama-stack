@@ -64,6 +64,11 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             if not isinstance(provider, NeedsRequestProviderData):
                 continue
 
+            # Check if provider has a validator (some providers like ollama don't need per-request credentials)
+            spec = getattr(provider, "__provider_spec__", None)
+            if not spec or not getattr(spec, "provider_data_validator", None):
+                continue
+
             # Try to get validated provider_data for this provider
             # Returns None if validation fails (missing keys) or if no provider_data exists
             validated_data = provider.get_request_provider_data()
