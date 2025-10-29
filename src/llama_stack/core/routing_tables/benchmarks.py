@@ -19,15 +19,15 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 class BenchmarksRoutingTable(CommonRoutingTableImpl, Benchmarks):
     async def list_benchmarks(self) -> ListBenchmarksResponse:
-        return ListBenchmarksResponse(data=await self.get_all_with_type("benchmark"))
+        return ListBenchmarksResponse(data=await self.get_all_with_type("benchmark"))  # type: ignore[arg-type]
 
     async def get_benchmark(self, benchmark_id: str) -> Benchmark:
         benchmark = await self.get_object_by_identifier("benchmark", benchmark_id)
         if benchmark is None:
             raise ValueError(f"Benchmark '{benchmark_id}' not found")
-        return benchmark
+        return benchmark  # type: ignore[return-value]
 
-    async def register_benchmark(
+    async def register_benchmark(  # type: ignore[override]
         self,
         benchmark_id: str,
         dataset_id: str,
@@ -59,4 +59,4 @@ class BenchmarksRoutingTable(CommonRoutingTableImpl, Benchmarks):
 
     async def unregister_benchmark(self, benchmark_id: str) -> None:
         existing_benchmark = await self.get_benchmark(benchmark_id)
-        await self.unregister_object(existing_benchmark)
+        await self.unregister_object(existing_benchmark)  # type: ignore[arg-type]

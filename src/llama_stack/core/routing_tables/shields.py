@@ -20,13 +20,13 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 class ShieldsRoutingTable(CommonRoutingTableImpl, Shields):
     async def list_shields(self) -> ListShieldsResponse:
-        return ListShieldsResponse(data=await self.get_all_with_type(ResourceType.shield.value))
+        return ListShieldsResponse(data=await self.get_all_with_type(ResourceType.shield.value))  # type: ignore[arg-type]
 
     async def get_shield(self, identifier: str) -> Shield:
         shield = await self.get_object_by_identifier("shield", identifier)
         if shield is None:
             raise ValueError(f"Shield '{identifier}' not found")
-        return shield
+        return shield  # type: ignore[return-value]
 
     async def register_shield(
         self,
@@ -58,4 +58,4 @@ class ShieldsRoutingTable(CommonRoutingTableImpl, Shields):
 
     async def unregister_shield(self, identifier: str) -> None:
         existing_shield = await self.get_shield(identifier)
-        await self.unregister_object(existing_shield)
+        await self.unregister_object(existing_shield)  # type: ignore[arg-type]

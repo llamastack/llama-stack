@@ -31,13 +31,13 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 class DatasetsRoutingTable(CommonRoutingTableImpl, Datasets):
     async def list_datasets(self) -> ListDatasetsResponse:
-        return ListDatasetsResponse(data=await self.get_all_with_type(ResourceType.dataset.value))
+        return ListDatasetsResponse(data=await self.get_all_with_type(ResourceType.dataset.value))  # type: ignore[arg-type]
 
     async def get_dataset(self, dataset_id: str) -> Dataset:
         dataset = await self.get_object_by_identifier("dataset", dataset_id)
         if dataset is None:
             raise DatasetNotFoundError(dataset_id)
-        return dataset
+        return dataset  # type: ignore[return-value]
 
     async def register_dataset(
         self,
@@ -77,7 +77,7 @@ class DatasetsRoutingTable(CommonRoutingTableImpl, Datasets):
         dataset = DatasetWithOwner(
             identifier=dataset_id,
             provider_resource_id=provider_dataset_id,
-            provider_id=provider_id,
+            provider_id=provider_id,  # type: ignore[arg-type]
             purpose=purpose,
             source=source,
             metadata=metadata,
@@ -88,4 +88,4 @@ class DatasetsRoutingTable(CommonRoutingTableImpl, Datasets):
 
     async def unregister_dataset(self, dataset_id: str) -> None:
         dataset = await self.get_dataset(dataset_id)
-        await self.unregister_object(dataset)
+        await self.unregister_object(dataset)  # type: ignore[arg-type]
