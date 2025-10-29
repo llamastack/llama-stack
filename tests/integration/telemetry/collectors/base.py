@@ -29,6 +29,67 @@ class SpanStub:
             return None
         return type("Context", (), {"trace_id": int(self.trace_id, 16)})()
 
+    def get_attributes(self) -> dict[str, Any]:
+        """Get span attributes as a dictionary.
+
+        Handles different attribute types (mapping, dict, etc.) and returns
+        a consistent dictionary format.
+        """
+        attrs = self.attributes
+        if attrs is None:
+            return {}
+
+        # Handle mapping-like objects (e.g., mappingproxy)
+        try:
+            return dict(attrs.items())  # type: ignore[attr-defined]
+        except AttributeError:
+            try:
+                return dict(attrs)
+            except TypeError:
+                return dict(attrs) if attrs else {}
+
+    def get_attribute(self, key: str) -> Any:
+        """Get a specific attribute value by key."""
+        attrs = self.get_attributes()
+        return attrs.get(key)
+
+    def get_trace_id(self) -> str | None:
+        """Get trace ID in hex format.
+
+        Tries context.trace_id first, then falls back to direct trace_id.
+        """
+        context = getattr(self, "context", None)
+        if context and getattr(context, "trace_id", None) is not None:
+            return f"{context.trace_id:032x}"
+        return getattr(self, "trace_id", None)
+
+    def has_message(self, text: str) -> bool:
+        """Check if span contains a specific message in its args."""
+        args = self.get_attribute("__args__")
+        if not args or not isinstance(args, str):
+            return False
+        return text in args
+
+    def is_root_span(self) -> bool:
+        """Check if this is a root span."""
+        return self.get_attribute("__root__") is True
+
+    def is_autotraced(self) -> bool:
+        """Check if this span was automatically traced."""
+        return self.get_attribute("__autotraced__") is True
+
+    def get_span_type(self) -> str | None:
+        """Get the span type (async, sync, async_generator)."""
+        return self.get_attribute("__type__")
+
+    def get_class_method(self) -> tuple[str | None, str | None]:
+        """Get the class and method names for autotraced spans."""
+        return (self.get_attribute("__class__"), self.get_attribute("__method__"))
+
+    def get_location(self) -> str | None:
+        """Get the location (library_client, server) for root spans."""
+        return self.get_attribute("__location__")
+
 
 def _value_to_python(value: Any) -> Any:
     kind = value.WhichOneof("value")
