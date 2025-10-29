@@ -49,6 +49,7 @@ def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_mod
 
 def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, text_model_id):
     """Comprehensive validation of telemetry data format including spans and metrics."""
+
     response = llama_stack_client.chat.completions.create(
         model=text_model_id,
         messages=[{"role": "user", "content": "Test trace openai with temperature 0.7"}],
@@ -106,15 +107,45 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
     # At least one span should capture the fully qualified model ID
     assert text_model_id in logged_model_ids, f"Expected to find {text_model_id} in spans, but got {logged_model_ids}"
 
-    # Verify token usage metrics in response
-    # Verify expected metrics are present
+    # Verify token usage metrics in response using polling
     expected_metrics = ["completion_tokens", "total_tokens", "prompt_tokens"]
+    metrics = mock_otlp_collector.get_metrics(expected_count=len(expected_metrics))
+    assert len(metrics) > 0, "No metrics found within timeout"
+
+    # Filter metrics to only those from the specific model used in the request
+    # This prevents issues when multiple metrics with the same name exist from different models
+    # (e.g., when safety models like llama-guard are also called)
+    model_metrics = {}
+    all_model_ids = set()
+
+    for name, metric in metrics.items():
+        if name in expected_metrics:
+            model_id = metric.get_attribute("model_id")
+            all_model_ids.add(model_id)
+            # Only include metrics from the specific model used in the test request
+            if model_id == text_model_id:
+                model_metrics[name] = metric
+
+    # Provide helpful error message if we have metrics from multiple models
+    if len(all_model_ids) > 1:
+        print(f"Note: Found metrics from multiple models: {sorted(all_model_ids)}")
+        print(f"Filtering to only metrics from test model: {text_model_id}")
+
+    # Verify expected metrics are present for our specific model
     for metric_name in expected_metrics:
-        assert mock_otlp_collector.has_metric(metric_name), (
-            f"Expected metric {metric_name} not found in {mock_otlp_collector.get_metric_names()}"
+        assert metric_name in model_metrics, (
+            f"Expected metric {metric_name} for model {text_model_id} not found. "
+            f"Available models: {sorted(all_model_ids)}, "
+            f"Available metrics for {text_model_id}: {list(model_metrics.keys())}"
         )
 
     # Verify metric values match usage data
-    assert mock_otlp_collector.get_metric_value("completion_tokens") == usage["completion_tokens"]
-    assert mock_otlp_collector.get_metric_value("total_tokens") == usage["total_tokens"]
-    assert mock_otlp_collector.get_metric_value("prompt_tokens") == usage["prompt_tokens"]
+    assert model_metrics["completion_tokens"].get_value() == usage["completion_tokens"], (
+        f"Expected {usage['completion_tokens']} for completion_tokens, but got {model_metrics['completion_tokens'].get_value()}"
+    )
+    assert model_metrics["total_tokens"].get_value() == usage["total_tokens"], (
+        f"Expected {usage['total_tokens']} for total_tokens, but got {model_metrics['total_tokens'].get_value()}"
+    )
+    assert model_metrics["prompt_tokens"].get_value() == usage["prompt_tokens"], (
+        f"Expected {usage['prompt_tokens']} for prompt_tokens, but got {model_metrics['prompt_tokens'].get_value()}"
+    )
