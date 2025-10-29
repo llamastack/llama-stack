@@ -19,7 +19,7 @@ def test_adapter_initialization():
     config = BedrockConfig(api_key="test-key", region_name="us-east-1")
     adapter = BedrockInferenceAdapter(config=config)
 
-    assert adapter.config.api_key == "test-key"
+    assert adapter.config.auth_credential.get_secret_value() == "test-key"
     assert adapter.config.region_name == "us-east-1"
 
 
@@ -28,15 +28,15 @@ def test_client_url_construction():
     adapter = BedrockInferenceAdapter(config=config)
 
     assert adapter.get_base_url() == "https://bedrock-runtime.us-west-2.amazonaws.com/openai/v1"
-    assert adapter.get_api_key() == "test-key"
 
 
 def test_api_key_from_config():
-    """Test API key is read from config"""
+    """Test API key is stored as SecretStr in auth_credential"""
     config = BedrockConfig(api_key="config-key", region_name="us-east-1")
     adapter = BedrockInferenceAdapter(config=config)
 
-    assert adapter.get_api_key() == "config-key"
+    # API key is stored in auth_credential field (SecretStr)
+    assert adapter.config.auth_credential.get_secret_value() == "config-key"
 
 
 def test_api_key_from_header_overrides_config():

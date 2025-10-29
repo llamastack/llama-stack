@@ -19,10 +19,6 @@ class BedrockProviderDataValidator(BaseModel):
 
 
 class BedrockConfig(RemoteInferenceProviderConfig):
-    api_key: str | None = Field(
-        default_factory=lambda: os.getenv("AWS_BEDROCK_API_KEY"),
-        description="Amazon Bedrock API key",
-    )
     region_name: str = Field(
         default_factory=lambda: os.getenv("AWS_DEFAULT_REGION", "us-east-2"),
         description="AWS Region for the Bedrock Runtime endpoint",

@@ -12,23 +12,21 @@ def test_bedrock_config_defaults_no_env(monkeypatch):
     monkeypatch.delenv("AWS_BEDROCK_API_KEY", raising=False)
     monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
     config = BedrockConfig()
-    assert config.api_key is None
+    assert config.auth_credential is None
     assert config.region_name == "us-east-2"
 
 
-def test_bedrock_config_defaults_with_env(monkeypatch):
-    """Test BedrockConfig reads from environment variables"""
-    monkeypatch.setenv("AWS_BEDROCK_API_KEY", "env-key")
+def test_bedrock_config_reads_from_env(monkeypatch):
+    """Test BedrockConfig field initialization reads from environment variables"""
     monkeypatch.setenv("AWS_DEFAULT_REGION", "eu-west-1")
     config = BedrockConfig()
-    assert config.api_key == "env-key"
     assert config.region_name == "eu-west-1"
 
 
 def test_bedrock_config_with_values():
-    """Test BedrockConfig accepts explicit values"""
+    """Test BedrockConfig accepts explicit values via alias"""
     config = BedrockConfig(api_key="test-key", region_name="us-west-2")
-    assert config.api_key == "test-key"
+    assert config.auth_credential.get_secret_value() == "test-key"
     assert config.region_name == "us-west-2"
 
 

@@ -9,7 +9,6 @@ from collections.abc import AsyncIterator, Iterable
 from openai import AuthenticationError
 
 from llama_stack.apis.inference import (
-    Model,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -40,15 +39,6 @@ class BedrockInferenceAdapter(OpenAIMixin):
     config: BedrockConfig
     provider_data_api_key_field: str = "aws_bedrock_api_key"
 
-    def get_api_key(self) -> str:
-        """Get API key for OpenAI client."""
-        if not self.config.api_key:
-            raise ValueError(
-                "API key is not set. Please provide a valid API key in the "
-                "provider config or via AWS_BEDROCK_API_KEY environment variable."
-            )
-        return self.config.api_key
-
     def get_base_url(self) -> str:
         """Get base URL for OpenAI client."""
         return f"https://bedrock-runtime.{self.config.region_name}.amazonaws.com/openai/v1"
@@ -60,14 +50,12 @@ class BedrockInferenceAdapter(OpenAIMixin):
         """
         return []
 
-    async def register_model(self, model: Model) -> Model:
+    async def check_model_availability(self, model: str) -> bool:
         """
-        Register a model with the Bedrock provider.
-
-        Bedrock doesn't support dynamic model listing via /v1/models, so we skip
-        the availability check and accept all models registered in the config.
+        Bedrock doesn't support dynamic model listing via /v1/models.
+        Always return True to accept all models registered in the config.
         """
-        return model
+        return True
 
     async def openai_embeddings(
         self,
@@ -102,11 +90,40 @@ class BedrockInferenceAdapter(OpenAIMixin):
             elif "include_usage" not in params.stream_options:
                 params.stream_options = {**params.stream_options, "include_usage": True}
 
-        # Wrap call in try/except to catch authentication errors
         try:
-            return await super().openai_chat_completion(params=params)
+            logger.debug(f"Calling Bedrock OpenAI API with model={params.model}, stream={params.stream}")
+            result = await super().openai_chat_completion(params=params)
+            logger.debug(f"Bedrock API returned: {type(result).__name__ if result is not None else 'None'}")
+
+            # Defensive check for unexpected None response
+            if result is None:
+                logger.error(f"OpenAI client returned None for model={params.model}, stream={params.stream}")
+                raise RuntimeError(
+                    f"Bedrock API returned no response for model '{params.model}'. "
+                    "This may indicate the model is not supported or a network/API issue occurred."
+                )
+
+            return result
         except AuthenticationError as e:
-            raise ValueError(
-                f"AWS Bedrock authentication failed: {e.message}. "
-                "Please check your API key in the provider config or x-llamastack-provider-data header."
-            ) from e
+            # Extract detailed error message from the exception
+            error_msg = str(e)
+
+            # Check if this is a token expiration error
+            if "expired" in error_msg.lower() or "Bearer Token has expired" in error_msg:
+                logger.error(f"AWS Bedrock authentication token expired: {error_msg}")
+                raise ValueError(
+                    "AWS Bedrock authentication failed: Bearer token has expired. "
+                    "The AWS_BEDROCK_API_KEY environment variable contains an expired pre-signed URL. "
+                    "Please refresh your token by generating a new pre-signed URL with AWS credentials. "
+                    "Refer to AWS Bedrock documentation for details on OpenAI-compatible endpoints."
+                ) from e
+            else:
+                logger.error(f"AWS Bedrock authentication failed: {error_msg}")
+                raise ValueError(
+                    f"AWS Bedrock authentication failed: {error_msg}. "
+                    "Please verify your API key is correct in the provider config or x-llamastack-provider-data header. "
+                    "The API key should be a valid AWS pre-signed URL for Bedrock's OpenAI-compatible endpoint."
+                ) from e
+        except Exception as e:
+            logger.error(f"Unexpected error calling Bedrock API: {type(e).__name__}: {e}", exc_info=True)
+            raise
