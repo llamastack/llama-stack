@@ -13,7 +13,7 @@ from llama_stack.core.datatypes import (
     ModelWithOwner,
     RegistryEntrySource,
 )
-from llama_stack.core.request_headers import NeedsRequestProviderData, PROVIDER_DATA_VAR
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
 from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl, lookup_model
