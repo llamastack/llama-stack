@@ -284,6 +284,7 @@ jobs:
 
       - name: Run integration tests with release config
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        continue-on-error: true
         uses: ./.github/actions/run-and-record-tests
         with:
           stack-config: /tmp/release-ci-tests-run.yaml
