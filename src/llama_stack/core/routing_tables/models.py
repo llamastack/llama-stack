@@ -25,13 +25,13 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
     async def refresh(self) -> None:
         for provider_id, provider in self.impls_by_provider_id.items():
-            refresh = await provider.should_refresh_models()
+            refresh = await provider.should_refresh_models()  # type: ignore[union-attr]
             refresh = refresh or provider_id not in self.listed_providers
             if not refresh:
                 continue
 
             try:
-                models = await provider.list_models()
+                models = await provider.list_models()  # type: ignore[union-attr]
             except Exception as e:
                 logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
                 continue
@@ -43,7 +43,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             await self.update_registered_models(provider_id, models)
 
     async def list_models(self) -> ListModelsResponse:
-        return ListModelsResponse(data=await self.get_all_with_type("model"))
+        return ListModelsResponse(data=await self.get_all_with_type("model"))  # type: ignore[arg-type]
 
     async def openai_list_models(self) -> OpenAIListModelsResponse:
         models = await self.get_all_with_type("model")
@@ -61,8 +61,8 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
     async def get_model(self, model_id: str) -> Model:
         return await lookup_model(self, model_id)
 
-    async def get_provider_impl(self, model_id: str) -> Any:
-        model = await lookup_model(self, model_id)
+    async def get_provider_impl(self, routing_key: str, provider_id: str | None = None) -> Any:
+        model = await lookup_model(self, routing_key)
         if model.provider_id not in self.impls_by_provider_id:
             raise ValueError(f"Provider {model.provider_id} not found in the routing table")
         return self.impls_by_provider_id[model.provider_id]
@@ -114,13 +114,13 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             source=RegistryEntrySource.via_register_api,
         )
         registered_model = await self.register_object(model)
-        return registered_model
+        return registered_model  # type: ignore[return-value]
 
     async def unregister_model(self, model_id: str) -> None:
         existing_model = await self.get_model(model_id)
         if existing_model is None:
             raise ModelNotFoundError(model_id)
-        await self.unregister_object(existing_model)
+        await self.unregister_object(existing_model)  # type: ignore[arg-type]
 
     async def update_registered_models(
         self,
@@ -142,22 +142,22 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             logger.debug(f"unregistering model {model.identifier}")
             await self.unregister_object(model)
 
-        for model in models:
-            if model.provider_resource_id in model_ids:
+        for provider_model in models:
+            if provider_model.provider_resource_id in model_ids:
                 # avoid overwriting a non-provider-registered model entry
                 continue
 
-            if model.identifier == model.provider_resource_id:
-                model.identifier = f"{provider_id}/{model.provider_resource_id}"
+            if provider_model.identifier == provider_model.provider_resource_id:
+                provider_model.identifier = f"{provider_id}/{provider_model.provider_resource_id}"
 
-            logger.debug(f"registering model {model.identifier} ({model.provider_resource_id})")
+            logger.debug(f"registering model {provider_model.identifier} ({provider_model.provider_resource_id})")
             await self.register_object(
                 ModelWithOwner(
-                    identifier=model.identifier,
-                    provider_resource_id=model.provider_resource_id,
+                    identifier=provider_model.identifier,
+                    provider_resource_id=provider_model.provider_resource_id,
                     provider_id=provider_id,
-                    metadata=model.metadata,
-                    model_type=model.model_type,
+                    metadata=provider_model.metadata,
+                    model_type=provider_model.model_type,
                     source=RegistryEntrySource.listed_from_provider,
                 )
             )

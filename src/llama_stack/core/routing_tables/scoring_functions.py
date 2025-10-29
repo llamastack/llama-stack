@@ -24,13 +24,13 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 class ScoringFunctionsRoutingTable(CommonRoutingTableImpl, ScoringFunctions):
     async def list_scoring_functions(self) -> ListScoringFunctionsResponse:
-        return ListScoringFunctionsResponse(data=await self.get_all_with_type(ResourceType.scoring_function.value))
+        return ListScoringFunctionsResponse(data=await self.get_all_with_type(ResourceType.scoring_function.value))  # type: ignore[arg-type]
 
     async def get_scoring_function(self, scoring_fn_id: str) -> ScoringFn:
         scoring_fn = await self.get_object_by_identifier("scoring_function", scoring_fn_id)
         if scoring_fn is None:
             raise ValueError(f"Scoring function '{scoring_fn_id}' not found")
-        return scoring_fn
+        return scoring_fn  # type: ignore[return-value]
 
     async def register_scoring_function(
         self,
@@ -63,4 +63,4 @@ class ScoringFunctionsRoutingTable(CommonRoutingTableImpl, ScoringFunctions):
 
     async def unregister_scoring_function(self, scoring_fn_id: str) -> None:
         existing_scoring_fn = await self.get_scoring_function(scoring_fn_id)
-        await self.unregister_object(existing_scoring_fn)
+        await self.unregister_object(existing_scoring_fn)  # type: ignore[arg-type]
