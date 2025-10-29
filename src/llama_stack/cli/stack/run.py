@@ -8,6 +8,7 @@ import argparse
 import os
 import ssl
 import subprocess
+import sys
 from pathlib import Path
 
 import uvicorn
@@ -168,9 +169,130 @@ class StackRun(Subcommand):
         # Another approach would be to ignore SIGINT entirely - let uvicorn handle it through its own
         # signal handling but this is quite intrusive and not worth the effort.
         try:
-            uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
+            if sys.platform in ("linux", "darwin"):
+                # On Unix-like systems, use Gunicorn with Uvicorn workers for production-grade performance
+                self._run_with_gunicorn(host, port, uvicorn_config)
+            else:
+                # On other systems (e.g., Windows), fall back to Uvicorn directly
+                uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
+
+    def _run_with_gunicorn(self, host: str | list[str], port: int, uvicorn_config: dict) -> None:
+        """
+        Run the server using Gunicorn with Uvicorn workers.
+
+        This provides production-grade multi-process performance on Unix systems.
+        """
+        import logging  # allow-direct-logging
+        import multiprocessing
+
+        # Calculate number of workers: (2 * CPU cores) + 1 is a common formula
+        # Can be overridden by WEB_CONCURRENCY or GUNICORN_WORKERS environment variable
+        default_workers = (multiprocessing.cpu_count() * 2) + 1
+        num_workers = int(os.getenv("GUNICORN_WORKERS") or os.getenv("WEB_CONCURRENCY") or default_workers)
+
+        # Handle host configuration - Gunicorn expects a single bind address
+        # Uvicorn can accept a list of hosts, but Gunicorn binds to one address
+        bind_host = host[0] if isinstance(host, list) else host
+
+        # IPv6 addresses need to be wrapped in brackets
+        if ":" in bind_host and not bind_host.startswith("["):
+            bind_address = f"[{bind_host}]:{port}"
+        else:
+            bind_address = f"{bind_host}:{port}"
+
+        # Map Python logging level to Gunicorn log level string (from uvicorn_config)
+        log_level_map = {
+            logging.CRITICAL: "critical",
+            logging.ERROR: "error",
+            logging.WARNING: "warning",
+            logging.INFO: "info",
+            logging.DEBUG: "debug",
+        }
+        log_level = uvicorn_config.get("log_level", logging.INFO)
+        gunicorn_log_level = log_level_map.get(log_level, "info")
+
+        # Worker timeout - longer for async workers, configurable via env var
+        timeout = int(os.getenv("GUNICORN_TIMEOUT", "120"))
+
+        # Worker connections - concurrent connections per worker
+        worker_connections = int(os.getenv("GUNICORN_WORKER_CONNECTIONS", "1000"))
+
+        # Worker recycling to prevent memory leaks
+        max_requests = int(os.getenv("GUNICORN_MAX_REQUESTS", "10000"))
+        max_requests_jitter = int(os.getenv("GUNICORN_MAX_REQUESTS_JITTER", "1000"))
+
+        # Keep-alive for connection reuse
+        keepalive = int(os.getenv("GUNICORN_KEEPALIVE", "5"))
+
+        # Build Gunicorn command
+        gunicorn_command = [
+            "gunicorn",
+            "-k",
+            "uvicorn.workers.UvicornWorker",
+            "--workers",
+            str(num_workers),
+            "--worker-connections",
+            str(worker_connections),
+            "--bind",
+            bind_address,
+            "--timeout",
+            str(timeout),
+            "--keep-alive",
+            str(keepalive),
+            "--max-requests",
+            str(max_requests),
+            "--max-requests-jitter",
+            str(max_requests_jitter),
+            "--log-level",
+            gunicorn_log_level,
+            "--access-logfile",
+            "-",  # Log to stdout
+            "--error-logfile",
+            "-",  # Log to stderr
+        ]
+
+        # Preload app for memory efficiency (disabled by default to avoid import issues)
+        # Enable with GUNICORN_PRELOAD=true for production deployments
+        if os.getenv("GUNICORN_PRELOAD", "true").lower() == "true":
+            gunicorn_command.append("--preload")
+
+        # Add SSL configuration if present (from uvicorn_config)
+        if uvicorn_config.get("ssl_keyfile") and uvicorn_config.get("ssl_certfile"):
+            gunicorn_command.extend(
+                [
+                    "--keyfile",
+                    uvicorn_config["ssl_keyfile"],
+                    "--certfile",
+                    uvicorn_config["ssl_certfile"],
+                ]
+            )
+            if uvicorn_config.get("ssl_ca_certs"):
+                gunicorn_command.extend(["--ca-certs", uvicorn_config["ssl_ca_certs"]])
+
+        # Add the application
+        gunicorn_command.append("llama_stack.core.server.server:create_app()")
+
+        # Log comprehensive configuration
+        logger.info(f"Starting Gunicorn server with {num_workers} workers on {bind_address}...")
+        logger.info("Using Uvicorn workers for ASGI application support")
+        logger.info(
+            f"Configuration: {worker_connections} connections/worker, {timeout}s timeout, {keepalive}s keepalive"
+        )
+        logger.info(f"Worker recycling: every {max_requests}±{max_requests_jitter} requests (prevents memory leaks)")
+        logger.info(f"Total concurrent capacity: {num_workers * worker_connections} connections")
+
+        try:
+            # Execute the Gunicorn command
+            subprocess.run(gunicorn_command, check=True)
+        except FileNotFoundError:
+            logger.error("Error: 'gunicorn' command not found. Please ensure Gunicorn is installed.")
+            logger.error("Falling back to Uvicorn...")
+            uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to start Gunicorn server. Error: {e}")
+            sys.exit(1)
 
     def _start_ui_development_server(self, stack_server_port: int):
         logger.info("Attempting to start UI development server...")
