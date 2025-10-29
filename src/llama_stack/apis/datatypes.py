@@ -105,7 +105,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar prompts: Prompt versions and management
     :cvar inspect: Built-in system inspection and introspection
     """
-    file_processing = "file_processing"
+    file_processors = "file_processors"
     providers = "providers"
     inference = "inference"
     safety = "safety"
