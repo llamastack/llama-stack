@@ -11,7 +11,7 @@ import uuid
 import warnings
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -363,7 +363,7 @@ class ChatAgent(ShieldRunnerMixin):
 
         if self.input_shields:
             async for res in self.run_multiple_shields_wrapper(
-                turn_id, input_messages, self.input_shields, "user-input"
+                turn_id, cast(list[OpenAIMessageParam], input_messages), self.input_shields, "user-input"
             ):
                 if isinstance(res, bool):
                     return
@@ -392,7 +392,7 @@ class ChatAgent(ShieldRunnerMixin):
 
         if self.output_shields:
             async for res in self.run_multiple_shields_wrapper(
-                turn_id, messages, self.output_shields, "assistant-output"
+                turn_id, cast(list[OpenAIMessageParam], messages), self.output_shields, "assistant-output"
             ):
                 if isinstance(res, bool):
                     return
@@ -404,7 +404,7 @@ class ChatAgent(ShieldRunnerMixin):
     async def run_multiple_shields_wrapper(
         self,
         turn_id: str,
-        messages: list[Message],
+        messages: list[OpenAIMessageParam],
         shields: list[str],
         touchpoint: str,
     ) -> AsyncGenerator:

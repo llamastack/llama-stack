@@ -7,11 +7,12 @@
 import json
 import uuid
 from datetime import UTC, datetime
+from typing import cast
 
 from llama_stack.apis.agents import AgentConfig, Session, ToolExecutionStep, Turn
 from llama_stack.apis.common.errors import SessionNotFoundError
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
-from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.core.access_control.datatypes import AccessRule, Action
 from llama_stack.core.datatypes import User
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
@@ -53,8 +54,12 @@ class AgentPersistence:
             turns=[],
             identifier=name,  # should this be qualified in any way?
         )
-        if not is_action_allowed(self.policy, "create", session_info, user):
-            raise AccessDeniedError("create", session_info, user)
+        # Both identifier and owner are set above, safe to use for access control
+        assert session_info.identifier is not None and session_info.owner is not None
+        from llama_stack.core.access_control.conditions import ProtectedResource
+        resource = cast(ProtectedResource, session_info)
+        if not is_action_allowed(self.policy, Action.CREATE, resource, user):
+            raise AccessDeniedError(Action.CREATE, resource, user)
 
         await self.kvstore.set(
             key=f"session:{self.agent_id}:{session_id}",
@@ -62,7 +67,7 @@ class AgentPersistence:
         )
         return session_id
 
-    async def get_session_info(self, session_id: str) -> AgentSessionInfo:
+    async def get_session_info(self, session_id: str) -> AgentSessionInfo | None:
         value = await self.kvstore.get(
             key=f"session:{self.agent_id}:{session_id}",
         )
@@ -83,7 +88,15 @@ class AgentPersistence:
         if not hasattr(session_info, "access_attributes") and not hasattr(session_info, "owner"):
             return True
 
-        return is_action_allowed(self.policy, "read", session_info, get_authenticated_user())
+        # Access control requires identifier and owner to be set
+        if session_info.identifier is None or session_info.owner is None:
+            return True
+
+        # At this point, both identifier and owner are guaranteed to be non-None
+        assert session_info.identifier is not None and session_info.owner is not None
+        from llama_stack.core.access_control.conditions import ProtectedResource
+        resource = cast(ProtectedResource, session_info)
+        return is_action_allowed(self.policy, Action.READ, resource, get_authenticated_user())
 
     async def get_session_if_accessible(self, session_id: str) -> AgentSessionInfo | None:
         """Get session info if the user has access to it. For internal use by sub-session methods."""
