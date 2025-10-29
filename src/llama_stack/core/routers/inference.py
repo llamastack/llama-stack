@@ -6,7 +6,7 @@
 
 import asyncio
 import time
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -15,20 +15,10 @@ from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatC
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
 from pydantic import TypeAdapter
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.inference import (
-    ChatCompletionResponse,
-    ChatCompletionResponseEventType,
-    ChatCompletionResponseStreamChunk,
-    CompletionMessage,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
     Inference,
     ListOpenAIChatCompletionResponse,
-    Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -45,15 +35,13 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     Order,
     RerankResponse,
-    StopReason,
-    ToolPromptFormat,
 )
 from llama_stack.apis.inference.inference import (
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
 )
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.core.telemetry.telemetry import MetricEvent, MetricInResponse
+from llama_stack.apis.models import ModelType
+from llama_stack.core.telemetry.telemetry import MetricEvent
 from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.chat_format import ChatFormat
