@@ -181,32 +181,39 @@ class BaseTelemetryCollector:
             last_len = len(spans)
             time.sleep(poll_interval)
 
-    def get_metrics(self) -> tuple[MetricStub, ...] | None:
-        return self._snapshot_metrics()
+    def get_metrics(
+        self,
+        expected_count: int | None = None,
+        timeout: float = 5.0,
+        poll_interval: float = 0.05,
+    ) -> dict[str, MetricStub]:
+        """Get metrics with polling until metrics are available or timeout is reached."""
+        import time
 
-    def get_metrics_dict(self) -> dict[str, Any]:
-        """Get metrics as a simple name->value dictionary for easy lookup.
+        deadline = time.time() + timeout
+        min_count = expected_count if expected_count is not None else 1
+        accumulated_metrics = {}
 
-        This method works with MetricStub objects for consistent interface
-        across both in-memory and OTLP collectors.
-        """
-        metrics = self._snapshot_metrics()
-        if not metrics:
-            return {}
+        while time.time() < deadline:
+            current_metrics = self._snapshot_metrics()
+            if current_metrics:
+                # Accumulate new metrics without losing existing ones
+                for metric in current_metrics:
+                    metric_name = metric.get_name()
+                    if metric_name not in accumulated_metrics:
+                        accumulated_metrics[metric_name] = metric
+                    else:
+                        # If we already have this metric, keep the latest one
+                        # (in case metrics are updated with new values)
+                        accumulated_metrics[metric_name] = metric
 
-        return {metric.get_name(): metric.get_value() for metric in metrics}
+            # Check if we have enough metrics
+            if len(accumulated_metrics) >= min_count:
+                return accumulated_metrics
 
-    def get_metric_value(self, name: str) -> Any | None:
-        """Get a specific metric value by name."""
-        return self.get_metrics_dict().get(name)
+            time.sleep(poll_interval)
 
-    def has_metric(self, name: str) -> bool:
-        """Check if a metric with the given name exists."""
-        return name in self.get_metrics_dict()
-
-    def get_metric_names(self) -> list[str]:
-        """Get all available metric names."""
-        return list(self.get_metrics_dict().keys())
+        return accumulated_metrics
 
     @staticmethod
     def _convert_attributes_to_dict(attrs: Any) -> dict[str, Any]:

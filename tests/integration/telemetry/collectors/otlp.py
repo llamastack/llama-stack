@@ -11,6 +11,7 @@ import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
+from typing import Any
 
 from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import ExportMetricsServiceRequest
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
@@ -59,7 +60,7 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
         for resource_metrics in request.resource_metrics:
             for scope_metrics in resource_metrics.scope_metrics:
                 for metric in scope_metrics.metrics:
-                    metric_stub = self._extract_metric_from_opentelemetry(metric)
+                    metric_stub = self._create_metric_stub_from_protobuf(metric)
                     if metric_stub:
                         new_metrics.append(metric_stub)
 
@@ -81,6 +82,54 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
         with self._lock:
             self._spans.clear()
             self._metrics.clear()
+
+    def _create_metric_stub_from_protobuf(self, metric: Any) -> MetricStub | None:
+        """Create MetricStub from protobuf metric object.
+
+        Protobuf metrics have a different structure than OpenTelemetry metrics.
+        They can have sum, gauge, or histogram data.
+        """
+        if not hasattr(metric, "name"):
+            return None
+
+        # Try to extract value from different metric types
+        for metric_type in ["sum", "gauge", "histogram"]:
+            if hasattr(metric, metric_type):
+                metric_data = getattr(metric, metric_type)
+                if metric_data and hasattr(metric_data, "data_points"):
+                    data_points = metric_data.data_points
+                    if data_points and len(data_points) > 0:
+                        data_point = data_points[0]
+
+                        # Extract value based on metric type
+                        if metric_type == "sum":
+                            value = data_point.as_int
+                        elif metric_type == "gauge":
+                            value = data_point.as_double
+                        else:  # histogram
+                            value = data_point.count
+
+                        # Extract attributes if available
+                        attributes = self._extract_attributes_from_data_point(data_point)
+
+                        return MetricStub(
+                            name=metric.name,
+                            value=value,
+                            attributes=attributes if attributes else None,
+                        )
+
+        return None
+
+    def _extract_attributes_from_data_point(self, data_point: Any) -> dict[str, Any]:
+        """Extract attributes from a protobuf data point."""
+        if not hasattr(data_point, "attributes"):
+            return {}
+
+        attrs = data_point.attributes
+        if not attrs:
+            return {}
+
+        return {kv.key: kv.value.string_value or kv.value.int_value or kv.value.double_value for kv in attrs}
 
     def shutdown(self) -> None:
         self._server.shutdown()
