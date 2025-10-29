@@ -97,6 +97,7 @@ class ListToolGroupsResponse(BaseModel):
     data: list[ToolGroup]
 
 
+@json_schema_type
 class ListToolDefsResponse(BaseModel):
     """Response containing a list of tool definitions.
 

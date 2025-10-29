@@ -8,8 +8,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from .strong_typing.schema import json_schema_type, register_schema  # noqa: F401
-
 
 class ExtraBodyField[T]:
     """
@@ -46,6 +44,47 @@ class ExtraBodyField[T]:
 
     def __init__(self, description: str | None = None):
         self.description = description
+
+
+def json_schema_type(cls):
+    """
+    Decorator to mark a Pydantic model for top-level component registration.
+
+    Models marked with this decorator will be registered as top-level components
+    in the OpenAPI schema, while unmarked models will be inlined.
+
+    This provides control over schema registration to avoid unnecessary indirection
+    for simple one-off types while keeping complex reusable types as components.
+    """
+    cls._llama_stack_schema_type = True
+    return cls
+
+
+# Global registry for registered schemas
+_registered_schemas = {}
+
+
+def register_schema(schema_type, name: str | None = None):
+    """
+    Register a schema type for top-level component registration.
+
+    This replicates the behavior of strong_typing's register_schema function.
+    It's used for union types and other complex types that should appear as
+    top-level components in the OpenAPI schema.
+
+    Args:
+        schema_type: The type to register (e.g., union types, Annotated types)
+        name: Optional name for the schema in the OpenAPI spec. If not provided,
+              uses the type's __name__ or a generated name.
+    """
+    if name is None:
+        name = getattr(schema_type, "__name__", f"Anonymous_{id(schema_type)}")
+
+    # Store the registration information in a global registry
+    # since union types don't allow setting attributes
+    _registered_schemas[schema_type] = {"name": name, "type": schema_type}
+
+    return schema_type
 
 
 @dataclass
