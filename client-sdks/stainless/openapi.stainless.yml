@@ -508,6 +508,26 @@ resources:
                   stream_event_model: alpha.agents.turn.agent_turn_response_stream_chunk
                   param_discriminator: stream
 
+  prompts:
+    models:
+      prompt: Prompt
+      list_prompts_response: ListPromptsResponse
+    methods:
+      create: post /v1/prompts
+      list:
+        endpoint: get /v1/prompts
+        paginated: false
+      retrieve: get /v1/prompts/{prompt_id}
+      update: post /v1/prompts/{prompt_id}
+      delete: delete /v1/prompts/{prompt_id}
+      set_default_version: post /v1/prompts/{prompt_id}/set-default-version
+    subresources:
+      versions:
+        methods:
+          list:
+            endpoint: get /v1/prompts/{prompt_id}/versions
+            paginated: false
+
   beta:
     subresources:
       datasets:
