@@ -14,6 +14,7 @@ from llama_stack.core.datatypes import (
     RegistryEntrySource,
 )
 from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
+from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl, lookup_model
@@ -69,10 +70,13 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             if not spec or not getattr(spec, "provider_data_validator", None):
                 continue
 
-            # Try to get validated provider_data for this provider
-            # Returns None if validation fails (missing keys) or if no provider_data exists
-            validated_data = provider.get_request_provider_data()
-            if validated_data is None:
+            # Validate provider_data silently - we're speculatively checking all providers
+            # so validation failures are expected when user didn't provide keys for this provider
+            try:
+                validator = instantiate_class_type(spec.provider_data_validator)
+                validator(**provider_data)
+            except Exception:
+                # User didn't provide credentials for this provider - skip silently
                 continue
 
             # Validation succeeded! User has credentials for this provider
