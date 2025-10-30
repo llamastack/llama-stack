@@ -427,6 +427,7 @@ _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
     "counters": {},
     "gauges": {},
     "up_down_counters": {},
+    "histograms": {},
 }
 _global_lock = threading.Lock()
 _TRACER_PROVIDER = None
@@ -540,6 +541,16 @@ class Telemetry:
             )
         return cast(metrics.ObservableGauge, _GLOBAL_STORAGE["gauges"][name])
 
+    def _get_or_create_histogram(self, name: str, unit: str) -> metrics.Histogram:
+        assert self.meter is not None
+        if name not in _GLOBAL_STORAGE["histograms"]:
+            _GLOBAL_STORAGE["histograms"][name] = self.meter.create_histogram(
+                name=name,
+                unit=unit,
+                description=f"Histogram for {name}",
+            )
+        return cast(metrics.Histogram, _GLOBAL_STORAGE["histograms"][name])
+
     def _log_metric(self, event: MetricEvent) -> None:
         # Add metric as an event to the current span
         try:
@@ -571,7 +582,16 @@ class Telemetry:
         # Log to OpenTelemetry meter if available
         if self.meter is None:
             return
-        if isinstance(event.value, int):
+
+        # Use histograms for token-related metrics (per-request measurements)
+        # Use counters for other cumulative metrics
+        token_metrics = {"prompt_tokens", "completion_tokens", "total_tokens"}
+
+        if event.metric in token_metrics:
+            # Token metrics are per-request measurements, use histogram
+            histogram = self._get_or_create_histogram(event.metric, event.unit)
+            histogram.record(event.value, attributes=_clean_attributes(event.attributes))
+        elif isinstance(event.value, int):
             counter = self._get_or_create_counter(event.metric, event.unit)
             counter.add(event.value, attributes=_clean_attributes(event.attributes))
         elif isinstance(event.value, float):
