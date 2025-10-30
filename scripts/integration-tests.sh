@@ -216,6 +216,7 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
         export OTEL_BSP_SCHEDULE_DELAY="200"
         export OTEL_BSP_EXPORT_TIMEOUT="2000"
+        export OTEL_METRIC_EXPORT_INTERVAL="200"
 
         # remove "server:" from STACK_CONFIG
         stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
