@@ -21,6 +21,7 @@ from llama_stack.apis.agents import (
     Document,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
+    OpenAIDeleteResponseObject,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
     OpenAIResponseObject,
@@ -141,7 +142,7 @@ class MetaReferenceAgentsImpl(Agents):
             persistence_store=(
                 self.persistence_store if agent_info.enable_session_persistence else self.in_memory_store
             ),
-            created_at=agent_info.created_at,
+            created_at=agent_info.created_at.isoformat(),
             policy=self.policy,
             telemetry_enabled=self.telemetry_enabled,
         )
@@ -163,9 +164,9 @@ class MetaReferenceAgentsImpl(Agents):
         agent_id: str,
         session_id: str,
         messages: list[UserMessage | ToolResponseMessage],
-        toolgroups: list[AgentToolGroup] | None = None,
-        documents: list[Document] | None = None,
         stream: bool | None = False,
+        documents: list[Document] | None = None,
+        toolgroups: list[AgentToolGroup] | None = None,
         tool_config: ToolConfig | None = None,
     ) -> AsyncGenerator:
         request = AgentTurnCreateRequest(
@@ -221,6 +222,8 @@ class MetaReferenceAgentsImpl(Agents):
     async def get_agents_turn(self, agent_id: str, session_id: str, turn_id: str) -> Turn:
         agent = await self._get_agent_impl(agent_id)
         turn = await agent.storage.get_session_turn(session_id, turn_id)
+        if turn is None:
+            raise ValueError(f"Turn {turn_id} not found in session {session_id}")
         return turn
 
     async def get_agents_step(self, agent_id: str, session_id: str, turn_id: str, step_id: str) -> AgentStepResponse:
@@ -232,13 +235,15 @@ class MetaReferenceAgentsImpl(Agents):
 
     async def get_agents_session(
         self,
-        agent_id: str,
         session_id: str,
+        agent_id: str,
         turn_ids: list[str] | None = None,
     ) -> Session:
         agent = await self._get_agent_impl(agent_id)
 
         session_info = await agent.storage.get_session_info(session_id)
+        if session_info is None:
+            raise ValueError(f"Session {session_id} not found")
         turns = await agent.storage.get_session_turns(session_id)
         if turn_ids:
             turns = [turn for turn in turns if turn.turn_id in turn_ids]
@@ -249,7 +254,7 @@ class MetaReferenceAgentsImpl(Agents):
             started_at=session_info.started_at,
         )
 
-    async def delete_agents_session(self, agent_id: str, session_id: str) -> None:
+    async def delete_agents_session(self, session_id: str, agent_id: str) -> None:
         agent = await self._get_agent_impl(agent_id)
 
         # Delete turns first, then the session
@@ -302,7 +307,7 @@ class MetaReferenceAgentsImpl(Agents):
         agent = Agent(
             agent_id=agent_id,
             agent_config=chat_agent.agent_config,
-            created_at=chat_agent.created_at,
+            created_at=datetime.fromisoformat(chat_agent.created_at),
         )
         return agent
 
@@ -323,6 +328,7 @@ class MetaReferenceAgentsImpl(Agents):
         self,
         response_id: str,
     ) -> OpenAIResponseObject:
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.get_openai_response(response_id)
 
     async def create_openai_response(
@@ -342,7 +348,8 @@ class MetaReferenceAgentsImpl(Agents):
         max_infer_iters: int | None = 10,
         guardrails: list[ResponseGuardrail] | None = None,
     ) -> OpenAIResponseObject:
-        return await self.openai_responses_impl.create_openai_response(
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
+        result = await self.openai_responses_impl.create_openai_response(
             input,
             model,
             prompt,
@@ -358,6 +365,7 @@ class MetaReferenceAgentsImpl(Agents):
             max_infer_iters,
             guardrails,
         )
+        return result  # type: ignore[no-any-return]
 
     async def list_openai_responses(
         self,
@@ -366,6 +374,7 @@ class MetaReferenceAgentsImpl(Agents):
         model: str | None = None,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseObject:
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.list_openai_responses(after, limit, model, order)
 
     async def list_openai_response_input_items(
@@ -377,9 +386,11 @@ class MetaReferenceAgentsImpl(Agents):
         limit: int | None = 20,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseInputItem:
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.list_openai_response_input_items(
             response_id, after, before, include, limit, order
         )
 
-    async def delete_openai_response(self, response_id: str) -> None:
+    async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.delete_openai_response(response_id)

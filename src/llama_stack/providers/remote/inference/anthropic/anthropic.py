@@ -33,4 +33,5 @@ class AnthropicInferenceAdapter(OpenAIMixin):
         return "https://api.anthropic.com/v1"
 
     async def list_provider_model_ids(self) -> Iterable[str]:
-        return [m.id async for m in AsyncAnthropic(api_key=self.get_api_key()).models.list()]
+        api_key = self._get_api_key_from_config_or_provider_data()
+        return [m.id async for m in AsyncAnthropic(api_key=api_key).models.list()]

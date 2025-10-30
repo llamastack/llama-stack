@@ -43,6 +43,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'src/llama_stack/ui/'
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
+
       - name: Install npm dependencies
         run: npm ci
         working-directory: src/llama_stack/ui
@@ -52,7 +55,7 @@ jobs:
         uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
         continue-on-error: true
         env:
-          SKIP: no-commit-to-branch
+          SKIP: no-commit-to-branch,mypy
           RUFF_OUTPUT_FORMAT: github
 
       - name: Check pre-commit results
@@ -109,3 +112,16 @@ jobs:
             echo "$unstaged_files"
             exit 1
           fi
+
+      - name: Sync dev + type_checking dependencies
+        run: uv sync --group dev --group type_checking
+
+      - name: Run mypy (full type_checking)
+        run: |
+          set +e
+          uv run --group dev --group type_checking mypy
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "::error::Full mypy failed. Reproduce locally with 'uv run pre-commit run mypy-full --hook-stage manual --all-files'."
+          fi
+          exit $status

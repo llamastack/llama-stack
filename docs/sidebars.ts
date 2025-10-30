@@ -244,15 +244,6 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Telemetry',
-          collapsed: true,
-          items: [
-            'providers/telemetry/index',
-            'providers/telemetry/inline_meta-reference'
-          ],
-        },
-        {
-          type: 'category',
           label: 'Batches',
           collapsed: true,
           items: [

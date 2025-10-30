@@ -13,6 +13,8 @@ from llama_stack.core.datatypes import (
     ModelWithOwner,
     RegistryEntrySource,
 )
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
+from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl, lookup_model
@@ -42,11 +44,90 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
             await self.update_registered_models(provider_id, models)
 
+    async def _get_dynamic_models_from_provider_data(self) -> list[Model]:
+        """
+        Fetch models from providers that have credentials in the current request's provider_data.
+
+        This allows users to see models available to them from providers that require
+        per-request API keys (via X-LlamaStack-Provider-Data header).
+
+        Returns models with fully qualified identifiers (provider_id/model_id) but does NOT
+        cache them in the registry since they are user-specific.
+        """
+        provider_data = PROVIDER_DATA_VAR.get()
+        if not provider_data:
+            return []
+
+        dynamic_models = []
+
+        for provider_id, provider in self.impls_by_provider_id.items():
+            # Check if this provider supports provider_data
+            if not isinstance(provider, NeedsRequestProviderData):
+                continue
+
+            # Check if provider has a validator (some providers like ollama don't need per-request credentials)
+            spec = getattr(provider, "__provider_spec__", None)
+            if not spec or not getattr(spec, "provider_data_validator", None):
+                continue
+
+            # Validate provider_data silently - we're speculatively checking all providers
+            # so validation failures are expected when user didn't provide keys for this provider
+            try:
+                validator = instantiate_class_type(spec.provider_data_validator)
+                validator(**provider_data)
+            except Exception:
+                # User didn't provide credentials for this provider - skip silently
+                continue
+
+            # Validation succeeded! User has credentials for this provider
+            # Now try to list models
+            try:
+                models = await provider.list_models()
+                if not models:
+                    continue
+
+                # Ensure models have fully qualified identifiers with provider_id prefix
+                for model in models:
+                    # Only add prefix if model identifier doesn't already have it
+                    if not model.identifier.startswith(f"{provider_id}/"):
+                        model.identifier = f"{provider_id}/{model.provider_resource_id}"
+
+                    dynamic_models.append(model)
+
+                logger.debug(f"Fetched {len(models)} models from provider {provider_id} using provider_data")
+
+            except Exception as e:
+                logger.debug(f"Failed to list models from provider {provider_id} with provider_data: {e}")
+                continue
+
+        return dynamic_models
+
     async def list_models(self) -> ListModelsResponse:
-        return ListModelsResponse(data=await self.get_all_with_type("model"))
+        # Get models from registry
+        registry_models = await self.get_all_with_type("model")
+
+        # Get additional models available via provider_data (user-specific, not cached)
+        dynamic_models = await self._get_dynamic_models_from_provider_data()
+
+        # Combine, avoiding duplicates (registry takes precedence)
+        registry_identifiers = {m.identifier for m in registry_models}
+        unique_dynamic_models = [m for m in dynamic_models if m.identifier not in registry_identifiers]
+
+        return ListModelsResponse(data=registry_models + unique_dynamic_models)
 
     async def openai_list_models(self) -> OpenAIListModelsResponse:
-        models = await self.get_all_with_type("model")
+        # Get models from registry
+        registry_models = await self.get_all_with_type("model")
+
+        # Get additional models available via provider_data (user-specific, not cached)
+        dynamic_models = await self._get_dynamic_models_from_provider_data()
+
+        # Combine, avoiding duplicates (registry takes precedence)
+        registry_identifiers = {m.identifier for m in registry_models}
+        unique_dynamic_models = [m for m in dynamic_models if m.identifier not in registry_identifiers]
+
+        all_models = registry_models + unique_dynamic_models
+
         openai_models = [
             OpenAIModel(
                 id=model.identifier,
@@ -54,7 +135,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 created=int(time.time()),
                 owned_by="llama_stack",
             )
-            for model in models
+            for model in all_models
         ]
         return OpenAIListModelsResponse(data=openai_models)
 

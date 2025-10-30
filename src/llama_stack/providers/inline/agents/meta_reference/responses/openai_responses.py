@@ -91,7 +91,8 @@ class OpenAIResponsesImpl:
         input: str | list[OpenAIResponseInput],
         previous_response: _OpenAIResponseObjectWithInputAndMessages,
     ):
-        new_input_items = previous_response.input.copy()
+        # Convert Sequence to list for mutation
+        new_input_items = list(previous_response.input)
         new_input_items.extend(previous_response.output)
 
         if isinstance(input, str):
@@ -107,7 +108,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None,
         previous_response_id: str | None,
         conversation: str | None,
-    ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam]]:
+    ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam], ToolContext]:
         """Process input with optional previous response context.
 
         Returns:
@@ -208,6 +209,9 @@ class OpenAIResponsesImpl:
         messages: list[OpenAIMessageParam],
     ) -> None:
         new_input_id = f"msg_{uuid.uuid4()}"
+        # Type input_items_data as the full OpenAIResponseInput union to avoid list invariance issues
+        input_items_data: list[OpenAIResponseInput] = []
+
         if isinstance(input, str):
             # synthesize a message from the input string
             input_content = OpenAIResponseInputMessageContentText(text=input)
@@ -219,7 +223,6 @@ class OpenAIResponsesImpl:
             input_items_data = [input_content_item]
         else:
             # we already have a list of messages
-            input_items_data = []
             for input_item in input:
                 if isinstance(input_item, OpenAIResponseMessage):
                     # These may or may not already have an id, so dump to dict, check for id, and add if missing
@@ -251,7 +254,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
-        guardrails: list[ResponseGuardrailSpec] | None = None,
+        guardrails: list[str | ResponseGuardrailSpec] | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -289,16 +292,19 @@ class OpenAIResponsesImpl:
             failed_response = None
 
             async for stream_chunk in stream_gen:
-                if stream_chunk.type in {"response.completed", "response.incomplete"}:
-                    if final_response is not None:
-                        raise ValueError(
-                            "The response stream produced multiple terminal responses! "
-                            f"Earlier response from {final_event_type}"
-                        )
-                    final_response = stream_chunk.response
-                    final_event_type = stream_chunk.type
-                elif stream_chunk.type == "response.failed":
-                    failed_response = stream_chunk.response
+                match stream_chunk.type:
+                    case "response.completed" | "response.incomplete":
+                        if final_response is not None:
+                            raise ValueError(
+                                "The response stream produced multiple terminal responses! "
+                                f"Earlier response from {final_event_type}"
+                            )
+                        final_response = stream_chunk.response
+                        final_event_type = stream_chunk.type
+                    case "response.failed":
+                        failed_response = stream_chunk.response
+                    case _:
+                        pass  # Other event types don't have .response
 
             if failed_response is not None:
                 error_message = (
@@ -326,6 +332,11 @@ class OpenAIResponsesImpl:
         max_infer_iters: int | None = 10,
         guardrail_ids: list[str] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
+        # These should never be None when called from create_openai_response (which sets defaults)
+        # but we assert here to help mypy understand the types
+        assert text is not None, "text must not be None"
+        assert max_infer_iters is not None, "max_infer_iters must not be None"
+
         # Input preprocessing
         all_input, messages, tool_context = await self._process_input_with_previous_response(
             input, tools, previous_response_id, conversation
@@ -368,16 +379,19 @@ class OpenAIResponsesImpl:
         final_response = None
         failed_response = None
 
-        output_items = []
+        # Type as ConversationItem to avoid list invariance issues
+        output_items: list[ConversationItem] = []
         async for stream_chunk in orchestrator.create_response():
-            if stream_chunk.type in {"response.completed", "response.incomplete"}:
-                final_response = stream_chunk.response
-            elif stream_chunk.type == "response.failed":
-                failed_response = stream_chunk.response
-
-            if stream_chunk.type == "response.output_item.done":
-                item = stream_chunk.item
-                output_items.append(item)
+            match stream_chunk.type:
+                case "response.completed" | "response.incomplete":
+                    final_response = stream_chunk.response
+                case "response.failed":
+                    failed_response = stream_chunk.response
+                case "response.output_item.done":
+                    item = stream_chunk.item
+                    output_items.append(item)
+                case _:
+                    pass  # Other event types
 
             # Store and sync before yielding terminal events
             # This ensures the storage/syncing happens even if the consumer breaks after receiving the event
@@ -410,7 +424,8 @@ class OpenAIResponsesImpl:
         self, conversation_id: str, input: str | list[OpenAIResponseInput] | None, output_items: list[ConversationItem]
     ) -> None:
         """Sync content and response messages to the conversation."""
-        conversation_items = []
+        # Type as ConversationItem union to avoid list invariance issues
+        conversation_items: list[ConversationItem] = []
 
         if isinstance(input, str):
             conversation_items.append(

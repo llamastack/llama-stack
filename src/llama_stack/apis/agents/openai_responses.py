@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import Sequence
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -202,7 +203,7 @@ class OpenAIResponseMessage(BaseModel):
     scenarios.
     """
 
-    content: str | list[OpenAIResponseInputMessageContent] | list[OpenAIResponseOutputMessageContent]
+    content: str | Sequence[OpenAIResponseInputMessageContent] | Sequence[OpenAIResponseOutputMessageContent]
     role: Literal["system"] | Literal["developer"] | Literal["user"] | Literal["assistant"]
     type: Literal["message"] = "message"
 
@@ -254,10 +255,10 @@ class OpenAIResponseOutputMessageFileSearchToolCall(BaseModel):
     """
 
     id: str
-    queries: list[str]
+    queries: Sequence[str]
     status: str
     type: Literal["file_search_call"] = "file_search_call"
-    results: list[OpenAIResponseOutputMessageFileSearchToolCallResults] | None = None
+    results: Sequence[OpenAIResponseOutputMessageFileSearchToolCallResults] | None = None
 
 
 @json_schema_type
@@ -597,7 +598,7 @@ class OpenAIResponseObject(BaseModel):
     id: str
     model: str
     object: Literal["response"] = "response"
-    output: list[OpenAIResponseOutput]
+    output: Sequence[OpenAIResponseOutput]
     parallel_tool_calls: bool = False
     previous_response_id: str | None = None
     prompt: OpenAIResponsePrompt | None = None
@@ -607,7 +608,7 @@ class OpenAIResponseObject(BaseModel):
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
-    tools: list[OpenAIResponseTool] | None = None
+    tools: Sequence[OpenAIResponseTool] | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None
@@ -1315,7 +1316,7 @@ class ListOpenAIResponseInputItem(BaseModel):
     :param object: Object type identifier, always "list"
     """
 
-    data: list[OpenAIResponseInput]
+    data: Sequence[OpenAIResponseInput]
     object: Literal["list"] = "list"
 
 
@@ -1326,7 +1327,7 @@ class OpenAIResponseObjectWithInput(OpenAIResponseObject):
     :param input: List of input items that led to this response
     """
 
-    input: list[OpenAIResponseInput]
+    input: Sequence[OpenAIResponseInput]
 
     def to_response_object(self) -> OpenAIResponseObject:
         """Convert to OpenAIResponseObject by excluding input field."""
@@ -1344,7 +1345,7 @@ class ListOpenAIResponseObject(BaseModel):
     :param object: Object type identifier, always "list"
     """
 
-    data: list[OpenAIResponseObjectWithInput]
+    data: Sequence[OpenAIResponseObjectWithInput]
     has_more: bool
     first_id: str
     last_id: str

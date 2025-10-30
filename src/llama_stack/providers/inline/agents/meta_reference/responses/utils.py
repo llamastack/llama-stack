@@ -7,6 +7,7 @@
 import asyncio
 import re
 import uuid
+from collections.abc import Sequence
 
 from llama_stack.apis.agents.agents import ResponseGuardrailSpec
 from llama_stack.apis.agents.openai_responses import (
@@ -71,14 +72,14 @@ async def convert_chat_choice_to_response_message(
 
     return OpenAIResponseMessage(
         id=message_id or f"msg_{uuid.uuid4()}",
-        content=[OpenAIResponseOutputMessageContentOutputText(text=clean_text, annotations=annotations)],
+        content=[OpenAIResponseOutputMessageContentOutputText(text=clean_text, annotations=list(annotations))],
         status="completed",
         role="assistant",
     )
 
 
 async def convert_response_content_to_chat_content(
-    content: (str | list[OpenAIResponseInputMessageContent] | list[OpenAIResponseOutputMessageContent]),
+    content: str | Sequence[OpenAIResponseInputMessageContent | OpenAIResponseOutputMessageContent],
 ) -> str | list[OpenAIChatCompletionContentPartParam]:
     """
     Convert the content parts from an OpenAI Response API request into OpenAI Chat Completion content parts.
@@ -88,7 +89,8 @@ async def convert_response_content_to_chat_content(
     if isinstance(content, str):
         return content
 
-    converted_parts = []
+    # Type with union to avoid list invariance issues
+    converted_parts: list[OpenAIChatCompletionContentPartParam] = []
     for content_part in content:
         if isinstance(content_part, OpenAIResponseInputMessageContentText):
             converted_parts.append(OpenAIChatCompletionContentPartTextParam(text=content_part.text))
@@ -158,9 +160,11 @@ async def convert_response_input_to_chat_messages(
                     ),
                 )
                 messages.append(OpenAIAssistantMessageParam(tool_calls=[tool_call]))
+                # Output can be None, use empty string as fallback
+                output_content = input_item.output if input_item.output is not None else ""
                 messages.append(
                     OpenAIToolMessageParam(
-                        content=input_item.output,
+                        content=output_content,
                         tool_call_id=input_item.id,
                     )
                 )
@@ -172,7 +176,8 @@ async def convert_response_input_to_chat_messages(
             ):
                 # these are handled by the responses impl itself and not pass through to chat completions
                 pass
-            else:
+            elif isinstance(input_item, OpenAIResponseMessage):
+                # Narrow type to OpenAIResponseMessage which has content and role attributes
                 content = await convert_response_content_to_chat_content(input_item.content)
                 message_type = await get_message_type_by_role(input_item.role)
                 if message_type is None:
@@ -191,7 +196,8 @@ async def convert_response_input_to_chat_messages(
                         last_user_content = getattr(last_user_msg, "content", None)
                         if last_user_content == content:
                             continue  # Skip duplicate user message
-                messages.append(message_type(content=content))
+                # Dynamic message type call - different message types have different content expectations
+                messages.append(message_type(content=content))  # type: ignore[call-arg,arg-type]
         if len(tool_call_results):
             # Check if unpaired function_call_outputs reference function_calls from previous messages
             if previous_messages:
@@ -237,8 +243,11 @@ async def convert_response_text_to_chat_response_format(
     if text.format["type"] == "json_object":
         return OpenAIResponseFormatJSONObject()
     if text.format["type"] == "json_schema":
+        # Assert name exists for json_schema format
+        assert text.format.get("name"), "json_schema format requires a name"
+        schema_name: str = text.format["name"]  # type: ignore[assignment]
         return OpenAIResponseFormatJSONSchema(
-            json_schema=OpenAIJSONSchema(name=text.format["name"], schema=text.format["schema"])
+            json_schema=OpenAIJSONSchema(name=schema_name, schema=text.format["schema"])
         )
     raise ValueError(f"Unsupported text format: {text.format}")
 
@@ -251,7 +260,7 @@ async def get_message_type_by_role(role: str) -> type[OpenAIMessageParam] | None
         "assistant": OpenAIAssistantMessageParam,
         "developer": OpenAIDeveloperMessageParam,
     }
-    return role_to_type.get(role)
+    return role_to_type.get(role)  # type: ignore[return-value]  # Pydantic models use ModelMetaclass
 
 
 def _extract_citations_from_text(
@@ -320,7 +329,8 @@ async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[
 
     # Look up shields to get their provider_resource_id (actual model ID)
     model_ids = []
-    shields_list = await safety_api.routing_table.list_shields()
+    # TODO: list_shields not in Safety interface but available at runtime via API routing
+    shields_list = await safety_api.routing_table.list_shields()  # type: ignore[attr-defined]
 
     for guardrail_id in guardrail_ids:
         matching_shields = [shield for shield in shields_list.data if shield.identifier == guardrail_id]
@@ -337,7 +347,9 @@ async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[
         for result in response.results:
             if result.flagged:
                 message = result.user_message or "Content blocked by safety guardrails"
-                flagged_categories = [cat for cat, flagged in result.categories.items() if flagged]
+                flagged_categories = (
+                    [cat for cat, flagged in result.categories.items() if flagged] if result.categories else []
+                )
                 violation_type = result.metadata.get("violation_type", []) if result.metadata else []
 
                 if flagged_categories:
@@ -346,6 +358,9 @@ async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[
                     message += f" (violation type: {', '.join(violation_type)})"
 
                 return message
+
+    # No violations found
+    return None
 
 
 def extract_guardrail_ids(guardrails: list | None) -> list[str]:

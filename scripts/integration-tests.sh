@@ -313,8 +313,20 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     fi
     echo "Using image: $IMAGE_NAME"
 
-    docker run -d --network host --name "$container_name" \
-        -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+    # On macOS/Darwin, --network host doesn't work as expected due to Docker running in a VM
+    # Use regular port mapping instead
+    NETWORK_MODE=""
+    PORT_MAPPINGS=""
+    if [[ "$(uname)" != "Darwin" ]] && [[ "$(uname)" != *"MINGW"* ]]; then
+        NETWORK_MODE="--network host"
+    else
+        # On non-Linux (macOS, Windows), need explicit port mappings for both app and telemetry
+        PORT_MAPPINGS="-p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT -p $COLLECTOR_PORT:$COLLECTOR_PORT"
+        echo "Using bridge networking with port mapping (non-Linux)"
+    fi
+
+    docker run -d $NETWORK_MODE --name "$container_name" \
+        $PORT_MAPPINGS \
         $DOCKER_ENV_VARS \
         "$IMAGE_NAME" \
         --port $LLAMA_STACK_PORT
