@@ -357,8 +357,6 @@ class BaseTelemetryCollector:
         return None
 
     def clear(self) -> None:
-        # prevent race conditions between tests caused by 200ms metric collection interval
-        time.sleep(0.3)
         self._clear_impl()
 
     def _snapshot_spans(self) -> tuple[SpanStub, ...]:  # pragma: no cover - interface hook
