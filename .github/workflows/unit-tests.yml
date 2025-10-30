@@ -4,9 +4,17 @@ run-name: Run the unit test suite
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+'
     paths:
       - 'llama_stack/**'
       - '!llama_stack/ui/**'
