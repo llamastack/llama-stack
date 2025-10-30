@@ -208,6 +208,15 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         echo "=== Starting Llama Stack Server ==="
         export LLAMA_STACK_LOG_WIDTH=120
 
+        # Configure telemetry collector for server mode
+        # Use a fixed port for the OTEL collector so the server can connect to it
+        COLLECTOR_PORT=4317
+        export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+        export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
+        export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+        export OTEL_BSP_SCHEDULE_DELAY="200"
+        export OTEL_BSP_EXPORT_TIMEOUT="2000"
+
         # remove "server:" from STACK_CONFIG
         stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
         nohup llama stack run $stack_config > server.log 2>&1 &
