@@ -159,6 +159,11 @@ if [[ "$COLLECT_ONLY" == false ]]; then
     if [[ "$STACK_CONFIG" == server:* ]] || [[ "$STACK_CONFIG" == docker:* ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
         echo "Setting stack config type: server"
+
+        # Configure telemetry collector port for both server and docker modes
+        COLLECTOR_PORT=4317
+        export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+        export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:${COLLECTOR_PORT}"
     else
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
         echo "Setting stack config type: library_client"
@@ -283,10 +288,6 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     # Stop and remove existing container if it exists
     docker stop "$container_name" 2>/dev/null || true
     docker rm "$container_name" 2>/dev/null || true
-
-    # Configure telemetry collector port shared between host and container
-    COLLECTOR_PORT=4317
-    export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
 
     # Build environment variables for docker run
     DOCKER_ENV_VARS=""
