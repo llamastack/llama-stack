@@ -15,6 +15,141 @@ info:
 servers:
   - url: http://any-hosted-llama-stack.com
 paths:
+  /v1/batches:
+    get:
+      responses:
+        '200':
+          description: A list of batch objects.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBatchesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Batches
+      summary: List all batches for the current user.
+      description: List all batches for the current user.
+      parameters:
+        - name: after
+          in: query
+          description: >-
+            A cursor for pagination; returns batches after this batch ID.
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: >-
+            Number of batches to return (default 20, max 100).
+          required: true
+          schema:
+            type: integer
+      deprecated: false
+    post:
+      responses:
+        '200':
+          description: The created batch object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Batch'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Batches
+      summary: >-
+        Create a new batch for processing multiple API requests.
+      description: >-
+        Create a new batch for processing multiple API requests.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBatchRequest'
+        required: true
+      deprecated: false
+  /v1/batches/{batch_id}:
+    get:
+      responses:
+        '200':
+          description: The batch object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Batch'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Batches
+      summary: >-
+        Retrieve information about a specific batch.
+      description: >-
+        Retrieve information about a specific batch.
+      parameters:
+        - name: batch_id
+          in: path
+          description: The ID of the batch to retrieve.
+          required: true
+          schema:
+            type: string
+      deprecated: false
+  /v1/batches/{batch_id}/cancel:
+    post:
+      responses:
+        '200':
+          description: The updated batch object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Batch'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Batches
+      summary: Cancel a batch that is in progress.
+      description: Cancel a batch that is in progress.
+      parameters:
+        - name: batch_id
+          in: path
+          description: The ID of the batch to cancel.
+          required: true
+          schema:
+            type: string
+      deprecated: false
   /v1/chat/completions:
     get:
       responses:
@@ -4212,6 +4347,331 @@ components:
       title: Error
       description: >-
         Error response from the API. Roughly follows RFC 7807.
+    ListBatchesResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          const: list
+          default: list
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              completion_window:
+                type: string
+              created_at:
+                type: integer
+              endpoint:
+                type: string
+              input_file_id:
+                type: string
+              object:
+                type: string
+                const: batch
+              status:
+                type: string
+                enum:
+                  - validating
+                  - failed
+                  - in_progress
+                  - finalizing
+                  - completed
+                  - expired
+                  - cancelling
+                  - cancelled
+              cancelled_at:
+                type: integer
+              cancelling_at:
+                type: integer
+              completed_at:
+                type: integer
+              error_file_id:
+                type: string
+              errors:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        line:
+                          type: integer
+                        message:
+                          type: string
+                        param:
+                          type: string
+                      additionalProperties: false
+                      title: BatchError
+                  object:
+                    type: string
+                additionalProperties: false
+                title: Errors
+              expired_at:
+                type: integer
+              expires_at:
+                type: integer
+              failed_at:
+                type: integer
+              finalizing_at:
+                type: integer
+              in_progress_at:
+                type: integer
+              metadata:
+                type: object
+                additionalProperties:
+                  type: string
+              model:
+                type: string
+              output_file_id:
+                type: string
+              request_counts:
+                type: object
+                properties:
+                  completed:
+                    type: integer
+                  failed:
+                    type: integer
+                  total:
+                    type: integer
+                additionalProperties: false
+                required:
+                  - completed
+                  - failed
+                  - total
+                title: BatchRequestCounts
+              usage:
+                type: object
+                properties:
+                  input_tokens:
+                    type: integer
+                  input_tokens_details:
+                    type: object
+                    properties:
+                      cached_tokens:
+                        type: integer
+                    additionalProperties: false
+                    required:
+                      - cached_tokens
+                    title: InputTokensDetails
+                  output_tokens:
+                    type: integer
+                  output_tokens_details:
+                    type: object
+                    properties:
+                      reasoning_tokens:
+                        type: integer
+                    additionalProperties: false
+                    required:
+                      - reasoning_tokens
+                    title: OutputTokensDetails
+                  total_tokens:
+                    type: integer
+                additionalProperties: false
+                required:
+                  - input_tokens
+                  - input_tokens_details
+                  - output_tokens
+                  - output_tokens_details
+                  - total_tokens
+                title: BatchUsage
+            additionalProperties: false
+            required:
+              - id
+              - completion_window
+              - created_at
+              - endpoint
+              - input_file_id
+              - object
+              - status
+            title: Batch
+        first_id:
+          type: string
+        last_id:
+          type: string
+        has_more:
+          type: boolean
+          default: false
+      additionalProperties: false
+      required:
+        - object
+        - data
+        - has_more
+      title: ListBatchesResponse
+      description: >-
+        Response containing a list of batch objects.
+    CreateBatchRequest:
+      type: object
+      properties:
+        input_file_id:
+          type: string
+          description: >-
+            The ID of an uploaded file containing requests for the batch.
+        endpoint:
+          type: string
+          description: >-
+            The endpoint to be used for all requests in the batch.
+        completion_window:
+          type: string
+          const: 24h
+          description: >-
+            The time window within which the batch should be processed.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional metadata for the batch.
+        idempotency_key:
+          type: string
+          description: >-
+            Optional idempotency key. When provided, enables idempotent behavior.
+      additionalProperties: false
+      required:
+        - input_file_id
+        - endpoint
+        - completion_window
+      title: CreateBatchRequest
+    Batch:
+      type: object
+      properties:
+        id:
+          type: string
+        completion_window:
+          type: string
+        created_at:
+          type: integer
+        endpoint:
+          type: string
+        input_file_id:
+          type: string
+        object:
+          type: string
+          const: batch
+        status:
+          type: string
+          enum:
+            - validating
+            - failed
+            - in_progress
+            - finalizing
+            - completed
+            - expired
+            - cancelling
+            - cancelled
+        cancelled_at:
+          type: integer
+        cancelling_at:
+          type: integer
+        completed_at:
+          type: integer
+        error_file_id:
+          type: string
+        errors:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  line:
+                    type: integer
+                  message:
+                    type: string
+                  param:
+                    type: string
+                additionalProperties: false
+                title: BatchError
+            object:
+              type: string
+          additionalProperties: false
+          title: Errors
+        expired_at:
+          type: integer
+        expires_at:
+          type: integer
+        failed_at:
+          type: integer
+        finalizing_at:
+          type: integer
+        in_progress_at:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        model:
+          type: string
+        output_file_id:
+          type: string
+        request_counts:
+          type: object
+          properties:
+            completed:
+              type: integer
+            failed:
+              type: integer
+            total:
+              type: integer
+          additionalProperties: false
+          required:
+            - completed
+            - failed
+            - total
+          title: BatchRequestCounts
+        usage:
+          type: object
+          properties:
+            input_tokens:
+              type: integer
+            input_tokens_details:
+              type: object
+              properties:
+                cached_tokens:
+                  type: integer
+              additionalProperties: false
+              required:
+                - cached_tokens
+              title: InputTokensDetails
+            output_tokens:
+              type: integer
+            output_tokens_details:
+              type: object
+              properties:
+                reasoning_tokens:
+                  type: integer
+              additionalProperties: false
+              required:
+                - reasoning_tokens
+              title: OutputTokensDetails
+            total_tokens:
+              type: integer
+          additionalProperties: false
+          required:
+            - input_tokens
+            - input_tokens_details
+            - output_tokens
+            - output_tokens_details
+            - total_tokens
+          title: BatchUsage
+      additionalProperties: false
+      required:
+        - id
+        - completion_window
+        - created_at
+        - endpoint
+        - input_file_id
+        - object
+        - status
+      title: Batch
     Order:
       type: string
       enum:
@@ -13528,6 +13988,19 @@ tags:
     description: >-
       APIs for creating and interacting with agentic systems.
     x-displayName: Agents
+  - name: Batches
+    description: >-
+      The API is designed to allow use of openai client libraries for seamless integration.
+
+
+      This API provides the following extensions:
+       - idempotent batch creation
+
+      Note: This API is currently under active development and may undergo changes.
+    x-displayName: >-
+      The Batches API enables efficient processing of multiple requests in a single
+      operation, particularly useful for processing large datasets, batch evaluation
+      workflows, and cost-effective inference at scale.
   - name: Benchmarks
     description: ''
   - name: Conversations
@@ -13602,6 +14075,7 @@ x-tagGroups:
   - name: Operations
     tags:
       - Agents
+      - Batches
       - Benchmarks
       - Conversations
       - DatasetIO

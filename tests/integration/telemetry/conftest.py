@@ -33,12 +33,10 @@ def telemetry_test_collector():
         }
 
         previous_env = {key: os.environ.get(key) for key in env_overrides}
-        previous_force_restart = os.environ.get("LLAMA_STACK_TEST_FORCE_SERVER_RESTART")
 
         for key, value in env_overrides.items():
             os.environ[key] = value
 
-        os.environ["LLAMA_STACK_TEST_FORCE_SERVER_RESTART"] = "1"
         telemetry_module._TRACER_PROVIDER = None
 
         try:
@@ -50,10 +48,6 @@ def telemetry_test_collector():
                     os.environ.pop(key, None)
                 else:
                     os.environ[key] = prior
-            if previous_force_restart is None:
-                os.environ.pop("LLAMA_STACK_TEST_FORCE_SERVER_RESTART", None)
-            else:
-                os.environ["LLAMA_STACK_TEST_FORCE_SERVER_RESTART"] = previous_force_restart
     else:
         manager = InMemoryTelemetryManager()
         try:
