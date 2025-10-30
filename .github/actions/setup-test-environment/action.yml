@@ -47,7 +47,7 @@ runs:
           # Check if PR is targeting a release branch
           TARGET_BRANCH="${{ github.base_ref }}"
 
-          if [[ "$TARGET_BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x-maint$ ]]; then
+          if [[ "$TARGET_BRANCH" =~ ^release-([0-9]+\.){1,3}[0-9]+$ ]]; then
             echo "PR targets release branch: $TARGET_BRANCH"
             echo "Checking if matching branch exists in llama-stack-client-python..."
 

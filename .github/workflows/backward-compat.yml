@@ -6,7 +6,9 @@ on:
   pull_request:
     branches:
       - main
-      - 'release-[0-9]+.[0-9]+.x-maint'
+      - 'release-[0-9]+.[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+'
     paths:
       - 'src/llama_stack/core/datatypes.py'
       - 'src/llama_stack/providers/datatypes.py'
