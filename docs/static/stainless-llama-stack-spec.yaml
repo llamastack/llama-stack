@@ -2187,52 +2187,6 @@ paths:
             type: string
           in: path
       deprecated: false
-<<<<<<< HEAD
-=======
-  /v1/synthetic-data-generation/generate:
-    post:
-      responses:
-        '200':
-          description: >-
-            Response containing filtered synthetic data samples and optional statistics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SyntheticDataGenerationResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - SyntheticDataGeneration (Coming Soon)
-      summary: >-
-        Generate synthetic data based on input dialogs and apply filtering.
-      description: >-
-        Generate synthetic data based on input dialogs and apply filtering.
-
-        :param dialogs: List of conversation messages to use as input for synthetic
-        data generation
-                :param filtering_function: Type of filtering to apply to generated
-        synthetic data samples
-                :param model: (Optional) The identifier of the model to use. The model
-        must be registered with Llama Stack and available via the /models endpoint
-                :returns: Response containing filtered synthetic data samples and
-        optional statistics
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SyntheticDataGenerateRequest'
-        required: true
-      deprecated: false
->>>>>>> 0e623067d (chore: use Pydantic to generate OpenAPI schema)
   /v1/tool-runtime/invoke:
     post:
       responses:
