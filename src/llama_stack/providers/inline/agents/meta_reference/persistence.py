@@ -9,8 +9,9 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from llama_stack.apis.agents import AgentConfig, Session, ToolExecutionStep, Turn
-from llama_stack.apis.common.errors import SessionNotFoundError
+from llama_stack_api.apis.agents import AgentConfig, Session, ToolExecutionStep, Turn
+from llama_stack_api.apis.common.errors import SessionNotFoundError
+
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.access_control.conditions import User as ProtocolUser
 from llama_stack.core.access_control.datatypes import AccessRule, Action

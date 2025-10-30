@@ -7,13 +7,13 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from llama_stack.apis.tools.rag_tool import RAGQueryConfig
-from llama_stack.apis.vector_io import (
+from llama_stack_api.apis.tools.rag_tool import RAGQueryConfig
+from llama_stack_api.apis.vector_io import (
     Chunk,
     ChunkMetadata,
     QueryChunksResponse,
 )
+
 from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
 
 

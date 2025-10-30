@@ -7,7 +7,7 @@
 from collections.abc import AsyncGenerator
 from contextvars import ContextVar
 
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT
+from llama_stack_api.core.telemetry.tracing import CURRENT_TRACE_CONTEXT
 
 _MISSING = object()
 

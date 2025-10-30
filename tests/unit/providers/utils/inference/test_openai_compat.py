@@ -5,10 +5,8 @@
 # the root directory of this source tree.
 
 import pytest
-from pydantic import ValidationError
-
-from llama_stack.apis.common.content_types import TextContentItem
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.common.content_types import TextContentItem
+from llama_stack_api.apis.inference import (
     CompletionMessage,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
@@ -21,7 +19,9 @@ from llama_stack.apis.inference import (
     SystemMessage,
     UserMessage,
 )
-from llama_stack.models.llama.datatypes import BuiltinTool, StopReason, ToolCall
+from llama_stack_api.models.llama.datatypes import BuiltinTool, StopReason, ToolCall
+from pydantic import ValidationError
+
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict,
     convert_message_to_openai_dict_new,

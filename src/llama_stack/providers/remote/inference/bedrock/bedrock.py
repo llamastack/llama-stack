@@ -8,8 +8,7 @@ import json
 from collections.abc import AsyncIterator
 
 from botocore.client import BaseClient
-
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     ChatCompletionRequest,
     Inference,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -17,11 +16,12 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack.apis.inference.inference import (
+from llama_stack_api.apis.inference.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
 )
+
 from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client
 from llama_stack.providers.utils.inference.model_registry import (

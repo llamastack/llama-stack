@@ -1945,6 +1945,7 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "jsonschema" },
+    { name = "llama-stack-api" },
     { name = "llama-stack-client" },
     { name = "openai" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
@@ -2096,6 +2097,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
+    { name = "llama-stack-api", editable = "src/llama-stack-api" },
     { name = "llama-stack-client", specifier = ">=0.3.0" },
     { name = "llama-stack-client", marker = "extra == 'ui'", specifier = ">=0.3.0" },
     { name = "openai", specifier = ">=2.5.0" },
@@ -2228,6 +2230,25 @@ unit = [
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
     { name = "sqlite-vec" },
     { name = "together" },
+]
+
+[[package]]
+name = "llama-stack-api"
+version = "0.1.0"
+source = { editable = "src/llama-stack-api" }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-sdk" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jsonschema" },
+    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
+    { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
+    { name = "pydantic", specifier = ">=2.11.9" },
 ]
 
 [[package]]

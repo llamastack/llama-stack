@@ -6,10 +6,10 @@
 import asyncio
 from typing import Any
 
-from llama_stack.apis.agents import (
+from llama_stack_api.apis.agents import (
     Order,
 )
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.apis.agents.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
@@ -17,7 +17,8 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObject,
     OpenAIResponseObjectWithInput,
 )
-from llama_stack.apis.inference import OpenAIMessageParam
+from llama_stack_api.apis.inference import OpenAIMessageParam
+
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference, StorageBackendType
 from llama_stack.log import get_logger

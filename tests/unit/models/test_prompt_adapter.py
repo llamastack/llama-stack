@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     ChatCompletionRequest,
     CompletionMessage,
     StopReason,
@@ -15,11 +15,12 @@ from llama_stack.apis.inference import (
     ToolConfig,
     UserMessage,
 )
-from llama_stack.models.llama.datatypes import (
+from llama_stack_api.models.llama.datatypes import (
     BuiltinTool,
     ToolDefinition,
     ToolPromptFormat,
 )
+
 from llama_stack.providers.utils.inference.prompt_adapter import (
     chat_completion_request_to_messages,
     chat_completion_request_to_prompt,

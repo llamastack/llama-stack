@@ -18,6 +18,9 @@ from typing import Any, TypeVar, Union, get_args, get_origin
 import httpx
 import yaml
 from fastapi import Response as FastAPIResponse
+from llama_stack_api.core.telemetry import Telemetry
+from llama_stack_api.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
+from llama_stack_api.strong_typing.inspection import is_unwrapped_body_param
 from llama_stack_client import (
     NOT_GIVEN,
     APIResponse,
@@ -44,13 +47,10 @@ from llama_stack.core.stack import (
     get_stack_run_config_from_distro,
     replace_env_vars,
 )
-from llama_stack.core.telemetry import Telemetry
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
 from llama_stack.log import get_logger, setup_logging
-from llama_stack.strong_typing.inspection import is_unwrapped_body_param
 
 logger = get_logger(name=__name__, category="core")
 

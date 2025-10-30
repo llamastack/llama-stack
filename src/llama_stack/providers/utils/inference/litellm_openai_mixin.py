@@ -9,8 +9,7 @@ import struct
 from collections.abc import AsyncIterator
 
 import litellm
-
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     ChatCompletionRequest,
     InferenceProvider,
     JsonSchemaResponseFormat,
@@ -25,6 +24,7 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingUsage,
     ToolChoice,
 )
+
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
@@ -268,7 +268,7 @@ class LiteLLMOpenAIMixin(
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         # Add usage tracking for streaming when telemetry is active
-        from llama_stack.core.telemetry.tracing import get_current_span
+        from llama_stack_api.core.telemetry.tracing import get_current_span
 
         stream_options = params.stream_options
         if params.stream and get_current_span() is not None:

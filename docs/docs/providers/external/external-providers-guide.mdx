@@ -80,7 +80,7 @@ container_image: custom-vector-store:latest  # optional
 All providers must contain a `get_provider_spec` function in their `provider` module. This is a standardized structure that Llama Stack expects and is necessary for getting things such as the config class. The `get_provider_spec` method returns a structure identical to the `adapter`. An example function may look like:
 
 ```python
-from llama_stack.providers.datatypes import (
+from llama_stack_api.providers.datatypes import (
     ProviderSpec,
     Api,
     RemoteProviderSpec,
