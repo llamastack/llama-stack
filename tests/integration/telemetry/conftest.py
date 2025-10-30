@@ -18,6 +18,7 @@ from tests.integration.telemetry.collectors import InMemoryTelemetryManager, Otl
 
 @pytest.fixture(scope="session")
 def telemetry_test_collector():
+    # Stack mode is set by integration-tests.sh based on STACK_CONFIG
     stack_mode = os.environ.get("LLAMA_STACK_TEST_STACK_CONFIG_TYPE", "library_client")
 
     if stack_mode == "server":
@@ -30,6 +31,7 @@ def telemetry_test_collector():
             "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
             "OTEL_BSP_SCHEDULE_DELAY": "200",
             "OTEL_BSP_EXPORT_TIMEOUT": "2000",
+            "LLAMA_STACK_DISABLE_GUNICORN": "true",  # Disable multi-process for telemetry collection
         }
 
         previous_env = {key: os.environ.get(key) for key in env_overrides}

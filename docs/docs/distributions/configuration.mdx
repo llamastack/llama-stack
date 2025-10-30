@@ -247,6 +247,8 @@ server:
   cors: true  # Optional: Enable CORS (dev mode) or full config object
 ```
 
+**Production Server**: On Unix-based systems (Linux, macOS), Llama Stack automatically uses Gunicorn with Uvicorn workers for production-grade multi-process performance. The server behavior can be customized using environment variables (e.g., `GUNICORN_WORKERS`, `GUNICORN_WORKER_CONNECTIONS`). See [Starting a Llama Stack Server](./starting_llama_stack_server#production-server-configuration-unixlinuxmacos) for complete configuration details.
+
 ### CORS Configuration
 
 CORS (Cross-Origin Resource Sharing) can be configured in two ways:
