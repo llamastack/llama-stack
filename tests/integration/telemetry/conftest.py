@@ -25,17 +25,6 @@ def telemetry_test_collector():
             collector = OtlpHttpTestCollector()
         except RuntimeError as exc:
             pytest.skip(str(exc))
-        env_overrides = {
-            "OTEL_EXPORTER_OTLP_ENDPOINT": collector.endpoint,
-            "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
-            "OTEL_BSP_SCHEDULE_DELAY": "200",
-            "OTEL_BSP_EXPORT_TIMEOUT": "2000",
-        }
-
-        previous_env = {key: os.environ.get(key) for key in env_overrides}
-
-        for key, value in env_overrides.items():
-            os.environ[key] = value
 
         telemetry_module._TRACER_PROVIDER = None
 
@@ -43,11 +32,6 @@ def telemetry_test_collector():
             yield collector
         finally:
             collector.shutdown()
-            for key, prior in previous_env.items():
-                if prior is None:
-                    os.environ.pop(key, None)
-                else:
-                    os.environ[key] = prior
     else:
         manager = InMemoryTelemetryManager()
         try:

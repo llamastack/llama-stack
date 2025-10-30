@@ -187,6 +187,11 @@ if ! command -v pytest &> /dev/null; then
     exit 1
 fi
 
+# Configure telemetry collector port shared between host and container
+COLLECTOR_PORT=4319
+export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:${COLLECTOR_PORT}"
+
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     stop_server() {
@@ -283,10 +288,6 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     # Stop and remove existing container if it exists
     docker stop "$container_name" 2>/dev/null || true
     docker rm "$container_name" 2>/dev/null || true
-
-    # Configure telemetry collector port shared between host and container
-    COLLECTOR_PORT=4317
-    export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
 
     # Build environment variables for docker run
     DOCKER_ENV_VARS=""
