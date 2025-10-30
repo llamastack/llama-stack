@@ -17,8 +17,17 @@ from tests.integration.telemetry.collectors import InMemoryTelemetryManager, Otl
 
 
 @pytest.fixture(scope="session")
-def telemetry_test_collector():
-    stack_mode = os.environ.get("LLAMA_STACK_TEST_STACK_CONFIG_TYPE", "library_client")
+def telemetry_test_collector(request):
+    # Determine stack mode from --stack-config argument
+    stack_config = request.session.config.getoption("--stack-config", default=None)
+    if not stack_config:
+        stack_config = os.environ.get("LLAMA_STACK_CONFIG", "")
+
+    # Check if running in server or docker mode (both need server-side telemetry)
+    if stack_config.startswith("server:") or stack_config.startswith("docker:"):
+        stack_mode = "server"
+    else:
+        stack_mode = os.environ.get("LLAMA_STACK_TEST_STACK_CONFIG_TYPE", "library_client")
 
     if stack_mode == "server":
         try:
