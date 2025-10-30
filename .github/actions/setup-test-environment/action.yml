@@ -44,8 +44,26 @@ runs:
       run: |
         # Install llama-stack-client-python based on the client-version input
         if [ "${{ inputs.client-version }}" = "latest" ]; then
-          echo "Installing latest llama-stack-client-python from main branch"
-          export LLAMA_STACK_CLIENT_DIR=git+https://github.com/llamastack/llama-stack-client-python.git@main
+          # Check if PR is targeting a release branch
+          TARGET_BRANCH="${{ github.base_ref }}"
+
+          if [[ "$TARGET_BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x-maint$ ]]; then
+            echo "PR targets release branch: $TARGET_BRANCH"
+            echo "Checking if matching branch exists in llama-stack-client-python..."
+
+            # Check if the branch exists in the client repo
+            if git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$TARGET_BRANCH" > /dev/null 2>&1; then
+              echo "Installing llama-stack-client-python from matching branch: $TARGET_BRANCH"
+              export LLAMA_STACK_CLIENT_DIR=git+https://github.com/llamastack/llama-stack-client-python.git@$TARGET_BRANCH
+            else
+              echo "::error::Branch $TARGET_BRANCH not found in llama-stack-client-python repository"
+              echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
+              exit 1
+            fi
+          else
+            echo "Installing latest llama-stack-client-python from main branch"
+            export LLAMA_STACK_CLIENT_DIR=git+https://github.com/llamastack/llama-stack-client-python.git@main
+          fi
         elif [ "${{ inputs.client-version }}" = "published" ]; then
           echo "Installing published llama-stack-client-python from PyPI"
           unset LLAMA_STACK_CLIENT_DIR
