@@ -9,6 +9,7 @@
 import gzip
 import os
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 
@@ -78,6 +79,35 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
             return tuple(self._metrics) if self._metrics else None
 
     def _clear_impl(self) -> None:
+        """Clear telemetry over a period of time to prevent race conditions between tests."""
+        with self._lock:
+            self._spans.clear()
+            self._metrics.clear()
+
+        # Prevent race conditions where telemetry arrives after clear() but before
+        # the test starts, causing contamination between tests
+        deadline = time.time() + 2.0  # Maximum wait time
+        last_span_count = 0
+        last_metric_count = 0
+        stable_iterations = 0
+
+        while time.time() < deadline:
+            with self._lock:
+                current_span_count = len(self._spans)
+                current_metric_count = len(self._metrics)
+
+            if current_span_count == last_span_count and current_metric_count == last_metric_count:
+                stable_iterations += 1
+                if stable_iterations >= 4:  # 4 * 50ms = 200ms of stability
+                    break
+            else:
+                stable_iterations = 0
+                last_span_count = current_span_count
+                last_metric_count = current_metric_count
+
+            time.sleep(0.05)
+
+        # Final clear to remove any telemetry that arrived during stabilization
         with self._lock:
             self._spans.clear()
             self._metrics.clear()
