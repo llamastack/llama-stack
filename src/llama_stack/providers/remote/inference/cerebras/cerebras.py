@@ -6,10 +6,11 @@
 
 from urllib.parse import urljoin
 
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
+
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import CerebrasImplConfig

@@ -6,9 +6,9 @@
 from enum import Enum
 from typing import Any
 
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.post_training import (
+from llama_stack_api.apis.datasetio import DatasetIO
+from llama_stack_api.apis.datasets import Datasets
+from llama_stack_api.apis.post_training import (
     AlgorithmConfig,
     Checkpoint,
     DPOAlignmentConfig,
@@ -20,6 +20,7 @@ from llama_stack.apis.post_training import (
     PostTrainingJobStatusResponse,
     TrainingConfig,
 )
+
 from llama_stack.providers.inline.post_training.torchtune.config import (
     TorchtunePostTrainingConfig,
 )

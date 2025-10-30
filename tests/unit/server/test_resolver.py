@@ -9,9 +9,10 @@ import sys
 from typing import Any, Protocol
 from unittest.mock import AsyncMock, MagicMock
 
+from llama_stack_api.apis.inference import Inference
+from llama_stack_api.providers.datatypes import InlineProviderSpec, ProviderSpec
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.inference import Inference
 from llama_stack.core.datatypes import Api, Provider, StackRunConfig
 from llama_stack.core.resolver import resolve_impls
 from llama_stack.core.routers.inference import InferenceRouter
@@ -25,7 +26,6 @@ from llama_stack.core.storage.datatypes import (
     SqlStoreReference,
     StorageConfig,
 )
-from llama_stack.providers.datatypes import InlineProviderSpec, ProviderSpec
 from llama_stack.providers.utils.kvstore import register_kvstore_backends
 from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 

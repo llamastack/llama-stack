@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.apis.agents import (
+from llama_stack_api.apis.agents import (
     Agents,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -15,15 +15,16 @@ from llama_stack.apis.agents import (
     OpenAIResponseObject,
     Order,
 )
-from llama_stack.apis.agents.agents import ResponseGuardrail
-from llama_stack.apis.agents.openai_responses import OpenAIResponsePrompt, OpenAIResponseText
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.agents.agents import ResponseGuardrail
+from llama_stack_api.apis.agents.openai_responses import OpenAIResponsePrompt, OpenAIResponseText
+from llama_stack_api.apis.conversations import Conversations
+from llama_stack_api.apis.inference import (
     Inference,
 )
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
+from llama_stack_api.apis.safety import Safety
+from llama_stack_api.apis.tools import ToolGroups, ToolRuntime
+from llama_stack_api.apis.vector_io import VectorIO
+
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import InmemoryKVStoreImpl, kvstore_impl

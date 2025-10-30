@@ -11,12 +11,8 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import Body
-from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
-from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
-from pydantic import TypeAdapter
-
-from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.common.errors import ModelNotFoundError, ModelTypeError
+from llama_stack_api.apis.inference import (
     Inference,
     ListOpenAIChatCompletionResponse,
     OpenAIAssistantMessageParam,
@@ -36,17 +32,21 @@ from llama_stack.apis.inference import (
     Order,
     RerankResponse,
 )
-from llama_stack.apis.inference.inference import (
+from llama_stack_api.apis.inference.inference import (
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
 )
-from llama_stack.apis.models import ModelType
+from llama_stack_api.apis.models import ModelType
+from llama_stack_api.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
+from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
+from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
+from pydantic import TypeAdapter
+
 from llama_stack.core.telemetry.telemetry import MetricEvent
 from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.chat_format import ChatFormat
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 
 logger = get_logger(name=__name__, category="core::routers")

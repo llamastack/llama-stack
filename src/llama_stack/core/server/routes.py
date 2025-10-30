@@ -10,11 +10,11 @@ from collections.abc import Callable
 from typing import Any
 
 from aiohttp import hdrs
+from llama_stack_api.apis.datatypes import Api, ExternalApiSpec
+from llama_stack_api.schema_utils import WebMethod
 from starlette.routing import Route
 
-from llama_stack.apis.datatypes import Api, ExternalApiSpec
 from llama_stack.core.resolver import api_protocol_map
-from llama_stack.schema_utils import WebMethod
 
 EndpointFunc = Callable[..., Any]
 PathParams = dict[str, str]

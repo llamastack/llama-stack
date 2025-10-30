@@ -6,12 +6,12 @@
 
 from typing import Any
 
-from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
-from llama_stack.apis.models import ModelType
-from llama_stack.apis.resource import ResourceType
+from llama_stack_api.apis.common.errors import ModelNotFoundError, ModelTypeError
+from llama_stack_api.apis.models import ModelType
+from llama_stack_api.apis.resource import ResourceType
 
 # Removed VectorStores import to avoid exposing public API
-from llama_stack.apis.vector_io.vector_io import (
+from llama_stack_api.apis.vector_io.vector_io import (
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
@@ -22,6 +22,7 @@ from llama_stack.apis.vector_io.vector_io import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
+
 from llama_stack.core.datatypes import (
     VectorStoreWithOwner,
 )

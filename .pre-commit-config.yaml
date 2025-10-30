@@ -42,7 +42,7 @@ repos:
     hooks:
     -   id: ruff
         args: [ --fix ]
-        exclude: ^src/llama_stack/strong_typing/.*$
+        exclude: ^(src/llama_stack/strong_typing/.*|src/llama-stack-api/llama_stack_api/strong_typing/.*)$
     -   id: ruff-format
 
 -   repo: https://github.com/adamchainz/blacken-docs

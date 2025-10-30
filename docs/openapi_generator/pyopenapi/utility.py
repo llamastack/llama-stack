@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any, List, Optional, TextIO, Union, get_type_hints, get_origin, get_args
 
 from pydantic import BaseModel
-from llama_stack.strong_typing.schema import object_to_json, StrictJsonType
-from llama_stack.strong_typing.inspection import is_unwrapped_body_param
+from llama_stack_api.strong_typing.schema import object_to_json, StrictJsonType
+from llama_stack_api.strong_typing.inspection import is_unwrapped_body_param
 from llama_stack.core.resolver import api_protocol_map
 
 from .generator import Generator

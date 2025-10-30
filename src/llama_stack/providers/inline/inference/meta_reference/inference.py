@@ -9,7 +9,7 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     InferenceProvider,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -19,12 +19,14 @@ from llama_stack.apis.inference import (
     OpenAIUserMessageParam,
     ToolChoice,
 )
-from llama_stack.apis.inference.inference import (
+from llama_stack_api.apis.inference.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAICompletion,
 )
-from llama_stack.apis.models import Model, ModelType
+from llama_stack_api.apis.models import Model, ModelType
+from llama_stack_api.providers.datatypes import ModelsProtocolPrivate
+
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import RawMessage, RawTextItem, ToolDefinition
 from llama_stack.models.llama.llama3.chat_format import ChatFormat as Llama3ChatFormat
@@ -40,7 +42,6 @@ from llama_stack.models.llama.llama4.prompt_templates.system_prompts import (
 from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
 from llama_stack.models.llama.sku_list import resolve_model
 from llama_stack.models.llama.sku_types import ModelFamily, is_multimodal
-from llama_stack.providers.datatypes import ModelsProtocolPrivate
 from llama_stack.providers.utils.inference.embedding_mixin import (
     SentenceTransformerEmbeddingMixin,
 )
@@ -376,7 +377,7 @@ class MetaReferenceInferenceImpl(
         # Convert tool calls to OpenAI format
         openai_tool_calls = None
         if decoded_message.tool_calls:
-            from llama_stack.apis.inference import (
+            from llama_stack_api.apis.inference import (
                 OpenAIChatCompletionToolCall,
                 OpenAIChatCompletionToolCallFunction,
             )
@@ -441,13 +442,14 @@ class MetaReferenceInferenceImpl(
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> AsyncIterator[OpenAIChatCompletionChunk]:
         """Stream chat completion chunks as they're generated."""
-        from llama_stack.apis.inference import (
+        from llama_stack_api.apis.inference import (
             OpenAIChatCompletionChunk,
             OpenAIChatCompletionToolCall,
             OpenAIChatCompletionToolCallFunction,
             OpenAIChoiceDelta,
             OpenAIChunkChoice,
         )
+
         from llama_stack.models.llama.datatypes import StopReason
         from llama_stack.providers.utils.inference.prompt_adapter import decode_assistant_message
 

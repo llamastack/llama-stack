@@ -6,15 +6,16 @@
 
 from typing import Any
 
-from llama_stack.apis.eval import BenchmarkConfig, Eval, EvaluateResponse, Job
-from llama_stack.apis.scoring import (
+from llama_stack_api.apis.eval import BenchmarkConfig, Eval, EvaluateResponse, Job
+from llama_stack_api.apis.scoring import (
     ScoreBatchResponse,
     ScoreResponse,
     Scoring,
     ScoringFnParams,
 )
+from llama_stack_api.providers.datatypes import RoutingTable
+
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import RoutingTable
 
 logger = get_logger(name=__name__, category="core::routers")
 

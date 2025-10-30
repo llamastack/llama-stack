@@ -8,11 +8,9 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 
-from pydantic import BaseModel, TypeAdapter
-
-from llama_stack.apis.agents import Order
-from llama_stack.apis.agents.agents import ResponseGuardrailSpec
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.apis.agents import Order
+from llama_stack_api.apis.agents.agents import ResponseGuardrailSpec
+from llama_stack_api.apis.agents.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
@@ -26,19 +24,21 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseText,
     OpenAIResponseTextFormat,
 )
-from llama_stack.apis.common.errors import (
+from llama_stack_api.apis.common.errors import (
     InvalidConversationIdError,
 )
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.conversations.conversations import ConversationItem
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.conversations import Conversations
+from llama_stack_api.apis.conversations.conversations import ConversationItem
+from llama_stack_api.apis.inference import (
     Inference,
     OpenAIMessageParam,
     OpenAISystemMessageParam,
 )
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
+from llama_stack_api.apis.safety import Safety
+from llama_stack_api.apis.tools import ToolGroups, ToolRuntime
+from llama_stack_api.apis.vector_io import VectorIO
+from pydantic import BaseModel, TypeAdapter
+
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,

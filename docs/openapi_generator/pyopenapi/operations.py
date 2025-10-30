@@ -11,11 +11,11 @@ import typing
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA, LLAMA_STACK_API_V1ALPHA
+from llama_stack_api.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA, LLAMA_STACK_API_V1ALPHA
 
 from termcolor import colored
 
-from llama_stack.strong_typing.inspection import get_signature
+from llama_stack_api.strong_typing.inspection import get_signature
 
 from typing import get_origin, get_args
 
@@ -23,7 +23,7 @@ from fastapi import UploadFile
 from fastapi.params import File, Form
 from typing import Annotated
 
-from llama_stack.schema_utils import ExtraBodyField
+from llama_stack_api.schema_utils import ExtraBodyField
 
 
 def split_prefix(

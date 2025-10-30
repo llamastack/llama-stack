@@ -9,10 +9,9 @@ import uuid
 from typing import Annotated, Any
 
 from fastapi import Body
-
-from llama_stack.apis.common.content_types import InterleavedContent
-from llama_stack.apis.models import ModelType
-from llama_stack.apis.vector_io import (
+from llama_stack_api.apis.common.content_types import InterleavedContent
+from llama_stack_api.apis.models import ModelType
+from llama_stack_api.apis.vector_io import (
     Chunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
@@ -33,9 +32,10 @@ from llama_stack.apis.vector_io import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
+from llama_stack_api.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
+
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 
 logger = get_logger(name=__name__, category="core::routers")
 

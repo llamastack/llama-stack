@@ -12,11 +12,12 @@
 
 from typing import Any
 
-from llama_stack.apis.common.type_system import (
+from llama_stack_api.apis.common.type_system import (
     ChatCompletionInputType,
     DialogType,
     StringType,
 )
+
 from llama_stack.providers.utils.common.data_schema_validator import (
     ColumnName,
 )

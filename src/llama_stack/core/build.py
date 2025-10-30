@@ -7,6 +7,7 @@
 import importlib.resources
 import sys
 
+from llama_stack_api.providers.datatypes import Api
 from pydantic import BaseModel
 from termcolor import cprint
 
@@ -17,7 +18,6 @@ from llama_stack.core.utils.exec import run_command
 from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.distributions.template import DistributionTemplate
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api
 
 log = get_logger(name=__name__, category="core")
 

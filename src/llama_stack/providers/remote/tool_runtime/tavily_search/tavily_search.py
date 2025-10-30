@@ -8,17 +8,17 @@ import json
 from typing import Any
 
 import httpx
-
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.tools import (
+from llama_stack_api.apis.common.content_types import URL
+from llama_stack_api.apis.tools import (
     ListToolDefsResponse,
     ToolDef,
     ToolGroup,
     ToolInvocationResult,
     ToolRuntime,
 )
+from llama_stack_api.providers.datatypes import ToolGroupsProtocolPrivate
+
 from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
 
 from .config import TavilySearchToolConfig
 

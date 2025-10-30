@@ -7,17 +7,18 @@
 from typing import Any
 from urllib.parse import urlparse
 
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.datatypes import Api
-from llama_stack.apis.tools import (
+from llama_stack_api.apis.common.content_types import URL
+from llama_stack_api.apis.datatypes import Api
+from llama_stack_api.apis.tools import (
     ListToolDefsResponse,
     ToolGroup,
     ToolInvocationResult,
     ToolRuntime,
 )
+from llama_stack_api.providers.datatypes import ToolGroupsProtocolPrivate
+
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
 from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool, list_mcp_tools
 
 from .config import MCPProviderConfig

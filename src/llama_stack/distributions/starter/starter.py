@@ -7,6 +7,8 @@
 
 from typing import Any
 
+from llama_stack_api.providers.datatypes import RemoteProviderSpec
+
 from llama_stack.core.datatypes import (
     BuildProvider,
     Provider,
@@ -24,7 +26,6 @@ from llama_stack.core.storage.datatypes import (
 )
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
-from llama_stack.providers.datatypes import RemoteProviderSpec
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,

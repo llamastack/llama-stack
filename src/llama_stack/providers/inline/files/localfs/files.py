@@ -10,10 +10,9 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, File, Form, Response, UploadFile
-
-from llama_stack.apis.common.errors import ResourceNotFoundError
-from llama_stack.apis.common.responses import Order
-from llama_stack.apis.files import (
+from llama_stack_api.apis.common.errors import ResourceNotFoundError
+from llama_stack_api.apis.common.responses import Order
+from llama_stack_api.apis.files import (
     ExpiresAfter,
     Files,
     ListOpenAIFileResponse,
@@ -21,6 +20,7 @@ from llama_stack.apis.files import (
     OpenAIFileObject,
     OpenAIFilePurpose,
 )
+
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger

@@ -6,9 +6,10 @@
 import re
 from typing import Any
 
-from llama_stack.apis.inference import Inference, OpenAIChatCompletionRequestWithExtraBody
-from llama_stack.apis.scoring import ScoringResultRow
-from llama_stack.apis.scoring_functions import ScoringFnParams
+from llama_stack_api.apis.inference import Inference, OpenAIChatCompletionRequestWithExtraBody
+from llama_stack_api.apis.scoring import ScoringResultRow
+from llama_stack_api.apis.scoring_functions import ScoringFnParams
+
 from llama_stack.providers.utils.scoring.base_scoring_fn import RegisteredBaseScoringFn
 
 from .fn_defs.llm_as_judge_405b_simpleqa import llm_as_judge_405b_simpleqa
