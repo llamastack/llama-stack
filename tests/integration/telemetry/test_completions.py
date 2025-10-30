@@ -109,7 +109,7 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
 
     # Verify token usage metrics in response using polling
     expected_metrics = ["completion_tokens", "total_tokens", "prompt_tokens"]
-    metrics = mock_otlp_collector.get_metrics(expected_count=len(expected_metrics))
+    metrics = mock_otlp_collector.get_metrics(expected_count=len(expected_metrics), expect_model_id=text_model_id)
     assert len(metrics) > 0, "No metrics found within timeout"
 
     # Filter metrics to only those from the specific model used in the request
