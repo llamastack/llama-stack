@@ -113,8 +113,7 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
     assert len(metrics) > 0, "No metrics found within timeout"
 
     # Filter metrics to only those from the specific model used in the request
-    # This prevents issues when multiple metrics with the same name exist from different models
-    # (e.g., when safety models like llama-guard are also called)
+    # Multiple metrics with the same name can exist (e.g., from safety models)
     inference_model_metrics = {}
     all_model_ids = set()
 
