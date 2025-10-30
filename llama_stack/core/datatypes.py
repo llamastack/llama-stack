@@ -471,6 +471,10 @@ class ServerConfig(BaseModel):
         "- true: Enable localhost CORS for development\n"
         "- {allow_origins: [...], allow_methods: [...], ...}: Full configuration",
     )
+    workers: int = Field(
+        default=1,
+        description="Number of workers to use for the server",
+    )
 
 
 class StackRunConfig(BaseModel):

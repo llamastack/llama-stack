@@ -128,7 +128,7 @@ class StackRun(Subcommand):
             config = StackRunConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
-        host = config.server.host or ["::", "0.0.0.0"]
+        host = config.server.host or "0.0.0.0"
 
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
@@ -140,6 +140,7 @@ class StackRun(Subcommand):
             "lifespan": "on",
             "log_level": logger.getEffectiveLevel(),
             "log_config": logger_config,
+            "workers": config.server.workers,
         }
 
         keyfile = config.server.tls_keyfile
