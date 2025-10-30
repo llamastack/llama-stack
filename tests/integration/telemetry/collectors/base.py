@@ -168,6 +168,7 @@ class BaseTelemetryCollector:
         expected_count: int | None = None,
         timeout: float = 5.0,
         poll_interval: float = 0.05,
+        expect_model_id: str | None = None,
     ) -> dict[str, MetricStub]:
         """Get metrics with polling until metrics are available or timeout is reached."""
 
@@ -175,6 +176,7 @@ class BaseTelemetryCollector:
         deadline = time.time() + timeout
         min_count = expected_count if expected_count is not None else 1
         accumulated_metrics = {}
+        count_metrics_with_model_id = 0
 
         while time.time() < deadline:
             current_metrics = self._snapshot_metrics()
@@ -183,12 +185,21 @@ class BaseTelemetryCollector:
                     metric_name = metric.name
                     if metric_name not in accumulated_metrics:
                         accumulated_metrics[metric_name] = metric
+                        if (
+                            expect_model_id
+                            and metric.attributes
+                            and metric.attributes.get("model_id") == expect_model_id
+                        ):
+                            count_metrics_with_model_id += 1
                     else:
                         accumulated_metrics[metric_name] = metric
 
             # Check if we have enough metrics
             if len(accumulated_metrics) >= min_count:
-                return accumulated_metrics
+                if not expect_model_id:
+                    return accumulated_metrics
+                if count_metrics_with_model_id >= min_count:
+                    return accumulated_metrics
 
             time.sleep(poll_interval)
 
@@ -346,6 +357,8 @@ class BaseTelemetryCollector:
         return None
 
     def clear(self) -> None:
+        # prevent race conditions between tests caused by 200ms metric collection interval
+        time.sleep(0.3)
         self._clear_impl()
 
     def _snapshot_spans(self) -> tuple[SpanStub, ...]:  # pragma: no cover - interface hook
