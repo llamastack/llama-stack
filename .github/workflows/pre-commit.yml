@@ -63,7 +63,7 @@ jobs:
         id: precommit
         run: |
           set +e
-          pre-commit run --show-diff-on-failure --color=always --all-files 2>&1 | tee precommit.log
+          pre-commit run --show-diff-on-failure --color=always --all-files 2>&1 | tee /tmp/precommit.log
           status=${PIPESTATUS[0]}
           echo "status=$status" >> $GITHUB_OUTPUT
           exit 0
@@ -77,7 +77,7 @@ jobs:
           echo "::error::Pre-commit hooks failed. Please run 'pre-commit run --all-files' locally and commit the fixes."
           echo ""
           echo "Failed hooks output:"
-          cat precommit.log
+          cat /tmp/precommit.log
           exit 1
 
       - name: Debug
