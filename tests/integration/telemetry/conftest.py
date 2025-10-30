@@ -7,6 +7,7 @@
 """Telemetry test configuration supporting both library and server test modes."""
 
 import os
+import time
 
 import pytest
 
@@ -59,6 +60,8 @@ def llama_stack_client(telemetry_test_collector, request):
 @pytest.fixture
 def mock_otlp_collector(telemetry_test_collector):
     """Provides access to telemetry data and clears between tests."""
+    # prevent race conditions between tests caused by 200ms metric collection interval
+    time.sleep(0.3)
     telemetry_test_collector.clear()
     try:
         yield telemetry_test_collector
