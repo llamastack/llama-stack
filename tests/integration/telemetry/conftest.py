@@ -10,7 +10,6 @@ import os
 
 import pytest
 
-import llama_stack.core.telemetry.telemetry as telemetry_module
 from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 from tests.integration.fixtures.common import instantiate_llama_stack_client
 from tests.integration.telemetry.collectors import InMemoryTelemetryManager, OtlpHttpTestCollector
