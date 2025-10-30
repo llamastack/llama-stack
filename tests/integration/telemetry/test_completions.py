@@ -32,7 +32,7 @@ def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_mod
             span
             for span in reversed(spans)
             if span.get_span_type() == "async_generator"
-            and span.get_attribute("chunk_count")
+            and span.attributes.get("chunk_count")
             and span.has_message("Test trace openai 1")
         ),
         None,
@@ -40,7 +40,7 @@ def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_mod
 
     assert async_generator_span is not None
 
-    raw_chunk_count = async_generator_span.get_attribute("chunk_count")
+    raw_chunk_count = async_generator_span.attributes.get("chunk_count")
     assert raw_chunk_count is not None
     chunk_count = int(raw_chunk_count)
 
@@ -85,7 +85,7 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
     logged_model_ids = []
 
     for span in spans:
-        attrs = span.get_attributes()
+        attrs = span.attributes
         assert attrs is not None
 
         # Root span is created manually by tracing middleware, not by @trace_protocol decorator
@@ -98,7 +98,7 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
         assert class_name and method_name
         assert span.get_span_type() in ["async", "sync", "async_generator"]
 
-        args_field = span.get_attribute("__args__")
+        args_field = span.attributes.get("__args__")
         if args_field:
             args = json.loads(args_field)
             if "model_id" in args:
@@ -115,37 +115,32 @@ def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, 
     # Filter metrics to only those from the specific model used in the request
     # This prevents issues when multiple metrics with the same name exist from different models
     # (e.g., when safety models like llama-guard are also called)
-    model_metrics = {}
+    inference_model_metrics = {}
     all_model_ids = set()
 
     for name, metric in metrics.items():
         if name in expected_metrics:
-            model_id = metric.get_attribute("model_id")
+            model_id = metric.attributes.get("model_id")
             all_model_ids.add(model_id)
             # Only include metrics from the specific model used in the test request
             if model_id == text_model_id:
-                model_metrics[name] = metric
-
-    # Provide helpful error message if we have metrics from multiple models
-    if len(all_model_ids) > 1:
-        print(f"Note: Found metrics from multiple models: {sorted(all_model_ids)}")
-        print(f"Filtering to only metrics from test model: {text_model_id}")
+                inference_model_metrics[name] = metric
 
     # Verify expected metrics are present for our specific model
     for metric_name in expected_metrics:
-        assert metric_name in model_metrics, (
+        assert metric_name in inference_model_metrics, (
             f"Expected metric {metric_name} for model {text_model_id} not found. "
             f"Available models: {sorted(all_model_ids)}, "
-            f"Available metrics for {text_model_id}: {list(model_metrics.keys())}"
+            f"Available metrics for {text_model_id}: {list(inference_model_metrics.keys())}"
         )
 
     # Verify metric values match usage data
-    assert model_metrics["completion_tokens"].get_value() == usage["completion_tokens"], (
-        f"Expected {usage['completion_tokens']} for completion_tokens, but got {model_metrics['completion_tokens'].get_value()}"
+    assert inference_model_metrics["completion_tokens"].value == usage["completion_tokens"], (
+        f"Expected {usage['completion_tokens']} for completion_tokens, but got {inference_model_metrics['completion_tokens'].value}"
     )
-    assert model_metrics["total_tokens"].get_value() == usage["total_tokens"], (
-        f"Expected {usage['total_tokens']} for total_tokens, but got {model_metrics['total_tokens'].get_value()}"
+    assert inference_model_metrics["total_tokens"].value == usage["total_tokens"], (
+        f"Expected {usage['total_tokens']} for total_tokens, but got {inference_model_metrics['total_tokens'].value}"
     )
-    assert model_metrics["prompt_tokens"].get_value() == usage["prompt_tokens"], (
-        f"Expected {usage['prompt_tokens']} for prompt_tokens, but got {model_metrics['prompt_tokens'].get_value()}"
+    assert inference_model_metrics["prompt_tokens"].value == usage["prompt_tokens"], (
+        f"Expected {usage['prompt_tokens']} for prompt_tokens, but got {inference_model_metrics['prompt_tokens'].value}"
     )

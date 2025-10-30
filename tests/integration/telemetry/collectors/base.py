@@ -6,7 +6,8 @@
 
 """Shared helpers for telemetry test collectors."""
 
-from collections.abc import Iterable, Mapping
+import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
@@ -19,29 +20,13 @@ class MetricStub:
     value: Any
     attributes: dict[str, Any] | None = None
 
-    def get_value(self) -> Any:
-        """Get the metric value."""
-        return self.value
-
-    def get_name(self) -> str:
-        """Get the metric name."""
-        return self.name
-
-    def get_attributes(self) -> dict[str, Any]:
-        """Get metric attributes as a dictionary."""
-        return self.attributes or {}
-
-    def get_attribute(self, key: str) -> Any:
-        """Get a specific attribute value by key."""
-        return self.get_attributes().get(key)
-
 
 @dataclass
 class SpanStub:
     """Unified span interface for both in-memory and OTLP collectors."""
 
     name: str
-    attributes: Mapping[str, Any] | None = None
+    attributes: dict[str, Any] | None = None
     resource_attributes: dict[str, Any] | None = None
     events: list[dict[str, Any]] | None = None
     trace_id: str | None = None
@@ -53,19 +38,6 @@ class SpanStub:
         if self.trace_id is None:
             return None
         return type("Context", (), {"trace_id": int(self.trace_id, 16)})()
-
-    def get_attributes(self) -> dict[str, Any]:
-        """Get span attributes as a dictionary.
-
-        Handles different attribute types (mapping, dict, etc.) and returns
-        a consistent dictionary format.
-        """
-        return BaseTelemetryCollector._convert_attributes_to_dict(self.attributes)
-
-    def get_attribute(self, key: str) -> Any:
-        """Get a specific attribute value by key."""
-        attrs = self.get_attributes()
-        return attrs.get(key)
 
     def get_trace_id(self) -> str | None:
         """Get trace ID in hex format.
@@ -79,30 +51,42 @@ class SpanStub:
 
     def has_message(self, text: str) -> bool:
         """Check if span contains a specific message in its args."""
-        args = self.get_attribute("__args__")
+        if self.attributes is None:
+            return False
+        args = self.attributes.get("__args__")
         if not args or not isinstance(args, str):
             return False
         return text in args
 
     def is_root_span(self) -> bool:
         """Check if this is a root span."""
-        return self.get_attribute("__root__") is True
+        if self.attributes is None:
+            return False
+        return self.attributes.get("__root__") is True
 
     def is_autotraced(self) -> bool:
         """Check if this span was automatically traced."""
-        return self.get_attribute("__autotraced__") is True
+        if self.attributes is None:
+            return False
+        return self.attributes.get("__autotraced__") is True
 
     def get_span_type(self) -> str | None:
         """Get the span type (async, sync, async_generator)."""
-        return self.get_attribute("__type__")
+        if self.attributes is None:
+            return None
+        return self.attributes.get("__type__")
 
     def get_class_method(self) -> tuple[str | None, str | None]:
         """Get the class and method names for autotraced spans."""
-        return (self.get_attribute("__class__"), self.get_attribute("__method__"))
+        if self.attributes is None:
+            return None, None
+        return (self.attributes.get("__class__"), self.attributes.get("__method__"))
 
     def get_location(self) -> str | None:
         """Get the location (library_client, server) for root spans."""
-        return self.get_attribute("__location__")
+        if self.attributes is None:
+            return None
+        return self.attributes.get("__location__")
 
 
 def _value_to_python(value: Any) -> Any:
@@ -152,8 +136,6 @@ class BaseTelemetryCollector:
         timeout: float = 5.0,
         poll_interval: float = 0.05,
     ) -> tuple[SpanStub, ...]:
-        import time
-
         deadline = time.time() + timeout
         min_count = expected_count if expected_count is not None else 1
         last_len: int | None = None
@@ -188,8 +170,8 @@ class BaseTelemetryCollector:
         poll_interval: float = 0.05,
     ) -> dict[str, MetricStub]:
         """Get metrics with polling until metrics are available or timeout is reached."""
-        import time
 
+        # metrics need to be collected since get requests delete stored metrics
         deadline = time.time() + timeout
         min_count = expected_count if expected_count is not None else 1
         accumulated_metrics = {}
@@ -197,14 +179,11 @@ class BaseTelemetryCollector:
         while time.time() < deadline:
             current_metrics = self._snapshot_metrics()
             if current_metrics:
-                # Accumulate new metrics without losing existing ones
                 for metric in current_metrics:
-                    metric_name = metric.get_name()
+                    metric_name = metric.name
                     if metric_name not in accumulated_metrics:
                         accumulated_metrics[metric_name] = metric
                     else:
-                        # If we already have this metric, keep the latest one
-                        # (in case metrics are updated with new values)
                         accumulated_metrics[metric_name] = metric
 
             # Check if we have enough metrics
@@ -258,7 +237,7 @@ class BaseTelemetryCollector:
         This helper reduces code duplication between collectors.
         """
         trace_id, span_id = BaseTelemetryCollector._extract_trace_span_ids(span)
-        attributes = BaseTelemetryCollector._convert_attributes_to_dict(span.attributes)
+        attributes = BaseTelemetryCollector._convert_attributes_to_dict(span.attributes) or {}
 
         return SpanStub(
             name=span.name,
@@ -273,7 +252,7 @@ class BaseTelemetryCollector:
 
         This helper handles the different structure of protobuf spans.
         """
-        attributes = attributes_to_dict(span.attributes)
+        attributes = attributes_to_dict(span.attributes) or {}
         events = events_to_list(span.events) if span.events else None
         trace_id = span.trace_id.hex() if span.trace_id else None
         span_id = span.span_id.hex() if span.span_id else None
@@ -300,12 +279,22 @@ class BaseTelemetryCollector:
             return None
 
         # Get the value from the first data point
-        value = metric.data.data_points[0].value
+        data_point = metric.data.data_points[0]
+
+        # Handle different metric types
+        if hasattr(data_point, "value"):
+            # Counter or Gauge
+            value = data_point.value
+        elif hasattr(data_point, "sum"):
+            # Histogram - use the sum of all recorded values
+            value = data_point.sum
+        else:
+            return None
 
         # Extract attributes if available
         attributes = {}
-        if hasattr(metric.data.data_points[0], "attributes"):
-            attrs = metric.data.data_points[0].attributes
+        if hasattr(data_point, "attributes"):
+            attrs = data_point.attributes
             if attrs is not None and hasattr(attrs, "items"):
                 attributes = dict(attrs.items())
             elif attrs is not None and not isinstance(attrs, dict):
@@ -314,8 +303,47 @@ class BaseTelemetryCollector:
         return MetricStub(
             name=metric.name,
             value=value,
-            attributes=attributes if attributes else None,
+            attributes=attributes or {},
         )
+
+    @staticmethod
+    def _create_metric_stub_from_protobuf(metric: Any) -> MetricStub | None:
+        """Create MetricStub from protobuf metric object.
+
+        Protobuf metrics have a different structure than OpenTelemetry metrics.
+        They can have sum, gauge, or histogram data.
+        """
+        if not hasattr(metric, "name"):
+            return None
+
+        # Try to extract value from different metric types
+        for metric_type in ["sum", "gauge", "histogram"]:
+            if hasattr(metric, metric_type):
+                metric_data = getattr(metric, metric_type)
+                if metric_data and hasattr(metric_data, "data_points"):
+                    data_points = metric_data.data_points
+                    if data_points and len(data_points) > 0:
+                        data_point = data_points[0]
+
+                        # Extract attributes first (needed for all metric types)
+                        attributes = (
+                            attributes_to_dict(data_point.attributes) if hasattr(data_point, "attributes") else {}
+                        )
+
+                        # Extract value based on metric type
+                        if metric_type == "sum":
+                            value = data_point.as_int
+                        elif metric_type == "gauge":
+                            value = data_point.as_double
+                        else:  # histogram
+                            value = data_point.sum
+
+                        return MetricStub(
+                            name=metric.name,
+                            value=value,
+                            attributes=attributes,
+                        )
+        return None
 
     def clear(self) -> None:
         self._clear_impl()
