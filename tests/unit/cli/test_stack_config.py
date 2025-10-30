@@ -229,3 +229,42 @@ def test_parse_and_maybe_upgrade_config_preserves_custom_external_providers_dir(
 
     # Verify the custom value was preserved
     assert str(result.external_providers_dir) == custom_dir
+
+
+def test_generate_run_config_from_providers():
+    """Test that _generate_run_config_from_providers creates a valid config"""
+    import argparse
+
+    from llama_stack.cli.stack.run import StackRun
+    from llama_stack.core.datatypes import Provider
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    stack_run = StackRun(subparsers)
+
+    providers = {
+        "inference": [
+            Provider(
+                provider_type="inline::meta-reference",
+                provider_id="meta-reference",
+            )
+        ]
+    }
+
+    config = stack_run._generate_run_config_from_providers(providers=providers)
+    config_dict = config.model_dump(mode="json")
+
+    # Verify basic structure
+    assert config_dict["image_name"] == "providers-run"
+    assert "inference" in config_dict["apis"]
+    assert "inference" in config_dict["providers"]
+
+    # Verify storage has all required stores including prompts
+    assert "storage" in config_dict
+    stores = config_dict["storage"]["stores"]
+    assert "prompts" in stores
+    assert stores["prompts"]["namespace"] == "prompts"
+
+    # Verify config can be parsed back
+    parsed = parse_and_maybe_upgrade_config(config_dict)
+    assert parsed.image_name == "providers-run"
