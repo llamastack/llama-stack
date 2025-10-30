@@ -230,6 +230,7 @@ def instantiate_llama_stack_client(session):
 
         force_restart = os.environ.get("LLAMA_STACK_TEST_FORCE_SERVER_RESTART") == "1"
         if force_restart:
+            print(f"Forcing restart of the server on port {port}")
             stop_server_on_port(port)
 
         # Check if port is available
