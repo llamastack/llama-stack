@@ -30,6 +30,7 @@ def telemetry_test_collector():
             "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
             "OTEL_BSP_SCHEDULE_DELAY": "200",
             "OTEL_BSP_EXPORT_TIMEOUT": "2000",
+            "LLAMA_STACK_DISABLE_GUNICORN": "true",  # Disable multi-process for telemetry collection
         }
 
         previous_env = {key: os.environ.get(key) for key in env_overrides}

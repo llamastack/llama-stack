@@ -169,11 +169,17 @@ class StackRun(Subcommand):
         # Another approach would be to ignore SIGINT entirely - let uvicorn handle it through its own
         # signal handling but this is quite intrusive and not worth the effort.
         try:
-            if sys.platform in ("linux", "darwin"):
+            # Check if Gunicorn should be disabled (for testing or debugging)
+            disable_gunicorn = os.getenv("LLAMA_STACK_DISABLE_GUNICORN", "false").lower() == "true"
+
+            if not disable_gunicorn and sys.platform in ("linux", "darwin"):
                 # On Unix-like systems, use Gunicorn with Uvicorn workers for production-grade performance
                 self._run_with_gunicorn(host, port, uvicorn_config)
             else:
                 # On other systems (e.g., Windows), fall back to Uvicorn directly
+                # Also used when LLAMA_STACK_DISABLE_GUNICORN=true (for tests)
+                if disable_gunicorn:
+                    logger.info("Gunicorn disabled via LLAMA_STACK_DISABLE_GUNICORN environment variable")
                 uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
