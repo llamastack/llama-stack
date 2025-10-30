@@ -27,6 +27,12 @@ paths:
         required: true
         schema:
           title: Kwargs
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: dataset_id'
       responses:
         '200':
           description: Successful Response
@@ -59,18 +65,18 @@ paths:
         schema:
           type: string
           title: Dataset Id
-      - name: start_index
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Start Index
       - name: limit
         in: query
-        required: false
+        required: true
         schema:
           type: integer
           title: Limit
+      - name: start_index
+        in: query
+        required: true
+        schema:
+          type: integer
+          title: Start Index
       responses:
         '200':
           description: A PaginatedResponse.
@@ -105,41 +111,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListDatasetsResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
     post:
       tags:
       - V1Beta
       summary: Register Dataset
-      description: Query endpoint for proper schema generation.
+      description: Typed endpoint for proper schema generation.
       operationId: register_dataset_v1beta_datasets_post
-      parameters:
-      - name: purpose
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/DatasetPurpose'
-      - name: metadata
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Metadata
-      - name: dataset_id
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Dataset Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/__main_____datasets_Request'
+        required: true
       responses:
         '200':
           description: A Dataset.
@@ -148,17 +142,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Dataset'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
   /v1beta/datasets/{dataset_id}:
     delete:
       tags:
@@ -177,6 +171,12 @@ paths:
         required: true
         schema:
           title: Kwargs
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: dataset_id'
       responses:
         '200':
           description: Successful Response
@@ -235,18 +235,18 @@ paths:
       description: Query endpoint for proper schema generation.
       operationId: list_agents_v1alpha_agents_get
       parameters:
-      - name: start_index
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Start Index
       - name: limit
         in: query
-        required: false
+        required: true
         schema:
           type: integer
           title: Limit
+      - name: start_index
+        in: query
+        required: true
+        schema:
+          type: integer
+          title: Start Index
       responses:
         '200':
           description: A PaginatedResponse.
@@ -315,6 +315,12 @@ paths:
         required: true
         schema:
           title: Kwargs
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: agent_id'
       responses:
         '200':
           description: Successful Response
@@ -370,21 +376,14 @@ paths:
       tags:
       - V1Alpha
       summary: Create Agent Session
-      description: Query endpoint for proper schema generation.
+      description: Typed endpoint for proper schema generation.
       operationId: create_agent_session_v1alpha_agents__agent_id__session_post
-      parameters:
-      - name: agent_id
-        in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/__main_____agents_agent_id_session_Request'
         required: true
-        schema:
-          type: string
-          title: Agent Id
-      - name: session_name
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Session Name
       responses:
         '200':
           description: An AgentSessionCreateResponse.
@@ -393,17 +392,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/AgentSessionCreateResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: agent_id'
   /v1alpha/agents/{agent_id}/session/{session_id}:
     delete:
       tags:
@@ -422,6 +428,18 @@ paths:
         required: true
         schema:
           title: Kwargs
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: agent_id'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: session_id'
       responses:
         '200':
           description: Successful Response
@@ -447,21 +465,21 @@ paths:
       description: Query endpoint for proper schema generation.
       operationId: get_agents_session_v1alpha_agents__agent_id__session__session_id__get
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Session Id
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
           title: Agent Id
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
       - name: turn_ids
         in: query
-        required: false
+        required: true
         schema:
           type: string
           title: Turn Ids
@@ -489,33 +507,14 @@ paths:
       tags:
       - V1Alpha
       summary: Create Agent Turn
-      description: Query endpoint for proper schema generation.
+      description: Typed endpoint for proper schema generation.
       operationId: create_agent_turn_v1alpha_agents__agent_id__session__session_id__turn_post
-      parameters:
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Agent Id
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Session Id
-      - name: stream
-        in: query
-        required: false
-        schema:
-          type: boolean
-          default: false
-          title: Stream
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Body_create_agent_turn_v1alpha_agents__agent_id__session__session_id__turn_post'
+              $ref: '#/components/schemas/__main_____agents_agent_id_session_session_id_turn_Request'
+        required: true
       responses:
         '200':
           description: If stream=False, returns a Turn object.
@@ -524,17 +523,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Turn'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: agent_id'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: session_id'
   /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}:
     get:
       tags:
@@ -585,39 +597,14 @@ paths:
       tags:
       - V1Alpha
       summary: Resume Agent Turn
-      description: Query endpoint for proper schema generation.
+      description: Typed endpoint for proper schema generation.
       operationId: resume_agent_turn_v1alpha_agents__agent_id__session__session_id__turn__turn_id__resume_post
-      parameters:
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Agent Id
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Session Id
-      - name: turn_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Turn Id
-      - name: stream
-        in: query
-        required: false
-        schema:
-          type: boolean
-          default: false
-          title: Stream
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ToolResponse'
+              $ref: '#/components/schemas/__main_____agents_agent_id_session_session_id_turn_turn_id_resume_Request'
+        required: true
       responses:
         '200':
           description: A Turn object if stream is False, otherwise an AsyncIterator
@@ -627,17 +614,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/Turn'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: agent_id'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: session_id'
+      - name: turn_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: turn_id'
   /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}:
     get:
       tags:
@@ -658,18 +664,18 @@ paths:
         schema:
           type: string
           title: Session Id
-      - name: turn_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Turn Id
       - name: step_id
         in: path
         required: true
         schema:
           type: string
           title: Step Id
+      - name: turn_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Turn Id
       responses:
         '200':
           description: An AgentStepResponse.
@@ -703,18 +709,18 @@ paths:
         schema:
           type: string
           title: Agent Id
-      - name: start_index
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Start Index
       - name: limit
         in: query
-        required: false
+        required: true
         schema:
           type: integer
           title: Limit
+      - name: start_index
+        in: query
+        required: true
+        schema:
+          type: integer
+          title: Start Index
       responses:
         '200':
           description: A PaginatedResponse.
@@ -813,6 +819,12 @@ paths:
         required: true
         schema:
           title: Kwargs
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: benchmark_id'
       responses:
         '200':
           description: Successful Response
@@ -895,6 +907,13 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: benchmark_id'
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs:
     post:
       tags:
@@ -927,6 +946,13 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: benchmark_id'
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     delete:
       tags:
@@ -945,6 +971,18 @@ paths:
         required: true
         schema:
           title: Kwargs
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: benchmark_id'
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: job_id'
       responses:
         '200':
           description: Successful Response
@@ -1045,33 +1083,14 @@ paths:
       tags:
       - V1Alpha
       summary: Rerank
-      description: Query endpoint for proper schema generation.
+      description: Typed endpoint for proper schema generation.
       operationId: rerank_v1alpha_inference_rerank_post
-      parameters:
-      - name: model
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Model
-      - name: query
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Query
-      - name: items
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Items
-      - name: max_num_results
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max Num Results
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_inference_rerank_Request'
+        required: true
       responses:
         '200':
           description: RerankResponse with indices sorted by relevance score (descending).
@@ -1080,17 +1099,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/RerankResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
   /v1alpha/post-training/job/artifacts:
     get:
       tags:
@@ -1101,7 +1120,7 @@ paths:
       parameters:
       - name: job_uuid
         in: query
-        required: false
+        required: true
         schema:
           type: string
           title: Job Uuid
@@ -1170,7 +1189,7 @@ paths:
       parameters:
       - name: job_uuid
         in: query
-        required: false
+        required: true
         schema:
           type: string
           title: Job Uuid
@@ -1305,59 +1324,41 @@ components:
     AgentConfig:
       properties:
         sampling_params:
-          anyOf:
-          - $ref: '#/components/schemas/SamplingParams'
-          - type: 'null'
+          $ref: '#/components/schemas/SamplingParams'
         input_shields:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
           title: Input Shields
+          items:
+            type: string
+          type: array
         output_shields:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
           title: Output Shields
+          items:
+            type: string
+          type: array
         toolgroups:
-          anyOf:
-          - items:
-              anyOf:
-              - type: string
-              - $ref: '#/components/schemas/AgentToolGroupWithArgs'
-            type: array
-          - type: 'null'
           title: Toolgroups
+          items:
+            anyOf:
+            - type: string
+            - $ref: '#/components/schemas/AgentToolGroupWithArgs'
+          type: array
         client_tools:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/ToolDef'
-            type: array
-          - type: 'null'
           title: Client Tools
+          items:
+            $ref: '#/components/schemas/ToolDef'
+          type: array
         tool_choice:
-          anyOf:
-          - $ref: '#/components/schemas/ToolChoice'
-          - type: 'null'
           deprecated: true
+          $ref: '#/components/schemas/ToolChoice'
         tool_prompt_format:
-          anyOf:
-          - $ref: '#/components/schemas/ToolPromptFormat'
-          - type: 'null'
           deprecated: true
+          $ref: '#/components/schemas/ToolPromptFormat'
         tool_config:
-          anyOf:
-          - $ref: '#/components/schemas/ToolConfig'
-          - type: 'null'
+          $ref: '#/components/schemas/ToolConfig'
         max_infer_iters:
-          anyOf:
-          - type: integer
-          - type: 'null'
           title: Max Infer Iters
           default: 10
+          type: integer
         model:
           type: string
           title: Model
@@ -1365,28 +1366,22 @@ components:
           type: string
           title: Instructions
         name:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Name
+          type: string
         enable_session_persistence:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Enable Session Persistence
           default: false
+          type: boolean
         response_format:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/JsonSchemaResponseFormat'
-            - $ref: '#/components/schemas/GrammarResponseFormat'
-            discriminator:
-              propertyName: type
-              mapping:
-                grammar: '#/components/schemas/GrammarResponseFormat'
-                json_schema: '#/components/schemas/JsonSchemaResponseFormat'
-          - type: 'null'
           title: Response Format
+          oneOf:
+          - $ref: '#/components/schemas/JsonSchemaResponseFormat'
+          - $ref: '#/components/schemas/GrammarResponseFormat'
+          discriminator:
+            propertyName: type
+            mapping:
+              grammar: '#/components/schemas/GrammarResponseFormat'
+              json_schema: '#/components/schemas/JsonSchemaResponseFormat'
       type: object
       required:
       - model
@@ -1418,6 +1413,19 @@ components:
 
 
         :param agent_id: Unique identifier for the created agent'
+    AgentSessionCreateResponse:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+      type: object
+      required:
+      - session_id
+      title: AgentSessionCreateResponse
+      description: 'Response returned when creating a new agent session.
+
+
+        :param session_id: Unique identifier for the created session'
     AgentToolGroupWithArgs:
       properties:
         name:
@@ -1452,6 +1460,45 @@ components:
         :cvar categorical_count: Count occurrences of categorical values
 
         :cvar accuracy: Calculate accuracy as the proportion of correct answers'
+    Attachment-Output:
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          - $ref: '#/components/schemas/URL'
+          title: Content
+        mime_type:
+          type: string
+          title: Mime Type
+      type: object
+      required:
+      - content
+      - mime_type
+      title: Attachment
+      description: 'An attachment to an agent turn.
+
+
+        :param content: The content of the attachment.
+
+        :param mime_type: The MIME type of the attachment.'
     BasicScoringFnParams:
       properties:
         type:
@@ -1480,11 +1527,9 @@ components:
           title: Identifier
           description: Unique identifier for this resource in llama stack
         provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Provider Resource Id
           description: Unique identifier for this resource in the provider
+          type: string
         provider_id:
           type: string
           title: Provider Id
@@ -1554,12 +1599,10 @@ components:
           description: Map between scoring function id and parameters for each scoring
             function you want to run
         num_examples:
-          anyOf:
-          - type: integer
-          - type: 'null'
           title: Num Examples
           description: Number of examples to evaluate (useful for testing), if not
             provided, all examples in the dataset will be evaluated
+          type: integer
       type: object
       required:
       - eval_candidate
@@ -1574,21 +1617,6 @@ components:
 
         :param num_examples: (Optional) The number of examples to evaluate. If not
         provided, all examples in the dataset will be evaluated'
-    Body_create_agent_turn_v1alpha_agents__agent_id__session__session_id__turn_post:
-      properties:
-        messages:
-          $ref: '#/components/schemas/UserMessage'
-        documents:
-          $ref: '#/components/schemas/Document'
-        toolgroups:
-          anyOf:
-          - type: string
-          - $ref: '#/components/schemas/AgentToolGroupWithArgs'
-          title: Toolgroups
-        tool_config:
-          $ref: '#/components/schemas/ToolConfig'
-      type: object
-      title: Body_create_agent_turn_v1alpha_agents__agent_id__session__session_id__turn_post
     BuiltinTool:
       type: string
       enum:
@@ -1597,6 +1625,57 @@ components:
       - photogen
       - code_interpreter
       title: BuiltinTool
+    CompletionMessage-Output:
+      properties:
+        role:
+          type: string
+          const: assistant
+          title: Role
+          default: assistant
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          title: Content
+        stop_reason:
+          $ref: '#/components/schemas/StopReason'
+        tool_calls:
+          title: Tool Calls
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          type: array
+      type: object
+      required:
+      - content
+      - stop_reason
+      title: CompletionMessage
+      description: "A message containing the model's (assistant) response in a chat\
+        \ conversation.\n\n:param role: Must be \"assistant\" to identify this as\
+        \ the model's response\n:param content: The content of the model's response\n\
+        :param stop_reason: Reason why the model stopped generating. Options are:\n\
+        \    - `StopReason.end_of_turn`: The model finished generating the entire\
+        \ response.\n    - `StopReason.end_of_message`: The model finished generating\
+        \ but generated a partial response -- usually, a tool call. The user may call\
+        \ the tool and continue the conversation with the tool's response.\n    -\
+        \ `StopReason.out_of_tokens`: The model ran out of token budget.\n:param tool_calls:\
+        \ List of tool calls. Each tool call is a ToolCall object."
     DPOAlignmentConfig:
       properties:
         beta:
@@ -1637,22 +1716,16 @@ components:
         data_format:
           $ref: '#/components/schemas/DatasetFormat'
         validation_dataset_id:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Validation Dataset Id
+          type: string
         packed:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Packed
           default: false
+          type: boolean
         train_on_input:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Train On Input
           default: false
+          type: boolean
       type: object
       required:
       - dataset_id
@@ -1686,11 +1759,9 @@ components:
           title: Identifier
           description: Unique identifier for this resource in llama stack
         provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Provider Resource Id
           description: Unique identifier for this resource in the provider
+          type: string
         provider_id:
           type: string
           title: Provider Id
@@ -1767,21 +1838,21 @@ components:
           anyOf:
           - type: string
           - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/ImageContentItem-Input'
             - $ref: '#/components/schemas/TextContentItem'
             discriminator:
               propertyName: type
               mapping:
-                image: '#/components/schemas/ImageContentItem'
+                image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
           - items:
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/ImageContentItem-Input'
               - $ref: '#/components/schemas/TextContentItem'
               discriminator:
                 propertyName: type
                 mapping:
-                  image: '#/components/schemas/ImageContentItem'
+                  image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
             type: array
           - $ref: '#/components/schemas/URL'
@@ -1803,29 +1874,21 @@ components:
     EfficiencyConfig:
       properties:
         enable_activation_checkpointing:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Enable Activation Checkpointing
           default: false
+          type: boolean
         enable_activation_offloading:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Enable Activation Offloading
           default: false
+          type: boolean
         memory_efficient_fsdp_wrap:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Memory Efficient Fsdp Wrap
           default: false
+          type: boolean
         fsdp_cpu_offload:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Fsdp Cpu Offload
           default: false
+          type: boolean
       type: object
       title: EfficiencyConfig
       description: 'Configuration for memory and compute efficiency optimizations.
@@ -1901,7 +1964,7 @@ components:
 
 
         :param type: Must be "greedy" to identify this sampling strategy'
-    ImageContentItem:
+    ImageContentItem-Input:
       properties:
         type:
           type: string
@@ -1920,6 +1983,58 @@ components:
         :param type: Discriminator type of the content item. Always "image"
 
         :param image: Image as a base64 encoded string or an URL'
+    ImageContentItem-Output:
+      properties:
+        type:
+          type: string
+          const: image
+          title: Type
+          default: image
+        image:
+          $ref: '#/components/schemas/_URLOrData'
+      type: object
+      required:
+      - image
+      title: ImageContentItem
+      description: 'A image content item
+
+
+        :param type: Discriminator type of the content item. Always "image"
+
+        :param image: Image as a base64 encoded string or an URL'
+    InferenceStep-Output:
+      properties:
+        turn_id:
+          type: string
+          title: Turn Id
+        step_id:
+          type: string
+          title: Step Id
+        started_at:
+          title: Started At
+          type: string
+          format: date-time
+        completed_at:
+          title: Completed At
+          type: string
+          format: date-time
+        step_type:
+          type: string
+          const: inference
+          title: Step Type
+          default: inference
+        model_response:
+          $ref: '#/components/schemas/CompletionMessage-Output'
+      type: object
+      required:
+      - turn_id
+      - step_id
+      - model_response
+      title: InferenceStep
+      description: 'An inference step in an agent turn.
+
+
+        :param model_response: The response from the LLM.'
     Job:
       properties:
         job_id:
@@ -1991,10 +2106,8 @@ components:
           type: string
           title: Judge Model
         prompt_template:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Prompt Template
+          type: string
         judge_score_regexes:
           items:
             type: string
@@ -2060,6 +2173,66 @@ components:
       required:
       - data
       title: ListPostTrainingJobsResponse
+    MemoryRetrievalStep-Output:
+      properties:
+        turn_id:
+          type: string
+          title: Turn Id
+        step_id:
+          type: string
+          title: Step Id
+        started_at:
+          title: Started At
+          type: string
+          format: date-time
+        completed_at:
+          title: Completed At
+          type: string
+          format: date-time
+        step_type:
+          type: string
+          const: memory_retrieval
+          title: Step Type
+          default: memory_retrieval
+        vector_store_ids:
+          type: string
+          title: Vector Store Ids
+        inserted_context:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          title: Inserted Context
+      type: object
+      required:
+      - turn_id
+      - step_id
+      - vector_store_ids
+      - inserted_context
+      title: MemoryRetrievalStep
+      description: 'A memory retrieval step in an agent turn.
+
+
+        :param vector_store_ids: The IDs of the vector databases to retrieve context
+        from.
+
+        :param inserted_context: The context retrieved from the vector databases.'
     ModelCandidate:
       properties:
         type:
@@ -2073,9 +2246,7 @@ components:
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
         system_message:
-          anyOf:
-          - $ref: '#/components/schemas/SystemMessage'
-          - type: 'null'
+          $ref: '#/components/schemas/SystemMessage'
       type: object
       required:
       - model
@@ -2172,6 +2343,41 @@ components:
 
         :param aggregation_functions: Aggregation functions to apply to the scores
         of each row'
+    RerankData:
+      properties:
+        index:
+          type: integer
+          title: Index
+        relevance_score:
+          type: number
+          title: Relevance Score
+      type: object
+      required:
+      - index
+      - relevance_score
+      title: RerankData
+      description: 'A single rerank result from a reranking response.
+
+
+        :param index: The original index of the document in the input list
+
+        :param relevance_score: The relevance score from the model output. Values
+        are inverted when applicable so that higher scores indicate greater relevance.'
+    RerankResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/RerankData'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: RerankResponse
+      description: 'Response from a reranking request.
+
+
+        :param data: List of rerank result objects, sorted by relevance score (descending)'
     RowsDataSource:
       properties:
         type:
@@ -2193,6 +2399,30 @@ components:
         \ in rows. E.g.\n    - [\n        {\"messages\": [{\"role\": \"user\", \"\
         content\": \"Hello, world!\"}, {\"role\": \"assistant\", \"content\": \"Hello,\
         \ world!\"}]}\n    ]"
+    SafetyViolation:
+      properties:
+        violation_level:
+          $ref: '#/components/schemas/ViolationLevel'
+        user_message:
+          title: User Message
+          type: string
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+      type: object
+      required:
+      - violation_level
+      title: SafetyViolation
+      description: 'Details of a safety violation detected by content moderation.
+
+
+        :param violation_level: Severity level of the violation
+
+        :param user_message: (Optional) Message to convey to the user about the violation
+
+        :param metadata: Additional metadata including specific violation codes for
+        debugging and telemetry'
     SamplingParams:
       properties:
         strategy:
@@ -2208,23 +2438,17 @@ components:
               top_k: '#/components/schemas/TopKSamplingStrategy'
               top_p: '#/components/schemas/TopPSamplingStrategy'
         max_tokens:
-          anyOf:
-          - type: integer
-          - type: 'null'
           title: Max Tokens
+          type: integer
         repetition_penalty:
-          anyOf:
-          - type: number
-          - type: 'null'
           title: Repetition Penalty
           default: 1.0
+          type: number
         stop:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
           title: Stop
+          items:
+            type: string
+          type: array
       type: object
       title: SamplingParams
       description: "Sampling parameters.\n\n:param strategy: The sampling strategy.\n\
@@ -2259,6 +2483,46 @@ components:
         name to value.
 
         :param aggregated_results: Map of metric name to aggregated value'
+    ShieldCallStep-Output:
+      properties:
+        turn_id:
+          type: string
+          title: Turn Id
+        step_id:
+          type: string
+          title: Step Id
+        started_at:
+          title: Started At
+          type: string
+          format: date-time
+        completed_at:
+          title: Completed At
+          type: string
+          format: date-time
+        step_type:
+          type: string
+          const: shield_call
+          title: Step Type
+          default: shield_call
+        violation:
+          $ref: '#/components/schemas/SafetyViolation'
+      type: object
+      required:
+      - turn_id
+      - step_id
+      - violation
+      title: ShieldCallStep
+      description: 'A shield call step in an agent turn.
+
+
+        :param violation: The violation from the shield call.'
+    StopReason:
+      type: string
+      enum:
+      - end_of_turn
+      - end_of_message
+      - out_of_tokens
+      title: StopReason
     SystemMessage:
       properties:
         role:
@@ -2270,21 +2534,21 @@ components:
           anyOf:
           - type: string
           - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/ImageContentItem-Input'
             - $ref: '#/components/schemas/TextContentItem'
             discriminator:
               propertyName: type
               mapping:
-                image: '#/components/schemas/ImageContentItem'
+                image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
           - items:
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/ImageContentItem-Input'
               - $ref: '#/components/schemas/TextContentItem'
               discriminator:
                 propertyName: type
                 mapping:
-                  image: '#/components/schemas/ImageContentItem'
+                  image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
             type: array
           title: Content
@@ -2332,6 +2596,25 @@ components:
         :param type: Discriminator type of the content item. Always "text"
 
         :param text: Text content'
+    ToolCall:
+      properties:
+        call_id:
+          type: string
+          title: Call Id
+        tool_name:
+          anyOf:
+          - $ref: '#/components/schemas/BuiltinTool'
+          - type: string
+          title: Tool Name
+        arguments:
+          type: string
+          title: Arguments
+      type: object
+      required:
+      - call_id
+      - tool_name
+      - arguments
+      title: ToolCall
     ToolChoice:
       type: string
       enum:
@@ -2355,18 +2638,13 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ToolChoice'
           - type: string
-          - type: 'null'
           title: Tool Choice
           default: auto
         tool_prompt_format:
-          anyOf:
-          - $ref: '#/components/schemas/ToolPromptFormat'
-          - type: 'null'
+          $ref: '#/components/schemas/ToolPromptFormat'
         system_message_behavior:
-          anyOf:
-          - $ref: '#/components/schemas/SystemMessageBehavior'
-          - type: 'null'
           default: append
+          $ref: '#/components/schemas/SystemMessageBehavior'
       type: object
       title: ToolConfig
       description: "Configuration for tool use.\n\n:param tool_choice: (Optional)\
@@ -2387,36 +2665,26 @@ components:
     ToolDef:
       properties:
         toolgroup_id:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Toolgroup Id
+          type: string
         name:
           type: string
           title: Name
         description:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Description
+          type: string
         input_schema:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
           title: Input Schema
+          additionalProperties: true
+          type: object
         output_schema:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
           title: Output Schema
+          additionalProperties: true
+          type: object
         metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
           title: Metadata
+          additionalProperties: true
+          type: object
       type: object
       required:
       - name
@@ -2436,6 +2704,50 @@ components:
         :param metadata: (Optional) Additional metadata about the tool
 
         :param toolgroup_id: (Optional) ID of the tool group this tool belongs to'
+    ToolExecutionStep-Output:
+      properties:
+        turn_id:
+          type: string
+          title: Turn Id
+        step_id:
+          type: string
+          title: Step Id
+        started_at:
+          title: Started At
+          type: string
+          format: date-time
+        completed_at:
+          title: Completed At
+          type: string
+          format: date-time
+        step_type:
+          type: string
+          const: tool_execution
+          title: Step Type
+          default: tool_execution
+        tool_calls:
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          type: array
+          title: Tool Calls
+        tool_responses:
+          items:
+            $ref: '#/components/schemas/ToolResponse-Output'
+          type: array
+          title: Tool Responses
+      type: object
+      required:
+      - turn_id
+      - step_id
+      - tool_calls
+      - tool_responses
+      title: ToolExecutionStep
+      description: 'A tool execution step in an agent turn.
+
+
+        :param tool_calls: The tool calls to execute.
+
+        :param tool_responses: The tool responses from the tool calls.'
     ToolPromptFormat:
       type: string
       enum:
@@ -2453,7 +2765,7 @@ components:
         \ that can be\n    evaluated to a list. Each element in the list is a function\
         \ call. Example:\n    [\"function_name(param1, param2)\", \"function_name(param1,\
         \ param2)\"]"
-    ToolResponse:
+    ToolResponse-Input:
       properties:
         call_id:
           type: string
@@ -2467,30 +2779,28 @@ components:
           anyOf:
           - type: string
           - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/ImageContentItem-Input'
             - $ref: '#/components/schemas/TextContentItem'
             discriminator:
               propertyName: type
               mapping:
-                image: '#/components/schemas/ImageContentItem'
+                image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
           - items:
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/ImageContentItem-Input'
               - $ref: '#/components/schemas/TextContentItem'
               discriminator:
                 propertyName: type
                 mapping:
-                  image: '#/components/schemas/ImageContentItem'
+                  image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
             type: array
           title: Content
         metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
           title: Metadata
+          additionalProperties: true
+          type: object
       type: object
       required:
       - call_id
@@ -2507,6 +2817,103 @@ components:
         :param content: The response content from the tool
 
         :param metadata: (Optional) Additional metadata about the tool response'
+    ToolResponse-Output:
+      properties:
+        call_id:
+          type: string
+          title: Call Id
+        tool_name:
+          anyOf:
+          - $ref: '#/components/schemas/BuiltinTool'
+          - type: string
+          title: Tool Name
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          title: Content
+        metadata:
+          title: Metadata
+          additionalProperties: true
+          type: object
+      type: object
+      required:
+      - call_id
+      - tool_name
+      - content
+      title: ToolResponse
+      description: 'Response from a tool invocation.
+
+
+        :param call_id: Unique identifier for the tool call this response is for
+
+        :param tool_name: Name of the tool that was invoked
+
+        :param content: The response content from the tool
+
+        :param metadata: (Optional) Additional metadata about the tool response'
+    ToolResponseMessage-Output:
+      properties:
+        role:
+          type: string
+          const: tool
+          title: Role
+          default: tool
+        call_id:
+          type: string
+          title: Call Id
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          title: Content
+      type: object
+      required:
+      - call_id
+      - content
+      title: ToolResponseMessage
+      description: 'A message representing the result of a tool invocation.
+
+
+        :param role: Must be "tool" to identify this as a tool response
+
+        :param call_id: Unique identifier for the tool call this response is for
+
+        :param content: The response content from the tool'
     TopKSamplingStrategy:
       properties:
         type:
@@ -2538,17 +2945,13 @@ components:
           title: Type
           default: top_p
         temperature:
-          anyOf:
-          - type: number
-            minimum: 0.0
-          - type: 'null'
           title: Temperature
+          type: number
+          minimum: 0.0
         top_p:
-          anyOf:
-          - type: number
-          - type: 'null'
           title: Top P
           default: 0.95
+          type: number
       type: object
       required:
       - temperature
@@ -2578,29 +2981,19 @@ components:
           title: Gradient Accumulation Steps
           default: 1
         max_validation_steps:
-          anyOf:
-          - type: integer
-          - type: 'null'
           title: Max Validation Steps
           default: 1
+          type: integer
         data_config:
-          anyOf:
-          - $ref: '#/components/schemas/DataConfig'
-          - type: 'null'
+          $ref: '#/components/schemas/DataConfig'
         optimizer_config:
-          anyOf:
-          - $ref: '#/components/schemas/OptimizerConfig'
-          - type: 'null'
+          $ref: '#/components/schemas/OptimizerConfig'
         efficiency_config:
-          anyOf:
-          - $ref: '#/components/schemas/EfficiencyConfig'
-          - type: 'null'
+          $ref: '#/components/schemas/EfficiencyConfig'
         dtype:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Dtype
           default: bf16
+          type: string
       type: object
       required:
       - n_epochs
@@ -2626,6 +3019,81 @@ components:
         optimizations
 
         :param dtype: (Optional) Data type for model parameters (bf16, fp16, fp32)'
+    Turn:
+      properties:
+        turn_id:
+          type: string
+          title: Turn Id
+        session_id:
+          type: string
+          title: Session Id
+        input_messages:
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/UserMessage-Output'
+            - $ref: '#/components/schemas/ToolResponseMessage-Output'
+          type: array
+          title: Input Messages
+        steps:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/InferenceStep-Output'
+            - $ref: '#/components/schemas/ToolExecutionStep-Output'
+            - $ref: '#/components/schemas/ShieldCallStep-Output'
+            - $ref: '#/components/schemas/MemoryRetrievalStep-Output'
+            discriminator:
+              propertyName: step_type
+              mapping:
+                inference: '#/components/schemas/InferenceStep-Output'
+                memory_retrieval: '#/components/schemas/MemoryRetrievalStep-Output'
+                shield_call: '#/components/schemas/ShieldCallStep-Output'
+                tool_execution: '#/components/schemas/ToolExecutionStep-Output'
+          type: array
+          title: Steps
+        output_message:
+          $ref: '#/components/schemas/CompletionMessage-Output'
+        output_attachments:
+          title: Output Attachments
+          items:
+            $ref: '#/components/schemas/Attachment-Output'
+          type: array
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        completed_at:
+          title: Completed At
+          type: string
+          format: date-time
+      type: object
+      required:
+      - turn_id
+      - session_id
+      - input_messages
+      - steps
+      - output_message
+      - started_at
+      title: Turn
+      description: 'A single turn in an interaction with an Agentic System.
+
+
+        :param turn_id: Unique identifier for the turn within a session
+
+        :param session_id: Unique identifier for the conversation session
+
+        :param input_messages: List of messages that initiated this turn
+
+        :param steps: Ordered list of processing steps executed during this turn
+
+        :param output_message: The model''s generated response containing content
+        and metadata
+
+        :param output_attachments: (Optional) Files or media attached to the agent''s
+        response
+
+        :param started_at: Timestamp when the turn began
+
+        :param completed_at: (Optional) Timestamp when the turn finished, if completed'
     URIDataSource:
       properties:
         type:
@@ -2656,7 +3124,7 @@ components:
 
 
         :param uri: The URL string pointing to the resource'
-    UserMessage:
+    UserMessage-Input:
       properties:
         role:
           type: string
@@ -2667,21 +3135,21 @@ components:
           anyOf:
           - type: string
           - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/ImageContentItem-Input'
             - $ref: '#/components/schemas/TextContentItem'
             discriminator:
               propertyName: type
               mapping:
-                image: '#/components/schemas/ImageContentItem'
+                image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
           - items:
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/ImageContentItem-Input'
               - $ref: '#/components/schemas/TextContentItem'
               discriminator:
                 propertyName: type
                 mapping:
-                  image: '#/components/schemas/ImageContentItem'
+                  image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
             type: array
           title: Content
@@ -2689,24 +3157,23 @@ components:
           anyOf:
           - type: string
           - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/ImageContentItem-Input'
             - $ref: '#/components/schemas/TextContentItem'
             discriminator:
               propertyName: type
               mapping:
-                image: '#/components/schemas/ImageContentItem'
+                image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
           - items:
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/ImageContentItem-Input'
               - $ref: '#/components/schemas/TextContentItem'
               discriminator:
                 propertyName: type
                 mapping:
-                  image: '#/components/schemas/ImageContentItem'
+                  image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
             type: array
-          - type: 'null'
           title: Context
       type: object
       required:
@@ -2722,18 +3189,94 @@ components:
 
         :param context: (Optional) This field is used internally by Llama Stack to
         pass RAG context. This field may be removed in the API in the future.'
+    UserMessage-Output:
+      properties:
+        role:
+          type: string
+          const: user
+          title: Role
+          default: user
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          title: Content
+        context:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          title: Context
+      type: object
+      required:
+      - content
+      title: UserMessage
+      description: 'A message from the user in a chat conversation.
+
+
+        :param role: Must be "user" to identify this as a user message
+
+        :param content: The content of the message, which can include text and other
+        media
+
+        :param context: (Optional) This field is used internally by Llama Stack to
+        pass RAG context. This field may be removed in the API in the future.'
+    ViolationLevel:
+      type: string
+      enum:
+      - info
+      - warn
+      - error
+      title: ViolationLevel
+      description: 'Severity level of a safety violation.
+
+
+        :cvar INFO: Informational level violation that does not require action
+
+        :cvar WARN: Warning level violation that suggests caution but allows continuation
+
+        :cvar ERROR: Error level violation that requires blocking or intervention'
     _URLOrData:
       properties:
         url:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-          - type: 'null'
+          $ref: '#/components/schemas/URL'
         data:
-          anyOf:
-          - type: string
-          - type: 'null'
           contentEncoding: base64
           title: Data
+          type: string
       type: object
       title: _URLOrData
       description: 'A URL or a base64 encoded string
@@ -2743,6 +3286,112 @@ components:
         Note that URL could have length limits.
 
         :param data: base64 encoded image data as string'
+    __main_____agents_agent_id_session_Request:
+      properties:
+        agent_id:
+          type: string
+          title: Agent Id
+        session_name:
+          type: string
+          title: Session Name
+      type: object
+      required:
+      - agent_id
+      - session_name
+      title: _agents_agent_id_session_Request
+    __main_____agents_agent_id_session_session_id_turn_Request:
+      properties:
+        agent_id:
+          type: string
+          title: Agent Id
+        session_id:
+          type: string
+          title: Session Id
+        messages:
+          $ref: '#/components/schemas/UserMessage-Input'
+        stream:
+          type: boolean
+          title: Stream
+          default: false
+        documents:
+          $ref: '#/components/schemas/Document'
+        toolgroups:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/AgentToolGroupWithArgs'
+          title: Toolgroups
+        tool_config:
+          $ref: '#/components/schemas/ToolConfig'
+      type: object
+      required:
+      - agent_id
+      - session_id
+      - messages
+      - documents
+      - toolgroups
+      - tool_config
+      title: _agents_agent_id_session_session_id_turn_Request
+    __main_____agents_agent_id_session_session_id_turn_turn_id_resume_Request:
+      properties:
+        agent_id:
+          type: string
+          title: Agent Id
+        session_id:
+          type: string
+          title: Session Id
+        turn_id:
+          type: string
+          title: Turn Id
+        tool_responses:
+          $ref: '#/components/schemas/ToolResponse-Input'
+        stream:
+          type: boolean
+          title: Stream
+          default: false
+      type: object
+      required:
+      - agent_id
+      - session_id
+      - turn_id
+      - tool_responses
+      title: _agents_agent_id_session_session_id_turn_turn_id_resume_Request
+    __main_____datasets_Request:
+      properties:
+        purpose:
+          $ref: '#/components/schemas/DatasetPurpose'
+        metadata:
+          type: string
+          title: Metadata
+        dataset_id:
+          type: string
+          title: Dataset Id
+      type: object
+      required:
+      - purpose
+      - metadata
+      - dataset_id
+      title: _datasets_Request
+    _inference_rerank_Request:
+      properties:
+        model:
+          type: string
+          title: Model
+        query:
+          type: string
+          title: Query
+        items:
+          type: string
+          title: Items
+        max_num_results:
+          type: integer
+          title: Max Num Results
+      type: object
+      required:
+      - model
+      - query
+      - items
+      - max_num_results
+      title: _inference_rerank_Request
     Error:
       description: 'Error response from the API. Roughly follows RFC 7807.
 
@@ -2767,16 +3416,576 @@ components:
           title: Detail
           type: string
         instance:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: null
           title: Instance
+          type: string
+          nullable: true
       required:
       - status
       - title
       - detail
       title: Error
+      type: object
+    Agent:
+      description: 'An agent instance with configuration and metadata.
+
+
+        :param agent_id: Unique identifier for the agent
+
+        :param agent_config: Configuration settings for the agent
+
+        :param created_at: Timestamp when the agent was created'
+      properties:
+        agent_id:
+          title: Agent Id
+          type: string
+        agent_config:
+          $ref: '#/components/schemas/AgentConfig'
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+      required:
+      - agent_id
+      - agent_config
+      - created_at
+      title: Agent
+      type: object
+    AgentStepResponse:
+      description: 'Response containing details of a specific agent step.
+
+
+        :param step: The complete step data and execution details'
+      properties:
+        step:
+          discriminator:
+            mapping:
+              inference: '#/$defs/InferenceStep'
+              memory_retrieval: '#/$defs/MemoryRetrievalStep'
+              shield_call: '#/$defs/ShieldCallStep'
+              tool_execution: '#/$defs/ToolExecutionStep'
+            propertyName: step_type
+          oneOf:
+          - $ref: '#/components/schemas/InferenceStep'
+          - $ref: '#/components/schemas/ToolExecutionStep'
+          - $ref: '#/components/schemas/ShieldCallStep'
+          - $ref: '#/components/schemas/MemoryRetrievalStep'
+          title: Step
+      required:
+      - step
+      title: AgentStepResponse
+      type: object
+    CompletionMessage:
+      description: "A message containing the model's (assistant) response in a chat\
+        \ conversation.\n\n:param role: Must be \"assistant\" to identify this as\
+        \ the model's response\n:param content: The content of the model's response\n\
+        :param stop_reason: Reason why the model stopped generating. Options are:\n\
+        \    - `StopReason.end_of_turn`: The model finished generating the entire\
+        \ response.\n    - `StopReason.end_of_message`: The model finished generating\
+        \ but generated a partial response -- usually, a tool call. The user may call\
+        \ the tool and continue the conversation with the tool's response.\n    -\
+        \ `StopReason.out_of_tokens`: The model ran out of token budget.\n:param tool_calls:\
+        \ List of tool calls. Each tool call is a ToolCall object."
+      properties:
+        role:
+          const: assistant
+          default: assistant
+          title: Role
+          type: string
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/$defs/ImageContentItem'
+                text: '#/$defs/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/TextContentItem'
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/$defs/ImageContentItem'
+                  text: '#/$defs/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/TextContentItem'
+            type: array
+          title: Content
+        stop_reason:
+          $ref: '#/components/schemas/StopReason'
+        tool_calls:
+          title: Tool Calls
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          type: array
+      required:
+      - content
+      - stop_reason
+      title: CompletionMessage
+      type: object
+    InferenceStep:
+      description: 'An inference step in an agent turn.
+
+
+        :param model_response: The response from the LLM.'
+      properties:
+        turn_id:
+          title: Turn Id
+          type: string
+        step_id:
+          title: Step Id
+          type: string
+        started_at:
+          title: Started At
+          format: date-time
+          type: string
+          nullable: true
+        completed_at:
+          title: Completed At
+          format: date-time
+          type: string
+          nullable: true
+        step_type:
+          const: inference
+          default: inference
+          title: Step Type
+          type: string
+        model_response:
+          $ref: '#/components/schemas/CompletionMessage'
+      required:
+      - turn_id
+      - step_id
+      - model_response
+      title: InferenceStep
+      type: object
+    MemoryRetrievalStep:
+      description: 'A memory retrieval step in an agent turn.
+
+
+        :param vector_store_ids: The IDs of the vector databases to retrieve context
+        from.
+
+        :param inserted_context: The context retrieved from the vector databases.'
+      properties:
+        turn_id:
+          title: Turn Id
+          type: string
+        step_id:
+          title: Step Id
+          type: string
+        started_at:
+          title: Started At
+          format: date-time
+          type: string
+          nullable: true
+        completed_at:
+          title: Completed At
+          format: date-time
+          type: string
+          nullable: true
+        step_type:
+          const: memory_retrieval
+          default: memory_retrieval
+          title: Step Type
+          type: string
+        vector_store_ids:
+          title: Vector Store Ids
+          type: string
+        inserted_context:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/$defs/ImageContentItem'
+                text: '#/$defs/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/TextContentItem'
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/$defs/ImageContentItem'
+                  text: '#/$defs/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/TextContentItem'
+            type: array
+          title: Inserted Context
+      required:
+      - turn_id
+      - step_id
+      - vector_store_ids
+      - inserted_context
+      title: MemoryRetrievalStep
+      type: object
+    PaginatedResponse:
+      description: 'A generic paginated response that follows a simple format.
+
+
+        :param data: The list of items for the current page
+
+        :param has_more: Whether there are more items available after this set
+
+        :param url: The URL for accessing this list'
+      properties:
+        data:
+          items:
+            additionalProperties: true
+            type: object
+          title: Data
+          type: array
+        has_more:
+          title: Has More
+          type: boolean
+        url:
+          title: Url
+          type: string
+          nullable: true
+      required:
+      - data
+      - has_more
+      title: PaginatedResponse
+      type: object
+    Session:
+      description: 'A single session of an interaction with an Agentic System.
+
+
+        :param session_id: Unique identifier for the conversation session
+
+        :param session_name: Human-readable name for the session
+
+        :param turns: List of all turns that have occurred in this session
+
+        :param started_at: Timestamp when the session was created'
+      properties:
+        session_id:
+          title: Session Id
+          type: string
+        session_name:
+          title: Session Name
+          type: string
+        turns:
+          items:
+            $ref: '#/components/schemas/Turn'
+          title: Turns
+          type: array
+        started_at:
+          format: date-time
+          title: Started At
+          type: string
+      required:
+      - session_id
+      - session_name
+      - turns
+      - started_at
+      title: Session
+      type: object
+    ShieldCallStep:
+      description: 'A shield call step in an agent turn.
+
+
+        :param violation: The violation from the shield call.'
+      properties:
+        turn_id:
+          title: Turn Id
+          type: string
+        step_id:
+          title: Step Id
+          type: string
+        started_at:
+          title: Started At
+          format: date-time
+          type: string
+          nullable: true
+        completed_at:
+          title: Completed At
+          format: date-time
+          type: string
+          nullable: true
+        step_type:
+          const: shield_call
+          default: shield_call
+          title: Step Type
+          type: string
+        violation:
+          $ref: '#/components/schemas/SafetyViolation'
+      required:
+      - turn_id
+      - step_id
+      - violation
+      title: ShieldCallStep
+      type: object
+    ToolExecutionStep:
+      description: 'A tool execution step in an agent turn.
+
+
+        :param tool_calls: The tool calls to execute.
+
+        :param tool_responses: The tool responses from the tool calls.'
+      properties:
+        turn_id:
+          title: Turn Id
+          type: string
+        step_id:
+          title: Step Id
+          type: string
+        started_at:
+          title: Started At
+          format: date-time
+          type: string
+          nullable: true
+        completed_at:
+          title: Completed At
+          format: date-time
+          type: string
+          nullable: true
+        step_type:
+          const: tool_execution
+          default: tool_execution
+          title: Step Type
+          type: string
+        tool_calls:
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          title: Tool Calls
+          type: array
+        tool_responses:
+          items:
+            $ref: '#/components/schemas/ToolResponse'
+          title: Tool Responses
+          type: array
+      required:
+      - turn_id
+      - step_id
+      - tool_calls
+      - tool_responses
+      title: ToolExecutionStep
+      type: object
+    ToolResponse:
+      description: 'Response from a tool invocation.
+
+
+        :param call_id: Unique identifier for the tool call this response is for
+
+        :param tool_name: Name of the tool that was invoked
+
+        :param content: The response content from the tool
+
+        :param metadata: (Optional) Additional metadata about the tool response'
+      properties:
+        call_id:
+          title: Call Id
+          type: string
+        tool_name:
+          anyOf:
+          - $ref: '#/components/schemas/BuiltinTool'
+          - type: string
+          title: Tool Name
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/$defs/ImageContentItem'
+                text: '#/$defs/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+            - $ref: '#/components/schemas/TextContentItem'
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/$defs/ImageContentItem'
+                  text: '#/$defs/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+              - $ref: '#/components/schemas/TextContentItem'
+            type: array
+          title: Content
+        metadata:
+          title: Metadata
+          additionalProperties: true
+          type: object
+          nullable: true
+      required:
+      - call_id
+      - tool_name
+      - content
+      title: ToolResponse
+      type: object
+    Checkpoint:
+      description: 'Checkpoint created during training runs.
+
+
+        :param identifier: Unique identifier for the checkpoint
+
+        :param created_at: Timestamp when the checkpoint was created
+
+        :param epoch: Training epoch when the checkpoint was saved
+
+        :param post_training_job_id: Identifier of the training job that created this
+        checkpoint
+
+        :param path: File system path where the checkpoint is stored
+
+        :param training_metrics: (Optional) Training metrics associated with this
+        checkpoint'
+      properties:
+        identifier:
+          title: Identifier
+          type: string
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        epoch:
+          title: Epoch
+          type: integer
+        post_training_job_id:
+          title: Post Training Job Id
+          type: string
+        path:
+          title: Path
+          type: string
+        training_metrics:
+          $ref: '#/components/schemas/PostTrainingMetric'
+          nullable: true
+      required:
+      - identifier
+      - created_at
+      - epoch
+      - post_training_job_id
+      - path
+      title: Checkpoint
+      type: object
+    PostTrainingJobArtifactsResponse:
+      description: 'Artifacts of a finetuning job.
+
+
+        :param job_uuid: Unique identifier for the training job
+
+        :param checkpoints: List of model checkpoints created during training'
+      properties:
+        job_uuid:
+          title: Job Uuid
+          type: string
+        checkpoints:
+          items:
+            $ref: '#/components/schemas/Checkpoint'
+          title: Checkpoints
+          type: array
+      required:
+      - job_uuid
+      title: PostTrainingJobArtifactsResponse
+      type: object
+    PostTrainingJobStatusResponse:
+      description: 'Status of a finetuning job.
+
+
+        :param job_uuid: Unique identifier for the training job
+
+        :param status: Current status of the training job
+
+        :param scheduled_at: (Optional) Timestamp when the job was scheduled
+
+        :param started_at: (Optional) Timestamp when the job execution began
+
+        :param completed_at: (Optional) Timestamp when the job finished, if completed
+
+        :param resources_allocated: (Optional) Information about computational resources
+        allocated to the job
+
+        :param checkpoints: List of model checkpoints created during training'
+      properties:
+        job_uuid:
+          title: Job Uuid
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        scheduled_at:
+          title: Scheduled At
+          format: date-time
+          type: string
+          nullable: true
+        started_at:
+          title: Started At
+          format: date-time
+          type: string
+          nullable: true
+        completed_at:
+          title: Completed At
+          format: date-time
+          type: string
+          nullable: true
+        resources_allocated:
+          title: Resources Allocated
+          additionalProperties: true
+          type: object
+          nullable: true
+        checkpoints:
+          items:
+            $ref: '#/components/schemas/Checkpoint'
+          title: Checkpoints
+          type: array
+      required:
+      - job_uuid
+      - status
+      title: PostTrainingJobStatusResponse
+      type: object
+    ImageContentItem:
+      description: 'A image content item
+
+
+        :param type: Discriminator type of the content item. Always "image"
+
+        :param image: Image as a base64 encoded string or an URL'
+      properties:
+        type:
+          const: image
+          default: image
+          title: Type
+          type: string
+        image:
+          $ref: '#/components/schemas/_URLOrData'
+      required:
+      - image
+      title: ImageContentItem
+      type: object
+    PostTrainingMetric:
+      description: 'Training metrics captured during post-training jobs.
+
+
+        :param epoch: Training epoch number
+
+        :param train_loss: Loss value on the training dataset
+
+        :param validation_loss: Loss value on the validation dataset
+
+        :param perplexity: Perplexity metric indicating model confidence'
+      properties:
+        epoch:
+          title: Epoch
+          type: integer
+        train_loss:
+          title: Train Loss
+          type: number
+        validation_loss:
+          title: Validation Loss
+          type: number
+        perplexity:
+          title: Perplexity
+          type: number
+      required:
+      - epoch
+      - train_loss
+      - validation_loss
+      - perplexity
+      title: PostTrainingMetric
       type: object
   responses:
     BadRequest400:
