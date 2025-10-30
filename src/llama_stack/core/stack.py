@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 
 from llama_stack.apis.agents import Agents
+from llama_stack.apis.batches import Batches
 from llama_stack.apis.benchmarks import Benchmarks
 from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.datasetio import DatasetIO
@@ -63,6 +64,7 @@ class LlamaStack(
     Providers,
     Inference,
     Agents,
+    Batches,
     Safety,
     SyntheticDataGeneration,
     Datasets,
