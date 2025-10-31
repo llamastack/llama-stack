@@ -7,9 +7,7 @@
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack_client import AsyncLlamaStackClient
-
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     Inference,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -19,7 +17,9 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack.apis.models import Model
+from llama_stack_api.apis.models import Model
+from llama_stack_client import AsyncLlamaStackClient
+
 from llama_stack.core.library_client import convert_pydantic_to_json_value
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 

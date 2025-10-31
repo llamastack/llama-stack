@@ -8,17 +8,16 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from llama_stack_api.apis.agents.agents import (
+    AgentConfig as Server__AgentConfig,
+)
+from llama_stack_api.apis.agents.agents import (
+    ToolChoice,
+)
 from llama_stack_client import AgentEventLogger
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted
 from llama_stack_client.types.shared_params.agent_config import AgentConfig, ToolConfig
-
-from llama_stack.apis.agents.agents import (
-    AgentConfig as Server__AgentConfig,
-)
-from llama_stack.apis.agents.agents import (
-    ToolChoice,
-)
 
 
 def text_message(content: str, *, role: str = "user") -> dict[str, Any]:

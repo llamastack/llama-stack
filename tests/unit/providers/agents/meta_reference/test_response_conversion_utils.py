@@ -6,8 +6,7 @@
 
 
 import pytest
-
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.apis.agents.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseInputMessageContentImage,
@@ -20,7 +19,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseText,
     OpenAIResponseTextFormat,
 )
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
@@ -35,6 +34,7 @@ from llama_stack.apis.inference import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
 )
+
 from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
     _extract_citations_from_text,
     convert_chat_choice_to_response_message,

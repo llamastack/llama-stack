@@ -6,9 +6,10 @@
 
 from typing import Any
 
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.models import Models
+from llama_stack_api.apis.files import Files
+from llama_stack_api.apis.inference import Inference
+from llama_stack_api.apis.models import Models
+
 from llama_stack.core.datatypes import AccessRule, Api
 from llama_stack.providers.utils.kvstore import kvstore_impl
 

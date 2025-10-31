@@ -6,19 +6,18 @@
 
 
 import pytest
-
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.apis.agents.openai_responses import (
     OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStreamResponseCompleted,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseOutputMessageContentOutputText,
 )
-from llama_stack.apis.common.errors import (
+from llama_stack_api.apis.common.errors import (
     ConversationNotFoundError,
     InvalidConversationIdError,
 )
-from llama_stack.apis.conversations.conversations import (
+from llama_stack_api.apis.conversations.conversations import (
     ConversationItemList,
 )
 

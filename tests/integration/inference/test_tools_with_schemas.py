@@ -12,9 +12,9 @@ Tests that tools pass through correctly to various LLM providers.
 import json
 
 import pytest
+from llama_stack_api.models.llama.datatypes import ToolDefinition
 
 from llama_stack import LlamaStackAsLibraryClient
-from llama_stack.models.llama.datatypes import ToolDefinition
 from tests.common.mcp import make_mcp_server
 
 AUTH_TOKEN = "test-token"

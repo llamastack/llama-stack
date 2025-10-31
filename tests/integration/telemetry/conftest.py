@@ -8,6 +8,7 @@
 
 import os
 
+import llama_stack_api.core.telemetry.telemetry as telemetry_module
 import pytest
 
 from llama_stack.testing.api_recorder import patch_httpx_for_test_id

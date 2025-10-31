@@ -7,19 +7,19 @@ from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
 import httpx
-from pydantic import ConfigDict
-
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     ToolChoice,
 )
-from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
+from llama_stack_api.providers.datatypes import (
     HealthResponse,
     HealthStatus,
 )
+from pydantic import ConfigDict
+
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import VLLMInferenceAdapterConfig

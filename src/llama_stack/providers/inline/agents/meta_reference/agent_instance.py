@@ -14,8 +14,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 import httpx
-
-from llama_stack.apis.agents import (
+from llama_stack_api.apis.agents import (
     AgentConfig,
     AgentToolGroup,
     AgentToolGroupWithArgs,
@@ -37,14 +36,14 @@ from llama_stack.apis.agents import (
     ToolExecutionStep,
     Turn,
 )
-from llama_stack.apis.common.content_types import (
+from llama_stack_api.apis.common.content_types import (
     URL,
     TextContentItem,
     ToolCallDelta,
     ToolCallParseStatus,
 )
-from llama_stack.apis.common.errors import SessionNotFoundError
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.common.errors import SessionNotFoundError
+from llama_stack_api.apis.inference import (
     ChatCompletionResponseEventType,
     CompletionMessage,
     Inference,
@@ -64,16 +63,17 @@ from llama_stack.apis.inference import (
     ToolResponseMessage,
     UserMessage,
 )
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ToolGroups, ToolInvocationResult, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
-from llama_stack.core.datatypes import AccessRule
-from llama_stack.core.telemetry import tracing
-from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import (
+from llama_stack_api.apis.safety import Safety
+from llama_stack_api.apis.tools import ToolGroups, ToolInvocationResult, ToolRuntime
+from llama_stack_api.apis.vector_io import VectorIO
+from llama_stack_api.core.telemetry import tracing
+from llama_stack_api.models.llama.datatypes import (
     BuiltinTool,
     ToolCall,
 )
+
+from llama_stack.core.datatypes import AccessRule
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_compat import (
     convert_message_to_openai_dict_new,
     convert_openai_chat_completion_stream,

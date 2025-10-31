@@ -13,13 +13,10 @@ import uuid
 from io import BytesIO
 from typing import Any, Literal
 
-from openai.types.batch import BatchError, Errors
-from pydantic import BaseModel
-
-from llama_stack.apis.batches import Batches, BatchObject, ListBatchesResponse
-from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
-from llama_stack.apis.files import Files, OpenAIFilePurpose
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.batches import Batches, BatchObject, ListBatchesResponse
+from llama_stack_api.apis.common.errors import ConflictError, ResourceNotFoundError
+from llama_stack_api.apis.files import Files, OpenAIFilePurpose
+from llama_stack_api.apis.inference import (
     Inference,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -31,7 +28,10 @@ from llama_stack.apis.inference import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
 )
-from llama_stack.apis.models import Models
+from llama_stack_api.apis.models import Models
+from openai.types.batch import BatchError, Errors
+from pydantic import BaseModel
+
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore import KVStore
 

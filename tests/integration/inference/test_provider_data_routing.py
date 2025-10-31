@@ -15,16 +15,16 @@ that enables routing based on provider_data alone.
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
-from llama_stack import LlamaStackAsLibraryClient
-from llama_stack.apis.datatypes import Api
-from llama_stack.apis.inference.inference import (
+from llama_stack_api.apis.datatypes import Api
+from llama_stack_api.apis.inference.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionUsage,
     OpenAIChoice,
 )
-from llama_stack.core.telemetry.telemetry import MetricEvent
+from llama_stack_api.core.telemetry.telemetry import MetricEvent
+
+from llama_stack import LlamaStackAsLibraryClient
 
 
 class OpenAIChatCompletionWithMetrics(OpenAIChatCompletion):

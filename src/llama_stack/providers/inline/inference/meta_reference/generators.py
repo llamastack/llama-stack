@@ -9,21 +9,21 @@ from collections.abc import Generator
 from typing import Optional
 
 import torch
-from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
-
-from llama_stack.apis.inference import (
+from llama_stack_api.apis.inference import (
     GreedySamplingStrategy,
     JsonSchemaResponseFormat,
     ResponseFormat,
     SamplingParams,
     TopPSamplingStrategy,
 )
-from llama_stack.models.llama.datatypes import QuantizationMode
-from llama_stack.models.llama.llama3.generation import Llama3
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
-from llama_stack.models.llama.llama4.generation import Llama4
-from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
-from llama_stack.models.llama.sku_types import Model, ModelFamily
+from llama_stack_api.models.llama.datatypes import QuantizationMode
+from llama_stack_api.models.llama.llama3.generation import Llama3
+from llama_stack_api.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
+from llama_stack_api.models.llama.llama4.generation import Llama4
+from llama_stack_api.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
+from llama_stack_api.models.llama.sku_types import Model, ModelFamily
+from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
+
 from llama_stack.providers.utils.inference.prompt_adapter import (
     ChatCompletionRequestWithRawContent,
     CompletionRequestWithRawContent,

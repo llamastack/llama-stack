@@ -7,9 +7,9 @@
 from unittest.mock import patch
 
 import pytest
+from llama_stack_api.apis.common.errors import ResourceNotFoundError
+from llama_stack_api.apis.files import OpenAIFilePurpose
 
-from llama_stack.apis.common.errors import ResourceNotFoundError
-from llama_stack.apis.files import OpenAIFilePurpose
 from llama_stack.core.datatypes import User
 from llama_stack.providers.remote.files.s3.files import S3FilesImpl
 
