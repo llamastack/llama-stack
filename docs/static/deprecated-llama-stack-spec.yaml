@@ -68,9 +68,9 @@ components:
           example:
             status: 500
             title: Internal Server Error
-            detail: An unexpected error occurred
+            detail: An unexpected error occurred. Our team has been notified.
     DefaultError:
-      description: An error occurred
+      description: An unexpected error occurred
       content:
         application/json:
           schema:

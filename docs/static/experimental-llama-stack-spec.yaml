@@ -13,7 +13,7 @@ paths:
     post:
       tags:
       - V1Beta
-      summary: Append Rows
+      summary: Append rows to a dataset.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: append_rows_v1beta_datasetio_append_rows__dataset_id__post
       parameters:
@@ -55,16 +55,10 @@ paths:
     get:
       tags:
       - V1Beta
-      summary: Iterrows
+      summary: Get a paginated list of rows from a dataset.
       description: Query endpoint for proper schema generation.
       operationId: iterrows_v1beta_datasetio_iterrows__dataset_id__get
       parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Dataset Id
       - name: limit
         in: query
         required: true
@@ -77,6 +71,12 @@ paths:
         schema:
           type: integer
           title: Start Index
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Dataset Id
       responses:
         '200':
           description: A PaginatedResponse.
@@ -100,7 +100,7 @@ paths:
     get:
       tags:
       - V1Beta
-      summary: List Datasets
+      summary: List all datasets.
       description: Response-only endpoint for proper schema generation.
       operationId: list_datasets_v1beta_datasets_get
       responses:
@@ -125,7 +125,7 @@ paths:
     post:
       tags:
       - V1Beta
-      summary: Register Dataset
+      summary: Register a new dataset.
       description: Typed endpoint for proper schema generation.
       operationId: register_dataset_v1beta_datasets_post
       requestBody:
@@ -157,7 +157,7 @@ paths:
     delete:
       tags:
       - V1Beta
-      summary: Unregister Dataset
+      summary: Unregister a dataset by its ID.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
       parameters:
@@ -198,7 +198,7 @@ paths:
     get:
       tags:
       - V1Beta
-      summary: Get Dataset
+      summary: Get a dataset by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_dataset_v1beta_datasets__dataset_id__get
       parameters:
@@ -231,7 +231,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: List Agents
+      summary: List all agents.
       description: Query endpoint for proper schema generation.
       operationId: list_agents_v1alpha_agents_get
       parameters:
@@ -269,7 +269,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Create Agent
+      summary: Create an agent with the given configuration.
       description: Typed endpoint for proper schema generation.
       operationId: create_agent_v1alpha_agents_post
       requestBody:
@@ -301,7 +301,7 @@ paths:
     delete:
       tags:
       - V1Alpha
-      summary: Delete Agent
+      summary: Delete an agent by its ID and its associated sessions and turns.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: delete_agent_v1alpha_agents__agent_id__delete
       parameters:
@@ -320,7 +320,7 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to delete.
       responses:
         '200':
           description: Successful Response
@@ -342,7 +342,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Agent
+      summary: Describe an agent by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agent_v1alpha_agents__agent_id__get
       parameters:
@@ -352,6 +352,7 @@ paths:
         schema:
           type: string
           title: Agent Id
+        description: ID of the agent.
       responses:
         '200':
           description: An Agent of the agent.
@@ -375,7 +376,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Create Agent Session
+      summary: Create a new session for an agent.
       description: Typed endpoint for proper schema generation.
       operationId: create_agent_session_v1alpha_agents__agent_id__session_post
       requestBody:
@@ -409,12 +410,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to create the session for.
   /v1alpha/agents/{agent_id}/session/{session_id}:
     delete:
       tags:
       - V1Alpha
-      summary: Delete Agents Session
+      summary: Delete an agent session by its ID and its associated turns.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: delete_agents_session_v1alpha_agents__agent_id__session__session_id__delete
       parameters:
@@ -428,18 +429,18 @@ paths:
         required: true
         schema:
           title: Kwargs
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: agent_id'
       - name: session_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: session_id'
+        description: The ID of the session to delete.
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The ID of the agent to delete the session for.
       responses:
         '200':
           description: Successful Response
@@ -461,28 +462,30 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Agents Session
+      summary: Retrieve an agent session by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agents_session_v1alpha_agents__agent_id__session__session_id__get
       parameters:
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Agent Id
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Session Id
       - name: turn_ids
         in: query
         required: true
         schema:
           type: string
           title: Turn Ids
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+        description: The ID of the session to get.
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Agent Id
+        description: The ID of the agent to get the session for.
       responses:
         '200':
           description: A Session.
@@ -506,7 +509,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Create Agent Turn
+      summary: Create a new turn for an agent.
       description: Typed endpoint for proper schema generation.
       operationId: create_agent_turn_v1alpha_agents__agent_id__session__session_id__turn_post
       requestBody:
@@ -540,18 +543,18 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to create the turn for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: session_id'
+        description: The ID of the session to create the turn for.
   /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}:
     get:
       tags:
       - V1Alpha
-      summary: Get Agents Turn
+      summary: Retrieve an agent turn by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agents_turn_v1alpha_agents__agent_id__session__session_id__turn__turn_id__get
       parameters:
@@ -561,18 +564,21 @@ paths:
         schema:
           type: string
           title: Agent Id
+        description: The ID of the agent to get the turn for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
           title: Session Id
+        description: The ID of the session to get the turn for.
       - name: turn_id
         in: path
         required: true
         schema:
           type: string
           title: Turn Id
+        description: The ID of the turn to get.
       responses:
         '200':
           description: A Turn.
@@ -596,7 +602,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Resume Agent Turn
+      summary: Resume an agent turn with executed tool call responses.
       description: Typed endpoint for proper schema generation.
       operationId: resume_agent_turn_v1alpha_agents__agent_id__session__session_id__turn__turn_id__resume_post
       requestBody:
@@ -631,24 +637,24 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to resume.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: session_id'
+        description: The ID of the session to resume.
       - name: turn_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: turn_id'
+        description: The ID of the turn to resume.
   /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}:
     get:
       tags:
       - V1Alpha
-      summary: Get Agents Step
+      summary: Retrieve an agent step by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agents_step_v1alpha_agents__agent_id__session__session_id__turn__turn_id__step__step_id__get
       parameters:
@@ -658,24 +664,28 @@ paths:
         schema:
           type: string
           title: Agent Id
+        description: The ID of the agent to get the step for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
           title: Session Id
-      - name: step_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Step Id
+        description: The ID of the session to get the step for.
       - name: turn_id
         in: path
         required: true
         schema:
           type: string
           title: Turn Id
+        description: The ID of the turn to get the step for.
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Step Id
+        description: The ID of the step to get.
       responses:
         '200':
           description: An AgentStepResponse.
@@ -699,16 +709,10 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: List Agent Sessions
+      summary: List all session(s) of a given agent.
       description: Query endpoint for proper schema generation.
       operationId: list_agent_sessions_v1alpha_agents__agent_id__sessions_get
       parameters:
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Agent Id
       - name: limit
         in: query
         required: true
@@ -721,6 +725,13 @@ paths:
         schema:
           type: integer
           title: Start Index
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Agent Id
+        description: The ID of the agent to list sessions for.
       responses:
         '200':
           description: A PaginatedResponse.
@@ -744,7 +755,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: List Benchmarks
+      summary: List all benchmarks.
       description: Response-only endpoint for proper schema generation.
       operationId: list_benchmarks_v1alpha_eval_benchmarks_get
       responses:
@@ -769,7 +780,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Register Benchmark
+      summary: Register a benchmark.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: register_benchmark_v1alpha_eval_benchmarks_post
       parameters:
@@ -805,7 +816,7 @@ paths:
     delete:
       tags:
       - V1Alpha
-      summary: Unregister Benchmark
+      summary: Unregister a benchmark.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
       parameters:
@@ -824,7 +835,7 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to unregister.
       responses:
         '200':
           description: Successful Response
@@ -846,7 +857,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Benchmark
+      summary: Get a benchmark by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_benchmark_v1alpha_eval_benchmarks__benchmark_id__get
       parameters:
@@ -856,6 +867,7 @@ paths:
         schema:
           type: string
           title: Benchmark Id
+        description: The ID of the benchmark to get.
       responses:
         '200':
           description: A Benchmark.
@@ -879,7 +891,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Evaluate Rows
+      summary: Evaluate a list of rows on a benchmark.
       description: Typed endpoint for proper schema generation.
       operationId: evaluate_rows_v1alpha_eval_benchmarks__benchmark_id__evaluations_post
       requestBody:
@@ -913,12 +925,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to run the evaluation on.
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs:
     post:
       tags:
       - V1Alpha
-      summary: Run Eval
+      summary: Run an evaluation on a benchmark.
       description: Typed endpoint for proper schema generation.
       operationId: run_eval_v1alpha_eval_benchmarks__benchmark_id__jobs_post
       requestBody:
@@ -952,12 +964,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to run the evaluation on.
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     delete:
       tags:
       - V1Alpha
-      summary: Job Cancel
+      summary: Cancel a job.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: job_cancel_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__delete
       parameters:
@@ -976,13 +988,13 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to run the evaluation on.
       - name: job_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: job_id'
+        description: The ID of the job to cancel.
       responses:
         '200':
           description: Successful Response
@@ -1004,7 +1016,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Job Status
+      summary: Get the status of a job.
       description: Query endpoint for proper schema generation.
       operationId: job_status_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__get
       parameters:
@@ -1014,12 +1026,14 @@ paths:
         schema:
           type: string
           title: Benchmark Id
+        description: The ID of the benchmark to run the evaluation on.
       - name: job_id
         in: path
         required: true
         schema:
           type: string
           title: Job Id
+        description: The ID of the job to get the status of.
       responses:
         '200':
           description: The status of the evaluation job.
@@ -1043,7 +1057,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Job Result
+      summary: Get the result of a job.
       description: Query endpoint for proper schema generation.
       operationId: job_result_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__result_get
       parameters:
@@ -1053,12 +1067,14 @@ paths:
         schema:
           type: string
           title: Benchmark Id
+        description: The ID of the benchmark to run the evaluation on.
       - name: job_id
         in: path
         required: true
         schema:
           type: string
           title: Job Id
+        description: The ID of the job to get the result of.
       responses:
         '200':
           description: The result of the job.
@@ -1082,7 +1098,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Rerank
+      summary: Rerank a list of documents based on their relevance to a query.
       description: Typed endpoint for proper schema generation.
       operationId: rerank_v1alpha_inference_rerank_post
       requestBody:
@@ -1114,7 +1130,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Training Job Artifacts
+      summary: Get the artifacts of a training job.
       description: Query endpoint for proper schema generation.
       operationId: get_training_job_artifacts_v1alpha_post_training_job_artifacts_get
       parameters:
@@ -1147,7 +1163,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Cancel Training Job
+      summary: Cancel a training job.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
       parameters:
@@ -1183,7 +1199,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Training Job Status
+      summary: Get the status of a training job.
       description: Query endpoint for proper schema generation.
       operationId: get_training_job_status_v1alpha_post_training_job_status_get
       parameters:
@@ -1216,7 +1232,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Training Jobs
+      summary: Get all training jobs.
       description: Response-only endpoint for proper schema generation.
       operationId: get_training_jobs_v1alpha_post_training_jobs_get
       responses:
@@ -1242,7 +1258,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Preference Optimize
+      summary: Run preference optimization of a model.
       description: Typed endpoint for proper schema generation.
       operationId: preference_optimize_v1alpha_post_training_preference_optimize_post
       requestBody:
@@ -1274,7 +1290,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Supervised Fine Tune
+      summary: Run supervised fine-tuning of a model.
       description: Typed endpoint for proper schema generation.
       operationId: supervised_fine_tune_v1alpha_post_training_supervised_fine_tune_post
       requestBody:
@@ -1317,10 +1333,7 @@ components:
       required:
       - config
       title: AgentCandidate
-      description: 'An agent candidate for evaluation.
-
-
-        :param config: The configuration for the agent candidate.'
+      description: An agent candidate for evaluation.
     AgentConfig:
       properties:
         sampling_params:
@@ -1387,19 +1400,7 @@ components:
       - model
       - instructions
       title: AgentConfig
-      description: 'Configuration for an agent.
-
-
-        :param model: The model identifier to use for the agent
-
-        :param instructions: The system instructions for the agent
-
-        :param name: Optional name for the agent, used in telemetry and identification
-
-        :param enable_session_persistence: Optional flag indicating whether session
-        data has to be persisted
-
-        :param response_format: Optional response format configuration'
+      description: Configuration for an agent.
     AgentCreateResponse:
       properties:
         agent_id:
@@ -1409,10 +1410,7 @@ components:
       required:
       - agent_id
       title: AgentCreateResponse
-      description: 'Response returned when creating a new agent.
-
-
-        :param agent_id: Unique identifier for the created agent'
+      description: Response returned when creating a new agent.
     AgentSessionCreateResponse:
       properties:
         session_id:
@@ -1422,10 +1420,7 @@ components:
       required:
       - session_id
       title: AgentSessionCreateResponse
-      description: 'Response returned when creating a new agent session.
-
-
-        :param session_id: Unique identifier for the created session'
+      description: Response returned when creating a new agent session.
     AgentToolGroupWithArgs:
       properties:
         name:
@@ -1449,17 +1444,7 @@ components:
       - categorical_count
       - accuracy
       title: AggregationFunctionType
-      description: 'Types of aggregation functions for scoring results.
-
-        :cvar average: Calculate the arithmetic mean of scores
-
-        :cvar weighted_average: Calculate a weighted average of scores
-
-        :cvar median: Calculate the median value of scores
-
-        :cvar categorical_count: Count occurrences of categorical values
-
-        :cvar accuracy: Calculate accuracy as the proportion of correct answers'
+      description: Types of aggregation functions for scoring results.
     Attachment-Output:
       properties:
         content:
@@ -1493,12 +1478,7 @@ components:
       - content
       - mime_type
       title: Attachment
-      description: 'An attachment to an agent turn.
-
-
-        :param content: The content of the attachment.
-
-        :param mime_type: The MIME type of the attachment.'
+      description: An attachment to an agent turn.
     BasicScoringFnParams:
       properties:
         type:
@@ -1514,12 +1494,7 @@ components:
           description: Aggregation functions to apply to the scores of each row
       type: object
       title: BasicScoringFnParams
-      description: 'Parameters for basic scoring function configuration.
-
-        :param type: The type of scoring function parameters, always basic
-
-        :param aggregation_functions: Aggregation functions to apply to the scores
-        of each row'
+      description: Parameters for basic scoring function configuration.
     Benchmark:
       properties:
         identifier:
@@ -1559,17 +1534,7 @@ components:
       - dataset_id
       - scoring_functions
       title: Benchmark
-      description: 'A benchmark resource for evaluating model performance.
-
-
-        :param dataset_id: Identifier of the dataset to use for the benchmark evaluation
-
-        :param scoring_functions: List of scoring function identifiers to apply during
-        evaluation
-
-        :param metadata: Metadata for this evaluation task
-
-        :param type: The resource type, always benchmark'
+      description: A benchmark resource for evaluating model performance.
     BenchmarkConfig:
       properties:
         eval_candidate:
@@ -1607,16 +1572,7 @@ components:
       required:
       - eval_candidate
       title: BenchmarkConfig
-      description: 'A benchmark configuration for evaluation.
-
-
-        :param eval_candidate: The candidate to evaluate.
-
-        :param scoring_params: Map between scoring function id and parameters for
-        each scoring function you want to run
-
-        :param num_examples: (Optional) The number of examples to evaluate. If not
-        provided, all examples in the dataset will be evaluated'
+      description: A benchmark configuration for evaluation.
     BuiltinTool:
       type: string
       enum:
@@ -1666,16 +1622,8 @@ components:
       - content
       - stop_reason
       title: CompletionMessage
-      description: "A message containing the model's (assistant) response in a chat\
-        \ conversation.\n\n:param role: Must be \"assistant\" to identify this as\
-        \ the model's response\n:param content: The content of the model's response\n\
-        :param stop_reason: Reason why the model stopped generating. Options are:\n\
-        \    - `StopReason.end_of_turn`: The model finished generating the entire\
-        \ response.\n    - `StopReason.end_of_message`: The model finished generating\
-        \ but generated a partial response -- usually, a tool call. The user may call\
-        \ the tool and continue the conversation with the tool's response.\n    -\
-        \ `StopReason.out_of_tokens`: The model ran out of token budget.\n:param tool_calls:\
-        \ List of tool calls. Each tool call is a ToolCall object."
+      description: A message containing the model's (assistant) response in a chat
+        conversation.
     DPOAlignmentConfig:
       properties:
         beta:
@@ -1688,12 +1636,7 @@ components:
       required:
       - beta
       title: DPOAlignmentConfig
-      description: 'Configuration for Direct Preference Optimization (DPO) alignment.
-
-
-        :param beta: Temperature parameter for the DPO loss
-
-        :param loss_type: The type of loss function to use for DPO'
+      description: Configuration for Direct Preference Optimization (DPO) alignment.
     DPOLossType:
       type: string
       enum:
@@ -1733,25 +1676,7 @@ components:
       - shuffle
       - data_format
       title: DataConfig
-      description: 'Configuration for training data and data loading.
-
-
-        :param dataset_id: Unique identifier for the training dataset
-
-        :param batch_size: Number of samples per training batch
-
-        :param shuffle: Whether to shuffle the dataset during training
-
-        :param data_format: Format of the dataset (instruct or dialog)
-
-        :param validation_dataset_id: (Optional) Unique identifier for the validation
-        dataset
-
-        :param packed: (Optional) Whether to pack multiple samples into a single sequence
-        for efficiency
-
-        :param train_on_input: (Optional) Whether to compute loss on input tokens
-        as well as output tokens'
+      description: Configuration for training data and data loading.
     Dataset:
       properties:
         identifier:
@@ -1795,22 +1720,15 @@ components:
       - purpose
       - source
       title: Dataset
-      description: 'Dataset resource for storing and accessing training or evaluation
+      description: Dataset resource for storing and accessing training or evaluation
         data.
-
-
-        :param type: Type of resource, always ''dataset'' for datasets'
     DatasetFormat:
       type: string
       enum:
       - instruct
       - dialog
       title: DatasetFormat
-      description: 'Format of the training dataset.
-
-        :cvar instruct: Instruction-following format with prompt and completion
-
-        :cvar dialog: Multi-turn conversation format with messages'
+      description: Format of the training dataset.
     DatasetPurpose:
       type: string
       enum:
@@ -1818,20 +1736,8 @@ components:
       - eval/question-answer
       - eval/messages-answer
       title: DatasetPurpose
-      description: "Purpose of the dataset. Each purpose has a required input data\
-        \ schema.\n\n:cvar post-training/messages: The dataset contains messages used\
-        \ for post-training.\n    {\n        \"messages\": [\n            {\"role\"\
-        : \"user\", \"content\": \"Hello, world!\"},\n            {\"role\": \"assistant\"\
-        , \"content\": \"Hello, world!\"},\n        ]\n    }\n:cvar eval/question-answer:\
-        \ The dataset contains a question column and an answer column.\n    {\n  \
-        \      \"question\": \"What is the capital of France?\",\n        \"answer\"\
-        : \"Paris\"\n    }\n:cvar eval/messages-answer: The dataset contains a messages\
-        \ column with list of messages and an answer column.\n    {\n        \"messages\"\
-        : [\n            {\"role\": \"user\", \"content\": \"Hello, my name is John\
-        \ Doe.\"},\n            {\"role\": \"assistant\", \"content\": \"Hello, John\
-        \ Doe. How can I help you today?\"},\n            {\"role\": \"user\", \"\
-        content\": \"What's my name?\"},\n        ],\n        \"answer\": \"John Doe\"\
-        \n    }"
+      description: Purpose of the dataset. Each purpose has a required input data
+        schema.
     Document:
       properties:
         content:
@@ -1865,12 +1771,7 @@ components:
       - content
       - mime_type
       title: Document
-      description: 'A document to be used by an agent.
-
-
-        :param content: The content of the document.
-
-        :param mime_type: The MIME type of the document.'
+      description: A document to be used by an agent.
     EfficiencyConfig:
       properties:
         enable_activation_checkpointing:
@@ -1891,20 +1792,7 @@ components:
           type: boolean
       type: object
       title: EfficiencyConfig
-      description: 'Configuration for memory and compute efficiency optimizations.
-
-
-        :param enable_activation_checkpointing: (Optional) Whether to use activation
-        checkpointing to reduce memory usage
-
-        :param enable_activation_offloading: (Optional) Whether to offload activations
-        to CPU to save GPU memory
-
-        :param memory_efficient_fsdp_wrap: (Optional) Whether to use memory-efficient
-        FSDP wrapping
-
-        :param fsdp_cpu_offload: (Optional) Whether to offload FSDP parameters to
-        CPU'
+      description: Configuration for memory and compute efficiency optimizations.
     EvaluateResponse:
       properties:
         generations:
@@ -1923,12 +1811,7 @@ components:
       - generations
       - scores
       title: EvaluateResponse
-      description: 'The response from an evaluation.
-
-
-        :param generations: The generations from the evaluation.
-
-        :param scores: The scores from the evaluation.'
+      description: The response from an evaluation.
     GrammarResponseFormat:
       properties:
         type:
@@ -1944,12 +1827,7 @@ components:
       required:
       - bnf
       title: GrammarResponseFormat
-      description: 'Configuration for grammar-guided response generation.
-
-
-        :param type: Must be "grammar" to identify this format type
-
-        :param bnf: The BNF grammar specification the response should conform to'
+      description: Configuration for grammar-guided response generation.
     GreedySamplingStrategy:
       properties:
         type:
@@ -1959,11 +1837,8 @@ components:
           default: greedy
       type: object
       title: GreedySamplingStrategy
-      description: 'Greedy sampling strategy that selects the highest probability
-        token at each step.
-
-
-        :param type: Must be "greedy" to identify this sampling strategy'
+      description: Greedy sampling strategy that selects the highest probability token
+        at each step.
     ImageContentItem-Input:
       properties:
         type:
@@ -1977,12 +1852,7 @@ components:
       required:
       - image
       title: ImageContentItem
-      description: 'A image content item
-
-
-        :param type: Discriminator type of the content item. Always "image"
-
-        :param image: Image as a base64 encoded string or an URL'
+      description: A image content item
     ImageContentItem-Output:
       properties:
         type:
@@ -1996,12 +1866,7 @@ components:
       required:
       - image
       title: ImageContentItem
-      description: 'A image content item
-
-
-        :param type: Discriminator type of the content item. Always "image"
-
-        :param image: Image as a base64 encoded string or an URL'
+      description: A image content item
     InferenceStep-Output:
       properties:
         turn_id:
@@ -2031,10 +1896,7 @@ components:
       - step_id
       - model_response
       title: InferenceStep
-      description: 'An inference step in an agent turn.
-
-
-        :param model_response: The response from the LLM.'
+      description: An inference step in an agent turn.
     Job:
       properties:
         job_id:
@@ -2047,12 +1909,7 @@ components:
       - job_id
       - status
       title: Job
-      description: 'A job execution instance with status tracking.
-
-
-        :param job_id: Unique identifier for the job
-
-        :param status: Current execution status of the job'
+      description: A job execution instance with status tracking.
     JobStatus:
       type: string
       enum:
@@ -2062,17 +1919,7 @@ components:
       - scheduled
       - cancelled
       title: JobStatus
-      description: 'Status of a job execution.
-
-        :cvar completed: Job has finished successfully
-
-        :cvar in_progress: Job is currently running
-
-        :cvar failed: Job has failed during execution
-
-        :cvar scheduled: Job is scheduled but not yet started
-
-        :cvar cancelled: Job was cancelled before completion'
+      description: Status of a job execution.
     JsonSchemaResponseFormat:
       properties:
         type:
@@ -2088,13 +1935,7 @@ components:
       required:
       - json_schema
       title: JsonSchemaResponseFormat
-      description: 'Configuration for JSON schema-guided response generation.
-
-
-        :param type: Must be "json_schema" to identify this format type
-
-        :param json_schema: The JSON schema the response should conform to. In a Python
-        SDK, this is often a `pydantic` model.'
+      description: Configuration for JSON schema-guided response generation.
     LLMAsJudgeScoringFnParams:
       properties:
         type:
@@ -2124,18 +1965,7 @@ components:
       required:
       - judge_model
       title: LLMAsJudgeScoringFnParams
-      description: 'Parameters for LLM-as-judge scoring function configuration.
-
-        :param type: The type of scoring function parameters, always llm_as_judge
-
-        :param judge_model: Identifier of the LLM model to use as a judge for scoring
-
-        :param prompt_template: (Optional) Custom prompt template for the judge model
-
-        :param judge_score_regexes: Regexes to extract the answer from generated response
-
-        :param aggregation_functions: Aggregation functions to apply to the scores
-        of each row'
+      description: Parameters for LLM-as-judge scoring function configuration.
     ListBenchmarksResponse:
       properties:
         data:
@@ -2158,10 +1988,7 @@ components:
       required:
       - data
       title: ListDatasetsResponse
-      description: 'Response from listing datasets.
-
-
-        :param data: List of datasets'
+      description: Response from listing datasets.
     ListPostTrainingJobsResponse:
       properties:
         data:
@@ -2226,13 +2053,7 @@ components:
       - vector_store_ids
       - inserted_context
       title: MemoryRetrievalStep
-      description: 'A memory retrieval step in an agent turn.
-
-
-        :param vector_store_ids: The IDs of the vector databases to retrieve context
-        from.
-
-        :param inserted_context: The context retrieved from the vector databases.'
+      description: A memory retrieval step in an agent turn.
     ModelCandidate:
       properties:
         type:
@@ -2252,15 +2073,7 @@ components:
       - model
       - sampling_params
       title: ModelCandidate
-      description: 'A model candidate for evaluation.
-
-
-        :param model: The model ID to evaluate.
-
-        :param sampling_params: The sampling parameters for the model.
-
-        :param system_message: (Optional) The system message providing instructions
-        or context to the model.'
+      description: A model candidate for evaluation.
     OptimizerConfig:
       properties:
         optimizer_type:
@@ -2281,16 +2094,7 @@ components:
       - weight_decay
       - num_warmup_steps
       title: OptimizerConfig
-      description: 'Configuration parameters for the optimization algorithm.
-
-
-        :param optimizer_type: Type of optimizer to use (adam, adamw, or sgd)
-
-        :param lr: Learning rate for the optimizer
-
-        :param weight_decay: Weight decay coefficient for regularization
-
-        :param num_warmup_steps: Number of steps for learning rate warmup'
+      description: Configuration parameters for the optimization algorithm.
     OptimizerType:
       type: string
       enum:
@@ -2298,13 +2102,7 @@ components:
       - adamw
       - sgd
       title: OptimizerType
-      description: 'Available optimizer algorithms for training.
-
-        :cvar adam: Adaptive Moment Estimation optimizer
-
-        :cvar adamw: AdamW optimizer with weight decay
-
-        :cvar sgd: Stochastic Gradient Descent optimizer'
+      description: Available optimizer algorithms for training.
     PostTrainingJob:
       properties:
         job_uuid:
@@ -2335,14 +2133,7 @@ components:
           description: Aggregation functions to apply to the scores of each row
       type: object
       title: RegexParserScoringFnParams
-      description: 'Parameters for regex parser scoring function configuration.
-
-        :param type: The type of scoring function parameters, always regex_parser
-
-        :param parsing_regexes: Regex to extract the answer from generated response
-
-        :param aggregation_functions: Aggregation functions to apply to the scores
-        of each row'
+      description: Parameters for regex parser scoring function configuration.
     RerankData:
       properties:
         index:
@@ -2356,13 +2147,7 @@ components:
       - index
       - relevance_score
       title: RerankData
-      description: 'A single rerank result from a reranking response.
-
-
-        :param index: The original index of the document in the input list
-
-        :param relevance_score: The relevance score from the model output. Values
-        are inverted when applicable so that higher scores indicate greater relevance.'
+      description: A single rerank result from a reranking response.
     RerankResponse:
       properties:
         data:
@@ -2374,10 +2159,7 @@ components:
       required:
       - data
       title: RerankResponse
-      description: 'Response from a reranking request.
-
-
-        :param data: List of rerank result objects, sorted by relevance score (descending)'
+      description: Response from a reranking request.
     RowsDataSource:
       properties:
         type:
@@ -2395,10 +2177,7 @@ components:
       required:
       - rows
       title: RowsDataSource
-      description: "A dataset stored in rows.\n:param rows: The dataset is stored\
-        \ in rows. E.g.\n    - [\n        {\"messages\": [{\"role\": \"user\", \"\
-        content\": \"Hello, world!\"}, {\"role\": \"assistant\", \"content\": \"Hello,\
-        \ world!\"}]}\n    ]"
+      description: A dataset stored in rows.
     SafetyViolation:
       properties:
         violation_level:
@@ -2414,15 +2193,7 @@ components:
       required:
       - violation_level
       title: SafetyViolation
-      description: 'Details of a safety violation detected by content moderation.
-
-
-        :param violation_level: Severity level of the violation
-
-        :param user_message: (Optional) Message to convey to the user about the violation
-
-        :param metadata: Additional metadata including specific violation codes for
-        debugging and telemetry'
+      description: Details of a safety violation detected by content moderation.
     SamplingParams:
       properties:
         strategy:
@@ -2451,14 +2222,7 @@ components:
           type: array
       type: object
       title: SamplingParams
-      description: "Sampling parameters.\n\n:param strategy: The sampling strategy.\n\
-        :param max_tokens: The maximum number of tokens that can be generated in the\
-        \ completion. The token count of\n    your prompt plus max_tokens cannot exceed\
-        \ the model's context length.\n:param repetition_penalty: Number between -2.0\
-        \ and 2.0. Positive values penalize new tokens\n    based on whether they\
-        \ appear in the text so far, increasing the model's likelihood to talk about\
-        \ new topics.\n:param stop: Up to 4 sequences where the API will stop generating\
-        \ further tokens.\n    The returned text will not contain the stop sequence."
+      description: Sampling parameters.
     ScoringResult:
       properties:
         score_rows:
@@ -2476,13 +2240,7 @@ components:
       - score_rows
       - aggregated_results
       title: ScoringResult
-      description: 'A scoring result for a single row.
-
-
-        :param score_rows: The scoring result for each row. Each row is a map of column
-        name to value.
-
-        :param aggregated_results: Map of metric name to aggregated value'
+      description: A scoring result for a single row.
     ShieldCallStep-Output:
       properties:
         turn_id:
@@ -2512,10 +2270,7 @@ components:
       - step_id
       - violation
       title: ShieldCallStep
-      description: 'A shield call step in an agent turn.
-
-
-        :param violation: The violation from the shield call.'
+      description: A shield call step in an agent turn.
     StopReason:
       type: string
       enum:
@@ -2556,26 +2311,14 @@ components:
       required:
       - content
       title: SystemMessage
-      description: 'A system message providing instructions or context to the model.
-
-
-        :param role: Must be "system" to identify this as a system message
-
-        :param content: The content of the "system prompt". If multiple system messages
-        are provided, they are concatenated. The underlying Llama Stack code may also
-        add other system messages (for example, for formatting tool definitions).'
+      description: A system message providing instructions or context to the model.
     SystemMessageBehavior:
       type: string
       enum:
       - append
       - replace
       title: SystemMessageBehavior
-      description: "Config for how to override the default system prompt.\n\n:cvar\
-        \ append: Appends the provided system message to the default system prompt:\n\
-        \    https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_2/#-function-definitions-in-the-system-prompt-\n\
-        :cvar replace: Replaces the default system prompt with the provided system\
-        \ message. The system message can include the string\n    '{{function_definitions}}'\
-        \ to indicate where the function definitions should be inserted."
+      description: Config for how to override the default system prompt.
     TextContentItem:
       properties:
         type:
@@ -2590,12 +2333,7 @@ components:
       required:
       - text
       title: TextContentItem
-      description: 'A text content item
-
-
-        :param type: Discriminator type of the content item. Always "text"
-
-        :param text: Text content'
+      description: A text content item
     ToolCall:
       properties:
         call_id:
@@ -2622,16 +2360,9 @@ components:
       - required
       - none
       title: ToolChoice
-      description: 'Whether tool use is required or automatic. This is a hint to the
+      description: Whether tool use is required or automatic. This is a hint to the
         model which may not be followed. It depends on the Instruction Following capabilities
         of the model.
-
-
-        :cvar auto: The model may use tools if it determines that is appropriate.
-
-        :cvar required: The model must use tools.
-
-        :cvar none: The model must not use tools.'
     ToolConfig:
       properties:
         tool_choice:
@@ -2647,21 +2378,7 @@ components:
           $ref: '#/components/schemas/SystemMessageBehavior'
       type: object
       title: ToolConfig
-      description: "Configuration for tool use.\n\n:param tool_choice: (Optional)\
-        \ Whether tool use is automatic, required, or none. Can also specify a tool\
-        \ name to use a specific tool. Defaults to ToolChoice.auto.\n:param tool_prompt_format:\
-        \ (Optional) Instructs the model how to format tool calls. By default, Llama\
-        \ Stack will attempt to use a format that is best adapted to the model.\n\
-        \    - `ToolPromptFormat.json`: The tool calls are formatted as a JSON object.\n\
-        \    - `ToolPromptFormat.function_tag`: The tool calls are enclosed in a <function=function_name>\
-        \ tag.\n    - `ToolPromptFormat.python_list`: The tool calls are output as\
-        \ Python syntax -- a list of function calls.\n:param system_message_behavior:\
-        \ (Optional) Config for how to override the default system prompt.\n    -\
-        \ `SystemMessageBehavior.append`: Appends the provided system message to the\
-        \ default system prompt.\n    - `SystemMessageBehavior.replace`: Replaces\
-        \ the default system prompt with the provided system message. The system message\
-        \ can include the string\n        '{{function_definitions}}' to indicate where\
-        \ the function definitions should be inserted."
+      description: Configuration for tool use.
     ToolDef:
       properties:
         toolgroup_id:
@@ -2689,21 +2406,7 @@ components:
       required:
       - name
       title: ToolDef
-      description: 'Tool definition used in runtime contexts.
-
-
-        :param name: Name of the tool
-
-        :param description: (Optional) Human-readable description of what the tool
-        does
-
-        :param input_schema: (Optional) JSON Schema for tool inputs (MCP inputSchema)
-
-        :param output_schema: (Optional) JSON Schema for tool outputs (MCP outputSchema)
-
-        :param metadata: (Optional) Additional metadata about the tool
-
-        :param toolgroup_id: (Optional) ID of the tool group this tool belongs to'
+      description: Tool definition used in runtime contexts.
     ToolExecutionStep-Output:
       properties:
         turn_id:
@@ -2742,12 +2445,7 @@ components:
       - tool_calls
       - tool_responses
       title: ToolExecutionStep
-      description: 'A tool execution step in an agent turn.
-
-
-        :param tool_calls: The tool calls to execute.
-
-        :param tool_responses: The tool responses from the tool calls.'
+      description: A tool execution step in an agent turn.
     ToolPromptFormat:
       type: string
       enum:
@@ -2755,16 +2453,7 @@ components:
       - function_tag
       - python_list
       title: ToolPromptFormat
-      description: "Prompt format for calling custom / zero shot tools.\n\n:cvar json:\
-        \ JSON format for calling tools. It takes the form:\n    {\n        \"type\"\
-        : \"function\",\n        \"function\" : {\n            \"name\": \"function_name\"\
-        ,\n            \"description\": \"function_description\",\n            \"\
-        parameters\": {...}\n        }\n    }\n:cvar function_tag: Function tag format,\
-        \ pseudo-XML. This looks like:\n    <function=function_name>(parameters)</function>\n\
-        \n:cvar python_list: Python list. The output is a valid Python expression\
-        \ that can be\n    evaluated to a list. Each element in the list is a function\
-        \ call. Example:\n    [\"function_name(param1, param2)\", \"function_name(param1,\
-        \ param2)\"]"
+      description: Prompt format for calling custom / zero shot tools.
     ToolResponse-Input:
       properties:
         call_id:
@@ -2807,16 +2496,7 @@ components:
       - tool_name
       - content
       title: ToolResponse
-      description: 'Response from a tool invocation.
-
-
-        :param call_id: Unique identifier for the tool call this response is for
-
-        :param tool_name: Name of the tool that was invoked
-
-        :param content: The response content from the tool
-
-        :param metadata: (Optional) Additional metadata about the tool response'
+      description: Response from a tool invocation.
     ToolResponse-Output:
       properties:
         call_id:
@@ -2859,16 +2539,7 @@ components:
       - tool_name
       - content
       title: ToolResponse
-      description: 'Response from a tool invocation.
-
-
-        :param call_id: Unique identifier for the tool call this response is for
-
-        :param tool_name: Name of the tool that was invoked
-
-        :param content: The response content from the tool
-
-        :param metadata: (Optional) Additional metadata about the tool response'
+      description: Response from a tool invocation.
     ToolResponseMessage-Output:
       properties:
         role:
@@ -2906,14 +2577,7 @@ components:
       - call_id
       - content
       title: ToolResponseMessage
-      description: 'A message representing the result of a tool invocation.
-
-
-        :param role: Must be "tool" to identify this as a tool response
-
-        :param call_id: Unique identifier for the tool call this response is for
-
-        :param content: The response content from the tool'
+      description: A message representing the result of a tool invocation.
     TopKSamplingStrategy:
       properties:
         type:
@@ -2929,14 +2593,8 @@ components:
       required:
       - top_k
       title: TopKSamplingStrategy
-      description: 'Top-k sampling strategy that restricts sampling to the k most
-        likely tokens.
-
-
-        :param type: Must be "top_k" to identify this sampling strategy
-
-        :param top_k: Number of top tokens to consider for sampling. Must be at least
-        1'
+      description: Top-k sampling strategy that restricts sampling to the k most likely
+        tokens.
     TopPSamplingStrategy:
       properties:
         type:
@@ -2956,17 +2614,8 @@ components:
       required:
       - temperature
       title: TopPSamplingStrategy
-      description: 'Top-p (nucleus) sampling strategy that samples from the smallest
+      description: Top-p (nucleus) sampling strategy that samples from the smallest
         set of tokens with cumulative probability >= p.
-
-
-        :param type: Must be "top_p" to identify this sampling strategy
-
-        :param temperature: Controls randomness in sampling. Higher values increase
-        randomness
-
-        :param top_p: Cumulative probability threshold for nucleus sampling. Defaults
-        to 0.95'
     TrainingConfig:
       properties:
         n_epochs:
@@ -2998,27 +2647,7 @@ components:
       required:
       - n_epochs
       title: TrainingConfig
-      description: 'Comprehensive configuration for the training process.
-
-
-        :param n_epochs: Number of training epochs to run
-
-        :param max_steps_per_epoch: Maximum number of steps to run per epoch
-
-        :param gradient_accumulation_steps: Number of steps to accumulate gradients
-        before updating
-
-        :param max_validation_steps: (Optional) Maximum number of validation steps
-        per epoch
-
-        :param data_config: (Optional) Configuration for data loading and formatting
-
-        :param optimizer_config: (Optional) Configuration for the optimization algorithm
-
-        :param efficiency_config: (Optional) Configuration for memory and compute
-        optimizations
-
-        :param dtype: (Optional) Data type for model parameters (bf16, fp16, fp32)'
+      description: Comprehensive configuration for the training process.
     Turn:
       properties:
         turn_id:
@@ -3074,26 +2703,7 @@ components:
       - output_message
       - started_at
       title: Turn
-      description: 'A single turn in an interaction with an Agentic System.
-
-
-        :param turn_id: Unique identifier for the turn within a session
-
-        :param session_id: Unique identifier for the conversation session
-
-        :param input_messages: List of messages that initiated this turn
-
-        :param steps: Ordered list of processing steps executed during this turn
-
-        :param output_message: The model''s generated response containing content
-        and metadata
-
-        :param output_attachments: (Optional) Files or media attached to the agent''s
-        response
-
-        :param started_at: Timestamp when the turn began
-
-        :param completed_at: (Optional) Timestamp when the turn finished, if completed'
+      description: A single turn in an interaction with an Agentic System.
     URIDataSource:
       properties:
         type:
@@ -3108,9 +2718,7 @@ components:
       required:
       - uri
       title: URIDataSource
-      description: "A dataset that can be obtained from a URI.\n:param uri: The dataset\
-        \ can be obtained from a URI. E.g.\n    - \"https://mywebsite.com/mydata.jsonl\"\
-        \n    - \"lsfs://mydata.jsonl\"\n    - \"data:csv;base64,{base64_content}\""
+      description: A dataset that can be obtained from a URI.
     URL:
       properties:
         uri:
@@ -3120,10 +2728,7 @@ components:
       required:
       - uri
       title: URL
-      description: 'A URL reference to external content.
-
-
-        :param uri: The URL string pointing to the resource'
+      description: A URL reference to external content.
     UserMessage-Input:
       properties:
         role:
@@ -3179,16 +2784,7 @@ components:
       required:
       - content
       title: UserMessage
-      description: 'A message from the user in a chat conversation.
-
-
-        :param role: Must be "user" to identify this as a user message
-
-        :param content: The content of the message, which can include text and other
-        media
-
-        :param context: (Optional) This field is used internally by Llama Stack to
-        pass RAG context. This field may be removed in the API in the future.'
+      description: A message from the user in a chat conversation.
     UserMessage-Output:
       properties:
         role:
@@ -3244,16 +2840,7 @@ components:
       required:
       - content
       title: UserMessage
-      description: 'A message from the user in a chat conversation.
-
-
-        :param role: Must be "user" to identify this as a user message
-
-        :param content: The content of the message, which can include text and other
-        media
-
-        :param context: (Optional) This field is used internally by Llama Stack to
-        pass RAG context. This field may be removed in the API in the future.'
+      description: A message from the user in a chat conversation.
     ViolationLevel:
       type: string
       enum:
@@ -3261,14 +2848,7 @@ components:
       - warn
       - error
       title: ViolationLevel
-      description: 'Severity level of a safety violation.
-
-
-        :cvar INFO: Informational level violation that does not require action
-
-        :cvar WARN: Warning level violation that suggests caution but allows continuation
-
-        :cvar ERROR: Error level violation that requires blocking or intervention'
+      description: Severity level of a safety violation.
     _URLOrData:
       properties:
         url:
@@ -3279,13 +2859,7 @@ components:
           type: string
       type: object
       title: _URLOrData
-      description: 'A URL or a base64 encoded string
-
-
-        :param url: A URL of the image or data URL in the format of data:image/{type};base64,{data}.
-        Note that URL could have length limits.
-
-        :param data: base64 encoded image data as string'
+      description: A URL or a base64 encoded string
     __main_____agents_agent_id_session_Request:
       properties:
         agent_id:
@@ -3393,18 +2967,7 @@ components:
       - max_num_results
       title: _inference_rerank_Request
     Error:
-      description: 'Error response from the API. Roughly follows RFC 7807.
-
-
-        :param status: HTTP status code
-
-        :param title: Error title, a short summary of the error which is invariant
-        for an error type
-
-        :param detail: Error detail, a longer human-readable description of the error
-
-        :param instance: (Optional) A URL which can be used to retrieve more information
-        about the specific occurrence of the error'
+      description: Error response from the API. Roughly follows RFC 7807.
       properties:
         status:
           title: Status
@@ -3426,14 +2989,7 @@ components:
       title: Error
       type: object
     Agent:
-      description: 'An agent instance with configuration and metadata.
-
-
-        :param agent_id: Unique identifier for the agent
-
-        :param agent_config: Configuration settings for the agent
-
-        :param created_at: Timestamp when the agent was created'
+      description: An agent instance with configuration and metadata.
       properties:
         agent_id:
           title: Agent Id
@@ -3451,10 +3007,7 @@ components:
       title: Agent
       type: object
     AgentStepResponse:
-      description: 'Response containing details of a specific agent step.
-
-
-        :param step: The complete step data and execution details'
+      description: Response containing details of a specific agent step.
       properties:
         step:
           discriminator:
@@ -3475,16 +3028,8 @@ components:
       title: AgentStepResponse
       type: object
     CompletionMessage:
-      description: "A message containing the model's (assistant) response in a chat\
-        \ conversation.\n\n:param role: Must be \"assistant\" to identify this as\
-        \ the model's response\n:param content: The content of the model's response\n\
-        :param stop_reason: Reason why the model stopped generating. Options are:\n\
-        \    - `StopReason.end_of_turn`: The model finished generating the entire\
-        \ response.\n    - `StopReason.end_of_message`: The model finished generating\
-        \ but generated a partial response -- usually, a tool call. The user may call\
-        \ the tool and continue the conversation with the tool's response.\n    -\
-        \ `StopReason.out_of_tokens`: The model ran out of token budget.\n:param tool_calls:\
-        \ List of tool calls. Each tool call is a ToolCall object."
+      description: A message containing the model's (assistant) response in a chat
+        conversation.
       properties:
         role:
           const: assistant
@@ -3526,10 +3071,7 @@ components:
       title: CompletionMessage
       type: object
     InferenceStep:
-      description: 'An inference step in an agent turn.
-
-
-        :param model_response: The response from the LLM.'
+      description: An inference step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -3561,13 +3103,7 @@ components:
       title: InferenceStep
       type: object
     MemoryRetrievalStep:
-      description: 'A memory retrieval step in an agent turn.
-
-
-        :param vector_store_ids: The IDs of the vector databases to retrieve context
-        from.
-
-        :param inserted_context: The context retrieved from the vector databases.'
+      description: A memory retrieval step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -3623,14 +3159,7 @@ components:
       title: MemoryRetrievalStep
       type: object
     PaginatedResponse:
-      description: 'A generic paginated response that follows a simple format.
-
-
-        :param data: The list of items for the current page
-
-        :param has_more: Whether there are more items available after this set
-
-        :param url: The URL for accessing this list'
+      description: A generic paginated response that follows a simple format.
       properties:
         data:
           items:
@@ -3651,16 +3180,7 @@ components:
       title: PaginatedResponse
       type: object
     Session:
-      description: 'A single session of an interaction with an Agentic System.
-
-
-        :param session_id: Unique identifier for the conversation session
-
-        :param session_name: Human-readable name for the session
-
-        :param turns: List of all turns that have occurred in this session
-
-        :param started_at: Timestamp when the session was created'
+      description: A single session of an interaction with an Agentic System.
       properties:
         session_id:
           title: Session Id
@@ -3685,10 +3205,7 @@ components:
       title: Session
       type: object
     ShieldCallStep:
-      description: 'A shield call step in an agent turn.
-
-
-        :param violation: The violation from the shield call.'
+      description: A shield call step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -3720,12 +3237,7 @@ components:
       title: ShieldCallStep
       type: object
     ToolExecutionStep:
-      description: 'A tool execution step in an agent turn.
-
-
-        :param tool_calls: The tool calls to execute.
-
-        :param tool_responses: The tool responses from the tool calls.'
+      description: A tool execution step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -3766,16 +3278,7 @@ components:
       title: ToolExecutionStep
       type: object
     ToolResponse:
-      description: 'Response from a tool invocation.
-
-
-        :param call_id: Unique identifier for the tool call this response is for
-
-        :param tool_name: Name of the tool that was invoked
-
-        :param content: The response content from the tool
-
-        :param metadata: (Optional) Additional metadata about the tool response'
+      description: Response from a tool invocation.
       properties:
         call_id:
           title: Call Id
@@ -3819,22 +3322,7 @@ components:
       title: ToolResponse
       type: object
     Checkpoint:
-      description: 'Checkpoint created during training runs.
-
-
-        :param identifier: Unique identifier for the checkpoint
-
-        :param created_at: Timestamp when the checkpoint was created
-
-        :param epoch: Training epoch when the checkpoint was saved
-
-        :param post_training_job_id: Identifier of the training job that created this
-        checkpoint
-
-        :param path: File system path where the checkpoint is stored
-
-        :param training_metrics: (Optional) Training metrics associated with this
-        checkpoint'
+      description: Checkpoint created during training runs.
       properties:
         identifier:
           title: Identifier
@@ -3864,12 +3352,7 @@ components:
       title: Checkpoint
       type: object
     PostTrainingJobArtifactsResponse:
-      description: 'Artifacts of a finetuning job.
-
-
-        :param job_uuid: Unique identifier for the training job
-
-        :param checkpoints: List of model checkpoints created during training'
+      description: Artifacts of a finetuning job.
       properties:
         job_uuid:
           title: Job Uuid
@@ -3884,23 +3367,7 @@ components:
       title: PostTrainingJobArtifactsResponse
       type: object
     PostTrainingJobStatusResponse:
-      description: 'Status of a finetuning job.
-
-
-        :param job_uuid: Unique identifier for the training job
-
-        :param status: Current status of the training job
-
-        :param scheduled_at: (Optional) Timestamp when the job was scheduled
-
-        :param started_at: (Optional) Timestamp when the job execution began
-
-        :param completed_at: (Optional) Timestamp when the job finished, if completed
-
-        :param resources_allocated: (Optional) Information about computational resources
-        allocated to the job
-
-        :param checkpoints: List of model checkpoints created during training'
+      description: Status of a finetuning job.
       properties:
         job_uuid:
           title: Job Uuid
@@ -3938,12 +3405,7 @@ components:
       title: PostTrainingJobStatusResponse
       type: object
     ImageContentItem:
-      description: 'A image content item
-
-
-        :param type: Discriminator type of the content item. Always "image"
-
-        :param image: Image as a base64 encoded string or an URL'
+      description: A image content item
       properties:
         type:
           const: image
@@ -3957,16 +3419,7 @@ components:
       title: ImageContentItem
       type: object
     PostTrainingMetric:
-      description: 'Training metrics captured during post-training jobs.
-
-
-        :param epoch: Training epoch number
-
-        :param train_loss: Loss value on the training dataset
-
-        :param validation_loss: Loss value on the validation dataset
-
-        :param perplexity: Perplexity metric indicating model confidence'
+      description: Training metrics captured during post-training jobs.
       properties:
         epoch:
           title: Epoch
@@ -4017,9 +3470,9 @@ components:
           example:
             status: 500
             title: Internal Server Error
-            detail: An unexpected error occurred
+            detail: An unexpected error occurred. Our team has been notified.
     DefaultError:
-      description: An error occurred
+      description: An unexpected error occurred
       content:
         application/json:
           schema:

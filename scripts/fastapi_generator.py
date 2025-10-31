@@ -29,6 +29,9 @@ from llama_stack.core.server.routes import get_all_api_routes
 # Global list to store dynamic models created during endpoint generation
 _dynamic_models = []
 
+# Global mapping from (path, method) to webmethod for parameter description extraction
+_path_webmethod_map: dict[tuple[str, str], Any] = {}
+
 
 def _get_all_api_routes_with_functions():
     """
@@ -107,18 +110,24 @@ def create_llama_stack_app() -> FastAPI:
     # Create FastAPI routes from the discovered routes
     for _, routes in api_routes.items():
         for route, webmethod in routes:
+            # Store mapping for later use in parameter description extraction
+            for method in route.methods:
+                _path_webmethod_map[(route.path, method.lower())] = webmethod
             # Convert the route to a FastAPI endpoint
             _create_fastapi_endpoint(app, route, webmethod)
 
     return app
 
 
-def _extract_path_parameters(path: str) -> list[dict[str, Any]]:
+def _extract_path_parameters(path: str, webmethod=None) -> list[dict[str, Any]]:
     """
     Extract path parameters from a URL path and return them as OpenAPI parameter definitions.
+    Parameters are returned in the order they appear in the docstring if available,
+    otherwise in the order they appear in the path.
 
     Args:
         path: URL path with parameters like /v1/batches/{batch_id}/cancel
+        webmethod: Optional webmethod to extract parameter descriptions from docstring
 
     Returns:
         List of parameter definitions for OpenAPI
@@ -127,19 +136,62 @@ def _extract_path_parameters(path: str) -> list[dict[str, Any]]:
 
     # Find all path parameters in the format {param} or {param:type}
     param_pattern = r"\{([^}:]+)(?::[^}]+)?\}"
-    matches = re.findall(param_pattern, path)
+    path_params = set(re.findall(param_pattern, path))
 
+    # Extract parameter descriptions and order from docstring if available
+    param_descriptions = {}
+    docstring_param_order = []
+    if webmethod:
+        func = getattr(webmethod, "func", None)
+        if func and func.__doc__:
+            docstring = func.__doc__
+            lines = docstring.split("\n")
+            for line in lines:
+                line = line.strip()
+                if line.startswith(":param "):
+                    # Extract parameter name and description
+                    # Format: :param param_name: description
+                    parts = line[7:].split(":", 1)
+                    if len(parts) == 2:
+                        param_name = parts[0].strip()
+                        description = parts[1].strip()
+                        # Only track path parameters that exist in the path
+                        if param_name in path_params:
+                            if description:
+                                param_descriptions[param_name] = description
+                            if param_name not in docstring_param_order:
+                                docstring_param_order.append(param_name)
+
+    # Build parameters list preserving docstring order for path parameters found in docstring,
+    # then add any remaining path parameters in path order
     parameters = []
-    for param_name in matches:
-        parameters.append(
-            {
-                "name": param_name,
-                "in": "path",
-                "required": True,
-                "schema": {"type": "string"},
-                "description": f"Path parameter: {param_name}",
-            }
-        )
+    # First add parameters in docstring order
+    for param_name in docstring_param_order:
+        if param_name in path_params:
+            description = param_descriptions.get(param_name, f"Path parameter: {param_name}")
+            parameters.append(
+                {
+                    "name": param_name,
+                    "in": "path",
+                    "required": True,
+                    "schema": {"type": "string"},
+                    "description": description,
+                }
+            )
+    # Then add any path parameters not in docstring, in path order
+    path_param_list = re.findall(param_pattern, path)
+    for param_name in path_param_list:
+        if param_name not in docstring_param_order:
+            description = param_descriptions.get(param_name, f"Path parameter: {param_name}")
+            parameters.append(
+                {
+                    "name": param_name,
+                    "in": "path",
+                    "required": True,
+                    "schema": {"type": "string"},
+                    "description": description,
+                }
+            )
 
     return parameters
 
@@ -166,7 +218,8 @@ def _create_fastapi_endpoint(app: FastAPI, route, webmethod):
             f"Debug: {webmethod.route} - request_model: {request_model}, response_model: {response_model}, query_parameters: {query_parameters}"
         )
 
-    # Extract response description from webmethod docstring (always try this first)
+    # Extract summary and response description from webmethod docstring
+    summary = _extract_summary_from_docstring(webmethod)
     response_description = _extract_response_description_from_docstring(webmethod, response_model)
 
     # Create endpoint function with proper typing
@@ -316,6 +369,9 @@ def _create_fastapi_endpoint(app: FastAPI, route, webmethod):
         },
     }
 
+    if summary:
+        route_kwargs["summary"] = summary
+
     for method in methods:
         if method.upper() == "GET":
             app.get(fastapi_path, **route_kwargs)(endpoint_func)
@@ -329,32 +385,51 @@ def _create_fastapi_endpoint(app: FastAPI, route, webmethod):
             app.patch(fastapi_path, **route_kwargs)(endpoint_func)
 
 
+def _extract_summary_from_docstring(webmethod) -> str | None:
+    """
+    Extract summary from the actual function docstring.
+    The summary is typically the first non-empty line of the docstring,
+    before any :param:, :returns:, or other docstring field markers.
+    """
+    func = getattr(webmethod, "func", None)
+    if not func:
+        return None
+
+    docstring = func.__doc__ or ""
+    if not docstring:
+        return None
+
+    lines = docstring.split("\n")
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith(":param:") or line.startswith(":returns:") or line.startswith(":raises:"):
+            break
+        return line
+
+    return None
+
+
 def _extract_response_description_from_docstring(webmethod, response_model) -> str:
     """
     Extract response description from the actual function docstring.
     Looks for :returns: in the docstring and uses that as the description.
     """
-    # Try to get the actual function from the webmethod
-    # The webmethod should have a reference to the original function
     func = getattr(webmethod, "func", None)
     if not func:
-        # If we can't get the function, return a generic description
         return "Successful Response"
 
-    # Get the function's docstring
     docstring = func.__doc__ or ""
 
-    # Look for :returns: line in the docstring
     lines = docstring.split("\n")
     for line in lines:
         line = line.strip()
         if line.startswith(":returns:"):
-            # Extract the description after :returns:
-            description = line[9:].strip()  # Remove ':returns:' prefix
+            description = line[9:].strip()
             if description:
                 return description
 
-    # If no :returns: found, return a generic description
     return "Successful Response"
 
 
@@ -842,7 +917,11 @@ def _add_error_responses(openapi_schema: dict[str, Any]) -> dict[str, Any]:
         500: {
             "name": "InternalServerError500",
             "description": "The server encountered an unexpected error",
-            "example": {"status": 500, "title": "Internal Server Error", "detail": "An unexpected error occurred"},
+            "example": {
+                "status": 500,
+                "title": "Internal Server Error",
+                "detail": "An unexpected error occurred. Our team has been notified.",
+            },
         },
     }
 
@@ -858,7 +937,7 @@ def _add_error_responses(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 
     # Add a default error response
     openapi_schema["components"]["responses"]["DefaultError"] = {
-        "description": "An error occurred",
+        "description": "An unexpected error occurred",
         "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
     }
 
@@ -868,29 +947,112 @@ def _add_error_responses(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 def _fix_path_parameters(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """
     Fix path parameter resolution issues by adding explicit parameter definitions.
+    Uses docstring descriptions if available.
     """
+    global _path_webmethod_map
+
     if "paths" not in openapi_schema:
         return openapi_schema
 
     for path, path_item in openapi_schema["paths"].items():
-        # Extract path parameters from the URL
-        path_params = _extract_path_parameters(path)
-
-        if not path_params:
-            continue
-
         # Add parameters to each operation in this path
         for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
             if method in path_item and isinstance(path_item[method], dict):
                 operation = path_item[method]
+
+                # Get webmethod for this path/method to extract parameter descriptions
+                webmethod = _path_webmethod_map.get((path, method))
+
+                # Extract path parameters from the URL with descriptions from docstring
+                path_params = _extract_path_parameters(path, webmethod)
+
+                if not path_params:
+                    continue
+
                 if "parameters" not in operation:
                     operation["parameters"] = []
 
-                # Add path parameters that aren't already defined
-                existing_param_names = {p.get("name") for p in operation["parameters"] if p.get("in") == "path"}
+                # Separate path and non-path parameters
+                existing_params = operation["parameters"]
+                non_path_params = [p for p in existing_params if p.get("in") != "path"]
+                existing_path_params = {p.get("name"): p for p in existing_params if p.get("in") == "path"}
+
+                # Build new parameters list: non-path params first, then path params in docstring order
+                new_params = non_path_params.copy()
+
+                # Add path parameters in docstring order
                 for param in path_params:
-                    if param["name"] not in existing_param_names:
-                        operation["parameters"].append(param)
+                    param_name = param["name"]
+                    if param_name in existing_path_params:
+                        # Update existing parameter description if we have a better one
+                        existing_param = existing_path_params[param_name]
+                        if param["description"] != f"Path parameter: {param_name}":
+                            existing_param["description"] = param["description"]
+                        new_params.append(existing_param)
+                    else:
+                        # Add new path parameter
+                        new_params.append(param)
+
+                operation["parameters"] = new_params
+
+    return openapi_schema
+
+
+def _extract_first_line_from_description(description: str) -> str:
+    """
+    Extract all lines from a description string that don't start with docstring keywords.
+    Stops at the first line that starts with :param:, :returns:, :raises:, etc.
+    Preserves multiple lines and formatting.
+    """
+    if not description:
+        return description
+
+    lines = description.split("\n")
+    description_lines = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            # Keep empty lines in the description to preserve formatting
+            description_lines.append(line)
+            continue
+        if (
+            stripped.startswith(":param")
+            or stripped.startswith(":returns")
+            or stripped.startswith(":raises")
+            or (stripped.startswith(":") and len(stripped) > 1 and stripped[1].isalpha())
+        ):
+            break
+        description_lines.append(line)
+
+    # Join lines and strip trailing whitespace/newlines
+    result = "\n".join(description_lines).rstrip()
+    return result if result else description
+
+
+def _fix_component_descriptions(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """
+    Fix component descriptions to only include the first line (summary),
+    removing :param:, :returns:, and other docstring directives.
+    """
+    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
+        return openapi_schema
+
+    schemas = openapi_schema["components"]["schemas"]
+
+    def fix_description_in_schema(schema_def: dict[str, Any]) -> None:
+        if isinstance(schema_def, dict):
+            if "description" in schema_def and isinstance(schema_def["description"], str):
+                schema_def["description"] = _extract_first_line_from_description(schema_def["description"])
+
+            for value in schema_def.values():
+                fix_description_in_schema(value)
+        elif isinstance(schema_def, list):
+            for item in schema_def:
+                fix_description_in_schema(item)
+
+    for _, schema_def in schemas.items():
+        fix_description_in_schema(schema_def)
 
     return openapi_schema
 
@@ -1409,6 +1571,9 @@ def generate_openapi_spec(output_dir: str, format: str = "yaml", include_example
     # Eliminate $defs section entirely for oasdiff compatibility
     openapi_schema = _eliminate_defs_section(openapi_schema)
 
+    # Fix component descriptions to only include first line (summary)
+    openapi_schema = _fix_component_descriptions(openapi_schema)
+
     # Debug: Check if there's a root-level $defs after flattening
     if "$defs" in openapi_schema:
         print(f"After flattening: root-level $defs with {len(openapi_schema['$defs'])} items")
@@ -1485,7 +1650,7 @@ def generate_openapi_spec(output_dir: str, format: str = "yaml", include_example
     if format in ["yaml", "both"]:
         yaml_path = output_path / "llama-stack-spec.yaml"
 
-        # Use ruamel.yaml for better control over YAML serialization
+        # Use ruamel.yaml for better YAML formatting
         try:
             from ruamel.yaml import YAML
 
@@ -1497,46 +1662,52 @@ def generate_openapi_spec(output_dir: str, format: str = "yaml", include_example
 
             with open(yaml_path, "w") as f:
                 yaml_writer.dump(stable_schema, f)
+
+            # Post-process the YAML file to remove $defs section and fix references
+            # Re-read and re-write with ruamel.yaml
+            with open(yaml_path) as f:
+                yaml_content = f.read()
+
+            if "  $defs:" in yaml_content or "#/$defs/" in yaml_content:
+                print("Post-processing YAML to remove $defs section")
+
+                # Use string replacement to fix references directly
+                if "#/$defs/" in yaml_content:
+                    refs_fixed = yaml_content.count("#/$defs/")
+                    yaml_content = yaml_content.replace("#/$defs/", "#/components/schemas/")
+                    print(f"Fixed {refs_fixed} $ref references using string replacement")
+
+                # Parse using PyYAML safe_load first to avoid issues with custom types
+                # This handles block scalars better during post-processing
+                import yaml as pyyaml
+
+                with open(yaml_path) as f:
+                    yaml_data = pyyaml.safe_load(f)
+
+                # Move $defs to components/schemas if it exists
+                if "$defs" in yaml_data:
+                    print(f"Found $defs section with {len(yaml_data['$defs'])} items")
+                    if "components" not in yaml_data:
+                        yaml_data["components"] = {}
+                    if "schemas" not in yaml_data["components"]:
+                        yaml_data["components"]["schemas"] = {}
+
+                    # Move all $defs to components/schemas
+                    for def_name, def_schema in yaml_data["$defs"].items():
+                        yaml_data["components"]["schemas"][def_name] = def_schema
+
+                    # Remove the $defs section
+                    del yaml_data["$defs"]
+                    print("Moved $defs to components/schemas")
+
+                # Write the modified YAML back with ruamel.yaml
+                with open(yaml_path, "w") as f:
+                    yaml_writer.dump(yaml_data, f)
+                print("Updated YAML file")
         except ImportError:
             # Fallback to standard yaml if ruamel.yaml is not available
             with open(yaml_path, "w") as f:
                 yaml.dump(stable_schema, f, default_flow_style=False, sort_keys=False)
-        # Post-process the YAML file to remove $defs section and fix references
-        with open(yaml_path) as f:
-            yaml_content = f.read()
-
-        if "  $defs:" in yaml_content or "#/$defs/" in yaml_content:
-            print("Post-processing YAML to remove $defs section")
-
-            # Use string replacement to fix references directly
-            if "#/$defs/" in yaml_content:
-                refs_fixed = yaml_content.count("#/$defs/")
-                yaml_content = yaml_content.replace("#/$defs/", "#/components/schemas/")
-                print(f"Fixed {refs_fixed} $ref references using string replacement")
-
-            # Parse the YAML content
-            yaml_data = yaml.safe_load(yaml_content)
-
-            # Move $defs to components/schemas if it exists
-            if "$defs" in yaml_data:
-                print(f"Found $defs section with {len(yaml_data['$defs'])} items")
-                if "components" not in yaml_data:
-                    yaml_data["components"] = {}
-                if "schemas" not in yaml_data["components"]:
-                    yaml_data["components"]["schemas"] = {}
-
-                # Move all $defs to components/schemas
-                for def_name, def_schema in yaml_data["$defs"].items():
-                    yaml_data["components"]["schemas"][def_name] = def_schema
-
-                # Remove the $defs section
-                del yaml_data["$defs"]
-                print("Moved $defs to components/schemas")
-
-            # Write the modified YAML back
-            with open(yaml_path, "w") as f:
-                yaml.dump(yaml_data, f, default_flow_style=False, sort_keys=False)
-            print("Updated YAML file")
 
         print(f"✅ Generated YAML (stable): {yaml_path}")
 
@@ -1643,7 +1814,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Generate OpenAPI specification using FastAPI")
     parser.add_argument("output_dir", help="Output directory for generated files")
-    parser.add_argument("--format", choices=["yaml", "json", "both"], default="yaml", help="Output format")
+    parser.add_argument("--format", choices=["yaml", "json", "both"], default="both", help="Output format")
     parser.add_argument("--no-examples", action="store_true", help="Exclude examples from the specification")
     parser.add_argument(
         "--validate-only", action="store_true", help="Only validate existing schema files, don't generate new ones"

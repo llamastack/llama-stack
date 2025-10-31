@@ -3476,7 +3476,7 @@ paths:
     post:
       tags:
       - V1Beta
-      summary: Append Rows
+      summary: Append rows to a dataset.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: append_rows_v1beta_datasetio_append_rows__dataset_id__post
       parameters:
@@ -3518,16 +3518,10 @@ paths:
     get:
       tags:
       - V1Beta
-      summary: Iterrows
+      summary: Get a paginated list of rows from a dataset.
       description: Query endpoint for proper schema generation.
       operationId: iterrows_v1beta_datasetio_iterrows__dataset_id__get
       parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Dataset Id
       - name: limit
         in: query
         required: true
@@ -3540,6 +3534,12 @@ paths:
         schema:
           type: integer
           title: Start Index
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Dataset Id
       responses:
         '200':
           description: A PaginatedResponse.
@@ -3563,7 +3563,7 @@ paths:
     get:
       tags:
       - V1Beta
-      summary: List Datasets
+      summary: List all datasets.
       description: Response-only endpoint for proper schema generation.
       operationId: list_datasets_v1beta_datasets_get
       responses:
@@ -3588,7 +3588,7 @@ paths:
     post:
       tags:
       - V1Beta
-      summary: Register Dataset
+      summary: Register a new dataset.
       description: Typed endpoint for proper schema generation.
       operationId: register_dataset_v1beta_datasets_post
       requestBody:
@@ -3620,7 +3620,7 @@ paths:
     delete:
       tags:
       - V1Beta
-      summary: Unregister Dataset
+      summary: Unregister a dataset by its ID.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
       parameters:
@@ -3661,7 +3661,7 @@ paths:
     get:
       tags:
       - V1Beta
-      summary: Get Dataset
+      summary: Get a dataset by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_dataset_v1beta_datasets__dataset_id__get
       parameters:
@@ -3694,7 +3694,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: List Agents
+      summary: List all agents.
       description: Query endpoint for proper schema generation.
       operationId: list_agents_v1alpha_agents_get
       parameters:
@@ -3732,7 +3732,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Create Agent
+      summary: Create an agent with the given configuration.
       description: Typed endpoint for proper schema generation.
       operationId: create_agent_v1alpha_agents_post
       requestBody:
@@ -3764,7 +3764,7 @@ paths:
     delete:
       tags:
       - V1Alpha
-      summary: Delete Agent
+      summary: Delete an agent by its ID and its associated sessions and turns.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: delete_agent_v1alpha_agents__agent_id__delete
       parameters:
@@ -3783,7 +3783,7 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to delete.
       responses:
         '200':
           description: Successful Response
@@ -3805,7 +3805,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Agent
+      summary: Describe an agent by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agent_v1alpha_agents__agent_id__get
       parameters:
@@ -3815,6 +3815,7 @@ paths:
         schema:
           type: string
           title: Agent Id
+        description: ID of the agent.
       responses:
         '200':
           description: An Agent of the agent.
@@ -3838,7 +3839,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Create Agent Session
+      summary: Create a new session for an agent.
       description: Typed endpoint for proper schema generation.
       operationId: create_agent_session_v1alpha_agents__agent_id__session_post
       requestBody:
@@ -3872,12 +3873,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to create the session for.
   /v1alpha/agents/{agent_id}/session/{session_id}:
     delete:
       tags:
       - V1Alpha
-      summary: Delete Agents Session
+      summary: Delete an agent session by its ID and its associated turns.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: delete_agents_session_v1alpha_agents__agent_id__session__session_id__delete
       parameters:
@@ -3891,18 +3892,18 @@ paths:
         required: true
         schema:
           title: Kwargs
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: agent_id'
       - name: session_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: session_id'
+        description: The ID of the session to delete.
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The ID of the agent to delete the session for.
       responses:
         '200':
           description: Successful Response
@@ -3924,28 +3925,30 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Agents Session
+      summary: Retrieve an agent session by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agents_session_v1alpha_agents__agent_id__session__session_id__get
       parameters:
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Agent Id
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Session Id
       - name: turn_ids
         in: query
         required: true
         schema:
           type: string
           title: Turn Ids
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+        description: The ID of the session to get.
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Agent Id
+        description: The ID of the agent to get the session for.
       responses:
         '200':
           description: A Session.
@@ -3969,7 +3972,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Create Agent Turn
+      summary: Create a new turn for an agent.
       description: Typed endpoint for proper schema generation.
       operationId: create_agent_turn_v1alpha_agents__agent_id__session__session_id__turn_post
       requestBody:
@@ -4003,18 +4006,18 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to create the turn for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: session_id'
+        description: The ID of the session to create the turn for.
   /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}:
     get:
       tags:
       - V1Alpha
-      summary: Get Agents Turn
+      summary: Retrieve an agent turn by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agents_turn_v1alpha_agents__agent_id__session__session_id__turn__turn_id__get
       parameters:
@@ -4024,18 +4027,21 @@ paths:
         schema:
           type: string
           title: Agent Id
+        description: The ID of the agent to get the turn for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
           title: Session Id
+        description: The ID of the session to get the turn for.
       - name: turn_id
         in: path
         required: true
         schema:
           type: string
           title: Turn Id
+        description: The ID of the turn to get.
       responses:
         '200':
           description: A Turn.
@@ -4059,7 +4065,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Resume Agent Turn
+      summary: Resume an agent turn with executed tool call responses.
       description: Typed endpoint for proper schema generation.
       operationId: resume_agent_turn_v1alpha_agents__agent_id__session__session_id__turn__turn_id__resume_post
       requestBody:
@@ -4093,24 +4099,24 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: agent_id'
+        description: The ID of the agent to resume.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: session_id'
+        description: The ID of the session to resume.
       - name: turn_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: turn_id'
+        description: The ID of the turn to resume.
   /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}:
     get:
       tags:
       - V1Alpha
-      summary: Get Agents Step
+      summary: Retrieve an agent step by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_agents_step_v1alpha_agents__agent_id__session__session_id__turn__turn_id__step__step_id__get
       parameters:
@@ -4120,24 +4126,28 @@ paths:
         schema:
           type: string
           title: Agent Id
+        description: The ID of the agent to get the step for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
           title: Session Id
-      - name: step_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Step Id
+        description: The ID of the session to get the step for.
       - name: turn_id
         in: path
         required: true
         schema:
           type: string
           title: Turn Id
+        description: The ID of the turn to get the step for.
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Step Id
+        description: The ID of the step to get.
       responses:
         '200':
           description: An AgentStepResponse.
@@ -4161,16 +4171,10 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: List Agent Sessions
+      summary: List all session(s) of a given agent.
       description: Query endpoint for proper schema generation.
       operationId: list_agent_sessions_v1alpha_agents__agent_id__sessions_get
       parameters:
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Agent Id
       - name: limit
         in: query
         required: true
@@ -4183,6 +4187,13 @@ paths:
         schema:
           type: integer
           title: Start Index
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Agent Id
+        description: The ID of the agent to list sessions for.
       responses:
         '200':
           description: A PaginatedResponse.
@@ -4206,7 +4217,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: List Benchmarks
+      summary: List all benchmarks.
       description: Response-only endpoint for proper schema generation.
       operationId: list_benchmarks_v1alpha_eval_benchmarks_get
       responses:
@@ -4231,7 +4242,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Register Benchmark
+      summary: Register a benchmark.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: register_benchmark_v1alpha_eval_benchmarks_post
       parameters:
@@ -4267,7 +4278,7 @@ paths:
     delete:
       tags:
       - V1Alpha
-      summary: Unregister Benchmark
+      summary: Unregister a benchmark.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
       parameters:
@@ -4286,7 +4297,7 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to unregister.
       responses:
         '200':
           description: Successful Response
@@ -4308,7 +4319,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Benchmark
+      summary: Get a benchmark by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_benchmark_v1alpha_eval_benchmarks__benchmark_id__get
       parameters:
@@ -4318,6 +4329,7 @@ paths:
         schema:
           type: string
           title: Benchmark Id
+        description: The ID of the benchmark to get.
       responses:
         '200':
           description: A Benchmark.
@@ -4341,7 +4353,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Evaluate Rows
+      summary: Evaluate a list of rows on a benchmark.
       description: Typed endpoint for proper schema generation.
       operationId: evaluate_rows_v1alpha_eval_benchmarks__benchmark_id__evaluations_post
       requestBody:
@@ -4375,12 +4387,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to run the evaluation on.
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs:
     post:
       tags:
       - V1Alpha
-      summary: Run Eval
+      summary: Run an evaluation on a benchmark.
       description: Typed endpoint for proper schema generation.
       operationId: run_eval_v1alpha_eval_benchmarks__benchmark_id__jobs_post
       requestBody:
@@ -4414,12 +4426,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to run the evaluation on.
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     delete:
       tags:
       - V1Alpha
-      summary: Job Cancel
+      summary: Cancel a job.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: job_cancel_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__delete
       parameters:
@@ -4438,13 +4450,13 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+        description: The ID of the benchmark to run the evaluation on.
       - name: job_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: job_id'
+        description: The ID of the job to cancel.
       responses:
         '200':
           description: Successful Response
@@ -4466,7 +4478,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Job Status
+      summary: Get the status of a job.
       description: Query endpoint for proper schema generation.
       operationId: job_status_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__get
       parameters:
@@ -4476,12 +4488,14 @@ paths:
         schema:
           type: string
           title: Benchmark Id
+        description: The ID of the benchmark to run the evaluation on.
       - name: job_id
         in: path
         required: true
         schema:
           type: string
           title: Job Id
+        description: The ID of the job to get the status of.
       responses:
         '200':
           description: The status of the evaluation job.
@@ -4505,7 +4519,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Job Result
+      summary: Get the result of a job.
       description: Query endpoint for proper schema generation.
       operationId: job_result_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__result_get
       parameters:
@@ -4515,12 +4529,14 @@ paths:
         schema:
           type: string
           title: Benchmark Id
+        description: The ID of the benchmark to run the evaluation on.
       - name: job_id
         in: path
         required: true
         schema:
           type: string
           title: Job Id
+        description: The ID of the job to get the result of.
       responses:
         '200':
           description: The result of the job.
@@ -4544,7 +4560,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Rerank
+      summary: Rerank a list of documents based on their relevance to a query.
       description: Typed endpoint for proper schema generation.
       operationId: rerank_v1alpha_inference_rerank_post
       requestBody:
@@ -4576,7 +4592,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Training Job Artifacts
+      summary: Get the artifacts of a training job.
       description: Query endpoint for proper schema generation.
       operationId: get_training_job_artifacts_v1alpha_post_training_job_artifacts_get
       parameters:
@@ -4609,7 +4625,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Cancel Training Job
+      summary: Cancel a training job.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
       parameters:
@@ -4645,7 +4661,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Training Job Status
+      summary: Get the status of a training job.
       description: Query endpoint for proper schema generation.
       operationId: get_training_job_status_v1alpha_post_training_job_status_get
       parameters:
@@ -4678,7 +4694,7 @@ paths:
     get:
       tags:
       - V1Alpha
-      summary: Get Training Jobs
+      summary: Get all training jobs.
       description: Response-only endpoint for proper schema generation.
       operationId: get_training_jobs_v1alpha_post_training_jobs_get
       responses:
@@ -4704,7 +4720,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Preference Optimize
+      summary: Run preference optimization of a model.
       description: Typed endpoint for proper schema generation.
       operationId: preference_optimize_v1alpha_post_training_preference_optimize_post
       requestBody:
@@ -4736,7 +4752,7 @@ paths:
     post:
       tags:
       - V1Alpha
-      summary: Supervised Fine Tune
+      summary: Run supervised fine-tuning of a model.
       description: Typed endpoint for proper schema generation.
       operationId: supervised_fine_tune_v1alpha_post_training_supervised_fine_tune_post
       requestBody:
@@ -4768,7 +4784,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Batches
+      summary: List all batches for the current user.
       description: Query endpoint for proper schema generation.
       operationId: list_batches_v1_batches_get
       parameters:
@@ -4807,7 +4823,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Create Batch
+      summary: Create a new batch for processing multiple API requests.
       description: Typed endpoint for proper schema generation.
       operationId: create_batch_v1_batches_post
       requestBody:
@@ -4839,7 +4855,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Retrieve Batch
+      summary: Retrieve information about a specific batch.
       description: Query endpoint for proper schema generation.
       operationId: retrieve_batch_v1_batches__batch_id__get
       parameters:
@@ -4849,6 +4865,7 @@ paths:
         schema:
           type: string
           title: Batch Id
+        description: The ID of the batch to retrieve.
       responses:
         '200':
           description: The batch object.
@@ -4872,7 +4889,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Cancel Batch
+      summary: Cancel a batch that is in progress.
       description: Typed endpoint for proper schema generation.
       operationId: cancel_batch_v1_batches__batch_id__cancel_post
       requestBody:
@@ -4906,12 +4923,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: batch_id'
+        description: The ID of the batch to cancel.
   /v1/chat/completions:
     get:
       tags:
       - V1
-      summary: List Chat Completions
+      summary: List chat completions.
       description: Query endpoint for proper schema generation.
       operationId: list_chat_completions_v1_chat_completions_get
       parameters:
@@ -4962,7 +4979,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Chat Completion
+      summary: Create chat completions.
       description: Typed endpoint for proper schema generation.
       operationId: openai_chat_completion_v1_chat_completions_post
       requestBody:
@@ -4994,7 +5011,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Chat Completion
+      summary: Get chat completion.
       description: Query endpoint for proper schema generation.
       operationId: get_chat_completion_v1_chat_completions__completion_id__get
       parameters:
@@ -5004,6 +5021,7 @@ paths:
         schema:
           type: string
           title: Completion Id
+        description: ID of the chat completion.
       responses:
         '200':
           description: A OpenAICompletionWithInputMessages.
@@ -5027,7 +5045,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Completion
+      summary: Create completion.
       description: Typed endpoint for proper schema generation.
       operationId: openai_completion_v1_completions_post
       requestBody:
@@ -5059,7 +5077,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Create Conversation
+      summary: Create a conversation.
       description: Typed endpoint for proper schema generation.
       operationId: create_conversation_v1_conversations_post
       requestBody:
@@ -5091,7 +5109,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Openai Delete Conversation
+      summary: Delete a conversation.
       description: Query endpoint for proper schema generation.
       operationId: openai_delete_conversation_v1_conversations__conversation_id__delete
       parameters:
@@ -5101,6 +5119,7 @@ paths:
         schema:
           type: string
           title: Conversation Id
+        description: The conversation identifier.
       responses:
         '200':
           description: The deleted conversation resource.
@@ -5123,7 +5142,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Conversation
+      summary: Retrieve a conversation.
       description: Query endpoint for proper schema generation.
       operationId: get_conversation_v1_conversations__conversation_id__get
       parameters:
@@ -5133,6 +5152,7 @@ paths:
         schema:
           type: string
           title: Conversation Id
+        description: The conversation identifier.
       responses:
         '200':
           description: The conversation object.
@@ -5155,7 +5175,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Update Conversation
+      summary: Update a conversation.
       description: Typed endpoint for proper schema generation.
       operationId: update_conversation_v1_conversations__conversation_id__post
       requestBody:
@@ -5189,21 +5209,15 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+        description: The conversation identifier.
   /v1/conversations/{conversation_id}/items:
     get:
       tags:
       - V1
-      summary: List Items
+      summary: List items.
       description: Query endpoint for proper schema generation.
       operationId: list_items_v1_conversations__conversation_id__items_get
       parameters:
-      - name: conversation_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Conversation Id
       - name: after
         in: query
         required: true
@@ -5227,6 +5241,13 @@ paths:
         schema:
           type: string
           title: Order
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Conversation Id
+        description: The conversation identifier.
       responses:
         '200':
           description: List of conversation items.
@@ -5249,7 +5270,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Add Items
+      summary: Create items.
       description: Typed endpoint for proper schema generation.
       operationId: add_items_v1_conversations__conversation_id__items_post
       requestBody:
@@ -5283,12 +5304,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+        description: The conversation identifier.
   /v1/conversations/{conversation_id}/items/{item_id}:
     delete:
       tags:
       - V1
-      summary: Openai Delete Conversation Item
+      summary: Delete an item.
       description: Query endpoint for proper schema generation.
       operationId: openai_delete_conversation_item_v1_conversations__conversation_id__items__item_id__delete
       parameters:
@@ -5298,12 +5319,14 @@ paths:
         schema:
           type: string
           title: Conversation Id
+        description: The conversation identifier.
       - name: item_id
         in: path
         required: true
         schema:
           type: string
           title: Item Id
+        description: The item identifier.
       responses:
         '200':
           description: The deleted item resource.
@@ -5326,7 +5349,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Retrieve
+      summary: Retrieve an item.
       description: Query endpoint for proper schema generation.
       operationId: retrieve_v1_conversations__conversation_id__items__item_id__get
       parameters:
@@ -5336,12 +5359,14 @@ paths:
         schema:
           type: string
           title: Conversation Id
+        description: The conversation identifier.
       - name: item_id
         in: path
         required: true
         schema:
           type: string
           title: Item Id
+        description: The item identifier.
       responses:
         '200':
           description: The conversation item.
@@ -5365,7 +5390,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Embeddings
+      summary: Create embeddings.
       description: Typed endpoint for proper schema generation.
       operationId: openai_embeddings_v1_embeddings_post
       requestBody:
@@ -5397,7 +5422,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Openai List Files
+      summary: List files.
       description: Query endpoint for proper schema generation.
       operationId: openai_list_files_v1_files_get
       parameters:
@@ -5447,7 +5472,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Upload File
+      summary: Upload file.
       description: Response-only endpoint for proper schema generation.
       operationId: openai_upload_file_v1_files_post
       responses:
@@ -5473,7 +5498,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Openai Delete File
+      summary: Delete file.
       description: Query endpoint for proper schema generation.
       operationId: openai_delete_file_v1_files__file_id__delete
       parameters:
@@ -5483,6 +5508,7 @@ paths:
         schema:
           type: string
           title: File Id
+        description: The ID of the file to use for this request.
       responses:
         '200':
           description: An OpenAIFileDeleteResponse indicating successful deletion.
@@ -5505,7 +5531,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Openai Retrieve File
+      summary: Retrieve file.
       description: Query endpoint for proper schema generation.
       operationId: openai_retrieve_file_v1_files__file_id__get
       parameters:
@@ -5515,6 +5541,7 @@ paths:
         schema:
           type: string
           title: File Id
+        description: The ID of the file to use for this request.
       responses:
         '200':
           description: An OpenAIFileObject containing file information.
@@ -5538,7 +5565,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Openai Retrieve File Content
+      summary: Retrieve file content.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: openai_retrieve_file_content_v1_files__file_id__content_get
       parameters:
@@ -5557,7 +5584,7 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: file_id'
+        description: The ID of the file to use for this request.
       responses:
         '200':
           description: The raw file content as a binary response.
@@ -5580,7 +5607,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Health
+      summary: Get health status.
       description: Response-only endpoint for proper schema generation.
       operationId: health_v1_health_get
       responses:
@@ -5606,7 +5633,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Routes
+      summary: List routes.
       description: Response-only endpoint for proper schema generation.
       operationId: list_routes_v1_inspect_routes_get
       responses:
@@ -5632,7 +5659,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Models
+      summary: List all models.
       description: Response-only endpoint for proper schema generation.
       operationId: list_models_v1_models_get
       responses:
@@ -5657,7 +5684,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Register Model
+      summary: Register model.
       description: Typed endpoint for proper schema generation.
       operationId: register_model_v1_models_post
       requestBody:
@@ -5689,7 +5716,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Unregister Model
+      summary: Unregister model.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_model_v1_models__model_id__delete
       parameters:
@@ -5730,7 +5757,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Model
+      summary: Get model.
       description: Query endpoint for proper schema generation.
       operationId: get_model_v1_models__model_id__get
       parameters:
@@ -5763,7 +5790,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Run Moderation
+      summary: Create moderation.
       description: Typed endpoint for proper schema generation.
       operationId: run_moderation_v1_moderations_post
       requestBody:
@@ -5795,7 +5822,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Prompts
+      summary: List all prompts.
       description: Response-only endpoint for proper schema generation.
       operationId: list_prompts_v1_prompts_get
       responses:
@@ -5820,7 +5847,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Create Prompt
+      summary: Create prompt.
       description: Typed endpoint for proper schema generation.
       operationId: create_prompt_v1_prompts_post
       requestBody:
@@ -5852,7 +5879,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Delete Prompt
+      summary: Delete prompt.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: delete_prompt_v1_prompts__prompt_id__delete
       parameters:
@@ -5866,13 +5893,12 @@ paths:
         required: true
         schema:
           title: Kwargs
-      - &id001
-        name: prompt_id
+      - name: prompt_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: prompt_id'
+        description: The identifier of the prompt to delete.
       responses:
         '200':
           description: Successful Response
@@ -5894,22 +5920,23 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Prompt
+      summary: Get prompt.
       description: Query endpoint for proper schema generation.
       operationId: get_prompt_v1_prompts__prompt_id__get
       parameters:
-      - name: prompt_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Prompt Id
       - name: version
         in: query
         required: true
         schema:
           type: integer
           title: Version
+      - name: prompt_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Prompt Id
+        description: The identifier of the prompt to get.
       responses:
         '200':
           description: A Prompt resource.
@@ -5932,7 +5959,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Update Prompt
+      summary: Update prompt.
       description: Typed endpoint for proper schema generation.
       operationId: update_prompt_v1_prompts__prompt_id__post
       requestBody:
@@ -5961,12 +5988,17 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       parameters:
-      - *id001
+      - name: prompt_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The identifier of the prompt to update.
   /v1/prompts/{prompt_id}/set-default-version:
     post:
       tags:
       - V1
-      summary: Set Default Version
+      summary: Set prompt version.
       description: Typed endpoint for proper schema generation.
       operationId: set_default_version_v1_prompts__prompt_id__set_default_version_post
       requestBody:
@@ -6000,12 +6032,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: prompt_id'
+        description: The identifier of the prompt.
   /v1/prompts/{prompt_id}/versions:
     get:
       tags:
       - V1
-      summary: List Prompt Versions
+      summary: List prompt versions.
       description: Query endpoint for proper schema generation.
       operationId: list_prompt_versions_v1_prompts__prompt_id__versions_get
       parameters:
@@ -6015,6 +6047,7 @@ paths:
         schema:
           type: string
           title: Prompt Id
+        description: The identifier of the prompt to list versions for.
       responses:
         '200':
           description: A ListPromptsResponse containing all versions of the prompt.
@@ -6038,7 +6071,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Providers
+      summary: List providers.
       description: Response-only endpoint for proper schema generation.
       operationId: list_providers_v1_providers_get
       responses:
@@ -6064,7 +6097,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Inspect Provider
+      summary: Get provider.
       description: Query endpoint for proper schema generation.
       operationId: inspect_provider_v1_providers__provider_id__get
       parameters:
@@ -6074,6 +6107,7 @@ paths:
         schema:
           type: string
           title: Provider Id
+        description: The ID of the provider to inspect.
       responses:
         '200':
           description: A ProviderInfo object containing the provider's details.
@@ -6097,7 +6131,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Openai Responses
+      summary: List all responses.
       description: Query endpoint for proper schema generation.
       operationId: list_openai_responses_v1_responses_get
       parameters:
@@ -6148,7 +6182,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Create Openai Response
+      summary: Create a model response.
       description: Typed endpoint for proper schema generation.
       operationId: create_openai_response_v1_responses_post
       requestBody:
@@ -6180,7 +6214,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Delete Openai Response
+      summary: Delete a response.
       description: Query endpoint for proper schema generation.
       operationId: delete_openai_response_v1_responses__response_id__delete
       parameters:
@@ -6190,6 +6224,7 @@ paths:
         schema:
           type: string
           title: Response Id
+        description: The ID of the OpenAI response to delete.
       responses:
         '200':
           description: An OpenAIDeleteResponseObject
@@ -6212,7 +6247,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Openai Response
+      summary: Get a model response.
       description: Query endpoint for proper schema generation.
       operationId: get_openai_response_v1_responses__response_id__get
       parameters:
@@ -6222,6 +6257,7 @@ paths:
         schema:
           type: string
           title: Response Id
+        description: The ID of the OpenAI response to retrieve.
       responses:
         '200':
           description: An OpenAIResponseObject.
@@ -6245,16 +6281,10 @@ paths:
     get:
       tags:
       - V1
-      summary: List Openai Response Input Items
+      summary: List input items.
       description: Query endpoint for proper schema generation.
       operationId: list_openai_response_input_items_v1_responses__response_id__input_items_get
       parameters:
-      - name: response_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Response Id
       - name: after
         in: query
         required: true
@@ -6286,6 +6316,13 @@ paths:
         schema:
           $ref: '#/components/schemas/Order'
           default: desc
+      - name: response_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Response Id
+        description: The ID of the response to retrieve input items for.
       responses:
         '200':
           description: An ListOpenAIResponseInputItem.
@@ -6309,7 +6346,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Run Shield
+      summary: Run shield.
       description: Typed endpoint for proper schema generation.
       operationId: run_shield_v1_safety_run_shield_post
       requestBody:
@@ -6341,7 +6378,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Scoring Functions
+      summary: List all scoring functions.
       description: Response-only endpoint for proper schema generation.
       operationId: list_scoring_functions_v1_scoring_functions_get
       responses:
@@ -6366,7 +6403,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Register Scoring Function
+      summary: Register a scoring function.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: register_scoring_function_v1_scoring_functions_post
       parameters:
@@ -6402,7 +6439,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Unregister Scoring Function
+      summary: Unregister a scoring function.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_scoring_function_v1_scoring_functions__scoring_fn_id__delete
       parameters:
@@ -6443,7 +6480,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Scoring Function
+      summary: Get a scoring function by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_scoring_function_v1_scoring_functions__scoring_fn_id__get
       parameters:
@@ -6476,7 +6513,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Score
+      summary: Score a list of rows.
       description: Typed endpoint for proper schema generation.
       operationId: score_v1_scoring_score_post
       requestBody:
@@ -6508,7 +6545,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Score Batch
+      summary: Score a batch of rows.
       description: Typed endpoint for proper schema generation.
       operationId: score_batch_v1_scoring_score_batch_post
       requestBody:
@@ -6540,7 +6577,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Shields
+      summary: List all shields.
       description: Response-only endpoint for proper schema generation.
       operationId: list_shields_v1_shields_get
       responses:
@@ -6565,7 +6602,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Register Shield
+      summary: Register a shield.
       description: Typed endpoint for proper schema generation.
       operationId: register_shield_v1_shields_post
       requestBody:
@@ -6597,7 +6634,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Unregister Shield
+      summary: Unregister a shield.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_shield_v1_shields__identifier__delete
       parameters:
@@ -6638,7 +6675,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Shield
+      summary: Get a shield by its identifier.
       description: Query endpoint for proper schema generation.
       operationId: get_shield_v1_shields__identifier__get
       parameters:
@@ -6671,7 +6708,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Invoke Tool
+      summary: Run a tool with the given arguments.
       description: Typed endpoint for proper schema generation.
       operationId: invoke_tool_v1_tool_runtime_invoke_post
       requestBody:
@@ -6703,7 +6740,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Runtime Tools
+      summary: List all tools in the runtime.
       description: Query endpoint for proper schema generation.
       operationId: list_runtime_tools_v1_tool_runtime_list_tools_get
       parameters:
@@ -6742,7 +6779,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Rag Tool.Insert
+      summary: Index documents so they can be used by the RAG system.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: rag_tool_insert_v1_tool_runtime_rag_tool_insert_post
       parameters:
@@ -6778,7 +6815,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Rag Tool.Query
+      summary: Query the RAG system for context; typically invoked by the agent.
       description: Typed endpoint for proper schema generation.
       operationId: rag_tool_query_v1_tool_runtime_rag_tool_query_post
       requestBody:
@@ -6810,7 +6847,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Tool Groups
+      summary: List tool groups with optional provider.
       description: Response-only endpoint for proper schema generation.
       operationId: list_tool_groups_v1_toolgroups_get
       responses:
@@ -6835,7 +6872,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Register Tool Group
+      summary: Register a tool group.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: register_tool_group_v1_toolgroups_post
       parameters:
@@ -6871,7 +6908,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Unregister Toolgroup
+      summary: Unregister a tool group.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: unregister_toolgroup_v1_toolgroups__toolgroup_id__delete
       parameters:
@@ -6912,7 +6949,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Tool Group
+      summary: Get a tool group by its ID.
       description: Query endpoint for proper schema generation.
       operationId: get_tool_group_v1_toolgroups__toolgroup_id__get
       parameters:
@@ -6945,7 +6982,7 @@ paths:
     get:
       tags:
       - V1
-      summary: List Tools
+      summary: List tools with optional tool group.
       description: Query endpoint for proper schema generation.
       operationId: list_tools_v1_tools_get
       parameters:
@@ -6978,7 +7015,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Get Tool
+      summary: Get a tool by its name.
       description: Query endpoint for proper schema generation.
       operationId: get_tool_v1_tools__tool_name__get
       parameters:
@@ -7011,7 +7048,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Insert Chunks
+      summary: Insert chunks into a vector database.
       description: Generic endpoint - this would be replaced with actual implementation.
       operationId: insert_chunks_v1_vector_io_insert_post
       parameters:
@@ -7047,7 +7084,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Query Chunks
+      summary: Query chunks from a vector database.
       description: Typed endpoint for proper schema generation.
       operationId: query_chunks_v1_vector_io_query_post
       requestBody:
@@ -7079,7 +7116,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Openai List Vector Stores
+      summary: Returns a list of vector stores.
       description: Query endpoint for proper schema generation.
       operationId: openai_list_vector_stores_v1_vector_stores_get
       parameters:
@@ -7131,7 +7168,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Create Vector Store
+      summary: Creates a vector store.
       description: Typed endpoint for proper schema generation.
       operationId: openai_create_vector_store_v1_vector_stores_post
       requestBody:
@@ -7163,7 +7200,7 @@ paths:
     delete:
       tags:
       - V1
-      summary: Openai Delete Vector Store
+      summary: Delete a vector store.
       description: Query endpoint for proper schema generation.
       operationId: openai_delete_vector_store_v1_vector_stores__vector_store_id__delete
       parameters:
@@ -7173,6 +7210,7 @@ paths:
         schema:
           type: string
           title: Vector Store Id
+        description: The ID of the vector store to delete.
       responses:
         '200':
           description: A VectorStoreDeleteResponse indicating the deletion status.
@@ -7195,7 +7233,7 @@ paths:
     get:
       tags:
       - V1
-      summary: Openai Retrieve Vector Store
+      summary: Retrieves a vector store.
       description: Query endpoint for proper schema generation.
       operationId: openai_retrieve_vector_store_v1_vector_stores__vector_store_id__get
       parameters:
@@ -7205,6 +7243,7 @@ paths:
         schema:
           type: string
           title: Vector Store Id
+        description: The ID of the vector store to retrieve.
       responses:
         '200':
           description: A VectorStoreObject representing the vector store.
@@ -7227,7 +7266,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Update Vector Store
+      summary: Updates a vector store.
       description: Typed endpoint for proper schema generation.
       operationId: openai_update_vector_store_v1_vector_stores__vector_store_id__post
       requestBody:
@@ -7261,12 +7300,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: vector_store_id'
+        description: The ID of the vector store to update.
   /v1/vector_stores/{vector_store_id}/file_batches:
     post:
       tags:
       - V1
-      summary: Openai Create Vector Store File Batch
+      summary: Create a vector store file batch.
       description: Typed endpoint for proper schema generation.
       operationId: openai_create_vector_store_file_batch_v1_vector_stores__vector_store_id__file_batches_post
       requestBody:
@@ -7300,12 +7339,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: vector_store_id'
+        description: The ID of the vector store to create the file batch for.
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}:
     get:
       tags:
       - V1
-      summary: Openai Retrieve Vector Store File Batch
+      summary: Retrieve a vector store file batch.
       description: Query endpoint for proper schema generation.
       operationId: openai_retrieve_vector_store_file_batch_v1_vector_stores__vector_store_id__file_batches__batch_id__get
       parameters:
@@ -7315,12 +7354,14 @@ paths:
         schema:
           type: string
           title: Batch Id
+        description: The ID of the file batch to retrieve.
       - name: vector_store_id
         in: path
         required: true
         schema:
           type: string
           title: Vector Store Id
+        description: The ID of the vector store containing the file batch.
       responses:
         '200':
           description: A VectorStoreFileBatchObject representing the file batch.
@@ -7344,7 +7385,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Cancel Vector Store File Batch
+      summary: Cancels a vector store file batch.
       description: Typed endpoint for proper schema generation.
       operationId: openai_cancel_vector_store_file_batch_v1_vector_stores__vector_store_id__file_batches__batch_id__cancel_post
       requestBody:
@@ -7373,38 +7414,26 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
       parameters:
-      - name: vector_store_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: vector_store_id'
       - name: batch_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: batch_id'
+        description: The ID of the file batch to cancel.
+      - name: vector_store_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The ID of the vector store containing the file batch.
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files:
     get:
       tags:
       - V1
-      summary: Openai List Files In Vector Store File Batch
+      summary: Returns a list of vector store files in a batch.
       description: Query endpoint for proper schema generation.
       operationId: openai_list_files_in_vector_store_file_batch_v1_vector_stores__vector_store_id__file_batches__batch_id__files_get
       parameters:
-      - name: batch_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Batch Id
-      - name: vector_store_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Vector Store Id
       - name: after
         in: query
         required: true
@@ -7437,6 +7466,20 @@ paths:
           type: string
           default: desc
           title: Order
+      - name: batch_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Batch Id
+        description: The ID of the file batch to list files from.
+      - name: vector_store_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Vector Store Id
+        description: The ID of the vector store containing the file batch.
       responses:
         '200':
           description: A VectorStoreFilesListInBatchResponse containing the list of files in the batch.
@@ -7460,16 +7503,10 @@ paths:
     get:
       tags:
       - V1
-      summary: Openai List Files In Vector Store
+      summary: List files in a vector store.
       description: Query endpoint for proper schema generation.
       operationId: openai_list_files_in_vector_store_v1_vector_stores__vector_store_id__files_get
       parameters:
-      - name: vector_store_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Vector Store Id
       - name: after
         in: query
         required: true
@@ -7502,6 +7539,13 @@ paths:
           type: string
           default: desc
           title: Order
+      - name: vector_store_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Vector Store Id
+        description: The ID of the vector store to list files from.
       responses:
         '200':
           description: A VectorStoreListFilesResponse containing the list of files.
@@ -7524,7 +7568,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Attach File To Vector Store
+      summary: Attach a file to a vector store.
       description: Typed endpoint for proper schema generation.
       operationId: openai_attach_file_to_vector_store_v1_vector_stores__vector_store_id__files_post
       requestBody:
@@ -7558,27 +7602,29 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: vector_store_id'
+        description: The ID of the vector store to attach the file to.
   /v1/vector_stores/{vector_store_id}/files/{file_id}:
     delete:
       tags:
       - V1
-      summary: Openai Delete Vector Store File
+      summary: Delete a vector store file.
       description: Query endpoint for proper schema generation.
       operationId: openai_delete_vector_store_file_v1_vector_stores__vector_store_id__files__file_id__delete
       parameters:
-      - name: file_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: File Id
       - name: vector_store_id
         in: path
         required: true
         schema:
           type: string
           title: Vector Store Id
+        description: The ID of the vector store containing the file to delete.
+      - name: file_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: File Id
+        description: The ID of the file to delete.
       responses:
         '200':
           description: A VectorStoreFileDeleteResponse indicating the deletion status.
@@ -7601,22 +7647,24 @@ paths:
     get:
       tags:
       - V1
-      summary: Openai Retrieve Vector Store File
+      summary: Retrieves a vector store file.
       description: Query endpoint for proper schema generation.
       operationId: openai_retrieve_vector_store_file_v1_vector_stores__vector_store_id__files__file_id__get
       parameters:
-      - name: file_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: File Id
       - name: vector_store_id
         in: path
         required: true
         schema:
           type: string
           title: Vector Store Id
+        description: The ID of the vector store containing the file to retrieve.
+      - name: file_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: File Id
+        description: The ID of the file to retrieve.
       responses:
         '200':
           description: A VectorStoreFileObject representing the file.
@@ -7639,7 +7687,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Update Vector Store File
+      summary: Updates a vector store file.
       description: Typed endpoint for proper schema generation.
       operationId: openai_update_vector_store_file_v1_vector_stores__vector_store_id__files__file_id__post
       requestBody:
@@ -7673,33 +7721,35 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: vector_store_id'
+        description: The ID of the vector store containing the file to update.
       - name: file_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: file_id'
+        description: The ID of the file to update.
   /v1/vector_stores/{vector_store_id}/files/{file_id}/content:
     get:
       tags:
       - V1
-      summary: Openai Retrieve Vector Store File Contents
+      summary: Retrieves the contents of a vector store file.
       description: Query endpoint for proper schema generation.
       operationId: openai_retrieve_vector_store_file_contents_v1_vector_stores__vector_store_id__files__file_id__content_get
       parameters:
-      - name: file_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: File Id
       - name: vector_store_id
         in: path
         required: true
         schema:
           type: string
           title: Vector Store Id
+        description: The ID of the vector store containing the file to retrieve.
+      - name: file_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: File Id
+        description: The ID of the file to retrieve.
       responses:
         '200':
           description: A list of InterleavedContent representing the file contents.
@@ -7723,7 +7773,7 @@ paths:
     post:
       tags:
       - V1
-      summary: Openai Search Vector Store
+      summary: Search for chunks in a vector store.
       description: Typed endpoint for proper schema generation.
       operationId: openai_search_vector_store_v1_vector_stores__vector_store_id__search_post
       requestBody:
@@ -7757,12 +7807,12 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: vector_store_id'
+        description: The ID of the vector store to search.
   /v1/version:
     get:
       tags:
       - V1
-      summary: Version
+      summary: Get version.
       description: Response-only endpoint for proper schema generation.
       operationId: version_v1_version_get
       responses:
@@ -7799,7 +7849,7 @@ components:
       required:
       - config
       title: AgentCandidate
-      description: "An agent candidate for evaluation.\n\n:param config: The configuration for the agent candidate."
+      description: An agent candidate for evaluation.
     AgentConfig:
       properties:
         sampling_params:
@@ -7866,7 +7916,7 @@ components:
       - model
       - instructions
       title: AgentConfig
-      description: "Configuration for an agent.\n\n:param model: The model identifier to use for the agent\n:param instructions: The system instructions for the agent\n:param name: Optional name for the agent, used in telemetry and identification\n:param enable_session_persistence: Optional flag indicating whether session data has to be persisted\n:param response_format: Optional response format configuration"
+      description: Configuration for an agent.
     AgentCreateResponse:
       properties:
         agent_id:
@@ -7876,7 +7926,7 @@ components:
       required:
       - agent_id
       title: AgentCreateResponse
-      description: "Response returned when creating a new agent.\n\n:param agent_id: Unique identifier for the created agent"
+      description: Response returned when creating a new agent.
     AgentSessionCreateResponse:
       properties:
         session_id:
@@ -7886,7 +7936,7 @@ components:
       required:
       - session_id
       title: AgentSessionCreateResponse
-      description: "Response returned when creating a new agent session.\n\n:param session_id: Unique identifier for the created session"
+      description: Response returned when creating a new agent session.
     AgentToolGroupWithArgs:
       properties:
         name:
@@ -7910,7 +7960,7 @@ components:
           default: agent_turn_input
       type: object
       title: AgentTurnInputType
-      description: "Parameter type for agent turn input.\n\n:param type: Discriminator type. Always \"agent_turn_input\""
+      description: Parameter type for agent turn input.
     AggregationFunctionType:
       type: string
       enum:
@@ -7920,7 +7970,7 @@ components:
       - categorical_count
       - accuracy
       title: AggregationFunctionType
-      description: "Types of aggregation functions for scoring results.\n:cvar average: Calculate the arithmetic mean of scores\n:cvar weighted_average: Calculate a weighted average of scores\n:cvar median: Calculate the median value of scores\n:cvar categorical_count: Count occurrences of categorical values\n:cvar accuracy: Calculate accuracy as the proportion of correct answers"
+      description: Types of aggregation functions for scoring results.
     AllowedToolsFilter:
       properties:
         tool_names:
@@ -7930,7 +7980,7 @@ components:
           type: array
       type: object
       title: AllowedToolsFilter
-      description: "Filter configuration for restricting which MCP tools can be used.\n\n:param tool_names: (Optional) List of specific tool names that are allowed"
+      description: Filter configuration for restricting which MCP tools can be used.
     ApprovalFilter:
       properties:
         always:
@@ -7945,7 +7995,7 @@ components:
           type: array
       type: object
       title: ApprovalFilter
-      description: "Filter configuration for MCP tool approval requirements.\n\n:param always: (Optional) List of tool names that always require approval\n:param never: (Optional) List of tool names that never require approval"
+      description: Filter configuration for MCP tool approval requirements.
     ArrayType:
       properties:
         type:
@@ -7955,7 +8005,7 @@ components:
           default: array
       type: object
       title: ArrayType
-      description: "Parameter type for array values.\n\n:param type: Discriminator type. Always \"array\""
+      description: Parameter type for array values.
     Attachment-Output:
       properties:
         content:
@@ -7989,7 +8039,7 @@ components:
       - content
       - mime_type
       title: Attachment
-      description: "An attachment to an agent turn.\n\n:param content: The content of the attachment.\n:param mime_type: The MIME type of the attachment."
+      description: An attachment to an agent turn.
     BasicScoringFnParams:
       properties:
         type:
@@ -8005,7 +8055,7 @@ components:
           description: Aggregation functions to apply to the scores of each row
       type: object
       title: BasicScoringFnParams
-      description: "Parameters for basic scoring function configuration.\n:param type: The type of scoring function parameters, always basic\n:param aggregation_functions: Aggregation functions to apply to the scores of each row"
+      description: Parameters for basic scoring function configuration.
     Batch:
       properties:
         id:
@@ -8192,7 +8242,7 @@ components:
       - dataset_id
       - scoring_functions
       title: Benchmark
-      description: "A benchmark resource for evaluating model performance.\n\n:param dataset_id: Identifier of the dataset to use for the benchmark evaluation\n:param scoring_functions: List of scoring function identifiers to apply during evaluation\n:param metadata: Metadata for this evaluation task\n:param type: The resource type, always benchmark"
+      description: A benchmark resource for evaluating model performance.
     BenchmarkConfig:
       properties:
         eval_candidate:
@@ -8228,7 +8278,7 @@ components:
       required:
       - eval_candidate
       title: BenchmarkConfig
-      description: "A benchmark configuration for evaluation.\n\n:param eval_candidate: The candidate to evaluate.\n:param scoring_params: Map between scoring function id and parameters for each scoring function you want to run\n:param num_examples: (Optional) The number of examples to evaluate. If not provided, all examples in the dataset will be evaluated"
+      description: A benchmark configuration for evaluation.
     BooleanType:
       properties:
         type:
@@ -8238,7 +8288,7 @@ components:
           default: boolean
       type: object
       title: BooleanType
-      description: "Parameter type for boolean values.\n\n:param type: Discriminator type. Always \"boolean\""
+      description: Parameter type for boolean values.
     BuiltinTool:
       type: string
       enum:
@@ -8256,7 +8306,7 @@ components:
           default: chat_completion_input
       type: object
       title: ChatCompletionInputType
-      description: "Parameter type for chat completion input.\n\n:param type: Discriminator type. Always \"chat_completion_input\""
+      description: Parameter type for chat completion input.
     Chunk-Output:
       properties:
         content:
@@ -8300,7 +8350,7 @@ components:
       - content
       - chunk_id
       title: Chunk
-      description: "A chunk of content that can be inserted into a vector database.\n:param content: The content of the chunk, which can be interleaved text, images, or other types.\n:param chunk_id: Unique identifier for the chunk. Must be provided explicitly.\n:param metadata: Metadata associated with the chunk that will be used in the model context during inference.\n:param embedding: Optional embedding for the chunk. If not provided, it will be computed later.\n:param chunk_metadata: Metadata for the chunk that will NOT be used in the context during inference.\n    The `chunk_metadata` is required backend functionality."
+      description: A chunk of content that can be inserted into a vector database.
     ChunkMetadata:
       properties:
         chunk_id:
@@ -8338,7 +8388,7 @@ components:
           type: integer
       type: object
       title: ChunkMetadata
-      description: "`ChunkMetadata` is backend metadata for a `Chunk` that is used to store additional information about the chunk that\n    will not be used in the context during inference, but is required for backend functionality. The `ChunkMetadata`\n    is set during chunk creation in `MemoryToolRuntimeImpl().insert()`and is not expected to change after.\n    Use `Chunk.metadata` for metadata that will be used in the context during inference.\n:param chunk_id: The ID of the chunk. If not set, it will be generated based on the document ID and content.\n:param document_id: The ID of the document this chunk belongs to.\n:param source: The source of the content, such as a URL, file path, or other identifier.\n:param created_timestamp: An optional timestamp indicating when the chunk was created.\n:param updated_timestamp: An optional timestamp indicating when the chunk was last updated.\n:param chunk_window: The window of the chunk, which can be used to group related chunks together.\n:param chunk_tokenizer: The tokenizer used to create the chunk. Default is Tiktoken.\n:param chunk_embedding_model: The embedding model used to create the chunk's embedding.\n:param chunk_embedding_dimension: The dimension of the embedding vector for the chunk.\n:param content_token_count: The number of tokens in the content of the chunk.\n:param metadata_token_count: The number of tokens in the metadata of the chunk."
+      description: "`ChunkMetadata` is backend metadata for a `Chunk` that is used to store additional information about the chunk that\n    will not be used in the context during inference, but is required for backend functionality. The `ChunkMetadata`\n    is set during chunk creation in `MemoryToolRuntimeImpl().insert()`and is not expected to change after.\n    Use `Chunk.metadata` for metadata that will be used in the context during inference."
     CompletionInputType:
       properties:
         type:
@@ -8348,7 +8398,7 @@ components:
           default: completion_input
       type: object
       title: CompletionInputType
-      description: "Parameter type for completion input.\n\n:param type: Discriminator type. Always \"completion_input\""
+      description: Parameter type for completion input.
     CompletionMessage-Output:
       properties:
         role:
@@ -8390,7 +8440,7 @@ components:
       - content
       - stop_reason
       title: CompletionMessage
-      description: "A message containing the model's (assistant) response in a chat conversation.\n\n:param role: Must be \"assistant\" to identify this as the model's response\n:param content: The content of the model's response\n:param stop_reason: Reason why the model stopped generating. Options are:\n    - `StopReason.end_of_turn`: The model finished generating the entire response.\n    - `StopReason.end_of_message`: The model finished generating but generated a partial response -- usually, a tool call. The user may call the tool and continue the conversation with the tool's response.\n    - `StopReason.out_of_tokens`: The model ran out of token budget.\n:param tool_calls: List of tool calls. Each tool call is a ToolCall object."
+      description: A message containing the model's (assistant) response in a chat conversation.
     Conversation:
       properties:
         id:
@@ -8502,7 +8552,7 @@ components:
       required:
       - beta
       title: DPOAlignmentConfig
-      description: "Configuration for Direct Preference Optimization (DPO) alignment.\n\n:param beta: Temperature parameter for the DPO loss\n:param loss_type: The type of loss function to use for DPO"
+      description: Configuration for Direct Preference Optimization (DPO) alignment.
     DPOLossType:
       type: string
       enum:
@@ -8542,7 +8592,7 @@ components:
       - shuffle
       - data_format
       title: DataConfig
-      description: "Configuration for training data and data loading.\n\n:param dataset_id: Unique identifier for the training dataset\n:param batch_size: Number of samples per training batch\n:param shuffle: Whether to shuffle the dataset during training\n:param data_format: Format of the dataset (instruct or dialog)\n:param validation_dataset_id: (Optional) Unique identifier for the validation dataset\n:param packed: (Optional) Whether to pack multiple samples into a single sequence for efficiency\n:param train_on_input: (Optional) Whether to compute loss on input tokens as well as output tokens"
+      description: Configuration for training data and data loading.
     Dataset:
       properties:
         identifier:
@@ -8586,14 +8636,14 @@ components:
       - purpose
       - source
       title: Dataset
-      description: "Dataset resource for storing and accessing training or evaluation data.\n\n:param type: Type of resource, always 'dataset' for datasets"
+      description: Dataset resource for storing and accessing training or evaluation data.
     DatasetFormat:
       type: string
       enum:
       - instruct
       - dialog
       title: DatasetFormat
-      description: "Format of the training dataset.\n:cvar instruct: Instruction-following format with prompt and completion\n:cvar dialog: Multi-turn conversation format with messages"
+      description: Format of the training dataset.
     DatasetPurpose:
       type: string
       enum:
@@ -8601,7 +8651,7 @@ components:
       - eval/question-answer
       - eval/messages-answer
       title: DatasetPurpose
-      description: "Purpose of the dataset. Each purpose has a required input data schema.\n\n:cvar post-training/messages: The dataset contains messages used for post-training.\n    {\n        \"messages\": [\n            {\"role\": \"user\", \"content\": \"Hello, world!\"},\n            {\"role\": \"assistant\", \"content\": \"Hello, world!\"},\n        ]\n    }\n:cvar eval/question-answer: The dataset contains a question column and an answer column.\n    {\n        \"question\": \"What is the capital of France?\",\n        \"answer\": \"Paris\"\n    }\n:cvar eval/messages-answer: The dataset contains a messages column with list of messages and an answer column.\n    {\n        \"messages\": [\n            {\"role\": \"user\", \"content\": \"Hello, my name is John Doe.\"},\n            {\"role\": \"assistant\", \"content\": \"Hello, John Doe. How can I help you today?\"},\n            {\"role\": \"user\", \"content\": \"What's my name?\"},\n        ],\n        \"answer\": \"John Doe\"\n    }"
+      description: Purpose of the dataset. Each purpose has a required input data schema.
     DefaultRAGQueryGeneratorConfig:
       properties:
         type:
@@ -8615,7 +8665,7 @@ components:
           default: ' '
       type: object
       title: DefaultRAGQueryGeneratorConfig
-      description: "Configuration for the default RAG query generator.\n\n:param type: Type of query generator, always 'default'\n:param separator: String separator used to join query terms"
+      description: Configuration for the default RAG query generator.
     Document:
       properties:
         content:
@@ -8649,7 +8699,7 @@ components:
       - content
       - mime_type
       title: Document
-      description: "A document to be used by an agent.\n\n:param content: The content of the document.\n:param mime_type: The MIME type of the document."
+      description: A document to be used by an agent.
     EfficiencyConfig:
       properties:
         enable_activation_checkpointing:
@@ -8670,7 +8720,7 @@ components:
           type: boolean
       type: object
       title: EfficiencyConfig
-      description: "Configuration for memory and compute efficiency optimizations.\n\n:param enable_activation_checkpointing: (Optional) Whether to use activation checkpointing to reduce memory usage\n:param enable_activation_offloading: (Optional) Whether to offload activations to CPU to save GPU memory\n:param memory_efficient_fsdp_wrap: (Optional) Whether to use memory-efficient FSDP wrapping\n:param fsdp_cpu_offload: (Optional) Whether to offload FSDP parameters to CPU"
+      description: Configuration for memory and compute efficiency optimizations.
     Errors:
       properties:
         data:
@@ -8702,7 +8752,7 @@ components:
       - generations
       - scores
       title: EvaluateResponse
-      description: "The response from an evaluation.\n\n:param generations: The generations from the evaluation.\n:param scores: The scores from the evaluation."
+      description: The response from an evaluation.
     GrammarResponseFormat:
       properties:
         type:
@@ -8718,7 +8768,7 @@ components:
       required:
       - bnf
       title: GrammarResponseFormat
-      description: "Configuration for grammar-guided response generation.\n\n:param type: Must be \"grammar\" to identify this format type\n:param bnf: The BNF grammar specification the response should conform to"
+      description: Configuration for grammar-guided response generation.
     GreedySamplingStrategy:
       properties:
         type:
@@ -8728,7 +8778,7 @@ components:
           default: greedy
       type: object
       title: GreedySamplingStrategy
-      description: "Greedy sampling strategy that selects the highest probability token at each step.\n\n:param type: Must be \"greedy\" to identify this sampling strategy"
+      description: Greedy sampling strategy that selects the highest probability token at each step.
     HealthInfo:
       properties:
         status:
@@ -8737,7 +8787,7 @@ components:
       required:
       - status
       title: HealthInfo
-      description: "Health status information for the service.\n\n:param status: Current health status of the service"
+      description: Health status information for the service.
     HealthStatus:
       type: string
       enum:
@@ -8758,7 +8808,7 @@ components:
       required:
       - image
       title: ImageContentItem
-      description: "A image content item\n\n:param type: Discriminator type of the content item. Always \"image\"\n:param image: Image as a base64 encoded string or an URL"
+      description: A image content item
     ImageContentItem-Output:
       properties:
         type:
@@ -8772,7 +8822,7 @@ components:
       required:
       - image
       title: ImageContentItem
-      description: "A image content item\n\n:param type: Discriminator type of the content item. Always \"image\"\n:param image: Image as a base64 encoded string or an URL"
+      description: A image content item
     InferenceStep-Output:
       properties:
         turn_id:
@@ -8802,7 +8852,7 @@ components:
       - step_id
       - model_response
       title: InferenceStep
-      description: "An inference step in an agent turn.\n\n:param model_response: The response from the LLM."
+      description: An inference step in an agent turn.
     InputTokensDetails:
       properties:
         cached_tokens:
@@ -8825,7 +8875,7 @@ components:
       - job_id
       - status
       title: Job
-      description: "A job execution instance with status tracking.\n\n:param job_id: Unique identifier for the job\n:param status: Current execution status of the job"
+      description: A job execution instance with status tracking.
     JobStatus:
       type: string
       enum:
@@ -8835,7 +8885,7 @@ components:
       - scheduled
       - cancelled
       title: JobStatus
-      description: "Status of a job execution.\n:cvar completed: Job has finished successfully\n:cvar in_progress: Job is currently running\n:cvar failed: Job has failed during execution\n:cvar scheduled: Job is scheduled but not yet started\n:cvar cancelled: Job was cancelled before completion"
+      description: Status of a job execution.
     JsonSchemaResponseFormat:
       properties:
         type:
@@ -8851,7 +8901,7 @@ components:
       required:
       - json_schema
       title: JsonSchemaResponseFormat
-      description: "Configuration for JSON schema-guided response generation.\n\n:param type: Must be \"json_schema\" to identify this format type\n:param json_schema: The JSON schema the response should conform to. In a Python SDK, this is often a `pydantic` model."
+      description: Configuration for JSON schema-guided response generation.
     JsonType:
       properties:
         type:
@@ -8861,7 +8911,7 @@ components:
           default: json
       type: object
       title: JsonType
-      description: "Parameter type for JSON values.\n\n:param type: Discriminator type. Always \"json\""
+      description: Parameter type for JSON values.
     LLMAsJudgeScoringFnParams:
       properties:
         type:
@@ -8891,7 +8941,7 @@ components:
       required:
       - judge_model
       title: LLMAsJudgeScoringFnParams
-      description: "Parameters for LLM-as-judge scoring function configuration.\n:param type: The type of scoring function parameters, always llm_as_judge\n:param judge_model: Identifier of the LLM model to use as a judge for scoring\n:param prompt_template: (Optional) Custom prompt template for the judge model\n:param judge_score_regexes: Regexes to extract the answer from generated response\n:param aggregation_functions: Aggregation functions to apply to the scores of each row"
+      description: Parameters for LLM-as-judge scoring function configuration.
     LLMRAGQueryGeneratorConfig:
       properties:
         type:
@@ -8910,7 +8960,7 @@ components:
       - model
       - template
       title: LLMRAGQueryGeneratorConfig
-      description: "Configuration for the LLM-based RAG query generator.\n\n:param type: Type of query generator, always 'llm'\n:param model: Name of the language model to use for query generation\n:param template: Template string for formatting the query generation prompt"
+      description: Configuration for the LLM-based RAG query generator.
     ListBenchmarksResponse:
       properties:
         data:
@@ -8933,7 +8983,7 @@ components:
       required:
       - data
       title: ListDatasetsResponse
-      description: "Response from listing datasets.\n\n:param data: List of datasets"
+      description: Response from listing datasets.
     ListModelsResponse:
       properties:
         data:
@@ -8979,7 +9029,7 @@ components:
       required:
       - data
       title: ListProvidersResponse
-      description: "Response containing a list of all available providers.\n\n:param data: List of provider information objects"
+      description: Response containing a list of all available providers.
     ListRoutesResponse:
       properties:
         data:
@@ -8991,7 +9041,7 @@ components:
       required:
       - data
       title: ListRoutesResponse
-      description: "Response containing a list of all available API routes.\n\n:param data: List of available route information objects"
+      description: Response containing a list of all available API routes.
     ListScoringFunctionsResponse:
       properties:
         data:
@@ -9025,7 +9075,7 @@ components:
       required:
       - data
       title: ListToolGroupsResponse
-      description: "Response containing a list of tool groups.\n\n:param data: List of tool groups"
+      description: Response containing a list of tool groups.
     MCPListToolsTool:
       properties:
         input_schema:
@@ -9043,7 +9093,7 @@ components:
       - input_schema
       - name
       title: MCPListToolsTool
-      description: "Tool definition returned by MCP list tools operation.\n\n:param input_schema: JSON schema defining the tool's input parameters\n:param name: Name of the tool\n:param description: (Optional) Description of what the tool does"
+      description: Tool definition returned by MCP list tools operation.
     MemoryRetrievalStep-Output:
       properties:
         turn_id:
@@ -9097,7 +9147,7 @@ components:
       - vector_store_ids
       - inserted_context
       title: MemoryRetrievalStep
-      description: "A memory retrieval step in an agent turn.\n\n:param vector_store_ids: The IDs of the vector databases to retrieve context from.\n:param inserted_context: The context retrieved from the vector databases."
+      description: A memory retrieval step in an agent turn.
     Model:
       properties:
         identifier:
@@ -9130,7 +9180,7 @@ components:
       - identifier
       - provider_id
       title: Model
-      description: "A model resource representing an AI model registered in Llama Stack.\n\n:param type: The resource type, always 'model' for model resources\n:param model_type: The type of model (LLM or embedding model)\n:param metadata: Any additional metadata for this model\n:param identifier: Unique identifier for this resource in llama stack\n:param provider_resource_id: Unique identifier for this resource in the provider\n:param provider_id: ID of the provider that owns this resource"
+      description: A model resource representing an AI model registered in Llama Stack.
     ModelCandidate:
       properties:
         type:
@@ -9150,7 +9200,7 @@ components:
       - model
       - sampling_params
       title: ModelCandidate
-      description: "A model candidate for evaluation.\n\n:param model: The model ID to evaluate.\n:param sampling_params: The sampling parameters for the model.\n:param system_message: (Optional) The system message providing instructions or context to the model."
+      description: A model candidate for evaluation.
     ModelType:
       type: string
       enum:
@@ -9158,7 +9208,7 @@ components:
       - embedding
       - rerank
       title: ModelType
-      description: "Enumeration of supported model types in Llama Stack.\n:cvar llm: Large language model for text generation and completion\n:cvar embedding: Embedding model for converting text to vector representations\n:cvar rerank: Reranking model for reordering documents based on their relevance to a query"
+      description: Enumeration of supported model types in Llama Stack.
     ModerationObject:
       properties:
         id:
@@ -9178,7 +9228,7 @@ components:
       - model
       - results
       title: ModerationObject
-      description: "A moderation object.\n:param id: The unique identifier for the moderation request.\n:param model: The model used to generate the moderation results.\n:param results: A list of moderation objects"
+      description: A moderation object.
     ModerationObjectResults:
       properties:
         flagged:
@@ -9212,7 +9262,7 @@ components:
       required:
       - flagged
       title: ModerationObjectResults
-      description: "A moderation object.\n:param flagged: Whether any of the below categories are flagged.\n:param categories: A list of the categories, and whether they are flagged or not.\n:param category_applied_input_types: A list of the categories along with the input type(s) that the score applies to.\n:param category_scores: A list of the categories along with their scores as predicted by model."
+      description: A moderation object.
     NumberType:
       properties:
         type:
@@ -9222,7 +9272,7 @@ components:
           default: number
       type: object
       title: NumberType
-      description: "Parameter type for numeric values.\n\n:param type: Discriminator type. Always \"number\""
+      description: Parameter type for numeric values.
     ObjectType:
       properties:
         type:
@@ -9232,7 +9282,7 @@ components:
           default: object
       type: object
       title: ObjectType
-      description: "Parameter type for object values.\n\n:param type: Discriminator type. Always \"object\""
+      description: Parameter type for object values.
     OpenAIAssistantMessageParam-Input:
       properties:
         role:
@@ -9257,7 +9307,7 @@ components:
           type: array
       type: object
       title: OpenAIAssistantMessageParam
-      description: "A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"assistant\" to identify this as the model's response\n:param content: The content of the model's response\n:param name: (Optional) The name of the assistant message participant.\n:param tool_calls: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object."
+      description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
     OpenAIAssistantMessageParam-Output:
       properties:
         role:
@@ -9282,7 +9332,7 @@ components:
           type: array
       type: object
       title: OpenAIAssistantMessageParam
-      description: "A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"assistant\" to identify this as the model's response\n:param content: The content of the model's response\n:param name: (Optional) The name of the assistant message participant.\n:param tool_calls: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object."
+      description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
     OpenAIChatCompletion:
       properties:
         id:
@@ -9313,7 +9363,7 @@ components:
       - created
       - model
       title: OpenAIChatCompletion
-      description: "Response from an OpenAI-compatible chat completion request.\n\n:param id: The ID of the chat completion\n:param choices: List of choices\n:param object: The object type, which will be \"chat.completion\"\n:param created: The Unix timestamp in seconds when the chat completion was created\n:param model: The model that was used to generate the chat completion\n:param usage: Token usage information for the completion"
+      description: Response from an OpenAI-compatible chat completion request.
     OpenAIChatCompletionContentPartImageParam:
       properties:
         type:
@@ -9327,7 +9377,7 @@ components:
       required:
       - image_url
       title: OpenAIChatCompletionContentPartImageParam
-      description: "Image content part for OpenAI-compatible chat completion messages.\n\n:param type: Must be \"image_url\" to identify this as image content\n:param image_url: Image URL specification and processing details"
+      description: Image content part for OpenAI-compatible chat completion messages.
     OpenAIChatCompletionContentPartTextParam:
       properties:
         type:
@@ -9342,7 +9392,7 @@ components:
       required:
       - text
       title: OpenAIChatCompletionContentPartTextParam
-      description: "Text content part for OpenAI-compatible chat completion messages.\n\n:param type: Must be \"text\" to identify this as text content\n:param text: The text content of the message"
+      description: Text content part for OpenAI-compatible chat completion messages.
     OpenAIChatCompletionRequestWithExtraBody:
       properties:
         model:
@@ -9464,7 +9514,7 @@ components:
       - model
       - messages
       title: OpenAIChatCompletionRequestWithExtraBody
-      description: "Request parameters for OpenAI-compatible chat completion endpoint.\n\n:param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.\n:param messages: List of messages in the conversation.\n:param frequency_penalty: (Optional) The penalty for repeated tokens.\n:param function_call: (Optional) The function call to use.\n:param functions: (Optional) List of functions to use.\n:param logit_bias: (Optional) The logit bias to use.\n:param logprobs: (Optional) The log probabilities to use.\n:param max_completion_tokens: (Optional) The maximum number of tokens to generate.\n:param max_tokens: (Optional) The maximum number of tokens to generate.\n:param n: (Optional) The number of completions to generate.\n:param parallel_tool_calls: (Optional) Whether to parallelize tool calls.\n:param presence_penalty: (Optional) The penalty for repeated tokens.\n:param response_format: (Optional) The response format to use.\n:param seed: (Optional) The seed to use.\n:param stop: (Optional) The stop tokens to use.\n:param stream: (Optional) Whether to stream the response.\n:param stream_options: (Optional) The stream options to use.\n:param temperature: (Optional) The temperature to use.\n:param tool_choice: (Optional) The tool choice to use.\n:param tools: (Optional) The tools to use.\n:param top_logprobs: (Optional) The top log probabilities to use.\n:param top_p: (Optional) The top p to use.\n:param user: (Optional) The user to use."
+      description: Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletionToolCall:
       properties:
         index:
@@ -9482,7 +9532,7 @@ components:
           $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
       type: object
       title: OpenAIChatCompletionToolCall
-      description: "Tool call specification for OpenAI-compatible chat completion responses.\n\n:param index: (Optional) Index of the tool call in the list\n:param id: (Optional) Unique identifier for the tool call\n:param type: Must be \"function\" to identify this as a function call\n:param function: (Optional) Function call details"
+      description: Tool call specification for OpenAI-compatible chat completion responses.
     OpenAIChatCompletionToolCallFunction:
       properties:
         name:
@@ -9493,7 +9543,7 @@ components:
           type: string
       type: object
       title: OpenAIChatCompletionToolCallFunction
-      description: "Function call details for OpenAI-compatible tool calls.\n\n:param name: (Optional) Name of the function to call\n:param arguments: (Optional) Arguments to pass to the function as a JSON string"
+      description: Function call details for OpenAI-compatible tool calls.
     OpenAIChatCompletionUsage:
       properties:
         prompt_tokens:
@@ -9515,7 +9565,7 @@ components:
       - completion_tokens
       - total_tokens
       title: OpenAIChatCompletionUsage
-      description: "Usage information for OpenAI chat completion.\n\n:param prompt_tokens: Number of tokens in the prompt\n:param completion_tokens: Number of tokens in the completion\n:param total_tokens: Total tokens used (prompt + completion)\n:param input_tokens_details: Detailed breakdown of input token usage\n:param output_tokens_details: Detailed breakdown of output token usage"
+      description: Usage information for OpenAI chat completion.
     OpenAIChatCompletionUsageCompletionTokensDetails:
       properties:
         reasoning_tokens:
@@ -9523,7 +9573,7 @@ components:
           type: integer
       type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
-      description: "Token details for output tokens in OpenAI chat completion usage.\n\n:param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)"
+      description: Token details for output tokens in OpenAI chat completion usage.
     OpenAIChatCompletionUsagePromptTokensDetails:
       properties:
         cached_tokens:
@@ -9531,7 +9581,7 @@ components:
           type: integer
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
-      description: "Token details for prompt tokens in OpenAI chat completion usage.\n\n:param cached_tokens: Number of tokens retrieved from cache"
+      description: Token details for prompt tokens in OpenAI chat completion usage.
     OpenAIChoice-Output:
       properties:
         message:
@@ -9564,7 +9614,7 @@ components:
       - finish_reason
       - index
       title: OpenAIChoice
-      description: "A choice from an OpenAI-compatible chat completion response.\n\n:param message: The message from the model\n:param finish_reason: The reason the model stopped generating\n:param index: The index of the choice\n:param logprobs: (Optional) The log probabilities for the tokens in the message"
+      description: A choice from an OpenAI-compatible chat completion response.
     OpenAIChoiceLogprobs-Output:
       properties:
         content:
@@ -9579,7 +9629,7 @@ components:
           type: array
       type: object
       title: OpenAIChoiceLogprobs
-      description: "The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.\n\n:param content: (Optional) The log probabilities for the tokens in the message\n:param refusal: (Optional) The log probabilities for the tokens in the message"
+      description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
     OpenAICompletion:
       properties:
         id:
@@ -9608,7 +9658,7 @@ components:
       - created
       - model
       title: OpenAICompletion
-      description: "Response from an OpenAI-compatible completion request.\n\n:id: The ID of the completion\n:choices: List of choices\n:created: The Unix timestamp in seconds when the completion was created\n:model: The model that was used to generate the completion\n:object: The object type, which will be \"text_completion\""
+      description: Response from an OpenAI-compatible completion request.
     OpenAICompletionChoice-Output:
       properties:
         finish_reason:
@@ -9628,7 +9678,7 @@ components:
       - text
       - index
       title: OpenAICompletionChoice
-      description: "A choice from an OpenAI-compatible completion response.\n\n:finish_reason: The reason the model stopped generating\n:text: The text of the choice\n:index: The index of the choice\n:logprobs: (Optional) The log probabilities for the tokens in the choice"
+      description: A choice from an OpenAI-compatible completion response.
     OpenAICompletionRequestWithExtraBody:
       properties:
         model:
@@ -9710,7 +9760,7 @@ components:
       - model
       - prompt
       title: OpenAICompletionRequestWithExtraBody
-      description: "Request parameters for OpenAI-compatible completion endpoint.\n\n:param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.\n:param prompt: The prompt to generate a completion for.\n:param best_of: (Optional) The number of completions to generate.\n:param echo: (Optional) Whether to echo the prompt.\n:param frequency_penalty: (Optional) The penalty for repeated tokens.\n:param logit_bias: (Optional) The logit bias to use.\n:param logprobs: (Optional) The log probabilities to use.\n:param max_tokens: (Optional) The maximum number of tokens to generate.\n:param n: (Optional) The number of completions to generate.\n:param presence_penalty: (Optional) The penalty for repeated tokens.\n:param seed: (Optional) The seed to use.\n:param stop: (Optional) The stop tokens to use.\n:param stream: (Optional) Whether to stream the response.\n:param stream_options: (Optional) The stream options to use.\n:param temperature: (Optional) The temperature to use.\n:param top_p: (Optional) The top p to use.\n:param user: (Optional) The user to use.\n:param suffix: (Optional) The suffix that should be appended to the completion."
+      description: Request parameters for OpenAI-compatible completion endpoint.
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody:
       properties:
         file_ids:
@@ -9737,7 +9787,7 @@ components:
       required:
       - file_ids
       title: OpenAICreateVectorStoreFileBatchRequestWithExtraBody
-      description: "Request to create a vector store file batch with extra_body support.\n\n:param file_ids: A list of File IDs that the vector store should use\n:param attributes: (Optional) Key-value attributes to store with the files\n:param chunking_strategy: (Optional) The chunking strategy used to chunk the file(s). Defaults to auto"
+      description: Request to create a vector store file batch with extra_body support.
     OpenAICreateVectorStoreRequestWithExtraBody:
       properties:
         name:
@@ -9763,7 +9813,7 @@ components:
       additionalProperties: true
       type: object
       title: OpenAICreateVectorStoreRequestWithExtraBody
-      description: "Request to create a vector store with extra_body support.\n\n:param name: (Optional) A name for the vector store\n:param file_ids: List of file IDs to include in the vector store\n:param expires_after: (Optional) Expiration policy for the vector store\n:param chunking_strategy: (Optional) Strategy for splitting files into chunks\n:param metadata: Set of key-value pairs that can be attached to the vector store"
+      description: Request to create a vector store with extra_body support.
     OpenAIDeveloperMessageParam:
       properties:
         role:
@@ -9785,7 +9835,7 @@ components:
       required:
       - content
       title: OpenAIDeveloperMessageParam
-      description: "A message from the developer in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"developer\" to identify this as a developer message\n:param content: The content of the developer message\n:param name: (Optional) The name of the developer message participant."
+      description: A message from the developer in an OpenAI-compatible chat completion request.
     OpenAIEmbeddingData:
       properties:
         object:
@@ -9808,7 +9858,7 @@ components:
       - embedding
       - index
       title: OpenAIEmbeddingData
-      description: "A single embedding data object from an OpenAI-compatible embeddings response.\n\n:param object: The object type, which will be \"embedding\"\n:param embedding: The embedding vector as a list of floats (when encoding_format=\"float\") or as a base64-encoded string (when encoding_format=\"base64\")\n:param index: The index of the embedding in the input list"
+      description: A single embedding data object from an OpenAI-compatible embeddings response.
     OpenAIEmbeddingUsage:
       properties:
         prompt_tokens:
@@ -9822,7 +9872,7 @@ components:
       - prompt_tokens
       - total_tokens
       title: OpenAIEmbeddingUsage
-      description: "Usage information for an OpenAI-compatible embeddings response.\n\n:param prompt_tokens: The number of tokens in the input\n:param total_tokens: The total number of tokens used"
+      description: Usage information for an OpenAI-compatible embeddings response.
     OpenAIEmbeddingsRequestWithExtraBody:
       properties:
         model:
@@ -9851,7 +9901,7 @@ components:
       - model
       - input
       title: OpenAIEmbeddingsRequestWithExtraBody
-      description: "Request parameters for OpenAI-compatible embeddings endpoint.\n\n:param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.\n:param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.\n:param encoding_format: (Optional) The format to return the embeddings in. Can be either \"float\" or \"base64\". Defaults to \"float\".\n:param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.\n:param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse."
+      description: Request parameters for OpenAI-compatible embeddings endpoint.
     OpenAIEmbeddingsResponse:
       properties:
         object:
@@ -9875,7 +9925,7 @@ components:
       - model
       - usage
       title: OpenAIEmbeddingsResponse
-      description: "Response from an OpenAI-compatible embeddings request.\n\n:param object: The object type, which will be \"list\"\n:param data: List of embedding data objects\n:param model: The model that was used to generate the embeddings\n:param usage: Usage information"
+      description: Response from an OpenAI-compatible embeddings request.
     OpenAIFile:
       properties:
         type:
@@ -9935,7 +9985,7 @@ components:
       - filename
       - purpose
       title: OpenAIFileObject
-      description: "OpenAI File object as defined in the OpenAI Files API.\n\n:param object: The object type, which is always \"file\"\n:param id: The file identifier, which can be referenced in the API endpoints\n:param bytes: The size of the file, in bytes\n:param created_at: The Unix timestamp (in seconds) for when the file was created\n:param expires_at: The Unix timestamp (in seconds) for when the file expires\n:param filename: The name of the file\n:param purpose: The intended purpose of the file"
+      description: OpenAI File object as defined in the OpenAI Files API.
     OpenAIFilePurpose:
       type: string
       enum:
@@ -9955,7 +10005,7 @@ components:
       required:
       - url
       title: OpenAIImageURL
-      description: "Image URL specification for OpenAI-compatible chat completion messages.\n\n:param url: URL of the image to include in the message\n:param detail: (Optional) Level of detail for image processing. Can be \"low\", \"high\", or \"auto\""
+      description: Image URL specification for OpenAI-compatible chat completion messages.
     OpenAIJSONSchema:
       properties:
         name:
@@ -9973,7 +10023,7 @@ components:
           type: object
       type: object
       title: OpenAIJSONSchema
-      description: "JSON schema specification for OpenAI-compatible structured response format.\n\n:param name: Name of the schema\n:param description: (Optional) Description of the schema\n:param strict: (Optional) Whether to enforce strict adherence to the schema\n:param schema: (Optional) The JSON schema definition"
+      description: JSON schema specification for OpenAI-compatible structured response format.
     OpenAIResponseAnnotationCitation:
       properties:
         type:
@@ -10000,7 +10050,7 @@ components:
       - title
       - url
       title: OpenAIResponseAnnotationCitation
-      description: "URL citation annotation for referencing external web resources.\n\n:param type: Annotation type identifier, always \"url_citation\"\n:param end_index: End position of the citation span in the content\n:param start_index: Start position of the citation span in the content\n:param title: Title of the referenced web resource\n:param url: URL of the referenced web resource"
+      description: URL citation annotation for referencing external web resources.
     OpenAIResponseAnnotationContainerFileCitation:
       properties:
         type:
@@ -10053,7 +10103,7 @@ components:
       - filename
       - index
       title: OpenAIResponseAnnotationFileCitation
-      description: "File citation annotation for referencing specific files in response content.\n\n:param type: Annotation type identifier, always \"file_citation\"\n:param file_id: Unique identifier of the referenced file\n:param filename: Name of the referenced file\n:param index: Position index of the citation within the content"
+      description: File citation annotation for referencing specific files in response content.
     OpenAIResponseAnnotationFilePath:
       properties:
         type:
@@ -10086,7 +10136,7 @@ components:
       required:
       - refusal
       title: OpenAIResponseContentPartRefusal
-      description: "Refusal content within a streamed response part.\n\n:param type: Content part type identifier, always \"refusal\"\n:param refusal: Refusal text supplied by the model"
+      description: Refusal content within a streamed response part.
     OpenAIResponseError:
       properties:
         code:
@@ -10100,7 +10150,7 @@ components:
       - code
       - message
       title: OpenAIResponseError
-      description: "Error details for failed OpenAI response requests.\n\n:param code: Error code identifying the type of failure\n:param message: Human-readable error message describing the failure"
+      description: Error details for failed OpenAI response requests.
     OpenAIResponseFormatJSONObject:
       properties:
         type:
@@ -10110,7 +10160,7 @@ components:
           default: json_object
       type: object
       title: OpenAIResponseFormatJSONObject
-      description: "JSON object response format for OpenAI-compatible chat completion requests.\n\n:param type: Must be \"json_object\" to indicate generic JSON object response format"
+      description: JSON object response format for OpenAI-compatible chat completion requests.
     OpenAIResponseFormatJSONSchema:
       properties:
         type:
@@ -10124,7 +10174,7 @@ components:
       required:
       - json_schema
       title: OpenAIResponseFormatJSONSchema
-      description: "JSON schema response format for OpenAI-compatible chat completion requests.\n\n:param type: Must be \"json_schema\" to indicate structured JSON response format\n:param json_schema: The JSON schema specification for the response"
+      description: JSON schema response format for OpenAI-compatible chat completion requests.
     OpenAIResponseFormatText:
       properties:
         type:
@@ -10134,7 +10184,7 @@ components:
           default: text
       type: object
       title: OpenAIResponseFormatText
-      description: "Text response format for OpenAI-compatible chat completion requests.\n\n:param type: Must be \"text\" to indicate plain text response format"
+      description: Text response format for OpenAI-compatible chat completion requests.
     OpenAIResponseInputFunctionToolCallOutput:
       properties:
         call_id:
@@ -10181,7 +10231,7 @@ components:
           type: string
       type: object
       title: OpenAIResponseInputMessageContentFile
-      description: "File content for input messages in OpenAI response format.\n\n:param type: The type of the input item. Always `input_file`.\n:param file_data: The data of the file to be sent to the model.\n:param file_id: (Optional) The ID of the file to be sent to the model.\n:param file_url: The URL of the file to be sent to the model.\n:param filename: The name of the file to be sent to the model."
+      description: File content for input messages in OpenAI response format.
     OpenAIResponseInputMessageContentImage:
       properties:
         detail:
@@ -10207,7 +10257,7 @@ components:
           type: string
       type: object
       title: OpenAIResponseInputMessageContentImage
-      description: "Image content for input messages in OpenAI response format.\n\n:param detail: Level of detail for image processing, can be \"low\", \"high\", or \"auto\"\n:param type: Content type identifier, always \"input_image\"\n:param file_id: (Optional) The ID of the file to be sent to the model.\n:param image_url: (Optional) URL of the image content"
+      description: Image content for input messages in OpenAI response format.
     OpenAIResponseInputMessageContentText:
       properties:
         text:
@@ -10222,7 +10272,7 @@ components:
       required:
       - text
       title: OpenAIResponseInputMessageContentText
-      description: "Text content for input messages in OpenAI response format.\n\n:param text: The text content of the input message\n:param type: Content type identifier, always \"input_text\""
+      description: Text content for input messages in OpenAI response format.
     OpenAIResponseInputToolFileSearch:
       properties:
         type:
@@ -10251,7 +10301,7 @@ components:
       required:
       - vector_store_ids
       title: OpenAIResponseInputToolFileSearch
-      description: "File search tool configuration for OpenAI response inputs.\n\n:param type: Tool type identifier, always \"file_search\"\n:param vector_store_ids: List of vector store identifiers to search within\n:param filters: (Optional) Additional filters to apply to the search\n:param max_num_results: (Optional) Maximum number of search results to return (1-50)\n:param ranking_options: (Optional) Options for ranking and scoring search results"
+      description: File search tool configuration for OpenAI response inputs.
     OpenAIResponseInputToolFunction:
       properties:
         type:
@@ -10277,7 +10327,7 @@ components:
       - name
       - parameters
       title: OpenAIResponseInputToolFunction
-      description: "Function tool configuration for OpenAI response inputs.\n\n:param type: Tool type identifier, always \"function\"\n:param name: Name of the function that can be called\n:param description: (Optional) Description of what the function does\n:param parameters: (Optional) JSON schema defining the function's parameters\n:param strict: (Optional) Whether to enforce strict parameter validation"
+      description: Function tool configuration for OpenAI response inputs.
     OpenAIResponseInputToolMCP:
       properties:
         type:
@@ -10316,7 +10366,7 @@ components:
       - server_label
       - server_url
       title: OpenAIResponseInputToolMCP
-      description: "Model Context Protocol (MCP) tool configuration for OpenAI response inputs.\n\n:param type: Tool type identifier, always \"mcp\"\n:param server_label: Label to identify this MCP server\n:param server_url: URL endpoint of the MCP server\n:param headers: (Optional) HTTP headers to include when connecting to the server\n:param require_approval: Approval requirement for tool calls (\"always\", \"never\", or filter)\n:param allowed_tools: (Optional) Restriction on which tools can be used from this server"
+      description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseInputToolWebSearch:
       properties:
         type:
@@ -10336,7 +10386,7 @@ components:
           pattern: ^low|medium|high$
       type: object
       title: OpenAIResponseInputToolWebSearch
-      description: "Web search tool configuration for OpenAI response inputs.\n\n:param type: Web search tool type variant to use\n:param search_context_size: (Optional) Size of search context, must be \"low\", \"medium\", or \"high\""
+      description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseMCPApprovalRequest:
       properties:
         arguments:
@@ -10598,7 +10648,7 @@ components:
       - output
       - status
       title: OpenAIResponseObject
-      description: "Complete OpenAI response object containing generation results and metadata.\n\n:param created_at: Unix timestamp when the response was created\n:param error: (Optional) Error details if the response generation failed\n:param id: Unique identifier for this response\n:param model: Model identifier used for generation\n:param object: Object type identifier, always \"response\"\n:param output: List of generated output items (messages, tool calls, etc.)\n:param parallel_tool_calls: Whether tool calls can be executed in parallel\n:param previous_response_id: (Optional) ID of the previous response in a conversation\n:param prompt: (Optional) Reference to a prompt template and its variables.\n:param status: Current status of the response generation\n:param temperature: (Optional) Sampling temperature used for generation\n:param text: Text formatting configuration for the response\n:param top_p: (Optional) Nucleus sampling parameter used for generation\n:param tools: (Optional) An array of tools the model may call while generating a response.\n:param truncation: (Optional) Truncation strategy applied to the response\n:param usage: (Optional) Token usage information for the response\n:param instructions: (Optional) System message inserted into the model's context"
+      description: Complete OpenAI response object containing generation results and metadata.
     OpenAIResponseOutputMessageContentOutputText:
       properties:
         text:
@@ -10658,7 +10708,7 @@ components:
       - queries
       - status
       title: OpenAIResponseOutputMessageFileSearchToolCall
-      description: "File search tool call output message for OpenAI responses.\n\n:param id: Unique identifier for this tool call\n:param queries: List of search queries executed\n:param status: Current status of the file search operation\n:param type: Tool call type identifier, always \"file_search_call\"\n:param results: (Optional) Search results returned by the file search operation"
+      description: File search tool call output message for OpenAI responses.
     OpenAIResponseOutputMessageFileSearchToolCallResults:
       properties:
         attributes:
@@ -10685,7 +10735,7 @@ components:
       - score
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
-      description: "Search results returned by the file search operation.\n\n:param attributes: (Optional) Key-value attributes associated with the file\n:param file_id: Unique identifier of the file containing the result\n:param filename: Name of the file containing the result\n:param score: Relevance score for this search result (between 0 and 1)\n:param text: Text content of the search result"
+      description: Search results returned by the file search operation.
     OpenAIResponseOutputMessageFunctionToolCall:
       properties:
         call_id:
@@ -10714,7 +10764,7 @@ components:
       - name
       - arguments
       title: OpenAIResponseOutputMessageFunctionToolCall
-      description: "Function tool call output message for OpenAI responses.\n\n:param call_id: Unique identifier for the function call\n:param name: Name of the function being called\n:param arguments: JSON string containing the function arguments\n:param type: Tool call type identifier, always \"function_call\"\n:param id: (Optional) Additional identifier for the tool call\n:param status: (Optional) Current status of the function call execution"
+      description: Function tool call output message for OpenAI responses.
     OpenAIResponseOutputMessageMCPCall:
       properties:
         id:
@@ -10747,7 +10797,7 @@ components:
       - name
       - server_label
       title: OpenAIResponseOutputMessageMCPCall
-      description: "Model Context Protocol (MCP) call output message for OpenAI responses.\n\n:param id: Unique identifier for this MCP call\n:param type: Tool call type identifier, always \"mcp_call\"\n:param arguments: JSON string containing the MCP call arguments\n:param name: Name of the MCP method being called\n:param server_label: Label identifying the MCP server handling the call\n:param error: (Optional) Error message if the MCP call failed\n:param output: (Optional) Output result from the successful MCP call"
+      description: Model Context Protocol (MCP) call output message for OpenAI responses.
     OpenAIResponseOutputMessageMCPListTools:
       properties:
         id:
@@ -10772,7 +10822,7 @@ components:
       - server_label
       - tools
       title: OpenAIResponseOutputMessageMCPListTools
-      description: "MCP list tools output message containing available tools from an MCP server.\n\n:param id: Unique identifier for this MCP list tools operation\n:param type: Tool call type identifier, always \"mcp_list_tools\"\n:param server_label: Label identifying the MCP server providing the tools\n:param tools: List of available tools provided by the MCP server"
+      description: MCP list tools output message containing available tools from an MCP server.
     OpenAIResponseOutputMessageWebSearchToolCall:
       properties:
         id:
@@ -10791,7 +10841,7 @@ components:
       - id
       - status
       title: OpenAIResponseOutputMessageWebSearchToolCall
-      description: "Web search tool call output message for OpenAI responses.\n\n:param id: Unique identifier for this tool call\n:param status: Current status of the web search operation\n:param type: Tool call type identifier, always \"web_search_call\""
+      description: Web search tool call output message for OpenAI responses.
     OpenAIResponsePrompt:
       properties:
         id:
@@ -10818,14 +10868,14 @@ components:
       required:
       - id
       title: OpenAIResponsePrompt
-      description: "OpenAI compatible Prompt object that is used in OpenAI responses.\n\n:param id: Unique identifier of the prompt template\n:param variables: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types\nlike images or files.\n:param version: Version number of the prompt to use (defaults to latest if not specified)"
+      description: OpenAI compatible Prompt object that is used in OpenAI responses.
     OpenAIResponseText:
       properties:
         format:
           $ref: '#/components/schemas/OpenAIResponseTextFormat'
       type: object
       title: OpenAIResponseText
-      description: "Text response configuration for OpenAI responses.\n\n:param format: (Optional) Text format configuration specifying output format requirements"
+      description: Text response configuration for OpenAI responses.
     OpenAIResponseTextFormat:
       properties:
         type:
@@ -10852,7 +10902,7 @@ components:
           type: boolean
       type: object
       title: OpenAIResponseTextFormat
-      description: "Configuration for Responses API text format.\n\n:param type: Must be \"text\", \"json_schema\", or \"json_object\" to identify the format type\n:param name: The name of the response format. Only used for json_schema.\n:param schema: The JSON schema the response should conform to. In a Python SDK, this is often a `pydantic` model. Only used for json_schema.\n:param description: (Optional) A description of the response format. Only used for json_schema.\n:param strict: (Optional) Whether to strictly enforce the JSON schema. If true, the response must match the schema exactly. Only used for json_schema."
+      description: Configuration for Responses API text format.
     OpenAIResponseToolMCP:
       properties:
         type:
@@ -10874,7 +10924,7 @@ components:
       required:
       - server_label
       title: OpenAIResponseToolMCP
-      description: "Model Context Protocol (MCP) tool configuration for OpenAI response object.\n\n:param type: Tool type identifier, always \"mcp\"\n:param server_label: Label to identify this MCP server\n:param allowed_tools: (Optional) Restriction on which tools can be used from this server"
+      description: Model Context Protocol (MCP) tool configuration for OpenAI response object.
     OpenAIResponseUsage:
       properties:
         input_tokens:
@@ -10896,7 +10946,7 @@ components:
       - output_tokens
       - total_tokens
       title: OpenAIResponseUsage
-      description: "Usage information for OpenAI response.\n\n:param input_tokens: Number of tokens in the input\n:param output_tokens: Number of tokens in the output\n:param total_tokens: Total tokens used (input + output)\n:param input_tokens_details: Detailed breakdown of input token usage\n:param output_tokens_details: Detailed breakdown of output token usage"
+      description: Usage information for OpenAI response.
     OpenAIResponseUsageInputTokensDetails:
       properties:
         cached_tokens:
@@ -10904,7 +10954,7 @@ components:
           type: integer
       type: object
       title: OpenAIResponseUsageInputTokensDetails
-      description: "Token details for input tokens in OpenAI response usage.\n\n:param cached_tokens: Number of tokens retrieved from cache"
+      description: Token details for input tokens in OpenAI response usage.
     OpenAIResponseUsageOutputTokensDetails:
       properties:
         reasoning_tokens:
@@ -10912,7 +10962,7 @@ components:
           type: integer
       type: object
       title: OpenAIResponseUsageOutputTokensDetails
-      description: "Token details for output tokens in OpenAI response usage.\n\n:param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)"
+      description: Token details for output tokens in OpenAI response usage.
     OpenAISystemMessageParam:
       properties:
         role:
@@ -10934,7 +10984,7 @@ components:
       required:
       - content
       title: OpenAISystemMessageParam
-      description: "A system message providing instructions or context to the model.\n\n:param role: Must be \"system\" to identify this as a system message\n:param content: The content of the \"system prompt\". If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages (for example, for formatting tool definitions).\n:param name: (Optional) The name of the system message participant."
+      description: A system message providing instructions or context to the model.
     OpenAITokenLogProb:
       properties:
         token:
@@ -10959,7 +11009,7 @@ components:
       - logprob
       - top_logprobs
       title: OpenAITokenLogProb
-      description: "The log probability for a token from an OpenAI-compatible chat completion response.\n\n:token: The token\n:bytes: (Optional) The bytes for the token\n:logprob: The log probability of the token\n:top_logprobs: The top log probabilities for the token"
+      description: The log probability for a token from an OpenAI-compatible chat completion response.
     OpenAIToolMessageParam:
       properties:
         role:
@@ -10982,7 +11032,7 @@ components:
       - tool_call_id
       - content
       title: OpenAIToolMessageParam
-      description: "A message representing the result of a tool invocation in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"tool\" to identify this as a tool response\n:param tool_call_id: Unique identifier for the tool call this response is for\n:param content: The response content from the tool"
+      description: A message representing the result of a tool invocation in an OpenAI-compatible chat completion request.
     OpenAITopLogProb:
       properties:
         token:
@@ -11001,7 +11051,7 @@ components:
       - token
       - logprob
       title: OpenAITopLogProb
-      description: "The top log probability for a token from an OpenAI-compatible chat completion response.\n\n:token: The token\n:bytes: (Optional) The bytes for the token\n:logprob: The log probability of the token"
+      description: The top log probability for a token from an OpenAI-compatible chat completion response.
     OpenAIUserMessageParam-Input:
       properties:
         role:
@@ -11032,7 +11082,7 @@ components:
       required:
       - content
       title: OpenAIUserMessageParam
-      description: "A message from the user in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"user\" to identify this as a user message\n:param content: The content of the message, which can include text and other media\n:param name: (Optional) The name of the user message participant."
+      description: A message from the user in an OpenAI-compatible chat completion request.
     OpenAIUserMessageParam-Output:
       properties:
         role:
@@ -11063,7 +11113,7 @@ components:
       required:
       - content
       title: OpenAIUserMessageParam
-      description: "A message from the user in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"user\" to identify this as a user message\n:param content: The content of the message, which can include text and other media\n:param name: (Optional) The name of the user message participant."
+      description: A message from the user in an OpenAI-compatible chat completion request.
     OptimizerConfig:
       properties:
         optimizer_type:
@@ -11084,7 +11134,7 @@ components:
       - weight_decay
       - num_warmup_steps
       title: OptimizerConfig
-      description: "Configuration parameters for the optimization algorithm.\n\n:param optimizer_type: Type of optimizer to use (adam, adamw, or sgd)\n:param lr: Learning rate for the optimizer\n:param weight_decay: Weight decay coefficient for regularization\n:param num_warmup_steps: Number of steps for learning rate warmup"
+      description: Configuration parameters for the optimization algorithm.
     OptimizerType:
       type: string
       enum:
@@ -11092,14 +11142,14 @@ components:
       - adamw
       - sgd
       title: OptimizerType
-      description: "Available optimizer algorithms for training.\n:cvar adam: Adaptive Moment Estimation optimizer\n:cvar adamw: AdamW optimizer with weight decay\n:cvar sgd: Stochastic Gradient Descent optimizer"
+      description: Available optimizer algorithms for training.
     Order:
       type: string
       enum:
       - asc
       - desc
       title: Order
-      description: "Sort order for paginated responses.\n:cvar asc: Ascending order\n:cvar desc: Descending order"
+      description: Sort order for paginated responses.
     OutputTokensDetails:
       properties:
         reasoning_tokens:
@@ -11150,7 +11200,7 @@ components:
       - version
       - prompt_id
       title: Prompt
-      description: "A prompt resource representing a stored OpenAI Compatible prompt template in Llama Stack.\n\n:param prompt: The system prompt text with variable placeholders. Variables are only supported when using the Responses API.\n:param version: Version (integer starting at 1, incremented on save)\n:param prompt_id: Unique identifier formatted as 'pmpt_<48-digit-hash>'\n:param variables: List of prompt variable names that can be used in the prompt template\n:param is_default: Boolean indicating whether this version is the default version for this prompt"
+      description: A prompt resource representing a stored OpenAI Compatible prompt template in Llama Stack.
     ProviderInfo:
       properties:
         api:
@@ -11178,7 +11228,7 @@ components:
       - config
       - health
       title: ProviderInfo
-      description: "Information about a registered provider including its configuration and health status.\n\n:param api: The API name this provider implements\n:param provider_id: Unique identifier for the provider\n:param provider_type: The type of provider implementation\n:param config: Configuration parameters for the provider\n:param health: Current health status of the provider"
+      description: Information about a registered provider including its configuration and health status.
     QueryChunksResponse:
       properties:
         chunks:
@@ -11196,7 +11246,7 @@ components:
       - chunks
       - scores
       title: QueryChunksResponse
-      description: "Response from querying chunks in a vector database.\n\n:param chunks: List of content chunks returned from the query\n:param scores: Relevance scores corresponding to each returned chunk"
+      description: Response from querying chunks in a vector database.
     RAGQueryConfig:
       properties:
         query_generator_config:
@@ -11239,7 +11289,7 @@ components:
               weighted: '#/components/schemas/WeightedRanker'
       type: object
       title: RAGQueryConfig
-      description: "Configuration for the RAG query generation.\n\n:param query_generator_config: Configuration for the query generator.\n:param max_tokens_in_context: Maximum number of tokens in the context.\n:param max_chunks: Maximum number of chunks to retrieve.\n:param chunk_template: Template for formatting each retrieved chunk in the context.\n    Available placeholders: {index} (1-based chunk ordinal), {chunk.content} (chunk content string), {metadata} (chunk metadata dict).\n    Default: \"Result {index}\\nContent: {chunk.content}\\nMetadata: {metadata}\\n\"\n:param mode: Search mode for retrieval—either \"vector\", \"keyword\", or \"hybrid\". Default \"vector\".\n:param ranker: Configuration for the ranker to use in hybrid search. Defaults to RRF ranker."
+      description: Configuration for the RAG query generation.
     RAGQueryResult:
       properties:
         content:
@@ -11270,7 +11320,7 @@ components:
           title: Metadata
       type: object
       title: RAGQueryResult
-      description: "Result of a RAG query containing retrieved content and metadata.\n\n:param content: (Optional) The retrieved content from the query\n:param metadata: Additional metadata about the query result"
+      description: Result of a RAG query containing retrieved content and metadata.
     RAGSearchMode:
       type: string
       enum:
@@ -11293,7 +11343,7 @@ components:
           minimum: 0.0
       type: object
       title: RRFRanker
-      description: "Reciprocal Rank Fusion (RRF) ranker configuration.\n\n:param type: The type of ranker, always \"rrf\"\n:param impact_factor: The impact factor for RRF scoring. Higher values give more weight to higher-ranked results.\n                     Must be greater than 0"
+      description: Reciprocal Rank Fusion (RRF) ranker configuration.
     RegexParserScoringFnParams:
       properties:
         type:
@@ -11315,7 +11365,7 @@ components:
           description: Aggregation functions to apply to the scores of each row
       type: object
       title: RegexParserScoringFnParams
-      description: "Parameters for regex parser scoring function configuration.\n:param type: The type of scoring function parameters, always regex_parser\n:param parsing_regexes: Regex to extract the answer from generated response\n:param aggregation_functions: Aggregation functions to apply to the scores of each row"
+      description: Parameters for regex parser scoring function configuration.
     RerankData:
       properties:
         index:
@@ -11329,7 +11379,7 @@ components:
       - index
       - relevance_score
       title: RerankData
-      description: "A single rerank result from a reranking response.\n\n:param index: The original index of the document in the input list\n:param relevance_score: The relevance score from the model output. Values are inverted when applicable so that higher scores indicate greater relevance."
+      description: A single rerank result from a reranking response.
     RerankResponse:
       properties:
         data:
@@ -11341,7 +11391,7 @@ components:
       required:
       - data
       title: RerankResponse
-      description: "Response from a reranking request.\n\n:param data: List of rerank result objects, sorted by relevance score (descending)"
+      description: Response from a reranking request.
     RouteInfo:
       properties:
         route:
@@ -11361,7 +11411,7 @@ components:
       - method
       - provider_types
       title: RouteInfo
-      description: "Information about an API route including its path, method, and implementing providers.\n\n:param route: The API endpoint path\n:param method: HTTP method for the route\n:param provider_types: List of provider types that implement this route"
+      description: Information about an API route including its path, method, and implementing providers.
     RowsDataSource:
       properties:
         type:
@@ -11379,14 +11429,14 @@ components:
       required:
       - rows
       title: RowsDataSource
-      description: "A dataset stored in rows.\n:param rows: The dataset is stored in rows. E.g.\n    - [\n        {\"messages\": [{\"role\": \"user\", \"content\": \"Hello, world!\"}, {\"role\": \"assistant\", \"content\": \"Hello, world!\"}]}\n    ]"
+      description: A dataset stored in rows.
     RunShieldResponse:
       properties:
         violation:
           $ref: '#/components/schemas/SafetyViolation'
       type: object
       title: RunShieldResponse
-      description: "Response from running a safety shield.\n\n:param violation: (Optional) Safety violation detected by the shield, if any"
+      description: Response from running a safety shield.
     SafetyViolation:
       properties:
         violation_level:
@@ -11402,7 +11452,7 @@ components:
       required:
       - violation_level
       title: SafetyViolation
-      description: "Details of a safety violation detected by content moderation.\n\n:param violation_level: Severity level of the violation\n:param user_message: (Optional) Message to convey to the user about the violation\n:param metadata: Additional metadata including specific violation codes for debugging and telemetry"
+      description: Details of a safety violation detected by content moderation.
     SamplingParams:
       properties:
         strategy:
@@ -11431,7 +11481,7 @@ components:
           type: array
       type: object
       title: SamplingParams
-      description: "Sampling parameters.\n\n:param strategy: The sampling strategy.\n:param max_tokens: The maximum number of tokens that can be generated in the completion. The token count of\n    your prompt plus max_tokens cannot exceed the model's context length.\n:param repetition_penalty: Number between -2.0 and 2.0. Positive values penalize new tokens\n    based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.\n:param stop: Up to 4 sequences where the API will stop generating further tokens.\n    The returned text will not contain the stop sequence."
+      description: Sampling parameters.
     ScoreBatchResponse:
       properties:
         dataset_id:
@@ -11446,7 +11496,7 @@ components:
       required:
       - results
       title: ScoreBatchResponse
-      description: "Response from batch scoring operations on datasets.\n\n:param dataset_id: (Optional) The identifier of the dataset that was scored\n:param results: A map of scoring function name to ScoringResult"
+      description: Response from batch scoring operations on datasets.
     ScoreResponse:
       properties:
         results:
@@ -11458,7 +11508,7 @@ components:
       required:
       - results
       title: ScoreResponse
-      description: "The response from scoring.\n\n:param results: A map of scoring function name to ScoringResult."
+      description: The response from scoring.
     ScoringFn-Output:
       properties:
         identifier:
@@ -11532,7 +11582,7 @@ components:
       - provider_id
       - return_type
       title: ScoringFn
-      description: "A scoring function resource for evaluating model outputs.\n:param type: The resource type, always scoring_function"
+      description: A scoring function resource for evaluating model outputs.
     ScoringResult:
       properties:
         score_rows:
@@ -11550,7 +11600,7 @@ components:
       - score_rows
       - aggregated_results
       title: ScoringResult
-      description: "A scoring result for a single row.\n\n:param score_rows: The scoring result for each row. Each row is a map of column name to value.\n:param aggregated_results: Map of metric name to aggregated value"
+      description: A scoring result for a single row.
     SearchRankingOptions:
       properties:
         ranker:
@@ -11562,7 +11612,7 @@ components:
           type: number
       type: object
       title: SearchRankingOptions
-      description: "Options for ranking and filtering search results.\n\n:param ranker: (Optional) Name of the ranking algorithm to use\n:param score_threshold: (Optional) Minimum relevance score threshold for results"
+      description: Options for ranking and filtering search results.
     Shield:
       properties:
         identifier:
@@ -11591,7 +11641,7 @@ components:
       - identifier
       - provider_id
       title: Shield
-      description: "A safety shield resource that can be used to check content.\n\n:param params: (Optional) Configuration parameters for the shield\n:param type: The resource type, always shield"
+      description: A safety shield resource that can be used to check content.
     ShieldCallStep-Output:
       properties:
         turn_id:
@@ -11621,7 +11671,7 @@ components:
       - step_id
       - violation
       title: ShieldCallStep
-      description: "A shield call step in an agent turn.\n\n:param violation: The violation from the shield call."
+      description: A shield call step in an agent turn.
     StopReason:
       type: string
       enum:
@@ -11638,7 +11688,7 @@ components:
           default: string
       type: object
       title: StringType
-      description: "Parameter type for string values.\n\n:param type: Discriminator type. Always \"string\""
+      description: Parameter type for string values.
     SystemMessage:
       properties:
         role:
@@ -11672,14 +11722,14 @@ components:
       required:
       - content
       title: SystemMessage
-      description: "A system message providing instructions or context to the model.\n\n:param role: Must be \"system\" to identify this as a system message\n:param content: The content of the \"system prompt\". If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages (for example, for formatting tool definitions)."
+      description: A system message providing instructions or context to the model.
     SystemMessageBehavior:
       type: string
       enum:
       - append
       - replace
       title: SystemMessageBehavior
-      description: "Config for how to override the default system prompt.\n\n:cvar append: Appends the provided system message to the default system prompt:\n    https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_2/#-function-definitions-in-the-system-prompt-\n:cvar replace: Replaces the default system prompt with the provided system message. The system message can include the string\n    '{{function_definitions}}' to indicate where the function definitions should be inserted."
+      description: Config for how to override the default system prompt.
     TextContentItem:
       properties:
         type:
@@ -11694,7 +11744,7 @@ components:
       required:
       - text
       title: TextContentItem
-      description: "A text content item\n\n:param type: Discriminator type of the content item. Always \"text\"\n:param text: Text content"
+      description: A text content item
     ToolCall:
       properties:
         call_id:
@@ -11721,7 +11771,7 @@ components:
       - required
       - none
       title: ToolChoice
-      description: "Whether tool use is required or automatic. This is a hint to the model which may not be followed. It depends on the Instruction Following capabilities of the model.\n\n:cvar auto: The model may use tools if it determines that is appropriate.\n:cvar required: The model must use tools.\n:cvar none: The model must not use tools."
+      description: Whether tool use is required or automatic. This is a hint to the model which may not be followed. It depends on the Instruction Following capabilities of the model.
     ToolConfig:
       properties:
         tool_choice:
@@ -11737,7 +11787,7 @@ components:
           $ref: '#/components/schemas/SystemMessageBehavior'
       type: object
       title: ToolConfig
-      description: "Configuration for tool use.\n\n:param tool_choice: (Optional) Whether tool use is automatic, required, or none. Can also specify a tool name to use a specific tool. Defaults to ToolChoice.auto.\n:param tool_prompt_format: (Optional) Instructs the model how to format tool calls. By default, Llama Stack will attempt to use a format that is best adapted to the model.\n    - `ToolPromptFormat.json`: The tool calls are formatted as a JSON object.\n    - `ToolPromptFormat.function_tag`: The tool calls are enclosed in a <function=function_name> tag.\n    - `ToolPromptFormat.python_list`: The tool calls are output as Python syntax -- a list of function calls.\n:param system_message_behavior: (Optional) Config for how to override the default system prompt.\n    - `SystemMessageBehavior.append`: Appends the provided system message to the default system prompt.\n    - `SystemMessageBehavior.replace`: Replaces the default system prompt with the provided system message. The system message can include the string\n        '{{function_definitions}}' to indicate where the function definitions should be inserted."
+      description: Configuration for tool use.
     ToolDef:
       properties:
         toolgroup_id:
@@ -11765,7 +11815,7 @@ components:
       required:
       - name
       title: ToolDef
-      description: "Tool definition used in runtime contexts.\n\n:param name: Name of the tool\n:param description: (Optional) Human-readable description of what the tool does\n:param input_schema: (Optional) JSON Schema for tool inputs (MCP inputSchema)\n:param output_schema: (Optional) JSON Schema for tool outputs (MCP outputSchema)\n:param metadata: (Optional) Additional metadata about the tool\n:param toolgroup_id: (Optional) ID of the tool group this tool belongs to"
+      description: Tool definition used in runtime contexts.
     ToolExecutionStep-Output:
       properties:
         turn_id:
@@ -11804,7 +11854,7 @@ components:
       - tool_calls
       - tool_responses
       title: ToolExecutionStep
-      description: "A tool execution step in an agent turn.\n\n:param tool_calls: The tool calls to execute.\n:param tool_responses: The tool responses from the tool calls."
+      description: A tool execution step in an agent turn.
     ToolGroup:
       properties:
         identifier:
@@ -11835,7 +11885,7 @@ components:
       - identifier
       - provider_id
       title: ToolGroup
-      description: "A group of related tools managed together.\n\n:param type: Type of resource, always 'tool_group'\n:param mcp_endpoint: (Optional) Model Context Protocol endpoint for remote tools\n:param args: (Optional) Additional arguments for the tool group"
+      description: A group of related tools managed together.
     ToolInvocationResult:
       properties:
         content:
@@ -11872,7 +11922,7 @@ components:
           type: object
       type: object
       title: ToolInvocationResult
-      description: "Result of a tool invocation.\n\n:param content: (Optional) The output content from the tool execution\n:param error_message: (Optional) Error message if the tool execution failed\n:param error_code: (Optional) Numeric error code if the tool execution failed\n:param metadata: (Optional) Additional metadata about the tool execution"
+      description: Result of a tool invocation.
     ToolPromptFormat:
       type: string
       enum:
@@ -11880,7 +11930,7 @@ components:
       - function_tag
       - python_list
       title: ToolPromptFormat
-      description: "Prompt format for calling custom / zero shot tools.\n\n:cvar json: JSON format for calling tools. It takes the form:\n    {\n        \"type\": \"function\",\n        \"function\" : {\n            \"name\": \"function_name\",\n            \"description\": \"function_description\",\n            \"parameters\": {...}\n        }\n    }\n:cvar function_tag: Function tag format, pseudo-XML. This looks like:\n    <function=function_name>(parameters)</function>\n\n:cvar python_list: Python list. The output is a valid Python expression that can be\n    evaluated to a list. Each element in the list is a function call. Example:\n    [\"function_name(param1, param2)\", \"function_name(param1, param2)\"]"
+      description: Prompt format for calling custom / zero shot tools.
     ToolResponse-Input:
       properties:
         call_id:
@@ -11923,7 +11973,7 @@ components:
       - tool_name
       - content
       title: ToolResponse
-      description: "Response from a tool invocation.\n\n:param call_id: Unique identifier for the tool call this response is for\n:param tool_name: Name of the tool that was invoked\n:param content: The response content from the tool\n:param metadata: (Optional) Additional metadata about the tool response"
+      description: Response from a tool invocation.
     ToolResponse-Output:
       properties:
         call_id:
@@ -11966,7 +12016,7 @@ components:
       - tool_name
       - content
       title: ToolResponse
-      description: "Response from a tool invocation.\n\n:param call_id: Unique identifier for the tool call this response is for\n:param tool_name: Name of the tool that was invoked\n:param content: The response content from the tool\n:param metadata: (Optional) Additional metadata about the tool response"
+      description: Response from a tool invocation.
     ToolResponseMessage-Output:
       properties:
         role:
@@ -12004,7 +12054,7 @@ components:
       - call_id
       - content
       title: ToolResponseMessage
-      description: "A message representing the result of a tool invocation.\n\n:param role: Must be \"tool\" to identify this as a tool response\n:param call_id: Unique identifier for the tool call this response is for\n:param content: The response content from the tool"
+      description: A message representing the result of a tool invocation.
     TopKSamplingStrategy:
       properties:
         type:
@@ -12020,7 +12070,7 @@ components:
       required:
       - top_k
       title: TopKSamplingStrategy
-      description: "Top-k sampling strategy that restricts sampling to the k most likely tokens.\n\n:param type: Must be \"top_k\" to identify this sampling strategy\n:param top_k: Number of top tokens to consider for sampling. Must be at least 1"
+      description: Top-k sampling strategy that restricts sampling to the k most likely tokens.
     TopPSamplingStrategy:
       properties:
         type:
@@ -12040,7 +12090,7 @@ components:
       required:
       - temperature
       title: TopPSamplingStrategy
-      description: "Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.\n\n:param type: Must be \"top_p\" to identify this sampling strategy\n:param temperature: Controls randomness in sampling. Higher values increase randomness\n:param top_p: Cumulative probability threshold for nucleus sampling. Defaults to 0.95"
+      description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
     TrainingConfig:
       properties:
         n_epochs:
@@ -12072,7 +12122,7 @@ components:
       required:
       - n_epochs
       title: TrainingConfig
-      description: "Comprehensive configuration for the training process.\n\n:param n_epochs: Number of training epochs to run\n:param max_steps_per_epoch: Maximum number of steps to run per epoch\n:param gradient_accumulation_steps: Number of steps to accumulate gradients before updating\n:param max_validation_steps: (Optional) Maximum number of validation steps per epoch\n:param data_config: (Optional) Configuration for data loading and formatting\n:param optimizer_config: (Optional) Configuration for the optimization algorithm\n:param efficiency_config: (Optional) Configuration for memory and compute optimizations\n:param dtype: (Optional) Data type for model parameters (bf16, fp16, fp32)"
+      description: Comprehensive configuration for the training process.
     Turn:
       properties:
         turn_id:
@@ -12128,7 +12178,7 @@ components:
       - output_message
       - started_at
       title: Turn
-      description: "A single turn in an interaction with an Agentic System.\n\n:param turn_id: Unique identifier for the turn within a session\n:param session_id: Unique identifier for the conversation session\n:param input_messages: List of messages that initiated this turn\n:param steps: Ordered list of processing steps executed during this turn\n:param output_message: The model's generated response containing content and metadata\n:param output_attachments: (Optional) Files or media attached to the agent's response\n:param started_at: Timestamp when the turn began\n:param completed_at: (Optional) Timestamp when the turn finished, if completed"
+      description: A single turn in an interaction with an Agentic System.
     URIDataSource:
       properties:
         type:
@@ -12143,7 +12193,7 @@ components:
       required:
       - uri
       title: URIDataSource
-      description: "A dataset that can be obtained from a URI.\n:param uri: The dataset can be obtained from a URI. E.g.\n    - \"https://mywebsite.com/mydata.jsonl\"\n    - \"lsfs://mydata.jsonl\"\n    - \"data:csv;base64,{base64_content}\""
+      description: A dataset that can be obtained from a URI.
     URL:
       properties:
         uri:
@@ -12153,7 +12203,7 @@ components:
       required:
       - uri
       title: URL
-      description: "A URL reference to external content.\n\n:param uri: The URL string pointing to the resource"
+      description: A URL reference to external content.
     UnionType:
       properties:
         type:
@@ -12163,7 +12213,7 @@ components:
           default: union
       type: object
       title: UnionType
-      description: "Parameter type for union values.\n\n:param type: Discriminator type. Always \"union\""
+      description: Parameter type for union values.
     UserMessage-Input:
       properties:
         role:
@@ -12219,7 +12269,7 @@ components:
       required:
       - content
       title: UserMessage
-      description: "A message from the user in a chat conversation.\n\n:param role: Must be \"user\" to identify this as a user message\n:param content: The content of the message, which can include text and other media\n:param context: (Optional) This field is used internally by Llama Stack to pass RAG context. This field may be removed in the API in the future."
+      description: A message from the user in a chat conversation.
     UserMessage-Output:
       properties:
         role:
@@ -12275,7 +12325,7 @@ components:
       required:
       - content
       title: UserMessage
-      description: "A message from the user in a chat conversation.\n\n:param role: Must be \"user\" to identify this as a user message\n:param content: The content of the message, which can include text and other media\n:param context: (Optional) This field is used internally by Llama Stack to pass RAG context. This field may be removed in the API in the future."
+      description: A message from the user in a chat conversation.
     VectorStoreChunkingStrategyAuto:
       properties:
         type:
@@ -12285,7 +12335,7 @@ components:
           default: auto
       type: object
       title: VectorStoreChunkingStrategyAuto
-      description: "Automatic chunking strategy for vector store files.\n\n:param type: Strategy type, always \"auto\" for automatic chunking"
+      description: Automatic chunking strategy for vector store files.
     VectorStoreChunkingStrategyStatic:
       properties:
         type:
@@ -12299,7 +12349,7 @@ components:
       required:
       - static
       title: VectorStoreChunkingStrategyStatic
-      description: "Static chunking strategy with configurable parameters.\n\n:param type: Strategy type, always \"static\" for static chunking\n:param static: Configuration parameters for the static chunking strategy"
+      description: Static chunking strategy with configurable parameters.
     VectorStoreChunkingStrategyStaticConfig:
       properties:
         chunk_overlap_tokens:
@@ -12314,7 +12364,7 @@ components:
           default: 800
       type: object
       title: VectorStoreChunkingStrategyStaticConfig
-      description: "Configuration for static chunking strategy.\n\n:param chunk_overlap_tokens: Number of tokens to overlap between adjacent chunks\n:param max_chunk_size_tokens: Maximum number of tokens per chunk, must be between 100 and 4096"
+      description: Configuration for static chunking strategy.
     VectorStoreContent:
       properties:
         type:
@@ -12329,7 +12379,7 @@ components:
       - type
       - text
       title: VectorStoreContent
-      description: "Content item from a vector store file or search result.\n\n:param type: Content type, currently only \"text\" is supported\n:param text: The actual text content"
+      description: Content item from a vector store file or search result.
     VectorStoreFileBatchObject:
       properties:
         id:
@@ -12366,7 +12416,7 @@ components:
       - status
       - file_counts
       title: VectorStoreFileBatchObject
-      description: "OpenAI Vector Store File Batch object.\n\n:param id: Unique identifier for the file batch\n:param object: Object type identifier, always \"vector_store.file_batch\"\n:param created_at: Timestamp when the file batch was created\n:param vector_store_id: ID of the vector store containing the file batch\n:param status: Current processing status of the file batch\n:param file_counts: File processing status counts for the batch"
+      description: OpenAI Vector Store File Batch object.
     VectorStoreFileCounts:
       properties:
         completed:
@@ -12392,7 +12442,7 @@ components:
       - in_progress
       - total
       title: VectorStoreFileCounts
-      description: "File processing status counts for a vector store.\n\n:param completed: Number of files that have been successfully processed\n:param cancelled: Number of files that had their processing cancelled\n:param failed: Number of files that failed to process\n:param in_progress: Number of files currently being processed\n:param total: Total number of files in the vector store"
+      description: File processing status counts for a vector store.
     VectorStoreFileLastError:
       properties:
         code:
@@ -12410,7 +12460,7 @@ components:
       - code
       - message
       title: VectorStoreFileLastError
-      description: "Error information for failed vector store file processing.\n\n:param code: Error code indicating the type of failure\n:param message: Human-readable error message describing the failure"
+      description: Error information for failed vector store file processing.
     VectorStoreFileObject:
       properties:
         id:
@@ -12465,7 +12515,7 @@ components:
       - status
       - vector_store_id
       title: VectorStoreFileObject
-      description: "OpenAI Vector Store File object.\n\n:param id: Unique identifier for the file\n:param object: Object type identifier, always \"vector_store.file\"\n:param attributes: Key-value attributes associated with the file\n:param chunking_strategy: Strategy used for splitting the file into chunks\n:param created_at: Timestamp when the file was added to the vector store\n:param last_error: (Optional) Error information if file processing failed\n:param status: Current processing status of the file\n:param usage_bytes: Storage space used by this file in bytes\n:param vector_store_id: ID of the vector store containing this file"
+      description: OpenAI Vector Store File object.
     VectorStoreObject:
       properties:
         id:
@@ -12511,7 +12561,7 @@ components:
       - created_at
       - file_counts
       title: VectorStoreObject
-      description: "OpenAI Vector Store object.\n\n:param id: Unique identifier for the vector store\n:param object: Object type identifier, always \"vector_store\"\n:param created_at: Timestamp when the vector store was created\n:param name: (Optional) Name of the vector store\n:param usage_bytes: Storage space used by the vector store in bytes\n:param file_counts: File processing status counts for the vector store\n:param status: Current status of the vector store\n:param expires_after: (Optional) Expiration policy for the vector store\n:param expires_at: (Optional) Timestamp when the vector store will expire\n:param last_active_at: (Optional) Timestamp of last activity on the vector store\n:param metadata: Set of key-value pairs that can be attached to the vector store"
+      description: OpenAI Vector Store object.
     VectorStoreSearchResponse:
       properties:
         file_id:
@@ -12543,7 +12593,7 @@ components:
       - score
       - content
       title: VectorStoreSearchResponse
-      description: "Response from searching a vector store.\n\n:param file_id: Unique identifier of the file containing the result\n:param filename: Name of the file containing the result\n:param score: Relevance score for this search result\n:param attributes: (Optional) Key-value attributes associated with the file\n:param content: List of content items matching the search query"
+      description: Response from searching a vector store.
     VectorStoreSearchResponsePage:
       properties:
         object:
@@ -12570,7 +12620,7 @@ components:
       - search_query
       - data
       title: VectorStoreSearchResponsePage
-      description: "Paginated response from searching a vector store.\n\n:param object: Object type identifier for the search results page\n:param search_query: The original search query that was executed\n:param data: List of search result objects\n:param has_more: Whether there are more results available beyond this page\n:param next_page: (Optional) Token for retrieving the next page of results"
+      description: Paginated response from searching a vector store.
     VersionInfo:
       properties:
         version:
@@ -12580,7 +12630,7 @@ components:
       required:
       - version
       title: VersionInfo
-      description: "Version information for the service.\n\n:param version: Version number of the service"
+      description: Version information for the service.
     ViolationLevel:
       type: string
       enum:
@@ -12588,7 +12638,7 @@ components:
       - warn
       - error
       title: ViolationLevel
-      description: "Severity level of a safety violation.\n\n:cvar INFO: Informational level violation that does not require action\n:cvar WARN: Warning level violation that suggests caution but allows continuation\n:cvar ERROR: Error level violation that requires blocking or intervention"
+      description: Severity level of a safety violation.
     WeightedRanker:
       properties:
         type:
@@ -12605,7 +12655,7 @@ components:
           default: 0.5
       type: object
       title: WeightedRanker
-      description: "Weighted ranker configuration that combines vector and keyword scores.\n\n:param type: The type of ranker, always \"weighted\"\n:param alpha: Weight factor between 0 and 1.\n             0 means only use keyword scores,\n             1 means only use vector scores,\n             values in between blend both scores."
+      description: Weighted ranker configuration that combines vector and keyword scores.
     _URLOrData:
       properties:
         url:
@@ -12616,7 +12666,7 @@ components:
           type: string
       type: object
       title: _URLOrData
-      description: "A URL or a base64 encoded string\n\n:param url: A URL of the image or data URL in the format of data:image/{type};base64,{data}. Note that URL could have length limits.\n:param data: base64 encoded image data as string"
+      description: A URL or a base64 encoded string
     __main_____agents_agent_id_session_Request:
       properties:
         agent_id:
@@ -13186,7 +13236,7 @@ components:
       - ranking_options
       title: _vector_stores_vector_store_id_search_Request
     Error:
-      description: "Error response from the API. Roughly follows RFC 7807.\n\n:param status: HTTP status code\n:param title: Error title, a short summary of the error which is invariant for an error type\n:param detail: Error detail, a longer human-readable description of the error\n:param instance: (Optional) A URL which can be used to retrieve more information about the specific occurrence of the error"
+      description: Error response from the API. Roughly follows RFC 7807.
       properties:
         status:
           title: Status
@@ -13208,7 +13258,7 @@ components:
       title: Error
       type: object
     Agent:
-      description: "An agent instance with configuration and metadata.\n\n:param agent_id: Unique identifier for the agent\n:param agent_config: Configuration settings for the agent\n:param created_at: Timestamp when the agent was created"
+      description: An agent instance with configuration and metadata.
       properties:
         agent_id:
           title: Agent Id
@@ -13226,7 +13276,7 @@ components:
       title: Agent
       type: object
     AgentStepResponse:
-      description: "Response containing details of a specific agent step.\n\n:param step: The complete step data and execution details"
+      description: Response containing details of a specific agent step.
       properties:
         step:
           discriminator:
@@ -13247,7 +13297,7 @@ components:
       title: AgentStepResponse
       type: object
     CompletionMessage:
-      description: "A message containing the model's (assistant) response in a chat conversation.\n\n:param role: Must be \"assistant\" to identify this as the model's response\n:param content: The content of the model's response\n:param stop_reason: Reason why the model stopped generating. Options are:\n    - `StopReason.end_of_turn`: The model finished generating the entire response.\n    - `StopReason.end_of_message`: The model finished generating but generated a partial response -- usually, a tool call. The user may call the tool and continue the conversation with the tool's response.\n    - `StopReason.out_of_tokens`: The model ran out of token budget.\n:param tool_calls: List of tool calls. Each tool call is a ToolCall object."
+      description: A message containing the model's (assistant) response in a chat conversation.
       properties:
         role:
           const: assistant
@@ -13289,7 +13339,7 @@ components:
       title: CompletionMessage
       type: object
     InferenceStep:
-      description: "An inference step in an agent turn.\n\n:param model_response: The response from the LLM."
+      description: An inference step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -13321,7 +13371,7 @@ components:
       title: InferenceStep
       type: object
     ListOpenAIResponseInputItem:
-      description: "List container for OpenAI response input items.\n\n:param data: List of input items\n:param object: Object type identifier, always \"list\""
+      description: List container for OpenAI response input items.
       properties:
         data:
           items:
@@ -13359,7 +13409,7 @@ components:
       title: ListOpenAIResponseInputItem
       type: object
     ListOpenAIResponseObject:
-      description: "Paginated list of OpenAI response objects with navigation metadata.\n\n:param data: List of response objects with their input context\n:param has_more: Whether there are more results available beyond this page\n:param first_id: Identifier of the first item in this page\n:param last_id: Identifier of the last item in this page\n:param object: Object type identifier, always \"list\""
+      description: Paginated list of OpenAI response objects with navigation metadata.
       properties:
         data:
           items:
@@ -13388,7 +13438,7 @@ components:
       title: ListOpenAIResponseObject
       type: object
     MemoryRetrievalStep:
-      description: "A memory retrieval step in an agent turn.\n\n:param vector_store_ids: The IDs of the vector databases to retrieve context from.\n:param inserted_context: The context retrieved from the vector databases."
+      description: A memory retrieval step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -13444,7 +13494,7 @@ components:
       title: MemoryRetrievalStep
       type: object
     OpenAIDeleteResponseObject:
-      description: "Response object confirming deletion of an OpenAI response.\n\n:param id: Unique identifier of the deleted response\n:param object: Object type identifier, always \"response\"\n:param deleted: Deletion confirmation flag, always True"
+      description: Response object confirming deletion of an OpenAI response.
       properties:
         id:
           title: Id
@@ -13463,7 +13513,7 @@ components:
       title: OpenAIDeleteResponseObject
       type: object
     PaginatedResponse:
-      description: "A generic paginated response that follows a simple format.\n\n:param data: The list of items for the current page\n:param has_more: Whether there are more items available after this set\n:param url: The URL for accessing this list"
+      description: A generic paginated response that follows a simple format.
       properties:
         data:
           items:
@@ -13484,7 +13534,7 @@ components:
       title: PaginatedResponse
       type: object
     Session:
-      description: "A single session of an interaction with an Agentic System.\n\n:param session_id: Unique identifier for the conversation session\n:param session_name: Human-readable name for the session\n:param turns: List of all turns that have occurred in this session\n:param started_at: Timestamp when the session was created"
+      description: A single session of an interaction with an Agentic System.
       properties:
         session_id:
           title: Session Id
@@ -13509,7 +13559,7 @@ components:
       title: Session
       type: object
     ShieldCallStep:
-      description: "A shield call step in an agent turn.\n\n:param violation: The violation from the shield call."
+      description: A shield call step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -13541,7 +13591,7 @@ components:
       title: ShieldCallStep
       type: object
     ToolExecutionStep:
-      description: "A tool execution step in an agent turn.\n\n:param tool_calls: The tool calls to execute.\n:param tool_responses: The tool responses from the tool calls."
+      description: A tool execution step in an agent turn.
       properties:
         turn_id:
           title: Turn Id
@@ -13582,7 +13632,7 @@ components:
       title: ToolExecutionStep
       type: object
     ToolResponse:
-      description: "Response from a tool invocation.\n\n:param call_id: Unique identifier for the tool call this response is for\n:param tool_name: Name of the tool that was invoked\n:param content: The response content from the tool\n:param metadata: (Optional) Additional metadata about the tool response"
+      description: Response from a tool invocation.
       properties:
         call_id:
           title: Call Id
@@ -13701,7 +13751,7 @@ components:
       title: ConversationItemDeletedResource
       type: object
     ListOpenAIFileResponse:
-      description: "Response for listing files in OpenAI Files API.\n\n:param data: List of file objects\n:param has_more: Whether there are more files available beyond this page\n:param first_id: ID of the first file in the list for pagination\n:param last_id: ID of the last file in the list for pagination\n:param object: The object type, which is always \"list\""
+      description: Response for listing files in OpenAI Files API.
       properties:
         data:
           items:
@@ -13730,7 +13780,7 @@ components:
       title: ListOpenAIFileResponse
       type: object
     OpenAIFileDeleteResponse:
-      description: "Response for deleting a file in OpenAI Files API.\n\n:param id: The file identifier that was deleted\n:param object: The object type, which is always \"file\"\n:param deleted: Whether the file was successfully deleted"
+      description: Response for deleting a file in OpenAI Files API.
       properties:
         id:
           title: Id
@@ -13749,7 +13799,7 @@ components:
       title: OpenAIFileDeleteResponse
       type: object
     ListOpenAIChatCompletionResponse:
-      description: "Response from listing OpenAI-compatible chat completions.\n\n:param data: List of chat completion objects with their input messages\n:param has_more: Whether there are more completions available beyond this list\n:param first_id: ID of the first completion in this list\n:param last_id: ID of the last completion in this list\n:param object: Must be \"list\" to identify this as a list response"
+      description: Response from listing OpenAI-compatible chat completions.
       properties:
         data:
           items:
@@ -15440,7 +15490,7 @@ components:
       title: ListOpenAIChatCompletionResponse
       type: object
     OpenAIAssistantMessageParam:
-      description: "A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"assistant\" to identify this as the model's response\n:param content: The content of the model's response\n:param name: (Optional) The name of the assistant message participant.\n:param tool_calls: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object."
+      description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
       properties:
         role:
           const: assistant
@@ -15468,7 +15518,7 @@ components:
       title: OpenAIAssistantMessageParam
       type: object
     OpenAIChoice:
-      description: "A choice from an OpenAI-compatible chat completion response.\n\n:param message: The message from the model\n:param finish_reason: The reason the model stopped generating\n:param index: The index of the choice\n:param logprobs: (Optional) The log probabilities for the tokens in the message"
+      description: A choice from an OpenAI-compatible chat completion response.
       properties:
         message:
           discriminator:
@@ -15502,7 +15552,7 @@ components:
       title: OpenAIChoice
       type: object
     OpenAIChoiceLogprobs:
-      description: "The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.\n\n:param content: (Optional) The log probabilities for the tokens in the message\n:param refusal: (Optional) The log probabilities for the tokens in the message"
+      description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
       properties:
         content:
           title: Content
@@ -15569,7 +15619,7 @@ components:
       title: OpenAICompletionWithInputMessages
       type: object
     OpenAIUserMessageParam:
-      description: "A message from the user in an OpenAI-compatible chat completion request.\n\n:param role: Must be \"user\" to identify this as a user message\n:param content: The content of the message, which can include text and other media\n:param name: (Optional) The name of the user message participant."
+      description: A message from the user in an OpenAI-compatible chat completion request.
       properties:
         role:
           const: user
@@ -15601,7 +15651,7 @@ components:
       title: OpenAIUserMessageParam
       type: object
     Checkpoint:
-      description: "Checkpoint created during training runs.\n\n:param identifier: Unique identifier for the checkpoint\n:param created_at: Timestamp when the checkpoint was created\n:param epoch: Training epoch when the checkpoint was saved\n:param post_training_job_id: Identifier of the training job that created this checkpoint\n:param path: File system path where the checkpoint is stored\n:param training_metrics: (Optional) Training metrics associated with this checkpoint"
+      description: Checkpoint created during training runs.
       properties:
         identifier:
           title: Identifier
@@ -15631,7 +15681,7 @@ components:
       title: Checkpoint
       type: object
     PostTrainingJobArtifactsResponse:
-      description: "Artifacts of a finetuning job.\n\n:param job_uuid: Unique identifier for the training job\n:param checkpoints: List of model checkpoints created during training"
+      description: Artifacts of a finetuning job.
       properties:
         job_uuid:
           title: Job Uuid
@@ -15646,7 +15696,7 @@ components:
       title: PostTrainingJobArtifactsResponse
       type: object
     PostTrainingJobStatusResponse:
-      description: "Status of a finetuning job.\n\n:param job_uuid: Unique identifier for the training job\n:param status: Current status of the training job\n:param scheduled_at: (Optional) Timestamp when the job was scheduled\n:param started_at: (Optional) Timestamp when the job execution began\n:param completed_at: (Optional) Timestamp when the job finished, if completed\n:param resources_allocated: (Optional) Information about computational resources allocated to the job\n:param checkpoints: List of model checkpoints created during training"
+      description: Status of a finetuning job.
       properties:
         job_uuid:
           title: Job Uuid
@@ -15684,7 +15734,7 @@ components:
       title: PostTrainingJobStatusResponse
       type: object
     ScoringFn:
-      description: "A scoring function resource for evaluating model outputs.\n:param type: The resource type, always scoring_function"
+      description: A scoring function resource for evaluating model outputs.
       properties:
         identifier:
           description: Unique identifier for this resource in llama stack
@@ -16484,7 +16534,7 @@ components:
       title: URL
       type: object
     ListToolDefsResponse:
-      description: "Response containing a list of tool definitions.\n\n:param data: List of tool definitions"
+      description: Response containing a list of tool definitions.
       properties:
         data:
           items:
@@ -16496,7 +16546,7 @@ components:
       title: ListToolDefsResponse
       type: object
     VectorStoreDeleteResponse:
-      description: "Response from deleting a vector store.\n\n:param id: Unique identifier of the deleted vector store\n:param object: Object type identifier for the deletion response\n:param deleted: Whether the deletion operation was successful"
+      description: Response from deleting a vector store.
       properties:
         id:
           title: Id
@@ -16514,7 +16564,7 @@ components:
       title: VectorStoreDeleteResponse
       type: object
     VectorStoreFileContentsResponse:
-      description: "Response from retrieving the contents of a vector store file.\n\n:param file_id: Unique identifier for the file\n:param filename: Name of the file\n:param attributes: Key-value attributes associated with the file\n:param content: List of content items from the file"
+      description: Response from retrieving the contents of a vector store file.
       properties:
         file_id:
           title: File Id
@@ -16539,7 +16589,7 @@ components:
       title: VectorStoreFileContentsResponse
       type: object
     VectorStoreFileDeleteResponse:
-      description: "Response from deleting a vector store file.\n\n:param id: Unique identifier of the deleted file\n:param object: Object type identifier for the deletion response\n:param deleted: Whether the deletion operation was successful"
+      description: Response from deleting a vector store file.
       properties:
         id:
           title: Id
@@ -16557,7 +16607,7 @@ components:
       title: VectorStoreFileDeleteResponse
       type: object
     VectorStoreFilesListInBatchResponse:
-      description: "Response from listing files in a vector store file batch.\n\n:param object: Object type identifier, always \"list\"\n:param data: List of vector store file objects in the batch\n:param first_id: (Optional) ID of the first file in the list for pagination\n:param last_id: (Optional) ID of the last file in the list for pagination\n:param has_more: Whether there are more files available beyond this page"
+      description: Response from listing files in a vector store file batch.
       properties:
         object:
           default: list
@@ -16585,7 +16635,7 @@ components:
       title: VectorStoreFilesListInBatchResponse
       type: object
     VectorStoreListFilesResponse:
-      description: "Response from listing files in a vector store.\n\n:param object: Object type identifier, always \"list\"\n:param data: List of vector store file objects\n:param first_id: (Optional) ID of the first file in the list for pagination\n:param last_id: (Optional) ID of the last file in the list for pagination\n:param has_more: Whether there are more files available beyond this page"
+      description: Response from listing files in a vector store.
       properties:
         object:
           default: list
@@ -16613,7 +16663,7 @@ components:
       title: VectorStoreListFilesResponse
       type: object
     VectorStoreListResponse:
-      description: "Response from listing vector stores.\n\n:param object: Object type identifier, always \"list\"\n:param data: List of vector store objects\n:param first_id: (Optional) ID of the first vector store in the list for pagination\n:param last_id: (Optional) ID of the last vector store in the list for pagination\n:param has_more: Whether there are more vector stores available beyond this page"
+      description: Response from listing vector stores.
       properties:
         object:
           default: list
@@ -16699,7 +16749,7 @@ components:
       title: OpenAIResponseMessage
       type: object
     OpenAIResponseObjectWithInput:
-      description: "OpenAI response object extended with input context information.\n\n:param input: List of input items that led to this response"
+      description: OpenAI response object extended with input context information.
       properties:
         created_at:
           title: Created At
@@ -18473,7 +18523,7 @@ components:
       title: OpenAIResponseObjectWithInput
       type: object
     ImageContentItem:
-      description: "A image content item\n\n:param type: Discriminator type of the content item. Always \"image\"\n:param image: Image as a base64 encoded string or an URL"
+      description: A image content item
       properties:
         type:
           const: image
@@ -18688,9 +18738,9 @@ components:
           example:
             status: 500
             title: Internal Server Error
-            detail: An unexpected error occurred
+            detail: An unexpected error occurred. Our team has been notified.
     DefaultError:
-      description: An error occurred
+      description: An unexpected error occurred
       content:
         application/json:
           schema:
