@@ -28,12 +28,11 @@ runs:
       shell: bash
       env:
         UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
-        UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-extra-index-url && 'unsafe-best-match' || '' }}
       run: |
         # Export UV env vars to GITHUB_ENV so they persist across steps
         if [ -n "$UV_EXTRA_INDEX_URL" ]; then
           echo "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL" >> $GITHUB_ENV
-          echo "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY" >> $GITHUB_ENV
+          echo "UV_INDEX_STRATEGY=unsafe-best-match" >> $GITHUB_ENV
           echo "Exported UV environment variables for subsequent steps"
         fi
 
