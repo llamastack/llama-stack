@@ -24,7 +24,8 @@ class MongoDBVectorIOConfig(BaseModel):
 
     # MongoDB Atlas connection details
     connection_string: str = Field(
-        description="MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/)"
+        default="",
+        description="MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/)",
     )
     database_name: str = Field(default="llama_stack", description="Database name to use for vector collections")
 
