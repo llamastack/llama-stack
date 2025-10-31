@@ -419,6 +419,13 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
             # Initialize KV store for metadata
             self.kvstore = await kvstore_impl(self.config.kvstore)
 
+            # Validate connection string
+            if not self.config.connection_string:
+                raise ValueError(
+                    "MongoDB connection_string is required but not provided. "
+                    "Please set MONGODB_CONNECTION_STRING environment variable or provide it in config."
+                )
+
             # Connect to MongoDB with optimized settings for RAG
             self.client = MongoClient(
                 self.config.connection_string,
