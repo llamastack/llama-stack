@@ -18,6 +18,9 @@ runs:
         python-version: ${{ inputs.python-version }}
         version: 0.7.6
 
+    - name: Pre-install client for release branches
+      uses: ./.github/actions/install-client-for-release
+
     - name: Install dependencies
       shell: bash
       run: |

@@ -111,3 +111,19 @@ jobs:
             echo "$unstaged_files"
             exit 1
           fi
+
+      - name: Pre-install client for release branches
+        uses: ./.github/actions/install-client-for-release
+
+      - name: Sync dev + type_checking dependencies
+        run: uv sync --group dev --group type_checking
+
+      - name: Run mypy (full type_checking)
+        run: |
+          set +e
+          uv run --group dev --group type_checking mypy
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "::error::Full mypy failed. Reproduce locally with 'uv run pre-commit run mypy-full --hook-stage manual --all-files'."
+          fi
+          exit $status
