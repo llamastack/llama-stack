@@ -138,10 +138,11 @@ def available_providers() -> list[ProviderSpec]:
             api=Api.inference,
             adapter_type="bedrock",
             provider_type="remote::bedrock",
-            pip_packages=["boto3"],
+            pip_packages=[],
             module="llama_stack.providers.remote.inference.bedrock",
             config_class="llama_stack.providers.remote.inference.bedrock.BedrockConfig",
-            description="AWS Bedrock inference provider for accessing various AI models through AWS's managed service.",
+            provider_data_validator="llama_stack.providers.remote.inference.bedrock.config.BedrockProviderDataValidator",
+            description="AWS Bedrock inference provider using OpenAI compatible endpoint.",
         ),
         RemoteProviderSpec(
             api=Api.inference,

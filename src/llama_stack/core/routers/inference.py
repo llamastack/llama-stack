@@ -190,7 +190,7 @@ class InferenceRouter(Inference):
 
         response = await provider.openai_completion(params)
         response.model = request_model_id
-        if self.telemetry_enabled:
+        if self.telemetry_enabled and response.usage is not None:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
@@ -253,7 +253,7 @@ class InferenceRouter(Inference):
         if self.store:
             asyncio.create_task(self.store.store_chat_completion(response, params.messages))
 
-        if self.telemetry_enabled:
+        if self.telemetry_enabled and response.usage is not None:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
                 completion_tokens=response.usage.completion_tokens,
