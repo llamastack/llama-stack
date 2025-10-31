@@ -54,23 +54,16 @@ runs:
             # Check if the branch exists in the client repo
             if git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$TARGET_BRANCH" > /dev/null 2>&1; then
               echo "Installing llama-stack-client-python from matching branch: $TARGET_BRANCH"
-              export LLAMA_STACK_CLIENT_DIR=git+https://github.com/llamastack/llama-stack-client-python.git@$TARGET_BRANCH
+              uv pip install --force-reinstall git+https://github.com/llamastack/llama-stack-client-python.git@$TARGET_BRANCH
             else
               echo "::error::Branch $TARGET_BRANCH not found in llama-stack-client-python repository"
               echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
               exit 1
             fi
-          else
-            echo "Installing latest llama-stack-client-python from main branch"
-            export LLAMA_STACK_CLIENT_DIR=git+https://github.com/llamastack/llama-stack-client-python.git@main
           fi
-        elif [ "${{ inputs.client-version }}" = "published" ]; then
-          echo "Installing published llama-stack-client-python from PyPI"
-          unset LLAMA_STACK_CLIENT_DIR
-        else
-          echo "Invalid client-version: ${{ inputs.client-version }}"
-          exit 1
+          # For main branch, client is already installed by setup-runner
         fi
+        # For published version, client is already installed by setup-runner
 
         echo "Building Llama Stack"
 
