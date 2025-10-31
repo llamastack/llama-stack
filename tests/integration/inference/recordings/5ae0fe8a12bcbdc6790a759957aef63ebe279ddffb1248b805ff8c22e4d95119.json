@@ -42,17 +42,27 @@
         "id": "rec-5ae0fe8a12bc",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "tool_calls",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "{\"name\":\"get_weather\",\"parameters {\"city\":\"Tokyo\"}}",
+              "content": "",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": null
+              "tool_calls": [
+                {
+                  "id": "call_g2dzmn39",
+                  "function": {
+                    "arguments": "{\"city\":\"Tokyo\"}",
+                    "name": "get_weather"
+                  },
+                  "type": "function",
+                  "index": 0
+                }
+              ]
             }
           }
         ],
@@ -62,14 +72,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 14,
+          "completion_tokens": 18,
           "prompt_tokens": 177,
-          "total_tokens": 191,
+          "total_tokens": 195,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

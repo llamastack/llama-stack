@@ -52,110 +52,6 @@
           "choices": [
             {
               "delta": {
-                "content": " capital",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "rec-9909147bdf0a",
-          "choices": [
-            {
-              "delta": {
-                "content": " city",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "rec-9909147bdf0a",
-          "choices": [
-            {
-              "delta": {
-                "content": " of",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "rec-9909147bdf0a",
-          "choices": [
-            {
-              "delta": {
-                "content": " the",
-                "function_call": null,
-                "refusal": null,
-                "role": "assistant",
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "chat.completion.chunk",
-          "service_tier": null,
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "rec-9909147bdf0a",
-          "choices": [
-            {
-              "delta": {
                 "content": " United",
                 "function_call": null,
                 "refusal": null,
@@ -183,6 +79,32 @@
             {
               "delta": {
                 "content": " States",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-9909147bdf0a",
+          "choices": [
+            {
+              "delta": {
+                "content": " capital",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -567,5 +489,6 @@
       }
     ],
     "is_streaming": true
-  }
+  },
+  "id_normalization_mapping": {}
 }

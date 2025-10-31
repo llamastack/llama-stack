@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Humans currently live on Earth. It is the only known planet in our solar system that supports life.",
+              "content": "Humans do not live on any of the planets in our solar system. However, we do inhabit a terrestrial paradise called Earth. It's the third planet from the Sun and has the right conditions to support human life: atmosphere, liquid water, and a stable climate. All the other planets in our solar system have extreme environments that are not suitable for human habitation.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 21,
+          "completion_tokens": 74,
           "prompt_tokens": 32,
-          "total_tokens": 53,
+          "total_tokens": 106,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

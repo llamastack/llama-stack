@@ -38,7 +38,7 @@
           "choices": [
             {
               "delta": {
-                "content": "It",
+                "content": "The",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -64,7 +64,7 @@
           "choices": [
             {
               "delta": {
-                "content": " was",
+                "content": " person",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -90,7 +90,7 @@
           "choices": [
             {
               "delta": {
-                "content": " great",
+                "content": " on",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -116,7 +116,7 @@
           "choices": [
             {
               "delta": {
-                "content": " to",
+                "content": " the",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -142,7 +142,7 @@
           "choices": [
             {
               "delta": {
-                "content": " finally",
+                "content": " phone",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -168,7 +168,7 @@
           "choices": [
             {
               "delta": {
-                "content": " meet",
+                "content": " answered",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -194,7 +194,7 @@
           "choices": [
             {
               "delta": {
-                "content": " you",
+                "content": " with",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -220,7 +220,7 @@
           "choices": [
             {
               "delta": {
-                "content": ",",
+                "content": " a",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -246,7 +246,7 @@
           "choices": [
             {
               "delta": {
-                "content": " and",
+                "content": " friendly",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -272,7 +272,7 @@
           "choices": [
             {
               "delta": {
-                "content": " I",
+                "content": " \"",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -298,7 +298,7 @@
           "choices": [
             {
               "delta": {
-                "content": "'d",
+                "content": "hello",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -324,7 +324,7 @@
           "choices": [
             {
               "delta": {
-                "content": " like",
+                "content": "\"",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -350,7 +350,7 @@
           "choices": [
             {
               "delta": {
-                "content": " to",
+                "content": " after",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -376,7 +376,7 @@
           "choices": [
             {
               "delta": {
-                "content": " say",
+                "content": " the",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -402,7 +402,7 @@
           "choices": [
             {
               "delta": {
-                "content": " hello",
+                "content": " ring",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -428,7 +428,59 @@
           "choices": [
             {
               "delta": {
-                "content": "!",
+                "content": " tone",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5d00fd96a13e",
+          "choices": [
+            {
+              "delta": {
+                "content": " stopped",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5d00fd96a13e",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
@@ -484,9 +536,9 @@
           "service_tier": null,
           "system_fingerprint": "fp_ollama",
           "usage": {
-            "completion_tokens": 17,
+            "completion_tokens": 19,
             "prompt_tokens": 40,
-            "total_tokens": 57,
+            "total_tokens": 59,
             "completion_tokens_details": null,
             "prompt_tokens_details": null
           }

@@ -24,7 +24,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": "blue"
+              "text": "Blue"
             }
           ],
           "created": 0,
@@ -62,7 +62,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": "The"
+              "text": "This"
             }
           ],
           "created": 0,
@@ -81,7 +81,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": " classic"
+              "text": " answer"
             }
           ],
           "created": 0,
@@ -100,7 +100,64 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": " nursery"
+              "text": " completes"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " the"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " traditional"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " English"
             }
           ],
           "created": 0,
@@ -138,7 +195,121 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": " goes"
+              "text": " that"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " has"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " been"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " passed"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " down"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " for"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " generations"
             }
           ],
           "created": 0,
@@ -158,6 +329,25 @@
               "index": 0,
               "logprobs": null,
               "text": ":\n\n"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": "\""
             }
           ],
           "created": 0,
@@ -366,7 +556,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": ".\n"
+              "text": ",\n"
             }
           ],
           "created": 0,
@@ -537,7 +727,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": ".\n\n"
+              "text": ".\"\n\n"
             }
           ],
           "created": 0,
@@ -556,7 +746,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": "This"
+              "text": "The"
             }
           ],
           "created": 0,
@@ -575,159 +765,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": " completes"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " the"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " traditional"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " rhyme"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " with"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " the"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " second"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " line"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " being"
+              "text": " answer"
             }
           ],
           "created": 0,
@@ -765,7 +803,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": "vio"
+              "text": "blue"
             }
           ],
           "created": 0,
@@ -784,7 +822,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": "lets"
+              "text": "\""
             }
           ],
           "created": 0,
@@ -803,102 +841,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": " are"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " blue"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": "\","
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " which"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " has"
-            }
-          ],
-          "created": 0,
-          "model": "llama3.2:3b-instruct-fp16",
-          "object": "text_completion",
-          "system_fingerprint": "fp_ollama",
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.completion.Completion",
-        "__data__": {
-          "id": "rec-8567635651a5",
-          "choices": [
-            {
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null,
-              "text": " been"
+              "text": " is"
             }
           ],
           "created": 0,
@@ -936,7 +879,7 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": " ubiquitous"
+              "text": " nod"
             }
           ],
           "created": 0,
@@ -955,7 +898,64 @@
               "finish_reason": null,
               "index": 0,
               "logprobs": null,
-              "text": " and"
+              "text": " to"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " the"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " classic"
+            }
+          ],
+          "created": 0,
+          "model": "llama3.2:3b-instruct-fp16",
+          "object": "text_completion",
+          "system_fingerprint": "fp_ollama",
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.completion.Completion",
+        "__data__": {
+          "id": "rec-8567635651a5",
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "text": " completion"
             }
           ],
           "created": 0,

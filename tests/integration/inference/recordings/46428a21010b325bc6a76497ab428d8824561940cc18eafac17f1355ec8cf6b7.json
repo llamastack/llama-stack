@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Hello! How can I assist you today?",
+              "content": "Hello! It's nice to meet you. Is there something I can help you with, or would you like to chat?",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 10,
+          "completion_tokens": 26,
           "prompt_tokens": 29,
-          "total_tokens": 39,
+          "total_tokens": 55,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }
