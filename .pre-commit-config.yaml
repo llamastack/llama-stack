@@ -78,7 +78,7 @@ repos:
         name: uv-lock
         additional_dependencies:
           - uv==0.7.20
-        entry: ./scripts/pre-commit-uv-lock.sh
+        entry: ./scripts/uv-run-with-index.sh lock
         language: python
         pass_filenames: false
         require_serial: true
@@ -87,7 +87,7 @@ repos:
         name: Distribution Template Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/distro_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/distro_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -96,7 +96,7 @@ repos:
         name: Provider Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/provider_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -105,7 +105,7 @@ repos:
         name: API Spec Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: sh -c 'uv run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
+        entry: sh -c './scripts/uv-run-with-index.sh run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
         language: python
         pass_filenames: false
         require_serial: true
@@ -146,7 +146,7 @@ repos:
         name: Generate CI documentation
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run ./scripts/gen-ci-docs.py
+        entry: ./scripts/uv-run-with-index.sh run ./scripts/gen-ci-docs.py
         language: python
         pass_filenames: false
         require_serial: true
