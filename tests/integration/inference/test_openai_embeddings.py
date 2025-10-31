@@ -161,8 +161,7 @@ def test_openai_embeddings_single_string(compat_client, client_with_models, embe
 
     assert response.object == "list"
 
-    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
-    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
+    assert response.model == embedding_model_id
     assert len(response.data) == 1
     assert response.data[0].object == "embedding"
     assert response.data[0].index == 0
@@ -186,8 +185,7 @@ def test_openai_embeddings_multiple_strings(compat_client, client_with_models, e
 
     assert response.object == "list"
 
-    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
-    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
+    assert response.model == embedding_model_id
     assert len(response.data) == len(input_texts)
 
     for i, embedding_data in enumerate(response.data):
@@ -365,8 +363,7 @@ def test_openai_embeddings_base64_batch_processing(compat_client, client_with_mo
     # Validate response structure
     assert response.object == "list"
 
-    # Handle provider-scoped model identifiers (e.g., sentence-transformers/nomic-ai/nomic-embed-text-v1.5)
-    assert response.model == embedding_model_id or response.model.endswith(f"/{embedding_model_id}")
+    assert response.model == embedding_model_id
     assert len(response.data) == len(input_texts)
 
     # Validate each embedding in the batch

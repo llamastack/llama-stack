@@ -40,6 +40,193 @@
         }
     ],
     "paths": {
+        "/v1/batches": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "A list of batch objects.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListBatchesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Batches"
+                ],
+                "summary": "List all batches for the current user.",
+                "description": "List all batches for the current user.",
+                "parameters": [
+                    {
+                        "name": "after",
+                        "in": "query",
+                        "description": "A cursor for pagination; returns batches after this batch ID.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of batches to return (default 20, max 100).",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "deprecated": false
+            },
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "The created batch object.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Batch"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Batches"
+                ],
+                "summary": "Create a new batch for processing multiple API requests.",
+                "description": "Create a new batch for processing multiple API requests.",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateBatchRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "deprecated": false
+            }
+        },
+        "/v1/batches/{batch_id}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "The batch object.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Batch"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Batches"
+                ],
+                "summary": "Retrieve information about a specific batch.",
+                "description": "Retrieve information about a specific batch.",
+                "parameters": [
+                    {
+                        "name": "batch_id",
+                        "in": "path",
+                        "description": "The ID of the batch to retrieve.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "deprecated": false
+            }
+        },
+        "/v1/batches/{batch_id}/cancel": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "The updated batch object.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Batch"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest400"
+                    },
+                    "429": {
+                        "$ref": "#/components/responses/TooManyRequests429"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError500"
+                    },
+                    "default": {
+                        "$ref": "#/components/responses/DefaultError"
+                    }
+                },
+                "tags": [
+                    "Batches"
+                ],
+                "summary": "Cancel a batch that is in progress.",
+                "description": "Cancel a batch that is in progress.",
+                "parameters": [
+                    {
+                        "name": "batch_id",
+                        "in": "path",
+                        "description": "The ID of the batch to cancel.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "deprecated": false
+            }
+        },
         "/v1/chat/completions": {
             "get": {
                 "responses": {
@@ -5677,6 +5864,451 @@
                 "title": "Error",
                 "description": "Error response from the API. Roughly follows RFC 7807."
             },
+            "ListBatchesResponse": {
+                "type": "object",
+                "properties": {
+                    "object": {
+                        "type": "string",
+                        "const": "list",
+                        "default": "list"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "completion_window": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "integer"
+                                },
+                                "endpoint": {
+                                    "type": "string"
+                                },
+                                "input_file_id": {
+                                    "type": "string"
+                                },
+                                "object": {
+                                    "type": "string",
+                                    "const": "batch"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "validating",
+                                        "failed",
+                                        "in_progress",
+                                        "finalizing",
+                                        "completed",
+                                        "expired",
+                                        "cancelling",
+                                        "cancelled"
+                                    ]
+                                },
+                                "cancelled_at": {
+                                    "type": "integer"
+                                },
+                                "cancelling_at": {
+                                    "type": "integer"
+                                },
+                                "completed_at": {
+                                    "type": "integer"
+                                },
+                                "error_file_id": {
+                                    "type": "string"
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "line": {
+                                                        "type": "integer"
+                                                    },
+                                                    "message": {
+                                                        "type": "string"
+                                                    },
+                                                    "param": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "additionalProperties": false,
+                                                "title": "BatchError"
+                                            }
+                                        },
+                                        "object": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false,
+                                    "title": "Errors"
+                                },
+                                "expired_at": {
+                                    "type": "integer"
+                                },
+                                "expires_at": {
+                                    "type": "integer"
+                                },
+                                "failed_at": {
+                                    "type": "integer"
+                                },
+                                "finalizing_at": {
+                                    "type": "integer"
+                                },
+                                "in_progress_at": {
+                                    "type": "integer"
+                                },
+                                "metadata": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                },
+                                "model": {
+                                    "type": "string"
+                                },
+                                "output_file_id": {
+                                    "type": "string"
+                                },
+                                "request_counts": {
+                                    "type": "object",
+                                    "properties": {
+                                        "completed": {
+                                            "type": "integer"
+                                        },
+                                        "failed": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "completed",
+                                        "failed",
+                                        "total"
+                                    ],
+                                    "title": "BatchRequestCounts"
+                                },
+                                "usage": {
+                                    "type": "object",
+                                    "properties": {
+                                        "input_tokens": {
+                                            "type": "integer"
+                                        },
+                                        "input_tokens_details": {
+                                            "type": "object",
+                                            "properties": {
+                                                "cached_tokens": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "additionalProperties": false,
+                                            "required": [
+                                                "cached_tokens"
+                                            ],
+                                            "title": "InputTokensDetails"
+                                        },
+                                        "output_tokens": {
+                                            "type": "integer"
+                                        },
+                                        "output_tokens_details": {
+                                            "type": "object",
+                                            "properties": {
+                                                "reasoning_tokens": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "additionalProperties": false,
+                                            "required": [
+                                                "reasoning_tokens"
+                                            ],
+                                            "title": "OutputTokensDetails"
+                                        },
+                                        "total_tokens": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "input_tokens",
+                                        "input_tokens_details",
+                                        "output_tokens",
+                                        "output_tokens_details",
+                                        "total_tokens"
+                                    ],
+                                    "title": "BatchUsage"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                                "id",
+                                "completion_window",
+                                "created_at",
+                                "endpoint",
+                                "input_file_id",
+                                "object",
+                                "status"
+                            ],
+                            "title": "Batch"
+                        }
+                    },
+                    "first_id": {
+                        "type": "string"
+                    },
+                    "last_id": {
+                        "type": "string"
+                    },
+                    "has_more": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "object",
+                    "data",
+                    "has_more"
+                ],
+                "title": "ListBatchesResponse",
+                "description": "Response containing a list of batch objects."
+            },
+            "CreateBatchRequest": {
+                "type": "object",
+                "properties": {
+                    "input_file_id": {
+                        "type": "string",
+                        "description": "The ID of an uploaded file containing requests for the batch."
+                    },
+                    "endpoint": {
+                        "type": "string",
+                        "description": "The endpoint to be used for all requests in the batch."
+                    },
+                    "completion_window": {
+                        "type": "string",
+                        "const": "24h",
+                        "description": "The time window within which the batch should be processed."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "description": "Optional metadata for the batch."
+                    },
+                    "idempotency_key": {
+                        "type": "string",
+                        "description": "Optional idempotency key. When provided, enables idempotent behavior."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "input_file_id",
+                    "endpoint",
+                    "completion_window"
+                ],
+                "title": "CreateBatchRequest"
+            },
+            "Batch": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "completion_window": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "integer"
+                    },
+                    "endpoint": {
+                        "type": "string"
+                    },
+                    "input_file_id": {
+                        "type": "string"
+                    },
+                    "object": {
+                        "type": "string",
+                        "const": "batch"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "validating",
+                            "failed",
+                            "in_progress",
+                            "finalizing",
+                            "completed",
+                            "expired",
+                            "cancelling",
+                            "cancelled"
+                        ]
+                    },
+                    "cancelled_at": {
+                        "type": "integer"
+                    },
+                    "cancelling_at": {
+                        "type": "integer"
+                    },
+                    "completed_at": {
+                        "type": "integer"
+                    },
+                    "error_file_id": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "line": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "param": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false,
+                                    "title": "BatchError"
+                                }
+                            },
+                            "object": {
+                                "type": "string"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "title": "Errors"
+                    },
+                    "expired_at": {
+                        "type": "integer"
+                    },
+                    "expires_at": {
+                        "type": "integer"
+                    },
+                    "failed_at": {
+                        "type": "integer"
+                    },
+                    "finalizing_at": {
+                        "type": "integer"
+                    },
+                    "in_progress_at": {
+                        "type": "integer"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "output_file_id": {
+                        "type": "string"
+                    },
+                    "request_counts": {
+                        "type": "object",
+                        "properties": {
+                            "completed": {
+                                "type": "integer"
+                            },
+                            "failed": {
+                                "type": "integer"
+                            },
+                            "total": {
+                                "type": "integer"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "completed",
+                            "failed",
+                            "total"
+                        ],
+                        "title": "BatchRequestCounts"
+                    },
+                    "usage": {
+                        "type": "object",
+                        "properties": {
+                            "input_tokens": {
+                                "type": "integer"
+                            },
+                            "input_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "cached_tokens": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "cached_tokens"
+                                ],
+                                "title": "InputTokensDetails"
+                            },
+                            "output_tokens": {
+                                "type": "integer"
+                            },
+                            "output_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "reasoning_tokens": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "reasoning_tokens"
+                                ],
+                                "title": "OutputTokensDetails"
+                            },
+                            "total_tokens": {
+                                "type": "integer"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "input_tokens",
+                            "input_tokens_details",
+                            "output_tokens",
+                            "output_tokens_details",
+                            "total_tokens"
+                        ],
+                        "title": "BatchUsage"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "completion_window",
+                    "created_at",
+                    "endpoint",
+                    "input_file_id",
+                    "object",
+                    "status"
+                ],
+                "title": "Batch"
+            },
             "Order": {
                 "type": "string",
                 "enum": [
@@ -7368,15 +8000,52 @@
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseInputMessageContentImage"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenAIResponseInputMessageContentFile"
                     }
                 ],
                 "discriminator": {
                     "propertyName": "type",
                     "mapping": {
                         "input_text": "#/components/schemas/OpenAIResponseInputMessageContentText",
-                        "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage"
+                        "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage",
+                        "input_file": "#/components/schemas/OpenAIResponseInputMessageContentFile"
                     }
                 }
+            },
+            "OpenAIResponseInputMessageContentFile": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "input_file",
+                        "default": "input_file",
+                        "description": "The type of the input item. Always `input_file`."
+                    },
+                    "file_data": {
+                        "type": "string",
+                        "description": "The data of the file to be sent to the model."
+                    },
+                    "file_id": {
+                        "type": "string",
+                        "description": "(Optional) The ID of the file to be sent to the model."
+                    },
+                    "file_url": {
+                        "type": "string",
+                        "description": "The URL of the file to be sent to the model."
+                    },
+                    "filename": {
+                        "type": "string",
+                        "description": "The name of the file to be sent to the model."
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "title": "OpenAIResponseInputMessageContentFile",
+                "description": "File content for input messages in OpenAI response format."
             },
             "OpenAIResponseInputMessageContentImage": {
                 "type": "object",
@@ -7404,6 +8073,10 @@
                         "const": "input_image",
                         "default": "input_image",
                         "description": "Content type identifier, always \"input_image\""
+                    },
+                    "file_id": {
+                        "type": "string",
+                        "description": "(Optional) The ID of the file to be sent to the model."
                     },
                     "image_url": {
                         "type": "string",
@@ -8977,28 +9650,13 @@
             "OpenAIResponseInput": {
                 "oneOf": [
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall"
+                        "$ref": "#/components/schemas/OpenAIResponseOutput"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseInputFunctionToolCallOutput"
                     },
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseMCPApprovalRequest"
-                    },
-                    {
                         "$ref": "#/components/schemas/OpenAIResponseMCPApprovalResponse"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPCall"
-                    },
-                    {
-                        "$ref": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseMessage"
@@ -9208,6 +9866,10 @@
                         "type": "string",
                         "description": "(Optional) ID of the previous response in a conversation"
                     },
+                    "prompt": {
+                        "$ref": "#/components/schemas/OpenAIResponsePrompt",
+                        "description": "(Optional) Reference to a prompt template and its variables."
+                    },
                     "status": {
                         "type": "string",
                         "description": "Current status of the response generation"
@@ -9302,6 +9964,32 @@
                         "mcp_approval_request": "#/components/schemas/OpenAIResponseMCPApprovalRequest"
                     }
                 }
+            },
+            "OpenAIResponsePrompt": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the prompt template"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContent"
+                        },
+                        "description": "Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files."
+                    },
+                    "version": {
+                        "type": "string",
+                        "description": "Version number of the prompt to use (defaults to latest if not specified)"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "id"
+                ],
+                "title": "OpenAIResponsePrompt",
+                "description": "OpenAI compatible Prompt object that is used in OpenAI responses."
             },
             "OpenAIResponseText": {
                 "type": "object",
@@ -9673,6 +10361,10 @@
                         "type": "string",
                         "description": "The underlying LLM used for completions."
                     },
+                    "prompt": {
+                        "$ref": "#/components/schemas/OpenAIResponsePrompt",
+                        "description": "(Optional) Prompt object with ID, version, and variables."
+                    },
                     "instructions": {
                         "type": "string"
                     },
@@ -9760,6 +10452,10 @@
                     "previous_response_id": {
                         "type": "string",
                         "description": "(Optional) ID of the previous response in a conversation"
+                    },
+                    "prompt": {
+                        "$ref": "#/components/schemas/OpenAIResponsePrompt",
+                        "description": "(Optional) Reference to a prompt template and its variables."
                     },
                     "status": {
                         "type": "string",
@@ -13099,7 +13795,7 @@
                         },
                         "description": "List of documents to index in the RAG system"
                     },
-                    "vector_db_id": {
+                    "vector_store_id": {
                         "type": "string",
                         "description": "ID of the vector database to store the document embeddings"
                     },
@@ -13111,7 +13807,7 @@
                 "additionalProperties": false,
                 "required": [
                     "documents",
-                    "vector_db_id",
+                    "vector_store_id",
                     "chunk_size_in_tokens"
                 ],
                 "title": "InsertRequest"
@@ -13302,7 +13998,7 @@
                         "$ref": "#/components/schemas/InterleavedContent",
                         "description": "The query content to search for in the indexed documents"
                     },
-                    "vector_db_ids": {
+                    "vector_store_ids": {
                         "type": "array",
                         "items": {
                             "type": "string"
@@ -13317,7 +14013,7 @@
                 "additionalProperties": false,
                 "required": [
                     "content",
-                    "vector_db_ids"
+                    "vector_store_ids"
                 ],
                 "title": "QueryRequest"
             },
@@ -13505,6 +14201,10 @@
                         "$ref": "#/components/schemas/InterleavedContent",
                         "description": "The content of the chunk, which can be interleaved text, images, or other types."
                     },
+                    "chunk_id": {
+                        "type": "string",
+                        "description": "Unique identifier for the chunk. Must be provided explicitly."
+                    },
                     "metadata": {
                         "type": "object",
                         "additionalProperties": {
@@ -13538,10 +14238,6 @@
                         },
                         "description": "Optional embedding for the chunk. If not provided, it will be computed later."
                     },
-                    "stored_chunk_id": {
-                        "type": "string",
-                        "description": "The chunk ID that is stored in the vector database. Used for backend functionality."
-                    },
                     "chunk_metadata": {
                         "$ref": "#/components/schemas/ChunkMetadata",
                         "description": "Metadata for the chunk that will NOT be used in the context during inference. The `chunk_metadata` is required backend functionality."
@@ -13550,6 +14246,7 @@
                 "additionalProperties": false,
                 "required": [
                     "content",
+                    "chunk_id",
                     "metadata"
                 ],
                 "title": "Chunk",
@@ -13610,7 +14307,7 @@
             "InsertChunksRequest": {
                 "type": "object",
                 "properties": {
-                    "vector_db_id": {
+                    "vector_store_id": {
                         "type": "string",
                         "description": "The identifier of the vector database to insert the chunks into."
                     },
@@ -13628,7 +14325,7 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                    "vector_db_id",
+                    "vector_store_id",
                     "chunks"
                 ],
                 "title": "InsertChunksRequest"
@@ -13636,7 +14333,7 @@
             "QueryChunksRequest": {
                 "type": "object",
                 "properties": {
-                    "vector_db_id": {
+                    "vector_store_id": {
                         "type": "string",
                         "description": "The identifier of the vector database to query."
                     },
@@ -13673,7 +14370,7 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                    "vector_db_id",
+                    "vector_store_id",
                     "query"
                 ],
                 "title": "QueryChunksRequest"
@@ -15452,7 +16149,6 @@
                     },
                     "max_tokens": {
                         "type": "integer",
-                        "default": 0,
                         "description": "The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length."
                     },
                     "repetition_penalty": {
@@ -15735,7 +16431,7 @@
                         "const": "memory_retrieval",
                         "default": "memory_retrieval"
                     },
-                    "vector_db_ids": {
+                    "vector_store_ids": {
                         "type": "string",
                         "description": "The IDs of the vector databases to retrieve context from."
                     },
@@ -15749,7 +16445,7 @@
                     "turn_id",
                     "step_id",
                     "step_type",
-                    "vector_db_ids",
+                    "vector_store_ids",
                     "inserted_context"
                 ],
                 "title": "MemoryRetrievalStep",
@@ -17898,6 +18594,11 @@
             "x-displayName": "Agents"
         },
         {
+            "name": "Batches",
+            "description": "The API is designed to allow use of openai client libraries for seamless integration.\n\nThis API provides the following extensions:\n - idempotent batch creation\n\nNote: This API is currently under active development and may undergo changes.",
+            "x-displayName": "The Batches API enables efficient processing of multiple requests in a single operation, particularly useful for processing large datasets, batch evaluation workflows, and cost-effective inference at scale."
+        },
+        {
             "name": "Benchmarks",
             "description": ""
         },
@@ -17991,6 +18692,7 @@
             "name": "Operations",
             "tags": [
                 "Agents",
+                "Batches",
                 "Benchmarks",
                 "Conversations",
                 "DatasetIO",

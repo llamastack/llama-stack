@@ -7,24 +7,24 @@ on:
     branches:
       - main
     paths:
-      - 'llama_stack/cli/stack/build.py'
-      - 'llama_stack/cli/stack/_build.py'
-      - 'llama_stack/core/build.*'
-      - 'llama_stack/core/*.sh'
+      - 'src/llama_stack/cli/stack/build.py'
+      - 'src/llama_stack/cli/stack/_build.py'
+      - 'src/llama_stack/core/build.*'
+      - 'src/llama_stack/core/*.sh'
       - '.github/workflows/providers-build.yml'
-      - 'llama_stack/distributions/**'
+      - 'src/llama_stack/distributions/**'
       - 'pyproject.toml'
       - 'containers/Containerfile'
       - '.dockerignore'
 
   pull_request:
     paths:
-      - 'llama_stack/cli/stack/build.py'
-      - 'llama_stack/cli/stack/_build.py'
-      - 'llama_stack/core/build.*'
-      - 'llama_stack/core/*.sh'
+      - 'src/llama_stack/cli/stack/build.py'
+      - 'src/llama_stack/cli/stack/_build.py'
+      - 'src/llama_stack/core/build.*'
+      - 'src/llama_stack/core/*.sh'
       - '.github/workflows/providers-build.yml'
-      - 'llama_stack/distributions/**'
+      - 'src/llama_stack/distributions/**'
       - 'pyproject.toml'
       - 'containers/Containerfile'
       - '.dockerignore'
@@ -45,7 +45,7 @@ jobs:
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(ls llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
+          distros=$(ls src/llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
           echo "distros=$distros" >> "$GITHUB_OUTPUT"
 
   build:
@@ -107,13 +107,13 @@ jobs:
 
       - name: Build container image
         run: |
-          BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "python:3.12-slim"' llama_stack/distributions/ci-tests/build.yaml)
+          BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "python:3.12-slim"' src/llama_stack/distributions/ci-tests/build.yaml)
           docker build . \
             -f containers/Containerfile \
             --build-arg INSTALL_MODE=editable \
             --build-arg DISTRO_NAME=ci-tests \
             --build-arg BASE_IMAGE="$BASE_IMAGE" \
-            --build-arg RUN_CONFIG_PATH=/workspace/llama_stack/distributions/ci-tests/run.yaml \
+            --build-arg RUN_CONFIG_PATH=/workspace/src/llama_stack/distributions/ci-tests/run.yaml \
             -t llama-stack:ci-tests
 
       - name: Inspect the container image entrypoint
@@ -143,17 +143,17 @@ jobs:
         run: |
           yq -i '
             .distribution_spec.container_image = "registry.access.redhat.com/ubi9:latest"
-          ' llama_stack/distributions/ci-tests/build.yaml
+          ' src/llama_stack/distributions/ci-tests/build.yaml
 
       - name: Build UBI9 container image
         run: |
-          BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "registry.access.redhat.com/ubi9:latest"' llama_stack/distributions/ci-tests/build.yaml)
+          BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "registry.access.redhat.com/ubi9:latest"' src/llama_stack/distributions/ci-tests/build.yaml)
           docker build . \
             -f containers/Containerfile \
             --build-arg INSTALL_MODE=editable \
             --build-arg DISTRO_NAME=ci-tests \
             --build-arg BASE_IMAGE="$BASE_IMAGE" \
-            --build-arg RUN_CONFIG_PATH=/workspace/llama_stack/distributions/ci-tests/run.yaml \
+            --build-arg RUN_CONFIG_PATH=/workspace/src/llama_stack/distributions/ci-tests/run.yaml \
             -t llama-stack:ci-tests-ubi9
 
       - name: Inspect UBI9 image

@@ -86,23 +86,37 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
 
 @pytest.fixture(scope="session")
 def sample_chunks():
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    chunks_data = [
+        (
+            "Python is a high-level programming language that emphasizes code readability and allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java.",
+            "doc1",
+            "programming",
+        ),
+        (
+            "Machine learning is a subset of artificial intelligence that enables systems to automatically learn and improve from experience without being explicitly programmed, using statistical techniques to give computer systems the ability to progressively improve performance on a specific task.",
+            "doc2",
+            "ai",
+        ),
+        (
+            "Data structures are fundamental to computer science because they provide organized ways to store and access data efficiently, enable faster processing of data through optimized algorithms, and form the building blocks for more complex software systems.",
+            "doc3",
+            "computer_science",
+        ),
+        (
+            "Neural networks are inspired by biological neural networks found in animal brains, using interconnected nodes called artificial neurons to process information through weighted connections that can be trained to recognize patterns and solve complex problems through iterative learning.",
+            "doc4",
+            "ai",
+        ),
+    ]
     return [
         Chunk(
-            content="Python is a high-level programming language that emphasizes code readability and allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java.",
-            metadata={"document_id": "doc1", "topic": "programming"},
-        ),
-        Chunk(
-            content="Machine learning is a subset of artificial intelligence that enables systems to automatically learn and improve from experience without being explicitly programmed, using statistical techniques to give computer systems the ability to progressively improve performance on a specific task.",
-            metadata={"document_id": "doc2", "topic": "ai"},
-        ),
-        Chunk(
-            content="Data structures are fundamental to computer science because they provide organized ways to store and access data efficiently, enable faster processing of data through optimized algorithms, and form the building blocks for more complex software systems.",
-            metadata={"document_id": "doc3", "topic": "computer_science"},
-        ),
-        Chunk(
-            content="Neural networks are inspired by biological neural networks found in animal brains, using interconnected nodes called artificial neurons to process information through weighted connections that can be trained to recognize patterns and solve complex problems through iterative learning.",
-            metadata={"document_id": "doc4", "topic": "ai"},
-        ),
+            content=content,
+            chunk_id=generate_chunk_id(doc_id, content),
+            metadata={"document_id": doc_id, "topic": topic},
+        )
+        for content, doc_id, topic in chunks_data
     ]
 
 
@@ -371,7 +385,7 @@ def test_openai_vector_store_with_chunks(
 
     # Insert chunks using the native LlamaStack API (since OpenAI API doesn't have direct chunk insertion)
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -438,7 +452,7 @@ def test_openai_vector_store_search_relevance(
 
     # Insert chunks using native API
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -488,7 +502,7 @@ def test_openai_vector_store_search_with_ranking_options(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -548,7 +562,7 @@ def test_openai_vector_store_search_with_high_score_filter(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -614,7 +628,7 @@ def test_openai_vector_store_search_with_max_num_results(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -1179,7 +1193,7 @@ def test_openai_vector_store_search_modes(
     )
 
     client_with_models.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
     query = "Python programming language"
