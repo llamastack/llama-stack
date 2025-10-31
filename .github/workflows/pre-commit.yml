@@ -130,8 +130,8 @@ jobs:
             exit 1
           fi
 
-      - name: Pre-install client for release branches
-        uses: ./.github/actions/install-client-for-release
+      - name: Install llama-stack-client
+        uses: ./.github/actions/install-llama-stack-client
 
       - name: Sync dev + type_checking dependencies
         run: uv sync --group dev --group type_checking
