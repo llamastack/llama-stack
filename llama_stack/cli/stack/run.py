@@ -106,7 +106,8 @@ class StackRun(Subcommand):
 
             try:
                 config = parse_and_maybe_upgrade_config(config_dict)
-                if not os.path.exists(str(config.external_providers_dir)):
+                # Create external_providers_dir if it's specified and doesn't exist
+                if config.external_providers_dir and not os.path.exists(str(config.external_providers_dir)):
                     os.makedirs(str(config.external_providers_dir), exist_ok=True)
             except AttributeError as e:
                 self.parser.error(f"failed to parse config file '{config_file}':\n {e}")

@@ -203,3 +203,26 @@ def test_parse_and_maybe_upgrade_config_invalid(invalid_config):
 def test_parse_and_maybe_upgrade_config_image_name_int(config_with_image_name_int):
     result = parse_and_maybe_upgrade_config(config_with_image_name_int)
     assert isinstance(result.image_name, str)
+
+
+def test_parse_and_maybe_upgrade_config_sets_external_providers_dir(up_to_date_config):
+    """Test that external_providers_dir is None when not specified (deprecated field)."""
+    # Ensure the config doesn't have external_providers_dir set
+    assert "external_providers_dir" not in up_to_date_config
+
+    result = parse_and_maybe_upgrade_config(up_to_date_config)
+
+    # Verify external_providers_dir is None (not set to default)
+    # This aligns with the deprecation of external_providers_dir
+    assert result.external_providers_dir is None
+
+
+def test_parse_and_maybe_upgrade_config_preserves_custom_external_providers_dir(up_to_date_config):
+    """Test that custom external_providers_dir values are preserved."""
+    custom_dir = "/custom/providers/dir"
+    up_to_date_config["external_providers_dir"] = custom_dir
+
+    result = parse_and_maybe_upgrade_config(up_to_date_config)
+
+    # Verify the custom value was preserved
+    assert str(result.external_providers_dir) == custom_dir
