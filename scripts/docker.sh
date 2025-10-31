@@ -215,6 +215,16 @@ build_image() {
         --build-arg "LLAMA_STACK_DIR=/workspace"
     )
 
+    # Pass UV index configuration for release branches
+    if [[ -n "${UV_EXTRA_INDEX_URL:-}" ]]; then
+        echo "Adding UV_EXTRA_INDEX_URL to docker build: $UV_EXTRA_INDEX_URL"
+        build_cmd+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
+    fi
+    if [[ -n "${UV_INDEX_STRATEGY:-}" ]]; then
+        echo "Adding UV_INDEX_STRATEGY to docker build: $UV_INDEX_STRATEGY"
+        build_cmd+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
+    fi
+
     if ! "${build_cmd[@]}"; then
         echo "❌ Failed to build Docker image"
         exit 1

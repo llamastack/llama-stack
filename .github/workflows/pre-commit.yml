@@ -43,43 +43,25 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'src/llama_stack/ui/'
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
+          cache-dependency-path: 'llama_stack/ui/'
 
       - name: Install npm dependencies
         run: npm ci
-        working-directory: src/llama_stack/ui
-
-      - name: Install pre-commit
-        run: python -m pip install pre-commit
-
-      - name: Cache pre-commit
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+        working-directory: llama_stack/ui
 
       - name: Run pre-commit
         id: precommit
-        run: |
-          set +e
-          pre-commit run --show-diff-on-failure --color=always --all-files 2>&1 | tee /tmp/precommit.log
-          status=${PIPESTATUS[0]}
-          echo "status=$status" >> $GITHUB_OUTPUT
-          exit 0
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+        continue-on-error: true
         env:
-          SKIP: no-commit-to-branch,mypy
+          SKIP: no-commit-to-branch
           RUFF_OUTPUT_FORMAT: github
 
       - name: Check pre-commit results
-        if: steps.precommit.outputs.status != '0'
+        if: steps.precommit.outcome == 'failure'
         run: |
           echo "::error::Pre-commit hooks failed. Please run 'pre-commit run --all-files' locally and commit the fixes."
-          echo ""
-          echo "Failed hooks output:"
-          cat /tmp/precommit.log
+          echo "::warning::Some pre-commit hooks failed. Check the output above for details."
           exit 1
 
       - name: Debug
@@ -130,16 +112,31 @@ jobs:
             exit 1
           fi
 
+      - name: Install uv for mypy
+        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        with:
+          python-version: "3.12"
+          version: 0.7.6
+
       - name: Configure client installation
         id: client-config
         uses: ./.github/actions/install-llama-stack-client
 
-      - name: Sync dev + type_checking dependencies
+      - name: Sync dev dependencies for mypy
         env:
-          UV_INDEX_URL: ${{ steps.client-config.outputs.uv-index-url }}
           UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
+          UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-extra-index-url && 'unsafe-best-match' || '' }}
         run: |
-          uv sync --group dev --group type_checking
+          # Check if type_checking group exists, otherwise just use dev
+          if grep -q "type.checking" pyproject.toml; then
+            echo "Found type_checking group, syncing with both groups"
+            uv sync --group dev --group type_checking
+            MYPY_CMD="uv run --group dev --group type_checking mypy"
+          else
+            echo "No type_checking group found, syncing with dev only"
+            uv sync --group dev
+            MYPY_CMD="uv run --group dev mypy"
+          fi
 
           # Install specific client version after sync if needed
           if [ "${{ steps.client-config.outputs.install-after-sync }}" = "true" ]; then
@@ -147,11 +144,24 @@ jobs:
             uv pip install ${{ steps.client-config.outputs.install-source }}
           fi
 
-      - name: Run mypy (full type_checking)
+          echo "MYPY_CMD=$MYPY_CMD" >> $GITHUB_ENV
+
+      - name: Run mypy (full type checking)
+        env:
+          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
+          UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-extra-index-url && 'unsafe-best-match' || '' }}
         run: |
           set +e
-          uv run --group dev --group type_checking mypy
+          output=$($MYPY_CMD 2>&1)
           status=$?
+
+          # If mypy isn't available (common on older release branches), skip gracefully
+          if echo "$output" | grep -q "Failed to spawn.*mypy"; then
+            echo "::warning::mypy not available, skipping type checking (expected on release-0.3.x)"
+            exit 0
+          fi
+
+          echo "$output"
           if [ $status -ne 0 ]; then
             echo "::error::Full mypy failed. Reproduce locally with 'uv run pre-commit run mypy-full --hook-stage manual --all-files'."
           fi

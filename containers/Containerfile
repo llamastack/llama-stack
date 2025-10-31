@@ -19,6 +19,8 @@ ARG KEEP_WORKSPACE=""
 ARG DISTRO_NAME="starter"
 ARG RUN_CONFIG_PATH=""
 ARG UV_HTTP_TIMEOUT=500
+ARG UV_EXTRA_INDEX_URL=""
+ARG UV_INDEX_STRATEGY=""
 ENV UV_HTTP_TIMEOUT=${UV_HTTP_TIMEOUT}
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -45,7 +47,7 @@ RUN set -eux; \
         exit 1; \
     fi
 
-RUN pip install --no-cache uv
+RUN pip install --no-cache-dir uv
 ENV UV_SYSTEM_PYTHON=1
 
 ENV INSTALL_MODE=${INSTALL_MODE}
@@ -68,41 +70,49 @@ RUN set -eux; \
             echo "LLAMA_STACK_CLIENT_DIR is set but $LLAMA_STACK_CLIENT_DIR does not exist" >&2; \
             exit 1; \
         fi; \
-        uv pip install --no-cache -e "$LLAMA_STACK_CLIENT_DIR"; \
+        uv pip install --no-cache-dir -e "$LLAMA_STACK_CLIENT_DIR"; \
     fi;
 
 # Install llama-stack
+# Use UV_EXTRA_INDEX_URL inline only for this step to avoid affecting distribution deps
 RUN set -eux; \
     if [ "$INSTALL_MODE" = "editable" ]; then \
         if [ ! -d "$LLAMA_STACK_DIR" ]; then \
             echo "INSTALL_MODE=editable requires LLAMA_STACK_DIR to point to a directory inside the build context" >&2; \
             exit 1; \
         fi; \
-        uv pip install --no-cache -e "$LLAMA_STACK_DIR"; \
-    elif [ "$INSTALL_MODE" = "test-pypi" ]; then \
-        uv pip install --no-cache fastapi libcst; \
-        if [ -n "$TEST_PYPI_VERSION" ]; then \
-            uv pip install --no-cache --extra-index-url https://test.pypi.org/simple/ --index-strategy unsafe-best-match "llama-stack==$TEST_PYPI_VERSION"; \
+        if [ -n "$UV_EXTRA_INDEX_URL" ] && [ -n "$UV_INDEX_STRATEGY" ]; then \
+            UV_EXTRA_INDEX_URL="$UV_EXTRA_INDEX_URL" UV_INDEX_STRATEGY="$UV_INDEX_STRATEGY" \
+                uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
         else \
-            uv pip install --no-cache --extra-index-url https://test.pypi.org/simple/ --index-strategy unsafe-best-match llama-stack; \
+            uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
+        fi; \
+    elif [ "$INSTALL_MODE" = "test-pypi" ]; then \
+        uv pip install --no-cache-dir fastapi libcst; \
+        if [ -n "$TEST_PYPI_VERSION" ]; then \
+            uv pip install --no-cache-dir --extra-index-url https://test.pypi.org/simple/ --index-strategy unsafe-best-match "llama-stack==$TEST_PYPI_VERSION"; \
+        else \
+            uv pip install --no-cache-dir --extra-index-url https://test.pypi.org/simple/ --index-strategy unsafe-best-match llama-stack; \
         fi; \
     else \
         if [ -n "$PYPI_VERSION" ]; then \
-            uv pip install --no-cache "llama-stack==$PYPI_VERSION"; \
+            uv pip install --no-cache-dir "llama-stack==$PYPI_VERSION"; \
         else \
-            uv pip install --no-cache llama-stack; \
+            uv pip install --no-cache-dir llama-stack; \
         fi; \
     fi;
 
 # Install the dependencies for the distribution
+# Explicitly unset UV index env vars to ensure we only use PyPI for distribution deps
 RUN set -eux; \
+    unset UV_EXTRA_INDEX_URL UV_INDEX_STRATEGY; \
     if [ -z "$DISTRO_NAME" ]; then \
         echo "DISTRO_NAME must be provided" >&2; \
         exit 1; \
     fi; \
     deps="$(llama stack list-deps "$DISTRO_NAME")"; \
     if [ -n "$deps" ]; then \
-        printf '%s\n' "$deps" | xargs -L1 uv pip install --no-cache; \
+        printf '%s\n' "$deps" | xargs -L1 uv pip install --no-cache-dir; \
     fi
 
 # Cleanup
