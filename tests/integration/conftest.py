@@ -371,18 +371,7 @@ def vector_provider_wrapper(func):
     inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
     if inference_mode == "live":
         # For live tests, try all providers (they'll skip if not available)
-        all_providers = [
-            "faiss",
-            "sqlite-vec",
-            "milvus",
-            "chromadb",
-            "pgvector",
-            "weaviate",
-            "qdrant",
-        ]
-    else:
-        # For CI tests (replay/record), only use providers that are available in ci-tests environment
-        all_providers = ["faiss", "sqlite-vec"]
+        all_providers = ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant", "elasticsearch"]
 
     return pytest.mark.parametrize("vector_io_provider_id", all_providers)(wrapper)
 

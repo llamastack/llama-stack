@@ -14,8 +14,8 @@ from llama_stack.schema_utils import json_schema_type
 
 @json_schema_type
 class ElasticsearchVectorIOConfig(BaseModel):
-    elasticsearch_api_key: str | None = Field(description="The API key for the Elasticsearch instance", default=None)
-    elasticsearch_url: str | None = Field(description="The URL of the Elasticsearch instance", default="localhost:9200")
+    api_key: str | None = Field(description="The API key for the Elasticsearch instance", default=None)
+    hosts: str | None = Field(description="The URL of the Elasticsearch instance", default="localhost:9200")
     persistence: KVStoreReference | None = Field(
         description="Config for KV store backend (SQLite only for now)", default=None
     )
@@ -23,8 +23,8 @@ class ElasticsearchVectorIOConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
-            "elasticsearch_api_key": None,
-            "elasticsearch_url": "${env.ELASTICSEARCH_URL:=localhost:9200}",
+            "hosts": "${env.ELASTICSEARCH_API_KEY:=None}",
+            "api_key": "${env.ELASTICSEARCH_URL:=localhost:9200}",
             "persistence": KVStoreReference(
                 backend="kv_default",
                 namespace="vector_io::elasticsearch",
