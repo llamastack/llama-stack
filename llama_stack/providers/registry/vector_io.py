@@ -825,11 +825,11 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
 Please refer to the remote provider documentation.
 """,
         ),
-        InlineProviderSpec(
+        RemoteProviderSpec(
             api=Api.vector_io,
             adapter_type="elasticsearch",
             provider_type="remote::elasticsearch",
-            pip_packages=["elasticsearch>=8.16.0, <9.0.0"] + DEFAULT_VECTOR_IO_DEPS,
+            pip_packages=["elasticsearch>=8.16.0,<9.0.0"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.elasticsearch",
             config_class="llama_stack.providers.remote.vector_io.elasticsearch.ElasticsearchVectorIOConfig",
             api_dependencies=[Api.inference],
@@ -871,6 +871,7 @@ Or you can [start a free trial](https://www.elastic.co/cloud/cloud-trial-overvie
 For more information on how to deploy Elasticsearch, see the [official documentation](https://www.elastic.co/docs/deploy-manage/deploy).
 
 ## Documentation
-See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search) for more details about Elasticsearch in general.""",
-        )
+See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search) for more details about Elasticsearch in general.
+""",
+        ),
     ]

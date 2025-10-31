@@ -368,15 +368,7 @@ def vector_provider_wrapper(func):
         all_providers = ["faiss", "sqlite-vec"]
     else:
         # For live tests, try all providers (they'll skip if not available)
-        all_providers = [
-            "faiss",
-            "sqlite-vec",
-            "milvus",
-            "chromadb",
-            "pgvector",
-            "weaviate",
-            "qdrant",
-        ]
+        all_providers = ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant", "elasticsearch"]
 
     return pytest.mark.parametrize("vector_io_provider_id", all_providers)(wrapper)
 
