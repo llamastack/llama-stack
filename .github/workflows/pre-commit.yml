@@ -53,13 +53,22 @@ jobs:
         id: client-config-precommit
         uses: ./.github/actions/install-llama-stack-client
 
+      - name: Export UV environment variables
+        run: |
+          if [ -n "${{ steps.client-config-precommit.outputs.uv-index-url }}" ]; then
+            echo "UV_INDEX_URL=${{ steps.client-config-precommit.outputs.uv-index-url }}" >> $GITHUB_ENV
+            echo "Setting UV_INDEX_URL to ${{ steps.client-config-precommit.outputs.uv-index-url }}"
+          fi
+          if [ -n "${{ steps.client-config-precommit.outputs.uv-extra-index-url }}" ]; then
+            echo "UV_EXTRA_INDEX_URL=${{ steps.client-config-precommit.outputs.uv-extra-index-url }}" >> $GITHUB_ENV
+            echo "Setting UV_EXTRA_INDEX_URL to ${{ steps.client-config-precommit.outputs.uv-extra-index-url }}"
+          fi
+
       - name: Run pre-commit
         id: precommit
         uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
         continue-on-error: true
         env:
-          UV_INDEX_URL: ${{ steps.client-config-precommit.outputs.uv-index-url }}
-          UV_EXTRA_INDEX_URL: ${{ steps.client-config-precommit.outputs.uv-extra-index-url }}
           SKIP: no-commit-to-branch
           RUFF_OUTPUT_FORMAT: github
 
