@@ -85,6 +85,7 @@ RUN set -eux; \
             UV_EXTRA_INDEX_URL="$UV_EXTRA_INDEX_URL" UV_INDEX_STRATEGY="$UV_INDEX_STRATEGY" \
                 uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
         else \
+            unset UV_EXTRA_INDEX_URL UV_INDEX_STRATEGY; \
             uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
         fi; \
     elif [ "$INSTALL_MODE" = "test-pypi" ]; then \
