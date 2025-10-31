@@ -237,6 +237,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                             provider_type="remote::mongodb",
                             config=MongoDBVectorIOConfig.sample_run_config(
                                 f"~/.llama/distributions/{name}",
+                                connection_string="${env.MONGODB_CONNECTION_STRING:=}",
+                                database_name="${env.MONGODB_DATABASE_NAME:=llama_stack}",
                             ),
                         ),
                         Provider(
