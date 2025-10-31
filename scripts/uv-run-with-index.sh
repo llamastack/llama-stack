@@ -22,29 +22,18 @@ else
   TARGET_BRANCH=$(git rev-parse --abbrev-ref HEAD@{upstream} 2>/dev/null | sed 's|origin/||' || echo "")
 fi
 
-echo "[uv-run-with-index] Current branch: '$BRANCH'" >&2
-echo "[uv-run-with-index] Target branch: '$TARGET_BRANCH'" >&2
-echo "[uv-run-with-index] PWD: $PWD" >&2
-echo "[uv-run-with-index] Command: uv $*" >&2
-
 # Check if on a release branch or targeting one, or LLAMA_STACK_RELEASE_MODE is set
 IS_RELEASE=false
 if [[ "$BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
-  echo "[uv-run-with-index] ✓ On release branch: $BRANCH" >&2
   IS_RELEASE=true
 elif [[ "$TARGET_BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
-  echo "[uv-run-with-index] ✓ Targeting release branch: $TARGET_BRANCH" >&2
   IS_RELEASE=true
 elif [[ "${LLAMA_STACK_RELEASE_MODE:-}" == "true" ]]; then
-  echo "[uv-run-with-index] ✓ LLAMA_STACK_RELEASE_MODE=true" >&2
   IS_RELEASE=true
-else
-  echo "[uv-run-with-index] ✗ Not a release branch" >&2
 fi
 
 # On release branches, use test.pypi as extra index for RC versions
 if [[ "$IS_RELEASE" == "true" ]]; then
-  echo "[uv-run-with-index] Setting UV_EXTRA_INDEX_URL=https://test.pypi.org/simple/" >&2
   export UV_EXTRA_INDEX_URL="https://test.pypi.org/simple/"
   export UV_INDEX_STRATEGY="unsafe-best-match"
 fi
