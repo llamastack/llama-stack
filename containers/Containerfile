@@ -81,7 +81,7 @@ RUN set -eux; \
             echo "INSTALL_MODE=editable requires LLAMA_STACK_DIR to point to a directory inside the build context" >&2; \
             exit 1; \
         fi; \
-        if [ -n "$UV_EXTRA_INDEX_URL" ]; then \
+        if [ -n "$UV_EXTRA_INDEX_URL" ] && [ -n "$UV_INDEX_STRATEGY" ]; then \
             UV_EXTRA_INDEX_URL="$UV_EXTRA_INDEX_URL" UV_INDEX_STRATEGY="$UV_INDEX_STRATEGY" \
                 uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
         else \
