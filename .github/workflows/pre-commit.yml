@@ -112,11 +112,22 @@ jobs:
             exit 1
           fi
 
-      - name: Install llama-stack-client
+      - name: Configure client installation
+        id: client-config
         uses: ./.github/actions/install-llama-stack-client
 
       - name: Sync dev + type_checking dependencies
-        run: uv sync --group dev --group type_checking
+        env:
+          UV_INDEX_URL: ${{ steps.client-config.outputs.uv-index-url }}
+          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
+        run: |
+          uv sync --group dev --group type_checking
+
+          # Install specific client version after sync if needed
+          if [ "${{ steps.client-config.outputs.install-after-sync }}" = "true" ]; then
+            echo "Installing llama-stack-client from: ${{ steps.client-config.outputs.install-source }}"
+            uv pip install ${{ steps.client-config.outputs.install-source }}
+          fi
 
       - name: Run mypy (full type_checking)
         run: |

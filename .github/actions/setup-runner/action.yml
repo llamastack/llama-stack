@@ -18,19 +18,29 @@ runs:
         python-version: ${{ inputs.python-version }}
         version: 0.7.6
 
-    - name: Install llama-stack-client
+    - name: Configure client installation
+      id: client-config
       uses: ./.github/actions/install-llama-stack-client
       with:
         client-version: ${{ inputs.client-version }}
 
     - name: Install dependencies
       shell: bash
+      env:
+        UV_INDEX_URL: ${{ steps.client-config.outputs.uv-index-url }}
+        UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
       run: |
         echo "Updating project dependencies via uv sync"
         uv sync --all-groups
 
         echo "Installing ad-hoc dependencies"
         uv pip install faiss-cpu
+
+        # Install specific client version after sync if needed
+        if [ "${{ steps.client-config.outputs.install-after-sync }}" = "true" ]; then
+          echo "Installing llama-stack-client from: ${{ steps.client-config.outputs.install-source }}"
+          uv pip install ${{ steps.client-config.outputs.install-source }}
+        fi
 
         echo "Installed llama packages"
         uv pip list | grep llama
