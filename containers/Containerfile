@@ -64,7 +64,9 @@ COPY . /workspace
 
 # Install the client package if it is provided
 # NOTE: this is installed before llama-stack since llama-stack depends on llama-stack-client-python
+# Unset UV index env vars to ensure we only use PyPI for the client
 RUN set -eux; \
+    unset UV_EXTRA_INDEX_URL UV_INDEX_STRATEGY; \
     if [ -n "$LLAMA_STACK_CLIENT_DIR" ]; then \
         if [ ! -d "$LLAMA_STACK_CLIENT_DIR" ]; then \
             echo "LLAMA_STACK_CLIENT_DIR is set but $LLAMA_STACK_CLIENT_DIR does not exist" >&2; \
@@ -74,15 +76,18 @@ RUN set -eux; \
     fi;
 
 # Install llama-stack
-# Use UV_EXTRA_INDEX_URL inline only for this step to avoid affecting distribution deps
+# Use UV_EXTRA_INDEX_URL inline only for editable install with RC dependencies
 RUN set -eux; \
+    SAVED_UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-}"; \
+    SAVED_UV_INDEX_STRATEGY="${UV_INDEX_STRATEGY:-}"; \
+    unset UV_EXTRA_INDEX_URL UV_INDEX_STRATEGY; \
     if [ "$INSTALL_MODE" = "editable" ]; then \
         if [ ! -d "$LLAMA_STACK_DIR" ]; then \
             echo "INSTALL_MODE=editable requires LLAMA_STACK_DIR to point to a directory inside the build context" >&2; \
             exit 1; \
         fi; \
-        if [ -n "$UV_EXTRA_INDEX_URL" ] && [ -n "$UV_INDEX_STRATEGY" ]; then \
-            UV_EXTRA_INDEX_URL="$UV_EXTRA_INDEX_URL" UV_INDEX_STRATEGY="$UV_INDEX_STRATEGY" \
+        if [ -n "$SAVED_UV_EXTRA_INDEX_URL" ] && [ -n "$SAVED_UV_INDEX_STRATEGY" ]; then \
+            UV_EXTRA_INDEX_URL="$SAVED_UV_EXTRA_INDEX_URL" UV_INDEX_STRATEGY="$SAVED_UV_INDEX_STRATEGY" \
                 uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
         else \
             uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
