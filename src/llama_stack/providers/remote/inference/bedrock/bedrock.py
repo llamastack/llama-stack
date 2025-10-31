@@ -95,9 +95,8 @@ class BedrockInferenceAdapter(OpenAIMixin):
             result = await super().openai_chat_completion(params=params)
             logger.debug(f"Bedrock API returned: {type(result).__name__ if result is not None else 'None'}")
 
-            # Defensive check for unexpected None response
             if result is None:
-                logger.error(f"OpenAI client returned None for model={params.model}, stream={params.stream}")
+                logger.error(f"Bedrock OpenAI client returned None for model={params.model}, stream={params.stream}")
                 raise RuntimeError(
                     f"Bedrock API returned no response for model '{params.model}'. "
                     "This may indicate the model is not supported or a network/API issue occurred."
@@ -105,7 +104,6 @@ class BedrockInferenceAdapter(OpenAIMixin):
 
             return result
         except AuthenticationError as e:
-            # Extract detailed error message from the exception
             error_msg = str(e)
 
             # Check if this is a token expiration error

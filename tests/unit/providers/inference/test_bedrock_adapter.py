@@ -31,11 +31,8 @@ def test_client_url_construction():
 
 
 def test_api_key_from_config():
-    """Test API key is stored as SecretStr in auth_credential"""
     config = BedrockConfig(api_key="config-key", region_name="us-east-1")
     adapter = BedrockInferenceAdapter(config=config)
-
-    # API key is stored in auth_credential field (SecretStr)
     assert adapter.config.auth_credential.get_secret_value() == "config-key"
 
 
@@ -75,7 +72,7 @@ async def test_authentication_error_handling():
             await adapter.openai_chat_completion(params=params)
 
         assert "AWS Bedrock authentication failed" in str(exc_info.value)
-        assert "Please check your API key" in str(exc_info.value)
+        assert "Please verify your API key" in str(exc_info.value)
     finally:
         # Restore original method
         BedrockInferenceAdapter.__bases__[0].openai_chat_completion = original_method

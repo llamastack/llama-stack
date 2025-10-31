@@ -38,6 +38,9 @@ async def test_basic_chat_completion():
     adapter = BedrockInferenceAdapter(config=config)
 
     class FakeModelStore:
+        async def has_model(self, model_id):
+            return True
+
         async def get_model(self, model_id):
             return SimpleNamespace(provider_resource_id="meta.llama3-1-8b-instruct-v1:0")
 
