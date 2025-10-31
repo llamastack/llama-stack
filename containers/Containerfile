@@ -58,8 +58,6 @@ ENV TEST_PYPI_VERSION=${TEST_PYPI_VERSION}
 ENV KEEP_WORKSPACE=${KEEP_WORKSPACE}
 ENV DISTRO_NAME=${DISTRO_NAME}
 ENV RUN_CONFIG_PATH=${RUN_CONFIG_PATH}
-ENV UV_EXTRA_INDEX_URL=${UV_EXTRA_INDEX_URL}
-ENV UV_INDEX_STRATEGY=${UV_INDEX_STRATEGY}
 
 # Copy the repository so editable installs and run configurations are available.
 COPY . /workspace
@@ -76,13 +74,19 @@ RUN set -eux; \
     fi;
 
 # Install llama-stack
+# Use UV_EXTRA_INDEX_URL inline only for this step to avoid affecting distribution deps
 RUN set -eux; \
     if [ "$INSTALL_MODE" = "editable" ]; then \
         if [ ! -d "$LLAMA_STACK_DIR" ]; then \
             echo "INSTALL_MODE=editable requires LLAMA_STACK_DIR to point to a directory inside the build context" >&2; \
             exit 1; \
         fi; \
-        uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
+        if [ -n "$UV_EXTRA_INDEX_URL" ]; then \
+            UV_EXTRA_INDEX_URL="$UV_EXTRA_INDEX_URL" UV_INDEX_STRATEGY="$UV_INDEX_STRATEGY" \
+                uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
+        else \
+            uv pip install --no-cache-dir -e "$LLAMA_STACK_DIR"; \
+        fi; \
     elif [ "$INSTALL_MODE" = "test-pypi" ]; then \
         uv pip install --no-cache-dir fastapi libcst; \
         if [ -n "$TEST_PYPI_VERSION" ]; then \
