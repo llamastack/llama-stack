@@ -18,11 +18,7 @@ from pymongo.server_api import ServerApi
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.inference import InterleavedContent
 from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import (
-    Chunk,
-    QueryChunksResponse,
-    VectorIO,
-)
+from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import (
     HealthResponse,
@@ -402,12 +398,14 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
         config: MongoDBVectorIOConfig,
         inference_api,
         files_api=None,
+        models_api=None,
     ) -> None:
         # Handle the case where files_api might be a ProviderSpec that needs resolution
         resolved_files_api = files_api
         super().__init__(files_api=resolved_files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
+        self.models_api = models_api
         self.client: MongoClient | None = None
         self.database: Database | None = None
         self.cache: dict[str, VectorDBWithIndex] = {}

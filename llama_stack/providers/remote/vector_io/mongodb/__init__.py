@@ -14,6 +14,7 @@ async def get_adapter_impl(config: MongoDBVectorIOConfig, deps: dict[Api, Provid
 
     # Handle the deps resolution - if files API exists, pass it, otherwise None
     files_api = deps.get(Api.files)
-    impl = MongoDBVectorIOAdapter(config, deps[Api.inference], files_api)
+    models_api = deps.get(Api.models)
+    impl = MongoDBVectorIOAdapter(config, deps[Api.inference], files_api, models_api)
     await impl.initialize()
     return impl
