@@ -42,29 +42,7 @@ runs:
     - name: Build Llama Stack
       shell: bash
       run: |
-        # Install llama-stack-client-python based on the client-version input
-        if [ "${{ inputs.client-version }}" = "latest" ]; then
-          # Check if PR is targeting a release branch
-          TARGET_BRANCH="${{ github.base_ref }}"
-
-          if [[ "$TARGET_BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
-            echo "PR targets release branch: $TARGET_BRANCH"
-            echo "Checking if matching branch exists in llama-stack-client-python..."
-
-            # Check if the branch exists in the client repo
-            if git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$TARGET_BRANCH" > /dev/null 2>&1; then
-              echo "Installing llama-stack-client-python from matching branch: $TARGET_BRANCH"
-              uv pip install --force-reinstall git+https://github.com/llamastack/llama-stack-client-python.git@$TARGET_BRANCH
-            else
-              echo "::error::Branch $TARGET_BRANCH not found in llama-stack-client-python repository"
-              echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
-              exit 1
-            fi
-          fi
-          # For main branch, client is already installed by setup-runner
-        fi
-        # For published version, client is already installed by setup-runner
-
+        # Client is already installed by setup-runner via install-llama-stack-client action
         echo "Building Llama Stack"
 
         LLAMA_STACK_DIR=. \
