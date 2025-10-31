@@ -29,6 +29,7 @@ runs:
       env:
         UV_INDEX_URL: ${{ steps.client-config.outputs.uv-index-url }}
         UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
+        UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-index-url && 'unsafe-best-match' || '' }}
       run: |
         echo "Updating project dependencies via uv sync"
         uv sync --all-groups

@@ -57,11 +57,11 @@ jobs:
         run: |
           if [ -n "${{ steps.client-config-precommit.outputs.uv-index-url }}" ]; then
             echo "UV_INDEX_URL=${{ steps.client-config-precommit.outputs.uv-index-url }}" >> $GITHUB_ENV
-            echo "Setting UV_INDEX_URL to ${{ steps.client-config-precommit.outputs.uv-index-url }}"
-          fi
-          if [ -n "${{ steps.client-config-precommit.outputs.uv-extra-index-url }}" ]; then
             echo "UV_EXTRA_INDEX_URL=${{ steps.client-config-precommit.outputs.uv-extra-index-url }}" >> $GITHUB_ENV
+            echo "UV_INDEX_STRATEGY=unsafe-best-match" >> $GITHUB_ENV
+            echo "Setting UV_INDEX_URL to ${{ steps.client-config-precommit.outputs.uv-index-url }}"
             echo "Setting UV_EXTRA_INDEX_URL to ${{ steps.client-config-precommit.outputs.uv-extra-index-url }}"
+            echo "Setting UV_INDEX_STRATEGY to unsafe-best-match"
           fi
 
       - name: Run pre-commit
@@ -135,6 +135,7 @@ jobs:
         env:
           UV_INDEX_URL: ${{ steps.client-config.outputs.uv-index-url }}
           UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
+          UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-index-url && 'unsafe-best-match' || '' }}
         run: |
           uv sync --group dev --group type_checking
 
