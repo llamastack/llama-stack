@@ -7,45 +7,58 @@ inputs:
     required: false
     default: ""
 
+outputs:
+  uv-index-url:
+    description: 'UV_INDEX_URL to use (set for release branches)'
+    value: ${{ steps.configure.outputs.uv-index-url }}
+  uv-extra-index-url:
+    description: 'UV_EXTRA_INDEX_URL to use (set for release branches)'
+    value: ${{ steps.configure.outputs.uv-extra-index-url }}
+  install-after-sync:
+    description: 'Whether to install client after uv sync'
+    value: ${{ steps.configure.outputs.install-after-sync }}
+  install-source:
+    description: 'Where to install client from after sync'
+    value: ${{ steps.configure.outputs.install-source }}
+
 runs:
   using: "composite"
   steps:
-    - name: Install llama-stack-client
+    - name: Configure client installation
+      id: configure
       shell: bash
       run: |
         # Determine the branch we're working with
-        # For PRs: use base_ref (target branch)
-        # For pushes: use ref (current branch)
         BRANCH="${{ github.base_ref || github.ref }}"
-        BRANCH="${BRANCH#refs/heads/}"  # Strip refs/heads/ prefix
+        BRANCH="${BRANCH#refs/heads/}"
 
         echo "Working with branch: $BRANCH"
 
-        # On release branches: always install from matching git branch to satisfy RC dependencies
-        # On non-release branches: install based on client-version input
+        # On release branches: use test.pypi for uv sync, then install from git
+        # On non-release branches: install based on client-version after sync
         if [[ "$BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
           echo "Detected release branch: $BRANCH"
-          echo "Checking if matching branch exists in llama-stack-client-python..."
 
-          # Check if the branch exists in the client repo
-          if git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$BRANCH" > /dev/null 2>&1; then
-            echo "Installing llama-stack-client-python from matching branch: $BRANCH"
-            uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@$BRANCH
-          else
+          # Check if matching branch exists in client repo
+          if ! git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$BRANCH" > /dev/null 2>&1; then
             echo "::error::Branch $BRANCH not found in llama-stack-client-python repository"
             echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
             exit 1
           fi
+
+          # Configure to use test.pypi for sync (to resolve RC versions)
+          echo "uv-index-url=https://test.pypi.org/simple/" >> $GITHUB_OUTPUT
+          echo "uv-extra-index-url=https://pypi.org/simple/" >> $GITHUB_OUTPUT
+          echo "install-after-sync=true" >> $GITHUB_OUTPUT
+          echo "install-source=git+https://github.com/llamastack/llama-stack-client-python.git@$BRANCH" >> $GITHUB_OUTPUT
+        elif [ "${{ inputs.client-version }}" = "latest" ]; then
+          # Install from main git after sync
+          echo "install-after-sync=true" >> $GITHUB_OUTPUT
+          echo "install-source=git+https://github.com/llamastack/llama-stack-client-python.git@main" >> $GITHUB_OUTPUT
+        elif [ "${{ inputs.client-version }}" = "published" ]; then
+          # Use published version from PyPI (installed by sync)
+          echo "install-after-sync=false" >> $GITHUB_OUTPUT
         elif [ -n "${{ inputs.client-version }}" ]; then
-          # Non-release branch with client-version specified
-          if [ "${{ inputs.client-version }}" = "latest" ]; then
-            echo "Installing latest llama-stack-client-python from main branch"
-            uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@main
-          elif [ "${{ inputs.client-version }}" = "published" ]; then
-            echo "Installing published llama-stack-client-python from PyPI"
-            uv pip install llama-stack-client
-          else
-            echo "Invalid client-version: ${{ inputs.client-version }}"
-            exit 1
-          fi
+          echo "::error::Invalid client-version: ${{ inputs.client-version }}"
+          exit 1
         fi
