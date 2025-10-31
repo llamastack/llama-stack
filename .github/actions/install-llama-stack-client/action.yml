@@ -1,10 +1,16 @@
-name: Install Client for Release Branch
-description: Pre-install llama-stack-client from git on release branches to satisfy RC dependencies before uv sync
+name: Install llama-stack-client
+description: Install llama-stack-client based on branch context and client-version input
+
+inputs:
+  client-version:
+    description: 'Client version to install on non-release branches (latest or published). Ignored on release branches.'
+    required: false
+    default: ""
 
 runs:
   using: "composite"
   steps:
-    - name: Install client from release branch if needed
+    - name: Install llama-stack-client
       shell: bash
       run: |
         # Determine the branch we're working with
@@ -15,9 +21,8 @@ runs:
 
         echo "Working with branch: $BRANCH"
 
-        # If on a release branch, install from matching release branch BEFORE uv sync
-        # This allows uv sync to resolve dependencies that reference unreleased RC versions
-        # We always do this on release branches regardless of client-version to satisfy pyproject.toml
+        # On release branches: always install from matching git branch to satisfy RC dependencies
+        # On non-release branches: install based on client-version input
         if [[ "$BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
           echo "Detected release branch: $BRANCH"
           echo "Checking if matching branch exists in llama-stack-client-python..."
@@ -29,6 +34,18 @@ runs:
           else
             echo "::error::Branch $BRANCH not found in llama-stack-client-python repository"
             echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
+            exit 1
+          fi
+        elif [ -n "${{ inputs.client-version }}" ]; then
+          # Non-release branch with client-version specified
+          if [ "${{ inputs.client-version }}" = "latest" ]; then
+            echo "Installing latest llama-stack-client-python from main branch"
+            uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@main
+          elif [ "${{ inputs.client-version }}" = "published" ]; then
+            echo "Installing published llama-stack-client-python from PyPI"
+            uv pip install llama-stack-client
+          else
+            echo "Invalid client-version: ${{ inputs.client-version }}"
             exit 1
           fi
         fi

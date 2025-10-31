@@ -18,8 +18,10 @@ runs:
         python-version: ${{ inputs.python-version }}
         version: 0.7.6
 
-    - name: Pre-install client for release branches
-      uses: ./.github/actions/install-client-for-release
+    - name: Install llama-stack-client
+      uses: ./.github/actions/install-llama-stack-client
+      with:
+        client-version: ${{ inputs.client-version }}
 
     - name: Install dependencies
       shell: bash
@@ -29,18 +31,6 @@ runs:
 
         echo "Installing ad-hoc dependencies"
         uv pip install faiss-cpu
-
-        # Install llama-stack-client-python based on the client-version input
-        if [ "${{ inputs.client-version }}" = "latest" ]; then
-          echo "Installing latest llama-stack-client-python from main branch"
-          uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@main
-        elif [ "${{ inputs.client-version }}" = "published" ]; then
-          echo "Installing published llama-stack-client-python from PyPI"
-          uv pip install llama-stack-client
-        else
-          echo "Invalid client-version: ${{ inputs.client-version }}"
-          exit 1
-        fi
 
         echo "Installed llama packages"
         uv pip list | grep llama
