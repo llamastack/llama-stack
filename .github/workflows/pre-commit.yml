@@ -165,8 +165,16 @@ jobs:
       - name: Run mypy (full type checking)
         run: |
           set +e
-          $MYPY_CMD
+          output=$($MYPY_CMD 2>&1)
           status=$?
+
+          # If mypy isn't available (common on older release branches), skip gracefully
+          if echo "$output" | grep -q "Failed to spawn.*mypy"; then
+            echo "::warning::mypy not available, skipping type checking (expected on release-0.3.x)"
+            exit 0
+          fi
+
+          echo "$output"
           if [ $status -ne 0 ]; then
             echo "::error::Full mypy failed. Reproduce locally with 'uv run pre-commit run mypy-full --hook-stage manual --all-files'."
           fi
