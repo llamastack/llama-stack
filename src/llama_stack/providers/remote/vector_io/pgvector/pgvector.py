@@ -395,6 +395,11 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         # Persist vector DB metadata in the KV store
         if self.kvstore is None:
             raise RuntimeError("KVStore not initialized. Call initialize() before registering vector stores.")
+
+        # Save to kvstore for persistence
+        key = f"{VECTOR_DBS_PREFIX}{vector_store.identifier}"
+        await self.kvstore.set(key=key, value=vector_store.model_dump_json())
+
         # Upsert model metadata in Postgres
         upsert_models(self.conn, [(vector_store.identifier, vector_store)])
 
