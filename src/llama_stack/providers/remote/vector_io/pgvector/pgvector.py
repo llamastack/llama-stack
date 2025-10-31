@@ -368,6 +368,22 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             log.exception("Could not connect to PGVector database server")
             raise RuntimeError("Could not connect to PGVector database server") from e
 
+        # Load existing vector stores from KV store into cache
+        start_key = VECTOR_DBS_PREFIX
+        end_key = f"{VECTOR_DBS_PREFIX}\xff"
+        stored_vector_stores = await self.kvstore.values_in_range(start_key, end_key)
+        for vector_store_data in stored_vector_stores:
+            vector_store = VectorStore.model_validate_json(vector_store_data)
+            pgvector_index = PGVectorIndex(
+                vector_store=vector_store,
+                dimension=vector_store.embedding_dimension,
+                conn=self.conn,
+                kvstore=self.kvstore,
+            )
+            await pgvector_index.initialize()
+            index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
+            self.cache[vector_store.identifier] = index
+
     async def shutdown(self) -> None:
         if self.conn is not None:
             self.conn.close()
@@ -377,7 +393,13 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
 
     async def register_vector_store(self, vector_store: VectorStore) -> None:
         # Persist vector DB metadata in the KV store
-        assert self.kvstore is not None
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before registering vector stores.")
+
+        # Save to kvstore for persistence
+        key = f"{VECTOR_DBS_PREFIX}{vector_store.identifier}"
+        await self.kvstore.set(key=key, value=vector_store.model_dump_json())
+
         # Upsert model metadata in Postgres
         upsert_models(self.conn, [(vector_store.identifier, vector_store)])
 
@@ -396,7 +418,8 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             del self.cache[vector_store_id]
 
         # Delete vector DB metadata from KV store
-        assert self.kvstore is not None
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
     async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
@@ -413,13 +436,16 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         if vector_store_id in self.cache:
             return self.cache[vector_store_id]
 
-        if self.vector_store_table is None:
+        # Try to load from kvstore
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before using vector stores.")
+
+        key = f"{VECTOR_DBS_PREFIX}{vector_store_id}"
+        vector_store_data = await self.kvstore.get(key)
+        if not vector_store_data:
             raise VectorStoreNotFoundError(vector_store_id)
 
-        vector_store = await self.vector_store_table.get_vector_store(vector_store_id)
-        if not vector_store:
-            raise VectorStoreNotFoundError(vector_store_id)
-
+        vector_store = VectorStore.model_validate_json(vector_store_data)
         index = PGVectorIndex(vector_store, vector_store.embedding_dimension, self.conn)
         await index.initialize()
         self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)

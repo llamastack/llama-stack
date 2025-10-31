@@ -92,6 +92,99 @@ async def test_persistence_across_adapter_restarts(vector_io_adapter):
     await vector_io_adapter.shutdown()
 
 
+async def test_vector_store_lazy_loading_from_kvstore(vector_io_adapter):
+    """
+    Test that vector stores can be lazy-loaded from KV store when not in cache.
+
+    Verifies that clearing the cache doesn't break vector store access - they
+    can be loaded on-demand from persistent storage.
+    """
+    await vector_io_adapter.initialize()
+
+    vector_store_id = f"lazy_load_test_{np.random.randint(1e6)}"
+    vector_store = VectorStore(
+        identifier=vector_store_id,
+        provider_id="test_provider",
+        embedding_model="test_model",
+        embedding_dimension=128,
+    )
+    await vector_io_adapter.register_vector_store(vector_store)
+    assert vector_store_id in vector_io_adapter.cache
+
+    vector_io_adapter.cache.clear()
+    assert vector_store_id not in vector_io_adapter.cache
+
+    loaded_index = await vector_io_adapter._get_and_cache_vector_store_index(vector_store_id)
+    assert loaded_index is not None
+    assert loaded_index.vector_store.identifier == vector_store_id
+    assert vector_store_id in vector_io_adapter.cache
+
+    cached_index = await vector_io_adapter._get_and_cache_vector_store_index(vector_store_id)
+    assert cached_index is loaded_index
+
+    await vector_io_adapter.shutdown()
+
+
+async def test_vector_store_preloading_on_initialization(vector_io_adapter):
+    """
+    Test that vector stores are preloaded from KV store during initialization.
+
+    Verifies that after restart, all vector stores are automatically loaded into
+    cache and immediately accessible without requiring lazy loading.
+    """
+    await vector_io_adapter.initialize()
+
+    vector_store_ids = [f"preload_test_{i}_{np.random.randint(1e6)}" for i in range(3)]
+    for vs_id in vector_store_ids:
+        vector_store = VectorStore(
+            identifier=vs_id,
+            provider_id="test_provider",
+            embedding_model="test_model",
+            embedding_dimension=128,
+        )
+        await vector_io_adapter.register_vector_store(vector_store)
+
+    for vs_id in vector_store_ids:
+        assert vs_id in vector_io_adapter.cache
+
+    await vector_io_adapter.shutdown()
+    await vector_io_adapter.initialize()
+
+    for vs_id in vector_store_ids:
+        assert vs_id in vector_io_adapter.cache
+
+    for vs_id in vector_store_ids:
+        loaded_index = await vector_io_adapter._get_and_cache_vector_store_index(vs_id)
+        assert loaded_index is not None
+        assert loaded_index.vector_store.identifier == vs_id
+
+    await vector_io_adapter.shutdown()
+
+
+async def test_kvstore_none_raises_runtime_error(vector_io_adapter):
+    """
+    Test that accessing vector stores with uninitialized kvstore raises RuntimeError.
+
+    Verifies proper RuntimeError is raised instead of assertions when kvstore is None.
+    """
+    await vector_io_adapter.initialize()
+
+    vector_store_id = f"kvstore_none_test_{np.random.randint(1e6)}"
+    vector_store = VectorStore(
+        identifier=vector_store_id,
+        provider_id="test_provider",
+        embedding_model="test_model",
+        embedding_dimension=128,
+    )
+    await vector_io_adapter.register_vector_store(vector_store)
+
+    vector_io_adapter.cache.clear()
+    vector_io_adapter.kvstore = None
+
+    with pytest.raises(RuntimeError, match="KVStore not initialized"):
+        await vector_io_adapter._get_and_cache_vector_store_index(vector_store_id)
+
+
 async def test_register_and_unregister_vector_store(vector_io_adapter):
     unique_id = f"foo_db_{np.random.randint(1e6)}"
     dummy = VectorStore(
