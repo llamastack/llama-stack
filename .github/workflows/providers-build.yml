@@ -72,10 +72,16 @@ jobs:
       - name: Build container image
         if: matrix.image-type == 'container'
         run: |
+          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=${{ matrix.distro }}"
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+          fi
           docker build . \
             -f containers/Containerfile \
-            --build-arg INSTALL_MODE=editable \
-            --build-arg DISTRO_NAME=${{ matrix.distro }} \
+            $BUILD_ARGS \
             --tag llama-stack:${{ matrix.distro }}-ci
 
       - name: Print dependencies in the image
@@ -108,12 +114,18 @@ jobs:
       - name: Build container image
         run: |
           BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "python:3.12-slim"' llama_stack/distributions/ci-tests/build.yaml)
+          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=ci-tests"
+          BUILD_ARGS="$BUILD_ARGS --build-arg BASE_IMAGE=$BASE_IMAGE"
+          BUILD_ARGS="$BUILD_ARGS --build-arg RUN_CONFIG_PATH=/workspace/llama_stack/distributions/ci-tests/run.yaml"
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+          fi
           docker build . \
             -f containers/Containerfile \
-            --build-arg INSTALL_MODE=editable \
-            --build-arg DISTRO_NAME=ci-tests \
-            --build-arg BASE_IMAGE="$BASE_IMAGE" \
-            --build-arg RUN_CONFIG_PATH=/workspace/llama_stack/distributions/ci-tests/run.yaml \
+            $BUILD_ARGS \
             -t llama-stack:ci-tests
 
       - name: Inspect the container image entrypoint
@@ -148,12 +160,18 @@ jobs:
       - name: Build UBI9 container image
         run: |
           BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "registry.access.redhat.com/ubi9:latest"' llama_stack/distributions/ci-tests/build.yaml)
+          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=ci-tests"
+          BUILD_ARGS="$BUILD_ARGS --build-arg BASE_IMAGE=$BASE_IMAGE"
+          BUILD_ARGS="$BUILD_ARGS --build-arg RUN_CONFIG_PATH=/workspace/llama_stack/distributions/ci-tests/run.yaml"
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+          fi
           docker build . \
             -f containers/Containerfile \
-            --build-arg INSTALL_MODE=editable \
-            --build-arg DISTRO_NAME=ci-tests \
-            --build-arg BASE_IMAGE="$BASE_IMAGE" \
-            --build-arg RUN_CONFIG_PATH=/workspace/llama_stack/distributions/ci-tests/run.yaml \
+            $BUILD_ARGS \
             -t llama-stack:ci-tests-ubi9
 
       - name: Inspect UBI9 image
