@@ -420,12 +420,14 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             if self.config.persistence:
                 self.kvstore = await kvstore_impl(self.config.persistence)
 
-            # Validate connection string
+            # Skip MongoDB connection if no connection string provided
+            # This allows other providers to work without MongoDB credentials
             if not self.config.connection_string:
-                raise ValueError(
-                    "MongoDB connection_string is required but not provided. "
-                    "Please set MONGODB_CONNECTION_STRING environment variable or provide it in config."
+                logger.warning(
+                    "MongoDB connection_string not provided. "
+                    "MongoDB vector store will not be available until credentials are configured."
                 )
+                return
 
             # Connect to MongoDB with optimized settings for RAG
             self.client = MongoClient(
