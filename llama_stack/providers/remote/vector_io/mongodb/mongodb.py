@@ -93,11 +93,11 @@ class MongoDBIndex(EmbeddingIndex):
                 f"Failed to initialize MongoDB index for vector_db: {self.vector_db.identifier}. "
                 f"Collection name: {self.collection.name}. Error: {str(e)}"
             )
-            # Don't fail completely - just log the error and continue
-            logger.warning(
-                "Continuing without complete index initialization. "
-                "You may need to create indexes manually in MongoDB Atlas dashboard."
-            )
+            raise RuntimeError(
+                f"Failed to initialize MongoDB vector search index. "
+                f"Vector store '{self.vector_db.identifier}' cannot function without indexes. "
+                f"Error: {str(e)}"
+            ) from e
 
     async def _create_vector_search_index(self) -> None:
         """Create optimized vector search index based on MongoDB RAG best practices."""
