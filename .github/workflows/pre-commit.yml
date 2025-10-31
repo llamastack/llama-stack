@@ -137,13 +137,22 @@ jobs:
         id: client-config
         uses: ./.github/actions/install-llama-stack-client
 
-      - name: Sync dev + type_checking dependencies
+      - name: Sync dev dependencies for mypy
         env:
           UV_INDEX_URL: ${{ steps.client-config.outputs.uv-index-url }}
           UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
           UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-index-url && 'unsafe-best-match' || '' }}
         run: |
-          uv sync --group dev --group type_checking
+          # Check if type_checking group exists, otherwise just use dev
+          if grep -q "type.checking" pyproject.toml; then
+            echo "Found type_checking group, syncing with both groups"
+            uv sync --group dev --group type_checking
+            MYPY_CMD="uv run --group dev --group type_checking mypy"
+          else
+            echo "No type_checking group found, syncing with dev only"
+            uv sync --group dev
+            MYPY_CMD="uv run --group dev mypy"
+          fi
 
           # Install specific client version after sync if needed
           if [ "${{ steps.client-config.outputs.install-after-sync }}" = "true" ]; then
@@ -151,10 +160,12 @@ jobs:
             uv pip install ${{ steps.client-config.outputs.install-source }}
           fi
 
-      - name: Run mypy (full type_checking)
+          echo "MYPY_CMD=$MYPY_CMD" >> $GITHUB_ENV
+
+      - name: Run mypy (full type checking)
         run: |
           set +e
-          uv run --group dev --group type_checking mypy
+          $MYPY_CMD
           status=$?
           if [ $status -ne 0 ]; then
             echo "::error::Full mypy failed. Reproduce locally with 'uv run pre-commit run mypy-full --hook-stage manual --all-files'."
