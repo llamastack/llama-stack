@@ -8,9 +8,19 @@
 set -euo pipefail
 
 # Detect current branch and target branch
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-# For feature branches, check what branch they're merging into
-TARGET_BRANCH=$(git rev-parse --abbrev-ref HEAD@{upstream} 2>/dev/null | sed 's|origin/||' || echo "")
+# In GitHub Actions, use GITHUB_REF/GITHUB_BASE_REF
+if [[ -n "${GITHUB_REF:-}" ]]; then
+  BRANCH="${GITHUB_REF#refs/heads/}"
+else
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+fi
+
+# For PRs, check the target branch
+if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+  TARGET_BRANCH="${GITHUB_BASE_REF}"
+else
+  TARGET_BRANCH=$(git rev-parse --abbrev-ref HEAD@{upstream} 2>/dev/null | sed 's|origin/||' || echo "")
+fi
 
 echo "[uv-run-with-index] Current branch: '$BRANCH'" >&2
 echo "[uv-run-with-index] Target branch: '$TARGET_BRANCH'" >&2
