@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant"]
+        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant", "remote::mongodb"]
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
       fail-fast: false # we want to run all tests regardless of failure
 
@@ -97,6 +97,16 @@ jobs:
             -p 6333:6333 \
             qdrant/qdrant
 
+      - name: Setup MongoDB
+        if: matrix.vector-io-provider == 'remote::mongodb'
+        run: |
+          docker run --rm -d --pull always \
+            --name mongodb \
+            -p 27017:27017 \
+            -e MONGO_INITDB_ROOT_USERNAME=llamastack \
+            -e MONGO_INITDB_ROOT_PASSWORD=llamastack \
+            mongodb/mongodb-atlas-local:latest
+
       - name: Wait for Qdrant to be ready
         if: matrix.vector-io-provider == 'remote::qdrant'
         run: |
@@ -110,6 +120,21 @@ jobs:
           done
           echo "Qdrant failed to start"
           docker logs qdrant
+          exit 1
+
+      - name: Wait for MongoDB to be ready
+        if: matrix.vector-io-provider == 'remote::mongodb'
+        run: |
+          echo "Waiting for MongoDB to be ready..."
+          for i in {1..30}; do
+            if docker exec mongodb mongosh --quiet --eval "db.adminCommand('ping').ok" > /dev/null 2>&1; then
+              echo "MongoDB is ready!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "MongoDB failed to start"
+          docker logs mongodb
           exit 1
 
       - name: Wait for ChromaDB to be ready
@@ -166,6 +191,11 @@ jobs:
           QDRANT_URL: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'http://localhost:6333' || '' }}
           ENABLE_WEAVIATE: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'true' || '' }}
           WEAVIATE_CLUSTER_URL: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'localhost:8080' || '' }}
+          ENABLE_MONGODB: ${{ matrix.vector-io-provider == 'remote::mongodb' && 'true' || '' }}
+          MONGODB_HOST: ${{ matrix.vector-io-provider == 'remote::mongodb' && 'localhost' || '' }}
+          MONGODB_PORT: ${{ matrix.vector-io-provider == 'remote::mongodb' && '27017' || '' }}
+          MONGODB_USERNAME: ${{ matrix.vector-io-provider == 'remote::mongodb' && 'llamastack' || '' }}
+          MONGODB_PASSWORD: ${{ matrix.vector-io-provider == 'remote::mongodb' && 'llamastack' || '' }}
         run: |
           uv run --no-sync \
             pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
@@ -191,6 +221,11 @@ jobs:
         if: ${{ always() && matrix.vector-io-provider == 'remote::qdrant' }}
         run: |
           docker logs qdrant > qdrant.log
+
+      - name: Write MongoDB logs to file
+        if: ${{ always() && matrix.vector-io-provider == 'remote::mongodb' }}
+        run: |
+          docker logs mongodb > mongodb.log
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
