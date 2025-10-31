@@ -215,7 +215,7 @@ class MongoDBIndex(EmbeddingIndex):
                         "index": self.config.index_name,
                         "queryVector": embedding.tolist(),
                         "path": self.config.path_field,
-                        "numCandidates": k * 10,  # Get more candidates for better results
+                        "numCandidates": min(k * 10, 1000),  # Cap at 1000 to prevent excessive candidates
                         "limit": k,
                     }
                 },
