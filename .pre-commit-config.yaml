@@ -52,10 +52,6 @@ repos:
         additional_dependencies:
         - black==24.3.0
 
--   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.20
-    hooks:
-    -   id: uv-lock
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.16.1
@@ -78,6 +74,15 @@ repos:
 
 -   repo: local
     hooks:
+      - id: uv-lock
+        name: uv-lock
+        additional_dependencies:
+          - uv==0.7.20
+        entry: ./scripts/pre-commit-uv-lock.sh
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^(pyproject\.toml|uv\.lock)$
       - id: distro-codegen
         name: Distribution Template Codegen
         additional_dependencies:
