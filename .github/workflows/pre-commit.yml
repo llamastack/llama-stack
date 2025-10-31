@@ -130,32 +130,8 @@ jobs:
             exit 1
           fi
 
-      - name: Install client from release branch if needed
-        run: |
-          # Determine the branch we're working with
-          # For PRs: use base_ref (target branch)
-          # For pushes: use ref (current branch)
-          BRANCH="${{ github.base_ref || github.ref }}"
-          BRANCH="${BRANCH#refs/heads/}"  # Strip refs/heads/ prefix
-
-          echo "Working with branch: $BRANCH"
-
-          # If on a release branch, install from matching release branch BEFORE uv sync
-          # This allows uv sync to resolve dependencies that reference unreleased RC versions
-          if [[ "$BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
-            echo "Detected release branch: $BRANCH"
-            echo "Checking if matching branch exists in llama-stack-client-python..."
-
-            # Check if the branch exists in the client repo
-            if git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$BRANCH" > /dev/null 2>&1; then
-              echo "Installing llama-stack-client-python from matching branch: $BRANCH"
-              uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@$BRANCH
-            else
-              echo "::error::Branch $BRANCH not found in llama-stack-client-python repository"
-              echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
-              exit 1
-            fi
-          fi
+      - name: Pre-install client for release branches
+        uses: ./.github/actions/install-client-for-release
 
       - name: Sync dev + type_checking dependencies
         run: uv sync --group dev --group type_checking

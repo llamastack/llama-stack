@@ -18,34 +18,15 @@ runs:
         python-version: ${{ inputs.python-version }}
         version: 0.7.6
 
+    - name: Pre-install client for release branches
+      uses: ./.github/actions/install-client-for-release
+
     - name: Install dependencies
       shell: bash
       run: |
-        # Determine the branch we're working with
-        # For PRs: use base_ref (target branch)
-        # For pushes: use ref (current branch)
+        # Determine the branch we're working with (needed for post-install logic)
         BRANCH="${{ github.base_ref || github.ref }}"
-        BRANCH="${BRANCH#refs/heads/}"  # Strip refs/heads/ prefix
-
-        echo "Working with branch: $BRANCH"
-
-        # If on a release branch, install from matching release branch BEFORE uv sync
-        # This allows uv sync to resolve dependencies that reference unreleased RC versions
-        # We always do this on release branches regardless of client-version to satisfy pyproject.toml
-        if [[ "$BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
-          echo "Detected release branch: $BRANCH"
-          echo "Checking if matching branch exists in llama-stack-client-python..."
-
-          # Check if the branch exists in the client repo
-          if git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$BRANCH" > /dev/null 2>&1; then
-            echo "Installing llama-stack-client-python from matching branch: $BRANCH"
-            uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@$BRANCH
-          else
-            echo "::error::Branch $BRANCH not found in llama-stack-client-python repository"
-            echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
-            exit 1
-          fi
-        fi
+        BRANCH="${BRANCH#refs/heads/}"
 
         echo "Updating project dependencies via uv sync"
         uv sync --all-groups
