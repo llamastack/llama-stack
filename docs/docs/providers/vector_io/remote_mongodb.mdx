@@ -243,7 +243,7 @@ For general MongoDB documentation, visit [MongoDB Documentation](https://docs.mo
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `connection_string` | `<class 'str'>` | No |  | MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/) |
+| `connection_string` | `str \| None` | No |  | MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/) |
 | `database_name` | `<class 'str'>` | No | llama_stack | Database name to use for vector collections |
 | `index_name` | `<class 'str'>` | No | vector_index | Name of the vector search index |
 | `path_field` | `<class 'str'>` | No | embedding | Field name for storing embeddings |

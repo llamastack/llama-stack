@@ -215,7 +215,7 @@ class MongoDBIndex(EmbeddingIndex):
                         "index": self.config.index_name,
                         "queryVector": embedding.tolist(),
                         "path": self.config.path_field,
-                        "numCandidates": k * 10,  # Get more candidates for better results
+                        "numCandidates": min(k * 10, 1000),  # Cap at 1000 to prevent excessive candidates
                         "limit": k,
                     }
                 },
@@ -398,12 +398,14 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         config: MongoDBVectorIOConfig,
         inference_api,
         files_api=None,
+        models_api=None,
     ) -> None:
         # Handle the case where files_api might be a ProviderSpec that needs resolution
         resolved_files_api = files_api
         super().__init__(files_api=resolved_files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
+        self.models_api = models_api
         self.client: MongoClient | None = None
         self.database: Database | None = None
         self.cache: dict[str, VectorStoreWithIndex] = {}
@@ -417,6 +419,13 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             # Initialize KV store for metadata
             if self.config.persistence:
                 self.kvstore = await kvstore_impl(self.config.persistence)
+
+            # Validate connection string
+            if not self.config.connection_string:
+                raise ValueError(
+                    "MongoDB connection_string is required but not provided. "
+                    "Please set MONGODB_CONNECTION_STRING environment variable or provide it in config."
+                )
 
             # Connect to MongoDB with optimized settings for RAG
             self.client = MongoClient(
