@@ -103,7 +103,9 @@ RUN set -eux; \
     fi;
 
 # Install the dependencies for the distribution
+# Explicitly unset UV index env vars to ensure we only use PyPI for distribution deps
 RUN set -eux; \
+    unset UV_EXTRA_INDEX_URL UV_INDEX_STRATEGY; \
     if [ -z "$DISTRO_NAME" ]; then \
         echo "DISTRO_NAME must be provided" >&2; \
         exit 1; \
