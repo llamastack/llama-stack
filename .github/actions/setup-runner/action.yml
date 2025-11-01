@@ -29,11 +29,12 @@ runs:
       env:
         UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
       run: |
-        # Export UV env vars to GITHUB_ENV so they persist across steps
+        # Export UV env vars for current step and persist to GITHUB_ENV for subsequent steps
         if [ -n "$UV_EXTRA_INDEX_URL" ]; then
+          export UV_INDEX_STRATEGY=unsafe-best-match
           echo "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL" >> $GITHUB_ENV
-          echo "UV_INDEX_STRATEGY=unsafe-best-match" >> $GITHUB_ENV
-          echo "Exported UV environment variables for subsequent steps"
+          echo "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY" >> $GITHUB_ENV
+          echo "Exported UV environment variables for current and subsequent steps"
         fi
 
         echo "Updating project dependencies via uv sync"
