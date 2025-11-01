@@ -1,0 +1,114 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestChatCompletionWithTools::test_tool_with_complex_schema[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Book a flight from SFO to JFK for John Doe"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "book_flight",
+            "description": "Book a flight",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "flight": {
+                  "$ref": "#/$defs/FlightInfo"
+                },
+                "passenger": {
+                  "$ref": "#/$defs/Passenger"
+                }
+              },
+              "required": [
+                "flight",
+                "passenger"
+              ],
+              "$defs": {
+                "FlightInfo": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  }
+                },
+                "Passenger": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "age": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-cfb292c0f41d",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user wants to book a flight from SFO to JFK for John Doe. Let me check the available tools. The provided function is book_flight, which requires flight and passenger details. The flight information needs to be in the FlightInfo format, and the passenger includes name and age. The user didn't specify the date, so maybe I should ask for that. Wait, the function parameters mention date as a required field. But the user only mentioned departure and destination. Hmm, the function's required fields are flight and passenger, but without the date, maybe the date is optional? Wait, looking back at the function definition, the date is part of the FlightInfo. So maybe the date is required? But the user didn't provide it. Oh, right, the function's parameters require both flight and passenger, but flight might have the date, and passenger has name and age. But the user only mentioned the departure and destination. Wait, the function's parameters for flight include date. So the user needs to provide the date. Since they didn't specify, perhaps the date is missing. But the function requires both flight and passenger. Wait, maybe the date is part of the flight info. So the user's request is to book a flight from SFO to JFK, but without the date, how can the function be called? The function requires flight and passenger. The flight info includes date, so the user must provide the date. But the user hasn't mentioned the date. Therefore, the assistant should ask for the date. But wait, the user's message says \"Book a flight from SFO to JFK for John Doe\". Maybe the date is implied? Or perhaps the assistant needs to make an assumption? But according to the function's parameters, the date is required. Since the user didn't include it, the function can't be called. Therefore, the correct response would be to inform the user that the date is required. However, the function requires flight and passenger, which are provided. The flight info includes date, so maybe the date is already present in the flight's date parameter. But the user didn't specify it. So maybe the assistant should ask for the date. But the user's message doesn't include it. Therefore, perhaps the function call can't be made without the date. But the user's query is to book the flight, so maybe the assistant should prompt for the date. However, the instructions say to call the function if possible. Since the user hasn't provided the date, maybe the function can't be called. But the user's message includes the departure and destination. Maybe the date is assumed to be the current date? But that's not accurate. Alternatively, perhaps the date is a parameter that the user hasn't provided, so the function can't be called. Therefore, the assistant should respond that the date is required. But according to the problem statement, if a function can't be called, the assistant should respond. But in this case, the function can be called with the flight and passenger details, but the date is missing. So maybe the assistant should ask for the date. But the user's message doesn't include it. Therefore, the correct response is to inform the user that the date is required. But the function requires flight and passenger, which are provided. Wait, the function parameters are flight (FlightInfo) and passenger (Passenger). The flight info includes date, so the user must provide the date. But the user hasn't mentioned it. Therefore, the assistant can't proceed without the date. So the answer would be to ask for the date. However, according to the problem's instructions, if a function can't be called, respond. Since the date is missing, the assistant can't call the function. Therefore, the correct response is to inform the user that the date is required.\n</think>\n\nThe flight booking requires the departure date. Please provide the date of the flight.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 803,
+          "prompt_tokens": 261,
+          "total_tokens": 1064,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

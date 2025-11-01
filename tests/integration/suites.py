@@ -78,7 +78,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "VLLM_URL": "http://localhost:8000/v1",
         },
         defaults={
-            "text_model": "vllm/meta-llama/Llama-3.2-1B-Instruct",
+            "text_model": "vllm/Qwen/Qwen3-0.6B",
             "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
         },
     ),
@@ -168,6 +168,11 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="base",
         roots=base_roots,
         default_setup="ollama",
+    ),
+    "base-vllm-subset": Suite(
+        name="base-vllm-subset",
+        roots=["tests/integration/inference"],
+        default_setup="vllm",
     ),
     "responses": Suite(
         name="responses",
