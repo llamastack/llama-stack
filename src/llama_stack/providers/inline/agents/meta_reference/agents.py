@@ -33,6 +33,7 @@ from llama_stack.apis.agents.agents import ResponseGuardrail
 from llama_stack.apis.agents.openai_responses import OpenAIResponsePrompt, OpenAIResponseText
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.conversations import Conversations
+from llama_stack.apis.files import Files
 from llama_stack.apis.inference import (
     Inference,
     ToolConfig,
@@ -40,6 +41,7 @@ from llama_stack.apis.inference import (
     ToolResponseMessage,
     UserMessage,
 )
+from llama_stack.apis.prompts import Prompts
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
@@ -67,6 +69,8 @@ class MetaReferenceAgentsImpl(Agents):
         tool_runtime_api: ToolRuntime,
         tool_groups_api: ToolGroups,
         conversations_api: Conversations,
+        prompts_api: Prompts,
+        files_api: Files,
         policy: list[AccessRule],
         telemetry_enabled: bool = False,
     ):
@@ -78,7 +82,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.tool_groups_api = tool_groups_api
         self.conversations_api = conversations_api
         self.telemetry_enabled = telemetry_enabled
-
+        self.prompts_api = prompts_api
+        self.files_api = files_api
         self.in_memory_store = InmemoryKVStoreImpl()
         self.openai_responses_impl: OpenAIResponsesImpl | None = None
         self.policy = policy
@@ -95,6 +100,8 @@ class MetaReferenceAgentsImpl(Agents):
             vector_io_api=self.vector_io_api,
             safety_api=self.safety_api,
             conversations_api=self.conversations_api,
+            prompts_api=self.prompts_api,
+            files_api=self.files_api,
         )
 
     async def create_agent(

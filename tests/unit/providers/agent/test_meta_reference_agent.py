@@ -16,7 +16,9 @@ from llama_stack.apis.agents import (
 )
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.conversations import Conversations
+from llama_stack.apis.files import Files
 from llama_stack.apis.inference import Inference
+from llama_stack.apis.prompts import Prompts
 from llama_stack.apis.safety import Safety
 from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
@@ -49,6 +51,8 @@ def mock_apis():
         "tool_runtime_api": AsyncMock(spec=ToolRuntime),
         "tool_groups_api": AsyncMock(spec=ToolGroups),
         "conversations_api": AsyncMock(spec=Conversations),
+        "prompts_api": AsyncMock(spec=Prompts),
+        "files_api": AsyncMock(spec=Files),
     }
 
 
@@ -81,7 +85,9 @@ async def agents_impl(config, mock_apis):
         mock_apis["tool_runtime_api"],
         mock_apis["tool_groups_api"],
         mock_apis["conversations_api"],
-        [],
+        mock_apis["prompts_api"],
+        mock_apis["files_api"],
+        [],  # policy (empty list for tests)
     )
     await impl.initialize()
     yield impl
