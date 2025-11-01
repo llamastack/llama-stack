@@ -1,0 +1,103 @@
+name: Build SDKs for pull request (including forks)
+
+# This workflow uses pull_request_target, which allows it to run on pull requests
+# from forks with access to secrets and OIDC tokens. This is safe because the
+# workflow definition comes from the base branch (trusted), and the action only
+# reads OpenAPI spec files without executing any code from the PR.
+#
+# Important: If your repository is public, configure GitHub to require approval
+# for workflows from fork PRs. Go to Settings → Actions → General, and under
+# "Fork pull request workflows from outside collaborators", select
+# "Require approval for all outside collaborators".
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Stainless organization name.
+  STAINLESS_ORG: llamastack
+
+  # Stainless project name.
+  STAINLESS_PROJECT: llama-stack-client
+
+  # Path to your OpenAPI spec.
+  OAS_PATH: ./docs/static/llama-stack-spec.yaml
+
+  # Path to your Stainless config. Optional; only provide this if you prefer
+  # to maintain the ground truth Stainless config in your own repo.
+  CONFIG_PATH: ./docs/static/stainless-config.yaml
+
+  # When to fail the job based on build conclusion.
+  # Options: "never" | "note" | "warning" | "error" | "fatal".
+  FAIL_ON: error
+
+jobs:
+  preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+
+      - name: Run preview builds
+        uses: stainless-api/upload-openapi-spec-action/preview@32823b096b4319c53ee948d702d9052873af485f # 1.6.0
+        with:
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
+          base_sha: ${{ github.event.pull_request.base.sha }}
+          base_ref: ${{ github.event.pull_request.base.ref }}
+          head_sha: ${{ github.event.pull_request.head.sha }}
+
+  merge:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      # Checkout the PR's code (including from forks)
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+
+      # Note that this only merges in changes that happened on the last build on
+      # preview/${{ github.head_ref }}. It's possible that there are OAS/config
+      # changes that haven't been built, if the preview-sdk job didn't finish
+      # before this step starts. In theory we want to wait for all builds
+      # against preview/${{ github.head_ref }} to complete, but assuming that
+      # the preview-sdk job happens before the PR merge, it should be fine.
+      - name: Run merge build
+        uses: stainless-api/upload-openapi-spec-action/merge@32823b096b4319c53ee948d702d9052873af485f # 1.6.0
+        with:
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
+          base_sha: ${{ github.event.pull_request.base.sha }}
+          base_ref: ${{ github.event.pull_request.base.ref }}
+          head_sha: ${{ github.event.pull_request.head.sha }}
