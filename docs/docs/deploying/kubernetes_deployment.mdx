@@ -10,7 +10,7 @@ import TabItem from '@theme/TabItem';
 
 # Kubernetes Deployment Guide
 
-Deploy Llama Stack and vLLM servers in a Kubernetes cluster instead of running them locally. This guide covers both local development with Kind and production deployment on AWS EKS.
+Deploy Llama Stack and vLLM servers in a Kubernetes cluster instead of running them locally. This guide covers deployment using the Kubernetes operator to manage the Llama Stack server with Kind. The vLLM inference server is deployed manually.
 
 ## Prerequisites
 
@@ -110,111 +110,170 @@ spec:
 EOF
 ```
 
-### Step 3: Configure Llama Stack
+### Step 3: Install Kubernetes Operator
 
-Update your run configuration:
-
-```yaml
-providers:
-  inference:
-  - provider_id: vllm
-    provider_type: remote::vllm
-    config:
-      url: http://vllm-server.default.svc.cluster.local:8000/v1
-      max_tokens: 4096
-      api_token: fake
-```
-
-Build container image:
+Install the Llama Stack Kubernetes operator to manage Llama Stack deployments:
 
 ```bash
-tmp_dir=$(mktemp -d) && cat >$tmp_dir/Containerfile.llama-stack-run-k8s <<EOF
-FROM distribution-myenv:dev
-RUN apt-get update && apt-get install -y git
-RUN git clone https://github.com/meta-llama/llama-stack.git /app/llama-stack-source
-ADD ./vllm-llama-stack-run-k8s.yaml /app/config.yaml
-EOF
-podman build -f $tmp_dir/Containerfile.llama-stack-run-k8s -t llama-stack-run-k8s $tmp_dir
+# Install from the latest main branch
+kubectl apply -f https://raw.githubusercontent.com/llamastack/llama-stack-k8s-operator/main/release/operator.yaml
+
+# Or install a specific version (e.g., v0.4.0)
+# kubectl apply -f https://raw.githubusercontent.com/llamastack/llama-stack-k8s-operator/v0.4.0/release/operator.yaml
 ```
 
-### Step 4: Deploy Llama Stack Server
+Verify the operator is running:
+
+```bash
+kubectl get pods -n llama-stack-operator-system
+```
+
+For more information about the operator, see the [llama-stack-k8s-operator repository](https://github.com/llamastack/llama-stack-k8s-operator).
+
+### Step 4: Deploy Llama Stack Server using Operator
+
+Create a `LlamaStackDistribution` custom resource to deploy the Llama Stack server. The operator will automatically create the necessary Deployment, Service, and other resources.
+You can optionally override the default `run.yaml` using `spec.server.userConfig` with a ConfigMap (see [userConfig spec](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/docs/api-overview.md#userconfigspec)).
 
 ```yaml
 cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
+apiVersion: llamastack.io/v1alpha1
+kind: LlamaStackDistribution
 metadata:
-  name: llama-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llama-stack-server
+  name: llamastack-vllm
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: llama-stack
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: llama-stack
-    spec:
-      containers:
-      - name: llama-stack
-        image: localhost/llama-stack-run-k8s:latest
-        imagePullPolicy: IfNotPresent
-        command: ["llama", "stack", "run", "/app/config.yaml"]
-        ports:
-          - containerPort: 5000
-        volumeMounts:
-          - name: llama-storage
-            mountPath: /root/.llama
-      volumes:
-      - name: llama-storage
-        persistentVolumeClaim:
-          claimName: llama-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: llama-stack-service
-spec:
-  selector:
-    app.kubernetes.io/name: llama-stack
-  ports:
-  - protocol: TCP
-    port: 5000
-    targetPort: 5000
-  type: ClusterIP
+  server:
+    distribution:
+      name: starter
+    containerSpec:
+      port: 8321
+      env:
+      - name: VLLM_URL
+        value: "http://vllm-server.default.svc.cluster.local:8000/v1"
+      - name: VLLM_MAX_TOKENS
+        value: "4096"
+      - name: VLLM_API_TOKEN
+        value: "fake"
+    # Optional: override run.yaml from a ConfigMap using userConfig
+    userConfig:
+      configMap:
+        name: llama-stack-config
+    storage:
+      size: "20Gi"
+      mountPath: "/home/lls/.lls"
 EOF
+```
+
+**Configuration Options:**
+
+- `replicas`: Number of Llama Stack server instances to run
+- `server.distribution.name`: The distribution to use (e.g., `starter` for the starter distribution). See the [list of supported distributions](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/distributions.json) in the operator repository.
+- `server.distribution.image`: (Optional) Custom container image for non-supported distributions. Use this field when deploying a distribution that is not in the supported list. If specified, this takes precedence over `name`.
+- `server.containerSpec.port`: Port on which the Llama Stack server listens (default: 8321)
+- `server.containerSpec.env`: Environment variables to configure providers:
+- `server.userConfig`: (Optional) Override the default `run.yaml` using a ConfigMap. See [userConfig spec](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/docs/api-overview.md#userconfigspec).
+- `server.storage.size`: Size of the persistent volume for model and data storage
+- `server.storage.mountPath`: Where to mount the storage in the container
+
+**Note:** For a complete list of supported distributions, see [distributions.json](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/distributions.json) in the operator repository. To use a custom or non-supported distribution, set the `server.distribution.image` field with your container image instead of  `server.distribution.name`.
+
+The operator automatically creates:
+- A Deployment for the Llama Stack server
+- A Service to access the server
+- A PersistentVolumeClaim for storage
+- All necessary RBAC resources
+
+
+Check the status of your deployment:
+
+```bash
+kubectl get llamastackdistribution
+kubectl describe llamastackdistribution llamastack-vllm
 ```
 
 ### Step 5: Test Deployment
 
+Wait for the Llama Stack server pod to be ready:
+
 ```bash
-# Port forward and test
-kubectl port-forward service/llama-stack-service 5000:5000
-llama-stack-client --endpoint http://localhost:5000 inference chat-completion --message "hello, what model are you?"
+# Check the status of the LlamaStackDistribution
+kubectl get llamastackdistribution llamastack-vllm
+
+# Check the pods created by the operator
+kubectl get pods -l app.kubernetes.io/name=llama-stack
+
+# Wait for the pod to be ready
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=llama-stack --timeout=300s
+```
+
+Get the service name created by the operator (it typically follows the pattern `<llamastackdistribution-name>-service`):
+
+```bash
+# List services to find the service name
+kubectl get services | grep llamastack
+
+# Port forward and test (replace SERVICE_NAME with the actual service name)
+kubectl port-forward service/llamastack-vllm-service 8321:8321
+```
+
+In another terminal, test the deployment:
+
+```bash
+llama-stack-client --endpoint http://localhost:8321 inference chat-completion --message "hello, what model are you?"
 ```
 
 ## Troubleshooting
 
-**Check pod status:**
+### vLLM Server Issues
+
+**Check vLLM pod status:**
 ```bash
 kubectl get pods -l app.kubernetes.io/name=vllm
 kubectl logs -l app.kubernetes.io/name=vllm
 ```
 
-**Test service connectivity:**
+**Test vLLM service connectivity:**
 ```bash
 kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- curl http://vllm-server:8000/v1/models
+```
+
+### Llama Stack Server Issues
+
+**Check LlamaStackDistribution status:**
+```bash
+# Get detailed status
+kubectl describe llamastackdistribution llamastack-vllm
+
+# Check for events
+kubectl get events --sort-by='.lastTimestamp' | grep llamastack-vllm
+```
+
+**Check operator-managed pods:**
+```bash
+# List all pods managed by the operator
+kubectl get pods -l app.kubernetes.io/name=llama-stack
+
+# Check pod logs (replace POD_NAME with actual pod name)
+kubectl logs -l app.kubernetes.io/name=llama-stack
+```
+
+**Check operator status:**
+```bash
+# Verify the operator is running
+kubectl get pods -n llama-stack-operator-system
+
+# Check operator logs if issues persist
+kubectl logs -n llama-stack-operator-system -l control-plane=controller-manager
+```
+
+**Verify service connectivity:**
+```bash
+# Get the service endpoint
+kubectl get svc llamastack-vllm-service
+
+# Test connectivity from within the cluster
+kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- curl http://llamastack-vllm-service:8321/health
 ```
 
 ## Related Resources
@@ -222,3 +281,5 @@ kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- curl http:
 - **[Deployment Overview](/docs/deploying/)** - Overview of deployment options
 - **[Distributions](/docs/distributions)** - Understanding Llama Stack distributions
 - **[Configuration](/docs/distributions/configuration)** - Detailed configuration options
+- **[LlamaStack Operator](https://github.com/llamastack/llama-stack-k8s-operator)** - Overview of llama-stack kubernetes operator
+- **[LlamaStackDistribution](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/docs/api-overview.md)** - API Spec of the llama-stack operator Custom Resource.
