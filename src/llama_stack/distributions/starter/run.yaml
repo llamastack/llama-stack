@@ -128,6 +128,19 @@ providers:
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
+  - provider_id: ${env.MONGODB_CONNECTION_STRING:+mongodb_atlas}
+    provider_type: remote::mongodb
+    config:
+      connection_string: ${env.MONGODB_CONNECTION_STRING:=}
+      database_name: ${env.MONGODB_DATABASE_NAME:=llama_stack}
+      index_name: ${env.MONGODB_INDEX_NAME:=vector_index}
+      path_field: ${env.MONGODB_PATH_FIELD:=embedding}
+      similarity_metric: ${env.MONGODB_SIMILARITY_METRIC:=cosine}
+      max_pool_size: ${env.MONGODB_MAX_POOL_SIZE:=100}
+      timeout_ms: ${env.MONGODB_TIMEOUT_MS:=30000}
+      persistence:
+        namespace: vector_io::mongodb_atlas
+        backend: kv_default
   - provider_id: ${env.QDRANT_URL:+qdrant}
     provider_type: remote::qdrant
     config:
