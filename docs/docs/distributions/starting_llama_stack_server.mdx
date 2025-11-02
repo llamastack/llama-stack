@@ -42,7 +42,7 @@ Configure Gunicorn behavior using environment variables:
 - `GUNICORN_KEEPALIVE`: Connection keepalive in seconds (default: `5`)
 - `GUNICORN_MAX_REQUESTS`: Restart workers after N requests to prevent memory leaks (default: `10000`)
 - `GUNICORN_MAX_REQUESTS_JITTER`: Randomize worker restart timing (default: `1000`)
-- `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `true`)
+- `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `true`, as set in `run.py` line 264)
 
 **Important**: When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions. To avoid this, set `GUNICORN_PRELOAD=true` and install all dependencies with `uv sync --group unit --group test`.
 
