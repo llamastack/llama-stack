@@ -278,7 +278,7 @@ class StackRun(Subcommand):
                 gunicorn_command.extend(["--ca-certs", uvicorn_config["ssl_ca_certs"]])
 
         # Add the application
-        gunicorn_command.append("llama_stack.core.server.server:create_app()")
+        gunicorn_command.append("llama_stack.core.server.server:create_app")
 
         # Log comprehensive configuration
         logger.info(f"Starting Gunicorn server with {num_workers} workers on {bind_address}...")
