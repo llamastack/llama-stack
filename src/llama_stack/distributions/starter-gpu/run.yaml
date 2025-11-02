@@ -171,6 +171,8 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
+  - provider_id: dana
+    provider_type: inline::dana
   post_training:
   - provider_id: huggingface-gpu
     provider_type: inline::huggingface-gpu
