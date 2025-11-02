@@ -5,6 +5,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -80,11 +81,14 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
                     continue
                 field_type = str(field.annotation) if field.annotation else "Any"
 
-                # this string replace is ridiculous
-                field_type = field_type.replace("typing.", "").replace("Optional[", "").replace("]", "")
-                field_type = field_type.replace("Annotated[", "").replace("FieldInfo(", "").replace(")", "")
+                field_type = field_type.replace("typing.", "")
                 field_type = field_type.replace("llama_stack.apis.inference.inference.", "")
                 field_type = field_type.replace("llama_stack.providers.", "")
+
+                field_type = re.sub(r"Optional\[([^\]]+)\]", r"\1 | None", field_type)
+                field_type = re.sub(r"Annotated\[([^,]+),.*?\]", r"\1", field_type)
+                field_type = re.sub(r"FieldInfo\([^)]*\)", "", field_type)
+                field_type = re.sub(r"<class '([^']+)'>", r"\1", field_type)
 
                 default_value = field.default
                 if field.default_factory is not None:
