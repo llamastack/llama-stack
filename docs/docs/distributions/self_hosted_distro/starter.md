@@ -85,7 +85,7 @@ On Unix-based systems (Linux, macOS), the server automatically uses Gunicorn wit
 - `GUNICORN_KEEPALIVE`: Connection keepalive in seconds (default: `5`)
 - `GUNICORN_MAX_REQUESTS`: Restart workers after N requests to prevent memory leaks (default: `10000`)
 - `GUNICORN_MAX_REQUESTS_JITTER`: Randomize worker restart timing (default: `1000`)
-- `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `false`)
+- `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `true`)
 
 **Important Notes**:
 
