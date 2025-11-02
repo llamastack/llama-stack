@@ -1258,7 +1258,23 @@
                 ],
                 "summary": "List routes.",
                 "description": "List routes.\nList all available API routes with their methods and implementing providers.",
-                "parameters": [],
+                "parameters": [
+                    {
+                        "name": "api_filter",
+                        "in": "query",
+                        "description": "Optional filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns only non-deprecated v1 routes.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1",
+                                "v1alpha",
+                                "v1beta",
+                                "deprecated"
+                            ]
+                        }
+                    }
+                ],
                 "deprecated": false
             }
         },

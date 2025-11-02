@@ -5,7 +5,9 @@ run-name: Run pre-commit checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
@@ -50,19 +52,34 @@ jobs:
         run: npm ci
         working-directory: src/llama_stack/ui
 
+      - name: Install pre-commit
+        run: python -m pip install pre-commit
+
+      - name: Cache pre-commit
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
       - name: Run pre-commit
         id: precommit
-        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
-        continue-on-error: true
+        run: |
+          set +e
+          pre-commit run --show-diff-on-failure --color=always --all-files 2>&1 | tee /tmp/precommit.log
+          status=${PIPESTATUS[0]}
+          echo "status=$status" >> $GITHUB_OUTPUT
+          exit 0
         env:
           SKIP: no-commit-to-branch,mypy
           RUFF_OUTPUT_FORMAT: github
 
       - name: Check pre-commit results
-        if: steps.precommit.outcome == 'failure'
+        if: steps.precommit.outputs.status != '0'
         run: |
           echo "::error::Pre-commit hooks failed. Please run 'pre-commit run --all-files' locally and commit the fixes."
-          echo "::warning::Some pre-commit hooks failed. Check the output above for details."
+          echo ""
+          echo "Failed hooks output:"
+          cat /tmp/precommit.log
           exit 1
 
       - name: Debug
@@ -113,11 +130,34 @@ jobs:
             exit 1
           fi
 
+      - name: Configure client installation
+        id: client-config
+        uses: ./.github/actions/install-llama-stack-client
+
       - name: Sync dev + type_checking dependencies
-        run: uv sync --group dev --group type_checking
+        env:
+          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
+        run: |
+          if [ -n "$UV_EXTRA_INDEX_URL" ]; then
+            export UV_INDEX_STRATEGY="unsafe-best-match"
+          fi
+
+          uv sync --group dev --group type_checking
+
+          # Install specific client version after sync if needed
+          if [ "${{ steps.client-config.outputs.install-after-sync }}" = "true" ]; then
+            echo "Installing llama-stack-client from: ${{ steps.client-config.outputs.install-source }}"
+            uv pip install ${{ steps.client-config.outputs.install-source }}
+          fi
 
       - name: Run mypy (full type_checking)
+        env:
+          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
         run: |
+          if [ -n "$UV_EXTRA_INDEX_URL" ]; then
+            export UV_INDEX_STRATEGY="unsafe-best-match"
+          fi
+
           set +e
           uv run --group dev --group type_checking mypy
           status=$?

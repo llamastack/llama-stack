@@ -18,25 +18,35 @@ runs:
         python-version: ${{ inputs.python-version }}
         version: 0.7.6
 
+    - name: Configure client installation
+      id: client-config
+      uses: ./.github/actions/install-llama-stack-client
+      with:
+        client-version: ${{ inputs.client-version }}
+
     - name: Install dependencies
       shell: bash
+      env:
+        UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
       run: |
+        # Export UV env vars for current step and persist to GITHUB_ENV for subsequent steps
+        if [ -n "$UV_EXTRA_INDEX_URL" ]; then
+          export UV_INDEX_STRATEGY=unsafe-best-match
+          echo "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL" >> $GITHUB_ENV
+          echo "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY" >> $GITHUB_ENV
+          echo "Exported UV environment variables for current and subsequent steps"
+        fi
+
         echo "Updating project dependencies via uv sync"
         uv sync --all-groups
 
         echo "Installing ad-hoc dependencies"
         uv pip install faiss-cpu
 
-        # Install llama-stack-client-python based on the client-version input
-        if [ "${{ inputs.client-version }}" = "latest" ]; then
-          echo "Installing latest llama-stack-client-python from main branch"
-          uv pip install git+https://github.com/llamastack/llama-stack-client-python.git@main
-        elif [ "${{ inputs.client-version }}" = "published" ]; then
-          echo "Installing published llama-stack-client-python from PyPI"
-          uv pip install llama-stack-client
-        else
-          echo "Invalid client-version: ${{ inputs.client-version }}"
-          exit 1
+        # Install specific client version after sync if needed
+        if [ "${{ steps.client-config.outputs.install-after-sync }}" = "true" ]; then
+          echo "Installing llama-stack-client from: ${{ steps.client-config.outputs.install-source }}"
+          uv pip install ${{ steps.client-config.outputs.install-source }}
         fi
 
         echo "Installed llama packages"
