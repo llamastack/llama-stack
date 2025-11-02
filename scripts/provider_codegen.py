@@ -390,8 +390,16 @@ def generate_index_docs(
     # Add YAML frontmatter for index
     md_lines.append("---")
     if api_docstring:
-        clean_desc = api_docstring.strip().replace('"', '\\"')
-        md_lines.append(f'description: "{clean_desc}"')
+        # Handle multi-line descriptions in YAML
+        if "\n" in api_docstring.strip():
+            md_lines.append("description: |")
+            for line in api_docstring.strip().split("\n"):
+                # Avoid trailing whitespace by only adding spaces to non-empty lines
+                md_lines.append(f"  {line}" if line.strip() else "")
+        else:
+            # For single line descriptions, format properly for YAML
+            clean_desc = api_docstring.strip().replace('"', '\\"')
+            md_lines.append(f'description: "{clean_desc}"')
     md_lines.append(f"sidebar_label: {sidebar_label}")
     md_lines.append(f"title: {api_name.title()}")
     md_lines.append("---")
