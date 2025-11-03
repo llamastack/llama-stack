@@ -6529,6 +6529,16 @@ components:
           type: integer
         owned_by:
           type: string
+        custom_metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
       additionalProperties: false
       required:
         - id
