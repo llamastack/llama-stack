@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+import asyncio
 
 from llama_stack.apis.agents import (
     Order,
@@ -17,12 +18,12 @@ from llama_stack.apis.agents.openai_responses import (
 )
 from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.core.datatypes import AccessRule
-from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference
+from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference, StorageBackendType
 from llama_stack.log import get_logger
 
 from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import sqlstore_impl
+from ..sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
 
 logger = get_logger(name=__name__, category="openai_responses")
 
@@ -59,6 +60,13 @@ class ResponsesStore:
         base_store = sqlstore_impl(self.reference)
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
 
+        # Disable write queue for SQLite since WAL mode handles concurrency
+        # Keep it enabled for other backends (like Postgres) for performance
+        backend_config = _SQLSTORE_BACKENDS.get(self.reference.backend)
+        if backend_config and backend_config.type == StorageBackendType.SQL_SQLITE:
+            self.enable_write_queue = False
+            logger.debug("Write queue disabled for SQLite (WAL mode handles concurrency)")
+
         await self.sql_store.create_table(
             "openai_responses",
             {
@@ -76,6 +84,14 @@ class ResponsesStore:
                 "messages": ColumnType.JSON,
             },
         )
+
+        if self.enable_write_queue:
+            self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
+            for _ in range(self._num_writers):
+                self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
+            logger.debug(
+                f"Responses store write queue enabled with {self._num_writers} writers, max queue size {self._max_write_queue_size}"
+            )
 
     async def shutdown(self) -> None:
         return

@@ -35,6 +35,7 @@ class InferenceStore:
         self.reference = reference
         self.sql_store = None
         self.policy = policy
+        self.enable_write_queue = True
 
         # Async write queue and worker control
         self._queue: asyncio.Queue[tuple[OpenAIChatCompletion, list[OpenAIMessageParam]]] | None = None
@@ -47,14 +48,13 @@ class InferenceStore:
         base_store = sqlstore_impl(self.reference)
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
 
-        # Disable write queue for SQLite to avoid concurrency issues
-        backend_name = self.reference.backend
-        backend_config = _SQLSTORE_BACKENDS.get(backend_name)
-        if backend_config is None:
-            raise ValueError(
-                f"Unregistered SQL backend '{backend_name}'. Registered backends: {sorted(_SQLSTORE_BACKENDS)}"
-            )
-        self.enable_write_queue = backend_config.type != StorageBackendType.SQL_SQLITE
+        # Disable write queue for SQLite since WAL mode handles concurrency
+        # Keep it enabled for other backends (like Postgres) for performance
+        backend_config = _SQLSTORE_BACKENDS.get(self.reference.backend)
+        if backend_config and backend_config.type == StorageBackendType.SQL_SQLITE:
+            self.enable_write_queue = False
+            logger.debug("Write queue disabled for SQLite (WAL mode handles concurrency)")
+
         await self.sql_store.create_table(
             "chat_completions",
             {
@@ -65,6 +65,14 @@ class InferenceStore:
                 "input_messages": ColumnType.JSON,
             },
         )
+
+        if self.enable_write_queue:
+            self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
+            for _ in range(self._num_writers):
+                self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
+            logger.debug(
+                f"Inference store write queue enabled with {self._num_writers} writers, max queue size {self._max_write_queue_size}"
+            )
 
     async def shutdown(self) -> None:
         if not self._worker_tasks:

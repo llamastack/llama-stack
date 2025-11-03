@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     Table,
     Text,
+    event,
     inspect,
     select,
     text,
@@ -75,7 +76,36 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         self.metadata = MetaData()
 
     def create_engine(self) -> AsyncEngine:
-        return create_async_engine(self.config.engine_str, pool_pre_ping=True)
+        # Configure connection args for better concurrency support
+        connect_args = {}
+        if "sqlite" in self.config.engine_str:
+            # SQLite-specific optimizations for concurrent access
+            # With WAL mode, most locks resolve in milliseconds, but allow up to 5s for edge cases
+            connect_args["timeout"] = 5.0
+            connect_args["check_same_thread"] = False  # Allow usage across asyncio tasks
+
+        engine = create_async_engine(
+            self.config.engine_str,
+            pool_pre_ping=True,
+            connect_args=connect_args,
+        )
+
+        # Enable WAL mode for SQLite to support concurrent readers and writers
+        if "sqlite" in self.config.engine_str:
+
+            @event.listens_for(engine.sync_engine, "connect")
+            def set_sqlite_pragma(dbapi_conn, connection_record):
+                cursor = dbapi_conn.cursor()
+                # Enable Write-Ahead Logging for better concurrency
+                cursor.execute("PRAGMA journal_mode=WAL")
+                # Set busy timeout to 5 seconds (retry instead of immediate failure)
+                # With WAL mode, locks should be brief; if we hit 5s there's a bigger issue
+                cursor.execute("PRAGMA busy_timeout=5000")
+                # Use NORMAL synchronous mode for better performance (still safe with WAL)
+                cursor.execute("PRAGMA synchronous=NORMAL")
+                cursor.close()
+
+        return engine
 
     async def create_table(
         self,
