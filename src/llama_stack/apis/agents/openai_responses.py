@@ -480,6 +480,26 @@ class AllowedToolsFilter(BaseModel):
 
 
 @json_schema_type
+class MCPAuthentication(BaseModel):
+    """Authentication configuration for MCP servers.
+
+    :param type: Authentication type ("bearer", "basic", or "api_key")
+    :param token: Bearer token for bearer authentication
+    :param username: Username for basic authentication
+    :param password: Password for basic authentication
+    :param api_key: API key for api_key authentication
+    :param header_name: Custom header name for API key (default: "X-API-Key")
+    """
+
+    type: Literal["bearer", "basic", "api_key"]
+    token: str | None = None
+    username: str | None = None
+    password: str | None = None
+    api_key: str | None = None
+    header_name: str = "X-API-Key"
+
+
+@json_schema_type
 class OpenAIResponseInputToolMCP(BaseModel):
     """Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
 
@@ -487,6 +507,7 @@ class OpenAIResponseInputToolMCP(BaseModel):
     :param server_label: Label to identify this MCP server
     :param server_url: URL endpoint of the MCP server
     :param headers: (Optional) HTTP headers to include when connecting to the server
+    :param authentication: (Optional) Authentication configuration for the MCP server
     :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
     :param allowed_tools: (Optional) Restriction on which tools can be used from this server
     """
@@ -495,6 +516,7 @@ class OpenAIResponseInputToolMCP(BaseModel):
     server_label: str
     server_url: str
     headers: dict[str, Any] | None = None
+    authentication: MCPAuthentication | None = None
 
     require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
     allowed_tools: list[str] | AllowedToolsFilter | None = None

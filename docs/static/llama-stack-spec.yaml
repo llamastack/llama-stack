@@ -6443,6 +6443,41 @@ components:
       title: ResponseGuardrailSpec
       description: >-
         Specification for a guardrail to apply during response generation.
+    MCPAuthentication:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - bearer
+            - basic
+            - api_key
+          description: >-
+            Authentication type ("bearer", "basic", or "api_key")
+        token:
+          type: string
+          description: Bearer token for bearer authentication
+        username:
+          type: string
+          description: Username for basic authentication
+        password:
+          type: string
+          description: Password for basic authentication
+        api_key:
+          type: string
+          description: API key for api_key authentication
+        header_name:
+          type: string
+          default: X-API-Key
+          description: >-
+            Custom header name for API key (default: "X-API-Key")
+      additionalProperties: false
+      required:
+        - type
+        - header_name
+      title: MCPAuthentication
+      description: >-
+        Authentication configuration for MCP servers.
     OpenAIResponseInputTool:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
@@ -6482,6 +6517,10 @@ components:
               - type: object
           description: >-
             (Optional) HTTP headers to include when connecting to the server
+        authentication:
+          $ref: '#/components/schemas/MCPAuthentication'
+          description: >-
+            (Optional) Authentication configuration for the MCP server
         require_approval:
           oneOf:
             - type: string

@@ -11,6 +11,7 @@ from typing import Any
 from llama_stack.apis.agents.openai_responses import (
     AllowedToolsFilter,
     ApprovalFilter,
+    MCPAuthentication,
     MCPListToolsTool,
     OpenAIResponseContentPartOutputText,
     OpenAIResponseContentPartReasoningText,
@@ -78,6 +79,34 @@ from .utils import (
 )
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
+
+
+def _convert_authentication_to_headers(auth: MCPAuthentication) -> dict[str, str]:
+    """Convert MCPAuthentication config to HTTP headers.
+
+    Args:
+        auth: Authentication configuration
+
+    Returns:
+        Dictionary of HTTP headers for authentication
+    """
+    headers = {}
+
+    if auth.type == "bearer":
+        if auth.token:
+            headers["Authorization"] = f"Bearer {auth.token}"
+    elif auth.type == "basic":
+        if auth.username and auth.password:
+            import base64
+
+            credentials = f"{auth.username}:{auth.password}"
+            encoded = base64.b64encode(credentials.encode()).decode()
+            headers["Authorization"] = f"Basic {encoded}"
+    elif auth.type == "api_key":
+        if auth.api_key:
+            headers[auth.header_name] = auth.api_key
+
+    return headers
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -1079,10 +1108,20 @@ class StreamingResponseOrchestrator:
                 "server_url": mcp_tool.server_url,
                 "mcp_list_tools_id": list_id,
             }
+            # Prepare headers with authentication from tool config
+            headers = dict(mcp_tool.headers or {})
+            if mcp_tool.authentication:
+                auth_headers = _convert_authentication_to_headers(mcp_tool.authentication)
+                # Don't override existing headers (case-insensitive check)
+                existing_keys_lower = {k.lower() for k in headers.keys()}
+                for key, value in auth_headers.items():
+                    if key.lower() not in existing_keys_lower:
+                        headers[key] = value
+
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
-                    headers=mcp_tool.headers or {},
+                    headers=headers,
                 )
 
             # Create the MCP list tools message
