@@ -52,12 +52,24 @@ async def mock_milvus_client() -> MagicMock:
                 {
                     "id": 0,
                     "distance": 0.1,
-                    "entity": {"chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}}},
+                    "entity": {
+                        "chunk_content": {
+                            "chunk_id": "chunk1",
+                            "content": "mock chunk 1",
+                            "metadata": {"document_id": "doc1"},
+                        }
+                    },
                 },
                 {
                     "id": 1,
                     "distance": 0.2,
-                    "entity": {"chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}}},
+                    "entity": {
+                        "chunk_content": {
+                            "chunk_id": "chunk2",
+                            "content": "mock chunk 2",
+                            "metadata": {"document_id": "doc2"},
+                        }
+                    },
                 },
             ]
         ]
@@ -68,17 +80,17 @@ async def mock_milvus_client() -> MagicMock:
         return_value=[
             {
                 "chunk_id": "chunk1",
-                "chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}},
+                "chunk_content": {"chunk_id": "chunk1", "content": "mock chunk 1", "metadata": {"document_id": "doc1"}},
                 "score": 0.9,
             },
             {
                 "chunk_id": "chunk2",
-                "chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}},
+                "chunk_content": {"chunk_id": "chunk2", "content": "mock chunk 2", "metadata": {"document_id": "doc2"}},
                 "score": 0.8,
             },
             {
                 "chunk_id": "chunk3",
-                "chunk_content": {"content": "mock chunk 3", "metadata": {"document_id": "doc3"}},
+                "chunk_content": {"chunk_id": "chunk3", "content": "mock chunk 3", "metadata": {"document_id": "doc3"}},
                 "score": 0.7,
             },
         ]
@@ -156,11 +168,19 @@ async def test_bm25_fallback_to_simple_search(milvus_index, sample_chunks, sampl
     mock_milvus_client.query.return_value = [
         {
             "chunk_id": "chunk1",
-            "chunk_content": {"content": "Python programming language", "metadata": {"document_id": "doc1"}},
+            "chunk_content": {
+                "chunk_id": "chunk1",
+                "content": "Python programming language",
+                "metadata": {"document_id": "doc1"},
+            },
         },
         {
             "chunk_id": "chunk2",
-            "chunk_content": {"content": "Machine learning algorithms", "metadata": {"document_id": "doc2"}},
+            "chunk_content": {
+                "chunk_id": "chunk2",
+                "content": "Machine learning algorithms",
+                "metadata": {"document_id": "doc2"},
+            },
         },
     ]
 
@@ -208,12 +228,24 @@ async def test_query_hybrid_search_rrf(
             {
                 "id": 0,
                 "distance": 0.1,
-                "entity": {"chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}}},
+                "entity": {
+                    "chunk_content": {
+                        "chunk_id": "chunk1",
+                        "content": "mock chunk 1",
+                        "metadata": {"document_id": "doc1"},
+                    }
+                },
             },
             {
                 "id": 1,
                 "distance": 0.2,
-                "entity": {"chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}}},
+                "entity": {
+                    "chunk_content": {
+                        "chunk_id": "chunk2",
+                        "content": "mock chunk 2",
+                        "metadata": {"document_id": "doc2"},
+                    }
+                },
             },
         ]
     ]
@@ -260,12 +292,24 @@ async def test_query_hybrid_search_weighted(
             {
                 "id": 0,
                 "distance": 0.1,
-                "entity": {"chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}}},
+                "entity": {
+                    "chunk_content": {
+                        "chunk_id": "chunk1",
+                        "content": "mock chunk 1",
+                        "metadata": {"document_id": "doc1"},
+                    }
+                },
             },
             {
                 "id": 1,
                 "distance": 0.2,
-                "entity": {"chunk_content": {"content": "mock chunk 2", "metadata": {"document_id": "doc2"}}},
+                "entity": {
+                    "chunk_content": {
+                        "chunk_id": "chunk2",
+                        "content": "mock chunk 2",
+                        "metadata": {"document_id": "doc2"},
+                    }
+                },
             },
         ]
     ]
@@ -306,7 +350,13 @@ async def test_query_hybrid_search_default_rrf(
             {
                 "id": 0,
                 "distance": 0.1,
-                "entity": {"chunk_content": {"content": "mock chunk 1", "metadata": {"document_id": "doc1"}}},
+                "entity": {
+                    "chunk_content": {
+                        "chunk_id": "chunk1",
+                        "content": "mock chunk 1",
+                        "metadata": {"document_id": "doc1"},
+                    }
+                },
             },
         ]
     ]
