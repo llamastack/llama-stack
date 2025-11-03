@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
-from chromadb import PersistentClient
 from pymilvus import AsyncMilvusClient, connections
 
 from llama_stack.apis.vector_dbs import VectorDB
