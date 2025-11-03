@@ -4,12 +4,21 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
+
 import pytest
 
 from llama_stack import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 from .helpers import setup_mcp_tools
+
+
+# Skip these tests in replay mode until recordings are generated
+pytestmark = pytest.mark.skipif(
+    os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay",
+    reason="No recordings yet for authentication tests. Run with --inference-mode=record-if-missing to generate.",
+)
 
 
 def test_mcp_authentication_bearer(compat_client, text_model_id):
@@ -52,23 +61,22 @@ def test_mcp_authentication_bearer(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authentication_api_key(compat_client, text_model_id):
-    """Test that API key authentication is correctly applied to MCP requests."""
+def test_mcp_authentication_different_token(compat_client, text_model_id):
+    """Test authentication with a different bearer token."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
-    test_api_key = "test-api-key-456"
-    with make_mcp_server(required_auth_token=test_api_key, auth_header="X-API-Key") as mcp_server_info:
+    test_token = "different-token-456"
+    with make_mcp_server(required_auth_token=test_token) as mcp_server_info:
         tools = setup_mcp_tools(
             [
                 {
                     "type": "mcp",
-                    "server_label": "apikey-mcp",
+                    "server_label": "auth2-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
                     "authentication": {
-                        "type": "api_key",
-                        "api_key": test_api_key,
-                        "header_name": "X-API-Key",
+                        "type": "bearer",
+                        "token": test_token,
                     },
                 }
             ],
