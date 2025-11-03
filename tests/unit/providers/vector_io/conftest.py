@@ -11,7 +11,6 @@ import numpy as np
 import pytest
 from pymilvus import AsyncMilvusClient, connections
 
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
 from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
@@ -205,8 +204,8 @@ async def milvus_vec_adapter(milvus_vec_db_path, mock_inference_api):
         files_api=None,
     )
     await adapter.initialize()
-    await adapter.register_vector_db(
-        VectorDB(
+    await adapter.register_vector_store(
+        VectorStore(
             identifier=adapter.metadata_collection_name,
             provider_id="test_provider",
             embedding_model="test_model",
