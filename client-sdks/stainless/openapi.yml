@@ -1129,6 +1129,31 @@ paths:
               $ref: '#/components/schemas/RunModerationRequest'
         required: true
       deprecated: false
+  /v1/openai/v1/models:
+    get:
+      responses:
+        '200':
+          description: A OpenAIListModelsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIListModelsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Models
+      summary: List models using the OpenAI API.
+      description: List models using the OpenAI API.
+      parameters: []
+      deprecated: false
   /v1/prompts:
     get:
       responses:
@@ -7029,6 +7054,48 @@ components:
         - metadata
       title: ModerationObjectResults
       description: A moderation object.
+    OpenAIModel:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          const: model
+          default: model
+        created:
+          type: integer
+        owned_by:
+          type: string
+        custom_metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created
+        - owned_by
+      title: OpenAIModel
+      description: A model from OpenAI.
+    OpenAIListModelsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIModel'
+      additionalProperties: false
+      required:
+        - data
+      title: OpenAIListModelsResponse
     Prompt:
       type: object
       properties:
