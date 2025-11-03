@@ -316,9 +316,6 @@ class OpenAIResponsesImpl:
 
             if final_response is None:
                 raise ValueError("The response stream never reached a terminal state")
-
-            # Flush any queued writes to ensure immediate visibility
-            await self.responses_store.flush()
             return final_response
 
     async def _create_streaming_response(

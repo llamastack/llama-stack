@@ -19,12 +19,12 @@ from llama_stack.apis.agents.openai_responses import (
 )
 from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.core.datatypes import AccessRule
-from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference
+from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference, StorageBackendType
 from llama_stack.log import get_logger
 
 from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import sqlstore_impl
+from ..sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
 
 logger = get_logger(name=__name__, category="openai_responses")
 
@@ -69,6 +69,13 @@ class ResponsesStore:
         """Create the necessary tables if they don't exist."""
         base_store = sqlstore_impl(self.reference)
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
+
+        # Disable write queue for SQLite since WAL mode handles concurrency
+        # Keep it enabled for other backends (like Postgres) for performance
+        backend_config = _SQLSTORE_BACKENDS.get(self.reference.backend)
+        if backend_config and backend_config.type == StorageBackendType.SQL_SQLITE:
+            self.enable_write_queue = False
+            logger.debug("Write queue disabled for SQLite (WAL mode handles concurrency)")
 
         await self.sql_store.create_table(
             "openai_responses",
