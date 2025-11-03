@@ -6166,6 +6166,11 @@ components:
           type: string
           description: >-
             (Optional) System message inserted into the model's context
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) Max number of total calls to built-in tools that can be processed
+            in a response
         input:
           type: array
           items:
@@ -6524,6 +6529,11 @@ components:
             (Optional) Additional fields to include in the response.
         max_infer_iters:
           type: integer
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) Max number of total calls to built-in tools that can be processed
+            in a response.
       additionalProperties: false
       required:
         - input
@@ -6605,6 +6615,11 @@ components:
           type: string
           description: >-
             (Optional) System message inserted into the model's context
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) Max number of total calls to built-in tools that can be processed
+            in a response
       additionalProperties: false
       required:
         - created_at

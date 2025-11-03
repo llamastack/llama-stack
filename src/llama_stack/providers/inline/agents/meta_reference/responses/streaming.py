@@ -115,6 +115,7 @@ class StreamingResponseOrchestrator:
         safety_api,
         guardrail_ids: list[str] | None = None,
         prompt: OpenAIResponsePrompt | None = None,
+        max_tool_calls: int | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -126,6 +127,10 @@ class StreamingResponseOrchestrator:
         self.safety_api = safety_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
+        # System message that is inserted into the model's context
+        self.instructions = instructions
+        # Max number of total calls to built-in tools that can be processed in a response
+        self.max_tool_calls = max_tool_calls
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -139,8 +144,8 @@ class StreamingResponseOrchestrator:
         self.accumulated_usage: OpenAIResponseUsage | None = None
         # Track if we've sent a refusal response
         self.violation_detected = False
-        # system message that is inserted into the model's context
-        self.instructions = instructions
+        # Track total calls made to built-in tools
+        self.accumulated_builtin_tool_calls = 0
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""
@@ -186,6 +191,7 @@ class StreamingResponseOrchestrator:
             usage=self.accumulated_usage,
             instructions=self.instructions,
             prompt=self.prompt,
+            max_tool_calls=self.max_tool_calls,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -894,6 +900,11 @@ class StreamingResponseOrchestrator:
         """Coordinate execution of both function and non-function tool calls."""
         # Execute non-function tool calls
         for tool_call in non_function_tool_calls:
+            # Check if total calls made to built-in and mcp tools exceed max_tool_calls
+            if self.max_tool_calls is not None and self.accumulated_builtin_tool_calls >= self.max_tool_calls:
+                logger.info(f"Ignoring built-in and mcp tool call since reached the limit of {self.max_tool_calls=}.")
+                break
+
             # Find the item_id for this tool call
             matching_item_id = None
             for index, item_id in completion_result_data.tool_call_item_ids.items():
@@ -973,6 +984,9 @@ class StreamingResponseOrchestrator:
 
             if tool_response_message:
                 next_turn_messages.append(tool_response_message)
+
+            # Track number of calls made to built-in and mcp tools
+            self.accumulated_builtin_tool_calls += 1
 
         # Execute function tool calls (client-side)
         for tool_call in function_tool_calls:
