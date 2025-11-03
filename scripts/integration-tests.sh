@@ -23,7 +23,7 @@ COLLECT_ONLY=false
 
 # Function to display usage
 usage() {
-    cat << EOF
+    cat <<EOF
 Usage: $0 [OPTIONS]
 
 Options:
@@ -62,46 +62,45 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --stack-config)
-            STACK_CONFIG="$2"
-            shift 2
-            ;;
-        --setup)
-            TEST_SETUP="$2"
-            shift 2
-            ;;
-        --subdirs)
-            TEST_SUBDIRS="$2"
-            shift 2
-            ;;
-        --suite)
-            TEST_SUITE="$2"
-            shift 2
-            ;;
-        --inference-mode)
-            INFERENCE_MODE="$2"
-            shift 2
-            ;;
-        --pattern)
-            TEST_PATTERN="$2"
-            shift 2
-            ;;
-        --collect-only)
-            COLLECT_ONLY=true
-            shift
-            ;;
-        --help)
-            usage
-            exit 0
-            ;;
-        *)
-            echo "Unknown option: $1"
-            usage
-            exit 1
-            ;;
+    --stack-config)
+        STACK_CONFIG="$2"
+        shift 2
+        ;;
+    --setup)
+        TEST_SETUP="$2"
+        shift 2
+        ;;
+    --subdirs)
+        TEST_SUBDIRS="$2"
+        shift 2
+        ;;
+    --suite)
+        TEST_SUITE="$2"
+        shift 2
+        ;;
+    --inference-mode)
+        INFERENCE_MODE="$2"
+        shift 2
+        ;;
+    --pattern)
+        TEST_PATTERN="$2"
+        shift 2
+        ;;
+    --collect-only)
+        COLLECT_ONLY=true
+        shift
+        ;;
+    --help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown option: $1"
+        usage
+        exit 1
+        ;;
     esac
 done
-
 
 # Validate required parameters
 if [[ -z "$STACK_CONFIG" && "$COLLECT_ONLY" == false ]]; then
@@ -177,12 +176,12 @@ cd $ROOT_DIR
 # check if "llama" and "pytest" are available. this script does not use `uv run` given
 # it can be used in a pre-release environment where we have not been able to tell
 # uv about pre-release dependencies properly (yet).
-if [[ "$COLLECT_ONLY" == false ]] && ! command -v llama &> /dev/null; then
+if [[ "$COLLECT_ONLY" == false ]] && ! command -v llama &>/dev/null; then
     echo "llama could not be found, ensure llama-stack is installed"
     exit 1
 fi
 
-if ! command -v pytest &> /dev/null; then
+if ! command -v pytest &>/dev/null; then
     echo "pytest could not be found, ensure pytest is installed"
     exit 1
 fi
@@ -216,10 +215,11 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
         export OTEL_BSP_SCHEDULE_DELAY="200"
         export OTEL_BSP_EXPORT_TIMEOUT="2000"
+        export OTEL_METRIC_EXPORT_INTERVAL="200"
 
         # remove "server:" from STACK_CONFIG
         stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
-        nohup llama stack run $stack_config > server.log 2>&1 &
+        nohup llama stack run $stack_config >server.log 2>&1 &
 
         echo "Waiting for Llama Stack Server to start..."
         for i in {1..30}; do
@@ -248,7 +248,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         container_name="llama-stack-test-$DISTRO"
         if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
             echo "Dumping container logs before stopping..."
-            docker logs "$container_name" > "docker-${DISTRO}-${INFERENCE_MODE}.log" 2>&1 || true
+            docker logs "$container_name" >"docker-${DISTRO}-${INFERENCE_MODE}.log" 2>&1 || true
             echo "Stopping and removing container: $container_name"
             docker stop "$container_name" 2>/dev/null || true
             docker rm "$container_name" 2>/dev/null || true
@@ -280,6 +280,16 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         --build-arg "LLAMA_STACK_DIR=/workspace"
     )
 
+    # Pass UV index configuration for release branches
+    if [[ -n "${UV_EXTRA_INDEX_URL:-}" ]]; then
+        echo "Adding UV_EXTRA_INDEX_URL to docker build: $UV_EXTRA_INDEX_URL"
+        build_cmd+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
+    fi
+    if [[ -n "${UV_INDEX_STRATEGY:-}" ]]; then
+        echo "Adding UV_INDEX_STRATEGY to docker build: $UV_INDEX_STRATEGY"
+        build_cmd+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
+    fi
+
     if ! "${build_cmd[@]}"; then
         echo "❌ Failed to build Docker image"
         exit 1
@@ -302,6 +312,9 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${COLLECTOR_PORT}"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_METRIC_EXPORT_INTERVAL=200"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_BSP_SCHEDULE_DELAY=200"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_BSP_EXPORT_TIMEOUT=2000"
 
     # Pass through API keys if they exist
     [ -n "${TOGETHER_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e TOGETHER_API_KEY=$TOGETHER_API_KEY"
@@ -437,17 +450,13 @@ elif [ $exit_code -eq 5 ]; then
 else
     echo "❌ Tests failed"
     echo ""
-    echo "=== Dumping last 100 lines of logs for debugging ==="
-
     # Output server or container logs based on stack config
     if [[ "$STACK_CONFIG" == *"server:"* && -f "server.log" ]]; then
-        echo "--- Last 100 lines of server.log ---"
-        tail -100 server.log
+        echo "--- Server side failures can be located inside server.log (available from artifacts on CI) ---"
     elif [[ "$STACK_CONFIG" == *"docker:"* ]]; then
         docker_log_file="docker-${DISTRO}-${INFERENCE_MODE}.log"
         if [[ -f "$docker_log_file" ]]; then
-            echo "--- Last 100 lines of $docker_log_file ---"
-            tail -100 "$docker_log_file"
+            echo "--- Server side failures can be located inside $docker_log_file (available from artifacts on CI) ---"
         fi
     fi
 
