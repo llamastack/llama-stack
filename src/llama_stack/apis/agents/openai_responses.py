@@ -591,6 +591,7 @@ class OpenAIResponseObject(BaseModel):
     :param truncation: (Optional) Truncation strategy applied to the response
     :param usage: (Optional) Token usage information for the response
     :param instructions: (Optional) System message inserted into the model's context
+    :param max_output_tokens: (Optional) Upper bound for response tokens generation.
     """
 
     created_at: int
@@ -612,6 +613,7 @@ class OpenAIResponseObject(BaseModel):
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None
+    max_output_tokens: int | None = None
 
 
 @json_schema_type
