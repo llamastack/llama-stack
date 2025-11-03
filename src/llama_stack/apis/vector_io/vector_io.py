@@ -10,7 +10,7 @@
 # the root directory of this source tree.
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
-from fastapi import Body
+from fastapi import Body, Query
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.tracing import telemetry_traceable
@@ -224,10 +224,16 @@ class VectorStoreContent(BaseModel):
 
     :param type: Content type, currently only "text" is supported
     :param text: The actual text content
+    :param embedding: Optional embedding vector for this content chunk (when requested via extra_body)
+    :param chunk_metadata: Optional chunk metadata (when requested via extra_body)
+    :param metadata: Optional user-defined metadata (when requested via extra_body)
     """
 
     type: Literal["text"]
     text: str
+    embedding: list[float] | None = None
+    chunk_metadata: ChunkMetadata | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -393,22 +399,6 @@ class VectorStoreListFilesResponse(BaseModel):
     first_id: str | None = None
     last_id: str | None = None
     has_more: bool = False
-
-
-@json_schema_type
-class VectorStoreFileContentResponse(BaseModel):
-    """Represents the parsed content of a vector store file.
-
-    :param object: The object type, which is always `vector_store.file_content.page`
-    :param data: Parsed content of the file
-    :param has_more: Indicates if there are more content pages to fetch
-    :param next_page: The token for the next page, if any
-    """
-
-    object: Literal["vector_store.file_content.page"] = "vector_store.file_content.page"
-    data: list[VectorStoreContent]
-    has_more: bool
-    next_page: str | None = None
 
 
 @json_schema_type
@@ -732,12 +722,16 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentResponse:
+        include_embeddings: Annotated[bool | None, Query(default=False)] = False,
+        include_metadata: Annotated[bool | None, Query(default=False)] = False,
+    ) -> VectorStoreFileContentsResponse:
         """Retrieves the contents of a vector store file.
 
         :param vector_store_id: The ID of the vector store containing the file to retrieve.
         :param file_id: The ID of the file to retrieve.
-        :returns: A VectorStoreFileContentResponse representing the file contents.
+        :param include_embeddings: Whether to include embedding vectors in the response.
+        :param include_metadata: Whether to include chunk metadata in the response.
+        :returns: File contents, optionally with embeddings and metadata based on query parameters.
         """
         ...
 
