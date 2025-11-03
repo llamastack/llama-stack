@@ -67,13 +67,12 @@ dev = [
     "pytest-cov",
     "pytest-html",
     "pytest-json-report",
-    "pytest-socket", # For blocking network access in unit tests
-    "nbval", # For notebook testing
+    "pytest-socket",       # For blocking network access in unit tests
+    "nbval",               # For notebook testing
     "black",
     "ruff",
     "mypy",
     "pre-commit",
-    "ruamel.yaml", # needed for openapi generator
 ]
 # Type checking dependencies - includes type stubs and optional runtime dependencies
 # needed for complete mypy coverage across all optional features
@@ -248,7 +247,9 @@ unfixable = [
 # Ignore the following errors for the following files
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["DTZ"] # Ignore datetime rules for tests
-"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py" = ["RUF001"]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py" = [
+    "RUF001",
+]
 "src/llama_stack/providers/inline/scoring/basic/scoring_fn/fn_defs/regex_parser_multiple_choice_answer.py" = [
     "RUF001",
     "PLE2515",

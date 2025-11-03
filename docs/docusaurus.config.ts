@@ -234,27 +234,27 @@ const config: Config = {
         docsPluginId: "classic",
         config: {
           stable: {
-            specPath: "static/llama-stack-spec.yaml",
+            specPath: "static/llama-stack-spec.json",
             outputDir: "docs/api",
-            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/llama-stack-spec.yaml",
+            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/llama-stack-spec.json",
             sidebarOptions: {
               groupPathsBy: "tag",
               categoryLinkSource: "tag",
             },
           } satisfies OpenApiPlugin.Options,
           experimental: {
-            specPath: "static/experimental-llama-stack-spec.yaml",
+            specPath: "static/experimental-llama-stack-spec.json",
             outputDir: "docs/api-experimental",
-            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/experimental-llama-stack-spec.yaml",
+            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/experimental-llama-stack-spec.json",
             sidebarOptions: {
               groupPathsBy: "tag",
               categoryLinkSource: "tag",
             },
           } satisfies OpenApiPlugin.Options,
           deprecated: {
-            specPath: "static/deprecated-llama-stack-spec.yaml",
+            specPath: "static/deprecated-llama-stack-spec.json",
             outputDir: "docs/api-deprecated",
-            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/deprecated-llama-stack-spec.yaml",
+            downloadUrl: "https://raw.githubusercontent.com/meta-llama/llama-stack/main/docs/static/deprecated-llama-stack-spec.json",
             sidebarOptions: {
               groupPathsBy: "tag",
               categoryLinkSource: "tag",

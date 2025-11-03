@@ -18,10 +18,10 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened, edited]
     paths:
-      - 'docs/static/llama-stack-spec.yaml'              # Legacy monolithic spec
-      - 'docs/static/stable-llama-stack-spec.yaml'       # Stable APIs spec
-      - 'docs/static/experimental-llama-stack-spec.yaml' # Experimental APIs spec
-      - 'docs/static/deprecated-llama-stack-spec.yaml'   # Deprecated APIs spec
+      - 'docs/static/llama-stack-spec.json'              # Legacy monolithic spec
+      - 'docs/static/stable-llama-stack-spec.json'       # Stable APIs spec
+      - 'docs/static/experimental-llama-stack-spec.json' # Experimental APIs spec
+      - 'docs/static/deprecated-llama-stack-spec.json'   # Deprecated APIs spec
       - '.github/workflows/conformance.yml'              # This workflow itself
 
 concurrency:
@@ -100,24 +100,24 @@ jobs:
           echo "Checking for API specification files..."
 
           # Check current branch
-          if [ -f "docs/static/stable-llama-stack-spec.yaml" ]; then
+          if [ -f "docs/static/stable-llama-stack-spec.json" ]; then
             echo "✓ Found stable API spec in current branch"
-            CURRENT_SPEC="docs/static/stable-llama-stack-spec.yaml"
-          elif [ -f "docs/static/llama-stack-spec.yaml" ]; then
+            CURRENT_SPEC="docs/static/stable-llama-stack-spec.json"
+          elif [ -f "docs/static/llama-stack-spec.json" ]; then
             echo "✓ Found monolithic API spec in current branch"
-            CURRENT_SPEC="docs/static/llama-stack-spec.yaml"
+            CURRENT_SPEC="docs/static/llama-stack-spec.json"
           else
             echo "❌ No API specs found in current branch"
             exit 1
           fi
 
           # Check base branch
-          if [ -f "base/docs/static/stable-llama-stack-spec.yaml" ]; then
+          if [ -f "base/docs/static/stable-llama-stack-spec.json" ]; then
             echo "✓ Found stable API spec in base branch"
-            BASE_SPEC="base/docs/static/stable-llama-stack-spec.yaml"
-          elif [ -f "base/docs/static/llama-stack-spec.yaml" ]; then
+            BASE_SPEC="base/docs/static/stable-llama-stack-spec.json"
+          elif [ -f "base/docs/static/llama-stack-spec.json" ]; then
             echo "✓ Found monolithic API spec in base branch"
-            BASE_SPEC="base/docs/static/llama-stack-spec.yaml"
+            BASE_SPEC="base/docs/static/llama-stack-spec.json"
           else
             echo "❌ No API specs found in base branch"
             exit 1

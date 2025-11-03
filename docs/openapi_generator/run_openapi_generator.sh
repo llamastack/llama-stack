@@ -27,8 +27,8 @@ if [ ${#missing_packages[@]} -ne 0 ]; then
     exit 1
 fi
 
-stack_dir=$(dirname $(dirname $THIS_DIR))
+stack_dir=$(dirname $(dirname "$THIS_DIR"))
 PYTHONPATH=$PYTHONPATH:$stack_dir \
-  python -m docs.openapi_generator.generate $(dirname $THIS_DIR)/static
+  python -m docs.openapi_generator.generate $(dirname "$THIS_DIR")/static
 
-cp $stack_dir/docs/static/stainless-llama-stack-spec.yaml $stack_dir/client-sdks/stainless/openapi.yml
+cp "$stack_dir"/docs/static/stainless-llama-stack-spec.json "$stack_dir"/client-sdks/stainless/openapi.json

@@ -14,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 import sys
 import fire
-import ruamel.yaml as yaml
 
 from llama_stack.apis.version import LLAMA_STACK_API_V1 # noqa: E402
 from llama_stack.core.stack import LlamaStack  # noqa: E402
@@ -22,16 +21,6 @@ from llama_stack.core.stack import LlamaStack  # noqa: E402
 from .pyopenapi.options import Options  # noqa: E402
 from .pyopenapi.specification import Info, Server  # noqa: E402
 from .pyopenapi.utility import Specification, validate_api  # noqa: E402
-
-
-def str_presenter(dumper, data):
-    if data.startswith(f"/{LLAMA_STACK_API_V1}") or data.startswith(
-        "#/components/schemas/"
-    ):
-        style = None
-    else:
-        style = ">" if "\n" in data or len(data) > 40 else None
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
 
 def generate_spec(output_dir: Path, stability_filter: str = None, main_spec: bool = False, combined_spec: bool = False):
@@ -83,23 +72,14 @@ def generate_spec(output_dir: Path, stability_filter: str = None, main_spec: boo
         ),
     )
 
-    yaml_filename = f"{filename_prefix}llama-stack-spec.yaml"
+    json_filename = f"{filename_prefix}llama-stack-spec.json"
 
-    with open(output_dir / yaml_filename, "w", encoding="utf-8") as fp:
-        y = yaml.YAML()
-        y.default_flow_style = False
-        y.block_seq_indent = 2
-        y.map_indent = 2
-        y.sequence_indent = 4
-        y.sequence_dash_offset = 2
-        y.width = 80
-        y.allow_unicode = True
-        y.representer.add_representer(str, str_presenter)
+    with open(output_dir / json_filename, "w", encoding="utf-8") as fp:
+        spec.write_json(fp, pretty_print=True)
+        # add a newline to the end of the file
+        fp.write("\n")
 
-        y.dump(
-            spec.get_json(),
-            fp,
-        )
+    print(f"Generated {json_filename}")
 
 def main(output_dir: str):
     output_dir = Path(output_dir)
@@ -115,10 +95,10 @@ def main(output_dir: str):
         sys.exit(1)
 
     now = str(datetime.now())
-    print(f"Converting the spec to YAML (openapi.yaml) and HTML (openapi.html) at {now}")
+    print(f"Converting the spec to JSON (openapi.json) and HTML (openapi.html) at {now}")
     print("")
 
-    # Generate main spec as stable APIs (llama-stack-spec.yaml)
+    # Generate main spec as stable APIs (llama-stack-spec.json)
     print("Generating main specification (stable APIs)...")
     generate_spec(output_dir, "stable", main_spec=True)
 
