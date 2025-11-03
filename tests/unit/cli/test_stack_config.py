@@ -277,7 +277,7 @@ def test_providers_flag_generates_config_with_api_keys():
     API keys and other credentials for remote providers like remote::openai.
     """
     import argparse
-    from unittest.mock import MagicMock, patch
+    from unittest.mock import patch
 
     from llama_stack.cli.stack.run import StackRun
 
@@ -286,13 +286,14 @@ def test_providers_flag_generates_config_with_api_keys():
     stack_run = StackRun(subparsers)
 
     # Create args with --providers flag set
-    args = MagicMock()
-    args.providers = "inference=remote::openai"
-    args.config = None
-    args.port = 8321
-    args.image_type = None
-    args.image_name = None
-    args.enable_ui = False
+    args = argparse.Namespace(
+        providers="inference=remote::openai",
+        config=None,
+        port=8321,
+        image_type=None,
+        image_name=None,
+        enable_ui=False,
+    )
 
     # Mock _uvicorn_run to prevent starting a server
     with patch.object(stack_run, "_uvicorn_run"):
