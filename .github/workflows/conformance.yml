@@ -87,12 +87,6 @@ jobs:
           sudo cp ~/oasdiff /usr/local/bin/oasdiff
           sudo chmod +x /usr/local/bin/oasdiff
 
-      # Install yq for YAML processing
-      - name: Install yq
-        run: |
-          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
-
       # Verify API specs exist for conformance testing
       - name: Check API Specs
         if: steps.skip-check.outputs.skip != 'true'
