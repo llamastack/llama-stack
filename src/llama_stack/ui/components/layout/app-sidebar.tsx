@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Settings2,
   Compass,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -49,6 +50,11 @@ const manageItems = [
     title: "Vector Stores",
     url: "/logs/vector-stores",
     icon: Database,
+  },
+  {
+    title: "Prompts",
+    url: "/prompts",
+    icon: FileText,
   },
   {
     title: "Documentation",

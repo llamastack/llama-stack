@@ -52,10 +52,6 @@ repos:
         additional_dependencies:
         - black==24.3.0
 
--   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.20
-    hooks:
-    -   id: uv-lock
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.18.2
@@ -63,21 +59,12 @@ repos:
     -   id: mypy
         additional_dependencies:
           - uv==0.6.2
+          - mypy
           - pytest
           - rich
           - types-requests
           - pydantic
-          - httpx
         pass_filenames: false
-
--   repo: local
-    hooks:
-    -   id: mypy-full
-        name: mypy (full type_checking)
-        entry: uv run --group dev --group type_checking mypy
-        language: system
-        pass_filenames: false
-        stages: [manual]
 
 # - repo: https://github.com/tcort/markdown-link-check
 #   rev: v3.11.2
@@ -87,11 +74,26 @@ repos:
 
 -   repo: local
     hooks:
+      - id: uv-lock
+        name: uv-lock
+        additional_dependencies:
+          - uv==0.7.20
+        entry: ./scripts/uv-run-with-index.sh lock
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^(pyproject\.toml|uv\.lock)$
+      - id: mypy-full
+        name: mypy (full type_checking)
+        entry: ./scripts/uv-run-with-index.sh run --group dev --group type_checking mypy
+        language: system
+        pass_filenames: false
+        stages: [manual]
       - id: distro-codegen
         name: Distribution Template Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/distro_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/distro_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -100,7 +102,7 @@ repos:
         name: Provider Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/provider_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -109,7 +111,7 @@ repos:
         name: API Spec Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: sh -c 'uv run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
+        entry: sh -c './scripts/uv-run-with-index.sh run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
         language: python
         pass_filenames: false
         require_serial: true
@@ -150,7 +152,7 @@ repos:
         name: Generate CI documentation
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run ./scripts/gen-ci-docs.py
+        entry: ./scripts/uv-run-with-index.sh run ./scripts/gen-ci-docs.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -162,6 +164,7 @@ repos:
         files: ^src/llama_stack/ui/.*\.(ts|tsx)$
         pass_filenames: false
         require_serial: true
+
       - id: check-log-usage
         name: Ensure 'llama_stack.log' usage for logging
         entry: bash
@@ -197,6 +200,7 @@ repos:
               echo;
               exit 1;
             } || true
+
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
     autoupdate_commit_msg: ⬆ [pre-commit.ci] pre-commit autoupdate

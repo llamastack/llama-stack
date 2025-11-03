@@ -1,0 +1,60 @@
+name: Install llama-stack-client
+description: Install llama-stack-client based on branch context and client-version input
+
+inputs:
+  client-version:
+    description: 'Client version to install on non-release branches (latest or published). Ignored on release branches.'
+    required: false
+    default: ""
+
+outputs:
+  uv-extra-index-url:
+    description: 'UV_EXTRA_INDEX_URL to use (set for release branches)'
+    value: ${{ steps.configure.outputs.uv-extra-index-url }}
+  install-after-sync:
+    description: 'Whether to install client after uv sync'
+    value: ${{ steps.configure.outputs.install-after-sync }}
+  install-source:
+    description: 'Where to install client from after sync'
+    value: ${{ steps.configure.outputs.install-source }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure client installation
+      id: configure
+      shell: bash
+      run: |
+        # Determine the branch we're working with
+        BRANCH="${{ github.base_ref || github.ref }}"
+        BRANCH="${BRANCH#refs/heads/}"
+
+        echo "Working with branch: $BRANCH"
+
+        # On release branches: use test.pypi for uv sync, then install from git
+        # On non-release branches: install based on client-version after sync
+        if [[ "$BRANCH" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
+          echo "Detected release branch: $BRANCH"
+
+          # Check if matching branch exists in client repo
+          if ! git ls-remote --exit-code --heads https://github.com/llamastack/llama-stack-client-python.git "$BRANCH" > /dev/null 2>&1; then
+            echo "::error::Branch $BRANCH not found in llama-stack-client-python repository"
+            echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
+            exit 1
+          fi
+
+          # Configure to use test.pypi as extra index (PyPI is primary)
+          echo "uv-extra-index-url=https://test.pypi.org/simple/" >> $GITHUB_OUTPUT
+          echo "install-after-sync=true" >> $GITHUB_OUTPUT
+          echo "install-source=git+https://github.com/llamastack/llama-stack-client-python.git@$BRANCH" >> $GITHUB_OUTPUT
+        elif [ "${{ inputs.client-version }}" = "latest" ]; then
+          # Install from main git after sync
+          echo "install-after-sync=true" >> $GITHUB_OUTPUT
+          echo "install-source=git+https://github.com/llamastack/llama-stack-client-python.git@main" >> $GITHUB_OUTPUT
+        elif [ "${{ inputs.client-version }}" = "published" ]; then
+          # Use published version from PyPI (installed by sync)
+          echo "install-after-sync=false" >> $GITHUB_OUTPUT
+        elif [ -n "${{ inputs.client-version }}" ]; then
+          echo "::error::Invalid client-version: ${{ inputs.client-version }}"
+          exit 1
+        fi

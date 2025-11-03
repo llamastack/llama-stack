@@ -7,9 +7,7 @@ on:
   push:
     branches:
       - main
-      - 'release-[0-9]+.[0-9]+.[0-9]+.[0-9]+'
-      - 'release-[0-9]+.[0-9]+.[0-9]+'
-      - 'release-[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+.x'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
@@ -48,7 +46,7 @@ jobs:
           cache-dependency-path: 'src/llama_stack/ui/'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
 
       - name: Install npm dependencies
         run: npm ci
@@ -132,11 +130,34 @@ jobs:
             exit 1
           fi
 
+      - name: Configure client installation
+        id: client-config
+        uses: ./.github/actions/install-llama-stack-client
+
       - name: Sync dev + type_checking dependencies
-        run: uv sync --group dev --group type_checking
+        env:
+          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
+        run: |
+          if [ -n "$UV_EXTRA_INDEX_URL" ]; then
+            export UV_INDEX_STRATEGY="unsafe-best-match"
+          fi
+
+          uv sync --group dev --group type_checking
+
+          # Install specific client version after sync if needed
+          if [ "${{ steps.client-config.outputs.install-after-sync }}" = "true" ]; then
+            echo "Installing llama-stack-client from: ${{ steps.client-config.outputs.install-source }}"
+            uv pip install ${{ steps.client-config.outputs.install-source }}
+          fi
 
       - name: Run mypy (full type_checking)
+        env:
+          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
         run: |
+          if [ -n "$UV_EXTRA_INDEX_URL" ]; then
+            export UV_INDEX_STRATEGY="unsafe-best-match"
+          fi
+
           set +e
           uv run --group dev --group type_checking mypy
           status=$?
