@@ -419,12 +419,14 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
             # Initialize KV store for metadata
             self.kvstore = await kvstore_impl(self.config.kvstore)
 
-            # Validate connection string
+            # Skip MongoDB connection if no connection string provided
+            # This allows other providers to work without MongoDB credentials
             if not self.config.connection_string:
-                raise ValueError(
-                    "MongoDB connection_string is required but not provided. "
-                    "Please set MONGODB_CONNECTION_STRING environment variable or provide it in config."
+                logger.warning(
+                    "MongoDB connection_string not provided. "
+                    "MongoDB vector store will not be available until credentials are configured."
                 )
+                return
 
             # Connect to MongoDB with optimized settings for RAG
             self.client = MongoClient(
@@ -476,68 +478,68 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
                 message=f"MongoDB RAG health check failed: {str(e)}",
             )
 
-    async def register_vector_db(self, vector_db: VectorDB) -> None:
+    async def register_vector_store(self, vector_store: VectorDB) -> None:
         """Register a new vector database optimized for RAG."""
         if self.database is None:
             raise RuntimeError("MongoDB database not initialized")
 
         # Create collection name from vector DB identifier
-        collection_name = sanitize_collection_name(vector_db.identifier)
+        collection_name = sanitize_collection_name(vector_store.identifier)
         collection = self.database[collection_name]
 
         # Create and initialize MongoDB index optimized for RAG
-        mongodb_index = MongoDBIndex(vector_db, collection, self.config)
+        mongodb_index = MongoDBIndex(vector_store, collection, self.config)
         await mongodb_index.initialize()
 
         # Create vector DB with index wrapper
         vector_db_with_index = VectorDBWithIndex(
-            vector_db=vector_db,
+            vector_db=vector_store,
             index=mongodb_index,
             inference_api=self.inference_api,
         )
 
         # Cache the vector DB
-        self.cache[vector_db.identifier] = vector_db_with_index
+        self.cache[vector_store.identifier] = vector_db_with_index
 
         # Save vector database info to KVStore for persistence
         if self.kvstore:
             await self.kvstore.set(
-                f"{VECTOR_DBS_PREFIX}{vector_db.identifier}",
-                vector_db.model_dump_json(),
+                f"{VECTOR_DBS_PREFIX}{vector_store.identifier}",
+                vector_store.model_dump_json(),
             )
 
-        logger.info(f"Registered vector database for RAG: {vector_db.identifier}")
+        logger.info(f"Registered vector database for RAG: {vector_store.identifier}")
 
-    async def unregister_vector_db(self, vector_db_id: str) -> None:
+    async def unregister_vector_store(self, vector_store_id: str) -> None:
         """Unregister a vector database."""
-        if vector_db_id in self.cache:
-            await self.cache[vector_db_id].index.delete()
-            del self.cache[vector_db_id]
+        if vector_store_id in self.cache:
+            await self.cache[vector_store_id].index.delete()
+            del self.cache[vector_store_id]
 
         # Clean up from KV store
         if self.kvstore:
-            await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_db_id}")
+            await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
-        logger.info(f"Unregistered vector database: {vector_db_id}")
+        logger.info(f"Unregistered vector database: {vector_store_id}")
 
     async def insert_chunks(
         self,
-        vector_db_id: str,
+        vector_store_id: str,
         chunks: list[Chunk],
         ttl_seconds: int | None = None,
     ) -> None:
         """Insert chunks into the vector database optimized for RAG."""
-        vector_db_with_index = await self._get_vector_db_index(vector_db_id)
+        vector_db_with_index = await self._get_vector_db_index(vector_store_id)
         await vector_db_with_index.insert_chunks(chunks)
 
     async def query_chunks(
         self,
-        vector_db_id: str,
+        vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
         """Query chunks from the vector database optimized for RAG context retrieval."""
-        vector_db_with_index = await self._get_vector_db_index(vector_db_id)
+        vector_db_with_index = await self._get_vector_db_index(vector_store_id)
         return await vector_db_with_index.query_chunks(query, params)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
