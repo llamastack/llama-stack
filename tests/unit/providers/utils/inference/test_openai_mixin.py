@@ -363,8 +363,8 @@ class TestOpenAIMixinAllowedModels:
     """Test cases for allowed_models filtering functionality"""
 
     async def test_list_models_with_allowed_models_filter(self, mixin, mock_client_with_models, mock_client_context):
-        """Test that list_models filters models based on allowed_models set"""
-        mixin.allowed_models = {"some-mock-model-id", "another-mock-model-id"}
+        """Test that list_models filters models based on allowed_models"""
+        mixin.config.allowed_models = ["some-mock-model-id", "another-mock-model-id"]
 
         with mock_client_context(mixin, mock_client_with_models):
             result = await mixin.list_models()
@@ -378,8 +378,18 @@ class TestOpenAIMixinAllowedModels:
             assert "final-mock-model-id" not in model_ids
 
     async def test_list_models_with_empty_allowed_models(self, mixin, mock_client_with_models, mock_client_context):
-        """Test that empty allowed_models set allows all models"""
-        assert len(mixin.allowed_models) == 0
+        """Test that empty allowed_models allows no models"""
+        mixin.config.allowed_models = []
+
+        with mock_client_context(mixin, mock_client_with_models):
+            result = await mixin.list_models()
+
+            assert result is not None
+            assert len(result) == 0  # No models should be included
+
+    async def test_list_models_with_omitted_allowed_models(self, mixin, mock_client_with_models, mock_client_context):
+        """Test that omitted allowed_models allows all models"""
+        assert mixin.config.allowed_models is None
 
         with mock_client_context(mixin, mock_client_with_models):
             result = await mixin.list_models()
@@ -396,7 +406,7 @@ class TestOpenAIMixinAllowedModels:
         self, mixin, mock_client_with_models, mock_client_context
     ):
         """Test that check_model_availability respects allowed_models"""
-        mixin.allowed_models = {"final-mock-model-id"}
+        mixin.config.allowed_models = ["final-mock-model-id"]
 
         with mock_client_context(mixin, mock_client_with_models):
             assert await mixin.check_model_availability("final-mock-model-id")
@@ -444,7 +454,7 @@ class TestOpenAIMixinModelRegistration:
 
     async def test_register_model_with_allowed_models_filter(self, mixin, mock_client_with_models, mock_client_context):
         """Test model registration with allowed_models filtering"""
-        mixin.allowed_models = {"some-mock-model-id"}
+        mixin.config.allowed_models = ["some-mock-model-id"]
 
         # Test with allowed model
         allowed_model = Model(
@@ -598,7 +608,7 @@ class TestOpenAIMixinCustomListProviderModelIds:
         mixin = CustomListProviderModelIdsImplementation(
             config=config, custom_model_ids=["model-1", "model-2", "model-3"]
         )
-        mixin.allowed_models = ["model-1"]
+        mixin.config.allowed_models = ["model-1"]
 
         result = await mixin.list_models()
 
