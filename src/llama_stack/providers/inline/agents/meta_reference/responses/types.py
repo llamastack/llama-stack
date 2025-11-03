@@ -29,6 +29,20 @@ from llama_stack.apis.agents.openai_responses import (
 from llama_stack.apis.inference import OpenAIChatCompletionToolCall, OpenAIMessageParam, OpenAIResponseFormatParam
 
 
+class RequestContext(BaseModel):
+    """Context information from incoming HTTP request.
+
+    This holds authentication and other request-specific metadata
+    that needs to be passed through the execution chain.
+    """
+
+    jwt_token: str | None = None
+    """JWT token extracted from Authorization header for forwarding to MCP servers."""
+
+    additional_headers: dict[str, str] | None = None
+    """Additional headers that may need to be forwarded."""
+
+
 class ToolExecutionResult(BaseModel):
     """Result of streaming tool execution."""
 
@@ -158,6 +172,7 @@ class ChatCompletionContext(BaseModel):
     temperature: float | None
     response_format: OpenAIResponseFormatParam
     tool_context: ToolContext | None
+    request_context: RequestContext | None = None
     approval_requests: list[OpenAIResponseMCPApprovalRequest] = []
     approval_responses: dict[str, OpenAIResponseMCPApprovalResponse] = {}
 
@@ -170,6 +185,7 @@ class ChatCompletionContext(BaseModel):
         response_format: OpenAIResponseFormatParam,
         tool_context: ToolContext,
         inputs: list[OpenAIResponseInput] | str,
+        request_context: RequestContext | None = None,
     ):
         super().__init__(
             model=model,
@@ -178,6 +194,7 @@ class ChatCompletionContext(BaseModel):
             temperature=temperature,
             response_format=response_format,
             tool_context=tool_context,
+            request_context=request_context,
         )
         if not isinstance(inputs, str):
             self.approval_requests = [input for input in inputs if input.type == "mcp_approval_request"]

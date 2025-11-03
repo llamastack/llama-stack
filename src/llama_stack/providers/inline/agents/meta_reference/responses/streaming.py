@@ -1071,6 +1071,16 @@ class StreamingResponseOrchestrator:
                     # AllowedToolsFilter only has tool_names field (not allowed/disallowed)
                     always_allowed = mcp_tool.allowed_tools.tool_names
 
+            # Prepare headers for MCP server with JWT injection
+            headers = dict(mcp_tool.headers or {})
+
+            # Inject JWT token from request context if available
+            if self.ctx.request_context and self.ctx.request_context.jwt_token:
+                # Only add Authorization header if not already present
+                if "Authorization" not in headers and "authorization" not in headers:
+                    headers["Authorization"] = self.ctx.request_context.jwt_token
+                    logger.info(f"JWT token forwarded to MCP server {mcp_tool.server_label}")
+
             # Call list_mcp_tools
             tool_defs = None
             list_id = f"mcp_list_{uuid.uuid4()}"
@@ -1082,7 +1092,7 @@ class StreamingResponseOrchestrator:
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
-                    headers=mcp_tool.headers or {},
+                    headers=headers,
                 )
 
             # Create the MCP list tools message

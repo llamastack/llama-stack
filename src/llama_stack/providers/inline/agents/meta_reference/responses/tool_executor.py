@@ -294,6 +294,19 @@ class ToolExecutor:
                 from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool
 
                 mcp_tool = mcp_tool_to_server[function_name]
+
+                # Prepare headers for MCP tool invocation with JWT injection
+                headers = dict(mcp_tool.headers or {})
+
+                # Inject JWT token from request context if available
+                if ctx.request_context and ctx.request_context.jwt_token:
+                    # Only add Authorization header if not already present
+                    if "Authorization" not in headers and "authorization" not in headers:
+                        headers["Authorization"] = ctx.request_context.jwt_token
+                        logger.info(
+                            f"JWT token forwarded to MCP server {mcp_tool.server_label} for tool {function_name}"
+                        )
+
                 attributes = {
                     "server_label": mcp_tool.server_label,
                     "server_url": mcp_tool.server_url,
@@ -302,7 +315,7 @@ class ToolExecutor:
                 async with tracing.span("invoke_mcp_tool", attributes):
                     result = await invoke_mcp_tool(
                         endpoint=mcp_tool.server_url,
-                        headers=mcp_tool.headers or {},
+                        headers=headers,
                         tool_name=function_name,
                         kwargs=tool_kwargs,
                     )
