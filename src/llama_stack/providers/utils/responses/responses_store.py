@@ -19,12 +19,12 @@ from llama_stack.apis.agents.openai_responses import (
 )
 from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.core.datatypes import AccessRule
-from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference, StorageBackendType
+from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference
 from llama_stack.log import get_logger
 
 from ..sqlstore.api import ColumnDefinition, ColumnType
 from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
+from ..sqlstore.sqlstore import sqlstore_impl
 
 logger = get_logger(name=__name__, category="openai_responses")
 
