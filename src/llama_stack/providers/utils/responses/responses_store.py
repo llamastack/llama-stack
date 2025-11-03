@@ -70,13 +70,6 @@ class ResponsesStore:
         base_store = sqlstore_impl(self.reference)
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
 
-        backend_config = _SQLSTORE_BACKENDS.get(self.reference.backend)
-        if backend_config is None:
-            raise ValueError(
-                f"Unregistered SQL backend '{self.reference.backend}'. Registered backends: {sorted(_SQLSTORE_BACKENDS)}"
-            )
-        if backend_config.type == StorageBackendType.SQL_SQLITE:
-            self.enable_write_queue = False
         await self.sql_store.create_table(
             "openai_responses",
             {
@@ -99,8 +92,9 @@ class ResponsesStore:
             self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
             for _ in range(self._num_writers):
                 self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
-        else:
-            logger.debug("Write queue disabled for SQLite to avoid concurrency issues")
+            logger.debug(
+                f"Responses store write queue enabled with {self._num_writers} writers, max queue size {self._max_write_queue_size}"
+            )
 
     async def shutdown(self) -> None:
         if not self._worker_tasks:

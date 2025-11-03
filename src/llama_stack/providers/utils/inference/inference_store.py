@@ -47,14 +47,6 @@ class InferenceStore:
         base_store = sqlstore_impl(self.reference)
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
 
-        # Disable write queue for SQLite to avoid concurrency issues
-        backend_name = self.reference.backend
-        backend_config = _SQLSTORE_BACKENDS.get(backend_name)
-        if backend_config is None:
-            raise ValueError(
-                f"Unregistered SQL backend '{backend_name}'. Registered backends: {sorted(_SQLSTORE_BACKENDS)}"
-            )
-        self.enable_write_queue = backend_config.type != StorageBackendType.SQL_SQLITE
         await self.sql_store.create_table(
             "chat_completions",
             {
@@ -70,8 +62,9 @@ class InferenceStore:
             self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
             for _ in range(self._num_writers):
                 self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
-        else:
-            logger.info("Write queue disabled for SQLite to avoid concurrency issues")
+            logger.debug(
+                f"Inference store write queue enabled with {self._num_writers} writers, max queue size {self._max_write_queue_size}"
+            )
 
     async def shutdown(self) -> None:
         if not self._worker_tasks:
