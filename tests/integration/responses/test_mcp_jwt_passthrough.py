@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
 
 import pytest
 
@@ -11,6 +12,13 @@ from llama_stack import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 from .helpers import setup_mcp_tools
+
+
+# Skip these tests in replay mode until recordings are generated
+pytestmark = pytest.mark.skipif(
+    os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay",
+    reason="No recordings yet for JWT passthrough tests. Run with --inference-mode=record-if-missing to generate.",
+)
 
 
 def test_mcp_jwt_passthrough_basic(compat_client, text_model_id, caplog):
