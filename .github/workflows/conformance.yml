@@ -111,16 +111,27 @@ jobs:
             exit 1
           fi
 
-          # Check base branch
-          if [ -f "base/docs/static/stable-llama-stack-spec.json" ]; then
-            echo "✓ Found stable API spec in base branch"
-            BASE_SPEC="base/docs/static/stable-llama-stack-spec.json"
-          elif [ -f "base/docs/static/llama-stack-spec.json" ]; then
-            echo "✓ Found monolithic API spec in base branch"
-            BASE_SPEC="base/docs/static/llama-stack-spec.json"
+
+          # Handles old YAML specs
+          # TODO: remove this once the JSON specs are merged
+          if [ -f "docs/static/stable-llama-stack-spec.yaml" ]; then
+            echo "✓ Found legacy YAML format stable API spec in current branch"
+            BASE_SPEC="docs/static/stable-llama-stack-spec.yaml"
+          elif [ -f "docs/static/llama-stack-spec.yaml" ]; then
+            echo "✓ Found legacy YAML format monolithic API spec in current branch"
+            BASE_SPEC="docs/static/llama-stack-spec.yaml"
           else
-            echo "❌ No API specs found in base branch"
-            exit 1
+            echo "No legacy YAML format API specs found in current branch, trying JSON specs"
+            if [ -f "base/docs/static/stable-llama-stack-spec.json" ]; then
+              echo "✓ Found stable API spec in base branch"
+              BASE_SPEC="base/docs/static/stable-llama-stack-spec.json"
+            elif [ -f "base/docs/static/llama-stack-spec.json" ]; then
+              echo "✓ Found monolithic API spec in base branch"
+              BASE_SPEC="base/docs/static/llama-stack-spec.json"
+            else
+              echo "❌ No API specs found in base branch"
+              exit 1
+            fi
           fi
 
           # Export for next step
