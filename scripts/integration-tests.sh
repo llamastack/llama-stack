@@ -186,11 +186,35 @@ if ! command -v pytest &>/dev/null; then
     exit 1
 fi
 
+# Helper function to find next available port
+find_available_port() {
+    local start_port=$1
+    local port=$start_port
+    for ((i=0; i<100; i++)); do
+        if ! lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            echo $port
+            return 0
+        fi
+        ((port++))
+    done
+    echo "Failed to find available port starting from $start_port" >&2
+    return 1
+}
+
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
+    # Find an available port for the server
+    LLAMA_STACK_PORT=$(find_available_port 8321)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: $LLAMA_STACK_PORT"
+        exit 1
+    fi
+    export LLAMA_STACK_PORT
+    echo "Will use port: $LLAMA_STACK_PORT"
+
     stop_server() {
         echo "Stopping Llama Stack Server..."
-        pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
+        pids=$(lsof -i :$LLAMA_STACK_PORT | awk 'NR>1 {print $2}')
         if [[ -n "$pids" ]]; then
             echo "Killing Llama Stack Server processes: $pids"
             kill -9 $pids
@@ -200,9 +224,9 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         echo "Llama Stack Server stopped"
     }
 
-    # check if server is already running
-    if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
-        echo "Llama Stack Server is already running, skipping start"
+    # check if server is already running on the chosen port
+    if curl -s http://localhost:$LLAMA_STACK_PORT/v1/health 2>/dev/null | grep -q "OK"; then
+        echo "Llama Stack Server is already running on port $LLAMA_STACK_PORT, skipping start"
     else
         echo "=== Starting Llama Stack Server ==="
         export LLAMA_STACK_LOG_WIDTH=120
@@ -220,9 +244,9 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
         nohup llama stack run $stack_config >server.log 2>&1 &
 
-        echo "Waiting for Llama Stack Server to start..."
+        echo "Waiting for Llama Stack Server to start on port $LLAMA_STACK_PORT..."
         for i in {1..30}; do
-            if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
+            if curl -s http://localhost:$LLAMA_STACK_PORT/v1/health 2>/dev/null | grep -q "OK"; then
                 echo "✅ Llama Stack Server started successfully"
                 break
             fi
@@ -259,7 +283,14 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
 
     # Extract distribution name from docker:distro format
     DISTRO=$(echo "$STACK_CONFIG" | sed 's/^docker://')
-    export LLAMA_STACK_PORT=8321
+    # Find an available port for the docker container
+    LLAMA_STACK_PORT=$(find_available_port 8321)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: $LLAMA_STACK_PORT"
+        exit 1
+    fi
+    export LLAMA_STACK_PORT
+    echo "Will use port: $LLAMA_STACK_PORT"
 
     echo "=== Building Docker Image for distribution: $DISTRO ==="
     containerfile="$ROOT_DIR/containers/Containerfile"
