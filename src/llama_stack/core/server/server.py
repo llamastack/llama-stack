@@ -6,33 +6,28 @@
 
 import asyncio
 import concurrent.futures
-import functools
 import inspect
 import json
-import logging  # allow-direct-logging
 import os
 import sys
 import traceback
 import warnings
-from collections.abc import Callable
 from contextlib import asynccontextmanager
 from importlib.metadata import version as parse_version
 from pathlib import Path
-from typing import Annotated, Any, get_origin
+from typing import Any
 
 import httpx
 import rich.pretty
 import yaml
-from fastapi import Body, FastAPI, HTTPException, Request, Response
-from fastapi import Path as FastapiPath
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
-from openai import BadRequestError
+from fastapi.responses import JSONResponse
+from openai import BadRequestError, NotFoundError
 from pydantic import BaseModel, ValidationError
 
 from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
-from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
@@ -41,22 +36,15 @@ from llama_stack.core.datatypes import (
 )
 from llama_stack.core.distribution import builtin_automatically_routed_apis
 from llama_stack.core.external import load_external_apis
-from llama_stack.core.request_headers import (
-    PROVIDER_DATA_VAR,
-    request_provider_data_context,
-    user_from_scope,
-)
-from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
     cast_image_name_to_string,
     replace_env_vars,
 )
 from llama_stack.core.telemetry import Telemetry
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, setup_logger
+from llama_stack.core.telemetry.tracing import setup_logger
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
-from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger, setup_logging
 from llama_stack.providers.datatypes import Api
 
@@ -89,8 +77,14 @@ def create_sse_event(data: Any) -> str:
 
 
 async def global_exception_handler(request: Request, exc: Exception):
-    traceback.print_exception(exc)
     http_exc = translate_exception(exc)
+
+    # Only log full tracebacks for unexpected server errors (5xx), not expected client/provider errors
+    if http_exc.status_code >= 500:
+        traceback.print_exception(exc)
+    elif http_exc.status_code >= 400:
+        # Log expected errors at debug level without full traceback
+        logger.debug(f"Client error {http_exc.status_code}: {http_exc.detail}")
 
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
 
@@ -121,6 +115,8 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
         return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=f"Invalid value: {str(exc)}")
     elif isinstance(exc, BadRequestError):
         return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
+    elif isinstance(exc, NotFoundError):
+        return HTTPException(status_code=httpx.codes.NOT_FOUND, detail=str(exc))
     elif isinstance(exc, PermissionError | AccessDeniedError):
         return HTTPException(status_code=httpx.codes.FORBIDDEN, detail=f"Permission denied: {str(exc)}")
     elif isinstance(exc, ConnectionError | httpx.ConnectError):
@@ -177,21 +173,6 @@ async def lifespan(app: StackApp):
     await app.stack.shutdown()
 
 
-def is_streaming_request(func_name: str, request: Request, **kwargs):
-    # TODO: pass the api method and punt it to the Protocol definition directly
-    # If there's a stream parameter at top level, use it
-    if "stream" in kwargs:
-        return kwargs["stream"]
-
-    # If there's a stream parameter inside a "params" parameter, e.g. openai_chat_completion() use it
-    if "params" in kwargs:
-        params = kwargs["params"]
-        if hasattr(params, "stream"):
-            return params.stream
-
-    return False
-
-
 async def maybe_await(value):
     if inspect.iscoroutine(value):
         return await value
@@ -234,90 +215,6 @@ async def log_request_pre_validation(request: Request):
                 logger.debug(f"Incoming {request.method} {request.url.path} request with empty body.")
         except Exception as e:
             logger.warning(f"Could not read or log request body for {request.method} {request.url.path}: {e}")
-
-
-def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
-    @functools.wraps(func)
-    async def route_handler(request: Request, **kwargs):
-        # Get auth attributes from the request scope
-        user = user_from_scope(request.scope)
-
-        await log_request_pre_validation(request)
-
-        test_context_token = None
-        test_context_var = None
-        reset_test_context_fn = None
-
-        # Use context manager with both provider data and auth attributes
-        with request_provider_data_context(request.headers, user):
-            if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
-                from llama_stack.core.testing_context import (
-                    TEST_CONTEXT,
-                    reset_test_context,
-                    sync_test_context_from_provider_data,
-                )
-
-                test_context_token = sync_test_context_from_provider_data()
-                test_context_var = TEST_CONTEXT
-                reset_test_context_fn = reset_test_context
-
-            is_streaming = is_streaming_request(func.__name__, request, **kwargs)
-
-            try:
-                if is_streaming:
-                    context_vars = [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
-                    if test_context_var is not None:
-                        context_vars.append(test_context_var)
-                    gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
-                    return StreamingResponse(gen, media_type="text/event-stream")
-                else:
-                    value = func(**kwargs)
-                    result = await maybe_await(value)
-                    if isinstance(result, PaginatedResponse) and result.url is None:
-                        result.url = route
-
-                    if method.upper() == "DELETE" and result is None:
-                        return Response(status_code=httpx.codes.NO_CONTENT)
-
-                    return result
-            except Exception as e:
-                if logger.isEnabledFor(logging.INFO):
-                    logger.exception(f"Error executing endpoint {route=} {method=}")
-                else:
-                    logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
-                raise translate_exception(e) from e
-            finally:
-                if test_context_token is not None and reset_test_context_fn is not None:
-                    reset_test_context_fn(test_context_token)
-
-    sig = inspect.signature(func)
-
-    new_params = [inspect.Parameter("request", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=Request)]
-    new_params.extend(sig.parameters.values())
-
-    path_params = extract_path_params(route)
-    if method == "post":
-        # Annotate parameters that are in the path with Path(...) and others with Body(...),
-        # but preserve existing File() and Form() annotations for multipart form data
-        new_params = (
-            [new_params[0]]
-            + [
-                (
-                    param.replace(annotation=Annotated[param.annotation, FastapiPath(..., title=param.name)])
-                    if param.name in path_params
-                    else (
-                        param  # Keep original annotation if it's already an Annotated type
-                        if get_origin(param.annotation) is Annotated
-                        else param.replace(annotation=Annotated[param.annotation, Body(..., embed=True)])
-                    )
-                )
-                for param in new_params[1:]
-            ]
-        )
-
-    route_handler.__signature__ = sig.replace(parameters=new_params)
-
-    return route_handler
 
 
 class ClientVersionMiddleware:
@@ -448,7 +345,30 @@ def create_app() -> StackApp:
 
     # Load external APIs if configured
     external_apis = load_external_apis(config)
-    all_routes = get_all_api_routes(external_apis)
+
+    # Import API modules to ensure routers are registered (they register on import)
+    # External APIs must also register their routers via register_router() in their module
+    from llama_stack.apis import (  # noqa: F401
+        batches,
+        benchmarks,
+        conversations,
+        datasetio,
+        datasets,
+        eval,
+        files,
+        inspect,
+        models,
+        prompts,
+        providers,
+        safety,
+        scoring,
+        scoring_functions,
+        shields,
+        tools,
+    )
+
+    # Import router registry to ensure routers are registered
+    from llama_stack.core.server.routers import create_router, has_router
 
     if config.apis:
         apis_to_serve = set(config.apis)
@@ -465,37 +385,29 @@ def create_app() -> StackApp:
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
+
+    # Store impls in app state for dependency injection
+    app.state.impls = impls
+
+    # Create impl_getter function for routers
+    def impl_getter(api: Api) -> Any:
+        return impls[api]
+
+    # Register routers for all APIs (including external APIs that must register routers)
     for api_str in apis_to_serve:
         api = Api(api_str)
-
-        routes = all_routes[api]
-        try:
-            impl = impls[api]
-        except KeyError as e:
-            raise ValueError(f"Could not find provider implementation for {api} API") from e
-
-        for route, _ in routes:
-            if not hasattr(impl, route.name):
-                # ideally this should be a typing violation already
-                raise ValueError(f"Could not find method {route.name} on {impl}!")
-
-            impl_method = getattr(impl, route.name)
-            # Filter out HEAD method since it's automatically handled by FastAPI for GET routes
-            available_methods = [m for m in route.methods if m != "HEAD"]
-            if not available_methods:
-                raise ValueError(f"No methods found for {route.name} on {impl}")
-            method = available_methods[0]
-            logger.debug(f"{method} {route.path}")
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
-                getattr(app, method.lower())(route.path, response_model=None)(
-                    create_dynamic_typed_route(
-                        impl_method,
-                        method.lower(),
-                        route.path,
-                    )
-                )
+        if has_router(api):
+            router = create_router(api, impl_getter)
+            if router:
+                app.include_router(router)
+                logger.debug(f"Registered router for {api} API")
+        else:
+            # All APIs must now use routers - this is a breaking change for external APIs
+            logger.warning(
+                f"API '{api.value}' does not have a registered router. "
+                f"External APIs must register a router using register_router() in their module. "
+                f"Skipping this API."
+            )
 
     logger.debug(f"serving APIs: {apis_to_serve}")
 
@@ -514,14 +426,6 @@ def _log_run_config(run_config: StackRunConfig):
     safe_config = redact_sensitive_fields(run_config.model_dump(mode="json"))
     clean_config = remove_disabled_providers(safe_config)
     logger.info(yaml.dump(clean_config, indent=2))
-
-
-def extract_path_params(route: str) -> list[str]:
-    segments = route.split("/")
-    params = [seg[1:-1] for seg in segments if seg.startswith("{") and seg.endswith("}")]
-    # to handle path params like {param:path}
-    params = [param.split(":")[0] for param in params]
-    return params
 
 
 def remove_disabled_providers(obj):

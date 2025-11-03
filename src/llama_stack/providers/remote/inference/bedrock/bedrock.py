@@ -12,15 +12,13 @@ from botocore.client import BaseClient
 from llama_stack.apis.inference import (
     ChatCompletionRequest,
     Inference,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
-)
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAICompletion,
 )
 from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client

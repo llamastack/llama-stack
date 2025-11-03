@@ -17,12 +17,13 @@ from llama_stack.apis.inference import (
     OpenAIUserMessageParam,
 )
 from llama_stack.apis.safety import (
+    ModerationObject,
+    ModerationObjectResults,
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ViolationLevel,
 )
-from llama_stack.apis.safety.safety import ModerationObject, ModerationObjectResults
 from llama_stack.apis.shields import Shield
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger

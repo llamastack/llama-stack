@@ -14,8 +14,8 @@ from together.constants import BASE_URL  # type: ignore[import-untyped]
 from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
+    OpenAIEmbeddingUsage,
 )
-from llama_stack.apis.inference.inference import OpenAIEmbeddingUsage
 from llama_stack.apis.models import Model
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger

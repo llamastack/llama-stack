@@ -17,7 +17,7 @@ from llama_stack.apis.datasets import Datasets
 from llama_stack.apis.datatypes import ExternalApiSpec
 from llama_stack.apis.eval import Eval
 from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference, InferenceProvider
+from llama_stack.apis.inference import Inference, InferenceProvider, InferenceService
 from llama_stack.apis.inspect import Inspect
 from llama_stack.apis.models import Models
 from llama_stack.apis.post_training import PostTraining
@@ -397,14 +397,16 @@ async def instantiate_provider(
     impl.__provider_spec__ = provider_spec
     impl.__provider_config__ = config
 
-    protocols = api_protocol_map_for_compliance_check(run_config)
-    additional_protocols = additional_protocols_map()
-    # TODO: check compliance for special tool groups
-    # the impl should be for Api.tool_runtime, the name should be the special tool group, the protocol should be the special tool group protocol
-    check_protocol_compliance(impl, protocols[provider_spec.api])
-    if not isinstance(provider_spec, AutoRoutedProviderSpec) and provider_spec.api in additional_protocols:
-        additional_api, _, _ = additional_protocols[provider_spec.api]
-        check_protocol_compliance(impl, additional_api)
+    # Skip protocol compliance checks for routing tables - they implement RoutingTable, not the full API protocol
+    if not isinstance(provider_spec, RoutingTableProviderSpec):
+        protocols = api_protocol_map_for_compliance_check(run_config)
+        additional_protocols = additional_protocols_map()
+        # TODO: check compliance for special tool groups
+        # the impl should be for Api.tool_runtime, the name should be the special tool group, the protocol should be the special tool group protocol
+        check_protocol_compliance(impl, protocols[provider_spec.api])
+        if not isinstance(provider_spec, AutoRoutedProviderSpec) and provider_spec.api in additional_protocols:
+            additional_api, _, _ = additional_protocols[provider_spec.api]
+            check_protocol_compliance(impl, additional_api)
 
     return impl
 
@@ -412,9 +414,60 @@ async def instantiate_provider(
 def check_protocol_compliance(obj: Any, protocol: Any) -> None:
     missing_methods = []
 
+    # Define optional methods per protocol that don't need to be implemented by providers
+    # These are methods that are either:
+    # 1. Alpha API methods (only in V1ALPHA routes)
+    # 2. Methods handled by routers (like inference store methods)
+    optional_methods = {
+        Inference: {"rerank", "list_chat_completions", "get_chat_completion"},
+        InferenceService: {"rerank", "list_chat_completions", "get_chat_completion"},
+        InferenceProvider: {"rerank", "list_chat_completions", "get_chat_completion"},
+    }
+
+    protocol_optional = optional_methods.get(protocol, set())
+
+    # Skip Pydantic BaseModel methods - these are not part of the protocol interface
+    # These methods come from BaseModel and should not be checked for compliance
+    pydantic_methods = {
+        "copy",
+        "dict",
+        "json",
+        "model_copy",
+        "model_dump",
+        "model_dump_json",
+        "model_post_init",
+        "model_validate",
+        "model_validate_json",
+        "parse_obj",
+        "parse_raw",
+        "schema",
+        "schema_json",
+        "construct",
+        "update_forward_refs",
+        "validate",
+    }
+
     mro = type(obj).__mro__
     for name, value in inspect.getmembers(protocol):
-        if inspect.isfunction(value) and hasattr(value, "__webmethods__"):
+        # Check all protocol methods, not just ones with webmethods
+        # Skip properties, attributes, and class variables
+        if not inspect.isfunction(value):
+            continue
+
+        # Skip private methods (starting with _)
+        if name.startswith("_"):
+            continue
+
+        # Skip Pydantic BaseModel methods
+        if name in pydantic_methods:
+            continue
+
+        # Skip optional methods for this protocol
+        if name in protocol_optional:
+            continue
+
+        # For methods that still have webmethods (unmigrated APIs), check for alpha API
+        if hasattr(value, "__webmethods__"):
             has_alpha_api = False
             for webmethod in value.__webmethods__:
                 if webmethod.level == LLAMA_STACK_API_V1ALPHA:
@@ -423,32 +476,37 @@ def check_protocol_compliance(obj: Any, protocol: Any) -> None:
             # if this API has multiple webmethods, and one of them is an alpha API, this API should be skipped when checking for missing or not callable routes
             if has_alpha_api:
                 continue
-            if not hasattr(obj, name):
-                missing_methods.append((name, "missing"))
-            elif not callable(getattr(obj, name)):
-                missing_methods.append((name, "not_callable"))
+
+        if not hasattr(obj, name):
+            missing_methods.append((name, "missing"))
+        elif not callable(getattr(obj, name)):
+            missing_methods.append((name, "not_callable"))
+        else:
+            # Check if the method signatures are compatible
+            obj_method = getattr(obj, name)
+            proto_sig = inspect.signature(value)
+            obj_sig = inspect.signature(obj_method)
+
+            proto_params = list(proto_sig.parameters.values())
+            proto_params = [p for p in proto_params if p.name != "self"]
+            obj_params = list(obj_sig.parameters.values())
+            obj_params = [p for p in obj_params if p.name != "self"]
+
+            # Check positional compatibility: same number of parameters
+            if len(proto_params) != len(obj_params):
+                logger.error(
+                    f"Method {name} incompatible: proto has {len(proto_params)} params, obj has {len(obj_params)} params"
+                )
+                missing_methods.append((name, "signature_mismatch"))
             else:
-                # Check if the method signatures are compatible
-                obj_method = getattr(obj, name)
-                proto_sig = inspect.signature(value)
-                obj_sig = inspect.signature(obj_method)
+                # Check if the method has a concrete implementation (not just a protocol stub)
+                # Find all classes in MRO that define this method
+                method_owners = [cls for cls in mro if name in cls.__dict__]
 
-                proto_params = set(proto_sig.parameters)
-                proto_params.discard("self")
-                obj_params = set(obj_sig.parameters)
-                obj_params.discard("self")
-                if not (proto_params <= obj_params):
-                    logger.error(f"Method {name} incompatible proto: {proto_params} vs. obj: {obj_params}")
-                    missing_methods.append((name, "signature_mismatch"))
-                else:
-                    # Check if the method has a concrete implementation (not just a protocol stub)
-                    # Find all classes in MRO that define this method
-                    method_owners = [cls for cls in mro if name in cls.__dict__]
-
-                    # Allow methods from mixins/parents, only reject if ONLY the protocol defines it
-                    if len(method_owners) == 1 and method_owners[0].__name__ == protocol.__name__:
-                        # Only reject if the method is ONLY defined in the protocol itself (abstract stub)
-                        missing_methods.append((name, "not_actually_implemented"))
+                # Allow methods from mixins/parents, only reject if ONLY the protocol defines it
+                if len(method_owners) == 1 and method_owners[0].__name__ == protocol.__name__:
+                    # Only reject if the method is ONLY defined in the protocol itself (abstract stub)
+                    missing_methods.append((name, "not_actually_implemented"))
 
     if missing_methods:
         raise ValueError(

@@ -9,7 +9,7 @@ import re
 import uuid
 from collections.abc import Sequence
 
-from llama_stack.apis.agents.agents import ResponseGuardrailSpec
+from llama_stack.apis.agents import ResponseGuardrailSpec
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInput,

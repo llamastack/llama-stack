@@ -7,12 +7,9 @@
 import json
 
 import httpx
-from aiohttp import hdrs
 
-from llama_stack.core.datatypes import AuthenticationConfig, User
-from llama_stack.core.request_headers import user_from_scope
+from llama_stack.core.datatypes import AuthenticationConfig
 from llama_stack.core.server.auth_providers import create_auth_provider
-from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.log import get_logger
 
 logger = get_logger(name=__name__, category="core::auth")
@@ -28,9 +25,8 @@ class AuthenticationMiddleware:
     4. Makes these attributes available to the route handlers for access control
 
     Unauthenticated Access:
-    Endpoints can opt out of authentication by setting require_authentication=False
-    in their @webmethod decorator. This is typically used for operational endpoints
-    like /health and /version to support monitoring, load balancers, and observability tools.
+    Public endpoints (like /health and /version) are configured in the middleware
+    and bypass authentication. All other endpoints require authentication.
 
     The middleware supports multiple authentication providers through the AuthProvider interface:
     - Kubernetes: Validates tokens against the Kubernetes API server
@@ -93,23 +89,24 @@ class AuthenticationMiddleware:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
-            # Find the route and check if authentication is required
+            # Check if authentication is required
             path = scope.get("path", "")
-            method = scope.get("method", hdrs.METH_GET)
 
-            if not hasattr(self, "route_impls"):
-                self.route_impls = initialize_route_impls(self.impls)
+            # Known public endpoints that don't require authentication
+            # These are typically operational endpoints like health checks
+            public_paths = (
+                "/v1/health",
+                "/v1/inspect/version",
+            )
 
-            webmethod = None
-            try:
-                _, _, _, webmethod = find_matching_route(method, path, self.route_impls)
-            except ValueError:
-                # If no matching endpoint is found, pass here to run auth anyways
-                pass
-
-            # If webmethod explicitly sets require_authentication=False, allow without auth
-            if webmethod and webmethod.require_authentication is False:
-                logger.debug(f"Allowing unauthenticated access to endpoint: {path}")
+            # Check if this is a public endpoint
+            if (
+                path in public_paths
+                or path.startswith("/docs")
+                or path.startswith("/redoc")
+                or path.startswith("/openapi.json")
+            ):
+                logger.debug(f"Allowing unauthenticated access to public endpoint: {path}")
                 return await self.app(scope, receive, send)
 
             # Handle authentication
@@ -150,15 +147,8 @@ class AuthenticationMiddleware:
                 f"Authentication successful: {validation_result.principal} with {len(validation_result.attributes)} attributes"
             )
 
-            # Scope-based API access control
-            if webmethod and webmethod.required_scope:
-                user = user_from_scope(scope)
-                if not _has_required_scope(webmethod.required_scope, user):
-                    return await self._send_auth_error(
-                        send,
-                        f"Access denied: user does not have required scope: {webmethod.required_scope}",
-                        status=403,
-                    )
+            # Note: Scope-based API access control can be implemented at the route level
+            # using FastAPI dependencies if needed
 
         return await self.app(scope, receive, send)
 
@@ -173,15 +163,3 @@ class AuthenticationMiddleware:
         error_key = "message" if status == 401 else "detail"
         error_msg = json.dumps({"error": {error_key: message}}).encode()
         await send({"type": "http.response.body", "body": error_msg})
-
-
-def _has_required_scope(required_scope: str, user: User | None) -> bool:
-    # if no user, assume auth is not enabled
-    if not user:
-        return True
-
-    if not user.attributes:
-        return False
-
-    user_scopes = user.attributes.get("scopes", [])
-    return required_scope in user_scopes

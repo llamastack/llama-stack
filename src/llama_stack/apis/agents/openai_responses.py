@@ -25,8 +25,8 @@ class OpenAIResponseError(BaseModel):
     :param message: Human-readable error message describing the failure
     """
 
-    code: str
-    message: str
+    code: str = Field(description="Error code identifying the type of failure")
+    message: str = Field(description="Human-readable error message describing the failure")
 
 
 @json_schema_type
@@ -37,8 +37,10 @@ class OpenAIResponseInputMessageContentText(BaseModel):
     :param type: Content type identifier, always "input_text"
     """
 
-    text: str
-    type: Literal["input_text"] = "input_text"
+    text: str = Field(description="The text content of the input message")
+    type: Literal["input_text"] = Field(
+        default="input_text", description='Content type identifier, always "input_text"'
+    )
 
 
 @json_schema_type
@@ -51,10 +53,14 @@ class OpenAIResponseInputMessageContentImage(BaseModel):
     :param image_url: (Optional) URL of the image content
     """
 
-    detail: Literal["low"] | Literal["high"] | Literal["auto"] = "auto"
-    type: Literal["input_image"] = "input_image"
-    file_id: str | None = None
-    image_url: str | None = None
+    detail: Literal["low"] | Literal["high"] | Literal["auto"] = Field(
+        default="auto", description='Level of detail for image processing, can be "low", "high", or "auto"'
+    )
+    type: Literal["input_image"] = Field(
+        default="input_image", description='Content type identifier, always "input_image"'
+    )
+    file_id: str | None = Field(default=None, description="The ID of the file to be sent to the model.")
+    image_url: str | None = Field(default=None, description="URL of the image content")
 
 
 @json_schema_type
@@ -68,11 +74,13 @@ class OpenAIResponseInputMessageContentFile(BaseModel):
     :param filename: The name of the file to be sent to the model.
     """
 
-    type: Literal["input_file"] = "input_file"
-    file_data: str | None = None
-    file_id: str | None = None
-    file_url: str | None = None
-    filename: str | None = None
+    type: Literal["input_file"] = Field(
+        default="input_file", description="The type of the input item. Always `input_file`."
+    )
+    file_data: str | None = Field(default=None, description="The data of the file to be sent to the model.")
+    file_id: str | None = Field(default=None, description="The ID of the file to be sent to the model.")
+    file_url: str | None = Field(default=None, description="The URL of the file to be sent to the model.")
+    filename: str | None = Field(default=None, description="The name of the file to be sent to the model.")
 
     @model_validator(mode="after")
     def validate_file_source(self) -> "OpenAIResponseInputMessageContentFile":
@@ -102,9 +110,14 @@ class OpenAIResponsePrompt(BaseModel):
     :param version: Version number of the prompt to use (defaults to latest if not specified)
     """
 
-    id: str
-    variables: dict[str, OpenAIResponseInputMessageContent] | None = None
-    version: str | None = None
+    id: str = Field(description="Unique identifier of the prompt template")
+    variables: dict[str, OpenAIResponseInputMessageContent] | None = Field(
+        default=None,
+        description="Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files.",
+    )
+    version: str | None = Field(
+        default=None, description="Version number of the prompt to use (defaults to latest if not specified)"
+    )
 
 
 @json_schema_type
@@ -117,10 +130,12 @@ class OpenAIResponseAnnotationFileCitation(BaseModel):
     :param index: Position index of the citation within the content
     """
 
-    type: Literal["file_citation"] = "file_citation"
-    file_id: str
-    filename: str
-    index: int
+    type: Literal["file_citation"] = Field(
+        default="file_citation", description='Annotation type identifier, always "file_citation"'
+    )
+    file_id: str = Field(description="Unique identifier of the referenced file")
+    filename: str = Field(description="Name of the referenced file")
+    index: int = Field(description="Position index of the citation within the content")
 
 
 @json_schema_type
@@ -134,28 +149,30 @@ class OpenAIResponseAnnotationCitation(BaseModel):
     :param url: URL of the referenced web resource
     """
 
-    type: Literal["url_citation"] = "url_citation"
-    end_index: int
-    start_index: int
-    title: str
-    url: str
+    type: Literal["url_citation"] = Field(
+        default="url_citation", description='Annotation type identifier, always "url_citation"'
+    )
+    end_index: int = Field(description="End position of the citation span in the content")
+    start_index: int = Field(description="Start position of the citation span in the content")
+    title: str = Field(description="Title of the referenced web resource")
+    url: str = Field(description="URL of the referenced web resource")
 
 
 @json_schema_type
 class OpenAIResponseAnnotationContainerFileCitation(BaseModel):
-    type: Literal["container_file_citation"] = "container_file_citation"
-    container_id: str
-    end_index: int
-    file_id: str
-    filename: str
-    start_index: int
+    type: Literal["container_file_citation"] = Field(default="container_file_citation")
+    container_id: str = Field()
+    end_index: int = Field()
+    file_id: str = Field()
+    filename: str = Field()
+    start_index: int = Field()
 
 
 @json_schema_type
 class OpenAIResponseAnnotationFilePath(BaseModel):
-    type: Literal["file_path"] = "file_path"
-    file_id: str
-    index: int
+    type: Literal["file_path"] = Field(default="file_path")
+    file_id: str = Field()
+    index: int = Field()
 
 
 OpenAIResponseAnnotations = Annotated[
@@ -170,8 +187,8 @@ register_schema(OpenAIResponseAnnotations, name="OpenAIResponseAnnotations")
 
 @json_schema_type
 class OpenAIResponseOutputMessageContentOutputText(BaseModel):
-    text: str
-    type: Literal["output_text"] = "output_text"
+    text: str = Field()
+    type: Literal["output_text"] = Field(default="output_text")
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
 
 
@@ -183,8 +200,8 @@ class OpenAIResponseContentPartRefusal(BaseModel):
     :param refusal: Refusal text supplied by the model
     """
 
-    type: Literal["refusal"] = "refusal"
-    refusal: str
+    type: Literal["refusal"] = Field(default="refusal", description='Content part type identifier, always "refusal"')
+    refusal: str = Field(description="Refusal text supplied by the model")
 
 
 OpenAIResponseOutputMessageContent = Annotated[
@@ -203,13 +220,13 @@ class OpenAIResponseMessage(BaseModel):
     scenarios.
     """
 
-    content: str | Sequence[OpenAIResponseInputMessageContent] | Sequence[OpenAIResponseOutputMessageContent]
-    role: Literal["system"] | Literal["developer"] | Literal["user"] | Literal["assistant"]
-    type: Literal["message"] = "message"
+    content: str | Sequence[OpenAIResponseInputMessageContent] | Sequence[OpenAIResponseOutputMessageContent] = Field()
+    role: Literal["system"] | Literal["developer"] | Literal["user"] | Literal["assistant"] = Field()
+    type: Literal["message"] = Field(default="message")
 
     # The fields below are not used in all scenarios, but are required in others.
-    id: str | None = None
-    status: str | None = None
+    id: str | None = Field(default=None)
+    status: str | None = Field(default=None)
 
 
 @json_schema_type
@@ -221,9 +238,11 @@ class OpenAIResponseOutputMessageWebSearchToolCall(BaseModel):
     :param type: Tool call type identifier, always "web_search_call"
     """
 
-    id: str
-    status: str
-    type: Literal["web_search_call"] = "web_search_call"
+    id: str = Field(description="Unique identifier for this tool call")
+    status: str = Field(description="Current status of the web search operation")
+    type: Literal["web_search_call"] = Field(
+        default="web_search_call", description='Tool call type identifier, always "web_search_call"'
+    )
 
 
 class OpenAIResponseOutputMessageFileSearchToolCallResults(BaseModel):
@@ -236,11 +255,11 @@ class OpenAIResponseOutputMessageFileSearchToolCallResults(BaseModel):
     :param text: Text content of the search result
     """
 
-    attributes: dict[str, Any]
-    file_id: str
-    filename: str
-    score: float
-    text: str
+    attributes: dict[str, Any] = Field(description="Key-value attributes associated with the file")
+    file_id: str = Field(description="Unique identifier of the file containing the result")
+    filename: str = Field(description="Name of the file containing the result")
+    score: float = Field(description="Relevance score for this search result (between 0 and 1)")
+    text: str = Field(description="Text content of the search result")
 
 
 @json_schema_type
@@ -254,11 +273,15 @@ class OpenAIResponseOutputMessageFileSearchToolCall(BaseModel):
     :param results: (Optional) Search results returned by the file search operation
     """
 
-    id: str
-    queries: Sequence[str]
-    status: str
-    type: Literal["file_search_call"] = "file_search_call"
-    results: Sequence[OpenAIResponseOutputMessageFileSearchToolCallResults] | None = None
+    id: str = Field(description="Unique identifier for this tool call")
+    queries: Sequence[str] = Field(description="List of search queries executed")
+    status: str = Field(description="Current status of the file search operation")
+    type: Literal["file_search_call"] = Field(
+        default="file_search_call", description='Tool call type identifier, always "file_search_call"'
+    )
+    results: Sequence[OpenAIResponseOutputMessageFileSearchToolCallResults] | None = Field(
+        default=None, description="Search results returned by the file search operation"
+    )
 
 
 @json_schema_type
@@ -273,12 +296,14 @@ class OpenAIResponseOutputMessageFunctionToolCall(BaseModel):
     :param status: (Optional) Current status of the function call execution
     """
 
-    call_id: str
-    name: str
-    arguments: str
-    type: Literal["function_call"] = "function_call"
-    id: str | None = None
-    status: str | None = None
+    call_id: str = Field(description="Unique identifier for the function call")
+    name: str = Field(description="Name of the function being called")
+    arguments: str = Field(description="JSON string containing the function arguments")
+    type: Literal["function_call"] = Field(
+        default="function_call", description='Tool call type identifier, always "function_call"'
+    )
+    id: str | None = Field(default=None, description="Additional identifier for the tool call")
+    status: str | None = Field(default=None, description="Current status of the function call execution")
 
 
 @json_schema_type
@@ -294,13 +319,13 @@ class OpenAIResponseOutputMessageMCPCall(BaseModel):
     :param output: (Optional) Output result from the successful MCP call
     """
 
-    id: str
-    type: Literal["mcp_call"] = "mcp_call"
-    arguments: str
-    name: str
-    server_label: str
-    error: str | None = None
-    output: str | None = None
+    id: str = Field(description="Unique identifier for this MCP call")
+    type: Literal["mcp_call"] = Field(default="mcp_call", description='Tool call type identifier, always "mcp_call"')
+    arguments: str = Field(description="JSON string containing the MCP call arguments")
+    name: str = Field(description="Name of the MCP method being called")
+    server_label: str = Field(description="Label identifying the MCP server handling the call")
+    error: str | None = Field(default=None, description="Error message if the MCP call failed")
+    output: str | None = Field(default=None, description="Output result from the successful MCP call")
 
 
 class MCPListToolsTool(BaseModel):
@@ -311,9 +336,9 @@ class MCPListToolsTool(BaseModel):
     :param description: (Optional) Description of what the tool does
     """
 
-    input_schema: dict[str, Any]
-    name: str
-    description: str | None = None
+    input_schema: dict[str, Any] = Field(description="JSON schema defining the tool's input parameters")
+    name: str = Field(description="Name of the tool")
+    description: str | None = Field(default=None, description="Description of what the tool does")
 
 
 @json_schema_type
@@ -326,10 +351,12 @@ class OpenAIResponseOutputMessageMCPListTools(BaseModel):
     :param tools: List of available tools provided by the MCP server
     """
 
-    id: str
-    type: Literal["mcp_list_tools"] = "mcp_list_tools"
-    server_label: str
-    tools: list[MCPListToolsTool]
+    id: str = Field(description="Unique identifier for this MCP list tools operation")
+    type: Literal["mcp_list_tools"] = Field(
+        default="mcp_list_tools", description='Tool call type identifier, always "mcp_list_tools"'
+    )
+    server_label: str = Field(description="Label identifying the MCP server providing the tools")
+    tools: list[MCPListToolsTool] = Field(description="List of available tools provided by the MCP server")
 
 
 @json_schema_type
@@ -338,11 +365,11 @@ class OpenAIResponseMCPApprovalRequest(BaseModel):
     A request for human approval of a tool invocation.
     """
 
-    arguments: str
-    id: str
-    name: str
-    server_label: str
-    type: Literal["mcp_approval_request"] = "mcp_approval_request"
+    arguments: str = Field()
+    id: str = Field()
+    name: str = Field()
+    server_label: str = Field()
+    type: Literal["mcp_approval_request"] = Field(default="mcp_approval_request")
 
 
 @json_schema_type
@@ -351,11 +378,11 @@ class OpenAIResponseMCPApprovalResponse(BaseModel):
     A response to an MCP approval request.
     """
 
-    approval_request_id: str
-    approve: bool
-    type: Literal["mcp_approval_response"] = "mcp_approval_response"
-    id: str | None = None
-    reason: str | None = None
+    approval_request_id: str = Field()
+    approve: bool = Field()
+    type: Literal["mcp_approval_response"] = Field(default="mcp_approval_response")
+    id: str | None = Field(default=None)
+    reason: str | None = Field(default=None)
 
 
 OpenAIResponseOutput = Annotated[
@@ -399,7 +426,9 @@ class OpenAIResponseText(BaseModel):
     :param format: (Optional) Text format configuration specifying output format requirements
     """
 
-    format: OpenAIResponseTextFormat | None = None
+    format: OpenAIResponseTextFormat | None = Field(
+        default=None, description="Text format configuration specifying output format requirements"
+    )
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
@@ -415,11 +444,15 @@ class OpenAIResponseInputToolWebSearch(BaseModel):
     """
 
     # Must match values of WebSearchToolTypes above
-    type: Literal["web_search"] | Literal["web_search_preview"] | Literal["web_search_preview_2025_03_11"] = (
-        "web_search"
+    type: Literal["web_search"] | Literal["web_search_preview"] | Literal["web_search_preview_2025_03_11"] = Field(
+        default="web_search", description="Web search tool type variant to use"
     )
     # TODO: actually use search_context_size somewhere...
-    search_context_size: str | None = Field(default="medium", pattern="^low|medium|high$")
+    search_context_size: str | None = Field(
+        default="medium",
+        pattern="^low|medium|high$",
+        description='Size of search context, must be "low", "medium", or "high"',
+    )
     # TODO: add user_location
 
 
@@ -434,11 +467,13 @@ class OpenAIResponseInputToolFunction(BaseModel):
     :param strict: (Optional) Whether to enforce strict parameter validation
     """
 
-    type: Literal["function"] = "function"
-    name: str
-    description: str | None = None
-    parameters: dict[str, Any] | None
-    strict: bool | None = None
+    type: Literal["function"] = Field(default="function", description='Tool type identifier, always "function"')
+    name: str = Field(description="Name of the function that can be called")
+    description: str | None = Field(default=None, description="Description of what the function does")
+    parameters: dict[str, Any] | None = Field(
+        default=None, description="JSON schema defining the function's parameters"
+    )
+    strict: bool | None = Field(default=None, description="Whether to enforce strict parameter validation")
 
 
 @json_schema_type
@@ -452,11 +487,17 @@ class OpenAIResponseInputToolFileSearch(BaseModel):
     :param ranking_options: (Optional) Options for ranking and scoring search results
     """
 
-    type: Literal["file_search"] = "file_search"
-    vector_store_ids: list[str]
-    filters: dict[str, Any] | None = None
-    max_num_results: int | None = Field(default=10, ge=1, le=50)
-    ranking_options: FileSearchRankingOptions | None = None
+    type: Literal["file_search"] = Field(
+        default="file_search", description='Tool type identifier, always "file_search"'
+    )
+    vector_store_ids: list[str] = Field(description="List of vector store identifiers to search within")
+    filters: dict[str, Any] | None = Field(default=None, description="Additional filters to apply to the search")
+    max_num_results: int | None = Field(
+        default=10, ge=1, le=50, description="Maximum number of search results to return (1-50)"
+    )
+    ranking_options: FileSearchRankingOptions | None = Field(
+        default=None, description="Options for ranking and scoring search results"
+    )
 
 
 class ApprovalFilter(BaseModel):
@@ -466,8 +507,8 @@ class ApprovalFilter(BaseModel):
     :param never: (Optional) List of tool names that never require approval
     """
 
-    always: list[str] | None = None
-    never: list[str] | None = None
+    always: list[str] | None = Field(default=None, description="List of tool names that always require approval")
+    never: list[str] | None = Field(default=None, description="List of tool names that never require approval")
 
 
 class AllowedToolsFilter(BaseModel):
@@ -476,7 +517,7 @@ class AllowedToolsFilter(BaseModel):
     :param tool_names: (Optional) List of specific tool names that are allowed
     """
 
-    tool_names: list[str] | None = None
+    tool_names: list[str] | None = Field(default=None, description="List of specific tool names that are allowed")
 
 
 @json_schema_type
@@ -491,13 +532,19 @@ class OpenAIResponseInputToolMCP(BaseModel):
     :param allowed_tools: (Optional) Restriction on which tools can be used from this server
     """
 
-    type: Literal["mcp"] = "mcp"
-    server_label: str
-    server_url: str
-    headers: dict[str, Any] | None = None
+    type: Literal["mcp"] = Field(default="mcp", description='Tool type identifier, always "mcp"')
+    server_label: str = Field(description="Label to identify this MCP server")
+    server_url: str = Field(description="URL endpoint of the MCP server")
+    headers: dict[str, Any] | None = Field(
+        default=None, description="HTTP headers to include when connecting to the server"
+    )
 
-    require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
-    allowed_tools: list[str] | AllowedToolsFilter | None = None
+    require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = Field(
+        default="never", description='Approval requirement for tool calls ("always", "never", or filter)'
+    )
+    allowed_tools: list[str] | AllowedToolsFilter | None = Field(
+        default=None, description="Restriction on which tools can be used from this server"
+    )
 
 
 OpenAIResponseInputTool = Annotated[
@@ -519,9 +566,11 @@ class OpenAIResponseToolMCP(BaseModel):
     :param allowed_tools: (Optional) Restriction on which tools can be used from this server
     """
 
-    type: Literal["mcp"] = "mcp"
-    server_label: str
-    allowed_tools: list[str] | AllowedToolsFilter | None = None
+    type: Literal["mcp"] = Field(default="mcp", description='Tool type identifier, always "mcp"')
+    server_label: str = Field(description="Label to identify this MCP server")
+    allowed_tools: list[str] | AllowedToolsFilter | None = Field(
+        default=None, description="Restriction on which tools can be used from this server"
+    )
 
 
 OpenAIResponseTool = Annotated[
@@ -540,7 +589,7 @@ class OpenAIResponseUsageOutputTokensDetails(BaseModel):
     :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
     """
 
-    reasoning_tokens: int | None = None
+    reasoning_tokens: int | None = Field(default=None, description="Number of tokens used for reasoning (o1/o3 models)")
 
 
 class OpenAIResponseUsageInputTokensDetails(BaseModel):
@@ -549,7 +598,7 @@ class OpenAIResponseUsageInputTokensDetails(BaseModel):
     :param cached_tokens: Number of tokens retrieved from cache
     """
 
-    cached_tokens: int | None = None
+    cached_tokens: int | None = Field(default=None, description="Number of tokens retrieved from cache")
 
 
 @json_schema_type
@@ -563,11 +612,15 @@ class OpenAIResponseUsage(BaseModel):
     :param output_tokens_details: Detailed breakdown of output token usage
     """
 
-    input_tokens: int
-    output_tokens: int
-    total_tokens: int
-    input_tokens_details: OpenAIResponseUsageInputTokensDetails | None = None
-    output_tokens_details: OpenAIResponseUsageOutputTokensDetails | None = None
+    input_tokens: int = Field(description="Number of tokens in the input")
+    output_tokens: int = Field(description="Number of tokens in the output")
+    total_tokens: int = Field(description="Total tokens used (input + output)")
+    input_tokens_details: OpenAIResponseUsageInputTokensDetails | None = Field(
+        default=None, description="Detailed breakdown of input token usage"
+    )
+    output_tokens_details: OpenAIResponseUsageOutputTokensDetails | None = Field(
+        default=None, description="Detailed breakdown of output token usage"
+    )
 
 
 @json_schema_type
@@ -593,25 +646,36 @@ class OpenAIResponseObject(BaseModel):
     :param instructions: (Optional) System message inserted into the model's context
     """
 
-    created_at: int
-    error: OpenAIResponseError | None = None
-    id: str
-    model: str
-    object: Literal["response"] = "response"
-    output: Sequence[OpenAIResponseOutput]
-    parallel_tool_calls: bool = False
-    previous_response_id: str | None = None
-    prompt: OpenAIResponsePrompt | None = None
-    status: str
-    temperature: float | None = None
+    created_at: int = Field(description="Unix timestamp when the response was created")
+    error: OpenAIResponseError | None = Field(
+        default=None, description="Error details if the response generation failed"
+    )
+    id: str = Field(description="Unique identifier for this response")
+    model: str = Field(description="Model identifier used for generation")
+    object: Literal["response"] = Field(default="response", description='Object type identifier, always "response"')
+    output: Sequence[OpenAIResponseOutput] = Field(
+        description="List of generated output items (messages, tool calls, etc.)"
+    )
+    parallel_tool_calls: bool = Field(default=False, description="Whether tool calls can be executed in parallel")
+    previous_response_id: str | None = Field(default=None, description="ID of the previous response in a conversation")
+    prompt: OpenAIResponsePrompt | None = Field(
+        default=None, description="Reference to a prompt template and its variables."
+    )
+    status: str = Field(description="Current status of the response generation")
+    temperature: float | None = Field(default=None, description="Sampling temperature used for generation")
     # Default to text format to avoid breaking the loading of old responses
     # before the field was added. New responses will have this set always.
-    text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
-    top_p: float | None = None
-    tools: Sequence[OpenAIResponseTool] | None = None
-    truncation: str | None = None
-    usage: OpenAIResponseUsage | None = None
-    instructions: str | None = None
+    text: OpenAIResponseText = Field(
+        default_factory=lambda: OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+        description="Text formatting configuration for the response",
+    )
+    top_p: float | None = Field(default=None, description="Nucleus sampling parameter used for generation")
+    tools: Sequence[OpenAIResponseTool] | None = Field(
+        default=None, description="An array of tools the model may call while generating a response."
+    )
+    truncation: str | None = Field(default=None, description="Truncation strategy applied to the response")
+    usage: OpenAIResponseUsage | None = Field(default=None, description="Token usage information for the response")
+    instructions: str | None = Field(default=None, description="System message inserted into the model's context")
 
 
 @json_schema_type
@@ -623,9 +687,9 @@ class OpenAIDeleteResponseObject(BaseModel):
     :param deleted: Deletion confirmation flag, always True
     """
 
-    id: str
-    object: Literal["response"] = "response"
-    deleted: bool = True
+    id: str = Field(description="Unique identifier of the deleted response")
+    object: Literal["response"] = Field(default="response", description='Object type identifier, always "response"')
+    deleted: bool = Field(default=True, description="Deletion confirmation flag, always True")
 
 
 @json_schema_type
@@ -636,8 +700,10 @@ class OpenAIResponseObjectStreamResponseCreated(BaseModel):
     :param type: Event type identifier, always "response.created"
     """
 
-    response: OpenAIResponseObject
-    type: Literal["response.created"] = "response.created"
+    response: OpenAIResponseObject = Field(description="The response object that was created")
+    type: Literal["response.created"] = Field(
+        default="response.created", description='Event type identifier, always "response.created"'
+    )
 
 
 @json_schema_type
@@ -649,9 +715,11 @@ class OpenAIResponseObjectStreamResponseInProgress(BaseModel):
     :param type: Event type identifier, always "response.in_progress"
     """
 
-    response: OpenAIResponseObject
-    sequence_number: int
-    type: Literal["response.in_progress"] = "response.in_progress"
+    response: OpenAIResponseObject = Field(description="Current response state while in progress")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.in_progress"] = Field(
+        default="response.in_progress", description='Event type identifier, always "response.in_progress"'
+    )
 
 
 @json_schema_type
@@ -662,8 +730,10 @@ class OpenAIResponseObjectStreamResponseCompleted(BaseModel):
     :param type: Event type identifier, always "response.completed"
     """
 
-    response: OpenAIResponseObject
-    type: Literal["response.completed"] = "response.completed"
+    response: OpenAIResponseObject = Field(description="Completed response object")
+    type: Literal["response.completed"] = Field(
+        default="response.completed", description='Event type identifier, always "response.completed"'
+    )
 
 
 @json_schema_type
@@ -675,9 +745,11 @@ class OpenAIResponseObjectStreamResponseIncomplete(BaseModel):
     :param type: Event type identifier, always "response.incomplete"
     """
 
-    response: OpenAIResponseObject
-    sequence_number: int
-    type: Literal["response.incomplete"] = "response.incomplete"
+    response: OpenAIResponseObject = Field(description="Response object describing the incomplete state")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.incomplete"] = Field(
+        default="response.incomplete", description='Event type identifier, always "response.incomplete"'
+    )
 
 
 @json_schema_type
@@ -689,9 +761,11 @@ class OpenAIResponseObjectStreamResponseFailed(BaseModel):
     :param type: Event type identifier, always "response.failed"
     """
 
-    response: OpenAIResponseObject
-    sequence_number: int
-    type: Literal["response.failed"] = "response.failed"
+    response: OpenAIResponseObject = Field(description="Response object describing the failure")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.failed"] = Field(
+        default="response.failed", description='Event type identifier, always "response.failed"'
+    )
 
 
 @json_schema_type
@@ -705,11 +779,13 @@ class OpenAIResponseObjectStreamResponseOutputItemAdded(BaseModel):
     :param type: Event type identifier, always "response.output_item.added"
     """
 
-    response_id: str
-    item: OpenAIResponseOutput
-    output_index: int
-    sequence_number: int
-    type: Literal["response.output_item.added"] = "response.output_item.added"
+    response_id: str = Field(description="Unique identifier of the response containing this output")
+    item: OpenAIResponseOutput = Field(description="The output item that was added (message, tool call, etc.)")
+    output_index: int = Field(description="Index position of this item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.output_item.added"] = Field(
+        default="response.output_item.added", description='Event type identifier, always "response.output_item.added"'
+    )
 
 
 @json_schema_type
@@ -723,11 +799,13 @@ class OpenAIResponseObjectStreamResponseOutputItemDone(BaseModel):
     :param type: Event type identifier, always "response.output_item.done"
     """
 
-    response_id: str
-    item: OpenAIResponseOutput
-    output_index: int
-    sequence_number: int
-    type: Literal["response.output_item.done"] = "response.output_item.done"
+    response_id: str = Field(description="Unique identifier of the response containing this output")
+    item: OpenAIResponseOutput = Field(description="The completed output item (message, tool call, etc.)")
+    output_index: int = Field(description="Index position of this item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.output_item.done"] = Field(
+        default="response.output_item.done", description='Event type identifier, always "response.output_item.done"'
+    )
 
 
 @json_schema_type
@@ -742,12 +820,14 @@ class OpenAIResponseObjectStreamResponseOutputTextDelta(BaseModel):
     :param type: Event type identifier, always "response.output_text.delta"
     """
 
-    content_index: int
-    delta: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.output_text.delta"] = "response.output_text.delta"
+    content_index: int = Field(description="Index position within the text content")
+    delta: str = Field(description="Incremental text content being added")
+    item_id: str = Field(description="Unique identifier of the output item being updated")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.output_text.delta"] = Field(
+        default="response.output_text.delta", description='Event type identifier, always "response.output_text.delta"'
+    )
 
 
 @json_schema_type
@@ -762,12 +842,14 @@ class OpenAIResponseObjectStreamResponseOutputTextDone(BaseModel):
     :param type: Event type identifier, always "response.output_text.done"
     """
 
-    content_index: int
-    text: str  # final text of the output item
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.output_text.done"] = "response.output_text.done"
+    content_index: int = Field(description="Index position within the text content")
+    text: str = Field(description="Final complete text content of the output item")  # final text of the output item
+    item_id: str = Field(description="Unique identifier of the completed output item")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.output_text.done"] = Field(
+        default="response.output_text.done", description='Event type identifier, always "response.output_text.done"'
+    )
 
 
 @json_schema_type
@@ -781,11 +863,14 @@ class OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta(BaseModel):
     :param type: Event type identifier, always "response.function_call_arguments.delta"
     """
 
-    delta: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.function_call_arguments.delta"] = "response.function_call_arguments.delta"
+    delta: str = Field(description="Incremental function call arguments being added")
+    item_id: str = Field(description="Unique identifier of the function call being updated")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.function_call_arguments.delta"] = Field(
+        default="response.function_call_arguments.delta",
+        description='Event type identifier, always "response.function_call_arguments.delta"',
+    )
 
 
 @json_schema_type
@@ -799,11 +884,16 @@ class OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone(BaseModel):
     :param type: Event type identifier, always "response.function_call_arguments.done"
     """
 
-    arguments: str  # final arguments of the function call
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.function_call_arguments.done"] = "response.function_call_arguments.done"
+    arguments: str = Field(
+        description="Final complete arguments JSON string for the function call"
+    )  # final arguments of the function call
+    item_id: str = Field(description="Unique identifier of the completed function call")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.function_call_arguments.done"] = Field(
+        default="response.function_call_arguments.done",
+        description='Event type identifier, always "response.function_call_arguments.done"',
+    )
 
 
 @json_schema_type
@@ -816,18 +906,21 @@ class OpenAIResponseObjectStreamResponseWebSearchCallInProgress(BaseModel):
     :param type: Event type identifier, always "response.web_search_call.in_progress"
     """
 
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.web_search_call.in_progress"] = "response.web_search_call.in_progress"
+    item_id: str = Field(description="Unique identifier of the web search call")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.web_search_call.in_progress"] = Field(
+        default="response.web_search_call.in_progress",
+        description='Event type identifier, always "response.web_search_call.in_progress"',
+    )
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseWebSearchCallSearching(BaseModel):
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.web_search_call.searching"] = "response.web_search_call.searching"
+    item_id: str = Field()
+    output_index: int = Field()
+    sequence_number: int = Field()
+    type: Literal["response.web_search_call.searching"] = Field(default="response.web_search_call.searching")
 
 
 @json_schema_type
@@ -840,46 +933,49 @@ class OpenAIResponseObjectStreamResponseWebSearchCallCompleted(BaseModel):
     :param type: Event type identifier, always "response.web_search_call.completed"
     """
 
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.web_search_call.completed"] = "response.web_search_call.completed"
+    item_id: str = Field(description="Unique identifier of the completed web search call")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.web_search_call.completed"] = Field(
+        default="response.web_search_call.completed",
+        description='Event type identifier, always "response.web_search_call.completed"',
+    )
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsInProgress(BaseModel):
-    sequence_number: int
-    type: Literal["response.mcp_list_tools.in_progress"] = "response.mcp_list_tools.in_progress"
+    sequence_number: int = Field()
+    type: Literal["response.mcp_list_tools.in_progress"] = Field(default="response.mcp_list_tools.in_progress")
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsFailed(BaseModel):
-    sequence_number: int
-    type: Literal["response.mcp_list_tools.failed"] = "response.mcp_list_tools.failed"
+    sequence_number: int = Field()
+    type: Literal["response.mcp_list_tools.failed"] = Field(default="response.mcp_list_tools.failed")
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsCompleted(BaseModel):
-    sequence_number: int
-    type: Literal["response.mcp_list_tools.completed"] = "response.mcp_list_tools.completed"
+    sequence_number: int = Field()
+    type: Literal["response.mcp_list_tools.completed"] = Field(default="response.mcp_list_tools.completed")
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta(BaseModel):
-    delta: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.mcp_call.arguments.delta"] = "response.mcp_call.arguments.delta"
+    delta: str = Field()
+    item_id: str = Field()
+    output_index: int = Field()
+    sequence_number: int = Field()
+    type: Literal["response.mcp_call.arguments.delta"] = Field(default="response.mcp_call.arguments.delta")
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpCallArgumentsDone(BaseModel):
-    arguments: str  # final arguments of the MCP call
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.mcp_call.arguments.done"] = "response.mcp_call.arguments.done"
+    arguments: str = Field()  # final arguments of the MCP call
+    item_id: str = Field()
+    output_index: int = Field()
+    sequence_number: int = Field()
+    type: Literal["response.mcp_call.arguments.done"] = Field(default="response.mcp_call.arguments.done")
 
 
 @json_schema_type
@@ -892,10 +988,13 @@ class OpenAIResponseObjectStreamResponseMcpCallInProgress(BaseModel):
     :param type: Event type identifier, always "response.mcp_call.in_progress"
     """
 
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.mcp_call.in_progress"] = "response.mcp_call.in_progress"
+    item_id: str = Field(description="Unique identifier of the MCP call")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.mcp_call.in_progress"] = Field(
+        default="response.mcp_call.in_progress",
+        description='Event type identifier, always "response.mcp_call.in_progress"',
+    )
 
 
 @json_schema_type
@@ -906,8 +1005,10 @@ class OpenAIResponseObjectStreamResponseMcpCallFailed(BaseModel):
     :param type: Event type identifier, always "response.mcp_call.failed"
     """
 
-    sequence_number: int
-    type: Literal["response.mcp_call.failed"] = "response.mcp_call.failed"
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.mcp_call.failed"] = Field(
+        default="response.mcp_call.failed", description='Event type identifier, always "response.mcp_call.failed"'
+    )
 
 
 @json_schema_type
@@ -918,8 +1019,10 @@ class OpenAIResponseObjectStreamResponseMcpCallCompleted(BaseModel):
     :param type: Event type identifier, always "response.mcp_call.completed"
     """
 
-    sequence_number: int
-    type: Literal["response.mcp_call.completed"] = "response.mcp_call.completed"
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.mcp_call.completed"] = Field(
+        default="response.mcp_call.completed", description='Event type identifier, always "response.mcp_call.completed"'
+    )
 
 
 @json_schema_type
@@ -932,10 +1035,14 @@ class OpenAIResponseContentPartOutputText(BaseModel):
     :param logprobs: (Optional) Token log probability details
     """
 
-    type: Literal["output_text"] = "output_text"
-    text: str
-    annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
-    logprobs: list[dict[str, Any]] | None = None
+    type: Literal["output_text"] = Field(
+        default="output_text", description='Content part type identifier, always "output_text"'
+    )
+    text: str = Field(description="Text emitted for this content part")
+    annotations: list[OpenAIResponseAnnotations] = Field(
+        default_factory=list, description="Structured annotations associated with the text"
+    )
+    logprobs: list[dict[str, Any]] | None = Field(default=None, description="Token log probability details")
 
 
 @json_schema_type
@@ -946,8 +1053,10 @@ class OpenAIResponseContentPartReasoningText(BaseModel):
     :param text: Reasoning text supplied by the model
     """
 
-    type: Literal["reasoning_text"] = "reasoning_text"
-    text: str
+    type: Literal["reasoning_text"] = Field(
+        default="reasoning_text", description='Content part type identifier, always "reasoning_text"'
+    )
+    text: str = Field(description="Reasoning text supplied by the model")
 
 
 OpenAIResponseContentPart = Annotated[
@@ -970,13 +1079,15 @@ class OpenAIResponseObjectStreamResponseContentPartAdded(BaseModel):
     :param type: Event type identifier, always "response.content_part.added"
     """
 
-    content_index: int
-    response_id: str
-    item_id: str
-    output_index: int
-    part: OpenAIResponseContentPart
-    sequence_number: int
-    type: Literal["response.content_part.added"] = "response.content_part.added"
+    content_index: int = Field(description="Index position of the part within the content array")
+    response_id: str = Field(description="Unique identifier of the response containing this content")
+    item_id: str = Field(description="Unique identifier of the output item containing this content part")
+    output_index: int = Field(description="Index position of the output item in the response")
+    part: OpenAIResponseContentPart = Field(description="The content part that was added")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.content_part.added"] = Field(
+        default="response.content_part.added", description='Event type identifier, always "response.content_part.added"'
+    )
 
 
 @json_schema_type
@@ -992,13 +1103,15 @@ class OpenAIResponseObjectStreamResponseContentPartDone(BaseModel):
     :param type: Event type identifier, always "response.content_part.done"
     """
 
-    content_index: int
-    response_id: str
-    item_id: str
-    output_index: int
-    part: OpenAIResponseContentPart
-    sequence_number: int
-    type: Literal["response.content_part.done"] = "response.content_part.done"
+    content_index: int = Field(description="Index position of the part within the content array")
+    response_id: str = Field(description="Unique identifier of the response containing this content")
+    item_id: str = Field(description="Unique identifier of the output item containing this content part")
+    output_index: int = Field(description="Index position of the output item in the response")
+    part: OpenAIResponseContentPart = Field(description="The completed content part")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.content_part.done"] = Field(
+        default="response.content_part.done", description='Event type identifier, always "response.content_part.done"'
+    )
 
 
 @json_schema_type
@@ -1013,12 +1126,15 @@ class OpenAIResponseObjectStreamResponseReasoningTextDelta(BaseModel):
     :param type: Event type identifier, always "response.reasoning_text.delta"
     """
 
-    content_index: int
-    delta: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.reasoning_text.delta"] = "response.reasoning_text.delta"
+    content_index: int = Field(description="Index position of the reasoning content part")
+    delta: str = Field(description="Incremental reasoning text being added")
+    item_id: str = Field(description="Unique identifier of the output item being updated")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.reasoning_text.delta"] = Field(
+        default="response.reasoning_text.delta",
+        description='Event type identifier, always "response.reasoning_text.delta"',
+    )
 
 
 @json_schema_type
@@ -1033,12 +1149,15 @@ class OpenAIResponseObjectStreamResponseReasoningTextDone(BaseModel):
     :param type: Event type identifier, always "response.reasoning_text.done"
     """
 
-    content_index: int
-    text: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.reasoning_text.done"] = "response.reasoning_text.done"
+    content_index: int = Field(description="Index position of the reasoning content part")
+    text: str = Field(description="Final complete reasoning text")
+    item_id: str = Field(description="Unique identifier of the completed output item")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.reasoning_text.done"] = Field(
+        default="response.reasoning_text.done",
+        description='Event type identifier, always "response.reasoning_text.done"',
+    )
 
 
 @json_schema_type
@@ -1049,8 +1168,10 @@ class OpenAIResponseContentPartReasoningSummary(BaseModel):
     :param text: Summary text
     """
 
-    type: Literal["summary_text"] = "summary_text"
-    text: str
+    type: Literal["summary_text"] = Field(
+        default="summary_text", description='Content part type identifier, always "summary_text"'
+    )
+    text: str = Field(description="Summary text")
 
 
 @json_schema_type
@@ -1065,12 +1186,15 @@ class OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(BaseModel):
     :param type: Event type identifier, always "response.reasoning_summary_part.added"
     """
 
-    item_id: str
-    output_index: int
-    part: OpenAIResponseContentPartReasoningSummary
-    sequence_number: int
-    summary_index: int
-    type: Literal["response.reasoning_summary_part.added"] = "response.reasoning_summary_part.added"
+    item_id: str = Field(description="Unique identifier of the output item")
+    output_index: int = Field(description="Index position of the output item")
+    part: OpenAIResponseContentPartReasoningSummary = Field(description="The summary part that was added")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    summary_index: int = Field(description="Index of the summary part within the reasoning summary")
+    type: Literal["response.reasoning_summary_part.added"] = Field(
+        default="response.reasoning_summary_part.added",
+        description='Event type identifier, always "response.reasoning_summary_part.added"',
+    )
 
 
 @json_schema_type
@@ -1085,12 +1209,15 @@ class OpenAIResponseObjectStreamResponseReasoningSummaryPartDone(BaseModel):
     :param type: Event type identifier, always "response.reasoning_summary_part.done"
     """
 
-    item_id: str
-    output_index: int
-    part: OpenAIResponseContentPartReasoningSummary
-    sequence_number: int
-    summary_index: int
-    type: Literal["response.reasoning_summary_part.done"] = "response.reasoning_summary_part.done"
+    item_id: str = Field(description="Unique identifier of the output item")
+    output_index: int = Field(description="Index position of the output item")
+    part: OpenAIResponseContentPartReasoningSummary = Field(description="The completed summary part")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    summary_index: int = Field(description="Index of the summary part within the reasoning summary")
+    type: Literal["response.reasoning_summary_part.done"] = Field(
+        default="response.reasoning_summary_part.done",
+        description='Event type identifier, always "response.reasoning_summary_part.done"',
+    )
 
 
 @json_schema_type
@@ -1105,12 +1232,15 @@ class OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(BaseModel):
     :param type: Event type identifier, always "response.reasoning_summary_text.delta"
     """
 
-    delta: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    summary_index: int
-    type: Literal["response.reasoning_summary_text.delta"] = "response.reasoning_summary_text.delta"
+    delta: str = Field(description="Incremental summary text being added")
+    item_id: str = Field(description="Unique identifier of the output item")
+    output_index: int = Field(description="Index position of the output item")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    summary_index: int = Field(description="Index of the summary part within the reasoning summary")
+    type: Literal["response.reasoning_summary_text.delta"] = Field(
+        default="response.reasoning_summary_text.delta",
+        description='Event type identifier, always "response.reasoning_summary_text.delta"',
+    )
 
 
 @json_schema_type
@@ -1125,12 +1255,15 @@ class OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(BaseModel):
     :param type: Event type identifier, always "response.reasoning_summary_text.done"
     """
 
-    text: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    summary_index: int
-    type: Literal["response.reasoning_summary_text.done"] = "response.reasoning_summary_text.done"
+    text: str = Field(description="Final complete summary text")
+    item_id: str = Field(description="Unique identifier of the output item")
+    output_index: int = Field(description="Index position of the output item")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    summary_index: int = Field(description="Index of the summary part within the reasoning summary")
+    type: Literal["response.reasoning_summary_text.done"] = Field(
+        default="response.reasoning_summary_text.done",
+        description='Event type identifier, always "response.reasoning_summary_text.done"',
+    )
 
 
 @json_schema_type
@@ -1145,12 +1278,14 @@ class OpenAIResponseObjectStreamResponseRefusalDelta(BaseModel):
     :param type: Event type identifier, always "response.refusal.delta"
     """
 
-    content_index: int
-    delta: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.refusal.delta"] = "response.refusal.delta"
+    content_index: int = Field(description="Index position of the content part")
+    delta: str = Field(description="Incremental refusal text being added")
+    item_id: str = Field(description="Unique identifier of the output item")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.refusal.delta"] = Field(
+        default="response.refusal.delta", description='Event type identifier, always "response.refusal.delta"'
+    )
 
 
 @json_schema_type
@@ -1165,12 +1300,14 @@ class OpenAIResponseObjectStreamResponseRefusalDone(BaseModel):
     :param type: Event type identifier, always "response.refusal.done"
     """
 
-    content_index: int
-    refusal: str
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.refusal.done"] = "response.refusal.done"
+    content_index: int = Field(description="Index position of the content part")
+    refusal: str = Field(description="Final complete refusal text")
+    item_id: str = Field(description="Unique identifier of the output item")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.refusal.done"] = Field(
+        default="response.refusal.done", description='Event type identifier, always "response.refusal.done"'
+    )
 
 
 @json_schema_type
@@ -1186,13 +1323,16 @@ class OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded(BaseModel):
     :param type: Event type identifier, always "response.output_text.annotation.added"
     """
 
-    item_id: str
-    output_index: int
-    content_index: int
-    annotation_index: int
-    annotation: OpenAIResponseAnnotations
-    sequence_number: int
-    type: Literal["response.output_text.annotation.added"] = "response.output_text.annotation.added"
+    item_id: str = Field(description="Unique identifier of the item to which the annotation is being added")
+    output_index: int = Field(description="Index position of the output item in the response's output array")
+    content_index: int = Field(description="Index position of the content part within the output item")
+    annotation_index: int = Field(description="Index of the annotation within the content part")
+    annotation: OpenAIResponseAnnotations = Field(description="The annotation object being added")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.output_text.annotation.added"] = Field(
+        default="response.output_text.annotation.added",
+        description='Event type identifier, always "response.output_text.annotation.added"',
+    )
 
 
 @json_schema_type
@@ -1205,10 +1345,13 @@ class OpenAIResponseObjectStreamResponseFileSearchCallInProgress(BaseModel):
     :param type: Event type identifier, always "response.file_search_call.in_progress"
     """
 
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.file_search_call.in_progress"] = "response.file_search_call.in_progress"
+    item_id: str = Field(description="Unique identifier of the file search call")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.file_search_call.in_progress"] = Field(
+        default="response.file_search_call.in_progress",
+        description='Event type identifier, always "response.file_search_call.in_progress"',
+    )
 
 
 @json_schema_type
@@ -1221,10 +1364,13 @@ class OpenAIResponseObjectStreamResponseFileSearchCallSearching(BaseModel):
     :param type: Event type identifier, always "response.file_search_call.searching"
     """
 
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.file_search_call.searching"] = "response.file_search_call.searching"
+    item_id: str = Field(description="Unique identifier of the file search call")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.file_search_call.searching"] = Field(
+        default="response.file_search_call.searching",
+        description='Event type identifier, always "response.file_search_call.searching"',
+    )
 
 
 @json_schema_type
@@ -1237,10 +1383,13 @@ class OpenAIResponseObjectStreamResponseFileSearchCallCompleted(BaseModel):
     :param type: Event type identifier, always "response.file_search_call.completed"
     """
 
-    item_id: str
-    output_index: int
-    sequence_number: int
-    type: Literal["response.file_search_call.completed"] = "response.file_search_call.completed"
+    item_id: str = Field(description="Unique identifier of the completed file search call")
+    output_index: int = Field(description="Index position of the item in the output list")
+    sequence_number: int = Field(description="Sequential number for ordering streaming events")
+    type: Literal["response.file_search_call.completed"] = Field(
+        default="response.file_search_call.completed",
+        description='Event type identifier, always "response.file_search_call.completed"',
+    )
 
 
 OpenAIResponseObjectStream = Annotated[
@@ -1291,11 +1440,11 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     This represents the output of a function call that gets passed back to the model.
     """
 
-    call_id: str
-    output: str
-    type: Literal["function_call_output"] = "function_call_output"
-    id: str | None = None
-    status: str | None = None
+    call_id: str = Field()
+    output: str = Field()
+    type: Literal["function_call_output"] = Field(default="function_call_output")
+    id: str | None = Field(default=None)
+    status: str | None = Field(default=None)
 
 
 OpenAIResponseInput = Annotated[
@@ -1317,8 +1466,8 @@ class ListOpenAIResponseInputItem(BaseModel):
     :param object: Object type identifier, always "list"
     """
 
-    data: Sequence[OpenAIResponseInput]
-    object: Literal["list"] = "list"
+    data: Sequence[OpenAIResponseInput] = Field(description="List of input items")
+    object: Literal["list"] = Field(default="list", description='Object type identifier, always "list"')
 
 
 @json_schema_type
@@ -1328,7 +1477,7 @@ class OpenAIResponseObjectWithInput(OpenAIResponseObject):
     :param input: List of input items that led to this response
     """
 
-    input: Sequence[OpenAIResponseInput]
+    input: Sequence[OpenAIResponseInput] = Field(description="List of input items that led to this response")
 
     def to_response_object(self) -> OpenAIResponseObject:
         """Convert to OpenAIResponseObject by excluding input field."""
@@ -1346,8 +1495,10 @@ class ListOpenAIResponseObject(BaseModel):
     :param object: Object type identifier, always "list"
     """
 
-    data: Sequence[OpenAIResponseObjectWithInput]
-    has_more: bool
-    first_id: str
-    last_id: str
-    object: Literal["list"] = "list"
+    data: Sequence[OpenAIResponseObjectWithInput] = Field(
+        description="List of response objects with their input context"
+    )
+    has_more: bool = Field(description="Whether there are more results available beyond this page")
+    first_id: str = Field(description="Identifier of the first item in this page")
+    last_id: str = Field(description="Identifier of the last item in this page")
+    object: Literal["list"] = Field(default="list", description='Object type identifier, always "list"')

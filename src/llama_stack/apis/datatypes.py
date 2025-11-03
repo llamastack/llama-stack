@@ -130,23 +130,22 @@ class Api(Enum, metaclass=DynamicApiMeta):
 
     # built-in API
     inspect = "inspect"
+    synthetic_data_generation = "synthetic_data_generation"
 
 
 @json_schema_type
 class Error(BaseModel):
-    """
-    Error response from the API. Roughly follows RFC 7807.
+    """Error response from the API. Roughly follows RFC 7807."""
 
-    :param status: HTTP status code
-    :param title: Error title, a short summary of the error which is invariant for an error type
-    :param detail: Error detail, a longer human-readable description of the error
-    :param instance: (Optional) A URL which can be used to retrieve more information about the specific occurrence of the error
-    """
-
-    status: int
-    title: str
-    detail: str
-    instance: str | None = None
+    status: int = Field(..., description="HTTP status code")
+    title: str = Field(
+        ..., description="Error title, a short summary of the error which is invariant for an error type"
+    )
+    detail: str = Field(..., description="Error detail, a longer human-readable description of the error")
+    instance: str | None = Field(
+        None,
+        description="(Optional) A URL which can be used to retrieve more information about the specific occurrence of the error",
+    )
 
 
 class ExternalApiSpec(BaseModel):

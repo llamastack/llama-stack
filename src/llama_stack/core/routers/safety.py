@@ -7,8 +7,7 @@
 from typing import Any
 
 from llama_stack.apis.inference import Message
-from llama_stack.apis.safety import RunShieldResponse, Safety
-from llama_stack.apis.safety.safety import ModerationObject
+from llama_stack.apis.safety import ModerationObject, RunShieldResponse, Safety
 from llama_stack.apis.shields import Shield
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.log import get_logger

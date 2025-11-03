@@ -6,42 +6,28 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from llama_stack.schema_utils import json_schema_type
 
 
 @json_schema_type
 class PostTrainingMetric(BaseModel):
-    """Training metrics captured during post-training jobs.
+    """Training metrics captured during post-training jobs."""
 
-    :param epoch: Training epoch number
-    :param train_loss: Loss value on the training dataset
-    :param validation_loss: Loss value on the validation dataset
-    :param perplexity: Perplexity metric indicating model confidence
-    """
-
-    epoch: int
-    train_loss: float
-    validation_loss: float
-    perplexity: float
+    epoch: int = Field(description="Training epoch number.")
+    train_loss: float = Field(description="Loss value on the training dataset.")
+    validation_loss: float = Field(description="Loss value on the validation dataset.")
+    perplexity: float = Field(description="Perplexity metric indicating model confidence.")
 
 
 @json_schema_type
 class Checkpoint(BaseModel):
-    """Checkpoint created during training runs.
+    """Checkpoint created during training runs."""
 
-    :param identifier: Unique identifier for the checkpoint
-    :param created_at: Timestamp when the checkpoint was created
-    :param epoch: Training epoch when the checkpoint was saved
-    :param post_training_job_id: Identifier of the training job that created this checkpoint
-    :param path: File system path where the checkpoint is stored
-    :param training_metrics: (Optional) Training metrics associated with this checkpoint
-    """
-
-    identifier: str
-    created_at: datetime
-    epoch: int
-    post_training_job_id: str
-    path: str
-    training_metrics: PostTrainingMetric | None = None
+    identifier: str = Field(description="Unique identifier for the checkpoint.")
+    created_at: datetime = Field(description="Timestamp when the checkpoint was created.")
+    epoch: int = Field(description="Training epoch when the checkpoint was saved.")
+    post_training_job_id: str = Field(description="Identifier of the training job that created this checkpoint.")
+    path: str = Field(description="File system path where the checkpoint is stored.")
+    training_metrics: PostTrainingMetric | None = Field(description="Training metrics associated with this checkpoint.")

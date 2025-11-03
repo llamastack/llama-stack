@@ -15,6 +15,7 @@ using multiple validation tools and approaches.
 import argparse
 import json
 import sys
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +45,8 @@ def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI 
         return False
     except Exception as e:
         print(f"❌ {schema_name} validation error: {e}")
+        print("   Traceback:")
+        traceback.print_exc()
         return False
 
 

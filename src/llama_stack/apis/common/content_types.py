@@ -15,21 +15,13 @@ from llama_stack.schema_utils import json_schema_type, register_schema
 
 @json_schema_type
 class URL(BaseModel):
-    """A URL reference to external content.
-
-    :param uri: The URL string pointing to the resource
-    """
+    """A URL reference to external content."""
 
     uri: str
 
 
 class _URLOrData(BaseModel):
-    """
-    A URL or a base64 encoded string
-
-    :param url: A URL of the image or data URL in the format of data:image/{type};base64,{data}. Note that URL could have length limits.
-    :param data: base64 encoded image data as string
-    """
+    """A URL or a base64 encoded string."""
 
     url: URL | None = None
     # data is a base64 encoded string, hint with contentEncoding=base64
@@ -45,11 +37,7 @@ class _URLOrData(BaseModel):
 
 @json_schema_type
 class ImageContentItem(BaseModel):
-    """A image content item
-
-    :param type: Discriminator type of the content item. Always "image"
-    :param image: Image as a base64 encoded string or an URL
-    """
+    """A image content item."""
 
     type: Literal["image"] = "image"
     image: _URLOrData
@@ -57,11 +45,7 @@ class ImageContentItem(BaseModel):
 
 @json_schema_type
 class TextContentItem(BaseModel):
-    """A text content item
-
-    :param type: Discriminator type of the content item. Always "text"
-    :param text: Text content
-    """
+    """A text content item."""
 
     type: Literal["text"] = "text"
     text: str
@@ -81,11 +65,7 @@ register_schema(InterleavedContent, name="InterleavedContent")
 
 @json_schema_type
 class TextDelta(BaseModel):
-    """A text content delta for streaming responses.
-
-    :param type: Discriminator type of the delta. Always "text"
-    :param text: The incremental text content
-    """
+    """A text content delta for streaming responses."""
 
     type: Literal["text"] = "text"
     text: str
@@ -93,23 +73,14 @@ class TextDelta(BaseModel):
 
 @json_schema_type
 class ImageDelta(BaseModel):
-    """An image content delta for streaming responses.
-
-    :param type: Discriminator type of the delta. Always "image"
-    :param image: The incremental image data as bytes
-    """
+    """An image content delta for streaming responses."""
 
     type: Literal["image"] = "image"
     image: bytes
 
 
 class ToolCallParseStatus(Enum):
-    """Status of tool call parsing during streaming.
-    :cvar started: Tool call parsing has begun
-    :cvar in_progress: Tool call parsing is ongoing
-    :cvar failed: Tool call parsing failed
-    :cvar succeeded: Tool call parsing completed successfully
-    """
+    """Status of tool call parsing during streaming."""
 
     started = "started"
     in_progress = "in_progress"
@@ -119,12 +90,7 @@ class ToolCallParseStatus(Enum):
 
 @json_schema_type
 class ToolCallDelta(BaseModel):
-    """A tool call content delta for streaming responses.
-
-    :param type: Discriminator type of the delta. Always "tool_call"
-    :param tool_call: Either an in-progress tool call string or the final parsed tool call
-    :param parse_status: Current parsing status of the tool call
-    """
+    """A tool call content delta for streaming responses."""
 
     type: Literal["tool_call"] = "tool_call"
 

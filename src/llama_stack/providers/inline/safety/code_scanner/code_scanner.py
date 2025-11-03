@@ -12,12 +12,13 @@ if TYPE_CHECKING:
 
 from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.apis.safety import (
+    ModerationObject,
+    ModerationObjectResults,
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ViolationLevel,
 )
-from llama_stack.apis.safety.safety import ModerationObject, ModerationObjectResults
 from llama_stack.apis.shields import Shield
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -49,6 +50,9 @@ class MetaReferenceCodeScannerSafetyImpl(Safety):
             raise ValueError(
                 f"Unsupported Code Scanner ID: {shield.provider_resource_id}. Allowed IDs: {ALLOWED_CODE_SCANNER_MODEL_IDS}"
             )
+
+    async def unregister_shield(self, identifier: str) -> None:
+        pass
 
     async def run_shield(
         self,

@@ -9,13 +9,11 @@ from collections.abc import AsyncIterator
 
 from llama_stack.apis.inference import (
     InferenceProvider,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAICompletionRequestWithExtraBody,
-)
-from llama_stack.apis.inference.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletion,
+    OpenAICompletionRequestWithExtraBody,
 )
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.log import get_logger

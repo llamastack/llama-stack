@@ -25,13 +25,13 @@ from llama_stack.apis.agents import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
     OpenAIResponseObject,
-    Order,
+    OpenAIResponsePrompt,
+    OpenAIResponseText,
+    ResponseGuardrail,
     Session,
     Turn,
 )
-from llama_stack.apis.agents.agents import ResponseGuardrail
-from llama_stack.apis.agents.openai_responses import OpenAIResponsePrompt, OpenAIResponseText
-from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack.apis.common.responses import Order, PaginatedResponse
 from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.inference import (
     Inference,

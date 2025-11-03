@@ -18,7 +18,7 @@ import pytest
 
 from llama_stack import LlamaStackAsLibraryClient
 from llama_stack.apis.datatypes import Api
-from llama_stack.apis.inference.inference import (
+from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionUsage,

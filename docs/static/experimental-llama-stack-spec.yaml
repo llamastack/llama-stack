@@ -12,171 +12,322 @@ paths:
   /v1beta/datasetio/append-rows/{dataset_id}:
     post:
       tags:
-      - V1Beta
+      - DatasetIO
       summary: Append rows to a dataset.
-      description: Generic endpoint - this would be replaced with actual implementation.
+      description: Append rows to a dataset.
       operationId: append_rows_v1beta_datasetio_append_rows__dataset_id__post
       parameters:
-      - name: args
-        in: query
-        required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
       - name: dataset_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to append the rows to
+          title: Dataset Id
+        description: The ID of the dataset to append the rows to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+              description: The rows to append to the dataset.
+              title: Body
+      responses:
+        '204':
+          description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1beta/datasetio/iterrows/{dataset_id}:
+    get:
+      tags:
+      - DatasetIO
+      summary: Get a paginated list of rows from a dataset.
+      description: Get a paginated list of rows from a dataset using offset-based pagination.
+      operationId: iterrows_v1beta_datasetio_iterrows__dataset_id__get
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the dataset to get the rows from
+          title: Dataset Id
+        description: The ID of the dataset to get the rows from
+      - name: start_index
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Index into dataset for the first row to get. Get all rows if None.
+          title: Start Index
+        description: Index into dataset for the first row to get. Get all rows if None.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The number of rows to get.
+          title: Limit
+        description: The number of rows to get.
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1beta/datasetio/iterrows/{dataset_id}:
-    get:
-      tags:
-      - V1Beta
-      summary: Get a paginated list of rows from a dataset.
-      description: Query endpoint for proper schema generation.
-      operationId: iterrows_v1beta_datasetio_iterrows__dataset_id__get
-      parameters:
-      - name: limit
-        in: query
-        required: true
-        schema:
-          type: integer
-          title: Limit
-      - name: start_index
-        in: query
-        required: true
-        schema:
-          type: integer
-          title: Start Index
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Dataset Id
-      responses:
-        '200':
-          description: A PaginatedResponse.
-          content:
-            application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1beta/datasets:
     get:
       tags:
-      - V1Beta
-      summary: List all datasets.
-      description: Response-only endpoint for proper schema generation.
+      - Datasets
+      summary: List all datasets
+      description: List all datasets
       operationId: list_datasets_v1beta_datasets_get
       responses:
         '200':
-          description: A ListDatasetsResponse.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDatasetsResponse'
         '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
       tags:
-      - V1Beta
-      summary: Register a new dataset.
-      description: Typed endpoint for proper schema generation.
+      - Datasets
+      summary: Register a new dataset
+      description: Register a new dataset
       operationId: register_dataset_v1beta_datasets_post
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/__main_____datasets_Request'
+              $ref: '#/components/schemas/RegisterDatasetRequest'
         required: true
       responses:
         '200':
-          description: A Dataset.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Dataset'
         '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-  /v1beta/datasets/{dataset_id}:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1beta/datasets/{{dataset_id}}:
     delete:
       tags:
-      - V1Beta
-      summary: Unregister a dataset by its ID.
-      description: Generic endpoint - this would be replaced with actual implementation.
-      operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
+      - Datasets
+      summary: Unregister a dataset by its ID
+      description: Unregister a dataset by its ID
+      operationId: unregister_dataset_v1beta_datasets___dataset_id___delete
       parameters:
-      - name: args
-        in: query
-        required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
       - name: dataset_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to unregister
+          title: Dataset Id
+        description: The ID of the dataset to unregister
+      responses:
+        '204':
+          description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+      - Datasets
+      summary: Get a dataset by its ID
+      description: Get a dataset by its ID
+      operationId: get_dataset_v1beta_datasets___dataset_id___get
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the dataset to get
+          title: Dataset Id
+        description: The ID of the dataset to get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents:
+    get:
+      tags:
+      - Agents
+      summary: List all agents.
+      description: List all agents.
+      operationId: list_agents_v1alpha_agents_get
+      parameters:
+      - name: start_index
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The index to start the pagination from.
+          title: Start Index
+        description: The index to start the pagination from.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The number of agents to return.
+          title: Limit
+        description: The number of agents to return.
       responses:
         '200':
           description: Successful Response
@@ -184,385 +335,405 @@ paths:
             application/json:
               schema: {}
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    get:
-      tags:
-      - V1Beta
-      summary: Get a dataset by its ID.
-      description: Query endpoint for proper schema generation.
-      operationId: get_dataset_v1beta_datasets__dataset_id__get
-      parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Dataset Id
-      responses:
-        '200':
-          description: A Dataset.
+          description: The request was invalid or malformed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dataset'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/agents:
-    get:
-      tags:
-      - V1Alpha
-      summary: List all agents.
-      description: Query endpoint for proper schema generation.
-      operationId: list_agents_v1alpha_agents_get
-      parameters:
-      - name: limit
-        in: query
-        required: true
-        schema:
-          type: integer
-          title: Limit
-      - name: start_index
-        in: query
-        required: true
-        schema:
-          type: integer
-          title: Start Index
-      responses:
-        '200':
-          description: A PaginatedResponse.
+          description: The client has sent too many requests in a given amount of time.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
       tags:
-      - V1Alpha
-      summary: Create an agent with the given configuration.
-      description: Typed endpoint for proper schema generation.
+      - Agents
+      summary: Create an agent.
+      description: Create an agent with the given configuration.
       operationId: create_agent_v1alpha_agents_post
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AgentConfig'
+              $ref: '#/components/schemas/AgentConfig-Input'
       responses:
         '200':
-          description: An AgentCreateResponse with the agent ID.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentCreateResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/agents/{agent_id}:
-    delete:
-      tags:
-      - V1Alpha
-      summary: Delete an agent by its ID and its associated sessions and turns.
-      description: Generic endpoint - this would be replaced with actual implementation.
-      operationId: delete_agent_v1alpha_agents__agent_id__delete
-      parameters:
-      - name: args
-        in: query
-        required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The ID of the agent to delete.
-      responses:
-        '200':
-          description: Successful Response
+          description: The request was invalid or malformed.
           content:
             application/json:
-              schema: {}
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    get:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}:
+    delete:
       tags:
-      - V1Alpha
-      summary: Describe an agent by its ID.
-      description: Query endpoint for proper schema generation.
-      operationId: get_agent_v1alpha_agents__agent_id__get
+      - Agents
+      summary: Delete an agent.
+      description: Delete an agent by its ID.
+      operationId: delete_agent_v1alpha_agents___agent_id___delete
       parameters:
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the agent to delete.
+          title: Agent Id
+        description: The ID of the agent to delete.
+      responses:
+        '204':
+          description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+      - Agents
+      summary: Describe an agent.
+      description: Describe an agent by its ID.
+      operationId: get_agent_v1alpha_agents___agent_id___get
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: ID of the agent.
           title: Agent Id
         description: ID of the agent.
       responses:
         '200':
-          description: An Agent of the agent.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agent'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/agents/{agent_id}/session:
-    post:
-      tags:
-      - V1Alpha
-      summary: Create a new session for an agent.
-      description: Typed endpoint for proper schema generation.
-      operationId: create_agent_session_v1alpha_agents__agent_id__session_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/__main_____agents_agent_id_session_Request'
-        required: true
-      responses:
-        '200':
-          description: An AgentSessionCreateResponse.
+          description: The request was invalid or malformed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AgentSessionCreateResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      parameters:
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The ID of the agent to create the session for.
-  /v1alpha/agents/{agent_id}/session/{session_id}:
-    delete:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}/session:
+    post:
       tags:
-      - V1Alpha
-      summary: Delete an agent session by its ID and its associated turns.
-      description: Generic endpoint - this would be replaced with actual implementation.
-      operationId: delete_agents_session_v1alpha_agents__agent_id__session__session_id__delete
+      - Agents
+      summary: Create a new session for an agent.
+      description: Create a new session for an agent.
+      operationId: create_agent_session_v1alpha_agents___agent_id___session_post
       parameters:
-      - name: args
-        in: query
-        required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The ID of the session to delete.
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
-        description: The ID of the agent to delete the session for.
+          description: The ID of the agent to create the session for.
+          title: Agent Id
+        description: The ID of the agent to create the session for.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentSessionRequest'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/AgentSessionCreateResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    get:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}/session/{{session_id}}:
+    delete:
       tags:
-      - V1Alpha
-      summary: Retrieve an agent session by its ID.
-      description: Query endpoint for proper schema generation.
-      operationId: get_agents_session_v1alpha_agents__agent_id__session__session_id__get
+      - Agents
+      summary: Delete an agent session.
+      description: Delete an agent session by its ID.
+      operationId: delete_agents_session_v1alpha_agents___agent_id___session___session_id___delete
       parameters:
-      - name: turn_ids
-        in: query
+      - name: agent_id
+        in: path
         required: true
         schema:
           type: string
-          title: Turn Ids
+          description: The ID of the agent to delete the session for.
+          title: Agent Id
+        description: The ID of the agent to delete the session for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the session to delete.
           title: Session Id
-        description: The ID of the session to get.
-      - name: agent_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Agent Id
-        description: The ID of the agent to get the session for.
+        description: The ID of the session to delete.
       responses:
-        '200':
-          description: A Session.
+        '204':
+          description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/agents/{agent_id}/session/{session_id}/turn:
-    post:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
       tags:
-      - V1Alpha
-      summary: Create a new turn for an agent.
-      description: Typed endpoint for proper schema generation.
-      operationId: create_agent_turn_v1alpha_agents__agent_id__session__session_id__turn_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/__main_____agents_agent_id_session_session_id_turn_Request'
-        required: true
-      responses:
-        '200':
-          description: If stream=False, returns a Turn object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Turn'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
+      - Agents
+      summary: Retrieve an agent session.
+      description: Retrieve an agent session by its ID.
+      operationId: get_agents_session_v1alpha_agents___agent_id___session___session_id___get
       parameters:
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the agent to get the session for.
+          title: Agent Id
+        description: The ID of the agent to get the session for.
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the session to get.
+          title: Session Id
+        description: The ID of the session to get.
+      - name: turn_ids
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: List of turn IDs to filter the session by.
+          title: Turn Ids
+        description: List of turn IDs to filter the session by.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}/session/{{session_id}}/turn:
+    post:
+      tags:
+      - Agents
+      summary: Create a new turn for an agent.
+      description: Create a new turn for an agent.
+      operationId: create_agent_turn_v1alpha_agents___agent_id___session___session_id___turn_post
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the agent to create the turn for.
+          title: Agent Id
         description: The ID of the agent to create the turn for.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the session to create the turn for.
+          title: Session Id
         description: The ID of the session to create the turn for.
-  /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentTurnCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}/session/{{session_id}}/turn/{{turn_id}}:
     get:
       tags:
-      - V1Alpha
-      summary: Retrieve an agent turn by its ID.
-      description: Query endpoint for proper schema generation.
-      operationId: get_agents_turn_v1alpha_agents__agent_id__session__session_id__turn__turn_id__get
+      - Agents
+      summary: Retrieve an agent turn.
+      description: Retrieve an agent turn by its ID.
+      operationId: get_agents_turn_v1alpha_agents___agent_id___session___session_id___turn___turn_id___get
       parameters:
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the agent to get the turn for.
           title: Agent Id
         description: The ID of the agent to get the turn for.
       - name: session_id
@@ -570,6 +741,7 @@ paths:
         required: true
         schema:
           type: string
+          description: The ID of the session to get the turn for.
           title: Session Id
         description: The ID of the session to get the turn for.
       - name: turn_id
@@ -577,92 +749,122 @@ paths:
         required: true
         schema:
           type: string
+          description: The ID of the turn to get.
           title: Turn Id
         description: The ID of the turn to get.
       responses:
         '200':
-          description: A Turn.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Turn'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}/resume:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}/session/{{session_id}}/turn/{{turn_id}}/resume:
     post:
       tags:
-      - V1Alpha
-      summary: Resume an agent turn with executed tool call responses.
-      description: Typed endpoint for proper schema generation.
-      operationId: resume_agent_turn_v1alpha_agents__agent_id__session__session_id__turn__turn_id__resume_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/__main_____agents_agent_id_session_session_id_turn_turn_id_resume_Request'
-        required: true
-      responses:
-        '200':
-          description: A Turn object if stream is False, otherwise an AsyncIterator
-            of AgentTurnResponseStreamChunk objects.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Turn'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
+      - Agents
+      summary: Resume an agent turn.
+      description: Resume an agent turn with executed tool call responses.
+      operationId: resume_agent_turn_v1alpha_agents___agent_id___session___session_id___turn___turn_id___resume_post
       parameters:
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the agent to resume.
+          title: Agent Id
         description: The ID of the agent to resume.
       - name: session_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the session to resume.
+          title: Session Id
         description: The ID of the session to resume.
       - name: turn_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the turn to resume.
+          title: Turn Id
         description: The ID of the turn to resume.
-  /v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentTurnResumeRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}/session/{{session_id}}/turn/{{turn_id}}/step/{{step_id}}:
     get:
       tags:
-      - V1Alpha
-      summary: Retrieve an agent step by its ID.
-      description: Query endpoint for proper schema generation.
-      operationId: get_agents_step_v1alpha_agents__agent_id__session__session_id__turn__turn_id__step__step_id__get
+      - Agents
+      summary: Retrieve an agent step.
+      description: Retrieve an agent step by its ID.
+      operationId: get_agents_step_v1alpha_agents___agent_id___session___session_id___turn___turn_id___step___step_id___get
       parameters:
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the agent to get the step for.
           title: Agent Id
         description: The ID of the agent to get the step for.
       - name: session_id
@@ -670,6 +872,7 @@ paths:
         required: true
         schema:
           type: string
+          description: The ID of the session to get the step for.
           title: Session Id
         description: The ID of the session to get the step for.
       - name: turn_id
@@ -677,6 +880,7 @@ paths:
         required: true
         schema:
           type: string
+          description: The ID of the turn to get the step for.
           title: Turn Id
         description: The ID of the turn to get the step for.
       - name: step_id
@@ -684,454 +888,588 @@ paths:
         required: true
         schema:
           type: string
+          description: The ID of the step to get.
           title: Step Id
         description: The ID of the step to get.
       responses:
         '200':
-          description: An AgentStepResponse.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentStepResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/agents/{agent_id}/sessions:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/agents/{{agent_id}}/sessions:
     get:
       tags:
-      - V1Alpha
-      summary: List all session(s) of a given agent.
-      description: Query endpoint for proper schema generation.
-      operationId: list_agent_sessions_v1alpha_agents__agent_id__sessions_get
+      - Agents
+      summary: List all sessions of an agent.
+      description: List all session(s) of a given agent.
+      operationId: list_agent_sessions_v1alpha_agents___agent_id___sessions_get
       parameters:
-      - name: limit
-        in: query
-        required: true
-        schema:
-          type: integer
-          title: Limit
-      - name: start_index
-        in: query
-        required: true
-        schema:
-          type: integer
-          title: Start Index
       - name: agent_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the agent to list sessions for.
           title: Agent Id
         description: The ID of the agent to list sessions for.
+      - name: start_index
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The index to start the pagination from.
+          title: Start Index
+        description: The index to start the pagination from.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The number of sessions to return.
+          title: Limit
+        description: The number of sessions to return.
       responses:
         '200':
-          description: A PaginatedResponse.
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: The request was invalid or malformed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1alpha/eval/benchmarks:
     get:
       tags:
-      - V1Alpha
-      summary: List all benchmarks.
-      description: Response-only endpoint for proper schema generation.
+      - Benchmarks
+      summary: List all benchmarks
+      description: List all benchmarks
       operationId: list_benchmarks_v1alpha_eval_benchmarks_get
       responses:
         '200':
-          description: A ListBenchmarksResponse.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListBenchmarksResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
       tags:
-      - V1Alpha
-      summary: Register a benchmark.
-      description: Generic endpoint - this would be replaced with actual implementation.
+      - Benchmarks
+      summary: Register a benchmark
+      description: Register a benchmark
       operationId: register_benchmark_v1alpha_eval_benchmarks_post
-      parameters:
-      - name: args
-        in: query
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterBenchmarkRequest'
         required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
       responses:
-        '200':
+        '204':
           description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
           content:
             application/json:
-              schema: {}
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/eval/benchmarks/{benchmark_id}:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/eval/benchmarks/{{benchmark_id}}:
     delete:
       tags:
-      - V1Alpha
-      summary: Unregister a benchmark.
-      description: Generic endpoint - this would be replaced with actual implementation.
-      operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
+      - Benchmarks
+      summary: Unregister a benchmark
+      description: Unregister a benchmark
+      operationId: unregister_benchmark_v1alpha_eval_benchmarks___benchmark_id___delete
       parameters:
-      - name: args
-        in: query
-        required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
       - name: benchmark_id
         in: path
         required: true
         schema:
           type: string
-        description: The ID of the benchmark to unregister.
+          description: The ID of the benchmark to unregister
+          title: Benchmark Id
+        description: The ID of the benchmark to unregister
+      responses:
+        '204':
+          description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+      - Benchmarks
+      summary: Get a benchmark by its ID
+      description: Get a benchmark by its ID
+      operationId: get_benchmark_v1alpha_eval_benchmarks___benchmark_id___get
+      parameters:
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the benchmark to get
+          title: Benchmark Id
+        description: The ID of the benchmark to get
       responses:
         '200':
           description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    get:
-      tags:
-      - V1Alpha
-      summary: Get a benchmark by its ID.
-      description: Query endpoint for proper schema generation.
-      operationId: get_benchmark_v1alpha_eval_benchmarks__benchmark_id__get
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Benchmark Id
-        description: The ID of the benchmark to get.
-      responses:
-        '200':
-          description: A Benchmark.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Benchmark'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/eval/benchmarks/{benchmark_id}/evaluations:
-    post:
-      tags:
-      - V1Alpha
-      summary: Evaluate a list of rows on a benchmark.
-      description: Typed endpoint for proper schema generation.
-      operationId: evaluate_rows_v1alpha_eval_benchmarks__benchmark_id__evaluations_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BenchmarkConfig'
-        required: true
-      responses:
-        '200':
-          description: EvaluateResponse object containing generations and scores.
+          description: The request was invalid or malformed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EvaluateResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The ID of the benchmark to run the evaluation on.
-  /v1alpha/eval/benchmarks/{benchmark_id}/jobs:
-    post:
-      tags:
-      - V1Alpha
-      summary: Run an evaluation on a benchmark.
-      description: Typed endpoint for proper schema generation.
-      operationId: run_eval_v1alpha_eval_benchmarks__benchmark_id__jobs_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BenchmarkConfig'
-        required: true
-      responses:
-        '200':
-          description: The job that was created to run the evaluation.
+          description: The client has sent too many requests in a given amount of time.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Job'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The ID of the benchmark to run the evaluation on.
-  /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
-    delete:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/eval/benchmarks/{{benchmark_id}}/evaluations:
+    post:
       tags:
-      - V1Alpha
-      summary: Cancel a job.
-      description: Generic endpoint - this would be replaced with actual implementation.
-      operationId: job_cancel_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__delete
+      - Eval
+      summary: Evaluate a list of rows on a benchmark
+      description: Evaluate a list of rows on a benchmark
+      operationId: evaluate_rows_v1alpha_eval_benchmarks___benchmark_id___evaluations_post
       parameters:
-      - name: args
-        in: query
-        required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
       - name: benchmark_id
         in: path
         required: true
         schema:
           type: string
-        description: The ID of the benchmark to run the evaluation on.
-      - name: job_id
-        in: path
+          description: The ID of the benchmark to run the evaluation on
+          title: Benchmark Id
+        description: The ID of the benchmark to run the evaluation on
+      requestBody:
         required: true
-        schema:
-          type: string
-        description: The ID of the job to cancel.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateRowsRequest'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/EvaluateResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    get:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/eval/benchmarks/{{benchmark_id}}/jobs:
+    post:
       tags:
-      - V1Alpha
-      summary: Get the status of a job.
-      description: Query endpoint for proper schema generation.
-      operationId: job_status_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__get
+      - Eval
+      summary: Run an evaluation on a benchmark
+      description: Run an evaluation on a benchmark
+      operationId: run_eval_v1alpha_eval_benchmarks___benchmark_id___jobs_post
       parameters:
       - name: benchmark_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the benchmark to run the evaluation on
           title: Benchmark Id
-        description: The ID of the benchmark to run the evaluation on.
-      - name: job_id
-        in: path
+        description: The ID of the benchmark to run the evaluation on
+      requestBody:
         required: true
-        schema:
-          type: string
-          title: Job Id
-        description: The ID of the job to get the status of.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchmarkConfig'
       responses:
         '200':
-          description: The status of the evaluation job.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Job'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result:
-    get:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/eval/benchmarks/{{benchmark_id}}/jobs/{{job_id}}:
+    delete:
       tags:
-      - V1Alpha
-      summary: Get the result of a job.
-      description: Query endpoint for proper schema generation.
-      operationId: job_result_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__result_get
+      - Eval
+      summary: Cancel a job
+      description: Cancel a job
+      operationId: job_cancel_v1alpha_eval_benchmarks___benchmark_id___jobs___job_id___delete
       parameters:
       - name: benchmark_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the benchmark to run the evaluation on
           title: Benchmark Id
-        description: The ID of the benchmark to run the evaluation on.
+        description: The ID of the benchmark to run the evaluation on
       - name: job_id
         in: path
         required: true
         schema:
           type: string
+          description: The ID of the job to cancel
           title: Job Id
-        description: The ID of the job to get the result of.
+        description: The ID of the job to cancel
+      responses:
+        '204':
+          description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+      - Eval
+      summary: Get the status of a job
+      description: Get the status of a job
+      operationId: job_status_v1alpha_eval_benchmarks___benchmark_id___jobs___job_id___get
+      parameters:
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the benchmark to run the evaluation on
+          title: Benchmark Id
+        description: The ID of the benchmark to run the evaluation on
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the job to get the status of
+          title: Job Id
+        description: The ID of the job to get the status of
       responses:
         '200':
-          description: The result of the job.
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/eval/benchmarks/{{benchmark_id}}/jobs/{{job_id}}/result:
+    get:
+      tags:
+      - Eval
+      summary: Get the result of a job
+      description: Get the result of a job
+      operationId: job_result_v1alpha_eval_benchmarks___benchmark_id___jobs___job_id___result_get
+      parameters:
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the benchmark to run the evaluation on
+          title: Benchmark Id
+        description: The ID of the benchmark to run the evaluation on
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the job to get the result of
+          title: Job Id
+        description: The ID of the job to get the result of
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EvaluateResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1alpha/inference/rerank:
     post:
       tags:
-      - V1Alpha
-      summary: Rerank a list of documents based on their relevance to a query.
-      description: Typed endpoint for proper schema generation.
+      - Inference
+      summary: Rerank a list of documents.
+      description: Rerank a list of documents based on their relevance to a query.
       operationId: rerank_v1alpha_inference_rerank_post
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/_inference_rerank_Request'
+              $ref: '#/components/schemas/Body_rerank_v1alpha_inference_rerank_post'
         required: true
       responses:
         '200':
-          description: RerankResponse with indices sorted by relevance score (descending).
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RerankResponse'
         '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1alpha/post-training/job/artifacts:
     get:
       tags:
-      - V1Alpha
-      summary: Get the artifacts of a training job.
-      description: Query endpoint for proper schema generation.
+      - Post Training
+      summary: Get the artifacts of a training job
+      description: Get the artifacts of a training job
       operationId: get_training_job_artifacts_v1alpha_post_training_job_artifacts_get
       parameters:
       - name: job_uuid
@@ -1139,68 +1477,89 @@ paths:
         required: true
         schema:
           type: string
+          description: The UUID of the job to get the artifacts of
           title: Job Uuid
-      responses:
-        '200':
-          description: A PostTrainingJobArtifactsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostTrainingJobArtifactsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-  /v1alpha/post-training/job/cancel:
-    post:
-      tags:
-      - V1Alpha
-      summary: Cancel a training job.
-      description: Generic endpoint - this would be replaced with actual implementation.
-      operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
-      parameters:
-      - name: args
-        in: query
-        required: true
-        schema:
-          title: Args
-      - name: kwargs
-        in: query
-        required: true
-        schema:
-          title: Kwargs
+        description: The UUID of the job to get the artifacts of
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/PostTrainingJobArtifactsResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1alpha/post-training/job/cancel:
+    post:
+      tags:
+      - Post Training
+      summary: Cancel a training job
+      description: Cancel a training job
+      operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
+      parameters:
+      - name: job_uuid
+        in: query
+        required: true
+        schema:
+          type: string
+          description: The UUID of the job to cancel
+          title: Job Uuid
+        description: The UUID of the job to cancel
+      responses:
+        '204':
+          description: Successful Response
+        '400':
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1alpha/post-training/job/status:
     get:
       tags:
-      - V1Alpha
-      summary: Get the status of a training job.
-      description: Query endpoint for proper schema generation.
+      - Post Training
+      summary: Get the status of a training job
+      description: Get the status of a training job
       operationId: get_training_job_status_v1alpha_post_training_job_status_get
       parameters:
       - name: job_uuid
@@ -1208,193 +1567,391 @@ paths:
         required: true
         schema:
           type: string
+          description: The UUID of the job to get the status of
           title: Job Uuid
+        description: The UUID of the job to get the status of
       responses:
         '200':
-          description: A PostTrainingJobStatusResponse.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostTrainingJobStatusResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1alpha/post-training/jobs:
     get:
       tags:
-      - V1Alpha
-      summary: Get all training jobs.
-      description: Response-only endpoint for proper schema generation.
+      - Post Training
+      summary: Get all training jobs
+      description: Get all training jobs
       operationId: get_training_jobs_v1alpha_post_training_jobs_get
       responses:
         '200':
-          description: A ListPostTrainingJobsResponse.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListPostTrainingJobsResponse'
         '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1alpha/post-training/preference-optimize:
     post:
       tags:
-      - V1Alpha
-      summary: Run preference optimization of a model.
-      description: Typed endpoint for proper schema generation.
+      - Post Training
+      summary: Run preference optimization of a model
+      description: Run preference optimization of a model
       operationId: preference_optimize_v1alpha_post_training_preference_optimize_post
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DPOAlignmentConfig'
+              $ref: '#/components/schemas/PreferenceOptimizeRequest'
         required: true
       responses:
         '200':
-          description: A PostTrainingJob.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostTrainingJob'
         '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1alpha/post-training/supervised-fine-tune:
     post:
       tags:
-      - V1Alpha
-      summary: Run supervised fine-tuning of a model.
-      description: Typed endpoint for proper schema generation.
+      - Post Training
+      summary: Run supervised fine-tuning of a model
+      description: Run supervised fine-tuning of a model
       operationId: supervised_fine_tune_v1alpha_post_training_supervised_fine_tune_post
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrainingConfig'
+              $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
       responses:
         '200':
-          description: A PostTrainingJob.
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostTrainingJob'
         '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
+          description: The request was invalid or malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
+          description: The client has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
+          description: The server encountered an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
+    Agent:
+      properties:
+        agent_id:
+          type: string
+          title: Agent Id
+          description: Unique identifier for the agent
+        agent_config:
+          $ref: '#/components/schemas/AgentConfig-Output'
+          description: Configuration settings for the agent
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Timestamp when the agent was created
+      type: object
+      required:
+      - agent_id
+      - agent_config
+      - created_at
+      title: Agent
+      description: An agent instance with configuration and metadata.
     AgentCandidate:
       properties:
         type:
           type: string
           const: agent
           title: Type
+          description: The type of candidate.
           default: agent
         config:
-          $ref: '#/components/schemas/AgentConfig'
+          $ref: '#/components/schemas/AgentConfig-Input'
+          description: The configuration for the agent candidate.
       type: object
       required:
       - config
       title: AgentCandidate
       description: An agent candidate for evaluation.
-    AgentConfig:
+    AgentConfig-Input:
       properties:
         sampling_params:
-          $ref: '#/components/schemas/SamplingParams'
+          anyOf:
+          - $ref: '#/components/schemas/SamplingParams'
+          - type: 'null'
         input_shields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
           title: Input Shields
-          items:
-            type: string
-          type: array
         output_shields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
           title: Output Shields
-          items:
-            type: string
-          type: array
         toolgroups:
+          anyOf:
+          - items:
+              anyOf:
+              - type: string
+              - $ref: '#/components/schemas/AgentToolGroupWithArgs'
+            type: array
+          - type: 'null'
           title: Toolgroups
-          items:
-            anyOf:
-            - type: string
-            - $ref: '#/components/schemas/AgentToolGroupWithArgs'
-          type: array
         client_tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ToolDef'
+            type: array
+          - type: 'null'
           title: Client Tools
-          items:
-            $ref: '#/components/schemas/ToolDef'
-          type: array
         tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/ToolChoice'
+          - type: 'null'
           deprecated: true
-          $ref: '#/components/schemas/ToolChoice'
         tool_prompt_format:
+          anyOf:
+          - $ref: '#/components/schemas/ToolPromptFormat'
+          - type: 'null'
           deprecated: true
-          $ref: '#/components/schemas/ToolPromptFormat'
         tool_config:
-          $ref: '#/components/schemas/ToolConfig'
+          anyOf:
+          - $ref: '#/components/schemas/ToolConfig'
+          - type: 'null'
         max_infer_iters:
+          anyOf:
+          - type: integer
+          - type: 'null'
           title: Max Infer Iters
           default: 10
-          type: integer
         model:
           type: string
           title: Model
+          description: The model identifier to use for the agent
         instructions:
           type: string
           title: Instructions
+          description: The system instructions for the agent
         name:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Name
-          type: string
+          description: Optional name for the agent, used in telemetry and identification
         enable_session_persistence:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Enable Session Persistence
+          description: Optional flag indicating whether session data has to be persisted
           default: false
-          type: boolean
         response_format:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/JsonSchemaResponseFormat'
+            - $ref: '#/components/schemas/GrammarResponseFormat'
+            discriminator:
+              propertyName: type
+              mapping:
+                grammar: '#/components/schemas/GrammarResponseFormat'
+                json_schema: '#/components/schemas/JsonSchemaResponseFormat'
+          - type: 'null'
           title: Response Format
-          oneOf:
-          - $ref: '#/components/schemas/JsonSchemaResponseFormat'
-          - $ref: '#/components/schemas/GrammarResponseFormat'
-          discriminator:
-            propertyName: type
-            mapping:
-              grammar: '#/components/schemas/GrammarResponseFormat'
-              json_schema: '#/components/schemas/JsonSchemaResponseFormat'
+          description: Optional response format configuration
+      type: object
+      required:
+      - model
+      - instructions
+      title: AgentConfig
+      description: Configuration for an agent.
+    AgentConfig-Output:
+      properties:
+        sampling_params:
+          anyOf:
+          - $ref: '#/components/schemas/SamplingParams'
+          - type: 'null'
+        input_shields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Input Shields
+        output_shields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Output Shields
+        toolgroups:
+          anyOf:
+          - items:
+              anyOf:
+              - type: string
+              - $ref: '#/components/schemas/AgentToolGroupWithArgs'
+            type: array
+          - type: 'null'
+          title: Toolgroups
+        client_tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ToolDef'
+            type: array
+          - type: 'null'
+          title: Client Tools
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/ToolChoice'
+          - type: 'null'
+          deprecated: true
+        tool_prompt_format:
+          anyOf:
+          - $ref: '#/components/schemas/ToolPromptFormat'
+          - type: 'null'
+          deprecated: true
+        tool_config:
+          anyOf:
+          - $ref: '#/components/schemas/ToolConfig'
+          - type: 'null'
+        max_infer_iters:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max Infer Iters
+          default: 10
+        model:
+          type: string
+          title: Model
+          description: The model identifier to use for the agent
+        instructions:
+          type: string
+          title: Instructions
+          description: The system instructions for the agent
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: Optional name for the agent, used in telemetry and identification
+        enable_session_persistence:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Enable Session Persistence
+          description: Optional flag indicating whether session data has to be persisted
+          default: false
+        response_format:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/JsonSchemaResponseFormat'
+            - $ref: '#/components/schemas/GrammarResponseFormat'
+            discriminator:
+              propertyName: type
+              mapping:
+                grammar: '#/components/schemas/GrammarResponseFormat'
+                json_schema: '#/components/schemas/JsonSchemaResponseFormat'
+          - type: 'null'
+          title: Response Format
+          description: Optional response format configuration
       type: object
       required:
       - model
@@ -1406,6 +1963,7 @@ components:
         agent_id:
           type: string
           title: Agent Id
+          description: Unique identifier for the created agent
       type: object
       required:
       - agent_id
@@ -1416,11 +1974,34 @@ components:
         session_id:
           type: string
           title: Session Id
+          description: Unique identifier for the created session
       type: object
       required:
       - session_id
       title: AgentSessionCreateResponse
       description: Response returned when creating a new agent session.
+    AgentStepResponse:
+      properties:
+        step:
+          oneOf:
+          - $ref: '#/components/schemas/InferenceStep-Output'
+          - $ref: '#/components/schemas/ToolExecutionStep-Output'
+          - $ref: '#/components/schemas/ShieldCallStep-Output'
+          - $ref: '#/components/schemas/MemoryRetrievalStep-Output'
+          title: Step
+          description: The complete step data and execution details
+          discriminator:
+            propertyName: step_type
+            mapping:
+              inference: '#/components/schemas/InferenceStep-Output'
+              memory_retrieval: '#/components/schemas/MemoryRetrievalStep-Output'
+              shield_call: '#/components/schemas/ShieldCallStep-Output'
+              tool_execution: '#/components/schemas/ToolExecutionStep-Output'
+      type: object
+      required:
+      - step
+      title: AgentStepResponse
+      description: Response containing details of a specific agent step.
     AgentToolGroupWithArgs:
       properties:
         name:
@@ -1435,6 +2016,142 @@ components:
       - name
       - args
       title: AgentToolGroupWithArgs
+    AgentTurnCreateRequest:
+      properties:
+        sampling_params:
+          anyOf:
+          - $ref: '#/components/schemas/SamplingParams'
+          - type: 'null'
+        input_shields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Input Shields
+        output_shields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Output Shields
+        toolgroups:
+          anyOf:
+          - items:
+              anyOf:
+              - type: string
+              - $ref: '#/components/schemas/AgentToolGroupWithArgs'
+            type: array
+          - type: 'null'
+          title: Toolgroups
+          description: List of tool groups to make available for this turn
+        client_tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ToolDef'
+            type: array
+          - type: 'null'
+          title: Client Tools
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/ToolChoice'
+          - type: 'null'
+          deprecated: true
+        tool_prompt_format:
+          anyOf:
+          - $ref: '#/components/schemas/ToolPromptFormat'
+          - type: 'null'
+          deprecated: true
+        tool_config:
+          anyOf:
+          - $ref: '#/components/schemas/ToolConfig'
+          - type: 'null'
+          description: Tool configuration to override agent defaults
+        max_infer_iters:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max Infer Iters
+          default: 10
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instructions
+        agent_id:
+          type: string
+          title: Agent Id
+          description: Unique identifier for the agent
+        session_id:
+          type: string
+          title: Session Id
+          description: Unique identifier for the conversation session
+        messages:
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/UserMessage-Input'
+            - $ref: '#/components/schemas/ToolResponseMessage-Input'
+          type: array
+          title: Messages
+          description: List of messages to start the turn with
+        documents:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Document'
+            type: array
+          - type: 'null'
+          title: Documents
+          description: List of documents to provide to the agent
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Stream
+          description: Whether to stream the response
+          default: false
+      type: object
+      required:
+      - agent_id
+      - session_id
+      - messages
+      title: AgentTurnCreateRequest
+      description: Request to create a new turn for an agent.
+    AgentTurnResumeRequest:
+      properties:
+        agent_id:
+          type: string
+          title: Agent Id
+          description: Unique identifier for the agent
+        session_id:
+          type: string
+          title: Session Id
+          description: Unique identifier for the conversation session
+        turn_id:
+          type: string
+          title: Turn Id
+          description: Unique identifier for the turn within a session
+        tool_responses:
+          items:
+            $ref: '#/components/schemas/ToolResponse-Input'
+          type: array
+          title: Tool Responses
+          description: List of tool responses to submit to continue the turn
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Stream
+          description: Whether to stream the response
+          default: false
+      type: object
+      required:
+      - agent_id
+      - session_id
+      - turn_id
+      - tool_responses
+      title: AgentTurnResumeRequest
+      description: Request to resume an agent turn with tool responses.
     AggregationFunctionType:
       type: string
       enum:
@@ -1470,9 +2187,11 @@ components:
             type: array
           - $ref: '#/components/schemas/URL'
           title: Content
+          description: The content of the attachment.
         mime_type:
           type: string
           title: Mime Type
+          description: The MIME type of the attachment.
       type: object
       required:
       - content
@@ -1502,9 +2221,11 @@ components:
           title: Identifier
           description: Unique identifier for this resource in llama stack
         provider_resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Provider Resource Id
           description: Unique identifier for this resource in the provider
-          type: string
         provider_id:
           type: string
           title: Provider Id
@@ -1513,15 +2234,18 @@ components:
           type: string
           const: benchmark
           title: Type
+          description: The resource type, always benchmark
           default: benchmark
         dataset_id:
           type: string
           title: Dataset Id
+          description: The ID of the dataset to use for the benchmark
         scoring_functions:
           items:
             type: string
           type: array
           title: Scoring Functions
+          description: The scoring functions to use for the benchmark
         metadata:
           additionalProperties: true
           type: object
@@ -1542,6 +2266,7 @@ components:
           - $ref: '#/components/schemas/ModelCandidate'
           - $ref: '#/components/schemas/AgentCandidate'
           title: Eval Candidate
+          description: The candidate to evaluate.
           discriminator:
             propertyName: type
             mapping:
@@ -1561,18 +2286,52 @@ components:
                 regex_parser: '#/components/schemas/RegexParserScoringFnParams'
           type: object
           title: Scoring Params
-          description: Map between scoring function id and parameters for each scoring
-            function you want to run
+          description: Map between scoring function id and parameters for each scoring function you want to run.
         num_examples:
+          anyOf:
+          - type: integer
+          - type: 'null'
           title: Num Examples
-          description: Number of examples to evaluate (useful for testing), if not
-            provided, all examples in the dataset will be evaluated
-          type: integer
+          description: The number of examples to evaluate. If not provided, all examples in the dataset will be evaluated.
       type: object
       required:
       - eval_candidate
       title: BenchmarkConfig
       description: A benchmark configuration for evaluation.
+    Body_rerank_v1alpha_inference_rerank_post:
+      properties:
+        model:
+          type: string
+          title: Model
+          description: The identifier of the reranking model to use.
+        query:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+          - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
+          title: Query
+          description: The search query to rank items against.
+        items:
+          items:
+            anyOf:
+            - type: string
+            - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+            - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
+          type: array
+          title: Items
+          description: List of items to rerank.
+        max_num_results:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max Num Results
+          description: 'Maximum number of results to return. Default: returns all.'
+      type: object
+      required:
+      - model
+      - query
+      - items
+      title: Body_rerank_v1alpha_inference_rerank_post
     BuiltinTool:
       type: string
       enum:
@@ -1581,6 +2340,44 @@ components:
       - photogen
       - code_interpreter
       title: BuiltinTool
+    Checkpoint:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Unique identifier for the checkpoint.
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Timestamp when the checkpoint was created.
+        epoch:
+          type: integer
+          title: Epoch
+          description: Training epoch when the checkpoint was saved.
+        post_training_job_id:
+          type: string
+          title: Post Training Job Id
+          description: Identifier of the training job that created this checkpoint.
+        path:
+          type: string
+          title: Path
+          description: File system path where the checkpoint is stored.
+        training_metrics:
+          anyOf:
+          - $ref: '#/components/schemas/PostTrainingMetric'
+          - type: 'null'
+          description: Training metrics associated with this checkpoint.
+      type: object
+      required:
+      - identifier
+      - created_at
+      - epoch
+      - post_training_job_id
+      - path
+      - training_metrics
+      title: Checkpoint
+      description: Checkpoint created during training runs.
     CompletionMessage-Output:
       properties:
         role:
@@ -1613,17 +2410,34 @@ components:
         stop_reason:
           $ref: '#/components/schemas/StopReason'
         tool_calls:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ToolCall'
+            type: array
+          - type: 'null'
           title: Tool Calls
-          items:
-            $ref: '#/components/schemas/ToolCall'
-          type: array
       type: object
       required:
       - content
       - stop_reason
       title: CompletionMessage
-      description: A message containing the model's (assistant) response in a chat
-        conversation.
+      description: "A message containing the model's (assistant) response in a chat conversation.\n\n- `StopReason.end_of_turn`: The model finished generating the entire response.\n- `StopReason.end_of_message`: The model finished generating but generated a partial response -- usually, a tool call. The user may call the tool and continue the conversation with the tool's response.\n- `StopReason.out_of_tokens`: The model ran out of token budget."
+    CreateAgentSessionRequest:
+      properties:
+        agent_id:
+          type: string
+          title: Agent Id
+          description: The ID of the agent to create the session for
+        session_name:
+          type: string
+          title: Session Name
+          description: The name of the session to create
+      type: object
+      required:
+      - agent_id
+      - session_name
+      title: CreateAgentSessionRequest
+      description: Request to create a new session for an agent.
     DPOAlignmentConfig:
       properties:
         beta:
@@ -1659,16 +2473,22 @@ components:
         data_format:
           $ref: '#/components/schemas/DatasetFormat'
         validation_dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Validation Dataset Id
-          type: string
         packed:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Packed
           default: false
-          type: boolean
         train_on_input:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Train On Input
           default: false
-          type: boolean
       type: object
       required:
       - dataset_id
@@ -1684,9 +2504,11 @@ components:
           title: Identifier
           description: Unique identifier for this resource in llama stack
         provider_resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Provider Resource Id
           description: Unique identifier for this resource in the provider
-          type: string
         provider_id:
           type: string
           title: Provider Id
@@ -1695,6 +2517,7 @@ components:
           type: string
           const: dataset
           title: Type
+          description: Type of resource, always 'dataset' for datasets
           default: dataset
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
@@ -1720,8 +2543,7 @@ components:
       - purpose
       - source
       title: Dataset
-      description: Dataset resource for storing and accessing training or evaluation
-        data.
+      description: Dataset resource for storing and accessing training or evaluation data.
     DatasetFormat:
       type: string
       enum:
@@ -1736,8 +2558,7 @@ components:
       - eval/question-answer
       - eval/messages-answer
       title: DatasetPurpose
-      description: Purpose of the dataset. Each purpose has a required input data
-        schema.
+      description: "Purpose of the dataset. Each purpose has a required input data schema.\n\n    {\n        \"messages\": [\n            {\"role\": \"user\", \"content\": \"Hello, world!\"},\n            {\"role\": \"assistant\", \"content\": \"Hello, world!\"},\n        ]\n    }\n    {\n        \"question\": \"What is the capital of France?\",\n        \"answer\": \"Paris\"\n    }\n    {\n        \"messages\": [\n            {\"role\": \"user\", \"content\": \"Hello, my name is John Doe.\"},\n            {\"role\": \"assistant\", \"content\": \"Hello, John Doe. How can I help you today?\"},\n            {\"role\": \"user\", \"content\": \"What's my name?\"},\n        ],\n        \"answer\": \"John Doe\"\n    }"
     Document:
       properties:
         content:
@@ -1763,9 +2584,11 @@ components:
             type: array
           - $ref: '#/components/schemas/URL'
           title: Content
+          description: The content of the document.
         mime_type:
           type: string
           title: Mime Type
+          description: The MIME type of the document.
       type: object
       required:
       - content
@@ -1775,24 +2598,59 @@ components:
     EfficiencyConfig:
       properties:
         enable_activation_checkpointing:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Enable Activation Checkpointing
           default: false
-          type: boolean
         enable_activation_offloading:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Enable Activation Offloading
           default: false
-          type: boolean
         memory_efficient_fsdp_wrap:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Memory Efficient Fsdp Wrap
           default: false
-          type: boolean
         fsdp_cpu_offload:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Fsdp Cpu Offload
           default: false
-          type: boolean
       type: object
       title: EfficiencyConfig
       description: Configuration for memory and compute efficiency optimizations.
+    Error:
+      properties:
+        status:
+          type: integer
+          title: Status
+          description: HTTP status code
+        title:
+          type: string
+          title: Title
+          description: Error title, a short summary of the error which is invariant for an error type
+        detail:
+          type: string
+          title: Detail
+          description: Error detail, a longer human-readable description of the error
+        instance:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instance
+          description: (Optional) A URL which can be used to retrieve more information about the specific occurrence of the error
+      type: object
+      required:
+      - status
+      - title
+      - detail
+      title: Error
+      description: Error response from the API. Roughly follows RFC 7807.
     EvaluateResponse:
       properties:
         generations:
@@ -1801,17 +2659,44 @@ components:
             type: object
           type: array
           title: Generations
+          description: The generations from the evaluation.
         scores:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Scores
+          description: The scores from the evaluation. Each key in the dict is a scoring function name.
       type: object
       required:
       - generations
       - scores
       title: EvaluateResponse
       description: The response from an evaluation.
+    EvaluateRowsRequest:
+      properties:
+        input_rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Input Rows
+          description: The rows to evaluate.
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          title: Scoring Functions
+          description: The scoring functions to use for the evaluation.
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark.
+      type: object
+      required:
+      - input_rows
+      - scoring_functions
+      - benchmark_config
+      title: EvaluateRowsRequest
+      description: Request model for evaluating rows.
     GrammarResponseFormat:
       properties:
         type:
@@ -1837,8 +2722,7 @@ components:
           default: greedy
       type: object
       title: GreedySamplingStrategy
-      description: Greedy sampling strategy that selects the highest probability token
-        at each step.
+      description: Greedy sampling strategy that selects the highest probability token at each step.
     ImageContentItem-Input:
       properties:
         type:
@@ -1852,7 +2736,7 @@ components:
       required:
       - image
       title: ImageContentItem
-      description: A image content item
+      description: A image content item.
     ImageContentItem-Output:
       properties:
         type:
@@ -1866,23 +2750,31 @@ components:
       required:
       - image
       title: ImageContentItem
-      description: A image content item
+      description: A image content item.
     InferenceStep-Output:
       properties:
         turn_id:
           type: string
           title: Turn Id
+          description: The ID of the turn.
         step_id:
           type: string
           title: Step Id
+          description: The ID of the step.
         started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Started At
-          type: string
-          format: date-time
+          description: The time the step started.
         completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Completed At
-          type: string
-          format: date-time
+          description: The time the step completed.
         step_type:
           type: string
           const: inference
@@ -1890,6 +2782,7 @@ components:
           default: inference
         model_response:
           $ref: '#/components/schemas/CompletionMessage-Output'
+          description: The response from the LLM.
       type: object
       required:
       - turn_id
@@ -1919,7 +2812,7 @@ components:
       - scheduled
       - cancelled
       title: JobStatus
-      description: Status of a job execution.
+      description: "Status of a job execution.\n:cvar completed: Job has finished successfully\n:cvar in_progress: Job is currently running\n:cvar failed: Job has failed during execution\n:cvar scheduled: Job is scheduled but not yet started\n:cvar cancelled: Job was cancelled before completion"
     JsonSchemaResponseFormat:
       properties:
         type:
@@ -1947,8 +2840,10 @@ components:
           type: string
           title: Judge Model
         prompt_template:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Prompt Template
-          type: string
         judge_score_regexes:
           items:
             type: string
@@ -1973,10 +2868,12 @@ components:
             $ref: '#/components/schemas/Benchmark'
           type: array
           title: Data
+          description: List of benchmark resources
       type: object
       required:
       - data
       title: ListBenchmarksResponse
+      description: Response model for listing benchmarks.
     ListDatasetsResponse:
       properties:
         data:
@@ -1984,6 +2881,7 @@ components:
             $ref: '#/components/schemas/Dataset'
           type: array
           title: Data
+          description: List of datasets
       type: object
       required:
       - data
@@ -1996,26 +2894,80 @@ components:
             $ref: '#/components/schemas/PostTrainingJob'
           type: array
           title: Data
+          description: The list of training jobs
       type: object
       required:
       - data
       title: ListPostTrainingJobsResponse
+    LoraFinetuningConfig:
+      properties:
+        type:
+          type: string
+          const: LoRA
+          title: Type
+          default: LoRA
+        lora_attn_modules:
+          items:
+            type: string
+          type: array
+          title: Lora Attn Modules
+        apply_lora_to_mlp:
+          type: boolean
+          title: Apply Lora To Mlp
+        apply_lora_to_output:
+          type: boolean
+          title: Apply Lora To Output
+        rank:
+          type: integer
+          title: Rank
+        alpha:
+          type: integer
+          title: Alpha
+        use_dora:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Use Dora
+          default: false
+        quantize_base:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Quantize Base
+          default: false
+      type: object
+      required:
+      - lora_attn_modules
+      - apply_lora_to_mlp
+      - apply_lora_to_output
+      - rank
+      - alpha
+      title: LoraFinetuningConfig
+      description: Configuration for Low-Rank Adaptation (LoRA) fine-tuning.
     MemoryRetrievalStep-Output:
       properties:
         turn_id:
           type: string
           title: Turn Id
+          description: The ID of the turn.
         step_id:
           type: string
           title: Step Id
+          description: The ID of the step.
         started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Started At
-          type: string
-          format: date-time
+          description: The time the step started.
         completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Completed At
-          type: string
-          format: date-time
+          description: The time the step completed.
         step_type:
           type: string
           const: memory_retrieval
@@ -2024,6 +2976,7 @@ components:
         vector_store_ids:
           type: string
           title: Vector Store Ids
+          description: The IDs of the vector databases to retrieve context from.
         inserted_context:
           anyOf:
           - type: string
@@ -2046,6 +2999,7 @@ components:
                   text: '#/components/schemas/TextContentItem'
             type: array
           title: Inserted Context
+          description: The context retrieved from the vector databases.
       type: object
       required:
       - turn_id
@@ -2060,20 +3014,70 @@ components:
           type: string
           const: model
           title: Type
+          description: The type of candidate.
           default: model
         model:
           type: string
           title: Model
+          description: The model ID to evaluate.
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
+          description: The sampling parameters for the model.
         system_message:
-          $ref: '#/components/schemas/SystemMessage'
+          anyOf:
+          - $ref: '#/components/schemas/SystemMessage'
+          - type: 'null'
+          description: The system message providing instructions or context to the model.
       type: object
       required:
       - model
       - sampling_params
       title: ModelCandidate
       description: A model candidate for evaluation.
+    OpenAIChatCompletionContentPartImageParam:
+      properties:
+        type:
+          type: string
+          const: image_url
+          title: Type
+          default: image_url
+        image_url:
+          $ref: '#/components/schemas/OpenAIImageURL'
+      type: object
+      required:
+      - image_url
+      title: OpenAIChatCompletionContentPartImageParam
+      description: Image content part for OpenAI-compatible chat completion messages.
+    OpenAIChatCompletionContentPartTextParam:
+      properties:
+        type:
+          type: string
+          const: text
+          title: Type
+          default: text
+        text:
+          type: string
+          title: Text
+      type: object
+      required:
+      - text
+      title: OpenAIChatCompletionContentPartTextParam
+      description: Text content part for OpenAI-compatible chat completion messages.
+    OpenAIImageURL:
+      properties:
+        url:
+          type: string
+          title: Url
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
+      required:
+      - url
+      title: OpenAIImageURL
+      description: Image URL specification for OpenAI-compatible chat completion messages.
     OptimizerConfig:
       properties:
         optimizer_type:
@@ -2103,15 +3107,181 @@ components:
       - sgd
       title: OptimizerType
       description: Available optimizer algorithms for training.
+    PaginatedResponse:
+      properties:
+        data:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Data
+          description: The list of items for the current page.
+        has_more:
+          type: boolean
+          title: Has More
+          description: Whether there are more items available after this set.
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+          description: The URL for accessing this list.
+      type: object
+      required:
+      - data
+      - has_more
+      - url
+      title: PaginatedResponse
+      description: A generic paginated response that follows a simple format.
     PostTrainingJob:
       properties:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job
       type: object
       required:
       - job_uuid
       title: PostTrainingJob
+    PostTrainingJobArtifactsResponse:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+          description: The UUID of the job
+        checkpoints:
+          items:
+            $ref: '#/components/schemas/Checkpoint'
+          type: array
+          title: Checkpoints
+      type: object
+      required:
+      - job_uuid
+      title: PostTrainingJobArtifactsResponse
+      description: Artifacts of a finetuning job.
+    PostTrainingJobStatusResponse:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        scheduled_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Scheduled At
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        resources_allocated:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Resources Allocated
+        checkpoints:
+          items:
+            $ref: '#/components/schemas/Checkpoint'
+          type: array
+          title: Checkpoints
+      type: object
+      required:
+      - job_uuid
+      - status
+      title: PostTrainingJobStatusResponse
+      description: Status of a finetuning job.
+    PostTrainingMetric:
+      properties:
+        epoch:
+          type: integer
+          title: Epoch
+          description: Training epoch number.
+        train_loss:
+          type: number
+          title: Train Loss
+          description: Loss value on the training dataset.
+        validation_loss:
+          type: number
+          title: Validation Loss
+          description: Loss value on the validation dataset.
+        perplexity:
+          type: number
+          title: Perplexity
+          description: Perplexity metric indicating model confidence.
+      type: object
+      required:
+      - epoch
+      - train_loss
+      - validation_loss
+      - perplexity
+      title: PostTrainingMetric
+      description: Training metrics captured during post-training jobs.
+    PreferenceOptimizeRequest:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+          description: The UUID of the job to create
+        finetuned_model:
+          type: string
+          title: Finetuned Model
+          description: The model to fine-tune
+        algorithm_config:
+          $ref: '#/components/schemas/DPOAlignmentConfig'
+          description: The algorithm configuration
+        training_config:
+          $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration
+        hyperparam_search_config:
+          additionalProperties: true
+          type: object
+          title: Hyperparam Search Config
+          description: The hyperparam search configuration
+        logger_config:
+          additionalProperties: true
+          type: object
+          title: Logger Config
+          description: The logger configuration
+      type: object
+      required:
+      - job_uuid
+      - finetuned_model
+      - algorithm_config
+      - training_config
+      - hyperparam_search_config
+      - logger_config
+      title: PreferenceOptimizeRequest
+      description: Request to run preference optimization of a model.
+    QATFinetuningConfig:
+      properties:
+        type:
+          type: string
+          const: QAT
+          title: Type
+          default: QAT
+        quantizer_name:
+          type: string
+          title: Quantizer Name
+        group_size:
+          type: integer
+          title: Group Size
+      type: object
+      required:
+      - quantizer_name
+      - group_size
+      title: QATFinetuningConfig
+      description: Configuration for Quantization-Aware Training (QAT) fine-tuning.
     RegexParserScoringFnParams:
       properties:
         type:
@@ -2134,6 +3304,83 @@ components:
       type: object
       title: RegexParserScoringFnParams
       description: Parameters for regex parser scoring function configuration.
+    RegisterBenchmarkRequest:
+      properties:
+        benchmark_id:
+          type: string
+          title: Benchmark Id
+          description: The ID of the benchmark to register
+        dataset_id:
+          type: string
+          title: Dataset Id
+          description: The ID of the dataset to use for the benchmark
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          title: Scoring Functions
+          description: The scoring functions to use for the benchmark
+        provider_benchmark_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider Benchmark Id
+          description: The ID of the provider benchmark to use for the benchmark
+        provider_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider Id
+          description: The ID of the provider to use for the benchmark
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Metadata
+          description: The metadata to use for the benchmark
+      type: object
+      required:
+      - benchmark_id
+      - dataset_id
+      - scoring_functions
+      title: RegisterBenchmarkRequest
+      description: Request model for registering a benchmark.
+    RegisterDatasetRequest:
+      properties:
+        purpose:
+          $ref: '#/components/schemas/DatasetPurpose'
+          description: The purpose of the dataset
+        source:
+          oneOf:
+          - $ref: '#/components/schemas/URIDataSource'
+          - $ref: '#/components/schemas/RowsDataSource'
+          title: Source
+          description: The data source of the dataset
+          discriminator:
+            propertyName: type
+            mapping:
+              rows: '#/components/schemas/RowsDataSource'
+              uri: '#/components/schemas/URIDataSource'
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Metadata
+          description: The metadata for the dataset
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Id
+          description: The ID of the dataset. If not provided, an ID will be generated
+      type: object
+      required:
+      - purpose
+      - source
+      title: RegisterDatasetRequest
+      description: Request model for registering a dataset.
     RerankData:
       properties:
         index:
@@ -2166,6 +3413,7 @@ components:
           type: string
           const: rows
           title: Type
+          description: The type of data source
           default: rows
         rows:
           items:
@@ -2173,6 +3421,7 @@ components:
             type: object
           type: array
           title: Rows
+          description: "The dataset is stored in rows. E.g. [{'messages': [{'role': 'user', 'content': 'Hello, world!'}, {'role': 'assistant', 'content': 'Hello, world!'}]}]"
       type: object
       required:
       - rows
@@ -2182,13 +3431,18 @@ components:
       properties:
         violation_level:
           $ref: '#/components/schemas/ViolationLevel'
+          description: Severity level of the violation.
         user_message:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: User Message
-          type: string
+          description: Message to convey to the user about the violation.
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata including specific violation codes for debugging and telemetry.
       type: object
       required:
       - violation_level
@@ -2209,17 +3463,23 @@ components:
               top_k: '#/components/schemas/TopKSamplingStrategy'
               top_p: '#/components/schemas/TopPSamplingStrategy'
         max_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
           title: Max Tokens
-          type: integer
         repetition_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
           title: Repetition Penalty
           default: 1.0
-          type: number
         stop:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
           title: Stop
-          items:
-            type: string
-          type: array
       type: object
       title: SamplingParams
       description: Sampling parameters.
@@ -2231,44 +3491,85 @@ components:
             type: object
           type: array
           title: Score Rows
+          description: The scoring result for each row. Each row is a map of column name to value
         aggregated_results:
           additionalProperties: true
           type: object
           title: Aggregated Results
+          description: Map of metric name to aggregated value
       type: object
       required:
       - score_rows
       - aggregated_results
       title: ScoringResult
       description: A scoring result for a single row.
+    Session:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+          description: Unique identifier for the conversation session
+        session_name:
+          type: string
+          title: Session Name
+          description: Human-readable name for the session
+        turns:
+          items:
+            $ref: '#/components/schemas/Turn'
+          type: array
+          title: Turns
+          description: List of all turns that have occurred in this session
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+          description: Timestamp when the session was created
+      type: object
+      required:
+      - session_id
+      - session_name
+      - turns
+      - started_at
+      title: Session
+      description: A single session of an interaction with an Agentic System.
     ShieldCallStep-Output:
       properties:
         turn_id:
           type: string
           title: Turn Id
+          description: The ID of the turn.
         step_id:
           type: string
           title: Step Id
+          description: The ID of the step.
         started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Started At
-          type: string
-          format: date-time
+          description: The time the step started.
         completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Completed At
-          type: string
-          format: date-time
+          description: The time the step completed.
         step_type:
           type: string
           const: shield_call
           title: Step Type
           default: shield_call
         violation:
-          $ref: '#/components/schemas/SafetyViolation'
+          anyOf:
+          - $ref: '#/components/schemas/SafetyViolation'
+          - type: 'null'
+          description: The violation from the shield call.
       type: object
       required:
       - turn_id
       - step_id
-      - violation
       title: ShieldCallStep
       description: A shield call step in an agent turn.
     StopReason:
@@ -2278,6 +3579,58 @@ components:
       - end_of_message
       - out_of_tokens
       title: StopReason
+    SupervisedFineTuneRequest:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+          description: The UUID of the job to create
+        training_config:
+          $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration
+        hyperparam_search_config:
+          additionalProperties: true
+          type: object
+          title: Hyperparam Search Config
+          description: The hyperparam search configuration
+        logger_config:
+          additionalProperties: true
+          type: object
+          title: Logger Config
+          description: The logger configuration
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model
+          description: Model descriptor for training if not in provider config`
+        checkpoint_dir:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Checkpoint Dir
+          description: The directory to save checkpoint(s) to
+        algorithm_config:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/LoraFinetuningConfig'
+            - $ref: '#/components/schemas/QATFinetuningConfig'
+            discriminator:
+              propertyName: type
+              mapping:
+                LoRA: '#/components/schemas/LoraFinetuningConfig'
+                QAT: '#/components/schemas/QATFinetuningConfig'
+          - type: 'null'
+          title: Algorithm Config
+          description: The algorithm configuration
+      type: object
+      required:
+      - job_uuid
+      - training_config
+      - hyperparam_search_config
+      - logger_config
+      title: SupervisedFineTuneRequest
+      description: Request to run supervised fine-tuning of a model.
     SystemMessage:
       properties:
         role:
@@ -2318,7 +3671,7 @@ components:
       - append
       - replace
       title: SystemMessageBehavior
-      description: Config for how to override the default system prompt.
+      description: "Config for how to override the default system prompt.\n\nhttps://www.llama.com/docs/model-cards-and-prompt-formats/llama3_2/#-function-definitions-in-the-system-prompt-\n'{{function_definitions}}' to indicate where the function definitions should be inserted."
     TextContentItem:
       properties:
         type:
@@ -2333,7 +3686,7 @@ components:
       required:
       - text
       title: TextContentItem
-      description: A text content item
+      description: A text content item.
     ToolCall:
       properties:
         call_id:
@@ -2360,48 +3713,67 @@ components:
       - required
       - none
       title: ToolChoice
-      description: Whether tool use is required or automatic. This is a hint to the
-        model which may not be followed. It depends on the Instruction Following capabilities
-        of the model.
+      description: Whether tool use is required or automatic. This is a hint to the model which may not be followed. It depends on the Instruction Following capabilities of the model.
     ToolConfig:
       properties:
         tool_choice:
           anyOf:
           - $ref: '#/components/schemas/ToolChoice'
           - type: string
+          - type: 'null'
           title: Tool Choice
           default: auto
         tool_prompt_format:
-          $ref: '#/components/schemas/ToolPromptFormat'
+          anyOf:
+          - $ref: '#/components/schemas/ToolPromptFormat'
+          - type: 'null'
         system_message_behavior:
+          anyOf:
+          - $ref: '#/components/schemas/SystemMessageBehavior'
+          - type: 'null'
           default: append
-          $ref: '#/components/schemas/SystemMessageBehavior'
       type: object
       title: ToolConfig
-      description: Configuration for tool use.
+      description: "Configuration for tool use.\n\n- `ToolPromptFormat.json`: The tool calls are formatted as a JSON object.\n- `ToolPromptFormat.function_tag`: The tool calls are enclosed in a <function=function_name> tag.\n- `ToolPromptFormat.python_list`: The tool calls are output as Python syntax -- a list of function calls.\n- `SystemMessageBehavior.append`: Appends the provided system message to the default system prompt.\n- `SystemMessageBehavior.replace`: Replaces the default system prompt with the provided system message. The system message can include the string\n    '{{function_definitions}}' to indicate where the function definitions should be inserted."
     ToolDef:
       properties:
         toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Toolgroup Id
-          type: string
+          description: ID of the tool group this tool belongs to
         name:
           type: string
           title: Name
+          description: Name of the tool
         description:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Description
-          type: string
+          description: Human-readable description of what the tool does
         input_schema:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
           title: Input Schema
-          additionalProperties: true
-          type: object
+          description: JSON Schema for tool inputs (MCP inputSchema)
         output_schema:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
           title: Output Schema
-          additionalProperties: true
-          type: object
+          description: JSON Schema for tool outputs (MCP outputSchema)
         metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
           title: Metadata
-          additionalProperties: true
-          type: object
+          description: Additional metadata about the tool
       type: object
       required:
       - name
@@ -2412,17 +3784,25 @@ components:
         turn_id:
           type: string
           title: Turn Id
+          description: The ID of the turn.
         step_id:
           type: string
           title: Step Id
+          description: The ID of the step.
         started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Started At
-          type: string
-          format: date-time
+          description: The time the step started.
         completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Completed At
-          type: string
-          format: date-time
+          description: The time the step completed.
         step_type:
           type: string
           const: tool_execution
@@ -2433,11 +3813,13 @@ components:
             $ref: '#/components/schemas/ToolCall'
           type: array
           title: Tool Calls
+          description: The tool calls to execute.
         tool_responses:
           items:
             $ref: '#/components/schemas/ToolResponse-Output'
           type: array
           title: Tool Responses
+          description: The tool responses from the tool calls.
       type: object
       required:
       - turn_id
@@ -2453,7 +3835,7 @@ components:
       - function_tag
       - python_list
       title: ToolPromptFormat
-      description: Prompt format for calling custom / zero shot tools.
+      description: "Prompt format for calling custom / zero shot tools.\n\n:cvar json: JSON format for calling tools. It takes the form:\n    {\n        \"type\": \"function\",\n        \"function\" : {\n            \"name\": \"function_name\",\n            \"description\": \"function_description\",\n            \"parameters\": {...}\n        }\n    }\n:cvar function_tag: Function tag format, pseudo-XML. This looks like:\n    <function=function_name>(parameters)</function>\n\n:cvar python_list: Python list. The output is a valid Python expression that can be\n    evaluated to a list. Each element in the list is a function call. Example:\n    [\"function_name(param1, param2)\", \"function_name(param1, param2)\"]"
     ToolResponse-Input:
       properties:
         call_id:
@@ -2487,9 +3869,11 @@ components:
             type: array
           title: Content
         metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
           title: Metadata
-          additionalProperties: true
-          type: object
       type: object
       required:
       - call_id
@@ -2530,9 +3914,11 @@ components:
             type: array
           title: Content
         metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
           title: Metadata
-          additionalProperties: true
-          type: object
       type: object
       required:
       - call_id
@@ -2540,6 +3926,44 @@ components:
       - content
       title: ToolResponse
       description: Response from a tool invocation.
+    ToolResponseMessage-Input:
+      properties:
+        role:
+          type: string
+          const: tool
+          title: Role
+          default: tool
+        call_id:
+          type: string
+          title: Call Id
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Input'
+            - $ref: '#/components/schemas/TextContentItem'
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Input'
+                text: '#/components/schemas/TextContentItem'
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Input'
+              - $ref: '#/components/schemas/TextContentItem'
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Input'
+                  text: '#/components/schemas/TextContentItem'
+            type: array
+          title: Content
+      type: object
+      required:
+      - call_id
+      - content
+      title: ToolResponseMessage
+      description: A message representing the result of a tool invocation.
     ToolResponseMessage-Output:
       properties:
         role:
@@ -2593,8 +4017,7 @@ components:
       required:
       - top_k
       title: TopKSamplingStrategy
-      description: Top-k sampling strategy that restricts sampling to the k most likely
-        tokens.
+      description: Top-k sampling strategy that restricts sampling to the k most likely tokens.
     TopPSamplingStrategy:
       properties:
         type:
@@ -2603,19 +4026,22 @@ components:
           title: Type
           default: top_p
         temperature:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
           title: Temperature
-          type: number
-          minimum: 0.0
         top_p:
+          anyOf:
+          - type: number
+          - type: 'null'
           title: Top P
           default: 0.95
-          type: number
       type: object
       required:
       - temperature
       title: TopPSamplingStrategy
-      description: Top-p (nucleus) sampling strategy that samples from the smallest
-        set of tokens with cumulative probability >= p.
+      description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
     TrainingConfig:
       properties:
         n_epochs:
@@ -2630,19 +4056,29 @@ components:
           title: Gradient Accumulation Steps
           default: 1
         max_validation_steps:
+          anyOf:
+          - type: integer
+          - type: 'null'
           title: Max Validation Steps
           default: 1
-          type: integer
         data_config:
-          $ref: '#/components/schemas/DataConfig'
+          anyOf:
+          - $ref: '#/components/schemas/DataConfig'
+          - type: 'null'
         optimizer_config:
-          $ref: '#/components/schemas/OptimizerConfig'
+          anyOf:
+          - $ref: '#/components/schemas/OptimizerConfig'
+          - type: 'null'
         efficiency_config:
-          $ref: '#/components/schemas/EfficiencyConfig'
+          anyOf:
+          - $ref: '#/components/schemas/EfficiencyConfig'
+          - type: 'null'
         dtype:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Dtype
           default: bf16
-          type: string
       type: object
       required:
       - n_epochs
@@ -2653,9 +4089,11 @@ components:
         turn_id:
           type: string
           title: Turn Id
+          description: Unique identifier for the turn within a session
         session_id:
           type: string
           title: Session Id
+          description: Unique identifier for the conversation session
         input_messages:
           items:
             anyOf:
@@ -2663,6 +4101,7 @@ components:
             - $ref: '#/components/schemas/ToolResponseMessage-Output'
           type: array
           title: Input Messages
+          description: List of messages that initiated this turn
         steps:
           items:
             oneOf:
@@ -2679,21 +4118,30 @@ components:
                 tool_execution: '#/components/schemas/ToolExecutionStep-Output'
           type: array
           title: Steps
+          description: Ordered list of processing steps executed during this turn
         output_message:
           $ref: '#/components/schemas/CompletionMessage-Output'
+          description: The model's generated response containing content and metadata
         output_attachments:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Attachment-Output'
+            type: array
+          - type: 'null'
           title: Output Attachments
-          items:
-            $ref: '#/components/schemas/Attachment-Output'
-          type: array
+          description: Files or media attached to the agent's response
         started_at:
           type: string
           format: date-time
           title: Started At
+          description: Timestamp when the turn began
         completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Completed At
-          type: string
-          format: date-time
+          description: Timestamp when the turn finished, if completed
       type: object
       required:
       - turn_id
@@ -2710,10 +4158,12 @@ components:
           type: string
           const: uri
           title: Type
+          description: The type of data source
           default: uri
         uri:
           type: string
           title: Uri
+          description: The dataset can be obtained from a URI. E.g. 'https://mywebsite.com/mydata.jsonl', 'lsfs://mydata.jsonl', 'data:csv;base64,{base64_content}'
       type: object
       required:
       - uri
@@ -2779,6 +4229,7 @@ components:
                   image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
             type: array
+          - type: 'null'
           title: Context
       type: object
       required:
@@ -2835,6 +4286,7 @@ components:
                   image: '#/components/schemas/ImageContentItem-Output'
                   text: '#/components/schemas/TextContentItem'
             type: array
+          - type: 'null'
           title: Context
       type: object
       required:
@@ -2848,632 +4300,19 @@ components:
       - warn
       - error
       title: ViolationLevel
-      description: Severity level of a safety violation.
+      description: "Severity level of a safety violation.\n\n:cvar INFO: Informational level violation that does not require action\n:cvar WARN: Warning level violation that suggests caution but allows continuation\n:cvar ERROR: Error level violation that requires blocking or intervention"
     _URLOrData:
       properties:
         url:
-          $ref: '#/components/schemas/URL'
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+          - type: 'null'
         data:
+          anyOf:
+          - type: string
+          - type: 'null'
           contentEncoding: base64
           title: Data
-          type: string
       type: object
       title: _URLOrData
-      description: A URL or a base64 encoded string
-    __main_____agents_agent_id_session_Request:
-      properties:
-        agent_id:
-          type: string
-          title: Agent Id
-        session_name:
-          type: string
-          title: Session Name
-      type: object
-      required:
-      - agent_id
-      - session_name
-      title: _agents_agent_id_session_Request
-    __main_____agents_agent_id_session_session_id_turn_Request:
-      properties:
-        agent_id:
-          type: string
-          title: Agent Id
-        session_id:
-          type: string
-          title: Session Id
-        messages:
-          $ref: '#/components/schemas/UserMessage-Input'
-        stream:
-          type: boolean
-          title: Stream
-          default: false
-        documents:
-          $ref: '#/components/schemas/Document'
-        toolgroups:
-          anyOf:
-          - type: string
-          - $ref: '#/components/schemas/AgentToolGroupWithArgs'
-          title: Toolgroups
-        tool_config:
-          $ref: '#/components/schemas/ToolConfig'
-      type: object
-      required:
-      - agent_id
-      - session_id
-      - messages
-      - documents
-      - toolgroups
-      - tool_config
-      title: _agents_agent_id_session_session_id_turn_Request
-    __main_____agents_agent_id_session_session_id_turn_turn_id_resume_Request:
-      properties:
-        agent_id:
-          type: string
-          title: Agent Id
-        session_id:
-          type: string
-          title: Session Id
-        turn_id:
-          type: string
-          title: Turn Id
-        tool_responses:
-          $ref: '#/components/schemas/ToolResponse-Input'
-        stream:
-          type: boolean
-          title: Stream
-          default: false
-      type: object
-      required:
-      - agent_id
-      - session_id
-      - turn_id
-      - tool_responses
-      title: _agents_agent_id_session_session_id_turn_turn_id_resume_Request
-    __main_____datasets_Request:
-      properties:
-        purpose:
-          $ref: '#/components/schemas/DatasetPurpose'
-        metadata:
-          type: string
-          title: Metadata
-        dataset_id:
-          type: string
-          title: Dataset Id
-      type: object
-      required:
-      - purpose
-      - metadata
-      - dataset_id
-      title: _datasets_Request
-    _inference_rerank_Request:
-      properties:
-        model:
-          type: string
-          title: Model
-        query:
-          type: string
-          title: Query
-        items:
-          type: string
-          title: Items
-        max_num_results:
-          type: integer
-          title: Max Num Results
-      type: object
-      required:
-      - model
-      - query
-      - items
-      - max_num_results
-      title: _inference_rerank_Request
-    Error:
-      description: Error response from the API. Roughly follows RFC 7807.
-      properties:
-        status:
-          title: Status
-          type: integer
-        title:
-          title: Title
-          type: string
-        detail:
-          title: Detail
-          type: string
-        instance:
-          title: Instance
-          type: string
-          nullable: true
-      required:
-      - status
-      - title
-      - detail
-      title: Error
-      type: object
-    Agent:
-      description: An agent instance with configuration and metadata.
-      properties:
-        agent_id:
-          title: Agent Id
-          type: string
-        agent_config:
-          $ref: '#/components/schemas/AgentConfig'
-        created_at:
-          format: date-time
-          title: Created At
-          type: string
-      required:
-      - agent_id
-      - agent_config
-      - created_at
-      title: Agent
-      type: object
-    AgentStepResponse:
-      description: Response containing details of a specific agent step.
-      properties:
-        step:
-          discriminator:
-            mapping:
-              inference: '#/$defs/InferenceStep'
-              memory_retrieval: '#/$defs/MemoryRetrievalStep'
-              shield_call: '#/$defs/ShieldCallStep'
-              tool_execution: '#/$defs/ToolExecutionStep'
-            propertyName: step_type
-          oneOf:
-          - $ref: '#/components/schemas/InferenceStep'
-          - $ref: '#/components/schemas/ToolExecutionStep'
-          - $ref: '#/components/schemas/ShieldCallStep'
-          - $ref: '#/components/schemas/MemoryRetrievalStep'
-          title: Step
-      required:
-      - step
-      title: AgentStepResponse
-      type: object
-    CompletionMessage:
-      description: A message containing the model's (assistant) response in a chat
-        conversation.
-      properties:
-        role:
-          const: assistant
-          default: assistant
-          title: Role
-          type: string
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/$defs/ImageContentItem'
-                text: '#/$defs/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-            - $ref: '#/components/schemas/TextContentItem'
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/$defs/ImageContentItem'
-                  text: '#/$defs/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-              - $ref: '#/components/schemas/TextContentItem'
-            type: array
-          title: Content
-        stop_reason:
-          $ref: '#/components/schemas/StopReason'
-        tool_calls:
-          title: Tool Calls
-          items:
-            $ref: '#/components/schemas/ToolCall'
-          type: array
-      required:
-      - content
-      - stop_reason
-      title: CompletionMessage
-      type: object
-    InferenceStep:
-      description: An inference step in an agent turn.
-      properties:
-        turn_id:
-          title: Turn Id
-          type: string
-        step_id:
-          title: Step Id
-          type: string
-        started_at:
-          title: Started At
-          format: date-time
-          type: string
-          nullable: true
-        completed_at:
-          title: Completed At
-          format: date-time
-          type: string
-          nullable: true
-        step_type:
-          const: inference
-          default: inference
-          title: Step Type
-          type: string
-        model_response:
-          $ref: '#/components/schemas/CompletionMessage'
-      required:
-      - turn_id
-      - step_id
-      - model_response
-      title: InferenceStep
-      type: object
-    MemoryRetrievalStep:
-      description: A memory retrieval step in an agent turn.
-      properties:
-        turn_id:
-          title: Turn Id
-          type: string
-        step_id:
-          title: Step Id
-          type: string
-        started_at:
-          title: Started At
-          format: date-time
-          type: string
-          nullable: true
-        completed_at:
-          title: Completed At
-          format: date-time
-          type: string
-          nullable: true
-        step_type:
-          const: memory_retrieval
-          default: memory_retrieval
-          title: Step Type
-          type: string
-        vector_store_ids:
-          title: Vector Store Ids
-          type: string
-        inserted_context:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/$defs/ImageContentItem'
-                text: '#/$defs/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-            - $ref: '#/components/schemas/TextContentItem'
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/$defs/ImageContentItem'
-                  text: '#/$defs/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-              - $ref: '#/components/schemas/TextContentItem'
-            type: array
-          title: Inserted Context
-      required:
-      - turn_id
-      - step_id
-      - vector_store_ids
-      - inserted_context
-      title: MemoryRetrievalStep
-      type: object
-    PaginatedResponse:
-      description: A generic paginated response that follows a simple format.
-      properties:
-        data:
-          items:
-            additionalProperties: true
-            type: object
-          title: Data
-          type: array
-        has_more:
-          title: Has More
-          type: boolean
-        url:
-          title: Url
-          type: string
-          nullable: true
-      required:
-      - data
-      - has_more
-      title: PaginatedResponse
-      type: object
-    Session:
-      description: A single session of an interaction with an Agentic System.
-      properties:
-        session_id:
-          title: Session Id
-          type: string
-        session_name:
-          title: Session Name
-          type: string
-        turns:
-          items:
-            $ref: '#/components/schemas/Turn'
-          title: Turns
-          type: array
-        started_at:
-          format: date-time
-          title: Started At
-          type: string
-      required:
-      - session_id
-      - session_name
-      - turns
-      - started_at
-      title: Session
-      type: object
-    ShieldCallStep:
-      description: A shield call step in an agent turn.
-      properties:
-        turn_id:
-          title: Turn Id
-          type: string
-        step_id:
-          title: Step Id
-          type: string
-        started_at:
-          title: Started At
-          format: date-time
-          type: string
-          nullable: true
-        completed_at:
-          title: Completed At
-          format: date-time
-          type: string
-          nullable: true
-        step_type:
-          const: shield_call
-          default: shield_call
-          title: Step Type
-          type: string
-        violation:
-          $ref: '#/components/schemas/SafetyViolation'
-      required:
-      - turn_id
-      - step_id
-      - violation
-      title: ShieldCallStep
-      type: object
-    ToolExecutionStep:
-      description: A tool execution step in an agent turn.
-      properties:
-        turn_id:
-          title: Turn Id
-          type: string
-        step_id:
-          title: Step Id
-          type: string
-        started_at:
-          title: Started At
-          format: date-time
-          type: string
-          nullable: true
-        completed_at:
-          title: Completed At
-          format: date-time
-          type: string
-          nullable: true
-        step_type:
-          const: tool_execution
-          default: tool_execution
-          title: Step Type
-          type: string
-        tool_calls:
-          items:
-            $ref: '#/components/schemas/ToolCall'
-          title: Tool Calls
-          type: array
-        tool_responses:
-          items:
-            $ref: '#/components/schemas/ToolResponse'
-          title: Tool Responses
-          type: array
-      required:
-      - turn_id
-      - step_id
-      - tool_calls
-      - tool_responses
-      title: ToolExecutionStep
-      type: object
-    ToolResponse:
-      description: Response from a tool invocation.
-      properties:
-        call_id:
-          title: Call Id
-          type: string
-        tool_name:
-          anyOf:
-          - $ref: '#/components/schemas/BuiltinTool'
-          - type: string
-          title: Tool Name
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/$defs/ImageContentItem'
-                text: '#/$defs/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-            - $ref: '#/components/schemas/TextContentItem'
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/$defs/ImageContentItem'
-                  text: '#/$defs/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-              - $ref: '#/components/schemas/TextContentItem'
-            type: array
-          title: Content
-        metadata:
-          title: Metadata
-          additionalProperties: true
-          type: object
-          nullable: true
-      required:
-      - call_id
-      - tool_name
-      - content
-      title: ToolResponse
-      type: object
-    Checkpoint:
-      description: Checkpoint created during training runs.
-      properties:
-        identifier:
-          title: Identifier
-          type: string
-        created_at:
-          format: date-time
-          title: Created At
-          type: string
-        epoch:
-          title: Epoch
-          type: integer
-        post_training_job_id:
-          title: Post Training Job Id
-          type: string
-        path:
-          title: Path
-          type: string
-        training_metrics:
-          $ref: '#/components/schemas/PostTrainingMetric'
-          nullable: true
-      required:
-      - identifier
-      - created_at
-      - epoch
-      - post_training_job_id
-      - path
-      title: Checkpoint
-      type: object
-    PostTrainingJobArtifactsResponse:
-      description: Artifacts of a finetuning job.
-      properties:
-        job_uuid:
-          title: Job Uuid
-          type: string
-        checkpoints:
-          items:
-            $ref: '#/components/schemas/Checkpoint'
-          title: Checkpoints
-          type: array
-      required:
-      - job_uuid
-      title: PostTrainingJobArtifactsResponse
-      type: object
-    PostTrainingJobStatusResponse:
-      description: Status of a finetuning job.
-      properties:
-        job_uuid:
-          title: Job Uuid
-          type: string
-        status:
-          $ref: '#/components/schemas/JobStatus'
-        scheduled_at:
-          title: Scheduled At
-          format: date-time
-          type: string
-          nullable: true
-        started_at:
-          title: Started At
-          format: date-time
-          type: string
-          nullable: true
-        completed_at:
-          title: Completed At
-          format: date-time
-          type: string
-          nullable: true
-        resources_allocated:
-          title: Resources Allocated
-          additionalProperties: true
-          type: object
-          nullable: true
-        checkpoints:
-          items:
-            $ref: '#/components/schemas/Checkpoint'
-          title: Checkpoints
-          type: array
-      required:
-      - job_uuid
-      - status
-      title: PostTrainingJobStatusResponse
-      type: object
-    ImageContentItem:
-      description: A image content item
-      properties:
-        type:
-          const: image
-          default: image
-          title: Type
-          type: string
-        image:
-          $ref: '#/components/schemas/_URLOrData'
-      required:
-      - image
-      title: ImageContentItem
-      type: object
-    PostTrainingMetric:
-      description: Training metrics captured during post-training jobs.
-      properties:
-        epoch:
-          title: Epoch
-          type: integer
-        train_loss:
-          title: Train Loss
-          type: number
-        validation_loss:
-          title: Validation Loss
-          type: number
-        perplexity:
-          title: Perplexity
-          type: number
-      required:
-      - epoch
-      - train_loss
-      - validation_loss
-      - perplexity
-      title: PostTrainingMetric
-      type: object
-  responses:
-    BadRequest400:
-      description: The request was invalid or malformed
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            status: 400
-            title: Bad Request
-            detail: The request was invalid or malformed
-    TooManyRequests429:
-      description: The client has sent too many requests in a given amount of time
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            status: 429
-            title: Too Many Requests
-            detail: You have exceeded the rate limit. Please try again later.
-    InternalServerError500:
-      description: The server encountered an unexpected error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            status: 500
-            title: Internal Server Error
-            detail: An unexpected error occurred. Our team has been notified.
-    DefaultError:
-      description: An unexpected error occurred
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+      description: A URL or a base64 encoded string.

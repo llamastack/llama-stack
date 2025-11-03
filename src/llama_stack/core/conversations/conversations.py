@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.apis.conversations.conversations import (
+from llama_stack.apis.conversations import (
     Conversation,
     ConversationDeletedResource,
     ConversationItem,

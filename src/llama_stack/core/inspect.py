@@ -18,8 +18,9 @@ from llama_stack.apis.inspect import (
 from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.external import load_external_apis
-from llama_stack.core.server.routes import get_all_api_routes
-from llama_stack.providers.datatypes import HealthStatus
+from llama_stack.core.resolver import api_protocol_map
+from llama_stack.core.server.routers import create_router, has_router
+from llama_stack.providers.datatypes import Api, HealthStatus
 
 
 class DistributionInspectConfig(BaseModel):
@@ -56,36 +57,77 @@ class DistributionInspectImpl(Inspect):
                 return not webmethod.deprecated and webmethod.level == api_filter
 
         ret = []
+
+        # Create a dummy impl_getter for router creation
+        def dummy_impl_getter(_api: Api) -> None:
+            return None
+
+        # Get all APIs that should be served
+
         external_apis = load_external_apis(run_config)
-        all_endpoints = get_all_api_routes(external_apis)
-        for api, endpoints in all_endpoints.items():
-            # Always include provider and inspect APIs, filter others based on run config
+        protocols = api_protocol_map(external_apis)
+
+        # Get APIs to serve
+        if run_config.apis:
+            apis_to_serve = set(run_config.apis)
+        else:
+            apis_to_serve = set(protocols.keys())
+
+        apis_to_serve.add("inspect")
+        apis_to_serve.add("providers")
+        apis_to_serve.add("prompts")
+        apis_to_serve.add("conversations")
+
+        # Get routes from routers
+        for api_str in apis_to_serve:
+            api = Api(api_str)
+
+            # Skip if no router registered
+            if not has_router(api):
+                continue
+
+            # Create router to extract routes
+            router = create_router(api, dummy_impl_getter)
+            if not router:
+                continue
+
+            # Extract routes from the router
+            provider_types: list[str] = []
             if api.value in ["providers", "inspect"]:
-                ret.extend(
-                    [
-                        RouteInfo(
-                            route=e.path,
-                            method=next(iter([m for m in e.methods if m != "HEAD"])),
-                            provider_types=[],  # These APIs don't have "real" providers - they're internal to the stack
-                        )
-                        for e, webmethod in endpoints
-                        if e.methods is not None and should_include_route(webmethod)
-                    ]
-                )
+                # These APIs don't have "real" providers
+                provider_types = []
             else:
                 providers = run_config.providers.get(api.value, [])
-                if providers:  # Only process if there are providers for this API
-                    ret.extend(
-                        [
-                            RouteInfo(
-                                route=e.path,
-                                method=next(iter([m for m in e.methods if m != "HEAD"])),
-                                provider_types=[p.provider_type for p in providers],
-                            )
-                            for e, webmethod in endpoints
-                            if e.methods is not None and should_include_route(webmethod)
-                        ]
+                provider_types = [p.provider_type for p in providers]
+
+            # Extract routes from router
+            for route in router.routes:
+                if not hasattr(route, "path") or not hasattr(route, "methods"):
+                    continue
+
+                # Filter out HEAD method
+                methods = [m for m in route.methods if m != "HEAD"]
+                if not methods:
+                    continue
+
+                # Get full path (prefix + path)
+                path = route.path
+                if hasattr(router, "prefix") and router.prefix:
+                    if path.startswith("/"):
+                        full_path = path
+                    else:
+                        full_path = router.prefix + "/" + path
+                        full_path = full_path.replace("//", "/")
+                else:
+                    full_path = path
+
+                ret.append(
+                    RouteInfo(
+                        route=full_path,
+                        method=methods[0],
+                        provider_types=provider_types,
                     )
+                )
 
         return ListRoutesResponse(data=ret)
 

@@ -14,7 +14,6 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict
 
 from llama_stack.apis.inference import (
-    Model,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -26,7 +25,7 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
 )
-from llama_stack.apis.models import ModelType
+from llama_stack.apis.models import Model, ModelType
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig

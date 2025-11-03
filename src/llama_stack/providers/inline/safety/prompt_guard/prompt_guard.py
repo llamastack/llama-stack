@@ -11,13 +11,13 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.apis.safety import (
+    ModerationObject,
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ShieldStore,
     ViolationLevel,
 )
-from llama_stack.apis.safety.safety import ModerationObject
 from llama_stack.apis.shields import Shield
 from llama_stack.core.utils.model_utils import model_local_dir
 from llama_stack.log import get_logger

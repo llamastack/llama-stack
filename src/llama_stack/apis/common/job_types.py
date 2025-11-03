@@ -28,11 +28,7 @@ class JobStatus(Enum):
 
 @json_schema_type
 class Job(BaseModel):
-    """A job execution instance with status tracking.
-
-    :param job_id: Unique identifier for the job
-    :param status: Current execution status of the job
-    """
+    """A job execution instance with status tracking."""
 
     job_id: str
     status: JobStatus

@@ -22,6 +22,8 @@ from llama_stack.apis.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
@@ -35,10 +37,6 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     Order,
     RerankResponse,
-)
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
 )
 from llama_stack.apis.models import ModelType
 from llama_stack.core.telemetry.telemetry import MetricEvent
