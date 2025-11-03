@@ -35,6 +35,7 @@ class InferenceStore:
         self.reference = reference
         self.sql_store = None
         self.policy = policy
+        self.enable_write_queue = True
 
         # Async write queue and worker control
         self._queue: asyncio.Queue[tuple[OpenAIChatCompletion, list[OpenAIMessageParam]]] | None = None
