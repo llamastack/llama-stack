@@ -32,7 +32,7 @@
 │    B. Vector IO (depends on inference, job_scheduler)    │
 │       ├─ deps = {                                        │
 │       │     Api.inference: <impl>,                       │
-│       │     Api.job_scheduler: <scheduler_impl>          │
+│       │     Api.job_scheduler: <scheduler>               │
 │       │   }                                               │
 │       ├─ get_provider_impl(config, deps)                │
 │       │   ├─ adapter = FaissVectorIOAdapter(            │

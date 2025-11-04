@@ -12,10 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
-from llama_stack.providers.utils.job_scheduler import (
-    InlineSchedulerConfig,
-    scheduler_impl,
-)
+from llama_stack.providers.utils.job_scheduler import InlineSchedulerConfig
 from llama_stack.providers.utils.kvstore import register_kvstore_backends
 
 
@@ -45,7 +42,9 @@ def scheduler_config():
 
 async def test_scheduler_api_exists(scheduler_config):
     """Test that scheduler API is properly defined."""
-    scheduler = await scheduler_impl(scheduler_config)
+    from llama_stack.providers.utils.job_scheduler.inline import InlineSchedulerImpl
+
+    scheduler = InlineSchedulerImpl(scheduler_config)
 
     # Verify all required methods exist
     assert hasattr(scheduler, "initialize")
@@ -61,7 +60,9 @@ async def test_scheduler_api_exists(scheduler_config):
 
 async def test_scheduler_not_implemented(scheduler_config):
     """Test that scheduler methods raise NotImplementedError."""
-    scheduler = await scheduler_impl(scheduler_config)
+    from llama_stack.providers.utils.job_scheduler.inline import InlineSchedulerImpl
+
+    scheduler = InlineSchedulerImpl(scheduler_config)
 
     # Test that all methods raise NotImplementedError
     with pytest.raises(NotImplementedError, match="not yet available"):
@@ -94,7 +95,9 @@ async def test_scheduler_not_implemented(scheduler_config):
 
 async def test_two_phase_initialization_pattern(scheduler_config):
     """Test that the two-phase initialization pattern is supported."""
-    scheduler = await scheduler_impl(scheduler_config)
+    from llama_stack.providers.utils.job_scheduler.inline import InlineSchedulerImpl
+
+    scheduler = InlineSchedulerImpl(scheduler_config)
 
     # Mock the methods to test the pattern
     scheduler.initialize = AsyncMock()
