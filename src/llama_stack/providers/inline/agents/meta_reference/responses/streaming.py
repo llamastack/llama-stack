@@ -111,7 +111,7 @@ class StreamingResponseOrchestrator:
         text: OpenAIResponseText,
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
-        instructions: str,
+        instructions: str | None,
         safety_api,
         guardrail_ids: list[str] | None = None,
         prompt: OpenAIResponsePrompt | None = None,
@@ -128,7 +128,9 @@ class StreamingResponseOrchestrator:
         self.prompt = prompt
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
-        self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = ctx.tool_context.previous_tools or {}
+        self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
+            ctx.tool_context.previous_tools if ctx.tool_context else {}
+        )
         # Track final messages after all tool executions
         self.final_messages: list[OpenAIMessageParam] = []
         # mapping for annotations
@@ -229,7 +231,8 @@ class StreamingResponseOrchestrator:
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
-                    tools=self.ctx.chat_tools,
+                    # Pydantic models are dict-compatible but mypy treats them as distinct types
+                    tools=self.ctx.chat_tools,  # type: ignore[arg-type]
                     stream=True,
                     temperature=self.ctx.temperature,
                     response_format=response_format,
@@ -272,7 +275,12 @@ class StreamingResponseOrchestrator:
 
                 # Handle choices with no tool calls
                 for choice in current_response.choices:
-                    if not (choice.message.tool_calls and self.ctx.response_tools):
+                    has_tool_calls = (
+                        isinstance(choice.message, OpenAIAssistantMessageParam)
+                        and choice.message.tool_calls
+                        and self.ctx.response_tools
+                    )
+                    if not has_tool_calls:
                         output_messages.append(
                             await convert_chat_choice_to_response_message(
                                 choice,
@@ -722,7 +730,10 @@ class StreamingResponseOrchestrator:
                                 )
 
                             # Accumulate arguments for final response (only for subsequent chunks)
-                            if not is_new_tool_call:
+                            if not is_new_tool_call and response_tool_call is not None:
+                                # Both should have functions since we're inside the tool_call.function check above
+                                assert response_tool_call.function is not None
+                                assert tool_call.function is not None
                                 response_tool_call.function.arguments = (
                                     response_tool_call.function.arguments or ""
                                 ) + tool_call.function.arguments
@@ -747,10 +758,13 @@ class StreamingResponseOrchestrator:
         for tool_call_index in sorted(chat_response_tool_calls.keys()):
             tool_call = chat_response_tool_calls[tool_call_index]
             # Ensure that arguments, if sent back to the inference provider, are not None
-            tool_call.function.arguments = tool_call.function.arguments or "{}"
+            if tool_call.function:
+                tool_call.function.arguments = tool_call.function.arguments or "{}"
             tool_call_item_id = tool_call_item_ids[tool_call_index]
-            final_arguments = tool_call.function.arguments
-            tool_call_name = chat_response_tool_calls[tool_call_index].function.name
+            final_arguments: str = tool_call.function.arguments or "{}" if tool_call.function else "{}"
+            func = chat_response_tool_calls[tool_call_index].function
+
+            tool_call_name = func.name if func else ""
 
             # Check if this is an MCP tool call
             is_mcp_tool = tool_call_name and tool_call_name in self.mcp_tool_to_server
@@ -894,12 +908,11 @@ class StreamingResponseOrchestrator:
 
             self.sequence_number += 1
             if tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server:
-                item = OpenAIResponseOutputMessageMCPCall(
+                item: OpenAIResponseOutput = OpenAIResponseOutputMessageMCPCall(
                     arguments="",
                     name=tool_call.function.name,
                     id=matching_item_id,
                     server_label=self.mcp_tool_to_server[tool_call.function.name].server_label,
-                    status="in_progress",
                 )
             elif tool_call.function.name == "web_search":
                 item = OpenAIResponseOutputMessageWebSearchToolCall(
@@ -1008,7 +1021,7 @@ class StreamingResponseOrchestrator:
                 description=tool.description,
                 input_schema=tool.input_schema,
             )
-            return convert_tooldef_to_openai_tool(tool_def)
+            return convert_tooldef_to_openai_tool(tool_def)  # type: ignore[return-value]  # Returns dict but ChatCompletionToolParam expects TypedDict
 
         # Initialize chat_tools if not already set
         if self.ctx.chat_tools is None:
@@ -1016,7 +1029,7 @@ class StreamingResponseOrchestrator:
 
         for input_tool in tools:
             if input_tool.type == "function":
-                self.ctx.chat_tools.append(ChatCompletionToolParam(type="function", function=input_tool.model_dump()))
+                self.ctx.chat_tools.append(ChatCompletionToolParam(type="function", function=input_tool.model_dump()))  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
             elif input_tool.type in WebSearchToolTypes:
                 tool_name = "web_search"
                 # Need to access tool_groups_api from tool_executor
@@ -1055,8 +1068,8 @@ class StreamingResponseOrchestrator:
                 if isinstance(mcp_tool.allowed_tools, list):
                     always_allowed = mcp_tool.allowed_tools
                 elif isinstance(mcp_tool.allowed_tools, AllowedToolsFilter):
-                    always_allowed = mcp_tool.allowed_tools.always
-                    never_allowed = mcp_tool.allowed_tools.never
+                    # AllowedToolsFilter only has tool_names field (not allowed/disallowed)
+                    always_allowed = mcp_tool.allowed_tools.tool_names
 
             # Call list_mcp_tools
             tool_defs = None
@@ -1088,7 +1101,7 @@ class StreamingResponseOrchestrator:
                     openai_tool = convert_tooldef_to_chat_tool(t)
                     if self.ctx.chat_tools is None:
                         self.ctx.chat_tools = []
-                    self.ctx.chat_tools.append(openai_tool)
+                    self.ctx.chat_tools.append(openai_tool)  # type: ignore[arg-type]  # Returns dict but ChatCompletionToolParam expects TypedDict
 
                     # Add to MCP tool mapping
                     if t.name in self.mcp_tool_to_server:
@@ -1120,13 +1133,17 @@ class StreamingResponseOrchestrator:
         self, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Handle all mcp tool lists from previous response that are still valid:
-        for tool in self.ctx.tool_context.previous_tool_listings:
-            async for evt in self._reuse_mcp_list_tools(tool, output_messages):
-                yield evt
-        # Process all remaining tools (including MCP tools) and emit streaming events
-        if self.ctx.tool_context.tools_to_process:
-            async for stream_event in self._process_new_tools(self.ctx.tool_context.tools_to_process, output_messages):
-                yield stream_event
+        # tool_context can be None when no tools are provided in the response request
+        if self.ctx.tool_context:
+            for tool in self.ctx.tool_context.previous_tool_listings:
+                async for evt in self._reuse_mcp_list_tools(tool, output_messages):
+                    yield evt
+            # Process all remaining tools (including MCP tools) and emit streaming events
+            if self.ctx.tool_context.tools_to_process:
+                async for stream_event in self._process_new_tools(
+                    self.ctx.tool_context.tools_to_process, output_messages
+                ):
+                    yield stream_event
 
     def _approval_required(self, tool_name: str) -> bool:
         if tool_name not in self.mcp_tool_to_server:
@@ -1220,7 +1237,7 @@ class StreamingResponseOrchestrator:
             openai_tool = convert_tooldef_to_openai_tool(tool_def)
             if self.ctx.chat_tools is None:
                 self.ctx.chat_tools = []
-            self.ctx.chat_tools.append(openai_tool)
+            self.ctx.chat_tools.append(openai_tool)  # type: ignore[arg-type]  # Returns dict but ChatCompletionToolParam expects TypedDict
 
         mcp_list_message = OpenAIResponseOutputMessageMCPListTools(
             id=f"mcp_list_{uuid.uuid4()}",

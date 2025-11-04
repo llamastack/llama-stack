@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 
 from llama_stack.apis.agents import Agents
+from llama_stack.apis.batches import Batches
 from llama_stack.apis.benchmarks import Benchmarks
 from llama_stack.apis.conversations import Conversations
 from llama_stack.apis.datasetio import DatasetIO
@@ -30,7 +31,6 @@ from llama_stack.apis.safety import Safety
 from llama_stack.apis.scoring import Scoring
 from llama_stack.apis.scoring_functions import ScoringFunctions
 from llama_stack.apis.shields import Shields
-from llama_stack.apis.synthetic_data_generation import SyntheticDataGeneration
 from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
 from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
@@ -63,8 +63,8 @@ class LlamaStack(
     Providers,
     Inference,
     Agents,
+    Batches,
     Safety,
-    SyntheticDataGeneration,
     Datasets,
     PostTraining,
     VectorIO,

@@ -18,10 +18,12 @@ from .inspection import (
     TypeLike,
     is_generic_dict,
     is_generic_list,
+    is_generic_sequence,
     is_type_optional,
     is_type_union,
     unwrap_generic_dict,
     unwrap_generic_list,
+    unwrap_generic_sequence,
     unwrap_optional_type,
     unwrap_union_types,
 )
@@ -155,24 +157,28 @@ def python_type_to_name(data_type: TypeLike, force: bool = False) -> str:
     if metadata is not None:
         # type is Annotated[T, ...]
         arg = typing.get_args(data_type)[0]
-        return python_type_to_name(arg)
+        return python_type_to_name(arg, force=force)
 
     if force:
         # generic types
         if is_type_optional(data_type, strict=True):
-            inner_name = python_type_to_name(unwrap_optional_type(data_type))
+            inner_name = python_type_to_name(unwrap_optional_type(data_type), force=True)
             return f"Optional__{inner_name}"
         elif is_generic_list(data_type):
-            item_name = python_type_to_name(unwrap_generic_list(data_type))
+            item_name = python_type_to_name(unwrap_generic_list(data_type), force=True)
+            return f"List__{item_name}"
+        elif is_generic_sequence(data_type):
+            # Treat Sequence the same as List for schema generation purposes
+            item_name = python_type_to_name(unwrap_generic_sequence(data_type), force=True)
             return f"List__{item_name}"
         elif is_generic_dict(data_type):
             key_type, value_type = unwrap_generic_dict(data_type)
-            key_name = python_type_to_name(key_type)
-            value_name = python_type_to_name(value_type)
+            key_name = python_type_to_name(key_type, force=True)
+            value_name = python_type_to_name(value_type, force=True)
             return f"Dict__{key_name}__{value_name}"
         elif is_type_union(data_type):
             member_types = unwrap_union_types(data_type)
-            member_names = "__".join(python_type_to_name(member_type) for member_type in member_types)
+            member_names = "__".join(python_type_to_name(member_type, force=True) for member_type in member_types)
             return f"Union__{member_names}"
 
     # named system or user-defined type

@@ -196,6 +196,7 @@ def make_overlapped_chunks(
         chunks.append(
             Chunk(
                 content=chunk,
+                chunk_id=chunk_id,
                 metadata=chunk_metadata,
                 chunk_metadata=backend_chunk_metadata,
             )

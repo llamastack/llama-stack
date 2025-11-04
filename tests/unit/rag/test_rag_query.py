@@ -41,6 +41,7 @@ class TestRagQuery:
         interleaved_content = MagicMock()
         chunk = Chunk(
             content=interleaved_content,
+            chunk_id="chunk1",
             metadata={
                 "key1": "value1",
                 "token_count": 10,
@@ -48,7 +49,6 @@ class TestRagQuery:
                 # Note this is inserted into `metadata` during MemoryToolRuntimeImpl().insert()
                 "document_id": "doc1",
             },
-            stored_chunk_id="chunk1",
             chunk_metadata=chunk_metadata,
         )
 
@@ -101,8 +101,8 @@ class TestRagQuery:
         )
         chunk1 = Chunk(
             content="chunk from db1",
+            chunk_id="c1",
             metadata={"vector_store_id": "db1", "document_id": "doc1"},
-            stored_chunk_id="c1",
             chunk_metadata=chunk_metadata1,
         )
 
@@ -114,8 +114,8 @@ class TestRagQuery:
         )
         chunk2 = Chunk(
             content="chunk from db2",
+            chunk_id="c2",
             metadata={"vector_store_id": "db2", "document_id": "doc2"},
-            stored_chunk_id="c2",
             chunk_metadata=chunk_metadata2,
         )
 

@@ -8,7 +8,6 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-import uuid
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
 from fastapi import Body
@@ -18,7 +17,6 @@ from llama_stack.apis.inference import InterleavedContent
 from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.core.telemetry.trace_protocol import trace_protocol
-from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack.schema_utils import json_schema_type, webmethod
 from llama_stack.strong_typing.schema import register_schema
 
@@ -61,37 +59,18 @@ class Chunk(BaseModel):
     """
     A chunk of content that can be inserted into a vector database.
     :param content: The content of the chunk, which can be interleaved text, images, or other types.
-    :param embedding: Optional embedding for the chunk. If not provided, it will be computed later.
+    :param chunk_id: Unique identifier for the chunk. Must be provided explicitly.
     :param metadata: Metadata associated with the chunk that will be used in the model context during inference.
-    :param stored_chunk_id: The chunk ID that is stored in the vector database. Used for backend functionality.
+    :param embedding: Optional embedding for the chunk. If not provided, it will be computed later.
     :param chunk_metadata: Metadata for the chunk that will NOT be used in the context during inference.
         The `chunk_metadata` is required backend functionality.
     """
 
     content: InterleavedContent
+    chunk_id: str
     metadata: dict[str, Any] = Field(default_factory=dict)
     embedding: list[float] | None = None
-    # The alias parameter serializes the field as "chunk_id" in JSON but keeps the internal name as "stored_chunk_id"
-    stored_chunk_id: str | None = Field(default=None, alias="chunk_id")
     chunk_metadata: ChunkMetadata | None = None
-
-    model_config = {"populate_by_name": True}
-
-    def model_post_init(self, __context):
-        # Extract chunk_id from metadata if present
-        if self.metadata and "chunk_id" in self.metadata:
-            self.stored_chunk_id = self.metadata.pop("chunk_id")
-
-    @property
-    def chunk_id(self) -> str:
-        """Returns the chunk ID, which is either an input `chunk_id` or a generated one if not set."""
-        if self.stored_chunk_id:
-            return self.stored_chunk_id
-
-        if "document_id" in self.metadata:
-            return generate_chunk_id(self.metadata["document_id"], str(self.content))
-
-        return generate_chunk_id(str(uuid.uuid4()), str(self.content))
 
     @property
     def document_id(self) -> str | None:

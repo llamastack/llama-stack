@@ -26,6 +26,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_doc,
     make_overlapped_chunks,
 )
+from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
 DUMMY_PDF_PATH = Path(os.path.abspath(__file__)).parent / "fixtures" / "dummy.pdf"
 # Depending on the machine, this can get parsed a couple of ways
@@ -53,6 +54,7 @@ class TestChunk:
     def test_chunk(self):
         chunk = Chunk(
             content="Example chunk content",
+            chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
             metadata={"key": "value"},
             embedding=[0.1, 0.2, 0.3],
         )
@@ -63,6 +65,7 @@ class TestChunk:
 
         chunk_no_embedding = Chunk(
             content="Example chunk content",
+            chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
             metadata={"key": "value"},
         )
         assert chunk_no_embedding.embedding is None
@@ -218,8 +221,8 @@ class TestVectorStoreWithIndex:
         )
 
         chunks = [
-            Chunk(content="Test 1", embedding=None, metadata={}),
-            Chunk(content="Test 2", embedding=None, metadata={}),
+            Chunk(content="Test 1", chunk_id=generate_chunk_id("test-doc", "Test 1"), embedding=None, metadata={}),
+            Chunk(content="Test 2", chunk_id=generate_chunk_id("test-doc", "Test 2"), embedding=None, metadata={}),
         ]
 
         mock_inference_api.openai_embeddings.return_value.data = [
@@ -254,8 +257,18 @@ class TestVectorStoreWithIndex:
         )
 
         chunks = [
-            Chunk(content="Test 1", embedding=[0.1, 0.2, 0.3], metadata={}),
-            Chunk(content="Test 2", embedding=[0.4, 0.5, 0.6], metadata={}),
+            Chunk(
+                content="Test 1",
+                chunk_id=generate_chunk_id("test-doc", "Test 1"),
+                embedding=[0.1, 0.2, 0.3],
+                metadata={},
+            ),
+            Chunk(
+                content="Test 2",
+                chunk_id=generate_chunk_id("test-doc", "Test 2"),
+                embedding=[0.4, 0.5, 0.6],
+                metadata={},
+            ),
         ]
 
         await vector_store_with_index.insert_chunks(chunks)
@@ -279,25 +292,47 @@ class TestVectorStoreWithIndex:
 
         # Verify Chunk raises ValueError for invalid embedding type
         with pytest.raises(ValueError, match="Input should be a valid list"):
-            Chunk(content="Test 1", embedding="invalid_type", metadata={})
+            Chunk(
+                content="Test 1",
+                chunk_id=generate_chunk_id("test-doc", "Test 1"),
+                embedding="invalid_type",
+                metadata={},
+            )
 
         # Verify Chunk raises ValueError for invalid embedding type in insert_chunks (i.e., Chunk errors before insert_chunks is called)
         with pytest.raises(ValueError, match="Input should be a valid list"):
             await vector_store_with_index.insert_chunks(
                 [
-                    Chunk(content="Test 1", embedding=None, metadata={}),
-                    Chunk(content="Test 2", embedding="invalid_type", metadata={}),
+                    Chunk(
+                        content="Test 1", chunk_id=generate_chunk_id("test-doc", "Test 1"), embedding=None, metadata={}
+                    ),
+                    Chunk(
+                        content="Test 2",
+                        chunk_id=generate_chunk_id("test-doc", "Test 2"),
+                        embedding="invalid_type",
+                        metadata={},
+                    ),
                 ]
             )
 
         # Verify Chunk raises ValueError for invalid embedding element type in insert_chunks (i.e., Chunk errors before insert_chunks is called)
         with pytest.raises(ValueError, match=" Input should be a valid number, unable to parse string as a number "):
             await vector_store_with_index.insert_chunks(
-                Chunk(content="Test 1", embedding=[0.1, "string", 0.3], metadata={})
+                Chunk(
+                    content="Test 1",
+                    chunk_id=generate_chunk_id("test-doc", "Test 1"),
+                    embedding=[0.1, "string", 0.3],
+                    metadata={},
+                )
             )
 
         chunks_wrong_dim = [
-            Chunk(content="Test 1", embedding=[0.1, 0.2, 0.3, 0.4], metadata={}),
+            Chunk(
+                content="Test 1",
+                chunk_id=generate_chunk_id("test-doc", "Test 1"),
+                embedding=[0.1, 0.2, 0.3, 0.4],
+                metadata={},
+            ),
         ]
         with pytest.raises(ValueError, match="has dimension 4, expected 3"):
             await vector_store_with_index.insert_chunks(chunks_wrong_dim)
@@ -317,9 +352,14 @@ class TestVectorStoreWithIndex:
         )
 
         chunks = [
-            Chunk(content="Test 1", embedding=None, metadata={}),
-            Chunk(content="Test 2", embedding=[0.2, 0.2, 0.2], metadata={}),
-            Chunk(content="Test 3", embedding=None, metadata={}),
+            Chunk(content="Test 1", chunk_id=generate_chunk_id("test-doc", "Test 1"), embedding=None, metadata={}),
+            Chunk(
+                content="Test 2",
+                chunk_id=generate_chunk_id("test-doc", "Test 2"),
+                embedding=[0.2, 0.2, 0.2],
+                metadata={},
+            ),
+            Chunk(content="Test 3", chunk_id=generate_chunk_id("test-doc", "Test 3"), embedding=None, metadata={}),
         ]
 
         mock_inference_api.openai_embeddings.return_value.data = [

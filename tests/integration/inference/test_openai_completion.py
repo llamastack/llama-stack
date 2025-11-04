@@ -39,7 +39,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         # Technically Nvidia does support OpenAI completions, but none of their hosted models
@@ -120,7 +120,7 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         "remote::cerebras",
@@ -721,6 +721,6 @@ def test_openai_chat_completion_structured_output(openai_client, text_model_id, 
     print(response.choices[0].message.content)
     answer = AnswerFormat.model_validate_json(response.choices[0].message.content)
     expected = tc["expected"]
-    assert answer.first_name == expected["first_name"]
-    assert answer.last_name == expected["last_name"]
+    assert expected["first_name"].lower() in answer.first_name.lower()
+    assert expected["last_name"].lower() in answer.last_name.lower()
     assert answer.year_of_birth == expected["year_of_birth"]

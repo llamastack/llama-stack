@@ -6,7 +6,7 @@
 
 import asyncio
 import time
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -15,20 +15,10 @@ from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatC
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
 from pydantic import TypeAdapter
 
-from llama_stack.apis.common.content_types import (
-    InterleavedContent,
-)
 from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
 from llama_stack.apis.inference import (
-    ChatCompletionResponse,
-    ChatCompletionResponseEventType,
-    ChatCompletionResponseStreamChunk,
-    CompletionMessage,
-    CompletionResponse,
-    CompletionResponseStreamChunk,
     Inference,
     ListOpenAIChatCompletionResponse,
-    Message,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -45,15 +35,13 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     Order,
     RerankResponse,
-    StopReason,
-    ToolPromptFormat,
 )
 from llama_stack.apis.inference.inference import (
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
 )
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.core.telemetry.telemetry import MetricEvent, MetricInResponse
+from llama_stack.apis.models import ModelType
+from llama_stack.core.telemetry.telemetry import MetricEvent
 from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.chat_format import ChatFormat
@@ -152,35 +140,6 @@ class InferenceRouter(Inference):
                 )
             )
         return metric_events
-
-    async def _compute_and_log_token_usage(
-        self,
-        prompt_tokens: int,
-        completion_tokens: int,
-        total_tokens: int,
-        model: Model,
-    ) -> list[MetricInResponse]:
-        metrics = self._construct_metrics(
-            prompt_tokens, completion_tokens, total_tokens, model.model_id, model.provider_id
-        )
-        if self.telemetry_enabled:
-            for metric in metrics:
-                enqueue_event(metric)
-        return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in metrics]
-
-    async def _count_tokens(
-        self,
-        messages: list[Message] | InterleavedContent,
-        tool_prompt_format: ToolPromptFormat | None = None,
-    ) -> int | None:
-        if not hasattr(self, "formatter") or self.formatter is None:
-            return None
-
-        if isinstance(messages, list):
-            encoded = self.formatter.encode_dialog_prompt(messages, tool_prompt_format)
-        else:
-            encoded = self.formatter.encode_content(messages)
-        return len(encoded.tokens) if encoded and encoded.tokens else 0
 
     async def _get_model_provider(self, model_id: str, expected_model_type: str) -> tuple[Inference, str]:
         model = await self.routing_table.get_object_by_identifier("model", model_id)
@@ -374,121 +333,6 @@ class InferenceRouter(Inference):
                     status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}"
                 )
         return health_statuses
-
-    async def stream_tokens_and_compute_metrics(
-        self,
-        response,
-        prompt_tokens,
-        fully_qualified_model_id: str,
-        provider_id: str,
-        tool_prompt_format: ToolPromptFormat | None = None,
-    ) -> AsyncGenerator[ChatCompletionResponseStreamChunk, None] | AsyncGenerator[CompletionResponseStreamChunk, None]:
-        completion_text = ""
-        async for chunk in response:
-            complete = False
-            if hasattr(chunk, "event"):  # only ChatCompletions have .event
-                if chunk.event.event_type == ChatCompletionResponseEventType.progress:
-                    if chunk.event.delta.type == "text":
-                        completion_text += chunk.event.delta.text
-                if chunk.event.event_type == ChatCompletionResponseEventType.complete:
-                    complete = True
-                    completion_tokens = await self._count_tokens(
-                        [
-                            CompletionMessage(
-                                content=completion_text,
-                                stop_reason=StopReason.end_of_turn,
-                            )
-                        ],
-                        tool_prompt_format=tool_prompt_format,
-                    )
-            else:
-                if hasattr(chunk, "delta"):
-                    completion_text += chunk.delta
-                if hasattr(chunk, "stop_reason") and chunk.stop_reason and self.telemetry_enabled:
-                    complete = True
-                    completion_tokens = await self._count_tokens(completion_text)
-            # if we are done receiving tokens
-            if complete:
-                total_tokens = (prompt_tokens or 0) + (completion_tokens or 0)
-
-                # Create a separate span for streaming completion metrics
-                if self.telemetry_enabled:
-                    # Log metrics in the new span context
-                    completion_metrics = self._construct_metrics(
-                        prompt_tokens=prompt_tokens,
-                        completion_tokens=completion_tokens,
-                        total_tokens=total_tokens,
-                        fully_qualified_model_id=fully_qualified_model_id,
-                        provider_id=provider_id,
-                    )
-                    for metric in completion_metrics:
-                        if metric.metric in [
-                            "completion_tokens",
-                            "total_tokens",
-                        ]:  # Only log completion and total tokens
-                            enqueue_event(metric)
-
-                        # Return metrics in response
-                        async_metrics = [
-                            MetricInResponse(metric=metric.metric, value=metric.value) for metric in completion_metrics
-                        ]
-                        chunk.metrics = async_metrics if chunk.metrics is None else chunk.metrics + async_metrics
-                else:
-                    # Fallback if no telemetry
-                    completion_metrics = self._construct_metrics(
-                        prompt_tokens or 0,
-                        completion_tokens or 0,
-                        total_tokens,
-                        fully_qualified_model_id=fully_qualified_model_id,
-                        provider_id=provider_id,
-                    )
-                    async_metrics = [
-                        MetricInResponse(metric=metric.metric, value=metric.value) for metric in completion_metrics
-                    ]
-                    chunk.metrics = async_metrics if chunk.metrics is None else chunk.metrics + async_metrics
-            yield chunk
-
-    async def count_tokens_and_compute_metrics(
-        self,
-        response: ChatCompletionResponse | CompletionResponse,
-        prompt_tokens,
-        fully_qualified_model_id: str,
-        provider_id: str,
-        tool_prompt_format: ToolPromptFormat | None = None,
-    ):
-        if isinstance(response, ChatCompletionResponse):
-            content = [response.completion_message]
-        else:
-            content = response.content
-        completion_tokens = await self._count_tokens(messages=content, tool_prompt_format=tool_prompt_format)
-        total_tokens = (prompt_tokens or 0) + (completion_tokens or 0)
-
-        # Create a separate span for completion metrics
-        if self.telemetry_enabled:
-            # Log metrics in the new span context
-            completion_metrics = self._construct_metrics(
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                total_tokens=total_tokens,
-                fully_qualified_model_id=fully_qualified_model_id,
-                provider_id=provider_id,
-            )
-            for metric in completion_metrics:
-                if metric.metric in ["completion_tokens", "total_tokens"]:  # Only log completion and total tokens
-                    enqueue_event(metric)
-
-            # Return metrics in response
-            return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in completion_metrics]
-
-        # Fallback if no telemetry
-        metrics = self._construct_metrics(
-            prompt_tokens or 0,
-            completion_tokens or 0,
-            total_tokens,
-            fully_qualified_model_id=fully_qualified_model_id,
-            provider_id=provider_id,
-        )
-        return [MetricInResponse(metric=metric.metric, value=metric.value) for metric in metrics]
 
     async def stream_tokens_and_compute_metrics_openai_chat(
         self,

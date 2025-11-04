@@ -30,10 +30,16 @@ jobs:
 
       - name: Build a single provider
         run: |
+          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=starter"
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+          fi
           docker build . \
             -f containers/Containerfile \
-            --build-arg INSTALL_MODE=editable \
-            --build-arg DISTRO_NAME=starter \
+            $BUILD_ARGS \
             --tag llama-stack:starter-ci
 
       - name: Run installer end-to-end
