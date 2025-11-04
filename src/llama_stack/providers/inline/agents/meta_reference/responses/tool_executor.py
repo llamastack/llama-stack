@@ -26,7 +26,10 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageWebSearchToolCall,
 )
-from llama_stack.apis.common.content_types import ImageContentItem, TextContentItem
+from llama_stack.apis.common.content_types import (
+    ImageContentItem,
+    TextContentItem,
+)
 from llama_stack.apis.inference import (
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
@@ -86,12 +89,7 @@ class ToolExecutor:
 
         # Emit progress events for tool execution start
         async for event_result in self._emit_progress_events(
-            function.name,
-            ctx,
-            sequence_number,
-            output_index,
-            item_id,
-            mcp_tool_to_server,
+            function.name, ctx, sequence_number, output_index, item_id, mcp_tool_to_server
         ):
             sequence_number = event_result.sequence_number
             yield event_result
@@ -111,28 +109,14 @@ class ToolExecutor:
             )
         )
         async for event_result in self._emit_completion_events(
-            function.name,
-            ctx,
-            sequence_number,
-            output_index,
-            item_id,
-            has_error,
-            mcp_tool_to_server,
+            function.name, ctx, sequence_number, output_index, item_id, has_error, mcp_tool_to_server,
         ):
             sequence_number = event_result.sequence_number
             yield event_result
 
         # Build result messages from tool execution
         output_message, input_message = await self._build_result_messages(
-            function,
-            tool_call_id,
-            item_id,
-            tool_kwargs,
-            ctx,
-            error_exc,
-            result,
-            has_error,
-            mcp_tool_to_server,
+            function, tool_call_id, item_id, tool_kwargs, ctx, error_exc, result, has_error, mcp_tool_to_server,
         )
 
         # Yield the final result
