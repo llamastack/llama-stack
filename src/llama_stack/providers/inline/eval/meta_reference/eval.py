@@ -8,7 +8,7 @@ from typing import Any
 
 from tqdm import tqdm
 
-from llama_stack.apis.agents import Agents, StepType
+from llama_stack.apis.agents import Agents
 from llama_stack.apis.benchmarks import Benchmark
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.datasets import Datasets
@@ -18,13 +18,9 @@ from llama_stack.apis.inference import (
     OpenAICompletionRequestWithExtraBody,
     OpenAISystemMessageParam,
     OpenAIUserMessageParam,
-    UserMessage,
 )
 from llama_stack.apis.scoring import Scoring
 from llama_stack.providers.datatypes import BenchmarksProtocolPrivate
-from llama_stack.providers.inline.agents.meta_reference.agent_instance import (
-    MEMORY_QUERY_TOOL,
-)
 from llama_stack.providers.utils.common.data_schema_validator import ColumnName
 from llama_stack.providers.utils.kvstore import kvstore_impl
 
@@ -118,49 +114,6 @@ class MetaReferenceEvalImpl(
         self.jobs[job_id] = res
         return Job(job_id=job_id, status=JobStatus.completed)
 
-    async def _run_agent_generation(
-        self, input_rows: list[dict[str, Any]], benchmark_config: BenchmarkConfig
-    ) -> list[dict[str, Any]]:
-        candidate = benchmark_config.eval_candidate
-        create_response = await self.agents_api.create_agent(candidate.config)
-        agent_id = create_response.agent_id
-
-        generations = []
-        for i, x in tqdm(enumerate(input_rows)):
-            assert ColumnName.chat_completion_input.value in x, "Invalid input row"
-            input_messages = json.loads(x[ColumnName.chat_completion_input.value])
-            input_messages = [UserMessage(**x) for x in input_messages if x["role"] == "user"]
-
-            # NOTE: only single-turn agent generation is supported. Create a new session for each input row
-            session_create_response = await self.agents_api.create_agent_session(agent_id, f"session-{i}")
-            session_id = session_create_response.session_id
-
-            turn_request = dict(
-                agent_id=agent_id,
-                session_id=session_id,
-                messages=input_messages,
-                stream=True,
-            )
-            turn_response = [chunk async for chunk in await self.agents_api.create_agent_turn(**turn_request)]
-            final_event = turn_response[-1].event.payload
-
-            # check if there's a memory retrieval step and extract the context
-            memory_rag_context = None
-            for step in final_event.turn.steps:
-                if step.step_type == StepType.tool_execution.value:
-                    for tool_response in step.tool_responses:
-                        if tool_response.tool_name == MEMORY_QUERY_TOOL:
-                            memory_rag_context = " ".join(x.text for x in tool_response.content)
-
-            agent_generation = {}
-            agent_generation[ColumnName.generated_answer.value] = final_event.turn.output_message.content
-            if memory_rag_context:
-                agent_generation[ColumnName.context.value] = memory_rag_context
-
-            generations.append(agent_generation)
-
-        return generations
-
     async def _run_model_generation(
         self, input_rows: list[dict[str, Any]], benchmark_config: BenchmarkConfig
     ) -> list[dict[str, Any]]:
@@ -215,9 +168,8 @@ class MetaReferenceEvalImpl(
         benchmark_config: BenchmarkConfig,
     ) -> EvaluateResponse:
         candidate = benchmark_config.eval_candidate
-        if candidate.type == "agent":
-            generations = await self._run_agent_generation(input_rows, benchmark_config)
-        elif candidate.type == "model":
+        # Agent evaluation removed
+        if candidate.type == "model":
             generations = await self._run_model_generation(input_rows, benchmark_config)
         else:
             raise ValueError(f"Invalid candidate type: {candidate.type}")
