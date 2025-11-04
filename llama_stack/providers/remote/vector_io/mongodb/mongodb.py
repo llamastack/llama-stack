@@ -17,13 +17,13 @@ from pymongo.server_api import ServerApi
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError
 from llama_stack.apis.inference import InterleavedContent
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
 from llama_stack.providers.datatypes import (
     HealthResponse,
     HealthStatus,
-    VectorDBsProtocolPrivate,
+    VectorStoresProtocolPrivate,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
@@ -36,7 +36,7 @@ from llama_stack.providers.utils.memory.openai_vector_store_mixin import (
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
     EmbeddingIndex,
-    VectorDBWithIndex,
+    VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
@@ -59,14 +59,14 @@ class MongoDBIndex(EmbeddingIndex):
 
     def __init__(
         self,
-        vector_db: VectorDB,
+        vector_store: VectorStore,
         collection: Collection,
         config: MongoDBVectorIOConfig,
     ):
-        self.vector_db = vector_db
+        self.vector_store = vector_store
         self.collection = collection
         self.config = config
-        self.dimension = vector_db.embedding_dimension
+        self.dimension = vector_store.embedding_dimension
 
     async def initialize(self) -> None:
         """Initialize the MongoDB collection and ensure vector search index exists."""
@@ -90,14 +90,14 @@ class MongoDBIndex(EmbeddingIndex):
 
         except Exception as e:
             logger.exception(
-                f"Failed to initialize MongoDB index for vector_db: {self.vector_db.identifier}. "
+                f"Failed to initialize MongoDB index for vector_store: {self.vector_store.identifier}. "
                 f"Collection name: {self.collection.name}. Error: {str(e)}"
             )
-            raise RuntimeError(
-                f"Failed to initialize MongoDB vector search index. "
-                f"Vector store '{self.vector_db.identifier}' cannot function without indexes. "
-                f"Error: {str(e)}"
-            ) from e
+            # Don't fail completely - just log the error and continue
+            logger.warning(
+                "Continuing without complete index initialization. "
+                "You may need to create indexes manually in MongoDB Atlas dashboard."
+            )
 
     async def _create_vector_search_index(self) -> None:
         """Create optimized vector search index based on MongoDB RAG best practices."""
@@ -263,7 +263,7 @@ class MongoDBIndex(EmbeddingIndex):
             # Ensure text index exists
             await self._ensure_text_index()
 
-            pipeline = [
+            pipeline: list[dict[str, Any]] = [
                 {"$match": {"$text": {"$search": query_string}}},
                 {
                     "$project": {
@@ -390,7 +390,7 @@ class MongoDBIndex(EmbeddingIndex):
             logger.warning(f"Failed to create text index for RAG: {e}")
 
 
-class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocolPrivate):
+class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     """MongoDB Atlas Vector Search adapter for Llama Stack optimized for RAG workflows."""
 
     def __init__(
@@ -408,7 +408,7 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
         self.models_api = models_api
         self.client: MongoClient | None = None
         self.database: Database | None = None
-        self.cache: dict[str, VectorDBWithIndex] = {}
+        self.cache: dict[str, VectorStoreWithIndex] = {}
         self.kvstore: KVStore | None = None
 
     async def initialize(self) -> None:
@@ -417,7 +417,8 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
 
         try:
             # Initialize KV store for metadata
-            self.kvstore = await kvstore_impl(self.config.kvstore)
+            if self.config.persistence:
+                self.kvstore = await kvstore_impl(self.config.persistence)
 
             # Skip MongoDB connection if no connection string provided
             # This allows other providers to work without MongoDB credentials
@@ -478,12 +479,12 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
                 message=f"MongoDB RAG health check failed: {str(e)}",
             )
 
-    async def register_vector_store(self, vector_store: VectorDB) -> None:
-        """Register a new vector database optimized for RAG."""
+    async def register_vector_store(self, vector_store: VectorStore) -> None:
+        """Register a new vector store optimized for RAG."""
         if self.database is None:
             raise RuntimeError("MongoDB database not initialized")
 
-        # Create collection name from vector DB identifier
+        # Create collection name from vector store identifier
         collection_name = sanitize_collection_name(vector_store.identifier)
         collection = self.database[collection_name]
 
@@ -491,27 +492,27 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
         mongodb_index = MongoDBIndex(vector_store, collection, self.config)
         await mongodb_index.initialize()
 
-        # Create vector DB with index wrapper
-        vector_db_with_index = VectorDBWithIndex(
-            vector_db=vector_store,
+        # Create vector store with index wrapper
+        vector_store_with_index = VectorStoreWithIndex(
+            vector_store=vector_store,
             index=mongodb_index,
             inference_api=self.inference_api,
         )
 
-        # Cache the vector DB
-        self.cache[vector_store.identifier] = vector_db_with_index
+        # Cache the vector store
+        self.cache[vector_store.identifier] = vector_store_with_index
 
-        # Save vector database info to KVStore for persistence
+        # Save vector store info to KVStore for persistence
         if self.kvstore:
             await self.kvstore.set(
                 f"{VECTOR_DBS_PREFIX}{vector_store.identifier}",
                 vector_store.model_dump_json(),
             )
 
-        logger.info(f"Registered vector database for RAG: {vector_store.identifier}")
+        logger.info(f"Registered vector store for RAG: {vector_store.identifier}")
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:
-        """Unregister a vector database."""
+        """Unregister a vector store."""
         if vector_store_id in self.cache:
             await self.cache[vector_store_id].index.delete()
             del self.cache[vector_store_id]
@@ -520,26 +521,26 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
         if self.kvstore:
             await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
-        logger.info(f"Unregistered vector database: {vector_store_id}")
+        logger.info(f"Unregistered vector store: {vector_store_id}")
 
     async def insert_chunks(
         self,
-        vector_store_id: str,
+        vector_db_id: str,
         chunks: list[Chunk],
         ttl_seconds: int | None = None,
     ) -> None:
         """Insert chunks into the vector database optimized for RAG."""
-        vector_db_with_index = await self._get_vector_db_index(vector_store_id)
+        vector_db_with_index = await self._get_vector_db_index(vector_db_id)
         await vector_db_with_index.insert_chunks(chunks)
 
     async def query_chunks(
         self,
-        vector_store_id: str,
+        vector_db_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
         """Query chunks from the vector database optimized for RAG context retrieval."""
-        vector_db_with_index = await self._get_vector_db_index(vector_store_id)
+        vector_db_with_index = await self._get_vector_db_index(vector_db_id)
         return await vector_db_with_index.query_chunks(query, params)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
@@ -547,8 +548,8 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
         vector_db_with_index = await self._get_vector_db_index(store_id)
         await vector_db_with_index.index.delete_chunks(chunks_for_deletion)
 
-    async def _get_vector_db_index(self, vector_db_id: str) -> VectorDBWithIndex:
-        """Get vector database index from cache."""
+    async def _get_vector_db_index(self, vector_db_id: str) -> VectorStoreWithIndex:
+        """Get vector store index from cache."""
         if vector_db_id in self.cache:
             return self.cache[vector_db_id]
 
@@ -570,39 +571,39 @@ class MongoDBVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorDBsProtocol
 
             for key in vector_db_keys:
                 try:
-                    vector_db_data = await self.kvstore.get(key)
-                    if vector_db_data:
+                    vector_store_data = await self.kvstore.get(key)
+                    if vector_store_data:
                         import json
 
-                        vector_db = VectorDB(**json.loads(vector_db_data))
-                        # Register the vector database without re-initializing
-                        await self._register_existing_vector_db(vector_db)
-                        logger.info(f"Loaded existing RAG-optimized vector database: {vector_db.identifier}")
+                        vector_store = VectorStore(**json.loads(vector_store_data))
+                        # Register the vector store without re-initializing
+                        await self._register_existing_vector_store(vector_store)
+                        logger.info(f"Loaded existing RAG-optimized vector store: {vector_store.identifier}")
                 except Exception as e:
-                    logger.warning(f"Failed to load vector database from key {key}: {e}")
+                    logger.warning(f"Failed to load vector store from key {key}: {e}")
                     continue
 
         except Exception as e:
-            logger.warning(f"Failed to load existing vector databases: {e}")
+            logger.warning(f"Failed to load existing vector stores: {e}")
 
-    async def _register_existing_vector_db(self, vector_db: VectorDB) -> None:
-        """Register an existing vector database without re-initialization."""
+    async def _register_existing_vector_store(self, vector_store: VectorStore) -> None:
+        """Register an existing vector store without re-initialization."""
         if self.database is None:
             raise RuntimeError("MongoDB database not initialized")
 
-        # Create collection name from vector DB identifier
-        collection_name = sanitize_collection_name(vector_db.identifier)
+        # Create collection name from vector store identifier
+        collection_name = sanitize_collection_name(vector_store.identifier)
         collection = self.database[collection_name]
 
         # Create MongoDB index without initialization (collection already exists)
-        mongodb_index = MongoDBIndex(vector_db, collection, self.config)
+        mongodb_index = MongoDBIndex(vector_store, collection, self.config)
 
-        # Create vector DB with index wrapper
-        vector_db_with_index = VectorDBWithIndex(
-            vector_db=vector_db,
+        # Create vector store with index wrapper
+        vector_store_with_index = VectorStoreWithIndex(
+            vector_store=vector_store,
             index=mongodb_index,
             inference_api=self.inference_api,
         )
 
-        # Cache the vector DB
-        self.cache[vector_db.identifier] = vector_db_with_index
+        # Cache the vector store
+        self.cache[vector_store.identifier] = vector_store_with_index

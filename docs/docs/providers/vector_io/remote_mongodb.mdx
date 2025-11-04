@@ -243,7 +243,11 @@ For general MongoDB documentation, visit [MongoDB Documentation](https://docs.mo
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `connection_string` | `str \| None` | No |  | MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/) |
+| `connection_string` | `str \| None` | No |  | MongoDB connection string (e.g., mongodb://user:pass@localhost:27017/ or mongodb+srv://user:pass@cluster.mongodb.net/) |
+| `host` | `str \| None` | No |  | MongoDB host (used if connection_string is not provided) |
+| `port` | `int \| None` | No |  | MongoDB port (used if connection_string is not provided) |
+| `username` | `str \| None` | No |  | MongoDB username (used if connection_string is not provided) |
+| `password` | `str \| None` | No |  | MongoDB password (used if connection_string is not provided) |
 | `database_name` | `<class 'str'>` | No | llama_stack | Database name to use for vector collections |
 | `index_name` | `<class 'str'>` | No | vector_index | Name of the vector search index |
 | `path_field` | `<class 'str'>` | No | embedding | Field name for storing embeddings |
@@ -256,6 +260,10 @@ For general MongoDB documentation, visit [MongoDB Documentation](https://docs.mo
 
 ```yaml
 connection_string: ${env.MONGODB_CONNECTION_STRING:=}
+host: ${env.MONGODB_HOST:=localhost}
+port: ${env.MONGODB_PORT:=27017}
+username: ${env.MONGODB_USERNAME:=}
+password: ${env.MONGODB_PASSWORD:=}
 database_name: ${env.MONGODB_DATABASE_NAME:=llama_stack}
 index_name: ${env.MONGODB_INDEX_NAME:=vector_index}
 path_field: ${env.MONGODB_PATH_FIELD:=embedding}
