@@ -3715,7 +3715,6 @@ components:
         bnf:
           additionalProperties: true
           type: object
-          minProperties: 1
           title: Bnf
       type: object
       required:
@@ -3939,7 +3938,6 @@ components:
         json_schema:
           additionalProperties: true
           type: object
-          minProperties: 1
           title: Json Schema
       type: object
       required:
@@ -8260,13 +8258,11 @@ components:
         max_tokens:
           anyOf:
           - type: integer
-            minimum: 0.0
           - type: 'null'
           title: Max Tokens
         repetition_penalty:
           anyOf:
           - type: number
-            minimum: 0.0
           - type: 'null'
           title: Repetition Penalty
           default: 1.0
@@ -8275,7 +8271,6 @@ components:
           - items:
               type: string
             type: array
-            minItems: 1
           - type: 'null'
           title: Stop
       type: object
@@ -9065,7 +9060,6 @@ components:
       properties:
         call_id:
           type: string
-          minLength: 1
           title: Call Id
         tool_name:
           anyOf:
@@ -9111,7 +9105,6 @@ components:
       properties:
         call_id:
           type: string
-          minLength: 1
           title: Call Id
         tool_name:
           anyOf:
@@ -10118,7 +10111,6 @@ components:
               type: string
             bnf:
               additionalProperties: true
-              minProperties: 1
               title: Bnf
               type: object
           required:
@@ -10145,7 +10137,6 @@ components:
               type: string
             json_schema:
               additionalProperties: true
-              minProperties: 1
               title: Json Schema
               type: object
           required:
@@ -10169,15 +10160,12 @@ components:
               title: Strategy
             max_tokens:
               anyOf:
-              - minimum: 0
-                type: integer
+              - type: integer
               - type: 'null'
-              default:
               title: Max Tokens
             repetition_penalty:
               anyOf:
-              - minimum: 0.0
-                type: number
+              - type: number
               - type: 'null'
               default: 1.0
               title: Repetition Penalty
@@ -10185,10 +10173,8 @@ components:
               anyOf:
               - items:
                   type: string
-                minItems: 1
                 type: array
               - type: 'null'
-              default:
               title: Stop
           title: SamplingParams
           type: object
@@ -10221,7 +10207,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/ToolPromptFormat'
               - type: 'null'
-              default:
             system_message_behavior:
               anyOf:
               - $ref: '#/components/schemas/SystemMessageBehavior'
@@ -10236,7 +10221,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: ID of the tool group this tool belongs to
               title: Toolgroup Id
             name:
@@ -10247,7 +10231,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Human-readable description of what the tool does
               title: Description
             input_schema:
@@ -10255,7 +10238,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON Schema for tool inputs (MCP inputSchema)
               title: Input Schema
             output_schema:
@@ -10263,7 +10245,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON Schema for tool outputs (MCP outputSchema)
               title: Output Schema
             metadata:
@@ -10271,7 +10252,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: Additional metadata about the tool
               title: Metadata
           required:
@@ -10366,19 +10346,16 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ToolChoice'
           - type: 'null'
-          default:
           deprecated: true
         tool_prompt_format:
           anyOf:
           - $ref: '#/components/schemas/ToolPromptFormat'
           - type: 'null'
-          default:
           deprecated: true
         tool_config:
           anyOf:
           - $ref: '#/components/schemas/ToolConfig'
           - type: 'null'
-          default:
         max_infer_iters:
           anyOf:
           - type: integer
@@ -10397,7 +10374,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           description: Optional name for the agent, used in telemetry and identification
           title: Name
         enable_session_persistence:
@@ -10418,7 +10394,6 @@ components:
             - $ref: '#/components/schemas/JsonSchemaResponseFormat'
             - $ref: '#/components/schemas/GrammarResponseFormat'
           - type: 'null'
-          default:
           description: Optional response format configuration
           title: Response Format
       required:
@@ -10711,7 +10686,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -10719,7 +10693,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -10752,7 +10725,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -10760,7 +10732,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -10812,7 +10783,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Message to convey to the user about the violation.
               title: User Message
             metadata:
@@ -10840,7 +10810,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -10848,7 +10817,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -10860,7 +10828,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SafetyViolation'
               - type: 'null'
-              default:
               description: The violation from the shield call.
           required:
           - turn_id
@@ -10977,7 +10944,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -10985,7 +10951,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -11016,7 +10981,6 @@ components:
           description: Response from a tool invocation.
           properties:
             call_id:
-              minLength: 1
               title: Call Id
               type: string
             tool_name:
@@ -11051,7 +11015,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Metadata
           required:
           - call_id
@@ -11154,7 +11117,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: Timestamp when the turn finished, if completed
               title: Completed At
           required:
@@ -11228,7 +11190,6 @@ components:
                   - $ref: '#/components/schemas/TextContentItem'
                 type: array
               - type: 'null'
-              default:
               title: Context
           required:
           - content
@@ -11249,13 +11210,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -11368,7 +11327,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -11376,7 +11334,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -11409,7 +11366,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -11417,7 +11373,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -11469,7 +11424,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Message to convey to the user about the violation.
               title: User Message
             metadata:
@@ -11497,7 +11451,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -11505,7 +11458,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -11517,7 +11469,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SafetyViolation'
               - type: 'null'
-              default:
               description: The violation from the shield call.
           required:
           - turn_id
@@ -11590,7 +11541,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -11598,7 +11548,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -11629,7 +11578,6 @@ components:
           description: Response from a tool invocation.
           properties:
             call_id:
-              minLength: 1
               title: Call Id
               type: string
             tool_name:
@@ -11664,7 +11612,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Metadata
           required:
           - call_id
@@ -11697,13 +11644,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -12224,7 +12169,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -12232,7 +12176,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -12265,7 +12208,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -12273,7 +12215,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -12325,7 +12266,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Message to convey to the user about the violation.
               title: User Message
             metadata:
@@ -12353,7 +12293,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -12361,7 +12300,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -12373,7 +12311,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SafetyViolation'
               - type: 'null'
-              default:
               description: The violation from the shield call.
           required:
           - turn_id
@@ -12490,7 +12427,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -12498,7 +12434,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -12529,7 +12464,6 @@ components:
           description: Response from a tool invocation.
           properties:
             call_id:
-              minLength: 1
               title: Call Id
               type: string
             tool_name:
@@ -12564,7 +12498,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Metadata
           required:
           - call_id
@@ -12667,7 +12600,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: Timestamp when the turn finished, if completed
               title: Completed At
           required:
@@ -12741,7 +12673,6 @@ components:
                   - $ref: '#/components/schemas/TextContentItem'
                 type: array
               - type: 'null'
-              default:
               title: Context
           required:
           - content
@@ -12762,13 +12693,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -12901,7 +12830,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -12909,7 +12837,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -12942,7 +12869,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -12950,7 +12876,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -13002,7 +12927,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Message to convey to the user about the violation.
               title: User Message
             metadata:
@@ -13030,7 +12954,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -13038,7 +12961,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -13050,7 +12972,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SafetyViolation'
               - type: 'null'
-              default:
               description: The violation from the shield call.
           required:
           - turn_id
@@ -13114,7 +13035,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -13122,7 +13042,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -13153,7 +13072,6 @@ components:
           description: Response from a tool invocation.
           properties:
             call_id:
-              minLength: 1
               title: Call Id
               type: string
             tool_name:
@@ -13188,7 +13106,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Metadata
           required:
           - call_id
@@ -13291,7 +13208,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: Timestamp when the turn finished, if completed
               title: Completed At
           required:
@@ -13365,7 +13281,6 @@ components:
                   - $ref: '#/components/schemas/TextContentItem'
                 type: array
               - type: 'null'
-              default:
               title: Context
           required:
           - content
@@ -13386,13 +13301,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -13531,7 +13444,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -13539,7 +13451,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -13572,7 +13483,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -13580,7 +13490,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -13632,7 +13541,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Message to convey to the user about the violation.
               title: User Message
             metadata:
@@ -13660,7 +13568,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -13668,7 +13575,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -13680,7 +13586,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SafetyViolation'
               - type: 'null'
-              default:
               description: The violation from the shield call.
           required:
           - turn_id
@@ -13744,7 +13649,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step started.
               title: Started At
             completed_at:
@@ -13752,7 +13656,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: The time the step completed.
               title: Completed At
             step_type:
@@ -13783,7 +13686,6 @@ components:
           description: Response from a tool invocation.
           properties:
             call_id:
-              minLength: 1
               title: Call Id
               type: string
             tool_name:
@@ -13818,7 +13720,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Metadata
           required:
           - call_id
@@ -13921,7 +13822,6 @@ components:
               - format: date-time
                 type: string
               - type: 'null'
-              default:
               description: Timestamp when the turn finished, if completed
               title: Completed At
           required:
@@ -13995,7 +13895,6 @@ components:
                   - $ref: '#/components/schemas/TextContentItem'
                 type: array
               - type: 'null'
-              default:
               title: Context
           required:
           - content
@@ -14016,13 +13915,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -14184,13 +14081,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -14209,7 +14104,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step started.
           title: Started At
         completed_at:
@@ -14217,7 +14111,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step completed.
           title: Completed At
         step_type:
@@ -14282,13 +14175,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -14307,7 +14198,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step started.
           title: Started At
         completed_at:
@@ -14315,7 +14205,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step completed.
           title: Completed At
         step_type:
@@ -14369,7 +14258,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Message to convey to the user about the violation.
               title: User Message
             metadata:
@@ -14404,7 +14292,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step started.
           title: Started At
         completed_at:
@@ -14412,7 +14299,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step completed.
           title: Completed At
         step_type:
@@ -14424,7 +14310,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/SafetyViolation'
           - type: 'null'
-          default:
           description: The violation from the shield call.
       required:
       - turn_id
@@ -14493,7 +14378,6 @@ components:
           description: Response from a tool invocation.
           properties:
             call_id:
-              minLength: 1
               title: Call Id
               type: string
             tool_name:
@@ -14528,7 +14412,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Metadata
           required:
           - call_id
@@ -14553,13 +14436,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -14578,7 +14459,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step started.
           title: Started At
         completed_at:
@@ -14586,7 +14466,6 @@ components:
           - format: date-time
             type: string
           - type: 'null'
-          default:
           description: The time the step completed.
           title: Completed At
         step_type:
@@ -14726,7 +14605,6 @@ components:
               type: string
             bnf:
               additionalProperties: true
-              minProperties: 1
               title: Bnf
               type: object
           required:
@@ -14767,7 +14645,6 @@ components:
               type: string
             json_schema:
               additionalProperties: true
-              minProperties: 1
               title: Json Schema
               type: object
           required:
@@ -14779,8 +14656,7 @@ components:
           properties:
             top_k:
               anyOf:
-              - minimum: 0
-                type: integer
+              - type: integer
               - type: 'null'
               default: 0
               title: Top K
@@ -14803,15 +14679,12 @@ components:
               title: Strategy
             max_tokens:
               anyOf:
-              - minimum: 0
-                type: integer
+              - type: integer
               - type: 'null'
-              default:
               title: Max Tokens
             repetition_penalty:
               anyOf:
-              - minimum: 0.0
-                type: number
+              - type: number
               - type: 'null'
               default: 1.0
               title: Repetition Penalty
@@ -14819,10 +14692,8 @@ components:
               anyOf:
               - items:
                   type: string
-                minItems: 1
                 type: array
               - type: 'null'
-              default:
               title: Stop
           title: SamplingParams
           type: object
@@ -14930,7 +14801,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/ToolPromptFormat'
               - type: 'null'
-              default:
             system_message_behavior:
               anyOf:
               - $ref: '#/components/schemas/SystemMessageBehavior'
@@ -14949,21 +14819,18 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Description
             input_schema:
               anyOf:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Input Schema
             output_schema:
               anyOf:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               title: Output Schema
           required:
           - tool_name
@@ -15117,7 +14984,6 @@ components:
                   - $ref: '#/components/schemas/TextContentItem'
                 type: array
               - type: 'null'
-              default:
               title: Context
           required:
           - content
@@ -15130,13 +14996,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -15183,7 +15047,6 @@ components:
             - $ref: '#/components/schemas/JsonSchemaResponseFormat'
             - $ref: '#/components/schemas/GrammarResponseFormat'
           - type: 'null'
-          default:
           title: Response Format
         stream:
           anyOf:
@@ -15195,7 +15058,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/LogProbConfig'
           - type: 'null'
-          default:
       required:
       - messages
       title: ChatCompletionRequest
@@ -15283,7 +15145,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Unit
           required:
           - metric
@@ -15318,7 +15179,6 @@ components:
             logprobs_by_token:
               additionalProperties:
                 type: number
-              minProperties: 1
               title: Logprobs By Token
               type: object
           required:
@@ -15361,13 +15221,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -15379,7 +15237,6 @@ components:
               $ref: '#/components/schemas/MetricInResponse'
             type: array
           - type: 'null'
-          default:
           title: Metrics
         completion_message:
           $ref: '#/components/schemas/CompletionMessage'
@@ -15389,7 +15246,6 @@ components:
               $ref: '#/components/schemas/TokenLogProbs'
             type: array
           - type: 'null'
-          default:
           title: Logprobs
       required:
       - completion_message
@@ -15457,7 +15313,6 @@ components:
             logprobs_by_token:
               additionalProperties:
                 type: number
-              minProperties: 1
               title: Logprobs By Token
               type: object
           required:
@@ -15534,13 +15389,11 @@ components:
               $ref: '#/components/schemas/TokenLogProbs'
             type: array
           - type: 'null'
-          default:
           title: Logprobs
         stop_reason:
           anyOf:
           - $ref: '#/components/schemas/StopReason'
           - type: 'null'
-          default:
       required:
       - event_type
       - delta
@@ -15579,13 +15432,11 @@ components:
                   $ref: '#/components/schemas/TokenLogProbs'
                 type: array
               - type: 'null'
-              default:
               title: Logprobs
             stop_reason:
               anyOf:
               - $ref: '#/components/schemas/StopReason'
               - type: 'null'
-              default:
           required:
           - event_type
           - delta
@@ -15630,7 +15481,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Unit
           required:
           - metric
@@ -15665,7 +15515,6 @@ components:
             logprobs_by_token:
               additionalProperties:
                 type: number
-              minProperties: 1
               title: Logprobs By Token
               type: object
           required:
@@ -15728,7 +15577,6 @@ components:
               $ref: '#/components/schemas/MetricInResponse'
             type: array
           - type: 'null'
-          default:
           title: Metrics
         event:
           $ref: '#/components/schemas/ChatCompletionResponseEvent'
@@ -15818,13 +15666,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -15888,7 +15734,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Unit
           required:
           - metric
@@ -15908,7 +15753,6 @@ components:
             logprobs_by_token:
               additionalProperties:
                 type: number
-              minProperties: 1
               title: Logprobs By Token
               type: object
           required:
@@ -15923,7 +15767,6 @@ components:
               $ref: '#/components/schemas/MetricInResponse'
             type: array
           - type: 'null'
-          default:
           title: Metrics
         content:
           title: Content
@@ -15936,7 +15779,6 @@ components:
               $ref: '#/components/schemas/TokenLogProbs'
             type: array
           - type: 'null'
-          default:
           title: Logprobs
       required:
       - content
@@ -15960,7 +15802,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Unit
           required:
           - metric
@@ -15980,7 +15821,6 @@ components:
             logprobs_by_token:
               additionalProperties:
                 type: number
-              minProperties: 1
               title: Logprobs By Token
               type: object
           required:
@@ -15995,7 +15835,6 @@ components:
               $ref: '#/components/schemas/MetricInResponse'
             type: array
           - type: 'null'
-          default:
           title: Metrics
         delta:
           title: Delta
@@ -16004,14 +15843,12 @@ components:
           anyOf:
           - $ref: '#/components/schemas/StopReason'
           - type: 'null'
-          default:
         logprobs:
           anyOf:
           - items:
               $ref: '#/components/schemas/TokenLogProbs'
             type: array
           - type: 'null'
-          default:
           title: Logprobs
       required:
       - delta
@@ -16051,8 +15888,7 @@ components:
           type: string
         scheme:
           anyOf:
-          - minLength: 1
-            type: string
+          - type: string
           - type: 'null'
           default: int4_weight_int8_dynamic_activation
           title: Scheme
@@ -16082,13 +15918,11 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Index
             id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             type:
               const: function
@@ -16099,7 +15933,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
               - type: 'null'
-              default:
           title: OpenAIChatCompletionToolCall
           type: object
         OpenAIChatCompletionToolCallFunction:
@@ -16109,13 +15942,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             arguments:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Arguments
           title: OpenAIChatCompletionToolCallFunction
           type: object
@@ -16133,13 +15964,11 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
             type: array
           - type: 'null'
-          default:
           title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Name
         tool_calls:
           anyOf:
@@ -16147,7 +15976,6 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
-          default:
           title: Tool Calls
       title: OpenAIAssistantMessageParam
       type: object
@@ -16168,13 +15996,11 @@ components:
                   $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
                 type: array
               - type: 'null'
-              default:
               title: Content
             name:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             tool_calls:
               anyOf:
@@ -16182,7 +16008,6 @@ components:
                   $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
                 type: array
               - type: 'null'
-              default:
               title: Tool Calls
           title: OpenAIAssistantMessageParam
           type: object
@@ -16222,13 +16047,11 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Index
             id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             type:
               const: function
@@ -16239,7 +16062,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
               - type: 'null'
-              default:
           title: OpenAIChatCompletionToolCall
           type: object
         OpenAIChatCompletionToolCallFunction:
@@ -16249,13 +16071,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             arguments:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Arguments
           title: OpenAIChatCompletionToolCallFunction
           type: object
@@ -16275,12 +16095,10 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
               - type: 'null'
-              default:
             completion_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
               - type: 'null'
-              default:
           required:
           - prompt_tokens
           - completion_tokens
@@ -16294,7 +16112,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Reasoning Tokens
           title: OpenAIChatCompletionUsageCompletionTokensDetails
           type: object
@@ -16305,7 +16122,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Cached Tokens
           title: OpenAIChatCompletionUsagePromptTokensDetails
           type: object
@@ -16338,7 +16154,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
               - type: 'null'
-              default:
           required:
           - message
           - finish_reason
@@ -16354,7 +16169,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Content
             refusal:
               anyOf:
@@ -16362,7 +16176,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Refusal
           title: OpenAIChoiceLogprobs
           type: object
@@ -16385,7 +16198,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
           required:
           - content
@@ -16410,13 +16222,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: File Id
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Filename
           title: OpenAIFileFile
           type: object
@@ -16430,7 +16240,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Detail
           required:
           - url
@@ -16455,7 +16264,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
           required:
           - content
@@ -16473,7 +16281,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -16524,7 +16331,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -16562,7 +16368,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
           required:
           - content
@@ -16593,7 +16398,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           - type: 'null'
-          default:
       required:
       - id
       - choices
@@ -16610,13 +16414,11 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Index
             id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             type:
               const: function
@@ -16627,7 +16429,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
               - type: 'null'
-              default:
           title: OpenAIChatCompletionToolCall
           type: object
         OpenAIChatCompletionToolCallFunction:
@@ -16637,13 +16438,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             arguments:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Arguments
           title: OpenAIChatCompletionToolCallFunction
           type: object
@@ -16663,12 +16462,10 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
               - type: 'null'
-              default:
             completion_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
               - type: 'null'
-              default:
           required:
           - prompt_tokens
           - completion_tokens
@@ -16682,7 +16479,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Reasoning Tokens
           title: OpenAIChatCompletionUsageCompletionTokensDetails
           type: object
@@ -16693,7 +16489,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Cached Tokens
           title: OpenAIChatCompletionUsagePromptTokensDetails
           type: object
@@ -16704,19 +16499,16 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Content
             refusal:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Refusal
             role:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Role
             tool_calls:
               anyOf:
@@ -16724,13 +16516,11 @@ components:
                   $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
                 type: array
               - type: 'null'
-              default:
               title: Tool Calls
             reasoning_content:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Reasoning Content
           title: OpenAIChoiceDelta
           type: object
@@ -16743,7 +16533,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Content
             refusal:
               anyOf:
@@ -16751,7 +16540,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Refusal
           title: OpenAIChoiceLogprobs
           type: object
@@ -16770,7 +16558,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
               - type: 'null'
-              default:
           required:
           - delta
           - finish_reason
@@ -16789,7 +16576,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -16817,7 +16603,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -16852,7 +16637,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           - type: 'null'
-          default:
       required:
       - id
       - choices
@@ -16877,13 +16661,11 @@ components:
                   $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
                 type: array
               - type: 'null'
-              default:
               title: Content
             name:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             tool_calls:
               anyOf:
@@ -16891,7 +16673,6 @@ components:
                   $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
                 type: array
               - type: 'null'
-              default:
               title: Tool Calls
           title: OpenAIAssistantMessageParam
           type: object
@@ -16931,13 +16712,11 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Index
             id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             type:
               const: function
@@ -16948,7 +16727,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
               - type: 'null'
-              default:
           title: OpenAIChatCompletionToolCall
           type: object
         OpenAIChatCompletionToolCallFunction:
@@ -16958,13 +16736,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             arguments:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Arguments
           title: OpenAIChatCompletionToolCallFunction
           type: object
@@ -16977,7 +16753,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Content
             refusal:
               anyOf:
@@ -16985,7 +16760,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Refusal
           title: OpenAIChoiceLogprobs
           type: object
@@ -17008,7 +16782,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
           required:
           - content
@@ -17033,13 +16806,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: File Id
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Filename
           title: OpenAIFileFile
           type: object
@@ -17053,7 +16824,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Detail
           required:
           - url
@@ -17078,7 +16848,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
           required:
           - content
@@ -17096,7 +16865,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17147,7 +16915,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17185,7 +16952,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
           required:
           - content
@@ -17219,7 +16985,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
           - type: 'null'
-          default:
       required:
       - message
       - finish_reason
@@ -17235,13 +17000,11 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Index
             id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             type:
               const: function
@@ -17252,7 +17015,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
               - type: 'null'
-              default:
           title: OpenAIChatCompletionToolCall
           type: object
         OpenAIChatCompletionToolCallFunction:
@@ -17262,13 +17024,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             arguments:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Arguments
           title: OpenAIChatCompletionToolCallFunction
           type: object
@@ -17278,19 +17038,16 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Content
         refusal:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Refusal
         role:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Role
         tool_calls:
           anyOf:
@@ -17298,13 +17055,11 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
-          default:
           title: Tool Calls
         reasoning_content:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Reasoning Content
       title: OpenAIChoiceDelta
       type: object
@@ -17322,7 +17077,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17350,7 +17104,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17368,7 +17121,6 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
-          default:
           title: Content
         refusal:
           anyOf:
@@ -17376,7 +17128,6 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
-          default:
           title: Refusal
       title: OpenAIChoiceLogprobs
       type: object
@@ -17389,13 +17140,11 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Index
             id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             type:
               const: function
@@ -17406,7 +17155,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
               - type: 'null'
-              default:
           title: OpenAIChatCompletionToolCall
           type: object
         OpenAIChatCompletionToolCallFunction:
@@ -17416,13 +17164,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Name
             arguments:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Arguments
           title: OpenAIChatCompletionToolCallFunction
           type: object
@@ -17433,19 +17179,16 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Content
             refusal:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Refusal
             role:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Role
             tool_calls:
               anyOf:
@@ -17453,13 +17196,11 @@ components:
                   $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
                 type: array
               - type: 'null'
-              default:
               title: Tool Calls
             reasoning_content:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Reasoning Content
           title: OpenAIChoiceDelta
           type: object
@@ -17472,7 +17213,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Content
             refusal:
               anyOf:
@@ -17480,7 +17220,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Refusal
           title: OpenAIChoiceLogprobs
           type: object
@@ -17496,7 +17235,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17524,7 +17262,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17548,7 +17285,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
           - type: 'null'
-          default:
       required:
       - delta
       - finish_reason
@@ -17566,7 +17302,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Content
             refusal:
               anyOf:
@@ -17574,7 +17309,6 @@ components:
                   $ref: '#/components/schemas/OpenAITokenLogProb'
                 type: array
               - type: 'null'
-              default:
               title: Refusal
           title: OpenAIChoiceLogprobs
           type: object
@@ -17590,7 +17324,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17618,7 +17351,6 @@ components:
                   type: integer
                 type: array
               - type: 'null'
-              default:
               title: Bytes
             logprob:
               title: Logprob
@@ -17643,7 +17375,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
           - type: 'null'
-          default:
       required:
       - finish_reason
       - text
@@ -17659,7 +17390,6 @@ components:
               type: integer
             type: array
           - type: 'null'
-          default:
           title: Text Offset
         token_logprobs:
           anyOf:
@@ -17667,7 +17397,6 @@ components:
               type: number
             type: array
           - type: 'null'
-          default:
           title: Token Logprobs
         tokens:
           anyOf:
@@ -17675,7 +17404,6 @@ components:
               type: string
             type: array
           - type: 'null'
-          default:
           title: Tokens
         top_logprobs:
           anyOf:
@@ -17685,7 +17413,6 @@ components:
               type: object
             type: array
           - type: 'null'
-          default:
           title: Top Logprobs
       title: OpenAICompletionLogprobs
       type: object
@@ -17739,13 +17466,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: File Id
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Filename
           title: OpenAIFileFile
           type: object
@@ -17759,7 +17484,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Detail
           required:
           - url
@@ -17792,7 +17516,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Name
       required:
       - content
@@ -17804,7 +17527,6 @@ components:
         logprobs_by_token:
           additionalProperties:
             type: number
-          minProperties: 1
           title: Logprobs By Token
           type: object
       required:
@@ -17867,20 +17589,17 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
       description: Response from a tool invocation.
       properties:
         call_id:
-          minLength: 1
           title: Call Id
           type: string
         tool_name:
@@ -17915,7 +17634,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-          default:
           title: Metadata
       required:
       - call_id
@@ -17971,13 +17689,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -18066,13 +17782,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -18127,7 +17841,6 @@ components:
               - $ref: '#/components/schemas/TextContentItem'
             type: array
           - type: 'null'
-          default:
           title: Context
       required:
       - content
@@ -18217,7 +17930,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Validation Dataset Id
             packed:
               anyOf:
@@ -18333,17 +18045,14 @@ components:
               anyOf:
               - $ref: '#/components/schemas/DataConfig'
               - type: 'null'
-              default:
             optimizer_config:
               anyOf:
               - $ref: '#/components/schemas/OptimizerConfig'
               - type: 'null'
-              default:
             efficiency_config:
               anyOf:
               - $ref: '#/components/schemas/EfficiencyConfig'
               - type: 'null'
-              default:
             dtype:
               anyOf:
               - type: string
@@ -18433,14 +18142,12 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-          default:
           description: Additional arguments to pass to the provider
           title: Args
         mcp_endpoint:
           anyOf:
           - $ref: '#/components/schemas/URL'
           - type: 'null'
-          default:
           description: Model Context Protocol endpoint for remote tools
       required:
       - toolgroup_id
@@ -18456,67 +18163,56 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Chunk Id
             document_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Document Id
             source:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Source
             created_timestamp:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Created Timestamp
             updated_timestamp:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Updated Timestamp
             chunk_window:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Chunk Window
             chunk_tokenizer:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Chunk Tokenizer
             chunk_embedding_model:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Chunk Embedding Model
             chunk_embedding_dimension:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Chunk Embedding Dimension
             content_token_count:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Content Token Count
             metadata_token_count:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               title: Metadata Token Count
           title: ChunkMetadata
           type: object
@@ -18566,13 +18262,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object
@@ -18613,13 +18307,11 @@ components:
               type: number
             type: array
           - type: 'null'
-          default:
           title: Embedding
         chunk_metadata:
           anyOf:
           - $ref: '#/components/schemas/ChunkMetadata'
           - type: 'null'
-          default:
       required:
       - content
       - chunk_id
@@ -18632,7 +18324,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Name
         file_ids:
           items:
@@ -18644,14 +18335,12 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-          default:
           title: Expires After
         chunking_strategy:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
-          default:
           title: Chunking Strategy
         metadata:
           additionalProperties: true
@@ -18674,7 +18363,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-          default:
           title: Filters
         max_num_results:
           default: 10
@@ -18685,7 +18373,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-          default:
           title: Ranking Options
         rewrite_query:
           default: false
@@ -18840,7 +18527,6 @@ components:
               type: object
             type: array
           - type: 'null'
-          default:
           description: Token log probability details
           title: Logprobs
       required:
@@ -19020,28 +18706,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -19070,14 +18752,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -19177,13 +18857,11 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Id
         status:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           title: Status
       required:
       - content
@@ -19201,7 +18879,6 @@ components:
                   type: string
                 type: array
               - type: 'null'
-              default:
               description: List of specific tool names that are allowed
               title: Tool Names
           title: AllowedToolsFilter
@@ -19222,7 +18899,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -19383,28 +19059,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -19433,14 +19105,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -19482,7 +19152,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: Additional filters to apply to the search
               title: Filters
             max_num_results:
@@ -19498,7 +19167,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SearchRankingOptions'
               - type: 'null'
-              default:
               description: Options for ranking and scoring search results
           required:
           - vector_store_ids
@@ -19521,7 +19189,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the function does
               title: Description
             parameters:
@@ -19529,14 +19196,12 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON schema defining the function's parameters
               title: Parameters
             strict:
               anyOf:
               - type: boolean
               - type: 'null'
-              default:
               description: Whether to enforce strict parameter validation
               title: Strict
           required:
@@ -19643,13 +19308,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -19667,7 +19330,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseError'
               - type: 'null'
-              default:
               description: Error details if the response generation failed
             id:
               description: Unique identifier for this response
@@ -19715,14 +19377,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: ID of the previous response in a conversation
               title: Previous Response Id
             prompt:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponsePrompt'
               - type: 'null'
-              default:
               description: Reference to a prompt template and its variables.
             status:
               description: Current status of the response generation
@@ -19732,7 +19392,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Sampling temperature used for generation
               title: Temperature
             text:
@@ -19742,7 +19401,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Nucleus sampling parameter used for generation
               title: Top P
             tools:
@@ -19764,27 +19422,23 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseToolMCP'
                 type: array
               - type: 'null'
-              default:
               description: An array of tools the model may call while generating a response.
               title: Tools
             truncation:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Truncation strategy applied to the response
               title: Truncation
             usage:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsage'
               - type: 'null'
-              default:
               description: Token usage information for the response
             instructions:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: System message inserted into the model's context
               title: Instructions
           required:
@@ -19854,7 +19508,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -19920,14 +19573,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -19965,14 +19616,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -20055,14 +19704,12 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                 type: object
               - type: 'null'
-              default:
               description: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files.
               title: Variables
             version:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Version number of the prompt to use (defaults to latest if not specified)
               title: Version
           required:
@@ -20076,7 +19723,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseTextFormat'
               - type: 'null'
-              default:
               description: Text format configuration specifying output format requirements
           title: OpenAIResponseText
           type: object
@@ -20135,7 +19781,6 @@ components:
                 type: array
               - $ref: '#/components/schemas/AllowedToolsFilter'
               - type: 'null'
-              default:
               description: Restriction on which tools can be used from this server
               title: Allowed Tools
           required:
@@ -20161,13 +19806,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of input token usage
             output_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of output token usage
           required:
           - input_tokens
@@ -20182,7 +19825,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens retrieved from cache
               title: Cached Tokens
           title: OpenAIResponseUsageInputTokensDetails
@@ -20194,7 +19836,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens used for reasoning (o1/o3 models)
               title: Reasoning Tokens
           title: OpenAIResponseUsageOutputTokensDetails
@@ -20206,7 +19847,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Ranker
             score_threshold:
               anyOf:
@@ -20377,7 +20017,6 @@ components:
                   type: object
                 type: array
               - type: 'null'
-              default:
               description: Token log probability details
               title: Logprobs
           required:
@@ -20614,7 +20253,6 @@ components:
                   type: object
                 type: array
               - type: 'null'
-              default:
               description: Token log probability details
               title: Logprobs
           required:
@@ -20716,7 +20354,6 @@ components:
                   type: string
                 type: array
               - type: 'null'
-              default:
               description: List of specific tool names that are allowed
               title: Tool Names
           title: AllowedToolsFilter
@@ -20737,7 +20374,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -20898,28 +20534,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -20948,14 +20580,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -20997,7 +20627,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: Additional filters to apply to the search
               title: Filters
             max_num_results:
@@ -21013,7 +20642,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SearchRankingOptions'
               - type: 'null'
-              default:
               description: Options for ranking and scoring search results
           required:
           - vector_store_ids
@@ -21036,7 +20664,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the function does
               title: Description
             parameters:
@@ -21044,14 +20671,12 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON schema defining the function's parameters
               title: Parameters
             strict:
               anyOf:
               - type: boolean
               - type: 'null'
-              default:
               description: Whether to enforce strict parameter validation
               title: Strict
           required:
@@ -21158,13 +20783,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -21182,7 +20805,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseError'
               - type: 'null'
-              default:
               description: Error details if the response generation failed
             id:
               description: Unique identifier for this response
@@ -21230,14 +20852,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: ID of the previous response in a conversation
               title: Previous Response Id
             prompt:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponsePrompt'
               - type: 'null'
-              default:
               description: Reference to a prompt template and its variables.
             status:
               description: Current status of the response generation
@@ -21247,7 +20867,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Sampling temperature used for generation
               title: Temperature
             text:
@@ -21257,7 +20876,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Nucleus sampling parameter used for generation
               title: Top P
             tools:
@@ -21279,27 +20897,23 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseToolMCP'
                 type: array
               - type: 'null'
-              default:
               description: An array of tools the model may call while generating a response.
               title: Tools
             truncation:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Truncation strategy applied to the response
               title: Truncation
             usage:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsage'
               - type: 'null'
-              default:
               description: Token usage information for the response
             instructions:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: System message inserted into the model's context
               title: Instructions
           required:
@@ -21369,7 +20983,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -21435,14 +21048,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -21480,14 +21091,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -21570,14 +21179,12 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                 type: object
               - type: 'null'
-              default:
               description: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files.
               title: Variables
             version:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Version number of the prompt to use (defaults to latest if not specified)
               title: Version
           required:
@@ -21591,7 +21198,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseTextFormat'
               - type: 'null'
-              default:
               description: Text format configuration specifying output format requirements
           title: OpenAIResponseText
           type: object
@@ -21650,7 +21256,6 @@ components:
                 type: array
               - $ref: '#/components/schemas/AllowedToolsFilter'
               - type: 'null'
-              default:
               description: Restriction on which tools can be used from this server
               title: Allowed Tools
           required:
@@ -21676,13 +21281,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of input token usage
             output_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of output token usage
           required:
           - input_tokens
@@ -21697,7 +21300,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens retrieved from cache
               title: Cached Tokens
           title: OpenAIResponseUsageInputTokensDetails
@@ -21709,7 +21311,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens used for reasoning (o1/o3 models)
               title: Reasoning Tokens
           title: OpenAIResponseUsageOutputTokensDetails
@@ -21721,7 +21322,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Ranker
             score_threshold:
               anyOf:
@@ -21757,7 +21357,6 @@ components:
                   type: string
                 type: array
               - type: 'null'
-              default:
               description: List of specific tool names that are allowed
               title: Tool Names
           title: AllowedToolsFilter
@@ -21778,7 +21377,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -21939,28 +21537,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -21989,14 +21583,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -22038,7 +21630,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: Additional filters to apply to the search
               title: Filters
             max_num_results:
@@ -22054,7 +21645,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SearchRankingOptions'
               - type: 'null'
-              default:
               description: Options for ranking and scoring search results
           required:
           - vector_store_ids
@@ -22077,7 +21667,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the function does
               title: Description
             parameters:
@@ -22085,14 +21674,12 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON schema defining the function's parameters
               title: Parameters
             strict:
               anyOf:
               - type: boolean
               - type: 'null'
-              default:
               description: Whether to enforce strict parameter validation
               title: Strict
           required:
@@ -22199,13 +21786,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -22223,7 +21808,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseError'
               - type: 'null'
-              default:
               description: Error details if the response generation failed
             id:
               description: Unique identifier for this response
@@ -22271,14 +21855,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: ID of the previous response in a conversation
               title: Previous Response Id
             prompt:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponsePrompt'
               - type: 'null'
-              default:
               description: Reference to a prompt template and its variables.
             status:
               description: Current status of the response generation
@@ -22288,7 +21870,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Sampling temperature used for generation
               title: Temperature
             text:
@@ -22298,7 +21879,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Nucleus sampling parameter used for generation
               title: Top P
             tools:
@@ -22320,27 +21900,23 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseToolMCP'
                 type: array
               - type: 'null'
-              default:
               description: An array of tools the model may call while generating a response.
               title: Tools
             truncation:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Truncation strategy applied to the response
               title: Truncation
             usage:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsage'
               - type: 'null'
-              default:
               description: Token usage information for the response
             instructions:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: System message inserted into the model's context
               title: Instructions
           required:
@@ -22410,7 +21986,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -22476,14 +22051,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -22521,14 +22094,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -22611,14 +22182,12 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                 type: object
               - type: 'null'
-              default:
               description: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files.
               title: Variables
             version:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Version number of the prompt to use (defaults to latest if not specified)
               title: Version
           required:
@@ -22632,7 +22201,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseTextFormat'
               - type: 'null'
-              default:
               description: Text format configuration specifying output format requirements
           title: OpenAIResponseText
           type: object
@@ -22691,7 +22259,6 @@ components:
                 type: array
               - $ref: '#/components/schemas/AllowedToolsFilter'
               - type: 'null'
-              default:
               description: Restriction on which tools can be used from this server
               title: Allowed Tools
           required:
@@ -22717,13 +22284,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of input token usage
             output_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of output token usage
           required:
           - input_tokens
@@ -22738,7 +22303,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens retrieved from cache
               title: Cached Tokens
           title: OpenAIResponseUsageInputTokensDetails
@@ -22750,7 +22314,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens used for reasoning (o1/o3 models)
               title: Reasoning Tokens
           title: OpenAIResponseUsageOutputTokensDetails
@@ -22762,7 +22325,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Ranker
             score_threshold:
               anyOf:
@@ -22948,7 +22510,6 @@ components:
                   type: string
                 type: array
               - type: 'null'
-              default:
               description: List of specific tool names that are allowed
               title: Tool Names
           title: AllowedToolsFilter
@@ -22969,7 +22530,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -23130,28 +22690,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -23180,14 +22736,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -23229,7 +22783,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: Additional filters to apply to the search
               title: Filters
             max_num_results:
@@ -23245,7 +22798,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SearchRankingOptions'
               - type: 'null'
-              default:
               description: Options for ranking and scoring search results
           required:
           - vector_store_ids
@@ -23268,7 +22820,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the function does
               title: Description
             parameters:
@@ -23276,14 +22827,12 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON schema defining the function's parameters
               title: Parameters
             strict:
               anyOf:
               - type: boolean
               - type: 'null'
-              default:
               description: Whether to enforce strict parameter validation
               title: Strict
           required:
@@ -23390,13 +22939,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -23414,7 +22961,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseError'
               - type: 'null'
-              default:
               description: Error details if the response generation failed
             id:
               description: Unique identifier for this response
@@ -23462,14 +23008,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: ID of the previous response in a conversation
               title: Previous Response Id
             prompt:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponsePrompt'
               - type: 'null'
-              default:
               description: Reference to a prompt template and its variables.
             status:
               description: Current status of the response generation
@@ -23479,7 +23023,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Sampling temperature used for generation
               title: Temperature
             text:
@@ -23489,7 +23032,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Nucleus sampling parameter used for generation
               title: Top P
             tools:
@@ -23511,27 +23053,23 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseToolMCP'
                 type: array
               - type: 'null'
-              default:
               description: An array of tools the model may call while generating a response.
               title: Tools
             truncation:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Truncation strategy applied to the response
               title: Truncation
             usage:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsage'
               - type: 'null'
-              default:
               description: Token usage information for the response
             instructions:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: System message inserted into the model's context
               title: Instructions
           required:
@@ -23601,7 +23139,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -23667,14 +23204,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -23712,14 +23247,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -23802,14 +23335,12 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                 type: object
               - type: 'null'
-              default:
               description: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files.
               title: Variables
             version:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Version number of the prompt to use (defaults to latest if not specified)
               title: Version
           required:
@@ -23823,7 +23354,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseTextFormat'
               - type: 'null'
-              default:
               description: Text format configuration specifying output format requirements
           title: OpenAIResponseText
           type: object
@@ -23882,7 +23412,6 @@ components:
                 type: array
               - $ref: '#/components/schemas/AllowedToolsFilter'
               - type: 'null'
-              default:
               description: Restriction on which tools can be used from this server
               title: Allowed Tools
           required:
@@ -23908,13 +23437,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of input token usage
             output_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of output token usage
           required:
           - input_tokens
@@ -23929,7 +23456,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens retrieved from cache
               title: Cached Tokens
           title: OpenAIResponseUsageInputTokensDetails
@@ -23941,7 +23467,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens used for reasoning (o1/o3 models)
               title: Reasoning Tokens
           title: OpenAIResponseUsageOutputTokensDetails
@@ -23953,7 +23478,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Ranker
             score_threshold:
               anyOf:
@@ -23994,7 +23518,6 @@ components:
                   type: string
                 type: array
               - type: 'null'
-              default:
               description: List of specific tool names that are allowed
               title: Tool Names
           title: AllowedToolsFilter
@@ -24015,7 +23538,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -24176,28 +23698,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -24226,14 +23744,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -24275,7 +23791,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: Additional filters to apply to the search
               title: Filters
             max_num_results:
@@ -24291,7 +23806,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SearchRankingOptions'
               - type: 'null'
-              default:
               description: Options for ranking and scoring search results
           required:
           - vector_store_ids
@@ -24314,7 +23828,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the function does
               title: Description
             parameters:
@@ -24322,14 +23835,12 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON schema defining the function's parameters
               title: Parameters
             strict:
               anyOf:
               - type: boolean
               - type: 'null'
-              default:
               description: Whether to enforce strict parameter validation
               title: Strict
           required:
@@ -24436,13 +23947,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -24460,7 +23969,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseError'
               - type: 'null'
-              default:
               description: Error details if the response generation failed
             id:
               description: Unique identifier for this response
@@ -24508,14 +24016,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: ID of the previous response in a conversation
               title: Previous Response Id
             prompt:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponsePrompt'
               - type: 'null'
-              default:
               description: Reference to a prompt template and its variables.
             status:
               description: Current status of the response generation
@@ -24525,7 +24031,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Sampling temperature used for generation
               title: Temperature
             text:
@@ -24535,7 +24040,6 @@ components:
               anyOf:
               - type: number
               - type: 'null'
-              default:
               description: Nucleus sampling parameter used for generation
               title: Top P
             tools:
@@ -24557,27 +24061,23 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseToolMCP'
                 type: array
               - type: 'null'
-              default:
               description: An array of tools the model may call while generating a response.
               title: Tools
             truncation:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Truncation strategy applied to the response
               title: Truncation
             usage:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsage'
               - type: 'null'
-              default:
               description: Token usage information for the response
             instructions:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: System message inserted into the model's context
               title: Instructions
           required:
@@ -24647,7 +24147,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -24713,14 +24212,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -24758,14 +24255,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -24848,14 +24343,12 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                 type: object
               - type: 'null'
-              default:
               description: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files.
               title: Variables
             version:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Version number of the prompt to use (defaults to latest if not specified)
               title: Version
           required:
@@ -24869,7 +24362,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseTextFormat'
               - type: 'null'
-              default:
               description: Text format configuration specifying output format requirements
           title: OpenAIResponseText
           type: object
@@ -24928,7 +24420,6 @@ components:
                 type: array
               - $ref: '#/components/schemas/AllowedToolsFilter'
               - type: 'null'
-              default:
               description: Restriction on which tools can be used from this server
               title: Allowed Tools
           required:
@@ -24954,13 +24445,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of input token usage
             output_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of output token usage
           required:
           - input_tokens
@@ -24975,7 +24464,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens retrieved from cache
               title: Cached Tokens
           title: OpenAIResponseUsageInputTokensDetails
@@ -24987,7 +24475,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens used for reasoning (o1/o3 models)
               title: Reasoning Tokens
           title: OpenAIResponseUsageOutputTokensDetails
@@ -24999,7 +24486,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Ranker
             score_threshold:
               anyOf:
@@ -25202,7 +24688,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -25347,28 +24832,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -25397,14 +24878,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -25502,13 +24981,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -25574,7 +25051,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -25640,14 +25116,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -25685,14 +25159,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -25819,7 +25291,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -25964,28 +25435,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -26014,14 +25481,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -26119,13 +25584,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -26191,7 +25654,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -26257,14 +25719,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -26302,14 +25762,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -27070,7 +26528,6 @@ components:
                   type: string
                 type: array
               - type: 'null'
-              default:
               description: List of specific tool names that are allowed
               title: Tool Names
           title: AllowedToolsFilter
@@ -27091,7 +26548,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the tool does
               title: Description
           required:
@@ -27257,13 +26713,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - call_id
@@ -27283,28 +26737,24 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The data of the file to be sent to the model.
               title: File Data
             file_id:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             file_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The URL of the file to be sent to the model.
               title: File Url
             filename:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The name of the file to be sent to the model.
               title: Filename
           title: OpenAIResponseInputMessageContentFile
@@ -27333,14 +26783,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: The ID of the file to be sent to the model.
               title: File Id
             image_url:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: URL of the image content
               title: Image Url
           title: OpenAIResponseInputMessageContentImage
@@ -27382,7 +26830,6 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: Additional filters to apply to the search
               title: Filters
             max_num_results:
@@ -27398,7 +26845,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/SearchRankingOptions'
               - type: 'null'
-              default:
               description: Options for ranking and scoring search results
           required:
           - vector_store_ids
@@ -27421,7 +26867,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Description of what the function does
               title: Description
             parameters:
@@ -27429,14 +26874,12 @@ components:
               - additionalProperties: true
                 type: object
               - type: 'null'
-              default:
               description: JSON schema defining the function's parameters
               title: Parameters
             strict:
               anyOf:
               - type: boolean
               - type: 'null'
-              default:
               description: Whether to enforce strict parameter validation
               title: Strict
           required:
@@ -27512,13 +26955,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             reason:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Reason
           required:
           - approval_request_id
@@ -27574,13 +27015,11 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Status
           required:
           - content
@@ -27646,7 +27085,6 @@ components:
                   $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
                 type: array
               - type: 'null'
-              default:
               description: Search results returned by the file search operation
               title: Results
           required:
@@ -27712,14 +27150,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Additional identifier for the tool call
               title: Id
             status:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Current status of the function call execution
               title: Status
           required:
@@ -27757,14 +27193,12 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Error message if the MCP call failed
               title: Error
             output:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Output result from the successful MCP call
               title: Output
           required:
@@ -27847,14 +27281,12 @@ components:
                   - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                 type: object
               - type: 'null'
-              default:
               description: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types like images or files.
               title: Variables
             version:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               description: Version number of the prompt to use (defaults to latest if not specified)
               title: Version
           required:
@@ -27868,7 +27300,6 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseTextFormat'
               - type: 'null'
-              default:
               description: Text format configuration specifying output format requirements
           title: OpenAIResponseText
           type: object
@@ -27927,7 +27358,6 @@ components:
                 type: array
               - $ref: '#/components/schemas/AllowedToolsFilter'
               - type: 'null'
-              default:
               description: Restriction on which tools can be used from this server
               title: Allowed Tools
           required:
@@ -27953,13 +27383,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of input token usage
             output_tokens_details:
               anyOf:
               - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
               - type: 'null'
-              default:
               description: Detailed breakdown of output token usage
           required:
           - input_tokens
@@ -27974,7 +27402,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens retrieved from cache
               title: Cached Tokens
           title: OpenAIResponseUsageInputTokensDetails
@@ -27986,7 +27413,6 @@ components:
               anyOf:
               - type: integer
               - type: 'null'
-              default:
               description: Number of tokens used for reasoning (o1/o3 models)
               title: Reasoning Tokens
           title: OpenAIResponseUsageOutputTokensDetails
@@ -27998,7 +27424,6 @@ components:
               anyOf:
               - type: string
               - type: 'null'
-              default:
               title: Ranker
             score_threshold:
               anyOf:
@@ -28018,7 +27443,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
           - type: 'null'
-          default:
           description: Error details if the response generation failed
         id:
           description: Unique identifier for this response
@@ -28066,14 +27490,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           description: ID of the previous response in a conversation
           title: Previous Response Id
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
           - type: 'null'
-          default:
           description: Reference to a prompt template and its variables.
         status:
           description: Current status of the response generation
@@ -28083,7 +27505,6 @@ components:
           anyOf:
           - type: number
           - type: 'null'
-          default:
           description: Sampling temperature used for generation
           title: Temperature
         text:
@@ -28093,7 +27514,6 @@ components:
           anyOf:
           - type: number
           - type: 'null'
-          default:
           description: Nucleus sampling parameter used for generation
           title: Top P
         tools:
@@ -28115,27 +27535,23 @@ components:
               - $ref: '#/components/schemas/OpenAIResponseToolMCP'
             type: array
           - type: 'null'
-          default:
           description: An array of tools the model may call while generating a response.
           title: Tools
         truncation:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           description: Truncation strategy applied to the response
           title: Truncation
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseUsage'
           - type: 'null'
-          default:
           description: Token usage information for the response
         instructions:
           anyOf:
           - type: string
           - type: 'null'
-          default:
           description: System message inserted into the model's context
           title: Instructions
         input:
@@ -28193,13 +27609,11 @@ components:
               anyOf:
               - $ref: '#/components/schemas/URL'
               - type: 'null'
-              default:
             data:
               anyOf:
               - type: string
               - type: 'null'
               contentEncoding: base64
-              default:
               title: Data
           title: _URLOrData
           type: object

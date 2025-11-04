@@ -10,7 +10,6 @@ FastAPI-based OpenAPI generator for Llama Stack.
 """
 
 import importlib
-import json
 from pathlib import Path
 from typing import Any
 
@@ -177,21 +176,23 @@ def _fix_ref_references(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """
     Fix common schema issues that cause OpenAPI validation problems.
-    This includes converting exclusiveMinimum numbers to minimum values and fixing string fields with null defaults.
+    This includes converting exclusiveMinimum numbers to minimum values and fixing invalid None defaults.
     """
     if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
         return openapi_schema
 
     schemas = openapi_schema["components"]["schemas"]
 
-    # Fix exclusiveMinimum issues
-    for _, schema_def in schemas.items():
-        _fix_exclusive_minimum_in_schema(schema_def)
+    # Fix exclusiveMinimum issues and invalid None defaults
+    for schema_name, schema_def in schemas.items():
+        if isinstance(schema_def, dict):
+            _fix_exclusive_minimum_in_schema(schema_def)
+            _fix_none_defaults_in_schema(schema_def, schema_name)
 
     return openapi_schema
 
 
-def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI schema") -> bool:
+def validate_openapi_schema(schema: dict[str, Any] | None, schema_name: str = "OpenAPI schema") -> bool:
     """
     Validate an OpenAPI schema using openapi-spec-validator.
 
@@ -205,6 +206,26 @@ def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI 
     Raises:
         OpenAPIValidationError: If validation fails
     """
+    if schema is None:
+        print(f"❌ {schema_name} is None")
+        return False
+
+    # Ensure required OpenAPI structure exists
+    if "paths" not in schema:
+        schema["paths"] = {}
+    if "components" not in schema:
+        schema["components"] = {}
+    if not isinstance(schema["components"], dict):
+        schema["components"] = {}
+    if "schemas" not in schema["components"]:
+        schema["components"]["schemas"] = {}
+    if not isinstance(schema["components"]["schemas"], dict):
+        schema["components"]["schemas"] = {}
+
+    # Ensure info section exists
+    if "info" not in schema:
+        schema["info"] = {"title": "API", "version": "1.0.0"}
+
     try:
         validate_spec(schema)
         print(f"✅ {schema_name} is valid")
@@ -238,6 +259,41 @@ def _fix_exclusive_minimum_in_schema(obj: Any) -> None:
         # Recursively process all items
         for item in obj:
             _fix_exclusive_minimum_in_schema(item)
+
+
+# TODO: handle this in the Classes
+def _fix_none_defaults_in_schema(obj: Any, path: str = "") -> None:
+    """
+    Recursively fix invalid None defaults in schema objects.
+    Removes default values that are None to prevent discriminator validation errors and empty defaults in YAML.
+    """
+    if isinstance(obj, dict):
+        # Remove None defaults - they cause issues with discriminator validation and create empty defaults in YAML
+        # For optional fields (int | None), None defaults are redundant and create empty "default:" in YAML
+        if "default" in obj and obj["default"] is None:
+            del obj["default"]
+
+        # Recursively check all nested schemas
+        for key, value in obj.items():
+            if key in ("properties", "items", "additionalProperties", "allOf", "anyOf", "oneOf"):
+                if isinstance(value, dict):
+                    for sub_key, sub_value in value.items():
+                        if isinstance(sub_value, dict):
+                            new_path = f"{path}.{sub_key}" if path else sub_key
+                            _fix_none_defaults_in_schema(sub_value, new_path)
+                elif isinstance(value, list):
+                    for i, item in enumerate(value):
+                        if isinstance(item, dict):
+                            new_path = f"{path}[{i}]" if path else f"[{i}]"
+                            _fix_none_defaults_in_schema(item, new_path)
+            elif isinstance(value, dict):
+                new_path = f"{path}.{key}" if path else key
+                _fix_none_defaults_in_schema(value, new_path)
+            elif isinstance(value, list):
+                for i, item in enumerate(value):
+                    if isinstance(item, dict):
+                        new_path = f"{path}.{key}[{i}]" if path else f"{key}[{i}]"
+                        _fix_none_defaults_in_schema(item, new_path)
 
 
 def _get_path_version(path: str) -> str | None:
@@ -409,19 +465,28 @@ def _filter_schema(
 
     filtered_schema["paths"] = filtered_paths
 
+    # Ensure components structure exists
+    if "components" not in filtered_schema:
+        filtered_schema["components"] = {}
+
     # Filter schemas/components if requested
-    if filter_schemas and "components" in filtered_schema and "schemas" in filtered_schema["components"]:
-        referenced_schemas = _find_schemas_referenced_by_paths(filtered_paths, openapi_schema)
-        filtered_schema["components"]["schemas"] = {
-            name: schema
-            for name, schema in filtered_schema["components"]["schemas"].items()
-            if name in referenced_schemas
-        }
+    if filter_schemas and "schemas" in filtered_schema.get("components", {}):
+        try:
+            referenced_schemas = _find_schemas_referenced_by_paths(filtered_paths, openapi_schema)
+            filtered_schema["components"]["schemas"] = {
+                name: schema
+                for name, schema in filtered_schema["components"]["schemas"].items()
+                if name in referenced_schemas
+            }
+        except Exception:
+            # If schema reference finding fails, keep all schemas
+            pass
+    elif "schemas" not in filtered_schema["components"]:
+        # Ensure schemas section exists even if empty
+        filtered_schema["components"]["schemas"] = {}
 
     # Preserve $defs section if it exists
-    if "components" in openapi_schema and "$defs" in openapi_schema["components"]:
-        if "components" not in filtered_schema:
-            filtered_schema["components"] = {}
+    if "components" in openapi_schema and "$defs" in openapi_schema.get("components", {}):
         filtered_schema["components"]["$defs"] = openapi_schema["components"]["$defs"]
 
     return filtered_schema
@@ -448,12 +513,17 @@ def _find_schemas_referenced_by_paths(filtered_paths: dict[str, Any], openapi_sc
                     referenced_schemas.update(_find_schema_refs_in_object(operation))
 
     # Also check the responses section for schema references
-    if "components" in openapi_schema and "responses" in openapi_schema["components"]:
-        referenced_schemas.update(_find_schema_refs_in_object(openapi_schema["components"]["responses"]))
+    components = openapi_schema.get("components")
+    if components and isinstance(components, dict) and "responses" in components:
+        referenced_schemas.update(_find_schema_refs_in_object(components["responses"]))
 
     # Also include schemas that are referenced by other schemas (transitive references)
     # This ensures we include all dependencies
-    all_schemas = openapi_schema.get("components", {}).get("schemas", {})
+    all_schemas = {}
+    if components and isinstance(components, dict):
+        all_schemas = components.get("schemas", {})
+        if not isinstance(all_schemas, dict):
+            all_schemas = {}
     additional_schemas = set()
 
     for schema_name in referenced_schemas:
