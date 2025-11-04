@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a comprehensive overview of file operations and Vector Store API support across all available vector store providers in Llama Stack. As of release 0.2.14, the following providers support full file operations integration.
+This document provides a comprehensive overview of file operations and Vector Store API support across all available vector store providers in Llama Stack. As of release 0.2.24, the following providers support full file operations integration.
 
 ## Supported Providers
 
@@ -76,7 +76,6 @@ All supported providers offer the following file operations capabilities:
 
 - **Default**: 800 tokens with 400 token overlap
 - **Custom**: Configurable chunk sizes and overlap
-- **Semantic**: Intelligent boundary detection
 - **Static**: Fixed-size chunks with overlap
 
 ## Provider-Specific Features
@@ -285,7 +284,7 @@ Planned improvements for file operations support:
 
 ## Support and Resources
 
-- **Documentation**: [File Operations and Vector Store Integration](../concepts/file_operations_vector_stores.md)
+- **Documentation**: [File Operations and Vector Store Integration](../../concepts/file_operations_vector_stores.mdx)
 - **API Reference**: [Files API](files_api.md)
 - **Provider Docs**: [Vector Store Providers](../vector_io/index.md)
 - **Examples**: [Getting Started](../getting_started/index.md)
