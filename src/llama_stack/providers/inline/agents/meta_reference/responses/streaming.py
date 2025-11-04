@@ -701,7 +701,7 @@ class StreamingResponseOrchestrator:
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
                             is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
-                            if not is_mcp_tool and tool_call.function.name not in ["web_search","knowledge_search"]:
+                            if not is_mcp_tool and tool_call.function.name not in ["web_search", "knowledge_search"]:
                                 # for MCP tools (and even other non-function tools) we emit an output message item later
                                 function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
                                     arguments="",  # Will be filled incrementally via delta events
@@ -1017,7 +1017,8 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
 
-    async def _process_new_tools(self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
+    async def _process_new_tools(
+        self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process all tools and emit appropriate streaming events."""
         from openai.types.chat import ChatCompletionToolParam
