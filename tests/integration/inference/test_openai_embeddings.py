@@ -31,9 +31,11 @@ def decode_base64_to_floats(base64_string: str) -> list[float]:
 
 
 def provider_from_model(client_with_models, model_id):
-    models = {m.identifier: m for m in client_with_models.models.list()}
-    models.update({m.provider_resource_id: m for m in client_with_models.models.list()})
-    provider_id = models[model_id].provider_id
+    models = {m.id: m for m in client_with_models.models.list()}
+    models.update(
+        {m.custom_metadata["provider_resource_id"]: m for m in client_with_models.models.list() if m.custom_metadata}
+    )
+    provider_id = models[model_id].custom_metadata["provider_id"]
     providers = {p.provider_id: p for p in client_with_models.providers.list()}
     return providers[provider_id]
 

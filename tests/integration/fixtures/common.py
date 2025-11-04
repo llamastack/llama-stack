@@ -153,13 +153,14 @@ def client_with_models(
     vision_model_id,
     embedding_model_id,
     judge_model_id,
+    rerank_model_id,
 ):
     client = llama_stack_client
 
     providers = [p for p in client.providers.list() if p.api == "inference"]
     assert len(providers) > 0, "No inference providers found"
 
-    model_ids = {m.identifier for m in client.models.list()}
+    model_ids = {m.id for m in client.models.list()}
 
     if text_model_id and text_model_id not in model_ids:
         raise ValueError(f"text_model_id {text_model_id} not found")
@@ -170,6 +171,9 @@ def client_with_models(
 
     if embedding_model_id and embedding_model_id not in model_ids:
         raise ValueError(f"embedding_model_id {embedding_model_id} not found")
+
+    if rerank_model_id and rerank_model_id not in model_ids:
+        raise ValueError(f"rerank_model_id {rerank_model_id} not found")
     return client
 
 
@@ -185,7 +189,14 @@ def model_providers(llama_stack_client):
 
 @pytest.fixture(autouse=True)
 def skip_if_no_model(request):
-    model_fixtures = ["text_model_id", "vision_model_id", "embedding_model_id", "judge_model_id", "shield_id"]
+    model_fixtures = [
+        "text_model_id",
+        "vision_model_id",
+        "embedding_model_id",
+        "judge_model_id",
+        "shield_id",
+        "rerank_model_id",
+    ]
     test_func = request.node.function
 
     actual_params = inspect.signature(test_func).parameters.keys()
@@ -230,6 +241,7 @@ def instantiate_llama_stack_client(session):
 
         force_restart = os.environ.get("LLAMA_STACK_TEST_FORCE_SERVER_RESTART") == "1"
         if force_restart:
+            print(f"Forcing restart of the server on port {port}")
             stop_server_on_port(port)
 
         # Check if port is available

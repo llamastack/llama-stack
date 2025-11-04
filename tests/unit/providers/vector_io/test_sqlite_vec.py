@@ -434,9 +434,15 @@ async def test_query_chunks_hybrid_tie_breaking(
     sqlite_vec_index, sample_embeddings, embedding_dimension, tmp_path_factory
 ):
     """Test tie-breaking and determinism when scores are equal."""
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     # Create two chunks with the same content and embedding
-    chunk1 = Chunk(content="identical", metadata={"document_id": "docA"})
-    chunk2 = Chunk(content="identical", metadata={"document_id": "docB"})
+    chunk1 = Chunk(
+        content="identical", chunk_id=generate_chunk_id("docA", "identical"), metadata={"document_id": "docA"}
+    )
+    chunk2 = Chunk(
+        content="identical", chunk_id=generate_chunk_id("docB", "identical"), metadata={"document_id": "docB"}
+    )
     chunks = [chunk1, chunk2]
     # Use the same embedding for both chunks to ensure equal scores
     same_embedding = sample_embeddings[0]

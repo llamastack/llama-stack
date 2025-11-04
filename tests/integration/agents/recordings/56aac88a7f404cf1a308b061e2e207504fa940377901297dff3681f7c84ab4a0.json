@@ -72,9 +72,9 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_awwijvr5",
+                    "id": "call_625v9rpa",
                     "function": {
-                      "arguments": "{\"celcius\":true,\"liquid_name\":\"polyjuice\"}",
+                      "arguments": "{\"celcius\":false,\"liquid_name\":\"polyjuice\"}",
                       "name": "get_boiling_point"
                     },
                     "type": "function"
@@ -131,9 +131,9 @@
           "service_tier": null,
           "system_fingerprint": "fp_ollama",
           "usage": {
-            "completion_tokens": 24,
+            "completion_tokens": 29,
             "prompt_tokens": 212,
-            "total_tokens": 236,
+            "total_tokens": 241,
             "completion_tokens_details": null,
             "prompt_tokens_details": null
           }

@@ -110,7 +110,6 @@ class Files(Protocol):
     """
 
     # OpenAI Files API Endpoints
-    @webmethod(route="/openai/v1/files", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/files", method="POST", level=LLAMA_STACK_API_V1)
     async def openai_upload_file(
         self,
@@ -134,7 +133,6 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/files", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_files(
         self,
@@ -155,7 +153,6 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/files/{file_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_file(
         self,
@@ -170,7 +167,6 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/files/{file_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def openai_delete_file(
         self,
@@ -183,7 +179,6 @@ class Files(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/files/{file_id}/content", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/files/{file_id}/content", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_retrieve_file_content(
         self,

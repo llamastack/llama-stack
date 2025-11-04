@@ -4,7 +4,11 @@ run-name: Check backward compatibility for run.yaml configs
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+'
     paths:
       - 'src/llama_stack/core/datatypes.py'
       - 'src/llama_stack/providers/datatypes.py'
@@ -33,7 +37,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
         with:
           enable-cache: true
 
@@ -411,7 +415,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
         with:
           enable-cache: true
 

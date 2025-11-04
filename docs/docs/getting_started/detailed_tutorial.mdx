@@ -239,8 +239,13 @@ client = LlamaStackClient(base_url="http://localhost:8321")
 models = client.models.list()
 
 # Select the first LLM
-llm = next(m for m in models if m.model_type == "llm" and m.provider_id == "ollama")
-model_id = llm.identifier
+llm = next(
+    m for m in models
+    if m.custom_metadata
+    and m.custom_metadata.get("model_type") == "llm"
+    and m.custom_metadata.get("provider_id") == "ollama"
+)
+model_id = llm.id
 
 print("Model:", model_id)
 
@@ -279,8 +284,13 @@ import uuid
 client = LlamaStackClient(base_url=f"http://localhost:8321")
 
 models = client.models.list()
-llm = next(m for m in models if m.model_type == "llm" and m.provider_id == "ollama")
-model_id = llm.identifier
+llm = next(
+    m for m in models
+    if m.custom_metadata
+    and m.custom_metadata.get("model_type") == "llm"
+    and m.custom_metadata.get("provider_id") == "ollama"
+)
+model_id = llm.id
 
 agent = Agent(client, model=model_id, instructions="You are a helpful assistant.")
 
@@ -450,8 +460,11 @@ import uuid
 client = LlamaStackClient(base_url="http://localhost:8321")
 
 # Create a vector database instance
-embed_lm = next(m for m in client.models.list() if m.model_type == "embedding")
-embedding_model = embed_lm.identifier
+embed_lm = next(
+    m for m in client.models.list()
+    if m.custom_metadata and m.custom_metadata.get("model_type") == "embedding"
+)
+embedding_model = embed_lm.id
 vector_db_id = f"v{uuid.uuid4().hex}"
 # The VectorDB API is deprecated; the server now returns its own authoritative ID.
 # We capture the correct ID from the response's .identifier attribute.
@@ -489,9 +502,11 @@ client.tool_runtime.rag_tool.insert(
 llm = next(
     m
     for m in client.models.list()
-    if m.model_type == "llm" and m.provider_id == "ollama"
+    if m.custom_metadata
+    and m.custom_metadata.get("model_type") == "llm"
+    and m.custom_metadata.get("provider_id") == "ollama"
 )
-model = llm.identifier
+model = llm.id
 
 # Create the RAG agent
 rag_agent = Agent(

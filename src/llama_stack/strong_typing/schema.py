@@ -111,7 +111,7 @@ def get_class_property_docstrings(
 def docstring_to_schema(data_type: type) -> Schema:
     short_description, long_description = get_class_docstrings(data_type)
     schema: Schema = {
-        "title": python_type_to_name(data_type),
+        "title": python_type_to_name(data_type, force=True),
     }
 
     description = "\n".join(filter(None, [short_description, long_description]))
@@ -417,6 +417,10 @@ class JsonSchemaGenerator:
         if origin_type is list:
             (list_type,) = typing.get_args(typ)  # unpack single tuple element
             return {"type": "array", "items": self.type_to_schema(list_type)}
+        elif origin_type is collections.abc.Sequence:
+            # Treat Sequence the same as list for JSON schema (both are arrays)
+            (sequence_type,) = typing.get_args(typ)  # unpack single tuple element
+            return {"type": "array", "items": self.type_to_schema(sequence_type)}
         elif origin_type is dict:
             key_type, value_type = typing.get_args(typ)
             if not (key_type is str or key_type is int or is_type_enum(key_type)):

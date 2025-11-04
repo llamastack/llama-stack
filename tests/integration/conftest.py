@@ -172,6 +172,10 @@ def pytest_addoption(parser):
         help="comma-separated list of embedding models. Fixture name: embedding_model_id",
     )
     parser.addoption(
+        "--rerank-model",
+        help="comma-separated list of rerank models. Fixture name: rerank_model_id",
+    )
+    parser.addoption(
         "--safety-shield",
         help="comma-separated list of safety shields. Fixture name: shield_id",
     )
@@ -249,6 +253,7 @@ def pytest_generate_tests(metafunc):
         "shield_id": ("--safety-shield", "shield"),
         "judge_model_id": ("--judge-model", "judge"),
         "embedding_dimension": ("--embedding-dimension", "dim"),
+        "rerank_model_id": ("--rerank-model", "rerank"),
     }
 
     # Collect all parameters and their values
@@ -363,10 +368,8 @@ def vector_provider_wrapper(func):
 
         return func(*args, **kwargs)
 
-    # For CI tests (replay/record), only use providers that are available in ci-tests environment
-    if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") in ("replay", "record"):
-        all_providers = ["faiss", "sqlite-vec"]
-    else:
+    inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
+    if inference_mode == "live":
         # For live tests, try all providers (they'll skip if not available)
         all_providers = [
             "faiss",
@@ -377,6 +380,9 @@ def vector_provider_wrapper(func):
             "weaviate",
             "qdrant",
         ]
+    else:
+        # For CI tests (replay/record), only use providers that are available in ci-tests environment
+        all_providers = ["faiss", "sqlite-vec"]
 
     return pytest.mark.parametrize("vector_io_provider_id", all_providers)(wrapper)
 

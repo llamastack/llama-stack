@@ -135,10 +135,24 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
     vector_io_adapter.cache["db1"] = fake_index
 
     # Various document_id scenarios that shouldn't crash
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     chunks = [
-        Chunk(content="has doc_id in metadata", metadata={"document_id": "doc-1"}),
-        Chunk(content="no doc_id anywhere", metadata={"source": "test"}),
-        Chunk(content="doc_id in chunk_metadata", chunk_metadata=ChunkMetadata(document_id="doc-3")),
+        Chunk(
+            content="has doc_id in metadata",
+            chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
+            metadata={"document_id": "doc-1"},
+        ),
+        Chunk(
+            content="no doc_id anywhere",
+            chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
+            metadata={"source": "test"},
+        ),
+        Chunk(
+            content="doc_id in chunk_metadata",
+            chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
+            chunk_metadata=ChunkMetadata(document_id="doc-3"),
+        ),
     ]
 
     # Should work without KeyError
@@ -151,7 +165,9 @@ async def test_document_id_with_invalid_type_raises_error():
     from llama_stack.apis.vector_io import Chunk
 
     # Integer document_id should raise TypeError
-    chunk = Chunk(content="test", metadata={"document_id": 12345})
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    chunk = Chunk(content="test", chunk_id=generate_chunk_id("test", "test"), metadata={"document_id": 12345})
     with pytest.raises(TypeError) as exc_info:
         _ = chunk.document_id
     assert "metadata['document_id'] must be a string" in str(exc_info.value)
@@ -159,7 +175,9 @@ async def test_document_id_with_invalid_type_raises_error():
 
 
 async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter):
-    expected = QueryChunksResponse(chunks=[Chunk(content="c1")], scores=[0.1])
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    expected = QueryChunksResponse(chunks=[Chunk(content="c1", chunk_id=generate_chunk_id("test", "c1"))], scores=[0.1])
     fake_index = AsyncMock(query_chunks=AsyncMock(return_value=expected))
     vector_io_adapter.cache["db1"] = fake_index
 

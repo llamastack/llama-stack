@@ -10,7 +10,6 @@ import os
 
 import pytest
 
-import llama_stack.core.telemetry.telemetry as telemetry_module
 from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 from tests.integration.fixtures.common import instantiate_llama_stack_client
 from tests.integration.telemetry.collectors import InMemoryTelemetryManager, OtlpHttpTestCollector
@@ -21,39 +20,26 @@ def telemetry_test_collector():
     stack_mode = os.environ.get("LLAMA_STACK_TEST_STACK_CONFIG_TYPE", "library_client")
 
     if stack_mode == "server":
+        # In server mode, the collector must be started and the server is already running.
+        # The integration test script (scripts/integration-tests.sh) should have set
+        # LLAMA_STACK_TEST_COLLECTOR_PORT and OTEL_EXPORTER_OTLP_ENDPOINT before starting the server.
         try:
             collector = OtlpHttpTestCollector()
         except RuntimeError as exc:
             pytest.skip(str(exc))
-        env_overrides = {
-            "OTEL_EXPORTER_OTLP_ENDPOINT": collector.endpoint,
-            "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
-            "OTEL_BSP_SCHEDULE_DELAY": "200",
-            "OTEL_BSP_EXPORT_TIMEOUT": "2000",
-        }
 
-        previous_env = {key: os.environ.get(key) for key in env_overrides}
-        previous_force_restart = os.environ.get("LLAMA_STACK_TEST_FORCE_SERVER_RESTART")
-
-        for key, value in env_overrides.items():
-            os.environ[key] = value
-
-        os.environ["LLAMA_STACK_TEST_FORCE_SERVER_RESTART"] = "1"
-        telemetry_module._TRACER_PROVIDER = None
+        # Verify the collector is listening on the expected endpoint
+        expected_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        if expected_endpoint and collector.endpoint != expected_endpoint:
+            pytest.skip(
+                f"Collector endpoint mismatch: expected {expected_endpoint}, got {collector.endpoint}. "
+                "Server was likely started before collector."
+            )
 
         try:
             yield collector
         finally:
             collector.shutdown()
-            for key, prior in previous_env.items():
-                if prior is None:
-                    os.environ.pop(key, None)
-                else:
-                    os.environ[key] = prior
-            if previous_force_restart is None:
-                os.environ.pop("LLAMA_STACK_TEST_FORCE_SERVER_RESTART", None)
-            else:
-                os.environ["LLAMA_STACK_TEST_FORCE_SERVER_RESTART"] = previous_force_restart
     else:
         manager = InMemoryTelemetryManager()
         try:

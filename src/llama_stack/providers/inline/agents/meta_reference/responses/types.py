@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from dataclasses import dataclass
+from typing import cast
 
 from openai.types.chat import ChatCompletionToolParam
 from pydantic import BaseModel
@@ -100,17 +101,19 @@ class ToolContext(BaseModel):
                 if isinstance(tool, OpenAIResponseToolMCP):
                     previous_tools_by_label[tool.server_label] = tool
             # collect tool definitions which are the same in current and previous requests:
-            tools_to_process = []
+            tools_to_process: list[OpenAIResponseInputTool] = []
             matched: dict[str, OpenAIResponseInputToolMCP] = {}
-            for tool in self.current_tools:
+            # Mypy confuses OpenAIResponseInputTool (Input union) with OpenAIResponseTool (output union)
+            # which differ only in MCP type (InputToolMCP vs ToolMCP). Code is correct.
+            for tool in cast(list[OpenAIResponseInputTool], self.current_tools):  # type: ignore[assignment]
                 if isinstance(tool, OpenAIResponseInputToolMCP) and tool.server_label in previous_tools_by_label:
                     previous_tool = previous_tools_by_label[tool.server_label]
                     if previous_tool.allowed_tools == tool.allowed_tools:
                         matched[tool.server_label] = tool
                     else:
-                        tools_to_process.append(tool)
+                        tools_to_process.append(tool)  # type: ignore[arg-type]
                 else:
-                    tools_to_process.append(tool)
+                    tools_to_process.append(tool)  # type: ignore[arg-type]
             # tools that are not the same or were not previously defined need to be processed:
             self.tools_to_process = tools_to_process
             # for all matched definitions, get the mcp_list_tools objects from the previous output:
@@ -119,9 +122,11 @@ class ToolContext(BaseModel):
             ]
             # reconstruct the tool to server mappings that can be reused:
             for listing in self.previous_tool_listings:
+                # listing is OpenAIResponseOutputMessageMCPListTools which has tools: list[MCPListToolsTool]
                 definition = matched[listing.server_label]
-                for tool in listing.tools:
-                    self.previous_tools[tool.name] = definition
+                for mcp_tool in listing.tools:
+                    # mcp_tool is MCPListToolsTool which has a name: str field
+                    self.previous_tools[mcp_tool.name] = definition
 
     def available_tools(self) -> list[OpenAIResponseTool]:
         if not self.current_tools:
@@ -139,6 +144,8 @@ class ToolContext(BaseModel):
                     server_label=tool.server_label,
                     allowed_tools=tool.allowed_tools,
                 )
+            # Exhaustive check - all tool types should be handled above
+            raise AssertionError(f"Unexpected tool type: {type(tool)}")
 
         return [convert_tool(tool) for tool in self.current_tools]
 
