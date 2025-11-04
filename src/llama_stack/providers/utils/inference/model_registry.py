@@ -20,7 +20,7 @@ logger = get_logger(name=__name__, category="providers::utils")
 
 
 class RemoteInferenceProviderConfig(BaseModel):
-    allowed_models: list[str] | None = Field(  # TODO: make this non-optional and give a list() default
+    allowed_models: list[str] | None = Field(
         default=None,
         description="List of models that should be registered with the model registry. If None, all models are allowed.",
     )
