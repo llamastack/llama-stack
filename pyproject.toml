@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.3.0"
+version = "0.4.0.dev0"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
@@ -67,14 +67,43 @@ dev = [
     "pytest-cov",
     "pytest-html",
     "pytest-json-report",
-    "pytest-socket",       # For blocking network access in unit tests
-    "nbval",               # For notebook testing
+    "pytest-socket", # For blocking network access in unit tests
+    "nbval", # For notebook testing
     "black",
     "ruff",
+    "mypy",
+    "pre-commit",
+    "ruamel.yaml", # needed for openapi generator
+]
+# Type checking dependencies - includes type stubs and optional runtime dependencies
+# needed for complete mypy coverage across all optional features
+type_checking = [
     "types-requests",
     "types-setuptools",
-    "pre-commit",
-    "ruamel.yaml",         # needed for openapi generator
+    "types-jsonschema",
+    "pandas-stubs",
+    "types-psutil",
+    "types-tqdm",
+    "boto3-stubs[s3]",
+    "streamlit",
+    "streamlit-option-menu",
+    "pandas",
+    "anthropic",
+    "databricks-sdk",
+    "fairscale",
+    "torchtune",
+    "trl",
+    "peft",
+    "datasets",
+    "together",
+    "nest-asyncio",
+    "pymongo",
+    "torchvision",
+    "sqlite-vec",
+    "faiss-cpu",
+    "lm-format-enforcer",
+    "mcp",
+    "ollama",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -255,7 +284,6 @@ exclude = [
     "^src/llama_stack/models/llama/llama3/interface\\.py$",
     "^src/llama_stack/models/llama/llama3/tokenizer\\.py$",
     "^src/llama_stack/models/llama/llama3/tool_utils\\.py$",
-    "^src/llama_stack/providers/inline/agents/meta_reference/",
     "^src/llama_stack/providers/inline/datasetio/localfs/",
     "^src/llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
     "^src/llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
@@ -316,7 +344,17 @@ exclude = [
 
 [[tool.mypy.overrides]]
 # packages that lack typing annotations, do not have stubs, or are unavailable.
-module = ["yaml", "fire"]
+module = [
+    "yaml",
+    "fire",
+    "torchtune.*",
+    "fairscale.*",
+    "torchvision.*",
+    "datasets",
+    "nest_asyncio",
+    "streamlit_option_menu",
+    "lmformatenforcer.*",
+]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]

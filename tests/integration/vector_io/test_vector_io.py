@@ -13,23 +13,33 @@ from ..conftest import vector_provider_wrapper
 
 @pytest.fixture(scope="session")
 def sample_chunks():
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    chunks_data = [
+        (
+            "Python is a high-level programming language that emphasizes code readability and allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java.",
+            "doc1",
+        ),
+        (
+            "Machine learning is a subset of artificial intelligence that enables systems to automatically learn and improve from experience without being explicitly programmed, using statistical techniques to give computer systems the ability to progressively improve performance on a specific task.",
+            "doc2",
+        ),
+        (
+            "Data structures are fundamental to computer science because they provide organized ways to store and access data efficiently, enable faster processing of data through optimized algorithms, and form the building blocks for more complex software systems.",
+            "doc3",
+        ),
+        (
+            "Neural networks are inspired by biological neural networks found in animal brains, using interconnected nodes called artificial neurons to process information through weighted connections that can be trained to recognize patterns and solve complex problems through iterative learning.",
+            "doc4",
+        ),
+    ]
     return [
         Chunk(
-            content="Python is a high-level programming language that emphasizes code readability and allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java.",
-            metadata={"document_id": "doc1"},
-        ),
-        Chunk(
-            content="Machine learning is a subset of artificial intelligence that enables systems to automatically learn and improve from experience without being explicitly programmed, using statistical techniques to give computer systems the ability to progressively improve performance on a specific task.",
-            metadata={"document_id": "doc2"},
-        ),
-        Chunk(
-            content="Data structures are fundamental to computer science because they provide organized ways to store and access data efficiently, enable faster processing of data through optimized algorithms, and form the building blocks for more complex software systems.",
-            metadata={"document_id": "doc3"},
-        ),
-        Chunk(
-            content="Neural networks are inspired by biological neural networks found in animal brains, using interconnected nodes called artificial neurons to process information through weighted connections that can be trained to recognize patterns and solve complex problems through iterative learning.",
-            metadata={"document_id": "doc4"},
-        ),
+            content=content,
+            chunk_id=generate_chunk_id(doc_id, content),
+            metadata={"document_id": doc_id},
+        )
+        for content, doc_id in chunks_data
     ]
 
 
@@ -168,6 +178,7 @@ def test_insert_chunks_with_precomputed_embeddings(
     chunks_with_embeddings = [
         Chunk(
             content="This is a test chunk with precomputed embedding.",
+            chunk_id="chunk1",
             metadata={"document_id": "doc1", "source": "precomputed", "chunk_id": "chunk1"},
             embedding=[0.1] * int(embedding_dimension),
         ),
@@ -215,9 +226,12 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
 
     actual_vector_store_id = register_response.id
 
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     chunks_with_embeddings = [
         Chunk(
             content="duplicate",
+            chunk_id=generate_chunk_id("doc1", "duplicate"),
             metadata={"document_id": "doc1", "source": "precomputed"},
             embedding=[0.1] * int(embedding_dimension),
         ),

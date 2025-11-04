@@ -9,12 +9,30 @@ import signal
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 import psutil
 import torch
 from datasets import Dataset
 from transformers import AutoConfig, AutoModelForCausalLM
+
+if TYPE_CHECKING:
+    from transformers import PretrainedConfig
+
+
+class HFAutoModel(Protocol):
+    """Protocol describing HuggingFace AutoModel interface.
+
+    This protocol defines the common interface for HuggingFace AutoModelForCausalLM
+    and similar models, providing type safety without requiring type stubs.
+    """
+
+    config: PretrainedConfig
+    device: torch.device
+
+    def to(self, device: torch.device) -> "HFAutoModel": ...
+    def save_pretrained(self, save_directory: str | Path) -> None: ...
+
 
 from llama_stack.apis.datasetio import DatasetIO
 from llama_stack.apis.post_training import Checkpoint, TrainingConfig
@@ -132,7 +150,7 @@ def load_model(
     model: str,
     device: torch.device,
     provider_config: HuggingFacePostTrainingConfig,
-) -> AutoModelForCausalLM:
+) -> HFAutoModel:
     """Load and initialize the model for training.
     Args:
         model: The model identifier to load
@@ -143,6 +161,8 @@ def load_model(
     Raises:
         RuntimeError: If model loading fails
     """
+    from typing import cast
+
     logger.info("Loading the base model")
     try:
         model_config = AutoConfig.from_pretrained(model, **provider_config.model_specific_config)
@@ -154,9 +174,10 @@ def load_model(
             **provider_config.model_specific_config,
         )
         # Always move model to specified device
-        model_obj = model_obj.to(device)
+        model_obj = model_obj.to(device)  # type: ignore[arg-type]
         logger.info(f"Model loaded and moved to device: {model_obj.device}")
-        return model_obj
+        # Cast to HFAutoModel protocol - transformers models satisfy this interface
+        return cast(HFAutoModel, model_obj)
     except Exception as e:
         raise RuntimeError(f"Failed to load model: {str(e)}") from e
 

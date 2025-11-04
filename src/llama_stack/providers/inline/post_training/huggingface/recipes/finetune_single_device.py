@@ -14,7 +14,6 @@ import torch
 from datasets import Dataset
 from peft import LoraConfig
 from transformers import (
-    AutoModelForCausalLM,
     AutoTokenizer,
 )
 from trl import SFTConfig, SFTTrainer
@@ -32,6 +31,7 @@ from llama_stack.providers.inline.post_training.common.utils import evacuate_mod
 
 from ..config import HuggingFacePostTrainingConfig
 from ..utils import (
+    HFAutoModel,
     calculate_training_steps,
     create_checkpoints,
     get_memory_stats,
@@ -338,7 +338,7 @@ class HFFinetuningSingleDevice:
 
     def save_model(
         self,
-        model_obj: AutoModelForCausalLM,
+        model_obj: HFAutoModel,
         trainer: SFTTrainer,
         peft_config: LoraConfig | None,
         output_dir_path: Path,
@@ -350,14 +350,22 @@ class HFFinetuningSingleDevice:
             peft_config: Optional LoRA configuration
             output_dir_path: Path to save the model
         """
+        from typing import cast
+
         logger.info("Saving final model")
         model_obj.config.use_cache = True
 
         if peft_config:
             logger.info("Merging LoRA weights with base model")
-            model_obj = trainer.model.merge_and_unload()
+            # TRL's merge_and_unload returns a HuggingFace model
+            # Both cast() and type: ignore are needed here:
+            # - cast() tells mypy the return type is HFAutoModel for downstream code
+            # - type: ignore suppresses errors on the merge_and_unload() call itself,
+            #   which mypy can't type-check due to TRL library's incomplete type stubs
+            model_obj = cast(HFAutoModel, trainer.model.merge_and_unload())  # type: ignore[union-attr,operator]
         else:
-            model_obj = trainer.model
+            # trainer.model is the trained HuggingFace model
+            model_obj = cast(HFAutoModel, trainer.model)
 
         save_path = output_dir_path / "merged_model"
         logger.info(f"Saving model to {save_path}")
@@ -411,7 +419,7 @@ class HFFinetuningSingleDevice:
         # Initialize trainer
         logger.info("Initializing SFTTrainer")
         trainer = SFTTrainer(
-            model=model_obj,
+            model=model_obj,  # type: ignore[arg-type]
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             peft_config=peft_config,

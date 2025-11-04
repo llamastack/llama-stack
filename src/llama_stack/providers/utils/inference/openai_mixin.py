@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
-from openai import NOT_GIVEN, AsyncOpenAI
+from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict
 
 from llama_stack.apis.inference import (
@@ -82,9 +82,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # Cache of available models keyed by model ID
     # This is set in list_models() and used in check_model_availability()
     _model_cache: dict[str, Model] = {}
-
-    # List of allowed models for this provider, if empty all models allowed
-    allowed_models: list[str] = []
 
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
@@ -226,8 +223,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         :param model: The registered model name/identifier
         :return: The provider-specific model ID (e.g., "gpt-4")
         """
-        # Look up the registered model to get the provider-specific model ID
         # self.model_store is injected by the distribution system at runtime
+        if not await self.model_store.has_model(model):  # type: ignore[attr-defined]
+            return model
+
+        # Look up the registered model to get the provider-specific model ID
         model_obj: Model = await self.model_store.get_model(model)  # type: ignore[attr-defined]
         # provider_resource_id is str | None, but we expect it to be str for OpenAI calls
         if model_obj.provider_resource_id is None:
@@ -351,21 +351,21 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI embeddings API call.
         """
-        # Prepare request parameters
-        request_params = {
+        # Build request params conditionally to avoid NotGiven/Omit type mismatch
+        # The OpenAI SDK uses Omit in signatures but NOT_GIVEN has type NotGiven
+        request_params: dict[str, Any] = {
             "model": await self._get_provider_model_id(params.model),
             "input": params.input,
-            "encoding_format": params.encoding_format if params.encoding_format is not None else NOT_GIVEN,
-            "dimensions": params.dimensions if params.dimensions is not None else NOT_GIVEN,
-            "user": params.user if params.user is not None else NOT_GIVEN,
         }
+        if params.encoding_format is not None:
+            request_params["encoding_format"] = params.encoding_format
+        if params.dimensions is not None:
+            request_params["dimensions"] = params.dimensions
+        if params.user is not None:
+            request_params["user"] = params.user
+        if params.model_extra:
+            request_params["extra_body"] = params.model_extra
 
-        # Add extra_body if present
-        extra_body = params.model_extra
-        if extra_body:
-            request_params["extra_body"] = extra_body
-
-        # Call OpenAI embeddings API with properly typed parameters
         response = await self.client.embeddings.create(**request_params)
 
         data = []
@@ -438,7 +438,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         for provider_model_id in provider_models_ids:
             if not isinstance(provider_model_id, str):
                 raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
-            if self.allowed_models and provider_model_id not in self.allowed_models:
+            if self.config.allowed_models is not None and provider_model_id not in self.config.allowed_models:
                 logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
                 continue
             model = self.construct_model_from_identifier(provider_model_id)

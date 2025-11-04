@@ -38,18 +38,18 @@ def maybe_reshard_state_dict(
     mmap: bool = True,
 ) -> dict[str, torch.Tensor]:
     if str(map_location) == "cpu":
-        torch.set_default_tensor_type(torch.BFloat16Tensor)
+        torch.set_default_dtype(torch.bfloat16)
     else:
-        torch.set_default_tensor_type(torch.cuda.BFloat16Tensor)
+        torch.set_default_dtype(torch.bfloat16)
 
-    ckpt_paths = np.array(sorted(ckpt_paths))
+    ckpt_paths_array = np.array(sorted(ckpt_paths))
 
     new_mp_size, new_mp_rank = get_model_parallel_world_size(), get_model_parallel_rank()
-    old_mp_size = len(ckpt_paths)
+    old_mp_size = len(ckpt_paths_array)
     old_mp_ranks = map_mp_rank(old_mp_size, new_mp_size, new_mp_rank)
 
-    print(f"Loading checkpoint shards:\n{str(ckpt_paths[old_mp_ranks])}")  # type: ignore
-    paths = ckpt_paths[old_mp_ranks]  # type: ignore
+    print(f"Loading checkpoint shards:\n{str(ckpt_paths_array[old_mp_ranks])}")  # type: ignore
+    paths = ckpt_paths_array[old_mp_ranks]  # type: ignore
     state_dicts = [torch.load(str(p), map_location=map_location, mmap=mmap) for p in paths]
 
     if new_mp_size == old_mp_size:

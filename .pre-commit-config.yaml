@@ -52,13 +52,9 @@ repos:
         additional_dependencies:
         - black==24.3.0
 
--   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.20
-    hooks:
-    -   id: uv-lock
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.1
+    rev: v1.18.2
     hooks:
     -   id: mypy
         additional_dependencies:
@@ -78,11 +74,26 @@ repos:
 
 -   repo: local
     hooks:
+      - id: uv-lock
+        name: uv-lock
+        additional_dependencies:
+          - uv==0.7.20
+        entry: ./scripts/uv-run-with-index.sh lock
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^(pyproject\.toml|uv\.lock)$
+      - id: mypy-full
+        name: mypy (full type_checking)
+        entry: ./scripts/uv-run-with-index.sh run --group dev --group type_checking mypy
+        language: system
+        pass_filenames: false
+        stages: [manual]
       - id: distro-codegen
         name: Distribution Template Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/distro_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/distro_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -91,7 +102,7 @@ repos:
         name: Provider Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/provider_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -100,7 +111,7 @@ repos:
         name: API Spec Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: sh -c 'uv run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
+        entry: sh -c './scripts/uv-run-with-index.sh run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
         language: python
         pass_filenames: false
         require_serial: true
@@ -141,7 +152,7 @@ repos:
         name: Generate CI documentation
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run ./scripts/gen-ci-docs.py
+        entry: ./scripts/uv-run-with-index.sh run ./scripts/gen-ci-docs.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -172,6 +183,23 @@ repos:
               exit 1
             fi
             exit 0
+      - id: fips-compliance
+        name: Ensure llama-stack remains FIPS compliant
+        entry: bash
+        language: system
+        types: [python]
+        pass_filenames: true
+        exclude: '^tests/.*$'  # Exclude test dir as some safety tests used MD5
+        args:
+          - -c
+          - |
+            grep -EnH '^[^#]*\b(md5|sha1|uuid3|uuid5)\b' "$@" && {
+              echo;
+              echo "❌ Do not use any of the following functions: hashlib.md5, hashlib.sha1, uuid.uuid3, uuid.uuid5"
+              echo "   These functions are not FIPS-compliant"
+              echo;
+              exit 1;
+            } || true
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks

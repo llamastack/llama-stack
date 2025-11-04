@@ -49,9 +49,21 @@ def vector_store_id():
 
 @pytest.fixture
 def sample_chunks():
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     return [
-        Chunk(content="MOCK text content 1", mime_type="text/plain", metadata={"document_id": "mock-doc-1"}),
-        Chunk(content="MOCK text content 1", mime_type="text/plain", metadata={"document_id": "mock-doc-2"}),
+        Chunk(
+            content="MOCK text content 1",
+            chunk_id=generate_chunk_id("mock-doc-1", "MOCK text content 1"),
+            mime_type="text/plain",
+            metadata={"document_id": "mock-doc-1"},
+        ),
+        Chunk(
+            content="MOCK text content 1",
+            chunk_id=generate_chunk_id("mock-doc-2", "MOCK text content 1"),
+            mime_type="text/plain",
+            metadata={"document_id": "mock-doc-2"},
+        ),
     ]
 
 

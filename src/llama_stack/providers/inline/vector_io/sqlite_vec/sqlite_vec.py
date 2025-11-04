@@ -11,7 +11,7 @@ import struct
 from typing import Any
 
 import numpy as np
-import sqlite_vec
+import sqlite_vec  # type: ignore[import-untyped]
 from numpy.typing import NDArray
 
 from llama_stack.apis.common.errors import VectorStoreNotFoundError

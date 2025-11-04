@@ -192,18 +192,18 @@ async def test_create_agent_session_persistence(agents_impl, sample_agent_config
     assert session_response.session_id is not None
 
     # Verify the session was stored
-    session = await agents_impl.get_agents_session(agent_id, session_response.session_id)
+    session = await agents_impl.get_agents_session(session_response.session_id, agent_id)
     assert session.session_name == "test_session"
     assert session.session_id == session_response.session_id
     assert session.started_at is not None
     assert session.turns == []
 
     # Delete the session
-    await agents_impl.delete_agents_session(agent_id, session_response.session_id)
+    await agents_impl.delete_agents_session(session_response.session_id, agent_id)
 
     # Verify the session was deleted
     with pytest.raises(ValueError):
-        await agents_impl.get_agents_session(agent_id, session_response.session_id)
+        await agents_impl.get_agents_session(session_response.session_id, agent_id)
 
 
 @pytest.mark.parametrize("enable_session_persistence", [True, False])
@@ -226,11 +226,11 @@ async def test_list_agent_sessions_persistence(agents_impl, sample_agent_config,
     assert session2.session_id in session_ids
 
     # Delete one session
-    await agents_impl.delete_agents_session(agent_id, session1.session_id)
+    await agents_impl.delete_agents_session(session1.session_id, agent_id)
 
     # Verify the session was deleted
     with pytest.raises(ValueError):
-        await agents_impl.get_agents_session(agent_id, session1.session_id)
+        await agents_impl.get_agents_session(session1.session_id, agent_id)
 
     # List sessions again
     sessions = await agents_impl.list_agent_sessions(agent_id)

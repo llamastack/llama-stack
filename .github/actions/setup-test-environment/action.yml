@@ -42,18 +42,7 @@ runs:
     - name: Build Llama Stack
       shell: bash
       run: |
-        # Install llama-stack-client-python based on the client-version input
-        if [ "${{ inputs.client-version }}" = "latest" ]; then
-          echo "Installing latest llama-stack-client-python from main branch"
-          export LLAMA_STACK_CLIENT_DIR=git+https://github.com/llamastack/llama-stack-client-python.git@main
-        elif [ "${{ inputs.client-version }}" = "published" ]; then
-          echo "Installing published llama-stack-client-python from PyPI"
-          unset LLAMA_STACK_CLIENT_DIR
-        else
-          echo "Invalid client-version: ${{ inputs.client-version }}"
-          exit 1
-        fi
-
+        # Client is already installed by setup-runner (handles both main and release branches)
         echo "Building Llama Stack"
 
         LLAMA_STACK_DIR=. \

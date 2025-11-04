@@ -309,7 +309,7 @@ class HFDPOAlignmentSingleDevice:
             save_total_limit=provider_config.save_total_limit,
             # DPO specific parameters
             beta=dpo_config.beta,
-            loss_type=provider_config.dpo_loss_type,
+            loss_type=provider_config.dpo_loss_type,  # type: ignore[arg-type]
         )
 
     def save_model(
@@ -381,13 +381,16 @@ class HFDPOAlignmentSingleDevice:
 
         # Initialize DPO trainer
         logger.info("Initializing DPOTrainer")
+        # TRL library has incomplete type stubs - use Any to bypass
+        from typing import Any, cast
+
         trainer = DPOTrainer(
-            model=model_obj,
-            ref_model=ref_model,
+            model=cast(Any, model_obj),  # HFAutoModel satisfies PreTrainedModel protocol
+            ref_model=cast(Any, ref_model),
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            processing_class=tokenizer,
+            processing_class=cast(Any, tokenizer),  # AutoTokenizer satisfies interface
         )
 
         try:

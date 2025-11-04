@@ -54,7 +54,7 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_5jhuk3h6",
+                  "id": "call_r7gqihbc",
                   "function": {
                     "arguments": "{\"city\":\"Tokyo\"}",
                     "name": "get_weather"
@@ -72,14 +72,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 14,
+          "completion_tokens": 15,
           "prompt_tokens": 177,
-          "total_tokens": 191,
+          "total_tokens": 192,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

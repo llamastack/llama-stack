@@ -30,14 +30,13 @@ class MongoDBKVStoreImpl(KVStore):
 
     async def initialize(self) -> None:
         try:
-            conn_creds = {
-                "host": self.config.host,
-                "port": self.config.port,
-                "username": self.config.user,
-                "password": self.config.password,
-            }
-            conn_creds = {k: v for k, v in conn_creds.items() if v is not None}
-            self.conn = AsyncMongoClient(**conn_creds)
+            # Pass parameters explicitly to satisfy mypy - AsyncMongoClient doesn't accept **dict
+            self.conn = AsyncMongoClient(
+                host=self.config.host if self.config.host is not None else None,
+                port=self.config.port if self.config.port is not None else None,
+                username=self.config.user if self.config.user is not None else None,
+                password=self.config.password if self.config.password is not None else None,
+            )
         except Exception as e:
             log.exception("Could not connect to MongoDB database server")
             raise RuntimeError("Could not connect to MongoDB database server") from e
@@ -79,4 +78,8 @@ class MongoDBKVStoreImpl(KVStore):
         end_key = self._namespaced_key(end_key)
         query = {"key": {"$gte": start_key, "$lt": end_key}}
         cursor = self.collection.find(query, {"key": 1, "_id": 0}).sort("key", 1)
-        return [doc["key"] for doc in cursor]
+        # AsyncCursor requires async iteration
+        result = []
+        async for doc in cursor:
+            result.append(doc["key"])
+        return result

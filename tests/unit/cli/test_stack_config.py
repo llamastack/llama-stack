@@ -206,3 +206,112 @@ def test_parse_and_maybe_upgrade_config_invalid(invalid_config):
 def test_parse_and_maybe_upgrade_config_image_name_int(config_with_image_name_int):
     result = parse_and_maybe_upgrade_config(config_with_image_name_int)
     assert isinstance(result.image_name, str)
+
+
+def test_parse_and_maybe_upgrade_config_sets_external_providers_dir(up_to_date_config):
+    """Test that external_providers_dir is None when not specified (deprecated field)."""
+    # Ensure the config doesn't have external_providers_dir set
+    assert "external_providers_dir" not in up_to_date_config
+
+    result = parse_and_maybe_upgrade_config(up_to_date_config)
+
+    # Verify external_providers_dir is None (not set to default)
+    # This aligns with the deprecation of external_providers_dir
+    assert result.external_providers_dir is None
+
+
+def test_parse_and_maybe_upgrade_config_preserves_custom_external_providers_dir(up_to_date_config):
+    """Test that custom external_providers_dir values are preserved."""
+    custom_dir = "/custom/providers/dir"
+    up_to_date_config["external_providers_dir"] = custom_dir
+
+    result = parse_and_maybe_upgrade_config(up_to_date_config)
+
+    # Verify the custom value was preserved
+    assert str(result.external_providers_dir) == custom_dir
+
+
+def test_generate_run_config_from_providers():
+    """Test that _generate_run_config_from_providers creates a valid config"""
+    import argparse
+
+    from llama_stack.cli.stack.run import StackRun
+    from llama_stack.core.datatypes import Provider
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    stack_run = StackRun(subparsers)
+
+    providers = {
+        "inference": [
+            Provider(
+                provider_type="inline::meta-reference",
+                provider_id="meta-reference",
+            )
+        ]
+    }
+
+    config = stack_run._generate_run_config_from_providers(providers=providers)
+    config_dict = config.model_dump(mode="json")
+
+    # Verify basic structure
+    assert config_dict["image_name"] == "providers-run"
+    assert "inference" in config_dict["apis"]
+    assert "inference" in config_dict["providers"]
+
+    # Verify storage has all required stores including prompts
+    assert "storage" in config_dict
+    stores = config_dict["storage"]["stores"]
+    assert "prompts" in stores
+    assert stores["prompts"]["namespace"] == "prompts"
+
+    # Verify config can be parsed back
+    parsed = parse_and_maybe_upgrade_config(config_dict)
+    assert parsed.image_name == "providers-run"
+
+
+def test_providers_flag_generates_config_with_api_keys():
+    """Test that --providers flag properly generates provider configs including API keys.
+
+    This tests the fix where sample_run_config() is called to populate
+    API keys and other credentials for remote providers like remote::openai.
+    """
+    import argparse
+    from unittest.mock import patch
+
+    from llama_stack.cli.stack.run import StackRun
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    stack_run = StackRun(subparsers)
+
+    # Create args with --providers flag set
+    args = argparse.Namespace(
+        providers="inference=remote::openai",
+        config=None,
+        port=8321,
+        image_type=None,
+        image_name=None,
+        enable_ui=False,
+    )
+
+    # Mock _uvicorn_run to prevent starting a server
+    with patch.object(stack_run, "_uvicorn_run"):
+        stack_run._run_stack_run_cmd(args)
+
+    # Read the generated config file
+    from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
+
+    config_file = DISTRIBS_BASE_DIR / "providers-run" / "run.yaml"
+    with open(config_file) as f:
+        config_dict = yaml.safe_load(f)
+
+    # Verify the provider has config with API keys
+    inference_providers = config_dict["providers"]["inference"]
+    assert len(inference_providers) == 1
+
+    openai_provider = inference_providers[0]
+    assert openai_provider["provider_type"] == "remote::openai"
+    assert openai_provider["config"], "Provider config should not be empty"
+    assert "api_key" in openai_provider["config"], "API key should be in provider config"
+    assert "base_url" in openai_provider["config"], "Base URL should be in provider config"

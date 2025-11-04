@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 from collections.abc import Mapping, Sequence
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from sqlalchemy import (
     JSON,
@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     Table,
     Text,
+    event,
     inspect,
     select,
     text,
@@ -55,17 +56,17 @@ def _build_where_expr(column: ColumnElement, value: Any) -> ColumnElement:
             raise ValueError(f"Operator mapping must have a single operator, got: {value}")
         op, operand = next(iter(value.items()))
         if op == "==" or op == "=":
-            return column == operand
+            return cast(ColumnElement[Any], column == operand)
         if op == ">":
-            return column > operand
+            return cast(ColumnElement[Any], column > operand)
         if op == "<":
-            return column < operand
+            return cast(ColumnElement[Any], column < operand)
         if op == ">=":
-            return column >= operand
+            return cast(ColumnElement[Any], column >= operand)
         if op == "<=":
-            return column <= operand
+            return cast(ColumnElement[Any], column <= operand)
         raise ValueError(f"Unsupported operator '{op}' in where mapping")
-    return column == value
+    return cast(ColumnElement[Any], column == value)
 
 
 class SqlAlchemySqlStoreImpl(SqlStore):
@@ -75,7 +76,36 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         self.metadata = MetaData()
 
     def create_engine(self) -> AsyncEngine:
-        return create_async_engine(self.config.engine_str, pool_pre_ping=True)
+        # Configure connection args for better concurrency support
+        connect_args = {}
+        if "sqlite" in self.config.engine_str:
+            # SQLite-specific optimizations for concurrent access
+            # With WAL mode, most locks resolve in milliseconds, but allow up to 5s for edge cases
+            connect_args["timeout"] = 5.0
+            connect_args["check_same_thread"] = False  # Allow usage across asyncio tasks
+
+        engine = create_async_engine(
+            self.config.engine_str,
+            pool_pre_ping=True,
+            connect_args=connect_args,
+        )
+
+        # Enable WAL mode for SQLite to support concurrent readers and writers
+        if "sqlite" in self.config.engine_str:
+
+            @event.listens_for(engine.sync_engine, "connect")
+            def set_sqlite_pragma(dbapi_conn, connection_record):
+                cursor = dbapi_conn.cursor()
+                # Enable Write-Ahead Logging for better concurrency
+                cursor.execute("PRAGMA journal_mode=WAL")
+                # Set busy timeout to 5 seconds (retry instead of immediate failure)
+                # With WAL mode, locks should be brief; if we hit 5s there's a bigger issue
+                cursor.execute("PRAGMA busy_timeout=5000")
+                # Use NORMAL synchronous mode for better performance (still safe with WAL)
+                cursor.execute("PRAGMA synchronous=NORMAL")
+                cursor.close()
+
+        return engine
 
     async def create_table(
         self,
@@ -210,10 +240,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
                 query = query.limit(fetch_limit)
 
             result = await session.execute(query)
-            if result.rowcount == 0:
-                rows = []
-            else:
-                rows = [dict(row._mapping) for row in result]
+            # Iterate directly - if no rows, list comprehension yields empty list
+            rows = [dict(row._mapping) for row in result]
 
             # Always return pagination result
             has_more = False

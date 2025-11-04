@@ -424,6 +424,7 @@ class DistributionTemplate(BaseModel):
                 providers_table=providers_table,
                 run_config_env_vars=self.run_config_env_vars,
                 default_models=default_models,
+                run_configs=list(self.run_configs.keys()),
             )
         return ""
 

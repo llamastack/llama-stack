@@ -32,10 +32,12 @@ class DatabricksInferenceAdapter(OpenAIMixin):
         return f"{self.config.url}/serving-endpoints"
 
     async def list_provider_model_ids(self) -> Iterable[str]:
+        # Filter out None values from endpoint names
+        api_token = self._get_api_key_from_config_or_provider_data()
         return [
-            endpoint.name
+            endpoint.name  # type: ignore[misc]
             for endpoint in WorkspaceClient(
-                host=self.config.url, token=self.get_api_key()
+                host=self.config.url, token=api_token
             ).serving_endpoints.list()  # TODO: this is not async
         ]
 

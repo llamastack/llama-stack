@@ -10,7 +10,7 @@ import io
 import json
 from typing import Any
 
-import faiss
+import faiss  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
 

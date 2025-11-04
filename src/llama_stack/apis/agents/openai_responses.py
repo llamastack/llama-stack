@@ -4,9 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import Sequence
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack.apis.vector_io import SearchRankingOptions as FileSearchRankingOptions
@@ -46,21 +47,64 @@ class OpenAIResponseInputMessageContentImage(BaseModel):
 
     :param detail: Level of detail for image processing, can be "low", "high", or "auto"
     :param type: Content type identifier, always "input_image"
+    :param file_id: (Optional) The ID of the file to be sent to the model.
     :param image_url: (Optional) URL of the image content
     """
 
     detail: Literal["low"] | Literal["high"] | Literal["auto"] = "auto"
     type: Literal["input_image"] = "input_image"
-    # TODO: handle file_id
+    file_id: str | None = None
     image_url: str | None = None
 
 
-# TODO: handle file content types
+@json_schema_type
+class OpenAIResponseInputMessageContentFile(BaseModel):
+    """File content for input messages in OpenAI response format.
+
+    :param type: The type of the input item. Always `input_file`.
+    :param file_data: The data of the file to be sent to the model.
+    :param file_id: (Optional) The ID of the file to be sent to the model.
+    :param file_url: The URL of the file to be sent to the model.
+    :param filename: The name of the file to be sent to the model.
+    """
+
+    type: Literal["input_file"] = "input_file"
+    file_data: str | None = None
+    file_id: str | None = None
+    file_url: str | None = None
+    filename: str | None = None
+
+    @model_validator(mode="after")
+    def validate_file_source(self) -> "OpenAIResponseInputMessageContentFile":
+        if not any([self.file_data, self.file_id, self.file_url, self.filename]):
+            raise ValueError(
+                "At least one of 'file_data', 'file_id', 'file_url', or 'filename' must be provided for file content"
+            )
+        return self
+
+
 OpenAIResponseInputMessageContent = Annotated[
-    OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage,
+    OpenAIResponseInputMessageContentText
+    | OpenAIResponseInputMessageContentImage
+    | OpenAIResponseInputMessageContentFile,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseInputMessageContent, name="OpenAIResponseInputMessageContent")
+
+
+@json_schema_type
+class OpenAIResponsePrompt(BaseModel):
+    """OpenAI compatible Prompt object that is used in OpenAI responses.
+
+    :param id: Unique identifier of the prompt template
+    :param variables: Dictionary of variable names to OpenAIResponseInputMessageContent structure for template substitution. The substitution values can either be strings, or other Response input types
+    like images or files.
+    :param version: Version number of the prompt to use (defaults to latest if not specified)
+    """
+
+    id: str
+    variables: dict[str, OpenAIResponseInputMessageContent] | None = None
+    version: str | None = None
 
 
 @json_schema_type
@@ -159,7 +203,7 @@ class OpenAIResponseMessage(BaseModel):
     scenarios.
     """
 
-    content: str | list[OpenAIResponseInputMessageContent] | list[OpenAIResponseOutputMessageContent]
+    content: str | Sequence[OpenAIResponseInputMessageContent] | Sequence[OpenAIResponseOutputMessageContent]
     role: Literal["system"] | Literal["developer"] | Literal["user"] | Literal["assistant"]
     type: Literal["message"] = "message"
 
@@ -211,10 +255,10 @@ class OpenAIResponseOutputMessageFileSearchToolCall(BaseModel):
     """
 
     id: str
-    queries: list[str]
+    queries: Sequence[str]
     status: str
     type: Literal["file_search_call"] = "file_search_call"
-    results: list[OpenAIResponseOutputMessageFileSearchToolCallResults] | None = None
+    results: Sequence[OpenAIResponseOutputMessageFileSearchToolCallResults] | None = None
 
 
 @json_schema_type
@@ -538,6 +582,7 @@ class OpenAIResponseObject(BaseModel):
     :param output: List of generated output items (messages, tool calls, etc.)
     :param parallel_tool_calls: Whether tool calls can be executed in parallel
     :param previous_response_id: (Optional) ID of the previous response in a conversation
+    :param prompt: (Optional) Reference to a prompt template and its variables.
     :param status: Current status of the response generation
     :param temperature: (Optional) Sampling temperature used for generation
     :param text: Text formatting configuration for the response
@@ -553,16 +598,17 @@ class OpenAIResponseObject(BaseModel):
     id: str
     model: str
     object: Literal["response"] = "response"
-    output: list[OpenAIResponseOutput]
+    output: Sequence[OpenAIResponseOutput]
     parallel_tool_calls: bool = False
     previous_response_id: str | None = None
+    prompt: OpenAIResponsePrompt | None = None
     status: str
     temperature: float | None = None
     # Default to text format to avoid breaking the loading of old responses
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
-    tools: list[OpenAIResponseTool] | None = None
+    tools: Sequence[OpenAIResponseTool] | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None
@@ -1270,7 +1316,7 @@ class ListOpenAIResponseInputItem(BaseModel):
     :param object: Object type identifier, always "list"
     """
 
-    data: list[OpenAIResponseInput]
+    data: Sequence[OpenAIResponseInput]
     object: Literal["list"] = "list"
 
 
@@ -1281,7 +1327,7 @@ class OpenAIResponseObjectWithInput(OpenAIResponseObject):
     :param input: List of input items that led to this response
     """
 
-    input: list[OpenAIResponseInput]
+    input: Sequence[OpenAIResponseInput]
 
     def to_response_object(self) -> OpenAIResponseObject:
         """Convert to OpenAIResponseObject by excluding input field."""
@@ -1299,7 +1345,7 @@ class ListOpenAIResponseObject(BaseModel):
     :param object: Object type identifier, always "list"
     """
 
-    data: list[OpenAIResponseObjectWithInput]
+    data: Sequence[OpenAIResponseObjectWithInput]
     has_more: bool
     first_id: str
     last_id: str

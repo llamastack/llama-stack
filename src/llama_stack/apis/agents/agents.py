@@ -38,6 +38,7 @@ from .openai_responses import (
     OpenAIResponseInputTool,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
+    OpenAIResponsePrompt,
     OpenAIResponseText,
 )
 
@@ -494,13 +495,6 @@ class Agents(Protocol):
         route="/agents",
         method="POST",
         descriptive_name="create_agent",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
-    @webmethod(
-        route="/agents",
-        method="POST",
-        descriptive_name="create_agent",
         level=LLAMA_STACK_API_V1ALPHA,
     )
     async def create_agent(
@@ -514,13 +508,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/agents/{agent_id}/session/{session_id}/turn",
-        method="POST",
-        descriptive_name="create_agent_turn",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
     @webmethod(
         route="/agents/{agent_id}/session/{session_id}/turn",
         method="POST",
@@ -555,13 +542,6 @@ class Agents(Protocol):
         route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/resume",
         method="POST",
         descriptive_name="resume_agent_turn",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
-    @webmethod(
-        route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/resume",
-        method="POST",
-        descriptive_name="resume_agent_turn",
         level=LLAMA_STACK_API_V1ALPHA,
     )
     async def resume_agent_turn(
@@ -588,12 +568,6 @@ class Agents(Protocol):
     @webmethod(
         route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}",
         method="GET",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
-    @webmethod(
-        route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}",
-        method="GET",
         level=LLAMA_STACK_API_V1ALPHA,
     )
     async def get_agents_turn(
@@ -611,12 +585,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}",
-        method="GET",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
     @webmethod(
         route="/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}",
         method="GET",
@@ -643,13 +611,6 @@ class Agents(Protocol):
         route="/agents/{agent_id}/session",
         method="POST",
         descriptive_name="create_agent_session",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
-    @webmethod(
-        route="/agents/{agent_id}/session",
-        method="POST",
-        descriptive_name="create_agent_session",
         level=LLAMA_STACK_API_V1ALPHA,
     )
     async def create_agent_session(
@@ -665,12 +626,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/agents/{agent_id}/session/{session_id}",
-        method="GET",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
     @webmethod(
         route="/agents/{agent_id}/session/{session_id}",
         method="GET",
@@ -694,12 +649,6 @@ class Agents(Protocol):
     @webmethod(
         route="/agents/{agent_id}/session/{session_id}",
         method="DELETE",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
-    @webmethod(
-        route="/agents/{agent_id}/session/{session_id}",
-        method="DELETE",
         level=LLAMA_STACK_API_V1ALPHA,
     )
     async def delete_agents_session(
@@ -714,12 +663,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/agents/{agent_id}",
-        method="DELETE",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
     @webmethod(route="/agents/{agent_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def delete_agent(
         self,
@@ -731,7 +674,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/agents", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
     @webmethod(route="/agents", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_agents(self, start_index: int | None = None, limit: int | None = None) -> PaginatedResponse:
         """List all agents.
@@ -742,12 +684,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/agents/{agent_id}",
-        method="GET",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
     @webmethod(route="/agents/{agent_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_agent(self, agent_id: str) -> Agent:
         """Describe an agent by its ID.
@@ -757,12 +693,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/agents/{agent_id}/sessions",
-        method="GET",
-        deprecated=True,
-        level=LLAMA_STACK_API_V1,
-    )
     @webmethod(route="/agents/{agent_id}/sessions", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_agent_sessions(
         self,
@@ -786,12 +716,6 @@ class Agents(Protocol):
     #
     # Both of these APIs are inherently stateful.
 
-    @webmethod(
-        route="/openai/v1/responses/{response_id}",
-        method="GET",
-        level=LLAMA_STACK_API_V1,
-        deprecated=True,
-    )
     @webmethod(route="/responses/{response_id}", method="GET", level=LLAMA_STACK_API_V1)
     async def get_openai_response(
         self,
@@ -804,12 +728,12 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses", method="POST", level=LLAMA_STACK_API_V1)
     async def create_openai_response(
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
+        prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
         conversation: str | None = None,
@@ -831,6 +755,7 @@ class Agents(Protocol):
 
         :param input: Input message(s) to create the response.
         :param model: The underlying LLM used for completions.
+        :param prompt: (Optional) Prompt object with ID, version, and variables.
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
         :param conversation: (Optional) The ID of a conversation to add the response to. Must begin with 'conv_'. Input and output messages will be automatically added to the conversation.
         :param include: (Optional) Additional fields to include in the response.
@@ -839,7 +764,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses", method="GET", level=LLAMA_STACK_API_V1)
     async def list_openai_responses(
         self,
@@ -858,9 +782,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/openai/v1/responses/{response_id}/input_items", method="GET", level=LLAMA_STACK_API_V1, deprecated=True
-    )
     @webmethod(route="/responses/{response_id}/input_items", method="GET", level=LLAMA_STACK_API_V1)
     async def list_openai_response_input_items(
         self,
@@ -883,7 +804,6 @@ class Agents(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/responses/{response_id}", method="DELETE", level=LLAMA_STACK_API_V1)
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         """Delete a response.

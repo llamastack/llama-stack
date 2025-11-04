@@ -46,8 +46,7 @@ class SentenceTransformerEmbeddingMixin:
             raise ValueError("Empty list not supported")
 
         # Get the model and generate embeddings
-        model_obj = await self.model_store.get_model(params.model)
-        embedding_model = await self._load_sentence_transformer_model(model_obj.provider_resource_id)
+        embedding_model = await self._load_sentence_transformer_model(params.model)
         embeddings = await asyncio.to_thread(embedding_model.encode, input_list, show_progress_bar=False)
 
         # Convert embeddings to the requested format

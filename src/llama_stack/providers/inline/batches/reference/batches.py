@@ -358,7 +358,10 @@ class ReferenceBatchesImpl(Batches):
 
         # TODO(SECURITY): do something about large files
         file_content_response = await self.files_api.openai_retrieve_file_content(batch.input_file_id)
-        file_content = file_content_response.body.decode("utf-8")
+        # Handle both bytes and memoryview types - convert to bytes unconditionally
+        # (bytes(x) returns x if already bytes, creates new bytes from memoryview otherwise)
+        body_bytes = bytes(file_content_response.body)
+        file_content = body_bytes.decode("utf-8")
         for line_num, line in enumerate(file_content.strip().split("\n"), 1):
             if line.strip():  # skip empty lines
                 try:
@@ -415,8 +418,8 @@ class ReferenceBatchesImpl(Batches):
                         )
                         valid = False
 
-                    if (body := request.get("body")) and isinstance(body, dict):
-                        if body.get("stream", False):
+                    if (request_body := request.get("body")) and isinstance(request_body, dict):
+                        if request_body.get("stream", False):
                             errors.append(
                                 BatchError(
                                     code="streaming_unsupported",
@@ -447,7 +450,7 @@ class ReferenceBatchesImpl(Batches):
                             ]
 
                         for param, expected_type, type_string in required_params:
-                            if param not in body:
+                            if param not in request_body:
                                 errors.append(
                                     BatchError(
                                         code="invalid_request",
@@ -457,7 +460,7 @@ class ReferenceBatchesImpl(Batches):
                                     )
                                 )
                                 valid = False
-                            elif not isinstance(body[param], expected_type):
+                            elif not isinstance(request_body[param], expected_type):
                                 errors.append(
                                     BatchError(
                                         code="invalid_request",
@@ -468,15 +471,15 @@ class ReferenceBatchesImpl(Batches):
                                 )
                                 valid = False
 
-                        if "model" in body and isinstance(body["model"], str):
+                        if "model" in request_body and isinstance(request_body["model"], str):
                             try:
-                                await self.models_api.get_model(body["model"])
+                                await self.models_api.get_model(request_body["model"])
                             except Exception:
                                 errors.append(
                                     BatchError(
                                         code="model_not_found",
                                         line=line_num,
-                                        message=f"Model '{body['model']}' does not exist or is not supported",
+                                        message=f"Model '{request_body['model']}' does not exist or is not supported",
                                         param="body.model",
                                     )
                                 )
@@ -484,14 +487,14 @@ class ReferenceBatchesImpl(Batches):
 
                     if valid:
                         assert isinstance(url, str), "URL must be a string"  # for mypy
-                        assert isinstance(body, dict), "Body must be a dictionary"  # for mypy
+                        assert isinstance(request_body, dict), "Body must be a dictionary"  # for mypy
                         requests.append(
                             BatchRequest(
                                 line_num=line_num,
                                 url=url,
                                 method=request["method"],
                                 custom_id=request["custom_id"],
-                                body=body,
+                                body=request_body,
                             ),
                         )
                 except json.JSONDecodeError:

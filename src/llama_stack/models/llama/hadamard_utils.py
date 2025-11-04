@@ -79,6 +79,8 @@ def add_hadamard_transform_for_spinquant(model: torch.nn.Module, prefix: str = "
     for module_name, module in model.named_children():
         child_full_name = prefix + "." + module_name
         if re.search(pattern_last_linear_ffn, child_full_name):
+            # Module matching this pattern should be nn.Linear with in_features
+            assert isinstance(module, nn.Linear), f"Expected nn.Linear, got {type(module)}"
             new_module = nn.Sequential(HadamardModule(group_size=module.in_features), module)
             del module
             setattr(model, module_name, new_module)

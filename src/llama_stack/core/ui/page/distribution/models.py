@@ -12,7 +12,7 @@ from llama_stack.core.ui.modules.api import llama_stack_api
 def models():
     # Models Section
     st.header("Models")
-    models_info = {m.identifier: m.to_dict() for m in llama_stack_api.client.models.list()}
+    models_info = {m.id: m.model_dump() for m in llama_stack_api.client.models.list()}
 
     selected_model = st.selectbox("Select a model", list(models_info.keys()))
     st.json(models_info[selected_model])

@@ -1,0 +1,578 @@
+name: Backward Compatibility Check
+
+run-name: Check backward compatibility for run.yaml configs
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+.[0-9]+'
+      - 'release-[0-9]+.[0-9]+'
+    paths:
+      - 'src/llama_stack/core/datatypes.py'
+      - 'src/llama_stack/providers/datatypes.py'
+      - 'src/llama_stack/distributions/**/run.yaml'
+      - 'tests/backward_compat/**'
+      - '.github/workflows/backward-compat.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-main-compatibility:
+    name: Check Compatibility with main
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0  # Need full history to access main branch
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --group dev
+
+      - name: Extract run.yaml files from main branch
+        id: extract_configs
+        run: |
+          # Get list of run.yaml paths from main
+          git fetch origin main
+          CONFIG_PATHS=$(git ls-tree -r --name-only origin/main | grep "src/llama_stack/distributions/.*/run.yaml$" || true)
+
+          if [ -z "$CONFIG_PATHS" ]; then
+            echo "No run.yaml files found in main branch"
+            exit 1
+          fi
+
+          # Extract all configs to a temp directory
+          mkdir -p /tmp/main_configs
+          echo "Extracting configs from main branch:"
+
+          while IFS= read -r config_path; do
+            if [ -z "$config_path" ]; then
+              continue
+            fi
+
+            # Extract filename for storage
+            filename=$(basename $(dirname "$config_path"))
+            echo "  - $filename (from $config_path)"
+
+            git show origin/main:"$config_path" > "/tmp/main_configs/${filename}.yaml"
+          done <<< "$CONFIG_PATHS"
+
+          echo ""
+          echo "Extracted $(ls /tmp/main_configs/*.yaml | wc -l) config files"
+
+      - name: Test all configs from main
+        id: test_configs
+        continue-on-error: true
+        run: |
+          # Run pytest once with all configs parameterized
+          if COMPAT_TEST_CONFIGS_DIR=/tmp/main_configs uv run pytest tests/backward_compat/test_run_config.py -v; then
+            echo "failed=false" >> $GITHUB_OUTPUT
+          else
+            echo "failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Check for breaking change acknowledgment
+        id: check_ack
+        if: steps.test_configs.outputs.failed == 'true'
+        run: |
+          echo "Breaking changes detected. Checking for acknowledgment..."
+
+          # Check PR title for '!:' marker (conventional commits)
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
+            echo "✓ Breaking change acknowledged in PR title"
+            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check commit messages for BREAKING CHANGE:
+          if git log origin/main..HEAD --format=%B | grep -q "BREAKING CHANGE:"; then
+            echo "✓ Breaking change acknowledged in commit message"
+            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✗ Breaking change NOT acknowledged"
+          echo "acknowledged=false" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Evaluate results
+        if: always()
+        run: |
+          FAILED="${{ steps.test_configs.outputs.failed }}"
+          ACKNOWLEDGED="${{ steps.check_ack.outputs.acknowledged }}"
+
+          if [[ "$FAILED" == "true" ]]; then
+            if [[ "$ACKNOWLEDGED" == "true" ]]; then
+              echo ""
+              echo "⚠️  WARNING: Breaking changes detected but acknowledged"
+              echo ""
+              echo "This PR introduces backward-incompatible changes to run.yaml."
+              echo "The changes have been properly acknowledged."
+              echo ""
+              exit 0  # Pass the check
+            else
+              echo ""
+              echo "❌ ERROR: Breaking changes detected without acknowledgment"
+              echo ""
+              echo "This PR introduces backward-incompatible changes to run.yaml"
+              echo "that will break existing user configurations."
+              echo ""
+              echo "To acknowledge this breaking change, do ONE of:"
+              echo "  1. Add '!:' to your PR title (e.g., 'feat!: change xyz')"
+              echo "  2. Add the 'breaking-change' label to this PR"
+              echo "  3. Include 'BREAKING CHANGE:' in a commit message"
+              echo ""
+              exit 1  # Fail the check
+            fi
+          fi
+
+  test-integration-main:
+    name: Run Integration Tests with main Config
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Extract ci-tests run.yaml from main
+        run: |
+          git fetch origin main
+          git show origin/main:src/llama_stack/distributions/ci-tests/run.yaml > /tmp/main-ci-tests-run.yaml
+          echo "Extracted ci-tests run.yaml from main branch"
+
+      - name: Setup test environment
+        uses: ./.github/actions/setup-test-environment
+        with:
+          python-version: '3.12'
+          client-version: 'latest'
+          setup: 'ollama'
+          suite: 'base'
+          inference-mode: 'replay'
+
+      - name: Run integration tests with main config
+        id: test_integration
+        continue-on-error: true
+        uses: ./.github/actions/run-and-record-tests
+        with:
+          stack-config: /tmp/main-ci-tests-run.yaml
+          setup: 'ollama'
+          inference-mode: 'replay'
+          suite: 'base'
+
+      - name: Check for breaking change acknowledgment
+        id: check_ack
+        if: steps.test_integration.outcome == 'failure'
+        run: |
+          echo "Integration tests failed. Checking for acknowledgment..."
+
+          # Check PR title for '!:' marker (conventional commits)
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
+            echo "✓ Breaking change acknowledged in PR title"
+            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check commit messages for BREAKING CHANGE:
+          if git log origin/main..HEAD --format=%B | grep -q "BREAKING CHANGE:"; then
+            echo "✓ Breaking change acknowledged in commit message"
+            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✗ Breaking change NOT acknowledged"
+          echo "acknowledged=false" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Evaluate integration test results
+        if: always()
+        run: |
+          TEST_FAILED="${{ steps.test_integration.outcome == 'failure' }}"
+          ACKNOWLEDGED="${{ steps.check_ack.outputs.acknowledged }}"
+
+          if [[ "$TEST_FAILED" == "true" ]]; then
+            if [[ "$ACKNOWLEDGED" == "true" ]]; then
+              echo ""
+              echo "⚠️  WARNING: Integration tests failed with main config but acknowledged"
+              echo ""
+              exit 0  # Pass the check
+            else
+              echo ""
+              echo "❌ ERROR: Integration tests failed with main config without acknowledgment"
+              echo ""
+              echo "To acknowledge this breaking change, do ONE of:"
+              echo "  1. Add '!:' to your PR title (e.g., 'feat!: change xyz')"
+              echo "  2. Include 'BREAKING CHANGE:' in a commit message"
+              echo ""
+              exit 1  # Fail the check
+            fi
+          fi
+
+  test-integration-release:
+    name: Run Integration Tests with Latest Release (Informational)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Get latest release
+        id: get_release
+        run: |
+          # Get the latest release from GitHub
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No releases found, skipping release compatibility check"
+            echo "has_release=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Latest release: $LATEST_TAG"
+          echo "has_release=true" >> $GITHUB_OUTPUT
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Extract ci-tests run.yaml from release
+        if: steps.get_release.outputs.has_release == 'true'
+        id: extract_config
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+
+          # Try with src/ prefix first (newer releases), then without (older releases)
+          if git show "$RELEASE_TAG:src/llama_stack/distributions/ci-tests/run.yaml" > /tmp/release-ci-tests-run.yaml 2>/dev/null; then
+            echo "Extracted ci-tests run.yaml from release $RELEASE_TAG (src/ path)"
+            echo "has_config=true" >> $GITHUB_OUTPUT
+          elif git show "$RELEASE_TAG:llama_stack/distributions/ci-tests/run.yaml" > /tmp/release-ci-tests-run.yaml 2>/dev/null; then
+            echo "Extracted ci-tests run.yaml from release $RELEASE_TAG (old path)"
+            echo "has_config=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::ci-tests/run.yaml not found in release $RELEASE_TAG"
+            echo "has_config=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup test environment
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        uses: ./.github/actions/setup-test-environment
+        with:
+          python-version: '3.12'
+          client-version: 'latest'
+          setup: 'ollama'
+          suite: 'base'
+          inference-mode: 'replay'
+
+      - name: Run integration tests with release config (PR branch)
+        id: test_release_pr
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        continue-on-error: true
+        uses: ./.github/actions/run-and-record-tests
+        with:
+          stack-config: /tmp/release-ci-tests-run.yaml
+          setup: 'ollama'
+          inference-mode: 'replay'
+          suite: 'base'
+
+      - name: Checkout main branch to test baseline
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        run: |
+          git checkout origin/main
+
+      - name: Setup test environment for main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        uses: ./.github/actions/setup-test-environment
+        with:
+          python-version: '3.12'
+          client-version: 'latest'
+          setup: 'ollama'
+          suite: 'base'
+          inference-mode: 'replay'
+
+      - name: Run integration tests with release config (main branch)
+        id: test_release_main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        continue-on-error: true
+        uses: ./.github/actions/run-and-record-tests
+        with:
+          stack-config: /tmp/release-ci-tests-run.yaml
+          setup: 'ollama'
+          inference-mode: 'replay'
+          suite: 'base'
+
+      - name: Report results and post PR comment
+        if: always() && steps.get_release.outputs.has_release == 'true' && steps.extract_config.outputs.has_config == 'true'
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+          PR_OUTCOME="${{ steps.test_release_pr.outcome }}"
+          MAIN_OUTCOME="${{ steps.test_release_main.outcome }}"
+
+          if [[ "$PR_OUTCOME" == "failure" && "$MAIN_OUTCOME" == "success" ]]; then
+            # NEW breaking change - PR fails but main passes
+            echo "::error::🚨 This PR introduces a NEW breaking change!"
+
+            # Check if we already posted a comment (to avoid spam on every push)
+            EXISTING_COMMENT=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("🚨 New Breaking Change Detected") and contains("Integration tests")) | .id' | head -1)
+
+            if [[ -z "$EXISTING_COMMENT" ]]; then
+              gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 New Breaking Change Detected
+
+          **Integration tests against release \`$RELEASE_TAG\` are now failing**
+
+          ⚠️  This PR introduces a breaking change that affects compatibility with the latest release.
+
+          - Users on release \`$RELEASE_TAG\` may not be able to upgrade
+          - Existing configurations may break
+
+          The tests pass on \`main\` but fail with this PR's changes.
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users."
+            else
+              echo "Comment already exists, skipping to avoid spam"
+            fi
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## 🚨 NEW Breaking Change Detected
+
+          **Integration tests against release \`$RELEASE_TAG\` FAILED**
+
+          ⚠️  **This PR introduces a NEW breaking change**
+
+          - Tests **PASS** on main branch ✅
+          - Tests **FAIL** on PR branch ❌
+          - Users on release \`$RELEASE_TAG\` may not be able to upgrade
+          - Existing configurations may break
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users.
+          EOF
+
+          elif [[ "$PR_OUTCOME" == "failure" ]]; then
+            # Existing breaking change - both PR and main fail
+            echo "::warning::Breaking change already exists in main branch"
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ⚠️ Release Compatibility Test Failed (Existing Issue)
+
+          **Integration tests against release \`$RELEASE_TAG\` FAILED**
+
+          - Tests **FAIL** on main branch ❌
+          - Tests **FAIL** on PR branch ❌
+          - This breaking change already exists in main (not introduced by this PR)
+
+          > **Note:** This is informational only.
+          EOF
+
+          else
+            # Success - tests pass
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ✅ Release Compatibility Test Passed
+
+          Integration tests against release \`$RELEASE_TAG\` passed successfully.
+          This PR maintains compatibility with the latest release.
+          EOF
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  check-schema-release-compatibility:
+    name: Check Schema Compatibility with Latest Release (Informational)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --group dev
+
+      - name: Get latest release
+        id: get_release
+        run: |
+          # Get the latest release from GitHub
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No releases found, skipping release compatibility check"
+            echo "has_release=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Latest release: $LATEST_TAG"
+          echo "has_release=true" >> $GITHUB_OUTPUT
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Extract configs from release
+        if: steps.get_release.outputs.has_release == 'true'
+        id: extract_release_configs
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+
+          # Get run.yaml files from the release (try both src/ and old path)
+          CONFIG_PATHS=$(git ls-tree -r --name-only "$RELEASE_TAG" | grep "llama_stack/distributions/.*/run.yaml$" || true)
+
+          if [ -z "$CONFIG_PATHS" ]; then
+            echo "::warning::No run.yaml files found in release $RELEASE_TAG"
+            echo "has_configs=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract all configs to a temp directory
+          mkdir -p /tmp/release_configs
+          echo "Extracting configs from release $RELEASE_TAG:"
+
+          while IFS= read -r config_path; do
+            if [ -z "$config_path" ]; then
+              continue
+            fi
+
+            filename=$(basename $(dirname "$config_path"))
+            echo "  - $filename (from $config_path)"
+
+            git show "$RELEASE_TAG:$config_path" > "/tmp/release_configs/${filename}.yaml" 2>/dev/null || true
+          done <<< "$CONFIG_PATHS"
+
+          echo ""
+          echo "Extracted $(ls /tmp/release_configs/*.yaml 2>/dev/null | wc -l) config files"
+          echo "has_configs=true" >> $GITHUB_OUTPUT
+
+      - name: Test against release configs (PR branch)
+        id: test_schema_pr
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        continue-on-error: true
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+          COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
+
+      - name: Checkout main branch to test baseline
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        run: |
+          git checkout origin/main
+
+      - name: Install dependencies for main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        run: |
+          uv sync --group dev
+
+      - name: Test against release configs (main branch)
+        id: test_schema_main
+        if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        continue-on-error: true
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+          COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
+
+      - name: Report results and post PR comment
+        if: always() && steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
+          PR_OUTCOME="${{ steps.test_schema_pr.outcome }}"
+          MAIN_OUTCOME="${{ steps.test_schema_main.outcome }}"
+
+          if [[ "$PR_OUTCOME" == "failure" && "$MAIN_OUTCOME" == "success" ]]; then
+            # NEW breaking change - PR fails but main passes
+            echo "::error::🚨 This PR introduces a NEW schema breaking change!"
+
+            # Check if we already posted a comment (to avoid spam on every push)
+            EXISTING_COMMENT=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("🚨 New Schema Breaking Change Detected")) | .id' | head -1)
+
+            if [[ -z "$EXISTING_COMMENT" ]]; then
+              gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 New Schema Breaking Change Detected
+
+          **Schema validation against release \`$RELEASE_TAG\` is now failing**
+
+          ⚠️  This PR introduces a schema breaking change that affects compatibility with the latest release.
+
+          - Users on release \`$RELEASE_TAG\` will not be able to upgrade
+          - Existing run.yaml configurations will fail validation
+
+          The tests pass on \`main\` but fail with this PR's changes.
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users."
+            else
+              echo "Comment already exists, skipping to avoid spam"
+            fi
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## 🚨 NEW Schema Breaking Change Detected
+
+          **Schema validation against release \`$RELEASE_TAG\` FAILED**
+
+          ⚠️  **This PR introduces a NEW schema breaking change**
+
+          - Tests **PASS** on main branch ✅
+          - Tests **FAIL** on PR branch ❌
+          - Users on release \`$RELEASE_TAG\` will not be able to upgrade
+          - Existing run.yaml configurations will fail validation
+
+          > **Note:** This is informational only and does not block merge.
+          > Consider whether this breaking change is acceptable for users.
+          EOF
+
+          elif [[ "$PR_OUTCOME" == "failure" ]]; then
+            # Existing breaking change - both PR and main fail
+            echo "::warning::Schema breaking change already exists in main branch"
+
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ⚠️ Release Schema Compatibility Failed (Existing Issue)
+
+          **Schema validation against release \`$RELEASE_TAG\` FAILED**
+
+          - Tests **FAIL** on main branch ❌
+          - Tests **FAIL** on PR branch ❌
+          - This schema breaking change already exists in main (not introduced by this PR)
+
+          > **Note:** This is informational only.
+          EOF
+
+          else
+            # Success - tests pass
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ✅ Release Schema Compatibility Passed
+
+          All run.yaml configs from release \`$RELEASE_TAG\` are compatible.
+          This PR maintains backward compatibility with the latest release.
+          EOF
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
