@@ -13,7 +13,8 @@ with st.sidebar:
     st.header("Configuration")
     available_models = llama_stack_api.client.models.list()
     available_models = [
-        model.id for model in available_models
+        model.id
+        for model in available_models
         if model.custom_metadata and model.custom_metadata.get("model_type") == "llm"
     ]
     selected_model = st.selectbox(
