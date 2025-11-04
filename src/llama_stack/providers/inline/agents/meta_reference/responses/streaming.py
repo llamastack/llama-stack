@@ -11,7 +11,6 @@ from typing import Any
 from llama_stack.apis.agents.openai_responses import (
     AllowedToolsFilter,
     ApprovalFilter,
-    MCPAuthorization,
     MCPListToolsTool,
     OpenAIResponseContentPartOutputText,
     OpenAIResponseContentPartReasoningText,
@@ -83,32 +82,16 @@ from .utils import (
 logger = get_logger(name=__name__, category="agents::meta_reference")
 
 
-def _convert_authentication_to_headers(auth: MCPAuthorization) -> dict[str, str]:
-    """Convert MCPAuthorization config to HTTP headers.
+def _convert_authorization_to_headers(authorization: str) -> dict[str, str]:
+    """Convert authorization string to HTTP headers.
 
     Args:
-        auth: Authorization configuration
+        authorization: Authorization header value (e.g., "Bearer token")
 
     Returns:
-        Dictionary of HTTP headers for authorization
+        Dictionary of HTTP headers with Authorization header
     """
-    headers = {}
-
-    if auth.type == "bearer":
-        if auth.token:
-            headers["Authorization"] = f"Bearer {auth.token}"
-    elif auth.type == "basic":
-        if auth.username and auth.password:
-            import base64
-
-            credentials = f"{auth.username}:{auth.password}"
-            encoded = base64.b64encode(credentials.encode()).decode()
-            headers["Authorization"] = f"Basic {encoded}"
-    elif auth.type == "api_key":
-        if auth.api_key:
-            headers[auth.header_name] = auth.api_key
-
-    return headers
+    return {"Authorization": authorization}
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -1131,7 +1114,7 @@ class StreamingResponseOrchestrator:
             # Prepare headers with authorization from tool config
             headers = dict(mcp_tool.headers or {})
             if mcp_tool.authorization:
-                auth_headers = _convert_authentication_to_headers(mcp_tool.authorization)
+                auth_headers = _convert_authorization_to_headers(mcp_tool.authorization)
                 # Don't override existing headers (case-insensitive check)
                 existing_keys_lower = {k.lower() for k in headers.keys()}
                 for key, value in auth_headers.items():
