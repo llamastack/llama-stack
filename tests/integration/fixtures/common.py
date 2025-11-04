@@ -20,8 +20,8 @@ import yaml
 from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
-from llama_stack import LlamaStackAsLibraryClient
 from llama_stack.core.datatypes import VectorStoresConfig
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
 from llama_stack.env import get_env_or_fail
 

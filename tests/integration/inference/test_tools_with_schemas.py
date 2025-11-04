@@ -13,7 +13,7 @@ import json
 
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.models.llama.datatypes import ToolDefinition
 from tests.common.mcp import make_mcp_server
 
