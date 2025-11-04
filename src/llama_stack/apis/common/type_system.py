@@ -104,17 +104,6 @@ class CompletionInputType(BaseModel):
 
 
 @json_schema_type
-class AgentTurnInputType(BaseModel):
-    """Parameter type for agent turn input.
-
-    :param type: Discriminator type. Always "agent_turn_input"
-    """
-
-    # expects List[Message] for messages (may also include attachments?)
-    type: Literal["agent_turn_input"] = "agent_turn_input"
-
-
-@json_schema_type
 class DialogType(BaseModel):
     """Parameter type for dialog data with semantic output labels.
 
@@ -135,8 +124,7 @@ ParamType = Annotated[
     | JsonType
     | UnionType
     | ChatCompletionInputType
-    | CompletionInputType
-    | AgentTurnInputType,
+    | CompletionInputType,
     Field(discriminator="type"),
 ]
 register_schema(ParamType, name="ParamType")
