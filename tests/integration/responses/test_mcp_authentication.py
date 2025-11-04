@@ -33,10 +33,7 @@ def test_mcp_authorization_bearer(compat_client, text_model_id):
                     "type": "mcp",
                     "server_label": "auth-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authorization": {
-                        "type": "bearer",
-                        "token": test_token,
-                    },
+                    "authorization": f"Bearer {test_token}",
                 }
             ],
             mcp_server_info,
@@ -73,10 +70,7 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
                     "type": "mcp",
                     "server_label": "auth2-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authorization": {
-                        "type": "bearer",
-                        "token": test_token,
-                    },
+                    "authorization": f"Bearer {test_token}",
                 }
             ],
             mcp_server_info,
@@ -98,7 +92,7 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
 
 
 def test_mcp_authorization_fallback_to_headers(compat_client, text_model_id):
-    """Test that authorization parameter doesn't override existing headers."""
+    """Test that authorization parameter doesn't override existing Authorization header."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
@@ -112,10 +106,7 @@ def test_mcp_authorization_fallback_to_headers(compat_client, text_model_id):
                     "server_label": "headers-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
                     "headers": {"Authorization": f"Bearer {test_token}"},
-                    "authorization": {
-                        "type": "bearer",
-                        "token": "should-not-override",
-                    },
+                    "authorization": "Bearer should-not-override",
                 }
             ],
             mcp_server_info,
