@@ -181,9 +181,15 @@ class StackRun(Subcommand):
             except AttributeError as e:
                 self.parser.error(f"failed to parse config file '{config_file}':\n {e}")
 
-        self._uvicorn_run(config_file, args)
+        self._run_server(config_file, args)
 
-    def _uvicorn_run(self, config_file: Path | None, args: argparse.Namespace) -> None:
+    def _run_server(self, config_file: Path | None, args: argparse.Namespace) -> None:
+        """
+        Run the Llama Stack server using either Gunicorn (on Unix systems) or Uvicorn (on Windows or when disabled).
+
+        On Unix systems (Linux/macOS), defaults to Gunicorn with Uvicorn workers for production-grade multi-process
+        performance. Falls back to single-process Uvicorn on Windows or when LLAMA_STACK_ENABLE_GUNICORN=false.
+        """
         if not config_file:
             self.parser.error("Config file is required")
 
@@ -229,27 +235,37 @@ class StackRun(Subcommand):
 
         logger.info(f"Listening on {host}:{port}")
 
-        # We need to catch KeyboardInterrupt because uvicorn's signal handling
-        # re-raises SIGINT signals using signal.raise_signal(), which Python
-        # converts to KeyboardInterrupt. Without this catch, we'd get a confusing
-        # stack trace when using Ctrl+C or kill -2 (SIGINT).
-        # SIGTERM (kill -15) works fine without this because Python doesn't
-        # have a default handler for it.
-        #
-        # Another approach would be to ignore SIGINT entirely - let uvicorn handle it through its own
-        # signal handling but this is quite intrusive and not worth the effort.
+        # We need to catch KeyboardInterrupt because both Uvicorn and Gunicorn's signal handling
+        # can raise SIGINT signals, which Python converts to KeyboardInterrupt. Without this catch,
+        # we'd get a confusing stack trace when using Ctrl+C or kill -2 (SIGINT).
+        # SIGTERM (kill -15) works fine without this because Python doesn't have a default handler for it.
         try:
-            # Check if Gunicorn should be disabled (for testing or debugging)
-            disable_gunicorn = os.getenv("LLAMA_STACK_DISABLE_GUNICORN", "false").lower() == "true"
+            # Check if Gunicorn should be enabled
+            # Default to true on Unix systems, can be disabled via environment variable
+            enable_gunicorn = os.getenv("LLAMA_STACK_ENABLE_GUNICORN", "true").lower() == "true" and sys.platform in (
+                "linux",
+                "darwin",
+            )
 
-            if not disable_gunicorn and sys.platform in ("linux", "darwin"):
+            if enable_gunicorn:
                 # On Unix-like systems, use Gunicorn with Uvicorn workers for production-grade performance
-                self._run_with_gunicorn(host, port, uvicorn_config)
+                try:
+                    self._run_with_gunicorn(host, port, uvicorn_config)
+                except (FileNotFoundError, subprocess.CalledProcessError) as e:
+                    # Gunicorn not available or failed to start - fall back to Uvicorn
+                    logger.warning(f"Gunicorn unavailable or failed to start: {e}")
+                    logger.info("Falling back to single-process Uvicorn server...")
+                    uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
             else:
-                # On other systems (e.g., Windows), fall back to Uvicorn directly
-                # Also used when LLAMA_STACK_DISABLE_GUNICORN=true (for tests)
-                if disable_gunicorn:
-                    logger.info("Gunicorn disabled via LLAMA_STACK_DISABLE_GUNICORN environment variable")
+                # Fall back to Uvicorn for:
+                # - Windows systems (Gunicorn not supported)
+                # - Unix systems with LLAMA_STACK_ENABLE_GUNICORN=false (for testing/debugging)
+                if sys.platform not in ("linux", "darwin"):
+                    logger.info("Using single-process Uvicorn server (Gunicorn not supported on this platform)")
+                else:
+                    logger.info(
+                        "Using single-process Uvicorn server (Gunicorn disabled via LLAMA_STACK_ENABLE_GUNICORN=false)"
+                    )
                 uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
@@ -359,16 +375,9 @@ class StackRun(Subcommand):
         logger.info(f"Worker recycling: every {max_requests}±{max_requests_jitter} requests (prevents memory leaks)")
         logger.info(f"Total concurrent capacity: {num_workers * worker_connections} connections")
 
-        try:
-            # Execute the Gunicorn command
-            subprocess.run(gunicorn_command, check=True)
-        except FileNotFoundError:
-            logger.error("Error: 'gunicorn' command not found. Please ensure Gunicorn is installed.")
-            logger.error("Falling back to Uvicorn...")
-            uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to start Gunicorn server. Error: {e}")
-            sys.exit(1)
+        # Execute the Gunicorn command
+        # If Gunicorn is not found or fails to start, raise the exception for the caller to handle
+        subprocess.run(gunicorn_command, check=True)
 
     def _start_ui_development_server(self, stack_server_port: int):
         logger.info("Attempting to start UI development server...")

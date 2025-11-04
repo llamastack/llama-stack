@@ -90,7 +90,8 @@ On Unix-based systems (Linux, macOS), the server automatically uses Gunicorn wit
 **Important Notes**:
 
 - On Windows, the server automatically falls back to single-process Uvicorn.
-- **Database Race Condition**: When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions (e.g., "table already exists" errors) as multiple workers simultaneously attempt to create database tables. To avoid this issue in production, set `GUNICORN_PRELOAD=true` and ensure all dependencies are installed with `uv sync --group unit --group test`.
+- **Database Race Condition**: When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions (e.g., "table already exists" errors) as multiple workers simultaneously attempt to create database tables. To avoid this issue in production, set `GUNICORN_PRELOAD=true`.
+- **SQLite with Multiple Workers**: SQLite works with Gunicorn's multi-process mode for development and low-to-moderate traffic scenarios. The system automatically enables WAL (Write-Ahead Logging) mode and sets a 5-second busy timeout. However, **SQLite only allows one writer at a time** - even with WAL mode, write operations from multiple workers are serialized, causing workers to wait for database locks under concurrent write load. **For production deployments with high traffic or multiple workers, we strongly recommend using PostgreSQL or another production-grade database** for true concurrent write performance.
 
 **Example production configuration:**
 ```bash

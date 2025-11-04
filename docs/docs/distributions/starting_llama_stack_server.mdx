@@ -44,7 +44,9 @@ Configure Gunicorn behavior using environment variables:
 - `GUNICORN_MAX_REQUESTS_JITTER`: Randomize worker restart timing (default: `1000`)
 - `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `true`, as set in `run.py` line 264)
 
-**Important**: When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions. To avoid this, set `GUNICORN_PRELOAD=true` and install all dependencies with `uv sync --group unit --group test`.
+**Important Notes**:
+- When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions. To avoid this, set `GUNICORN_PRELOAD=true`.
+- **SQLite with Multiple Workers**: SQLite works with Gunicorn's multi-process mode for development and low-to-moderate traffic scenarios. The system automatically enables WAL (Write-Ahead Logging) mode and sets a 5-second busy timeout. However, **SQLite only allows one writer at a time** - even with WAL mode, write operations from multiple workers are serialized, causing workers to wait for database locks under concurrent write load. **For production deployments with high traffic or multiple workers, we strongly recommend using PostgreSQL or another production-grade database** for true concurrent write performance.
 
 **Example production configuration:**
 ```bash
