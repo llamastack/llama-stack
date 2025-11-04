@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Annotated, Any, Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ from llama_stack.apis.inference import SamplingParams, SystemMessage
 from llama_stack.apis.scoring import ScoringResult
 from llama_stack.apis.scoring_functions import ScoringFnParams
 from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
-from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
+from llama_stack.schema_utils import json_schema_type, webmethod
 
 
 @json_schema_type
@@ -31,7 +31,7 @@ class ModelCandidate(BaseModel):
     system_message: SystemMessage | None = None
 
 
-register_schema(EvalCandidate, name="EvalCandidate")
+EvalCandidate = ModelCandidate
 
 
 @json_schema_type

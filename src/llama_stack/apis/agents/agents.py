@@ -5,30 +5,13 @@
 # the root directory of this source tree.
 
 from collections.abc import AsyncIterator
-from datetime import datetime
-from enum import StrEnum
-from typing import Annotated, Any, Literal, Protocol, runtime_checkable
+from typing import Annotated, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
-from llama_stack.apis.common.content_types import URL, ContentDelta, InterleavedContent
 from llama_stack.apis.common.responses import Order
-from llama_stack.apis.inference import (
-    CompletionMessage,
-    ResponseFormat,
-    SamplingParams,
-    ToolCall,
-    ToolChoice,
-    ToolConfig,
-    ToolPromptFormat,
-    ToolResponse,
-    ToolResponseMessage,
-    UserMessage,
-)
-from llama_stack.apis.safety import SafetyViolation
-from llama_stack.apis.tools import ToolDef
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.schema_utils import ExtraBodyField, json_schema_type, register_schema, webmethod
+from llama_stack.schema_utils import ExtraBodyField, json_schema_type, webmethod
 
 from .openai_responses import (
     ListOpenAIResponseInputItem,

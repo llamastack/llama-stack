@@ -18,13 +18,9 @@ from llama_stack.apis.inference import (
     OpenAICompletionRequestWithExtraBody,
     OpenAISystemMessageParam,
     OpenAIUserMessageParam,
-    UserMessage,
 )
 from llama_stack.apis.scoring import Scoring
 from llama_stack.providers.datatypes import BenchmarksProtocolPrivate
-from llama_stack.providers.inline.agents.meta_reference.agent_instance import (
-    MEMORY_QUERY_TOOL,
-)
 from llama_stack.providers.utils.common.data_schema_validator import ColumnName
 from llama_stack.providers.utils.kvstore import kvstore_impl
 
