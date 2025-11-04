@@ -83,9 +83,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # This is set in list_models() and used in check_model_availability()
     _model_cache: dict[str, Model] = {}
 
-    # List of allowed models for this provider, if empty all models allowed
-    allowed_models: list[str] = []
-
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
 
@@ -441,7 +438,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         for provider_model_id in provider_models_ids:
             if not isinstance(provider_model_id, str):
                 raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
-            if self.allowed_models and provider_model_id not in self.allowed_models:
+            if self.config.allowed_models is not None and provider_model_id not in self.config.allowed_models:
                 logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
                 continue
             model = self.construct_model_from_identifier(provider_model_id)
