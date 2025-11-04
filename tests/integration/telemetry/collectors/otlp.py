@@ -21,6 +21,7 @@ from .base import BaseTelemetryCollector, MetricStub, SpanStub, attributes_to_di
 
 class OtlpHttpTestCollector(BaseTelemetryCollector):
     def __init__(self) -> None:
+        super().__init__()
         self._spans: list[SpanStub] = []
         self._metrics: list[MetricStub] = []
         self._lock = threading.Lock()
@@ -60,9 +61,9 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
         for resource_metrics in request.resource_metrics:
             for scope_metrics in resource_metrics.scope_metrics:
                 for metric in scope_metrics.metrics:
-                    metric_stub = self._create_metric_stub_from_protobuf(metric)
-                    if metric_stub:
-                        new_metrics.append(metric_stub)
+                    # Handle multiple data points per metric (e.g., different attribute sets)
+                    metric_stubs = self._create_metric_stubs_from_protobuf(metric)
+                    new_metrics.extend(metric_stubs)
 
         if not new_metrics:
             return

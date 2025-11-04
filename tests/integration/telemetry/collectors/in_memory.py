@@ -28,6 +28,7 @@ class InMemoryTelemetryCollector(BaseTelemetryCollector):
     """
 
     def __init__(self, span_exporter: InMemorySpanExporter, metric_reader: InMemoryMetricReader) -> None:
+        super().__init__()
         self._span_exporter = span_exporter
         self._metric_reader = metric_reader
 
