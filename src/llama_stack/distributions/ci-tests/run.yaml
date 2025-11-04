@@ -143,6 +143,13 @@ providers:
       persistence:
         namespace: vector_io::weaviate
         backend: kv_default
+  - provider_id: openai-vector-store
+    provider_type: remote::openai
+    config:
+      api_key: ${env.OPENAI_API_KEY:=}
+      persistence:
+        namespace: vector_io::openai_vector_store
+        backend: kv_default
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs

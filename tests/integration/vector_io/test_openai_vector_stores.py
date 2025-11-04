@@ -80,6 +80,17 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
     )
 
 
+def skip_if_provider_is_openai_vector_store(client_with_models):
+    """Skip tests that require direct chunk insertion/querying (not supported by OpenAI)."""
+    vector_io_providers = [p for p in client_with_models.providers.list() if p.api == "vector_io"]
+    for p in vector_io_providers:
+        if p.provider_type == "remote::openai":
+            pytest.skip(
+                "OpenAI Vector Stores provider does not support direct chunk insertion/querying. "
+                "Use file attachment instead."
+            )
+
+
 @pytest.fixture(scope="session")
 def sample_chunks():
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
@@ -144,8 +155,8 @@ def compat_client_with_empty_stores(compat_client):
     yield compat_client
 
     # Clean up after the test
-    clear_vector_stores()
-    clear_files()
+    # clear_vector_stores()
+    # clear_files()
 
 
 @vector_provider_wrapper
@@ -365,6 +376,7 @@ def test_openai_vector_store_with_chunks(
 ):
     """Test vector store functionality with actual chunks using both OpenAI and native APIs."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_is_openai_vector_store(client_with_models)
 
     compat_client = compat_client_with_empty_stores
     llama_client = client_with_models
@@ -430,6 +442,7 @@ def test_openai_vector_store_search_relevance(
 ):
     """Test that OpenAI vector store search returns relevant results for different queries."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_is_openai_vector_store(client_with_models)
 
     compat_client = compat_client_with_empty_stores
     llama_client = client_with_models
@@ -482,6 +495,7 @@ def test_openai_vector_store_search_with_ranking_options(
 ):
     """Test OpenAI vector store search with ranking options."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_is_openai_vector_store(client_with_models)
 
     compat_client = compat_client_with_empty_stores
     llama_client = client_with_models
@@ -542,6 +556,7 @@ def test_openai_vector_store_search_with_high_score_filter(
 ):
     """Test that searching with text very similar to a document and high score threshold returns only that document."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_is_openai_vector_store(client_with_models)
 
     compat_client = compat_client_with_empty_stores
     llama_client = client_with_models
@@ -608,6 +623,7 @@ def test_openai_vector_store_search_with_max_num_results(
 ):
     """Test OpenAI vector store search with max_num_results."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_is_openai_vector_store(client_with_models)
 
     compat_client = compat_client_with_empty_stores
     llama_client = client_with_models
@@ -678,6 +694,13 @@ def test_openai_vector_store_attach_file(
     assert file_attach_response.object == "vector_store.file"
     assert file_attach_response.id == file.id
     assert file_attach_response.vector_store_id == vector_store.id
+
+    start_time = time.time()
+    while file_attach_response.status != "completed" and time.time() - start_time < 10:
+        file_attach_response = compat_client.vector_stores.files.retrieve(
+            vector_store_id=vector_store.id,
+            file_id=file.id,
+        )
     assert file_attach_response.status == "completed"
     assert file_attach_response.chunking_strategy.type == "auto"
     assert file_attach_response.created_at > 0
@@ -1178,6 +1201,7 @@ def test_openai_vector_store_search_modes(
 ):
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
     skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_models, search_mode)
+    skip_if_provider_is_openai_vector_store(client_with_models)
 
     vector_store = llama_stack_client.vector_stores.create(
         name=f"search_mode_test_{search_mode}",

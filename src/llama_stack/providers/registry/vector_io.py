@@ -80,6 +80,75 @@ See [Faiss' documentation](https://faiss.ai/) or the [Faiss Wiki](https://github
 more details about Faiss in general.
 """,
         ),
+        RemoteProviderSpec(
+            api=Api.vector_io,
+            adapter_type="openai",
+            provider_type="remote::openai",
+            pip_packages=["openai"] + DEFAULT_VECTOR_IO_DEPS,
+            module="llama_stack.providers.remote.vector_io.openai",
+            config_class="llama_stack.providers.inline.vector_io.openai.OpenAIVectorIOConfig",
+            api_dependencies=[Api.inference],
+            optional_api_dependencies=[Api.files, Api.models],
+            description="""
+[OpenAI Vector Stores](https://platform.openai.com/docs/guides/vector-stores) is a remote vector database provider for Llama Stack that uses OpenAI's Vector Stores API.
+It allows you to store and query vectors using OpenAI's embeddings and vector store infrastructure.
+
+## Features
+
+- Direct integration with OpenAI's Vector Stores API
+- File attachment support for batch vector store operations
+- OpenAI-compatible API endpoints
+- Full-text search and vector search capabilities
+- Metadata filtering
+
+## Search Modes
+
+**Supported:**
+- **Vector Search** (`mode="vector"`): Performs vector similarity search using OpenAI embeddings
+
+**Not Supported:**
+- **Keyword Search** (`mode="keyword"`): Not supported by OpenAI Vector Stores API
+- **Hybrid Search** (`mode="hybrid"`): Not supported by OpenAI Vector Stores API
+
+## Configuration
+
+To use this provider, you need to provide:
+
+1. **API Key**: Either pass `api_key` in the config or set the `OPENAI_API_KEY` environment variable
+2. **Persistence**: A KVStore backend for storing metadata
+
+### Example Configuration
+
+```yaml
+vector_io:
+  - provider_id: openai
+    provider_type: remote::openai
+    config:
+      api_key: ${OPENAI_API_KEY}
+      persistence:
+        backend: kv_default
+        namespace: vector_io::openai
+```
+
+## Installation
+
+Install the OpenAI Python client:
+
+```bash
+pip install openai
+```
+
+## Limitations
+
+- OpenAI Vector Stores API currently supports file-based attachments primarily
+- Direct chunk insertion uses OpenAI's embeddings API
+- For queries, only vector search mode is natively supported
+
+## Documentation
+
+See [OpenAI Vector Stores API documentation](https://platform.openai.com/docs/guides/vector-stores) for more details.
+""",
+        ),
         # NOTE: sqlite-vec cannot be bundled into the container image because it does not have a
         # source distribution and the wheels are not available for all platforms.
         InlineProviderSpec(
