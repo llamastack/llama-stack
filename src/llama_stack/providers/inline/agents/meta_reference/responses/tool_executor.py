@@ -167,7 +167,7 @@ class ToolExecutor:
             if result_item.attributes:
                 metadata_text += f", attributes: {result_item.attributes}"
 
-            text_content = (f"[{i + 1}] {metadata_text} (cite as <|{file_id}|>)\n{chunk_text}\n")
+            text_content = f"[{i + 1}] {metadata_text} (cite as <|{file_id}|>)\n{chunk_text}\n"
             content_items.append(TextContentItem(text=text_content))
             unique_files.add(file_id)
 
