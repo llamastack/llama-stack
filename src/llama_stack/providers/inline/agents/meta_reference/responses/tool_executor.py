@@ -83,9 +83,7 @@ class ToolExecutor:
             yield event_result
 
         # Execute the actual tool call
-        error_exc, result = await self._execute_tool(
-            function.name, tool_kwargs, ctx, mcp_tool_to_server
-        )
+        error_exc, result = await self._execute_tool(function.name, tool_kwargs, ctx, mcp_tool_to_server)
 
         # Emit completion events for tool execution
         has_error = bool(
@@ -169,9 +167,7 @@ class ToolExecutor:
             if result_item.attributes:
                 metadata_text += f", attributes: {result_item.attributes}"
 
-            text_content = (
-                f"[{i + 1}] {metadata_text} (cite as <|{file_id}|>)\n{chunk_text}\n"
-            )
+            text_content = (f"[{i + 1}] {metadata_text} (cite as <|{file_id}|>)\n{chunk_text}\n")
             content_items.append(TextContentItem(text=text_content))
             unique_files.add(file_id)
 
@@ -370,33 +366,25 @@ class ToolExecutor:
                 yield ToolExecutionResult(stream_event=mcp_failed_event, sequence_number=sequence_number)
             else:
                 mcp_completed_event = OpenAIResponseObjectStreamResponseMcpCallCompleted(
-                        sequence_number=sequence_number,
-                    )
-                yield ToolExecutionResult(
-                    stream_event=mcp_completed_event, sequence_number=sequence_number
+                    sequence_number=sequence_number,
                 )
+                yield ToolExecutionResult(stream_event=mcp_completed_event, sequence_number=sequence_number)
         elif function_name == "web_search":
             sequence_number += 1
             web_completion_event = OpenAIResponseObjectStreamResponseWebSearchCallCompleted(
-                    item_id=item_id,
-                    output_index=output_index,
-                    sequence_number=sequence_number,
-                )
-
-            yield ToolExecutionResult(
-                stream_event=web_completion_event, sequence_number=sequence_number
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
             )
+            yield ToolExecutionResult(stream_event=web_completion_event, sequence_number=sequence_number)
         elif function_name == "knowledge_search":
             sequence_number += 1
             file_completion_event = OpenAIResponseObjectStreamResponseFileSearchCallCompleted(
-                    item_id=item_id,
-                    output_index=output_index,
-                    sequence_number=sequence_number,
-                )
-
-            yield ToolExecutionResult(
-                stream_event=file_completion_event, sequence_number=sequence_number
+                item_id=item_id,
+                output_index=output_index,
+                sequence_number=sequence_number,
             )
+            yield ToolExecutionResult(stream_event=file_completion_event, sequence_number=sequence_number)
 
     async def _build_result_messages(
         self,
@@ -427,8 +415,8 @@ class ToolExecutor:
             if error_exc:
                 message.error = str(error_exc)
             elif (result and (error_code := getattr(result, "error_code", None)) and error_code > 0) or (
-                    result and getattr(result, "error_message", None)
-                    ):
+                result and getattr(result, "error_message", None)
+            ):
                 ec = getattr(result, "error_code", "unknown")
                 em = getattr(result, "error_message", "")
                 message.error = f"Error (code {ec}): {em}"
