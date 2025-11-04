@@ -54,7 +54,6 @@ class ListBenchmarksResponse(BaseModel):
 
 @runtime_checkable
 class Benchmarks(Protocol):
-    @webmethod(route="/eval/benchmarks", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/eval/benchmarks", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_benchmarks(self) -> ListBenchmarksResponse:
         """List all benchmarks.
@@ -63,7 +62,6 @@ class Benchmarks(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/eval/benchmarks/{benchmark_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_benchmark(
         self,
@@ -76,7 +74,6 @@ class Benchmarks(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/eval/benchmarks", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def register_benchmark(
         self,
@@ -98,7 +95,6 @@ class Benchmarks(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/eval/benchmarks/{benchmark_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def unregister_benchmark(self, benchmark_id: str) -> None:
         """Unregister a benchmark.

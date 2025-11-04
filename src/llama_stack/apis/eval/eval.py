@@ -86,7 +86,6 @@ class Eval(Protocol):
 
     Llama Stack Evaluation API for running evaluations on model and agent candidates."""
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def run_eval(
         self,
@@ -101,9 +100,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/evaluations", method="POST", level=LLAMA_STACK_API_V1, deprecated=True
-    )
     @webmethod(route="/eval/benchmarks/{benchmark_id}/evaluations", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def evaluate_rows(
         self,
@@ -122,9 +118,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True
-    )
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def job_status(self, benchmark_id: str, job_id: str) -> Job:
         """Get the status of a job.
@@ -135,12 +128,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}",
-        method="DELETE",
-        level=LLAMA_STACK_API_V1,
-        deprecated=True,
-    )
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def job_cancel(self, benchmark_id: str, job_id: str) -> None:
         """Cancel a job.
@@ -150,12 +137,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result",
-        method="GET",
-        level=LLAMA_STACK_API_V1,
-        deprecated=True,
-    )
     @webmethod(
         route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result", method="GET", level=LLAMA_STACK_API_V1ALPHA
     )

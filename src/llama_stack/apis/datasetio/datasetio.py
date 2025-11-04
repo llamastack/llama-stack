@@ -21,7 +21,6 @@ class DatasetIO(Protocol):
     # keeping for aligning with inference/safety, but this is not used
     dataset_store: DatasetStore
 
-    @webmethod(route="/datasetio/iterrows/{dataset_id:path}", method="GET", deprecated=True, level=LLAMA_STACK_API_V1)
     @webmethod(route="/datasetio/iterrows/{dataset_id:path}", method="GET", level=LLAMA_STACK_API_V1BETA)
     async def iterrows(
         self,
@@ -46,9 +45,6 @@ class DatasetIO(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/datasetio/append-rows/{dataset_id:path}", method="POST", deprecated=True, level=LLAMA_STACK_API_V1
-    )
     @webmethod(route="/datasetio/append-rows/{dataset_id:path}", method="POST", level=LLAMA_STACK_API_V1BETA)
     async def append_rows(self, dataset_id: str, rows: list[dict[str, Any]]) -> None:
         """Append rows to a dataset.
