@@ -1015,8 +1015,8 @@ async def load_data_from_url(url: str) -> str:
     if url.startswith("http"):
         async with httpx.AsyncClient() as client:
             r = await client.get(url)
-            resp = r.text
-            return str(resp)
+            resp: str = r.text
+            return resp
     raise ValueError(f"Unexpected URL: {type(url)}")
 
 

@@ -268,3 +268,50 @@ def test_generate_run_config_from_providers():
     # Verify config can be parsed back
     parsed = parse_and_maybe_upgrade_config(config_dict)
     assert parsed.image_name == "providers-run"
+
+
+def test_providers_flag_generates_config_with_api_keys():
+    """Test that --providers flag properly generates provider configs including API keys.
+
+    This tests the fix where sample_run_config() is called to populate
+    API keys and other credentials for remote providers like remote::openai.
+    """
+    import argparse
+    from unittest.mock import patch
+
+    from llama_stack.cli.stack.run import StackRun
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    stack_run = StackRun(subparsers)
+
+    # Create args with --providers flag set
+    args = argparse.Namespace(
+        providers="inference=remote::openai",
+        config=None,
+        port=8321,
+        image_type=None,
+        image_name=None,
+        enable_ui=False,
+    )
+
+    # Mock _uvicorn_run to prevent starting a server
+    with patch.object(stack_run, "_uvicorn_run"):
+        stack_run._run_stack_run_cmd(args)
+
+    # Read the generated config file
+    from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
+
+    config_file = DISTRIBS_BASE_DIR / "providers-run" / "run.yaml"
+    with open(config_file) as f:
+        config_dict = yaml.safe_load(f)
+
+    # Verify the provider has config with API keys
+    inference_providers = config_dict["providers"]["inference"]
+    assert len(inference_providers) == 1
+
+    openai_provider = inference_providers[0]
+    assert openai_provider["provider_type"] == "remote::openai"
+    assert openai_provider["config"], "Provider config should not be empty"
+    assert "api_key" in openai_provider["config"], "API key should be in provider config"
+    assert "base_url" in openai_provider["config"], "Base URL should be in provider config"
