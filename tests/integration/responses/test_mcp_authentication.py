@@ -13,7 +13,6 @@ from tests.common.mcp import make_mcp_server
 
 from .helpers import setup_mcp_tools
 
-
 # Skip these tests in replay mode until recordings are generated
 pytestmark = pytest.mark.skipif(
     os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay",
