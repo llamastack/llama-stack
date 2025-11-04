@@ -235,3 +235,36 @@ class OpenAIVectorStoreMixin:
 - ✅ **Monitoring**: Query job status via `get_job_info(job_id)`
 - ✅ **Cancellation**: Cancel jobs via `cancel_job(job_id)`
 - ✅ **Clean separation**: Job scheduling decoupled from execution
+
+## Single Worker vs Multi Worker
+
+  ✅ Single Worker (Inline Scheduler - Not Implemented Yet)
+```
+  providers:
+    job_scheduler:
+      - provider_type: inline::scheduler
+        config:
+          kvstore: { ... }
+          max_concurrent_jobs: 10
+
+  Works because:
+  - Jobs run in the same process via asyncio.create_task()
+  - In-memory _jobs dict is shared within the process
+  - Crash recovery works (jobs persist to KVStore)
+```
+
+  ---
+  ✅ Multi Worker (Celery Scheduler - Not Implemented Yet)
+```
+  providers:
+    job_scheduler:
+      - provider_type: celery::scheduler
+        config:
+          broker_url: redis://localhost:6379/0
+          result_backend: redis://localhost:6379/1
+```
+  Works because:
+  - Shared message broker (Redis/RabbitMQ)
+  - Celery handles distributed task queue
+  - Workers coordinate via broker
+  - Any worker can execute any job
