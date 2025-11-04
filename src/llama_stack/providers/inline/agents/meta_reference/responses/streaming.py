@@ -68,9 +68,7 @@ from llama_stack.apis.inference import (
 )
 from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
-)
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
@@ -105,9 +103,7 @@ def convert_tooldef_to_chat_tool(tool_def):
     """
 
     from llama_stack.models.llama.datatypes import ToolDefinition
-    from llama_stack.providers.utils.inference.openai_compat import (
-        convert_tooldef_to_openai_tool,
-    )
+    from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
     internal_tool_def = ToolDefinition(
         tool_name=tool_def.name,
@@ -285,9 +281,7 @@ class StreamingResponseOrchestrator:
                 # add any approval requests required
                 for tool_call in approvals:
                     async for evt in self._add_mcp_approval_request(
-                        tool_call.function.name,
-                        tool_call.function.arguments,
-                        output_messages,
+                        tool_call.function.name, tool_call.function.arguments, output_messages
                     ):
                         yield evt
 
@@ -396,12 +390,7 @@ class StreamingResponseOrchestrator:
                         else:
                             non_function_tool_calls.append(tool_call)
 
-        return (
-            function_tool_calls,
-            non_function_tool_calls,
-            approvals,
-            next_turn_messages,
-        )
+        return function_tool_calls, non_function_tool_calls, approvals, next_turn_messages
 
     def _accumulate_chunk_usage(self, chunk: OpenAIChatCompletionChunk) -> None:
         """Accumulate usage from a streaming chunk into the response usage format."""
@@ -712,15 +701,12 @@ class StreamingResponseOrchestrator:
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
                             is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
-                            if not is_mcp_tool and tool_call.function.name not in [
-                                "web_search",
-                                "knowledge_search",
-                            ]:
+                            if not is_mcp_tool and tool_call.function.name not in ["web_search","knowledge_search"]:
                                 # for MCP tools (and even other non-function tools) we emit an output message item later
                                 function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
                                     arguments="",  # Will be filled incrementally via delta events
                                     call_id=tool_call.id or "",
-                                    name=(tool_call.function.name if tool_call.function else ""),
+                                    name=tool_call.function.name if tool_call.function else "",
                                     id=tool_call_item_id,
                                     status="in_progress",
                                 )
@@ -1031,19 +1017,14 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
 
-    async def _process_new_tools(
-        self,
-        tools: list[OpenAIResponseInputTool],
-        output_messages: list[OpenAIResponseOutput],
+    async def _process_new_tools(self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process all tools and emit appropriate streaming events."""
         from openai.types.chat import ChatCompletionToolParam
 
         from llama_stack.apis.tools import ToolDef
         from llama_stack.models.llama.datatypes import ToolDefinition
-        from llama_stack.providers.utils.inference.openai_compat import (
-            convert_tooldef_to_openai_tool,
-        )
+        from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
         def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
             tool_def = ToolDefinition(
@@ -1080,9 +1061,7 @@ class StreamingResponseOrchestrator:
                 raise ValueError(f"Llama Stack OpenAI Responses does not yet support tool type: {input_tool.type}")
 
     async def _process_mcp_tool(
-        self,
-        mcp_tool: OpenAIResponseInputToolMCP,
-        output_messages: list[OpenAIResponseOutput],
+        self, mcp_tool: OpenAIResponseInputToolMCP, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process an MCP tool configuration and emit appropriate streaming events."""
         from llama_stack.providers.utils.tools.mcp import list_mcp_tools
@@ -1203,10 +1182,7 @@ class StreamingResponseOrchestrator:
         return True
 
     async def _add_mcp_approval_request(
-        self,
-        tool_name: str,
-        arguments: str,
-        output_messages: list[OpenAIResponseOutput],
+        self, tool_name: str, arguments: str, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         mcp_server = self.mcp_tool_to_server[tool_name]
         mcp_approval_request = OpenAIResponseMCPApprovalRequest(
@@ -1233,9 +1209,7 @@ class StreamingResponseOrchestrator:
         )
 
     async def _add_mcp_list_tools(
-        self,
-        mcp_list_message: OpenAIResponseOutputMessageMCPListTools,
-        output_messages: list[OpenAIResponseOutput],
+        self, mcp_list_message: OpenAIResponseOutputMessageMCPListTools, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # Add the MCP list message to output
         output_messages.append(mcp_list_message)
@@ -1268,15 +1242,11 @@ class StreamingResponseOrchestrator:
         )
 
     async def _reuse_mcp_list_tools(
-        self,
-        original: OpenAIResponseOutputMessageMCPListTools,
-        output_messages: list[OpenAIResponseOutput],
+        self, original: OpenAIResponseOutputMessageMCPListTools, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         for t in original.tools:
             from llama_stack.models.llama.datatypes import ToolDefinition
-            from llama_stack.providers.utils.inference.openai_compat import (
-                convert_tooldef_to_openai_tool,
-            )
+            from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
             # convert from input_schema to map of ToolParamDefinitions...
             tool_def = ToolDefinition(
