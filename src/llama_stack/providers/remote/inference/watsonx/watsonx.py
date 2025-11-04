@@ -274,22 +274,37 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         models = []
         for model_spec in self._get_model_specs():
             functions = [f["id"] for f in model_spec.get("functions", [])]
+            # Format: {"embedding_dimension": 1536, "context_length": 8192}
 
+            # Example of an embedding model:
+            # {'model_id': 'ibm/granite-embedding-278m-multilingual',
+            # 'label': 'granite-embedding-278m-multilingual',
+            # 'model_limits': {'max_sequence_length': 512, 'embedding_dimension': 768},
+            # ...
             provider_resource_id = f"{self.__provider_id__}/{model_spec['model_id']}"
             if "embedding" in functions:
-                model_type = ModelType.embedding
-            elif "text_chat" in functions:
-                model_type = ModelType.llm
-            else:
-                model_type = None
-
-            if model_type is not None:
+                embedding_dimension = model_spec.get("model_limits", {}).get("embedding_dimension", 0)
+                context_length = model_spec.get("model_limits", {}).get("max_sequence_length", 0)
+                embedding_metadata = {
+                    "embedding_dimension": embedding_dimension,
+                    "context_length": context_length,
+                }
+                model = Model(
+                    identifier=model_spec["model_id"],
+                    provider_resource_id=provider_resource_id,
+                    provider_id=self.__provider_id__,
+                    metadata=embedding_metadata,
+                    model_type=ModelType.embedding,
+                )
+                self._model_cache[provider_resource_id] = model
+                models.append(model)
+            if "text_chat" in functions:
                 model = Model(
                     identifier=model_spec["model_id"],
                     provider_resource_id=provider_resource_id,
                     provider_id=self.__provider_id__,
                     metadata={},
-                    model_type=model_type,
+                    model_type=ModelType.llm,
                 )
                 self._model_cache[provider_resource_id] = model
                 models.append(model)
