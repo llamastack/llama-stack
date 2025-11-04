@@ -80,18 +80,6 @@ from .utils import (
 logger = get_logger(name=__name__, category="agents::meta_reference")
 
 
-def _convert_authorization_to_headers(authorization: str) -> dict[str, str]:
-    """Convert authorization string to HTTP headers.
-
-    Args:
-        authorization: Authorization header value (e.g., "Bearer token")
-
-    Returns:
-        Dictionary of HTTP headers with Authorization header
-    """
-    return {"Authorization": authorization}
-
-
 def convert_tooldef_to_chat_tool(tool_def):
     """Convert a ToolDef to OpenAI ChatCompletionToolParam format.
 
@@ -1094,12 +1082,10 @@ class StreamingResponseOrchestrator:
             # Prepare headers with authorization from tool config
             headers = dict(mcp_tool.headers or {})
             if mcp_tool.authorization:
-                auth_headers = _convert_authorization_to_headers(mcp_tool.authorization)
-                # Don't override existing headers (case-insensitive check)
+                # Don't override existing Authorization header (case-insensitive check)
                 existing_keys_lower = {k.lower() for k in headers.keys()}
-                for key, value in auth_headers.items():
-                    if key.lower() not in existing_keys_lower:
-                        headers[key] = value
+                if "authorization" not in existing_keys_lower:
+                    headers["Authorization"] = mcp_tool.authorization
 
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(
