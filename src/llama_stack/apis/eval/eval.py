@@ -8,7 +8,6 @@ from typing import Annotated, Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.agents import AgentConfig
 from llama_stack.apis.common.job_types import Job
 from llama_stack.apis.inference import SamplingParams, SystemMessage
 from llama_stack.apis.scoring import ScoringResult
@@ -32,18 +31,6 @@ class ModelCandidate(BaseModel):
     system_message: SystemMessage | None = None
 
 
-@json_schema_type
-class AgentCandidate(BaseModel):
-    """An agent candidate for evaluation.
-
-    :param config: The configuration for the agent candidate.
-    """
-
-    type: Literal["agent"] = "agent"
-    config: AgentConfig
-
-
-EvalCandidate = Annotated[ModelCandidate | AgentCandidate, Field(discriminator="type")]
 register_schema(EvalCandidate, name="EvalCandidate")
 
 
