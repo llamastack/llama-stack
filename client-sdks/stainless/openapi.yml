@@ -977,11 +977,11 @@ paths:
     get:
       responses:
         '200':
-          description: A ListModelsResponse.
+          description: A OpenAIListModelsResponse.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListModelsResponse'
+                $ref: '#/components/schemas/OpenAIListModelsResponse'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -994,8 +994,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Models
-      summary: List all models.
-      description: List all models.
+      summary: List models using the OpenAI API.
+      description: List models using the OpenAI API.
       parameters: []
       deprecated: false
     post:
@@ -6798,6 +6798,88 @@ components:
       title: ListRoutesResponse
       description: >-
         Response containing a list of all available API routes.
+    OpenAIModel:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          const: model
+          default: model
+        created:
+          type: integer
+        owned_by:
+          type: string
+        custom_metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created
+        - owned_by
+      title: OpenAIModel
+      description: A model from OpenAI.
+    OpenAIListModelsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIModel'
+      additionalProperties: false
+      required:
+        - data
+      title: OpenAIListModelsResponse
+    ModelType:
+      type: string
+      enum:
+        - llm
+        - embedding
+        - rerank
+      title: ModelType
+      description: >-
+        Enumeration of supported model types in Llama Stack.
+    RegisterModelRequest:
+      type: object
+      properties:
+        model_id:
+          type: string
+          description: The identifier of the model to register.
+        provider_model_id:
+          type: string
+          description: >-
+            The identifier of the model in the provider.
+        provider_id:
+          type: string
+          description: The identifier of the provider.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Any additional metadata for this model.
+        model_type:
+          $ref: '#/components/schemas/ModelType'
+          description: The type of model to register.
+      additionalProperties: false
+      required:
+        - model_id
+      title: RegisterModelRequest
     Model:
       type: object
       properties:
@@ -6855,57 +6937,6 @@ components:
       title: Model
       description: >-
         A model resource representing an AI model registered in Llama Stack.
-    ModelType:
-      type: string
-      enum:
-        - llm
-        - embedding
-        - rerank
-      title: ModelType
-      description: >-
-        Enumeration of supported model types in Llama Stack.
-    ListModelsResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Model'
-      additionalProperties: false
-      required:
-        - data
-      title: ListModelsResponse
-    RegisterModelRequest:
-      type: object
-      properties:
-        model_id:
-          type: string
-          description: The identifier of the model to register.
-        provider_model_id:
-          type: string
-          description: >-
-            The identifier of the model in the provider.
-        provider_id:
-          type: string
-          description: The identifier of the provider.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: Any additional metadata for this model.
-        model_type:
-          $ref: '#/components/schemas/ModelType'
-          description: The type of model to register.
-      additionalProperties: false
-      required:
-        - model_id
-      title: RegisterModelRequest
     RunModerationRequest:
       type: object
       properties:
