@@ -132,6 +132,10 @@ providers:
     provider_type: remote::mongodb
     config:
       connection_string: ${env.MONGODB_CONNECTION_STRING:=}
+      host: ${env.MONGODB_HOST:=localhost}
+      port: ${env.MONGODB_PORT:=27017}
+      username: ${env.MONGODB_USERNAME:=}
+      password: ${env.MONGODB_PASSWORD:=}
       database_name: ${env.MONGODB_DATABASE_NAME:=llama_stack}
       index_name: ${env.MONGODB_INDEX_NAME:=vector_index}
       path_field: ${env.MONGODB_PATH_FIELD:=embedding}
