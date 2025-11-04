@@ -62,7 +62,7 @@
 
 ## Server Startup Flow
 
-## Two-Phase Initialization
+### Two-Phase Initialization
 
 Separate scheduler initialization into two phases:
 - **Phase 1 (`initialize`)**: Load jobs from storage, but don't resume them
@@ -159,7 +159,7 @@ class VectorIOAdapter:
         )
 ```
 
-## Behavior
+### Behavior
 
 ### Case 1: Clean Start (No Jobs)
 ```python
@@ -246,12 +246,11 @@ class OpenAIVectorStoreMixin:
         config:
           kvstore: { ... }
           max_concurrent_jobs: 10
-
-  Works because:
-  - Jobs run in the same process via asyncio.create_task()
-  - In-memory _jobs dict is shared within the process
-  - Crash recovery works (jobs persist to KVStore)
 ```
+Works because:
+- Jobs run in the same process via asyncio.create_task()
+- In-memory _jobs dict is shared within the process
+- Crash recovery works (jobs persist to KVStore)
 
   ---
   ✅ Multi Worker (Celery Scheduler - Not Implemented Yet)
