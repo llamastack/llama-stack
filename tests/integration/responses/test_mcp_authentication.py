@@ -16,12 +16,12 @@ from .helpers import setup_mcp_tools
 # Skip these tests in replay mode until recordings are generated
 pytestmark = pytest.mark.skipif(
     os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay",
-    reason="No recordings yet for authentication tests. Run with --inference-mode=record-if-missing to generate.",
+    reason="No recordings yet for authorization tests. Run with --inference-mode=record-if-missing to generate.",
 )
 
 
-def test_mcp_authentication_bearer(compat_client, text_model_id):
-    """Test that bearer authentication is correctly applied to MCP requests."""
+def test_mcp_authorization_bearer(compat_client, text_model_id):
+    """Test that bearer authorization is correctly applied to MCP requests."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
@@ -33,7 +33,7 @@ def test_mcp_authentication_bearer(compat_client, text_model_id):
                     "type": "mcp",
                     "server_label": "auth-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authentication": {
+                    "authorization": {
                         "type": "bearer",
                         "token": test_token,
                     },
@@ -42,7 +42,7 @@ def test_mcp_authentication_bearer(compat_client, text_model_id):
             mcp_server_info,
         )
 
-        # Create response - authentication should be applied
+        # Create response - authorization should be applied
         response = compat_client.responses.create(
             model=text_model_id,
             input="What is the boiling point of myawesomeliquid?",
@@ -60,8 +60,8 @@ def test_mcp_authentication_bearer(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authentication_different_token(compat_client, text_model_id):
-    """Test authentication with a different bearer token."""
+def test_mcp_authorization_different_token(compat_client, text_model_id):
+    """Test authorization with a different bearer token."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
@@ -73,7 +73,7 @@ def test_mcp_authentication_different_token(compat_client, text_model_id):
                     "type": "mcp",
                     "server_label": "auth2-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authentication": {
+                    "authorization": {
                         "type": "bearer",
                         "token": test_token,
                     },
@@ -82,7 +82,7 @@ def test_mcp_authentication_different_token(compat_client, text_model_id):
             mcp_server_info,
         )
 
-        # Create response - authentication should be applied
+        # Create response - authorization should be applied
         response = compat_client.responses.create(
             model=text_model_id,
             input="What is the boiling point of myawesomeliquid?",
@@ -97,8 +97,8 @@ def test_mcp_authentication_different_token(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authentication_fallback_to_headers(compat_client, text_model_id):
-    """Test that authentication parameter doesn't override existing headers."""
+def test_mcp_authorization_fallback_to_headers(compat_client, text_model_id):
+    """Test that authorization parameter doesn't override existing headers."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
@@ -112,7 +112,7 @@ def test_mcp_authentication_fallback_to_headers(compat_client, text_model_id):
                     "server_label": "headers-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
                     "headers": {"Authorization": f"Bearer {test_token}"},
-                    "authentication": {
+                    "authorization": {
                         "type": "bearer",
                         "token": "should-not-override",
                     },
@@ -136,19 +136,25 @@ def test_mcp_authentication_fallback_to_headers(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authentication_backward_compatibility(compat_client, text_model_id):
-    """Test that MCP tools work without authentication (backward compatibility)."""
+def test_mcp_authorization_backward_compatibility(compat_client, text_model_id):
+    """Test that MCP tools work without authorization (backward compatibility)."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
-    # No authentication required
+    # No authorization required
     with make_mcp_server(required_auth_token=None) as mcp_server_info:
         tools = setup_mcp_tools(
-            [{"type": "mcp", "server_label": "noauth-mcp", "server_url": "<FILLED_BY_TEST_RUNNER>"}],
+            [
+                {
+                    "type": "mcp",
+                    "server_label": "noauth-mcp",
+                    "server_url": "<FILLED_BY_TEST_RUNNER>",
+                }
+            ],
             mcp_server_info,
         )
 
-        # Create response without authentication
+        # Create response without authorization
         response = compat_client.responses.create(
             model=text_model_id,
             input="What is the boiling point of myawesomeliquid?",

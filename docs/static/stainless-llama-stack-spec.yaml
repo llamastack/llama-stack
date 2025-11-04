@@ -7656,7 +7656,7 @@ components:
       title: ResponseGuardrailSpec
       description: >-
         Specification for a guardrail to apply during response generation.
-    MCPAuthentication:
+    MCPAuthorization:
       type: object
       properties:
         type:
@@ -7666,19 +7666,19 @@ components:
             - basic
             - api_key
           description: >-
-            Authentication type ("bearer", "basic", or "api_key")
+            Authorization type ("bearer", "basic", or "api_key")
         token:
           type: string
-          description: Bearer token for bearer authentication
+          description: Bearer token for bearer authorization
         username:
           type: string
-          description: Username for basic authentication
+          description: Username for basic authorization
         password:
           type: string
-          description: Password for basic authentication
+          description: Password for basic authorization
         api_key:
           type: string
-          description: API key for api_key authentication
+          description: API key for api_key authorization
         header_name:
           type: string
           default: X-API-Key
@@ -7688,9 +7688,9 @@ components:
       required:
         - type
         - header_name
-      title: MCPAuthentication
+      title: MCPAuthorization
       description: >-
-        Authentication configuration for MCP servers.
+        Authorization configuration for MCP servers.
     OpenAIResponseInputTool:
       oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
@@ -7730,10 +7730,10 @@ components:
               - type: object
           description: >-
             (Optional) HTTP headers to include when connecting to the server
-        authentication:
-          $ref: '#/components/schemas/MCPAuthentication'
+        authorization:
+          $ref: '#/components/schemas/MCPAuthorization'
           description: >-
-            (Optional) Authentication configuration for the MCP server
+            (Optional) Authorization configuration for the MCP server
         require_approval:
           oneOf:
             - type: string
