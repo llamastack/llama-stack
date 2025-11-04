@@ -283,8 +283,8 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
             # ...
             provider_resource_id = f"{self.__provider_id__}/{model_spec['model_id']}"
             if "embedding" in functions:
-                embedding_dimension = model_spec["model_limits"]["embedding_dimension"]
-                context_length = model_spec["model_limits"]["max_sequence_length"]
+                embedding_dimension = model_spec.get("model_limits", {}).get("embedding_dimension", 0)
+                context_length = model_spec.get("model_limits", {}).get("max_sequence_length", 0)
                 embedding_metadata = {
                     "embedding_dimension": embedding_dimension,
                     "context_length": context_length,
