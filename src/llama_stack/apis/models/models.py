@@ -107,7 +107,6 @@ class OpenAIListModelsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Models(Protocol):
-    @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
     async def list_models(self) -> ListModelsResponse:
         """List all models.
 
@@ -115,7 +114,7 @@ class Models(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/models", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_models(self) -> OpenAIListModelsResponse:
         """List models using the OpenAI API.
 
