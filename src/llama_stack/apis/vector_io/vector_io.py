@@ -260,7 +260,7 @@ class VectorStoreSearchResponsePage(BaseModel):
     """
 
     object: str = "vector_store.search_results.page"
-    search_query: str
+    search_query: str | list[str]
     data: list[VectorStoreSearchResponse]
     has_more: bool = False
     next_page: str | None = None

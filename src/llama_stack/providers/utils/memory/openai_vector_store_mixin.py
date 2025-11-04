@@ -729,6 +729,70 @@ class OpenAIVectorStoreMixin(ABC):
             ]
         return content
 
+    async def _prepare_and_attach_file_chunks(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        attributes: dict[str, Any],
+        chunking_strategy: VectorStoreChunkingStrategy,
+        created_at: int,
+    ) -> tuple[VectorStoreFileObject, list[Chunk], OpenAIFileObject | None]:
+        """
+        Implementation-specific method for preparing and attaching file chunks to vector store.
+        Subclasses can override this to customize how files are prepared and attached.
+
+        Returns: (VectorStoreFileObject, chunks, file_response) tuple
+        """
+        if isinstance(chunking_strategy, VectorStoreChunkingStrategyStatic):
+            max_chunk_size_tokens = chunking_strategy.static.max_chunk_size_tokens
+            chunk_overlap_tokens = chunking_strategy.static.chunk_overlap_tokens
+        else:
+            # Default values from OpenAI API spec
+            max_chunk_size_tokens = 800
+            chunk_overlap_tokens = 400
+
+        file_response = await self.files_api.openai_retrieve_file(file_id)
+        mime_type, _ = mimetypes.guess_type(file_response.filename)
+        content_response = await self.files_api.openai_retrieve_file_content(file_id)
+
+        content = content_from_data_and_mime_type(content_response.body, mime_type)
+
+        chunk_attributes = attributes.copy()
+        chunk_attributes["filename"] = file_response.filename
+
+        chunks = make_overlapped_chunks(
+            file_id,
+            content,
+            max_chunk_size_tokens,
+            chunk_overlap_tokens,
+            chunk_attributes,
+        )
+
+        vector_store_file_object = VectorStoreFileObject(
+            id=file_id,
+            attributes=attributes,
+            chunking_strategy=chunking_strategy,
+            created_at=created_at,
+            status="in_progress",
+            vector_store_id=vector_store_id,
+        )
+
+        if not chunks:
+            vector_store_file_object.status = "failed"
+            vector_store_file_object.last_error = VectorStoreFileLastError(
+                code="server_error",
+                message="No chunks were generated from the file",
+            )
+        else:
+            # Default implementation: insert chunks directly
+            await self.insert_chunks(
+                vector_store_id=vector_store_id,
+                chunks=chunks,
+            )
+            vector_store_file_object.status = "completed"
+
+        return vector_store_file_object, chunks, file_response
+
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
@@ -750,69 +814,43 @@ class OpenAIVectorStoreMixin(ABC):
         attributes = attributes or {}
         chunking_strategy = chunking_strategy or VectorStoreChunkingStrategyAuto()
         created_at = int(time.time())
-        chunks: list[Chunk] = []
-        file_response: OpenAIFileObject | None = None
-
-        vector_store_file_object = VectorStoreFileObject(
-            id=file_id,
-            attributes=attributes,
-            chunking_strategy=chunking_strategy,
-            created_at=created_at,
-            status="in_progress",
-            vector_store_id=vector_store_id,
-        )
 
         if not hasattr(self, "files_api") or not self.files_api:
-            vector_store_file_object.status = "failed"
-            vector_store_file_object.last_error = VectorStoreFileLastError(
-                code="server_error",
-                message="Files API is not available",
+            vector_store_file_object = VectorStoreFileObject(
+                id=file_id,
+                attributes=attributes,
+                chunking_strategy=chunking_strategy,
+                created_at=created_at,
+                status="failed",
+                vector_store_id=vector_store_id,
+                last_error=VectorStoreFileLastError(
+                    code="server_error",
+                    message="Files API is not available",
+                ),
             )
             return vector_store_file_object
 
-        if isinstance(chunking_strategy, VectorStoreChunkingStrategyStatic):
-            max_chunk_size_tokens = chunking_strategy.static.max_chunk_size_tokens
-            chunk_overlap_tokens = chunking_strategy.static.chunk_overlap_tokens
-        else:
-            # Default values from OpenAI API spec
-            max_chunk_size_tokens = 800
-            chunk_overlap_tokens = 400
-
         try:
-            file_response = await self.files_api.openai_retrieve_file(file_id)
-            mime_type, _ = mimetypes.guess_type(file_response.filename)
-            content_response = await self.files_api.openai_retrieve_file_content(file_id)
-
-            content = content_from_data_and_mime_type(content_response.body, mime_type)
-
-            chunk_attributes = attributes.copy()
-            chunk_attributes["filename"] = file_response.filename
-
-            chunks = make_overlapped_chunks(
-                file_id,
-                content,
-                max_chunk_size_tokens,
-                chunk_overlap_tokens,
-                chunk_attributes,
+            vector_store_file_object, chunks, file_response = await self._prepare_and_attach_file_chunks(
+                vector_store_id=vector_store_id,
+                file_id=file_id,
+                attributes=attributes,
+                chunking_strategy=chunking_strategy,
+                created_at=created_at,
             )
-            if not chunks:
-                vector_store_file_object.status = "failed"
-                vector_store_file_object.last_error = VectorStoreFileLastError(
-                    code="server_error",
-                    message="No chunks were generated from the file",
-                )
-            else:
-                await self.insert_chunks(
-                    vector_store_id=vector_store_id,
-                    chunks=chunks,
-                )
-                vector_store_file_object.status = "completed"
         except Exception as e:
             logger.exception("Error attaching file to vector store")
-            vector_store_file_object.status = "failed"
-            vector_store_file_object.last_error = VectorStoreFileLastError(
-                code="server_error",
-                message=str(e),
+            vector_store_file_object = VectorStoreFileObject(
+                id=file_id,
+                attributes=attributes,
+                chunking_strategy=chunking_strategy,
+                created_at=created_at,
+                status="failed",
+                vector_store_id=vector_store_id,
+                last_error=VectorStoreFileLastError(
+                    code="server_error",
+                    message=str(e),
+                ),
             )
 
         # Create OpenAI vector store file metadata
@@ -820,8 +858,8 @@ class OpenAIVectorStoreMixin(ABC):
         file_info["filename"] = file_response.filename if file_response else ""
 
         # Save vector store file to persistent storage (provider-specific)
-        dict_chunks = [c.model_dump() for c in chunks]
-        # This should be updated to include chunk_id
+        # Only save chunks if they were generated (some providers like OpenAI handle storage remotely)
+        dict_chunks = [c.model_dump() for c in chunks] if chunks else []
         await self._save_openai_vector_store_file(vector_store_id, file_id, file_info, dict_chunks)
 
         # Update file_ids and file_counts in vector store metadata
