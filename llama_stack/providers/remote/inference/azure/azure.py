@@ -45,13 +45,13 @@ class AzureInferenceAdapter(OpenAIMixin, LiteLLMOpenAIMixin):
         # Add Azure specific parameters
         provider_data = self.get_request_provider_data()
         if provider_data:
-            if getattr(provider_data, "azure_api_key", None):
-                params["api_key"] = provider_data.azure_api_key
-            if getattr(provider_data, "azure_api_base", None):
-                params["api_base"] = provider_data.azure_api_base
-            if getattr(provider_data, "azure_api_version", None):
+            if provider_data.azure_api_key:
+                params["api_key"] = provider_data.azure_api_key.get_secret_value()
+            if provider_data.azure_api_base:
+                params["api_base"] = str(provider_data.azure_api_base)
+            if provider_data.azure_api_version:
                 params["api_version"] = provider_data.azure_api_version
-            if getattr(provider_data, "azure_api_type", None):
+            if provider_data.azure_api_type:
                 params["api_type"] = provider_data.azure_api_type
         else:
             params["api_key"] = self.config.api_key.get_secret_value()
