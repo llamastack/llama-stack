@@ -90,12 +90,14 @@ class OpenAIModel(BaseModel):
     :object: The object type, which will be "model"
     :created: The Unix timestamp in seconds when the model was created
     :owned_by: The owner of the model
+    :custom_metadata: Llama Stack-specific metadata including model_type, provider info, and additional metadata
     """
 
     id: str
     object: Literal["model"] = "model"
     created: int
     owned_by: str
+    custom_metadata: dict[str, Any] | None = None
 
 
 class OpenAIListModelsResponse(BaseModel):
@@ -105,7 +107,6 @@ class OpenAIListModelsResponse(BaseModel):
 @runtime_checkable
 @trace_protocol
 class Models(Protocol):
-    @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
     async def list_models(self) -> ListModelsResponse:
         """List all models.
 
@@ -113,7 +114,7 @@ class Models(Protocol):
         """
         ...
 
-    @webmethod(route="/openai/v1/models", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
+    @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_models(self) -> OpenAIListModelsResponse:
         """List models using the OpenAI API.
 

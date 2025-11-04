@@ -977,11 +977,11 @@ paths:
     get:
       responses:
         '200':
-          description: A ListModelsResponse.
+          description: A OpenAIListModelsResponse.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListModelsResponse'
+                $ref: '#/components/schemas/OpenAIListModelsResponse'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -994,8 +994,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Models
-      summary: List all models.
-      description: List all models.
+      summary: List models using the OpenAI API.
+      description: List models using the OpenAI API.
       parameters: []
       deprecated: false
     post:
@@ -1984,40 +1984,6 @@ paths:
           required: true
           schema:
             type: string
-      deprecated: false
-  /v1/synthetic-data-generation/generate:
-    post:
-      responses:
-        '200':
-          description: >-
-            Response containing filtered synthetic data samples and optional statistics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SyntheticDataGenerationResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - SyntheticDataGeneration (Coming Soon)
-      summary: >-
-        Generate synthetic data based on input dialogs and apply filtering.
-      description: >-
-        Generate synthetic data based on input dialogs and apply filtering.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SyntheticDataGenerateRequest'
-        required: true
       deprecated: false
   /v1/tool-runtime/invoke:
     post:
@@ -6832,6 +6798,88 @@ components:
       title: ListRoutesResponse
       description: >-
         Response containing a list of all available API routes.
+    OpenAIModel:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          const: model
+          default: model
+        created:
+          type: integer
+        owned_by:
+          type: string
+        custom_metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created
+        - owned_by
+      title: OpenAIModel
+      description: A model from OpenAI.
+    OpenAIListModelsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIModel'
+      additionalProperties: false
+      required:
+        - data
+      title: OpenAIListModelsResponse
+    ModelType:
+      type: string
+      enum:
+        - llm
+        - embedding
+        - rerank
+      title: ModelType
+      description: >-
+        Enumeration of supported model types in Llama Stack.
+    RegisterModelRequest:
+      type: object
+      properties:
+        model_id:
+          type: string
+          description: The identifier of the model to register.
+        provider_model_id:
+          type: string
+          description: >-
+            The identifier of the model in the provider.
+        provider_id:
+          type: string
+          description: The identifier of the provider.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Any additional metadata for this model.
+        model_type:
+          $ref: '#/components/schemas/ModelType'
+          description: The type of model to register.
+      additionalProperties: false
+      required:
+        - model_id
+      title: RegisterModelRequest
     Model:
       type: object
       properties:
@@ -6889,57 +6937,6 @@ components:
       title: Model
       description: >-
         A model resource representing an AI model registered in Llama Stack.
-    ModelType:
-      type: string
-      enum:
-        - llm
-        - embedding
-        - rerank
-      title: ModelType
-      description: >-
-        Enumeration of supported model types in Llama Stack.
-    ListModelsResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Model'
-      additionalProperties: false
-      required:
-        - data
-      title: ListModelsResponse
-    RegisterModelRequest:
-      type: object
-      properties:
-        model_id:
-          type: string
-          description: The identifier of the model to register.
-        provider_model_id:
-          type: string
-          description: >-
-            The identifier of the model in the provider.
-        provider_id:
-          type: string
-          description: The identifier of the provider.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: Any additional metadata for this model.
-        model_type:
-          $ref: '#/components/schemas/ModelType'
-          description: The type of model to register.
-      additionalProperties: false
-      required:
-        - model_id
-      title: RegisterModelRequest
     RunModerationRequest:
       type: object
       properties:
@@ -9953,45 +9950,29 @@ components:
       required:
         - shield_id
       title: RegisterShieldRequest
-    CompletionMessage:
+    InvokeToolRequest:
       type: object
       properties:
-        role:
+        tool_name:
           type: string
-          const: assistant
-          default: assistant
+          description: The name of the tool to invoke.
+        kwargs:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
           description: >-
-            Must be "assistant" to identify this as the model's response
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The content of the model's response
-        stop_reason:
-          type: string
-          enum:
-            - end_of_turn
-            - end_of_message
-            - out_of_tokens
-          description: >-
-            Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`:
-            The model finished generating the entire response. - `StopReason.end_of_message`:
-            The model finished generating but generated a partial response -- usually,
-            a tool call. The user may call the tool and continue the conversation
-            with the tool's response. - `StopReason.out_of_tokens`: The model ran
-            out of token budget.
-        tool_calls:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolCall'
-          description: >-
-            List of tool calls. Each tool call is a ToolCall object.
+            A dictionary of arguments to pass to the tool.
       additionalProperties: false
       required:
-        - role
-        - content
-        - stop_reason
-      title: CompletionMessage
-      description: >-
-        A message containing the model's (assistant) response in a chat conversation.
+        - tool_name
+        - kwargs
+      title: InvokeToolRequest
     ImageContentItem:
       type: object
       properties:
@@ -10038,41 +10019,6 @@ components:
         mapping:
           image: '#/components/schemas/ImageContentItem'
           text: '#/components/schemas/TextContentItem'
-    Message:
-      oneOf:
-        - $ref: '#/components/schemas/UserMessage'
-        - $ref: '#/components/schemas/SystemMessage'
-        - $ref: '#/components/schemas/ToolResponseMessage'
-        - $ref: '#/components/schemas/CompletionMessage'
-      discriminator:
-        propertyName: role
-        mapping:
-          user: '#/components/schemas/UserMessage'
-          system: '#/components/schemas/SystemMessage'
-          tool: '#/components/schemas/ToolResponseMessage'
-          assistant: '#/components/schemas/CompletionMessage'
-    SystemMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: system
-          default: system
-          description: >-
-            Must be "system" to identify this as a system message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the "system prompt". If multiple system messages are provided,
-            they are concatenated. The underlying Llama Stack code may also add other
-            system messages (for example, for formatting tool definitions).
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: SystemMessage
-      description: >-
-        A system message providing instructions or context to the model.
     TextContentItem:
       type: object
       properties:
@@ -10091,179 +10037,6 @@ components:
         - text
       title: TextContentItem
       description: A text content item
-    ToolCall:
-      type: object
-      properties:
-        call_id:
-          type: string
-        tool_name:
-          oneOf:
-            - type: string
-              enum:
-                - brave_search
-                - wolfram_alpha
-                - photogen
-                - code_interpreter
-              title: BuiltinTool
-            - type: string
-        arguments:
-          type: string
-      additionalProperties: false
-      required:
-        - call_id
-        - tool_name
-        - arguments
-      title: ToolCall
-    ToolResponseMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: tool
-          default: tool
-          description: >-
-            Must be "tool" to identify this as a tool response
-        call_id:
-          type: string
-          description: >-
-            Unique identifier for the tool call this response is for
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The response content from the tool
-      additionalProperties: false
-      required:
-        - role
-        - call_id
-        - content
-      title: ToolResponseMessage
-      description: >-
-        A message representing the result of a tool invocation.
-    URL:
-      type: object
-      properties:
-        uri:
-          type: string
-          description: The URL string pointing to the resource
-      additionalProperties: false
-      required:
-        - uri
-      title: URL
-      description: A URL reference to external content.
-    UserMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: user
-          default: user
-          description: >-
-            Must be "user" to identify this as a user message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the message, which can include text and other media
-        context:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            (Optional) This field is used internally by Llama Stack to pass RAG context.
-            This field may be removed in the API in the future.
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: UserMessage
-      description: >-
-        A message from the user in a chat conversation.
-    SyntheticDataGenerateRequest:
-      type: object
-      properties:
-        dialogs:
-          type: array
-          items:
-            $ref: '#/components/schemas/Message'
-          description: >-
-            List of conversation messages to use as input for synthetic data generation
-        filtering_function:
-          type: string
-          enum:
-            - none
-            - random
-            - top_k
-            - top_p
-            - top_k_top_p
-            - sigmoid
-          description: >-
-            Type of filtering to apply to generated synthetic data samples
-        model:
-          type: string
-          description: >-
-            (Optional) The identifier of the model to use. The model must be registered
-            with Llama Stack and available via the /models endpoint
-      additionalProperties: false
-      required:
-        - dialogs
-        - filtering_function
-      title: SyntheticDataGenerateRequest
-    SyntheticDataGenerationResponse:
-      type: object
-      properties:
-        synthetic_data:
-          type: array
-          items:
-            type: object
-            additionalProperties:
-              oneOf:
-                - type: 'null'
-                - type: boolean
-                - type: number
-                - type: string
-                - type: array
-                - type: object
-          description: >-
-            List of generated synthetic data samples that passed the filtering criteria
-        statistics:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            (Optional) Statistical information about the generation process and filtering
-            results
-      additionalProperties: false
-      required:
-        - synthetic_data
-      title: SyntheticDataGenerationResponse
-      description: >-
-        Response from the synthetic data generation. Batch of (prompt, response, score)
-        tuples that pass the threshold.
-    InvokeToolRequest:
-      type: object
-      properties:
-        tool_name:
-          type: string
-          description: The name of the tool to invoke.
-        kwargs:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            A dictionary of arguments to pass to the tool.
-      additionalProperties: false
-      required:
-        - tool_name
-        - kwargs
-      title: InvokeToolRequest
     ToolInvocationResult:
       type: object
       properties:
@@ -10294,6 +10067,17 @@ components:
       additionalProperties: false
       title: ToolInvocationResult
       description: Result of a tool invocation.
+    URL:
+      type: object
+      properties:
+        uri:
+          type: string
+          description: The URL string pointing to the resource
+      additionalProperties: false
+      required:
+        - uri
+      title: URL
+      description: A URL reference to external content.
     ToolDef:
       type: object
       properties:
@@ -12326,6 +12110,45 @@ components:
       title: AgentSessionCreateResponse
       description: >-
         Response returned when creating a new agent session.
+    CompletionMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: assistant
+          default: assistant
+          description: >-
+            Must be "assistant" to identify this as the model's response
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: The content of the model's response
+        stop_reason:
+          type: string
+          enum:
+            - end_of_turn
+            - end_of_message
+            - out_of_tokens
+          description: >-
+            Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`:
+            The model finished generating the entire response. - `StopReason.end_of_message`:
+            The model finished generating but generated a partial response -- usually,
+            a tool call. The user may call the tool and continue the conversation
+            with the tool's response. - `StopReason.out_of_tokens`: The model ran
+            out of token budget.
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          description: >-
+            List of tool calls. Each tool call is a ToolCall object.
+      additionalProperties: false
+      required:
+        - role
+        - content
+        - stop_reason
+      title: CompletionMessage
+      description: >-
+        A message containing the model's (assistant) response in a chat conversation.
     InferenceStep:
       type: object
       properties:
@@ -12478,6 +12301,29 @@ components:
         - step_type
       title: ShieldCallStep
       description: A shield call step in an agent turn.
+    ToolCall:
+      type: object
+      properties:
+        call_id:
+          type: string
+        tool_name:
+          oneOf:
+            - type: string
+              enum:
+                - brave_search
+                - wolfram_alpha
+                - photogen
+                - code_interpreter
+              title: BuiltinTool
+            - type: string
+        arguments:
+          type: string
+      additionalProperties: false
+      required:
+        - call_id
+        - tool_name
+        - arguments
+      title: ToolCall
     ToolExecutionStep:
       type: object
       properties:
@@ -12565,6 +12411,30 @@ components:
         - content
       title: ToolResponse
       description: Response from a tool invocation.
+    ToolResponseMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: tool
+          default: tool
+          description: >-
+            Must be "tool" to identify this as a tool response
+        call_id:
+          type: string
+          description: >-
+            Unique identifier for the tool call this response is for
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: The response content from the tool
+      additionalProperties: false
+      required:
+        - role
+        - call_id
+        - content
+      title: ToolResponseMessage
+      description: >-
+        A message representing the result of a tool invocation.
     Turn:
       type: object
       properties:
@@ -12650,6 +12520,31 @@ components:
       title: Turn
       description: >-
         A single turn in an interaction with an Agentic System.
+    UserMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: user
+          default: user
+          description: >-
+            Must be "user" to identify this as a user message
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            The content of the message, which can include text and other media
+        context:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            (Optional) This field is used internally by Llama Stack to pass RAG context.
+            This field may be removed in the API in the future.
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: UserMessage
+      description: >-
+        A message from the user in a chat conversation.
     CreateAgentTurnRequest:
       type: object
       properties:
@@ -13263,6 +13158,28 @@ components:
         - sampling_params
       title: ModelCandidate
       description: A model candidate for evaluation.
+    SystemMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          const: system
+          default: system
+          description: >-
+            Must be "system" to identify this as a system message
+        content:
+          $ref: '#/components/schemas/InterleavedContent'
+          description: >-
+            The content of the "system prompt". If multiple system messages are provided,
+            they are concatenated. The underlying Llama Stack code may also add other
+            system messages (for example, for formatting tool definitions).
+      additionalProperties: false
+      required:
+        - role
+        - content
+      title: SystemMessage
+      description: >-
+        A system message providing instructions or context to the model.
     EvaluateRowsRequest:
       type: object
       properties:
@@ -14078,8 +13995,6 @@ tags:
     description: ''
   - name: Shields
     description: ''
-  - name: SyntheticDataGeneration (Coming Soon)
-    description: ''
   - name: ToolGroups
     description: ''
   - name: ToolRuntime
@@ -14107,7 +14022,6 @@ x-tagGroups:
       - Scoring
       - ScoringFunctions
       - Shields
-      - SyntheticDataGeneration (Coming Soon)
       - ToolGroups
       - ToolRuntime
       - VectorIO

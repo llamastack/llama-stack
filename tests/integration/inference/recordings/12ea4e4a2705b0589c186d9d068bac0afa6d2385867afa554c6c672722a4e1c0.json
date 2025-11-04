@@ -80,17 +80,27 @@
         "id": "rec-12ea4e4a2705",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "tool_calls",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "{\"name\":\"complex\",\"parameters\":{}\"}}",
+              "content": "",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": null
+              "tool_calls": [
+                {
+                  "id": "call_j48tlieh",
+                  "function": {
+                    "arguments": "{\"x\":\"1\"}",
+                    "name": "simple"
+                  },
+                  "type": "function",
+                  "index": 0
+                }
+              ]
             }
           }
         ],
@@ -100,14 +110,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 10,
+          "completion_tokens": 16,
           "prompt_tokens": 246,
-          "total_tokens": 256,
+          "total_tokens": 262,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }
