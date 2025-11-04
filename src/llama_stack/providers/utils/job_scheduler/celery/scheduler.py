@@ -30,8 +30,6 @@ class CelerySchedulerImpl(Scheduler):
     def __init__(self, config: CelerySchedulerConfig):
         self.config = config
         self._job_executors: dict[str, Callable[[dict], Awaitable[dict]]] = {}
-        # TODO: Initialize Celery app with broker and result backend
-        raise NotImplementedError("Celery scheduler not yet implemented")
 
     def register_job_executor(
         self,
@@ -39,15 +37,19 @@ class CelerySchedulerImpl(Scheduler):
         executor: Callable[[dict], Awaitable[dict]],
     ) -> None:
         """Register a job executor function for a specific job type."""
-        self._job_executors[job_type] = executor
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
 
     async def initialize(self) -> None:
         """Initialize the Celery scheduler."""
-        raise NotImplementedError("Celery scheduler not yet implemented")
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
+
+    async def start(self) -> None:
+        """Start processing jobs after all executors are registered."""
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
 
     async def shutdown(self) -> None:
         """Gracefully shutdown the Celery scheduler."""
-        raise NotImplementedError("Celery scheduler not yet implemented")
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
 
     async def schedule_job(
         self,
@@ -56,19 +58,19 @@ class CelerySchedulerImpl(Scheduler):
         metadata: dict | None = None,
     ) -> str:
         """Schedule a new job for execution via Celery."""
-        raise NotImplementedError("Celery scheduler not yet implemented")
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
 
     async def get_job_info(self, job_id: str) -> dict:
         """Get complete information about a job from Celery result backend."""
-        raise NotImplementedError("Celery scheduler not yet implemented")
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
 
     async def cancel_job(self, job_id: str) -> bool:
         """Cancel a pending or running Celery job."""
-        raise NotImplementedError("Celery scheduler not yet implemented")
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
 
     async def delete_job(self, job_id: str) -> bool:
         """Delete a completed or cancelled job from Celery result backend."""
-        raise NotImplementedError("Celery scheduler not yet implemented")
+        raise NotImplementedError("Celery scheduler implementation is not yet available")
 
     async def list_jobs(
         self,
@@ -78,4 +80,4 @@ class CelerySchedulerImpl(Scheduler):
         offset: int = 0,
     ) -> list[dict]:
         """List jobs from Celery result backend with optional filtering."""
-        raise NotImplementedError("Celery scheduler not yet implemented")
+        raise NotImplementedError("Celery scheduler implementation is not yet available")

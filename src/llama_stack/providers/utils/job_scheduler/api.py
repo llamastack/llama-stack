@@ -127,7 +127,20 @@ class Scheduler(Protocol):
         ...
 
     async def initialize(self) -> None:
-        """Initialize the scheduler (connect to backend, etc.)"""
+        """
+        Initialize the scheduler (connect to backend, load persisted jobs).
+
+        Note: Does NOT start processing jobs. Call start() after all executors are registered.
+        """
+        ...
+
+    async def start(self) -> None:
+        """
+        Start processing jobs after all executors are registered.
+
+        This resumes any incomplete jobs from storage. Must be called after initialize()
+        and after all job executors have been registered via register_job_executor().
+        """
         ...
 
     async def shutdown(self) -> None:
