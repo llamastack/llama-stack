@@ -403,11 +403,7 @@ class OpenAIResponseText(BaseModel):
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
-WebSearchToolTypes = [
-    "web_search",
-    "web_search_preview",
-    "web_search_preview_2025_03_11",
-]
+WebSearchToolTypes = ["web_search", "web_search_preview", "web_search_preview_2025_03_11"]
 
 
 @json_schema_type
