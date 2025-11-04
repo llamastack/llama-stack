@@ -11,8 +11,8 @@ from pydantic import BaseModel, Field, field_validator
 from typing_extensions import runtime_checkable
 
 from llama_stack.apis.common.content_types import URL, InterleavedContent
+from llama_stack.apis.common.tracing import trace_protocol
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 

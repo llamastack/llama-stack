@@ -93,4 +93,11 @@ async def get_auto_router_impl(
 
     impl = api_to_routers[api.value](routing_table, **api_to_dep_impl)
     await impl.initialize()
+
+    # Apply tracing to router implementation if telemetry is enabled and protocol wants tracing
+    if run_config.telemetry.enabled and getattr(impl.__class__, "__trace_protocol__", False):
+        from llama_stack.core.telemetry.trace_protocol import trace_protocol
+
+        trace_protocol(impl.__class__)
+
     return impl
