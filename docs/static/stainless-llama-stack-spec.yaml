@@ -8853,20 +8853,6 @@ components:
         - error
       title: ViolationLevel
       description: Severity level of a safety violation.
-    AgentTurnInputType:
-      type: object
-      properties:
-        type:
-          type: string
-          const: agent_turn_input
-          default: agent_turn_input
-          description: >-
-            Discriminator type. Always "agent_turn_input"
-      additionalProperties: false
-      required:
-        - type
-      title: AgentTurnInputType
-      description: Parameter type for agent turn input.
     AggregationFunctionType:
       type: string
       enum:
@@ -9109,7 +9095,6 @@ components:
             - $ref: '#/components/schemas/UnionType'
             - $ref: '#/components/schemas/ChatCompletionInputType'
             - $ref: '#/components/schemas/CompletionInputType'
-            - $ref: '#/components/schemas/AgentTurnInputType'
           discriminator:
             propertyName: type
             mapping:
@@ -9122,7 +9107,6 @@ components:
               union: '#/components/schemas/UnionType'
               chat_completion_input: '#/components/schemas/ChatCompletionInputType'
               completion_input: '#/components/schemas/CompletionInputType'
-              agent_turn_input: '#/components/schemas/AgentTurnInputType'
         params:
           $ref: '#/components/schemas/ScoringFnParams'
       additionalProperties: false
@@ -9203,7 +9187,6 @@ components:
         - $ref: '#/components/schemas/UnionType'
         - $ref: '#/components/schemas/ChatCompletionInputType'
         - $ref: '#/components/schemas/CompletionInputType'
-        - $ref: '#/components/schemas/AgentTurnInputType'
       discriminator:
         propertyName: type
         mapping:
@@ -9216,7 +9199,6 @@ components:
           union: '#/components/schemas/UnionType'
           chat_completion_input: '#/components/schemas/ChatCompletionInputType'
           completion_input: '#/components/schemas/CompletionInputType'
-          agent_turn_input: '#/components/schemas/AgentTurnInputType'
     RegisterScoringFunctionRequest:
       type: object
       properties:
