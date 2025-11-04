@@ -8,7 +8,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.apis.datasets import Dataset
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA
+from llama_stack.apis.version import LLAMA_STACK_API_V1BETA
 from llama_stack.schema_utils import webmethod
 
 

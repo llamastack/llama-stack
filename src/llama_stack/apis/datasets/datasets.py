@@ -10,7 +10,7 @@ from typing import Annotated, Any, Literal, Protocol
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.resource import Resource, ResourceType
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1BETA
+from llama_stack.apis.version import LLAMA_STACK_API_V1BETA
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 

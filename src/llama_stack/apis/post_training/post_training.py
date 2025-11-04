@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from llama_stack.apis.common.content_types import URL
 from llama_stack.apis.common.job_types import JobStatus
 from llama_stack.apis.common.training_types import Checkpoint
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
+from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 

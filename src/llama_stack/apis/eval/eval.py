@@ -13,7 +13,7 @@ from llama_stack.apis.common.job_types import Job
 from llama_stack.apis.inference import SamplingParams, SystemMessage
 from llama_stack.apis.scoring import ScoringResult
 from llama_stack.apis.scoring_functions import ScoringFnParams
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
+from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 
