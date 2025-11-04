@@ -22,6 +22,7 @@ on:
       - '.github/actions/setup-ollama/action.yml'
       - '.github/actions/setup-test-environment/action.yml'
       - '.github/actions/run-and-record-tests/action.yml'
+      - 'scripts/integration-tests.sh'
   schedule:
     # If changing the cron schedule, update the provider in the test-matrix job
     - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC

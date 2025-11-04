@@ -51,10 +51,14 @@ async function proxyRequest(request: NextRequest, method: string) {
     );
 
     // Create response with same status and headers
-    const proxyResponse = new NextResponse(responseText, {
-      status: response.status,
-      statusText: response.statusText,
-    });
+    // Handle 204 No Content responses specially
+    const proxyResponse =
+      response.status === 204
+        ? new NextResponse(null, { status: 204 })
+        : new NextResponse(responseText, {
+            status: response.status,
+            statusText: response.statusText,
+          });
 
     // Copy response headers (except problematic ones)
     response.headers.forEach((value, key) => {
