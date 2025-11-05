@@ -14,7 +14,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'src/llama_stack/**'
-      - '!src/llama_stack/ui/**'
+      - '!src/llama_stack_ui/**'
       - 'tests/**'
       - 'uv.lock'
       - 'pyproject.toml'
