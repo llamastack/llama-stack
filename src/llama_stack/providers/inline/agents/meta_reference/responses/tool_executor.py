@@ -373,6 +373,7 @@ class ToolExecutor:
                 mcp_completed_event = OpenAIResponseObjectStreamResponseMcpCallCompleted(
                     sequence_number=sequence_number,
                 )
+                yield ToolExecutionResult(stream_event=mcp_completed_event, sequence_number=sequence_number)
         elif function_name == "web_search":
             sequence_number += 1
             web_completion_event = OpenAIResponseObjectStreamResponseWebSearchCallCompleted(
@@ -488,8 +489,6 @@ class ToolExecutor:
             input_message = OpenAIToolMessageParam(content=msg_content, tool_call_id=tool_call_id)  # type: ignore[arg-type]
         else:
             text = str(error_exc) if error_exc else "Tool execution failed"
-            input_message = OpenAIToolMessageParam(
-                content=text, tool_call_id=tool_call_id
-            )
+            input_message = OpenAIToolMessageParam(content=text, tool_call_id=tool_call_id)
 
         return message, input_message
