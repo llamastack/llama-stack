@@ -103,32 +103,6 @@ register_schema(ConversationItem, name="ConversationItem")
 
 
 @json_schema_type
-class ConversationCreateRequest(BaseModel):
-    """Request body for creating a conversation."""
-
-    items: list[ConversationItem] | None = Field(
-        default=[],
-        description="Initial items to include in the conversation context. You may add up to 20 items at a time.",
-        max_length=20,
-    )
-    metadata: Metadata | None = Field(
-        default={},
-        description="Set of 16 key-value pairs that can be attached to an object. Useful for storing additional information",
-        max_length=16,
-    )
-
-
-@json_schema_type
-class ConversationUpdateRequest(BaseModel):
-    """Request body for updating a conversation."""
-
-    metadata: Metadata = Field(
-        ...,
-        description="Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.",
-    )
-
-
-@json_schema_type
 class ConversationDeletedResource(BaseModel):
     """Response for deleted conversation."""
 
