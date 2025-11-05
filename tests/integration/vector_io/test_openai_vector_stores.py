@@ -350,7 +350,7 @@ def test_openai_vector_store_search_empty(
     assert search_response is not None
     assert hasattr(search_response, "data")
     assert len(search_response.data) == 0  # Empty store should return no results
-    assert search_response.search_query == "test query"
+    assert search_response.search_query == ["test query"]
     assert search_response.has_more is False
 
 
@@ -825,7 +825,7 @@ def test_openai_vector_store_list_files(
     assert first_page.has_more
     assert len(first_page.data) == 2
     assert first_page.first_id == first_page.data[0].id
-    assert first_page.last_id != first_page.data[-1].id
+    assert first_page.last_id == first_page.data[-1].id
 
     next_page = compat_client.vector_stores.files.list(
         vector_store_id=vector_store.id, limit=2, after=first_page.data[-1].id

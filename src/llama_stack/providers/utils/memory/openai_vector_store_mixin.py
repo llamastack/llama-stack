@@ -642,7 +642,7 @@ class OpenAIVectorStoreMixin(ABC):
                     break
 
             return VectorStoreSearchResponsePage(
-                search_query=search_query,
+                search_query=query if isinstance(query, list) else [query],
                 data=data,
                 has_more=False,  # For simplicity, we don't implement pagination here
                 next_page=None,
@@ -652,7 +652,7 @@ class OpenAIVectorStoreMixin(ABC):
             logger.error(f"Error searching vector store {vector_store_id}: {e}")
             # Return empty results on error
             return VectorStoreSearchResponsePage(
-                search_query=search_query,
+                search_query=query if isinstance(query, list) else [query],
                 data=[],
                 has_more=False,
                 next_page=None,
@@ -891,8 +891,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Determine pagination info
         has_more = len(file_objects) > limit
-        first_id = file_objects[0].id if file_objects else None
-        last_id = file_objects[-1].id if file_objects else None
+        first_id = limited_files[0].id if file_objects else None
+        last_id = limited_files[-1].id if file_objects else None
 
         return VectorStoreListFilesResponse(
             data=limited_files,
