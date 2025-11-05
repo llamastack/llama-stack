@@ -79,10 +79,9 @@ def resolve_config_or_distro(
 
 def _get_distro_config_path(distro_name: str, mode: str) -> Path:
     """Get the config file path for a distro."""
-    if mode.endswith(".yaml"):
-        return DISTRO_DIR / distro_name / mode
-
-    return DISTRO_DIR / distro_name / f"{mode}.yaml"
+    if not mode.endswith(".yaml"):
+        mode = f"{mode}.yaml"
+    return DISTRO_DIR / distro_name / mode
 
 
 def _format_resolution_error(config_or_distro: str, mode: Mode) -> str:

@@ -87,6 +87,7 @@ def run_command(command: list[str]) -> int:
 
         # Print stdout and stderr if command failed
         if result.returncode != 0:
+            log.error(f"Command {' '.join(command)} failed with returncode {result.returncode}")
             if result.stdout:
                 log.error(f"STDOUT: {result.stdout}")
             if result.stderr:
