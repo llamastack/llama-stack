@@ -886,8 +886,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Determine pagination info
         has_more = len(file_objects) > limit
-        first_id = file_objects[0].id if file_objects else None
-        last_id = file_objects[-1].id if file_objects else None
+        first_id = limited_files[0].id if file_objects else None
+        last_id = limited_files[-1].id if file_objects else None
 
         return VectorStoreListFilesResponse(
             data=limited_files,

@@ -825,7 +825,7 @@ def test_openai_vector_store_list_files(
     assert first_page.has_more
     assert len(first_page.data) == 2
     assert first_page.first_id == first_page.data[0].id
-    assert first_page.last_id != first_page.data[-1].id
+    assert first_page.last_id == first_page.data[-1].id
 
     next_page = compat_client.vector_stores.files.list(
         vector_store_id=vector_store.id, limit=2, after=first_page.data[-1].id
