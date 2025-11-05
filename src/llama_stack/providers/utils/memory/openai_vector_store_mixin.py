@@ -26,6 +26,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
     VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyStaticConfig,
     VectorStoreContent,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
@@ -414,6 +415,10 @@ class OpenAIVectorStoreMixin(ABC):
             in_progress=0,
             total=0,
         )
+        if not params.chunking_strategy or params.chunking_strategy.type == "auto":
+            chunking_strategy = VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig())
+        else:
+            chunking_strategy = params.chunking_strategy
         store_info: dict[str, Any] = {
             "id": vector_store_id,
             "object": "vector_store",
@@ -426,7 +431,7 @@ class OpenAIVectorStoreMixin(ABC):
             "expires_at": None,
             "last_active_at": created_at,
             "file_ids": [],
-            "chunking_strategy": params.chunking_strategy,
+            "chunking_strategy": chunking_strategy.model_dump(),
         }
 
         # Add provider information to metadata if provided
