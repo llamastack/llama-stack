@@ -91,40 +91,36 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authorization_fallback_to_headers(compat_client, text_model_id):
-    """Test that authorization parameter doesn't override existing Authorization header."""
+def test_mcp_authorization_error_when_both_provided(compat_client, text_model_id):
+    """Test that providing both headers['Authorization'] and authorization field raises an error."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
-    # Headers should take precedence - this test uses headers auth
-    test_token = "headers-token-123"
+    test_token = "test-token-123"
     with make_mcp_server(required_auth_token=test_token) as mcp_server_info:
         tools = setup_mcp_tools(
             [
                 {
                     "type": "mcp",
-                    "server_label": "headers-mcp",
+                    "server_label": "both-auth-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
                     "headers": {"Authorization": f"Bearer {test_token}"},
-                    "authorization": "should-not-override",  # Just the token
+                    "authorization": "should-cause-error",  # This should trigger an error
                 }
             ],
             mcp_server_info,
         )
 
-        # Create response - headers should take precedence
-        response = compat_client.responses.create(
-            model=text_model_id,
-            input="What is the boiling point of myawesomeliquid?",
-            tools=tools,
-            stream=False,
-        )
-
-        # Verify operations succeeded with headers auth
-        assert len(response.output) >= 3
-        assert response.output[0].type == "mcp_list_tools"
-        assert response.output[1].type == "mcp_call"
-        assert response.output[1].error is None
+        # Create response - should raise ValueError
+        with pytest.raises(
+            ValueError, match="Cannot specify Authorization in both 'headers' and 'authorization' fields"
+        ):
+            compat_client.responses.create(
+                model=text_model_id,
+                input="What is the boiling point of myawesomeliquid?",
+                tools=tools,
+                stream=False,
+            )
 
 
 def test_mcp_authorization_backward_compatibility(compat_client, text_model_id):

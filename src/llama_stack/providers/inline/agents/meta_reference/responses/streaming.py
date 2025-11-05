@@ -1082,11 +1082,15 @@ class StreamingResponseOrchestrator:
             # Prepare headers with authorization from tool config
             headers = dict(mcp_tool.headers or {})
             if mcp_tool.authorization:
-                # Don't override existing Authorization header (case-insensitive check)
+                # Check if Authorization header already exists (case-insensitive check)
                 existing_keys_lower = {k.lower() for k in headers.keys()}
-                if "authorization" not in existing_keys_lower:
-                    # OAuth access token - add "Bearer " prefix
-                    headers["Authorization"] = f"Bearer {mcp_tool.authorization}"
+                if "authorization" in existing_keys_lower:
+                    raise ValueError(
+                        "Cannot specify Authorization in both 'headers' and 'authorization' fields. "
+                        "Please use only the 'authorization' field."
+                    )
+                # OAuth access token - add "Bearer " prefix
+                headers["Authorization"] = f"Bearer {mcp_tool.authorization}"
 
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(

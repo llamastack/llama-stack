@@ -302,11 +302,15 @@ class ToolExecutor:
                 # Prepare headers with authorization from tool config
                 headers = dict(mcp_tool.headers or {})
                 if mcp_tool.authorization:
-                    # Don't override existing Authorization header (case-insensitive check)
+                    # Check if Authorization header already exists (case-insensitive check)
                     existing_keys_lower = {k.lower() for k in headers.keys()}
-                    if "authorization" not in existing_keys_lower:
-                        # OAuth access token - add "Bearer " prefix
-                        headers["Authorization"] = f"Bearer {mcp_tool.authorization}"
+                    if "authorization" in existing_keys_lower:
+                        raise ValueError(
+                            "Cannot specify Authorization in both 'headers' and 'authorization' fields. "
+                            "Please use only the 'authorization' field."
+                        )
+                    # OAuth access token - add "Bearer " prefix
+                    headers["Authorization"] = f"Bearer {mcp_tool.authorization}"
 
                 async with tracing.span("invoke_mcp_tool", attributes):
                     result = await invoke_mcp_tool(
@@ -369,7 +373,6 @@ class ToolExecutor:
                 mcp_completed_event = OpenAIResponseObjectStreamResponseMcpCallCompleted(
                     sequence_number=sequence_number,
                 )
-                yield ToolExecutionResult(stream_event=mcp_completed_event, sequence_number=sequence_number)
         elif function_name == "web_search":
             sequence_number += 1
             web_completion_event = OpenAIResponseObjectStreamResponseWebSearchCallCompleted(
@@ -485,6 +488,8 @@ class ToolExecutor:
             input_message = OpenAIToolMessageParam(content=msg_content, tool_call_id=tool_call_id)  # type: ignore[arg-type]
         else:
             text = str(error_exc) if error_exc else "Tool execution failed"
-            input_message = OpenAIToolMessageParam(content=text, tool_call_id=tool_call_id)
+            input_message = OpenAIToolMessageParam(
+                content=text, tool_call_id=tool_call_id
+            )
 
         return message, input_message
