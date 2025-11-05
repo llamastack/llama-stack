@@ -1,0 +1,12 @@
+{
+  "default": [
+    {"suite": "base", "setup": "ollama"},
+    {"suite": "vision", "setup": "ollama-vision"},
+    {"suite": "responses", "setup": "gpt"}
+  ],
+  "schedules": {
+    "1 0 * * 0": [
+      {"suite": "base", "setup": "vllm"}
+    ]
+  }
+}
