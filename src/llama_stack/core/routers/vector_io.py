@@ -292,6 +292,8 @@ class VectorIORouter(VectorIO):
         chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> VectorStoreFileObject:
         logger.debug(f"VectorIORouter.openai_attach_file_to_vector_store: {vector_store_id}, {file_id}")
+        if chunking_strategy is None or chunking_strategy.type == "auto":
+            chunking_strategy = VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig())
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_attach_file_to_vector_store(
             vector_store_id=vector_store_id,
