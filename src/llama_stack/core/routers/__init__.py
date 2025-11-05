@@ -45,6 +45,16 @@ async def get_routing_table_impl(
         raise ValueError(f"API {api.value} not found in router map")
 
     impl = api_to_tables[api.value](impls_by_provider_id, dist_registry, policy)
+
+    # Apply tracing to routing table if any base class has __trace_protocol__ marker
+    # (Tracing will be no-op if telemetry is disabled)
+    traced_classes = [base for base in reversed(impl.__class__.__mro__) if getattr(base, "__trace_protocol__", False)]
+    if traced_classes:
+        from llama_stack.core.telemetry.trace_protocol import trace_protocol
+
+        for cls in traced_classes:
+            trace_protocol(cls)
+
     await impl.initialize()
     return impl
 
@@ -92,12 +102,18 @@ async def get_auto_router_impl(
         api_to_dep_impl["safety_config"] = run_config.safety
 
     impl = api_to_routers[api.value](routing_table, **api_to_dep_impl)
+
+    # Apply tracing to router implementation BEFORE initialize() if telemetry is enabled
+    # Apply to all classes in MRO that have __trace_protocol__ marker to ensure inherited methods are wrapped
+    if run_config.telemetry.enabled:
+        traced_classes = [
+            base for base in reversed(impl.__class__.__mro__) if getattr(base, "__trace_protocol__", False)
+        ]
+        if traced_classes:
+            from llama_stack.core.telemetry.trace_protocol import trace_protocol
+
+            for cls in traced_classes:
+                trace_protocol(cls)
+
     await impl.initialize()
-
-    # Apply tracing to router implementation if telemetry is enabled and protocol wants tracing
-    if run_config.telemetry.enabled and getattr(impl.__class__, "__trace_protocol__", False):
-        from llama_stack.core.telemetry.trace_protocol import trace_protocol
-
-        trace_protocol(impl.__class__)
-
     return impl
