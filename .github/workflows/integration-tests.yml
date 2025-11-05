@@ -58,7 +58,7 @@ jobs:
         run: |
           # Generate matrix from CI_MATRIX in tests/integration/suites.py
           # Supports schedule-based and manual input overrides
-          MATRIX=$(python3 scripts/generate_ci_matrix.py \
+          MATRIX=$(PYTHONPATH=. python3 scripts/generate_ci_matrix.py \
             --schedule "${{ github.event.schedule }}" \
             --test-setup "${{ github.event.inputs.test-setup }}")
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
