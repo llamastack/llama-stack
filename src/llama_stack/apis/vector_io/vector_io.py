@@ -13,7 +13,7 @@ from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 from fastapi import Body
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.common.tracing import trace_protocol
+from llama_stack.apis.common.tracing import mark_as_traced
 from llama_stack.apis.inference import InterleavedContent
 from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
@@ -502,7 +502,7 @@ class VectorStoreTable(Protocol):
 
 
 @runtime_checkable
-@trace_protocol
+@mark_as_traced
 class VectorIO(Protocol):
     vector_store_table: VectorStoreTable | None = None
 

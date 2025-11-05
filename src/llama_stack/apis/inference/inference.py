@@ -20,7 +20,7 @@ from typing_extensions import TypedDict
 
 from llama_stack.apis.common.content_types import ContentDelta, InterleavedContent
 from llama_stack.apis.common.responses import MetricResponseMixin, Order
-from llama_stack.apis.common.tracing import trace_protocol
+from llama_stack.apis.common.tracing import mark_as_traced
 from llama_stack.apis.models import Model
 from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 from llama_stack.models.llama.datatypes import (
@@ -1159,7 +1159,7 @@ class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
 
 
 @runtime_checkable
-@trace_protocol
+@mark_as_traced
 class InferenceProvider(Protocol):
     """
     This protocol defines the interface that should be implemented by all inference providers.

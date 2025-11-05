@@ -9,7 +9,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.common.tracing import trace_protocol
+from llama_stack.apis.common.tracing import mark_as_traced
 from llama_stack.apis.inference import OpenAIMessageParam
 from llama_stack.apis.shields import Shield
 from llama_stack.apis.version import LLAMA_STACK_API_V1
@@ -94,7 +94,7 @@ class ShieldStore(Protocol):
 
 
 @runtime_checkable
-@trace_protocol
+@mark_as_traced
 class Safety(Protocol):
     """Safety
 
