@@ -45,7 +45,7 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         if mcp_endpoint is None:
             raise ValueError("mcp_endpoint is required")
         headers = await self.get_headers_from_request(mcp_endpoint.uri)
-        return await list_mcp_tools(mcp_endpoint.uri, headers)
+        return await list_mcp_tools(endpoint=mcp_endpoint.uri, headers=headers)
 
     async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
         tool = await self.tool_store.get_tool(tool_name)
@@ -56,7 +56,12 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
             raise ValueError(f"Endpoint {endpoint} is not a valid HTTP(S) URL")
 
         headers = await self.get_headers_from_request(endpoint)
-        return await invoke_mcp_tool(endpoint, headers, tool_name, kwargs)
+        return await invoke_mcp_tool(
+            endpoint=endpoint,
+            tool_name=tool_name,
+            kwargs=kwargs,
+            headers=headers,
+        )
 
     async def get_headers_from_request(self, mcp_endpoint_uri: str) -> dict[str, str]:
         def canonicalize_uri(uri: str) -> str:
