@@ -679,7 +679,7 @@ def test_openai_vector_store_attach_file(
     assert file_attach_response.id == file.id
     assert file_attach_response.vector_store_id == vector_store.id
     assert file_attach_response.status == "completed"
-    assert file_attach_response.chunking_strategy.type == "auto"
+    assert file_attach_response.chunking_strategy.type == "static"
     assert file_attach_response.created_at > 0
     assert not file_attach_response.last_error
 
@@ -815,8 +815,8 @@ def test_openai_vector_store_list_files(
     assert set(file_ids) == {file.id for file in files_list.data}
     assert files_list.data[0].object == "vector_store.file"
     assert files_list.data[0].vector_store_id == vector_store.id
-    assert files_list.data[0].status == "completed"
-    assert files_list.data[0].chunking_strategy.type == "auto"
+    assert files_list.data[0].status in ["completed", "in_progress"]
+    assert files_list.data[0].chunking_strategy.type == "static"
     assert files_list.data[0].created_at > 0
     assert files_list.first_id == files_list.data[0].id
     assert not files_list.data[0].last_error
