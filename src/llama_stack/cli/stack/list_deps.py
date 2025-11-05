@@ -46,6 +46,10 @@ class StackListDeps(Subcommand):
     def _run_stack_list_deps_command(self, args: argparse.Namespace) -> None:
         # always keep implementation completely silo-ed away from CLI so CLI
         # can be fast to load and reduces dependencies
+        if not args.config and not args.providers:
+            self.parser.print_help()
+            self.parser.exit()
+
         from ._list_deps import run_stack_list_deps_command
 
         return run_stack_list_deps_command(args)
