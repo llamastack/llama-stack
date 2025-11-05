@@ -33,7 +33,7 @@ def test_mcp_authorization_bearer(compat_client, text_model_id):
                     "type": "mcp",
                     "server_label": "auth-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authorization": f"Bearer {test_token}",
+                    "authorization": test_token,  # Just the token, not "Bearer <token>"
                 }
             ],
             mcp_server_info,
@@ -70,7 +70,7 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
                     "type": "mcp",
                     "server_label": "auth2-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authorization": f"Bearer {test_token}",
+                    "authorization": test_token,  # Just the token, not "Bearer <token>"
                 }
             ],
             mcp_server_info,
@@ -106,7 +106,7 @@ def test_mcp_authorization_fallback_to_headers(compat_client, text_model_id):
                     "server_label": "headers-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
                     "headers": {"Authorization": f"Bearer {test_token}"},
-                    "authorization": "Bearer should-not-override",
+                    "authorization": "should-not-override",  # Just the token
                 }
             ],
             mcp_server_info,

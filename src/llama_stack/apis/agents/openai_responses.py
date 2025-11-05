@@ -487,7 +487,7 @@ class OpenAIResponseInputToolMCP(BaseModel):
     :param server_label: Label to identify this MCP server
     :param server_url: URL endpoint of the MCP server
     :param headers: (Optional) HTTP headers to include when connecting to the server
-    :param authorization: (Optional) Bearer token authorization string (format: "Bearer <token>")
+    :param authorization: (Optional) OAuth access token for authenticating with the MCP server (provide just the token, not "Bearer <token>")
     :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
     :param allowed_tools: (Optional) Restriction on which tools can be used from this server
     """
@@ -496,8 +496,8 @@ class OpenAIResponseInputToolMCP(BaseModel):
     server_label: str
     server_url: str
     headers: dict[str, Any] | None = None
-    # OpenAI's MCP authorization currently only supports bearer tokens as a simple string
-    # Format: "Bearer <token>" (e.g., "Bearer my-secret-token")
+    # OAuth access token for MCP server authentication
+    # Provide just the token (e.g., "my-secret-token"), the "Bearer " prefix will be added automatically
     authorization: str | None = None
 
     require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"

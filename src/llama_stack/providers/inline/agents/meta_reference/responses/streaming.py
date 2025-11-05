@@ -1085,7 +1085,8 @@ class StreamingResponseOrchestrator:
                 # Don't override existing Authorization header (case-insensitive check)
                 existing_keys_lower = {k.lower() for k in headers.keys()}
                 if "authorization" not in existing_keys_lower:
-                    headers["Authorization"] = mcp_tool.authorization
+                    # OAuth access token - add "Bearer " prefix
+                    headers["Authorization"] = f"Bearer {mcp_tool.authorization}"
 
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(

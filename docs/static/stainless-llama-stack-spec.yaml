@@ -7135,7 +7135,8 @@ components:
         authorization:
           type: string
           description: >-
-            (Optional) Bearer token authorization string (format: "Bearer <token>")
+            (Optional) OAuth access token for authenticating with the MCP server (provide
+            just the token, not "Bearer <token>")
         require_approval:
           oneOf:
             - type: string
