@@ -43,14 +43,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'src/llama_stack/ui/'
+          cache-dependency-path: 'src/llama_stack_ui/'
 
       - name: Set up uv
         uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
 
       - name: Install npm dependencies
         run: npm ci
-        working-directory: src/llama_stack/ui
+        working-directory: src/llama_stack_ui
 
       - name: Install pre-commit
         run: python -m pip install pre-commit
