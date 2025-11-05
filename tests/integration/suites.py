@@ -180,16 +180,3 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         default_setup="ollama-vision",
     ),
 }
-
-# CI test matrix - single source of truth for continuous integration test configurations
-# This is used by:
-# - .github/workflows/integration-tests.yml (CI jobs)
-# - scripts/cleanup_recordings.py (unused recording cleanup)
-#
-# Each entry defines a (suite, setup) pair that runs in CI.
-# Note: Special test configurations (vllm weekly tests, manual inputs) are handled in the CI workflow.
-CI_MATRIX = [
-    {"suite": "base", "setup": "ollama"},
-    {"suite": "vision", "setup": "ollama-vision"},
-    {"suite": "responses", "setup": "gpt"},
-]

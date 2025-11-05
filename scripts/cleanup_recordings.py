@@ -9,7 +9,7 @@
 Clean up unused test recordings based on CI test collection.
 
 This script:
-1. Resolves the CI test matrix by combining the default CI_MATRIX with scheduled overrides
+1. Reads CI matrix definitions from tests/integration/ci_matrix.json (default + scheduled overrides)
 2. Uses pytest --collect-only with --json-report to gather all test IDs that run in CI
 3. Compares against existing recordings to identify unused ones
 4. Optionally deletes unused recordings
@@ -34,45 +34,43 @@ from collections import defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-from tests.integration.suites import CI_MATRIX  # noqa: E402
 
-# Additional scheduled CI configurations (keep in sync with scripts/generate_ci_matrix.py)
-ADDITIONAL_CI_CONFIGS = [
-    {"suite": "base", "setup": "vllm"},  # Weekly vLLM coverage
-]
+# Load CI matrix from JSON file
+CI_MATRIX_FILE = REPO_ROOT / "tests/integration/ci_matrix.json"
+with open(CI_MATRIX_FILE) as f:
+    _matrix_config = json.load(f)
+
+DEFAULT_CI_MATRIX: list[dict[str, str]] = _matrix_config["default"]
+SCHEDULED_MATRICES: dict[str, list[dict[str, str]]] = _matrix_config.get("schedules", {})
 
 
-def load_ci_configs() -> list[dict[str, str]]:
-    """Return all (suite, setup) combinations exercised in CI."""
-
-    configs: list[dict[str, str]] = []
+def _unique_configs(entries):
     seen: set[tuple[str, str]] = set()
-
-    def add(entry: dict[str, str]) -> None:
-        suite = entry.get("suite")
-        setup = entry.get("setup")
-        if not suite or not setup:
-            raise RuntimeError(f"Invalid CI matrix entry: {entry}")
+    for entry in entries:
+        suite = entry["suite"]
+        setup = entry["setup"]
         key = (suite, setup)
         if key in seen:
-            return
+            continue
         seen.add(key)
-        configs.append({"suite": suite, "setup": setup})
-
-    for entry in CI_MATRIX:
-        add(entry)
-    for entry in ADDITIONAL_CI_CONFIGS:
-        add(entry)
-
-    return configs
+        yield {"suite": suite, "setup": setup}
 
 
-def collect_ci_tests(ci_configs: list[dict[str, str]]):
+def iter_all_ci_configs() -> list[dict[str, str]]:
+    """Return unique CI configs across default and scheduled matrices."""
+    combined = list(DEFAULT_CI_MATRIX)
+    for configs in SCHEDULED_MATRICES.values():
+        combined.extend(configs)
+    return list(_unique_configs(combined))
+
+
+def collect_ci_tests():
     """Collect all test IDs that would run in CI using --collect-only with JSON output."""
 
     all_test_ids = set()
+    configs = iter_all_ci_configs()
 
-    for config in ci_configs:
+    for config in configs:
         print(f"Collecting tests for suite={config['suite']}, setup={config['setup']}...")
 
         # Create a temporary file for JSON report
@@ -135,7 +133,7 @@ def collect_ci_tests(ci_configs: list[dict[str, str]]):
                 os.unlink(json_report_file)
 
     print(f"\nTotal unique test IDs collected: {len(all_test_ids)}")
-    return all_test_ids
+    return all_test_ids, configs
 
 
 def get_base_test_id(test_id: str) -> str:
@@ -247,14 +245,14 @@ def main():
     print("Recording Cleanup Utility")
     print("=" * 60)
 
-    ci_configs = load_ci_configs()
+    ci_configs = iter_all_ci_configs()
 
     print(f"\nDetected CI configurations: {len(ci_configs)}")
     for config in ci_configs:
         print(f"  - suite={config['suite']}, setup={config['setup']}")
 
     # Collect test IDs from CI configurations
-    ci_test_ids = collect_ci_tests(ci_configs)
+    ci_test_ids, _ = collect_ci_tests()
 
     if args.manifest:
         with open(args.manifest, "w") as f:

@@ -6,20 +6,22 @@
 # the root directory of this source tree.
 
 """
-Generate CI test matrix from suites.py with schedule/input overrides.
+Generate CI test matrix from ci_matrix.json with schedule/input overrides.
 
 This script is used by .github/workflows/integration-tests.yml to generate
-the test matrix dynamically based on the CI_MATRIX definition in suites.py.
+the test matrix dynamically based on the CI_MATRIX definition.
 """
 
 import json
-import sys
 from pathlib import Path
 
-# Add tests/integration to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "tests/integration"))
+CI_MATRIX_FILE = Path(__file__).parent.parent / "tests/integration/ci_matrix.json"
 
-from suites import CI_MATRIX
+with open(CI_MATRIX_FILE) as f:
+    matrix_config = json.load(f)
+
+DEFAULT_MATRIX = matrix_config["default"]
+SCHEDULE_MATRICES: dict[str, list[dict[str, str]]] = matrix_config.get("schedules", {})
 
 
 def generate_matrix(schedule="", test_setup=""):
@@ -33,15 +35,15 @@ def generate_matrix(schedule="", test_setup=""):
     Returns:
         Matrix configuration as JSON string
     """
-    # Weekly vllm test on Sunday
-    if schedule == "1 0 * * 0":
-        matrix = [{"suite": "base", "setup": "vllm"}]
+    # Weekly scheduled test matrices
+    if schedule and schedule in SCHEDULE_MATRICES:
+        matrix = SCHEDULE_MATRICES[schedule]
     # Manual input for specific setup
     elif test_setup == "ollama-vision":
         matrix = [{"suite": "vision", "setup": "ollama-vision"}]
-    # Default: use CI_MATRIX from suites.py
+    # Default: use JSON-defined matrix
     else:
-        matrix = CI_MATRIX
+        matrix = DEFAULT_MATRIX
 
     # GitHub Actions expects {"include": [...]} format
     return json.dumps({"include": matrix})
