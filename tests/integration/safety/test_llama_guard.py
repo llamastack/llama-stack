@@ -40,7 +40,7 @@ def text_model(request, client_with_models):
     model_id = request.param
 
     # Check if the model is available
-    available_models = [m.identifier for m in client_with_models.models.list()]
+    available_models = [m.id for m in client_with_models.models.list()]
 
     if model_id not in available_models:
         pytest.skip(
@@ -76,7 +76,7 @@ def vision_model(request, client_with_models):
     model_id = request.param
 
     # Check if the model is available
-    available_models = [m.identifier for m in client_with_models.models.list()]
+    available_models = [m.id for m in client_with_models.models.list()]
 
     if model_id not in available_models:
         pytest.skip(

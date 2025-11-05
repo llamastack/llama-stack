@@ -186,11 +186,35 @@ if ! command -v pytest &>/dev/null; then
     exit 1
 fi
 
+# Helper function to find next available port
+find_available_port() {
+    local start_port=$1
+    local port=$start_port
+    for ((i=0; i<100; i++)); do
+        if ! lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            echo $port
+            return 0
+        fi
+        ((port++))
+    done
+    echo "Failed to find available port starting from $start_port" >&2
+    return 1
+}
+
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
+    # Find an available port for the server
+    LLAMA_STACK_PORT=$(find_available_port 8321)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: $LLAMA_STACK_PORT"
+        exit 1
+    fi
+    export LLAMA_STACK_PORT
+    echo "Will use port: $LLAMA_STACK_PORT"
+
     stop_server() {
         echo "Stopping Llama Stack Server..."
-        pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
+        pids=$(lsof -i :$LLAMA_STACK_PORT | awk 'NR>1 {print $2}')
         if [[ -n "$pids" ]]; then
             echo "Killing Llama Stack Server processes: $pids"
             kill -9 $pids
@@ -200,42 +224,37 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         echo "Llama Stack Server stopped"
     }
 
-    # check if server is already running
-    if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
-        echo "Llama Stack Server is already running, skipping start"
-    else
-        echo "=== Starting Llama Stack Server ==="
-        export LLAMA_STACK_LOG_WIDTH=120
+    echo "=== Starting Llama Stack Server ==="
+    export LLAMA_STACK_LOG_WIDTH=120
 
-        # Configure telemetry collector for server mode
-        # Use a fixed port for the OTEL collector so the server can connect to it
-        COLLECTOR_PORT=4317
-        export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
-        export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
-        export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
-        export OTEL_BSP_SCHEDULE_DELAY="200"
-        export OTEL_BSP_EXPORT_TIMEOUT="2000"
+    # Configure telemetry collector for server mode
+    # Use a fixed port for the OTEL collector so the server can connect to it
+    COLLECTOR_PORT=4317
+    export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+    export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
+    export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+    export OTEL_BSP_SCHEDULE_DELAY="200"
+    export OTEL_BSP_EXPORT_TIMEOUT="2000"
 
-        # remove "server:" from STACK_CONFIG
-        stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
-        nohup llama stack run $stack_config >server.log 2>&1 &
+    # remove "server:" from STACK_CONFIG
+    stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
+    nohup llama stack run $stack_config >server.log 2>&1 &
 
-        echo "Waiting for Llama Stack Server to start..."
-        for i in {1..30}; do
-            if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
-                echo "✅ Llama Stack Server started successfully"
-                break
-            fi
-            if [[ $i -eq 30 ]]; then
-                echo "❌ Llama Stack Server failed to start"
-                echo "Server logs:"
-                cat server.log
-                exit 1
-            fi
-            sleep 1
-        done
-        echo ""
-    fi
+    echo "Waiting for Llama Stack Server to start on port $LLAMA_STACK_PORT..."
+    for i in {1..30}; do
+        if curl -s http://localhost:$LLAMA_STACK_PORT/v1/health 2>/dev/null | grep -q "OK"; then
+            echo "✅ Llama Stack Server started successfully"
+            break
+        fi
+        if [[ $i -eq 30 ]]; then
+            echo "❌ Llama Stack Server failed to start"
+            echo "Server logs:"
+            cat server.log
+            exit 1
+        fi
+        sleep 1
+    done
+    echo ""
 
     trap stop_server EXIT ERR INT TERM
 fi
@@ -259,7 +278,14 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
 
     # Extract distribution name from docker:distro format
     DISTRO=$(echo "$STACK_CONFIG" | sed 's/^docker://')
-    export LLAMA_STACK_PORT=8321
+    # Find an available port for the docker container
+    LLAMA_STACK_PORT=$(find_available_port 8321)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: $LLAMA_STACK_PORT"
+        exit 1
+    fi
+    export LLAMA_STACK_PORT
+    echo "Will use port: $LLAMA_STACK_PORT"
 
     echo "=== Building Docker Image for distribution: $DISTRO ==="
     containerfile="$ROOT_DIR/containers/Containerfile"
