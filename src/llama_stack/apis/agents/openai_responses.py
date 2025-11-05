@@ -496,8 +496,6 @@ class OpenAIResponseInputToolMCP(BaseModel):
     server_label: str
     server_url: str
     headers: dict[str, Any] | None = None
-    # OAuth access token for MCP server authentication
-    # Provide just the token (e.g., "my-secret-token"), the "Bearer " prefix will be added automatically
     authorization: str | None = None
 
     require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"

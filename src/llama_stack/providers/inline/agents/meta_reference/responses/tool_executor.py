@@ -299,25 +299,14 @@ class ToolExecutor:
                     "server_url": mcp_tool.server_url,
                     "tool_name": function_name,
                 }
-                # Prepare headers with authorization from tool config
-                headers = dict(mcp_tool.headers or {})
-                if mcp_tool.authorization:
-                    # Check if Authorization header already exists (case-insensitive check)
-                    existing_keys_lower = {k.lower() for k in headers.keys()}
-                    if "authorization" in existing_keys_lower:
-                        raise ValueError(
-                            "Cannot specify Authorization in both 'headers' and 'authorization' fields. "
-                            "Please use only the 'authorization' field."
-                        )
-                    # OAuth access token - add "Bearer " prefix
-                    headers["Authorization"] = f"Bearer {mcp_tool.authorization}"
-
+                # Invoke MCP tool with authorization from tool config
                 async with tracing.span("invoke_mcp_tool", attributes):
                     result = await invoke_mcp_tool(
                         endpoint=mcp_tool.server_url,
-                        headers=headers,
                         tool_name=function_name,
                         kwargs=tool_kwargs,
+                        headers=mcp_tool.headers,
+                        authorization=mcp_tool.authorization,
                     )
             elif function_name == "knowledge_search":
                 response_file_search_tool = (
