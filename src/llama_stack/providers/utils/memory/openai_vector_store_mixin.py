@@ -426,7 +426,7 @@ class OpenAIVectorStoreMixin(ABC):
             "expires_at": None,
             "last_active_at": created_at,
             "file_ids": [],
-            "chunking_strategy": params.chunking_strategy,
+            "chunking_strategy": params.chunking_strategy.model_dump(),
         }
 
         # Add provider information to metadata if provided
