@@ -350,7 +350,7 @@ def test_openai_vector_store_search_empty(
     assert search_response is not None
     assert hasattr(search_response, "data")
     assert len(search_response.data) == 0  # Empty store should return no results
-    assert search_response.search_query == "test query"
+    assert search_response.search_query == ["test query"]
     assert search_response.has_more is False
 
 
