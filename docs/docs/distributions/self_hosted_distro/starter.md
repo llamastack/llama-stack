@@ -170,8 +170,7 @@ The container will run the distribution with a SQLite store by default. This sto
 - Agents store: store agent configurations (sessions, turns, etc.)
 - Agents Responses store: store responses from the agents
 
-However, you can override the default behavior by setting the `ENABLE_POSTGRES_STORE` environment variable to `1`.
-To run the distribution with a Postgres store, you can use the following command:
+However, you can use PostgreSQL instead by running the `starter::run-with-postgres-store.yaml` configuration:
 
 ```bash
 docker run \
@@ -186,7 +185,8 @@ docker run \
   -e POSTGRES_DB=your_postgres_db \
   -e POSTGRES_USER=your_postgres_user \
   -e POSTGRES_PASSWORD=your_postgres_password \
-  -e ENABLE_POSTGRES_STORE=1
+  llamastack/distribution-starter \
+  starter::run-with-postgres-store.yaml
 ```
 
 Postgres environment variables:
@@ -205,8 +205,11 @@ Ensure you have configured the starter distribution using the environment variab
 # Install dependencies for the starter distribution
 uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
 
-# Run the server
+# Run the server (with SQLite - default)
 uv run --with llama-stack llama stack run starter
+
+# Or run with PostgreSQL
+uv run --with llama-stack llama stack run starter::run-with-postgres-store.yaml
 ```
 
 ## Example Usage

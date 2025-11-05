@@ -135,11 +135,6 @@ RUN cat <<'EOF' >/usr/local/bin/llama-stack-entrypoint.sh
 #!/bin/sh
 set -e
 
-# Check if ENABLE_POSTGRES_STORE is set to switch to postgres config
-if [ "${ENABLE_POSTGRES_STORE:-}" = "1" ] && [ "$DISTRO_NAME" = "starter" ]; then
-  exec llama stack run "starter::run-with-postgres-store.yaml" "$@"
-fi
-
 if [ -n "$RUN_CONFIG_PATH" ] && [ -f "$RUN_CONFIG_PATH" ]; then
   exec llama stack run "$RUN_CONFIG_PATH" "$@"
 fi
