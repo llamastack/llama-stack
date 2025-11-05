@@ -27,7 +27,6 @@ from llama_stack.apis.tools import (
     RAGDocument,
     RAGQueryConfig,
     RAGQueryResult,
-    RAGToolRuntime,
     ToolDef,
     ToolGroup,
     ToolInvocationResult,
@@ -91,7 +90,7 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
             return content_str.encode("utf-8"), "text/plain"
 
 
-class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, RAGToolRuntime):
+class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
     def __init__(
         self,
         config: RagToolRuntimeConfig,

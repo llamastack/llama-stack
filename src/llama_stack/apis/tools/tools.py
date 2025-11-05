@@ -16,8 +16,6 @@ from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
-from .rag_tool import RAGToolRuntime
-
 
 @json_schema_type
 class ToolDef(BaseModel):
@@ -194,8 +192,6 @@ class SpecialToolGroup(Enum):
 @trace_protocol
 class ToolRuntime(Protocol):
     tool_store: ToolStore | None = None
-
-    rag_tool: RAGToolRuntime | None = None
 
     # TODO: This needs to be renamed once OPEN API generator name conflict issue is fixed.
     @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1)
