@@ -22,6 +22,8 @@ on:
       - '.github/actions/setup-ollama/action.yml'
       - '.github/actions/setup-test-environment/action.yml'
       - '.github/actions/run-and-record-tests/action.yml'
+      - 'scripts/integration-tests.sh'
+      - 'scripts/generate_ci_matrix.py'
   schedule:
     # If changing the cron schedule, update the provider in the test-matrix job
     - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC
@@ -43,8 +45,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Generate test matrix
+        id: set-matrix
+        run: |
+          # Generate matrix from CI_MATRIX in tests/integration/suites.py
+          # Supports schedule-based and manual input overrides
+          MATRIX=$(PYTHONPATH=. python3 scripts/generate_ci_matrix.py \
+            --schedule "${{ github.event.schedule }}" \
+            --test-setup "${{ github.event.inputs.test-setup }}")
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "Generated matrix: $MATRIX"
 
   run-replay-mode-tests:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.config.setup, matrix.python-version, matrix.client-version, matrix.config.suite) }}
 
@@ -55,18 +76,9 @@ jobs:
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        # Define (setup, suite) pairs - they are always matched and cannot be independent
-        # Weekly schedule (Sun 1 AM): vllm+base
-        # Input test-setup=ollama-vision: ollama-vision+vision
-        # Default (including test-setup=ollama): ollama+base, ollama-vision+vision, gpt+responses
-        config: >-
-          ${{
-            github.event.schedule == '1 0 * * 0'
-              && fromJSON('[{"setup": "vllm", "suite": "base"}]')
-            || github.event.inputs.test-setup == 'ollama-vision'
-              && fromJSON('[{"setup": "ollama-vision", "suite": "vision"}]')
-            || fromJSON('[{"setup": "ollama", "suite": "base"}, {"setup": "ollama-vision", "suite": "vision"}]')
-          }}
+        # Test configurations: Generated from CI_MATRIX in tests/integration/suites.py
+        # See scripts/generate_ci_matrix.py for generation logic
+        config: ${{ fromJSON(needs.generate-matrix.outputs.matrix).include }}
 
     steps:
       - name: Checkout repository
