@@ -231,7 +231,7 @@ providers:
     config:
       kvstore:
         namespace: batches
-        backend: kv_default
+        backend: kv_postgres
 storage:
   backends:
     kv_postgres:

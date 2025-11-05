@@ -282,6 +282,18 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                             ),
                         )
                     ],
+                    "batches": [
+                        Provider(
+                            provider_id="reference",
+                            provider_type="inline::reference",
+                            config=dict(
+                                kvstore=KVStoreReference(
+                                    backend="kv_postgres",
+                                    namespace="batches",
+                                ).model_dump(exclude_none=True),
+                            ),
+                        )
+                    ],
                 },
                 storage_backends={
                     "kv_postgres": PostgresKVStoreConfig.sample_run_config(),
