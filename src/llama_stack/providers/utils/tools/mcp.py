@@ -27,6 +27,7 @@ from llama_stack.providers.utils.tools.ttl_dict import TTLDict
 
 logger = get_logger(__name__, category="tools")
 
+
 def prepare_mcp_headers(base_headers: dict[str, str] | None, authorization: str | None) -> dict[str, str]:
     """
     Prepare headers for MCP requests with authorization support.

@@ -45,9 +45,7 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         if mcp_endpoint is None:
             raise ValueError("mcp_endpoint is required")
         headers, authorization = await self.get_headers_from_request(mcp_endpoint.uri)
-        return await list_mcp_tools(
-            endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization
-        )
+        return await list_mcp_tools(endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization)
 
     async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
         tool = await self.tool_store.get_tool(tool_name)
@@ -66,9 +64,7 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
             authorization=authorization,
         )
 
-    async def get_headers_from_request(
-        self, mcp_endpoint_uri: str
-    ) -> tuple[dict[str, str], str | None]:
+    async def get_headers_from_request(self, mcp_endpoint_uri: str) -> tuple[dict[str, str], str | None]:
         """
         Extract headers and authorization from request provider data.
 
