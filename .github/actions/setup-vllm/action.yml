@@ -11,13 +11,14 @@ runs:
           --name vllm \
           -p 8000:8000 \
           --privileged=true \
-          quay.io/higginsd/vllm-cpu:65393ee064 \
+          quay.io/higginsd/vllm-cpu:65393ee064-qwen3 \
           --host 0.0.0.0 \
           --port 8000 \
           --enable-auto-tool-choice \
-          --tool-call-parser llama3_json \
-          --model /root/.cache/Llama-3.2-1B-Instruct \
-          --served-model-name meta-llama/Llama-3.2-1B-Instruct
+          --tool-call-parser hermes \
+          --model /root/.cache/Qwen3-0.6B \
+          --served-model-name Qwen/Qwen3-0.6B \
+          --max-model-len 8192
 
           # Wait for vllm to be ready
           echo "Waiting for vllm to be ready..."

@@ -260,7 +260,7 @@ class VectorStoreSearchResponsePage(BaseModel):
     """
 
     object: str = "vector_store.search_results.page"
-    search_query: str
+    search_query: list[str]
     data: list[VectorStoreSearchResponse]
     has_more: bool = False
     next_page: str | None = None
@@ -478,7 +478,7 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
     name: str | None = None
     file_ids: list[str] | None = None
     expires_after: dict[str, Any] | None = None
-    chunking_strategy: dict[str, Any] | None = None
+    chunking_strategy: VectorStoreChunkingStrategy | None = None
     metadata: dict[str, Any] | None = None
 
 
