@@ -487,7 +487,7 @@ class OpenAIResponseInputToolMCP(BaseModel):
     :param server_label: Label to identify this MCP server
     :param server_url: URL endpoint of the MCP server
     :param headers: (Optional) HTTP headers to include when connecting to the server
-    :param authorization: (Optional) OAuth access token for authenticating with the MCP server (provide just the token, not "Bearer <token>")
+    :param authorization: (Optional) OAuth access token for authenticating with the MCP server
     :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
     :param allowed_tools: (Optional) Restriction on which tools can be used from this server
     """
