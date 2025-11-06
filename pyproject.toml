@@ -104,6 +104,7 @@ type_checking = [
     "lm-format-enforcer",
     "mcp",
     "ollama",
+    "llama-stack-client>=0.3.0",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
