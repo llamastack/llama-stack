@@ -81,9 +81,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
             "server_label": test_toolgroup_id,
             "require_approval": "never",
             "allowed_tools": [tool.name for tool in tools_list],
-            "headers": {
-                "Authorization": f"Bearer {AUTH_TOKEN}",
-            },
+            "authorization": AUTH_TOKEN,
         }
     ]
     agent = Agent(
