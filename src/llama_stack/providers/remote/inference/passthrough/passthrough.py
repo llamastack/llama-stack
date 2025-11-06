@@ -5,9 +5,8 @@
 # the root directory of this source tree.
 
 from collections.abc import AsyncIterator
-from typing import Any
 
-from llama_stack_client import AsyncLlamaStackClient
+from openai import AsyncOpenAI
 
 from llama_stack.apis.inference import (
     Inference,
@@ -20,16 +19,20 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsResponse,
 )
 from llama_stack.apis.models import Model
-from llama_stack.core.library_client import convert_pydantic_to_json_value
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack.core.request_headers import NeedsRequestProviderData
 
 from .config import PassthroughImplConfig
 
 
-class PassthroughInferenceAdapter(Inference):
+class PassthroughInferenceAdapter(NeedsRequestProviderData, Inference):
     def __init__(self, config: PassthroughImplConfig) -> None:
-        ModelRegistryHelper.__init__(self)
         self.config = config
+
+    async def initialize(self) -> None:
+        pass
+
+    async def shutdown(self) -> None:
+        pass
 
     async def unregister_model(self, model_id: str) -> None:
         pass
@@ -37,86 +40,96 @@ class PassthroughInferenceAdapter(Inference):
     async def register_model(self, model: Model) -> Model:
         return model
 
-    def _get_client(self) -> AsyncLlamaStackClient:
-        passthrough_url = None
-        passthrough_api_key = None
-        provider_data = None
+    async def list_models(self) -> list[Model]:
+        """List models by calling the downstream /v1/models endpoint."""
+        client = self._get_openai_client()
 
-        if self.config.url is not None:
-            passthrough_url = self.config.url
-        else:
-            provider_data = self.get_request_provider_data()
-            if provider_data is None or not provider_data.passthrough_url:
-                raise ValueError(
-                    'Pass url of the passthrough endpoint in the header X-LlamaStack-Provider-Data as { "passthrough_url": <your passthrough url>}'
-                )
-            passthrough_url = provider_data.passthrough_url
+        response = await client.models.list()
 
-        if self.config.api_key is not None:
-            passthrough_api_key = self.config.api_key.get_secret_value()
-        else:
-            provider_data = self.get_request_provider_data()
-            if provider_data is None or not provider_data.passthrough_api_key:
-                raise ValueError(
-                    'Pass API Key for the passthrough endpoint in the header X-LlamaStack-Provider-Data as { "passthrough_api_key": <your api key>}'
-                )
-            passthrough_api_key = provider_data.passthrough_api_key
+        # Convert from OpenAI format to Llama Stack Model format
+        models = []
+        for model_data in response.data:
+            downstream_model_id = model_data.id
+            custom_metadata = getattr(model_data, "custom_metadata", {}) or {}
 
-        return AsyncLlamaStackClient(
-            base_url=passthrough_url,
-            api_key=passthrough_api_key,
-            provider_data=provider_data,
+            # Prefix identifier with provider ID for local registry
+            local_identifier = f"{self.__provider_id__}/{downstream_model_id}"
+
+            model = Model(
+                identifier=local_identifier,
+                provider_id=self.__provider_id__,
+                provider_resource_id=downstream_model_id,
+                model_type=custom_metadata.get("model_type", "llm"),
+                metadata=custom_metadata,
+            )
+            models.append(model)
+
+        return models
+
+    async def should_refresh_models(self) -> bool:
+        """Passthrough should refresh models since they come from downstream dynamically."""
+        return self.config.refresh_models
+
+    def _get_openai_client(self) -> AsyncOpenAI:
+        """Get an AsyncOpenAI client configured for the downstream server."""
+        base_url = self._get_passthrough_url()
+        api_key = self._get_passthrough_api_key()
+
+        return AsyncOpenAI(
+            base_url=f"{base_url.rstrip('/')}/v1",
+            api_key=api_key,
         )
 
-    async def openai_embeddings(
-        self,
-        params: OpenAIEmbeddingsRequestWithExtraBody,
-    ) -> OpenAIEmbeddingsResponse:
-        raise NotImplementedError()
+    def _get_passthrough_url(self) -> str:
+        """Get the passthrough URL from config or provider data."""
+        if self.config.url is not None:
+            return self.config.url
+
+        provider_data = self.get_request_provider_data()
+        if provider_data is None:
+            raise ValueError(
+                'Pass url of the passthrough endpoint in the header X-LlamaStack-Provider-Data as { "passthrough_url": <your passthrough url>}'
+            )
+        return provider_data.passthrough_url
+
+    def _get_passthrough_api_key(self) -> str:
+        """Get the passthrough API key from config or provider data."""
+        if self.config.auth_credential is not None:
+            return self.config.auth_credential.get_secret_value()
+
+        provider_data = self.get_request_provider_data()
+        if provider_data is None:
+            raise ValueError(
+                'Pass API Key for the passthrough endpoint in the header X-LlamaStack-Provider-Data as { "passthrough_api_key": <your api key>}'
+            )
+        return provider_data.passthrough_api_key
 
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
-        client = self._get_client()
-        model_obj = await self.model_store.get_model(params.model)
-
-        params = params.model_copy()
-        params.model = model_obj.provider_resource_id
-
+        """Forward completion request to downstream using OpenAI client."""
+        client = self._get_openai_client()
         request_params = params.model_dump(exclude_none=True)
-
-        return await client.inference.openai_completion(**request_params)
+        response = await client.completions.create(**request_params)
+        return response  # type: ignore
 
     async def openai_chat_completion(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        client = self._get_client()
-        model_obj = await self.model_store.get_model(params.model)
-
-        params = params.model_copy()
-        params.model = model_obj.provider_resource_id
-
+        """Forward chat completion request to downstream using OpenAI client."""
+        client = self._get_openai_client()
         request_params = params.model_dump(exclude_none=True)
+        response = await client.chat.completions.create(**request_params)
+        return response  # type: ignore
 
-        return await client.inference.openai_chat_completion(**request_params)
-
-    def cast_value_to_json_dict(self, request_params: dict[str, Any]) -> dict[str, Any]:
-        json_params = {}
-        for key, value in request_params.items():
-            json_input = convert_pydantic_to_json_value(value)
-            if isinstance(json_input, dict):
-                json_input = {k: v for k, v in json_input.items() if v is not None}
-            elif isinstance(json_input, list):
-                json_input = [x for x in json_input if x is not None]
-                new_input = []
-                for x in json_input:
-                    if isinstance(x, dict):
-                        x = {k: v for k, v in x.items() if v is not None}
-                    new_input.append(x)
-                json_input = new_input
-
-            json_params[key] = json_input
-
-        return json_params
+    async def openai_embeddings(
+        self,
+        params: OpenAIEmbeddingsRequestWithExtraBody,
+    ) -> OpenAIEmbeddingsResponse:
+        """Forward embeddings request to downstream using OpenAI client."""
+        client = self._get_openai_client()
+        request_params = params.model_dump(exclude_none=True)
+        response = await client.embeddings.create(**request_params)
+        return response  # type: ignore

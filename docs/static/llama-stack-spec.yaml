@@ -9260,6 +9260,70 @@ components:
         - metadata
       title: VectorStoreObject
       description: OpenAI Vector Store object.
+    VectorStoreChunkingStrategy:
+      oneOf:
+        - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+        - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+      discriminator:
+        propertyName: type
+        mapping:
+          auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+          static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+    VectorStoreChunkingStrategyAuto:
+      type: object
+      properties:
+        type:
+          type: string
+          const: auto
+          default: auto
+          description: >-
+            Strategy type, always "auto" for automatic chunking
+      additionalProperties: false
+      required:
+        - type
+      title: VectorStoreChunkingStrategyAuto
+      description: >-
+        Automatic chunking strategy for vector store files.
+    VectorStoreChunkingStrategyStatic:
+      type: object
+      properties:
+        type:
+          type: string
+          const: static
+          default: static
+          description: >-
+            Strategy type, always "static" for static chunking
+        static:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategyStaticConfig'
+          description: >-
+            Configuration parameters for the static chunking strategy
+      additionalProperties: false
+      required:
+        - type
+        - static
+      title: VectorStoreChunkingStrategyStatic
+      description: >-
+        Static chunking strategy with configurable parameters.
+    VectorStoreChunkingStrategyStaticConfig:
+      type: object
+      properties:
+        chunk_overlap_tokens:
+          type: integer
+          default: 400
+          description: >-
+            Number of tokens to overlap between adjacent chunks
+        max_chunk_size_tokens:
+          type: integer
+          default: 800
+          description: >-
+            Maximum number of tokens per chunk, must be between 100 and 4096
+      additionalProperties: false
+      required:
+        - chunk_overlap_tokens
+        - max_chunk_size_tokens
+      title: VectorStoreChunkingStrategyStaticConfig
+      description: >-
+        Configuration for static chunking strategy.
     "OpenAICreateVectorStoreRequestWithExtraBody":
       type: object
       properties:
@@ -9285,15 +9349,7 @@ components:
           description: >-
             (Optional) Expiration policy for the vector store
         chunking_strategy:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
+          $ref: '#/components/schemas/VectorStoreChunkingStrategy'
           description: >-
             (Optional) Strategy for splitting files into chunks
         metadata:
@@ -9369,70 +9425,6 @@ components:
         - deleted
       title: VectorStoreDeleteResponse
       description: Response from deleting a vector store.
-    VectorStoreChunkingStrategy:
-      oneOf:
-        - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-        - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-      discriminator:
-        propertyName: type
-        mapping:
-          auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-          static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-    VectorStoreChunkingStrategyAuto:
-      type: object
-      properties:
-        type:
-          type: string
-          const: auto
-          default: auto
-          description: >-
-            Strategy type, always "auto" for automatic chunking
-      additionalProperties: false
-      required:
-        - type
-      title: VectorStoreChunkingStrategyAuto
-      description: >-
-        Automatic chunking strategy for vector store files.
-    VectorStoreChunkingStrategyStatic:
-      type: object
-      properties:
-        type:
-          type: string
-          const: static
-          default: static
-          description: >-
-            Strategy type, always "static" for static chunking
-        static:
-          $ref: '#/components/schemas/VectorStoreChunkingStrategyStaticConfig'
-          description: >-
-            Configuration parameters for the static chunking strategy
-      additionalProperties: false
-      required:
-        - type
-        - static
-      title: VectorStoreChunkingStrategyStatic
-      description: >-
-        Static chunking strategy with configurable parameters.
-    VectorStoreChunkingStrategyStaticConfig:
-      type: object
-      properties:
-        chunk_overlap_tokens:
-          type: integer
-          default: 400
-          description: >-
-            Number of tokens to overlap between adjacent chunks
-        max_chunk_size_tokens:
-          type: integer
-          default: 800
-          description: >-
-            Maximum number of tokens per chunk, must be between 100 and 4096
-      additionalProperties: false
-      required:
-        - chunk_overlap_tokens
-        - max_chunk_size_tokens
-      title: VectorStoreChunkingStrategyStaticConfig
-      description: >-
-        Configuration for static chunking strategy.
     "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
       type: object
       properties:
@@ -9890,7 +9882,9 @@ components:
           description: >-
             Object type identifier for the search results page
         search_query:
-          type: string
+          type: array
+          items:
+            type: string
           description: >-
             The original search query that was executed
         data:

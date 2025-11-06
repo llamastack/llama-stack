@@ -1,0 +1,84 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestEdgeCases::test_tool_without_schema[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Call the no args tool"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "no_args_tool",
+            "description": "Tool with no arguments",
+            "parameters": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-452805c3c859",
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user wants me to call the no args tool. Let me check the available functions. There's only one tool provided, which is the no_args_tool with no arguments. Since the user didn't specify any parameters, I should just return the tool call as instructed. I need to make sure the JSON is correctly formatted and within the XML tags. Alright, that's all I need.\n</think>\n\n",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-7a67269afe214c85924c5171612bbdbd",
+                  "function": {
+                    "arguments": "{}",
+                    "name": "no_args_tool"
+                  },
+                  "type": "function"
+                }
+              ],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 101,
+          "prompt_tokens": 136,
+          "total_tokens": 237,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
