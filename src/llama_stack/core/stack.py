@@ -309,6 +309,9 @@ def _convert_string_to_proper_type(value: str) -> Any:
     # providers config should be typed this way.
     # TODO: we could try to load the config class and see if the config has a field with type 'str | None'
     # and then convert the empty string to None or not
+    # NOTE: Empty strings from env var defaults (e.g., ${VAR:=}) are converted to None.
+    # Code that uses these values MUST check for None explicitly (not just truthiness)
+    # to avoid converting None to the string "None" later.
     if value == "":
         return None
 

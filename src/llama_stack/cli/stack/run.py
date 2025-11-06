@@ -176,8 +176,17 @@ class StackRun(Subcommand):
             try:
                 config = parse_and_maybe_upgrade_config(config_dict)
                 # Create external_providers_dir if it's specified and doesn't exist
-                if config.external_providers_dir and not os.path.exists(str(config.external_providers_dir)):
-                    os.makedirs(str(config.external_providers_dir), exist_ok=True)
+                if config.external_providers_dir is not None:
+                    ext_dir = Path(config.external_providers_dir)
+                    if not ext_dir.exists():
+                        try:
+                            logger.info(f"Creating external providers directory: {ext_dir}")
+                            ext_dir.mkdir(parents=True, exist_ok=True)
+                        except (OSError, PermissionError) as e:
+                            self.parser.error(
+                                f"Failed to create external_providers_dir '{ext_dir}': {e}\n"
+                                f"Please ensure you have write permissions or specify a different path."
+                            )
             except AttributeError as e:
                 self.parser.error(f"failed to parse config file '{config_file}':\n {e}")
 
