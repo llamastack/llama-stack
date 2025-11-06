@@ -91,8 +91,8 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authorization_error_when_both_provided(compat_client, text_model_id):
-    """Test that providing both headers['Authorization'] and authorization field raises an error."""
+def test_mcp_authorization_error_when_header_provided(compat_client, text_model_id):
+    """Test that providing Authorization in headers raises a security error."""
     if not isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("in-process MCP server is only supported in library client")
 
@@ -102,18 +102,17 @@ def test_mcp_authorization_error_when_both_provided(compat_client, text_model_id
             [
                 {
                     "type": "mcp",
-                    "server_label": "both-auth-mcp",
+                    "server_label": "header-auth-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "headers": {"Authorization": f"Bearer {test_token}"},
-                    "authorization": "should-cause-error",  # This should trigger an error
+                    "headers": {"Authorization": f"Bearer {test_token}"},  # Security risk - should be rejected
                 }
             ],
             mcp_server_info,
         )
 
-        # Create response - should raise ValueError
+        # Create response - should raise ValueError for security reasons
         with pytest.raises(
-            ValueError, match="Cannot specify Authorization in both 'headers' and 'authorization' fields"
+            ValueError, match="For security reasons, Authorization header cannot be passed via 'headers'"
         ):
             compat_client.responses.create(
                 model=text_model_id,

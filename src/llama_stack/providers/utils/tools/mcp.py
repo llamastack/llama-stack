@@ -27,30 +27,33 @@ from llama_stack.providers.utils.tools.ttl_dict import TTLDict
 
 logger = get_logger(__name__, category="tools")
 
-
 def prepare_mcp_headers(base_headers: dict[str, str] | None, authorization: str | None) -> dict[str, str]:
-    """Prepare headers for MCP requests with authorization handling.
+    """
+    Prepare headers for MCP requests with authorization support.
 
     Args:
-        base_headers: Base headers to use (e.g., from mcp_tool.headers)
-        authorization: OAuth access token (just the token, not "Bearer <token>")
+        base_headers: Base headers dictionary (can be None)
+        authorization: OAuth access token (without "Bearer " prefix)
 
     Returns:
-        Final headers dict with Authorization header if authorization is provided
+        Headers dictionary with Authorization header if token provided
 
     Raises:
-        ValueError: If both base_headers contains Authorization and authorization parameter is provided
+        ValueError: If Authorization header is specified in the headers dict (security risk)
     """
     headers = dict(base_headers or {})
 
+    # Security check: reject any Authorization header in the headers dict
+    # Users must use the authorization parameter instead to avoid security risks
+    existing_keys_lower = {k.lower() for k in headers.keys()}
+    if "authorization" in existing_keys_lower:
+        raise ValueError(
+            "For security reasons, Authorization header cannot be passed via 'headers'. "
+            "Please use the 'authorization' parameter instead."
+        )
+
+    # Add Authorization header if token provided
     if authorization:
-        # Check if Authorization header already exists (case-insensitive check)
-        existing_keys_lower = {k.lower() for k in headers.keys()}
-        if "authorization" in existing_keys_lower:
-            raise ValueError(
-                "Cannot specify Authorization in both 'headers' and 'authorization' fields. "
-                "Please use only the 'authorization' field."
-            )
         # OAuth access token - add "Bearer " prefix
         headers["Authorization"] = f"Bearer {authorization}"
 
