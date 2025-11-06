@@ -12,7 +12,7 @@ processors:
     send_batch_size: 1024
 
 exporters:
-  # Export traces to Jaeger
+  # Export traces to Jaeger v2 (uses standard OTLP ports)
   otlp/jaeger:
     endpoint: jaeger:4317
     tls:

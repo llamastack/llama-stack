@@ -1,0 +1,82 @@
+# This compose file works with both Docker and Podman.
+# Services running on your local machine can reach containers via:
+#   - OTLP HTTP: http://localhost:4318
+#   - OTLP gRPC: localhost:4317
+#   - Jaeger UI: http://localhost:16686
+#   - Prometheus: http://localhost:9090
+#   - Grafana: http://localhost:3000
+
+services:
+  jaeger:
+    image: docker.io/jaegertracing/jaeger:latest
+    container_name: jaeger
+    networks:
+      - llama-telemetry
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # Jaeger gRPC (v1 uses 14250, v2 will use 4317)
+      - "9411:9411"    # Zipkin
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    restart: unless-stopped
+
+  otel-collector:
+    image: docker.io/otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    networks:
+      - llama-telemetry
+    ports:
+      - "4318:4318"    # OTLP HTTP
+      - "4317:4317"    # OTLP gRPC
+      - "9464:9464"    # Prometheus metrics endpoint
+      - "13133:13133"  # Health check
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:Z
+    command: ["--config", "/etc/otel-collector-config.yaml"]
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+
+  prometheus:
+    image: docker.io/prom/prometheus:latest
+    container_name: prometheus
+    networks:
+      - llama-telemetry
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:Z
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  grafana:
+    image: docker.io/grafana/grafana:11.0.0
+    container_name: grafana
+    networks:
+      - llama-telemetry
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z
+      - ./grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:Z
+      - ./llama-stack-dashboard.json:/etc/grafana/provisioning/dashboards/llama-stack-dashboard.json:Z
+    depends_on:
+      - prometheus
+      - jaeger
+    restart: unless-stopped
+
+networks:
+  llama-telemetry:
+    name: llama-telemetry
+    driver: bridge
