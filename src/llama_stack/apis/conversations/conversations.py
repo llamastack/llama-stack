@@ -20,7 +20,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall,
 )
-from llama_stack.apis.common.tracing import mark_as_traced
+from llama_stack.apis.common.tracing import telemetry_traceable
 from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
@@ -157,7 +157,7 @@ class ConversationItemDeletedResource(BaseModel):
 
 
 @runtime_checkable
-@mark_as_traced
+@telemetry_traceable
 class Conversations(Protocol):
     """Conversations
 

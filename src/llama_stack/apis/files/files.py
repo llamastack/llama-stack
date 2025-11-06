@@ -11,7 +11,7 @@ from fastapi import File, Form, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from llama_stack.apis.common.responses import Order
-from llama_stack.apis.common.tracing import mark_as_traced
+from llama_stack.apis.common.tracing import telemetry_traceable
 from llama_stack.apis.version import LLAMA_STACK_API_V1
 from llama_stack.schema_utils import json_schema_type, webmethod
 
@@ -102,7 +102,7 @@ class OpenAIFileDeleteResponse(BaseModel):
 
 
 @runtime_checkable
-@mark_as_traced
+@telemetry_traceable
 class Files(Protocol):
     """Files
 

@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-def mark_as_traced(cls):
+def telemetry_traceable(cls):
     """
     Mark a protocol for automatic tracing when telemetry is enabled.
 
@@ -14,7 +14,7 @@ def mark_as_traced(cls):
 
     Usage:
         @runtime_checkable
-        @mark_as_traced
+        @telemetry_traceable
         class MyProtocol(Protocol):
             ...
     """
