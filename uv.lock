@@ -1963,14 +1963,6 @@ dependencies = [
     { name = "uvicorn" },
 ]
 
-[package.optional-dependencies]
-ui = [
-    { name = "llama-stack-client" },
-    { name = "pandas" },
-    { name = "streamlit" },
-    { name = "streamlit-option-menu" },
-]
-
 [package.dev-dependencies]
 benchmark = [
     { name = "locust" },
@@ -2097,11 +2089,9 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
     { name = "llama-stack-client", specifier = ">=0.3.0" },
-    { name = "llama-stack-client", marker = "extra == 'ui'", specifier = ">=0.3.0" },
     { name = "openai", specifier = ">=2.5.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
-    { name = "pandas", marker = "extra == 'ui'" },
     { name = "pillow" },
     { name = "prompt-toolkit" },
     { name = "pydantic", specifier = ">=2.11.9" },
@@ -2111,13 +2101,10 @@ requires-dist = [
     { name = "rich" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
     { name = "starlette" },
-    { name = "streamlit", marker = "extra == 'ui'" },
-    { name = "streamlit-option-menu", marker = "extra == 'ui'" },
     { name = "termcolor" },
     { name = "tiktoken" },
     { name = "uvicorn", specifier = ">=0.34.0" },
 ]
-provides-extras = ["ui"]
 
 [package.metadata.requires-dev]
 benchmark = [{ name = "locust", specifier = ">=2.39.1" }]
