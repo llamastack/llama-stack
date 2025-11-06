@@ -260,7 +260,7 @@ def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case, cap
 
         for tool in tools:
             if tool["type"] == "mcp":
-                tool["headers"] = {"Authorization": "Bearer test-token"}
+                tool["authorization"] = "test-token"
 
         response = compat_client.responses.create(
             model=text_model_id,
