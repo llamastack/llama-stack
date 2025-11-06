@@ -24,12 +24,7 @@ from .fixtures.test_cases import (
     multi_turn_tool_execution_test_cases,
     web_search_test_cases,
 )
-from .helpers import (
-    new_vector_store,
-    setup_mcp_tools,
-    upload_file,
-    wait_for_file_attachment,
-)
+from .helpers import new_vector_store, setup_mcp_tools, upload_file, wait_for_file_attachment
 from .streaming_assertions import StreamingValidator
 
 
@@ -53,12 +48,7 @@ def test_response_non_streaming_web_search(compat_client, text_model_id, case):
 
 @pytest.mark.parametrize("case", file_search_test_cases)
 def test_response_non_streaming_file_search(
-    compat_client,
-    text_model_id,
-    embedding_model_id,
-    embedding_dimension,
-    tmp_path,
-    case,
+    compat_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path, case
 ):
     if isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("Responses API file search is not yet supported in library client.")
@@ -258,8 +248,7 @@ def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case, cap
         )
         # Suppress expected auth error logs only for the failing auth attempt
         with caplog.at_level(
-            logging.CRITICAL,
-            logger="llama_stack.providers.inline.agents.meta_reference.responses.streaming",
+            logging.CRITICAL, logger="llama_stack.providers.inline.agents.meta_reference.responses.streaming"
         ):
             with pytest.raises(exc_type):
                 compat_client.responses.create(
@@ -323,11 +312,7 @@ def test_response_sequential_mcp_tool(compat_client, text_model_id, case):
         assert "boiling point" in text_content.lower()
 
         response2 = compat_client.responses.create(
-            model=text_model_id,
-            input=case.input,
-            tools=tools,
-            stream=False,
-            previous_response_id=response.id,
+            model=text_model_id, input=case.input, tools=tools, stream=False, previous_response_id=response.id
         )
 
         assert len(response2.output) >= 1
@@ -376,13 +361,7 @@ def test_response_mcp_tool_approval(compat_client, text_model_id, case, approve)
         response = compat_client.responses.create(
             previous_response_id=response.id,
             model=text_model_id,
-            input=[
-                {
-                    "type": "mcp_approval_response",
-                    "approval_request_id": approval_request.id,
-                    "approve": approve,
-                }
-            ],
+            input=[{"type": "mcp_approval_response", "approval_request_id": approval_request.id, "approve": approve}],
             tools=tools,
             stream=False,
         )
@@ -459,11 +438,7 @@ def test_response_function_call_ordering_1(compat_client, text_model_id, case):
         }
     )
     response = compat_client.responses.create(
-        model=text_model_id,
-        input=inputs,
-        tools=case.tools,
-        stream=False,
-        previous_response_id=response.id,
+        model=text_model_id, input=inputs, tools=case.tools, stream=False, previous_response_id=response.id
     )
     assert len(response.output) == 1
 
