@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
 from .helpers import new_vector_store, upload_file
 
