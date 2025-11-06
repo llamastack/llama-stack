@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import math
-from collections.abc import Generator
 from typing import Optional
 
 import torch
@@ -24,11 +23,6 @@ from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokeniz
 from llama_stack.models.llama.llama4.generation import Llama4
 from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
 from llama_stack.models.llama.sku_types import Model, ModelFamily
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    ChatCompletionRequestWithRawContent,
-    CompletionRequestWithRawContent,
-    get_default_tool_prompt_format,
-)
 
 from .common import model_checkpoint_dir
 from .config import MetaReferenceInferenceConfig
@@ -106,14 +100,6 @@ def _infer_sampling_params(sampling_params: SamplingParams):
     return temperature, top_p
 
 
-def _infer_tool_prompt_format(request: ChatCompletionRequestWithRawContent):
-    tool_config = request.tool_config
-    if tool_config is not None and tool_config.tool_prompt_format is not None:
-        return tool_config.tool_prompt_format
-    else:
-        return get_default_tool_prompt_format(request.model)
-
-
 class LlamaGenerator:
     def __init__(
         self,
@@ -156,56 +142,3 @@ class LlamaGenerator:
         self.tokenizer = self.inner_generator.tokenizer
         self.args = self.inner_generator.args
         self.formatter = self.inner_generator.formatter
-
-    def completion(
-        self,
-        request_batch: list[CompletionRequestWithRawContent],
-    ) -> Generator:
-        first_request = request_batch[0]
-        sampling_params = first_request.sampling_params or SamplingParams()
-        max_gen_len = sampling_params.max_tokens
-        if max_gen_len is None or max_gen_len == 0 or max_gen_len >= self.args.max_seq_len:
-            max_gen_len = self.args.max_seq_len - 1
-
-        temperature, top_p = _infer_sampling_params(sampling_params)
-        yield from self.inner_generator.generate(
-            llm_inputs=[self.formatter.encode_content(request.content) for request in request_batch],
-            max_gen_len=max_gen_len,
-            temperature=temperature,
-            top_p=top_p,
-            logprobs=bool(first_request.logprobs),
-            echo=False,
-            logits_processor=get_logits_processor(
-                self.tokenizer,
-                self.args.vocab_size,
-                first_request.response_format,
-            ),
-        )
-
-    def chat_completion(
-        self,
-        request_batch: list[ChatCompletionRequestWithRawContent],
-    ) -> Generator:
-        first_request = request_batch[0]
-        sampling_params = first_request.sampling_params or SamplingParams()
-        max_gen_len = sampling_params.max_tokens
-        if max_gen_len is None or max_gen_len == 0 or max_gen_len >= self.args.max_seq_len:
-            max_gen_len = self.args.max_seq_len - 1
-
-        temperature, top_p = _infer_sampling_params(sampling_params)
-        yield from self.inner_generator.generate(
-            llm_inputs=[
-                self.formatter.encode_dialog_prompt(request.messages, _infer_tool_prompt_format(request))
-                for request in request_batch
-            ],
-            max_gen_len=max_gen_len,
-            temperature=temperature,
-            top_p=top_p,
-            logprobs=bool(first_request.logprobs),
-            echo=False,
-            logits_processor=get_logits_processor(
-                self.tokenizer,
-                self.args.vocab_size,
-                first_request.response_format,
-            ),
-        )

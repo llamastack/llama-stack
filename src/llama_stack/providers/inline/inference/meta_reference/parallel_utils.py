@@ -34,7 +34,6 @@ from torch.distributed.launcher.api import LaunchConfig, elastic_launch
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import GenerationResult
 from llama_stack.providers.utils.inference.prompt_adapter import (
-    ChatCompletionRequestWithRawContent,
     CompletionRequestWithRawContent,
 )
 
@@ -71,7 +70,7 @@ class TaskRequest(BaseModel):
     type: Literal[ProcessingMessageName.task_request] = ProcessingMessageName.task_request
     task: tuple[
         str,
-        list[CompletionRequestWithRawContent] | list[ChatCompletionRequestWithRawContent],
+        list[CompletionRequestWithRawContent],
     ]
 
 
@@ -330,7 +329,7 @@ class ModelParallelProcessGroup:
         self,
         req: tuple[
             str,
-            list[CompletionRequestWithRawContent] | list[ChatCompletionRequestWithRawContent],
+            list[CompletionRequestWithRawContent],
         ],
     ) -> Generator:
         assert not self.running, "inference already running"
