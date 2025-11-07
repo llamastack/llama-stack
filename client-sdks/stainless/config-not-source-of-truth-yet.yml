@@ -115,9 +115,6 @@ resources:
       sampling_params: SamplingParams
       scoring_result: ScoringResult
       system_message: SystemMessage
-      query_result: RAGQueryResult
-      document: RAGDocument
-      query_config: RAGQueryConfig
   toolgroups:
     models:
       tool_group: ToolGroup
@@ -143,11 +140,6 @@ resources:
         endpoint: get /v1/tool-runtime/list-tools
         paginated: false
       invoke_tool: post /v1/tool-runtime/invoke
-    subresources:
-      rag_tool:
-        methods:
-          insert: post /v1/tool-runtime/rag-tool/insert
-          query: post /v1/tool-runtime/rag-tool/query
 
   responses:
     models:
