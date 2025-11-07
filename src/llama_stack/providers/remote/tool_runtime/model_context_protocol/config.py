@@ -12,10 +12,6 @@ from pydantic import BaseModel
 class MCPProviderDataValidator(BaseModel):
     """
     Validator for MCP provider-specific data passed via request headers.
-
-    This data structure is passed in the X-LlamaStack-Provider-Data header
-    to provide MCP endpoint-specific configuration.
-
     Example usage:
         HTTP Request Headers:
             X-LlamaStack-Provider-Data: {
@@ -29,18 +25,16 @@ class MCPProviderDataValidator(BaseModel):
                     "http://weather-mcp.com": "weather_api_token_xyz"
                 }
             }
-
     Security Note:
         - Authorization header MUST NOT be placed in mcp_headers
         - Use the dedicated mcp_authorization field instead
         - Each MCP endpoint can have its own separate token
-        - Tokens are provided WITHOUT the "Bearer " prefix (added automatically)
     """
 
     # mcp_endpoint => dict of headers to send (excluding Authorization)
     mcp_headers: dict[str, dict[str, str]] | None = None
 
-    # mcp_endpoint => authorization token (without "Bearer " prefix)
+    # mcp_endpoint => authorization token
     # Example: {"http://server.com": "token123"}
     mcp_authorization: dict[str, str] | None = None
 
