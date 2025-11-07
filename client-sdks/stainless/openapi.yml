@@ -2916,11 +2916,11 @@ paths:
       responses:
         '200':
           description: >-
-            A list of InterleavedContent representing the file contents.
+            Represents the parsed content of a vector store file.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VectorStoreFileContentsResponse'
+                $ref: '#/components/schemas/VectorStoreFileContentResponse'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -10463,41 +10463,36 @@ components:
       title: VectorStoreContent
       description: >-
         Content item from a vector store file or search result.
-    VectorStoreFileContentsResponse:
+    VectorStoreFileContentResponse:
       type: object
+      description: Represents the parsed content of a vector store file.
       properties:
-        file_id:
+        object:
           type: string
-          description: Unique identifier for the file
-        filename:
-          type: string
-          description: Name of the file
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            Key-value attributes associated with the file
-        content:
+          enum:
+            - vector_store.file_content.page
+          description: The object type, which is always `vector_store.file_content.page`
+          x-stainless-const: true
+        data:
           type: array
+          description: Parsed content of the file.
           items:
             $ref: '#/components/schemas/VectorStoreContent'
-          description: List of content items from the file
+        has_more:
+          type: boolean
+          description: Indicates if there are more content pages to fetch.
+        next_page:
+          anyOf:
+            - type: string
+              description: The token for the next page, if any.
+            - type: 'null'
       additionalProperties: false
       required:
-        - file_id
-        - filename
-        - attributes
-        - content
-      title: VectorStoreFileContentsResponse
-      description: >-
-        Response from retrieving the contents of a vector store file.
+        - object
+        - data
+        - has_more
+        - next_page
+      title: VectorStoreFileContentResponse
     OpenaiSearchVectorStoreRequest:
       type: object
       properties:
