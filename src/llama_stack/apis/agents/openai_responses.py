@@ -415,9 +415,12 @@ class OpenAIResponseInputToolWebSearch(BaseModel):
     """
 
     # Must match values of WebSearchToolTypes above
-    type: Literal["web_search"] | Literal["web_search_preview"] | Literal["web_search_preview_2025_03_11"] | Literal["web_search_2025_08_26"] = (
-        "web_search"
-    )
+    type: (
+        Literal["web_search"]
+        | Literal["web_search_preview"]
+        | Literal["web_search_preview_2025_03_11"]
+        | Literal["web_search_2025_08_26"]
+    ) = "web_search"
     # TODO: actually use search_context_size somewhere...
     search_context_size: str | None = Field(default="medium", pattern="^low|medium|high$")
     # TODO: add user_location
