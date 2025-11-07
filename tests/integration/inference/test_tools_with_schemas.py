@@ -193,7 +193,7 @@ class TestMCPToolsInChatCompletion:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
+        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
         auth_headers = {
             "X-LlamaStack-Provider-Data": json.dumps(provider_data),
         }
