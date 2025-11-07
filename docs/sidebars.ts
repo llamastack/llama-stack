@@ -57,6 +57,7 @@ const sidebars: SidebarsConfig = {
         'distributions/importing_as_library',
         'distributions/configuration',
         'distributions/starting_llama_stack_server',
+        'distributions/llama_stack_ui',
         {
           type: 'category',
           label: 'Self-Hosted Distributions',
