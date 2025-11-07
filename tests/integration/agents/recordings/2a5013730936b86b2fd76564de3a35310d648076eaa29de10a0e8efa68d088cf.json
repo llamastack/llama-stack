@@ -49,7 +49,7 @@
           "choices": [
             {
               "delta": {
-                "content": "{\"name\":\"get_weather\",\"parameters={\"city\":\"New York\"}}",
+                "content": "{\"name\":\"get_weather\",\"parameters':{'city':'New York'}}",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
