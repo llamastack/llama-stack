@@ -17,6 +17,13 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoiceAllowedTools,
+    OpenAIResponseInputToolChoiceCustomTool,
+    OpenAIResponseInputToolChoiceFileSearch,
+    OpenAIResponseInputToolChoiceFunctionTool,
+    OpenAIResponseInputToolChoiceMCPTool,
+    OpenAIResponseInputToolChoiceMode,
+    OpenAIResponseInputToolChoiceWebSearch,
     OpenAIResponseInputToolMCP,
     OpenAIResponseMCPApprovalRequest,
     OpenAIResponseMessage,
@@ -73,6 +80,11 @@ from llama_stack.providers.utils.inference.prompt_adapter import interleaved_con
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
     convert_chat_choice_to_response_message,
+    convert_custom_tool_choice,
+    convert_file_search_tool_choice,
+    convert_function_tool_choice,
+    convert_mcp_tool_choice,
+    convert_web_search_tool_choice,
     is_function_tool_call,
     run_guardrails,
 )
@@ -131,6 +143,13 @@ class StreamingResponseOrchestrator:
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
             ctx.tool_context.previous_tools if ctx.tool_context else {}
         )
+        # Reverse mapping: server_label -> list of tool names for efficient lookup
+        self.server_label_to_tools: dict[str, list[str]] = {}
+        # Build initial reverse mapping from previous_tools
+        for tool_name, mcp_server in self.mcp_tool_to_server.items():
+            if mcp_server.server_label not in self.server_label_to_tools:
+                self.server_label_to_tools[mcp_server.server_label] = []
+            self.server_label_to_tools[mcp_server.server_label].append(tool_name)
         # Track final messages after all tool executions
         self.final_messages: list[OpenAIMessageParam] = []
         # mapping for annotations
@@ -214,6 +233,8 @@ class StreamingResponseOrchestrator:
         async for stream_event in self._process_tools(output_messages):
             yield stream_event
 
+        self.ctx.chat_tool_choice = await self._process_tool_choice()
+
         n_iter = 0
         messages = self.ctx.messages.copy()
         final_status = "completed"
@@ -233,6 +254,7 @@ class StreamingResponseOrchestrator:
                     messages=messages,
                     # Pydantic models are dict-compatible but mypy treats them as distinct types
                     tools=self.ctx.chat_tools,  # type: ignore[arg-type]
+                    tool_choice=self.ctx.chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
                     response_format=response_format,
@@ -1108,6 +1130,11 @@ class StreamingResponseOrchestrator:
                         raise ValueError(f"Duplicate tool name {t.name} found for server {mcp_tool.server_label}")
                     self.mcp_tool_to_server[t.name] = mcp_tool
 
+                    # Add to reverse mapping for efficient server_label lookup
+                    if mcp_tool.server_label not in self.server_label_to_tools:
+                        self.server_label_to_tools[mcp_tool.server_label] = []
+                    self.server_label_to_tools[mcp_tool.server_label].append(t.name)
+
                     # Add to MCP list message
                     mcp_list_message.tools.append(
                         MCPListToolsTool(
@@ -1144,6 +1171,149 @@ class StreamingResponseOrchestrator:
                     self.ctx.tool_context.tools_to_process, output_messages
                 ):
                     yield stream_event
+
+    async def _process_tool_choice(self) -> str | dict[str, Any] | None:
+        """Process and validate the OpenAI Response tool choice and return the appropriate chat completion tool choice string or object."""
+        if self.ctx.responses_tool_choice:
+            if not self.ctx.chat_tools or len(self.ctx.chat_tools) == 0:
+                logger.warning("No tools available to enforce tool choice, skipping tool choice enforcement")
+                return None
+
+            # retrieve all function tool names from the chat tools
+            # Note: chat_tools contains dicts, not objects
+            chat_tool_names = [
+                tool["function"]["name"] for tool in self.ctx.chat_tools if tool.get("type") == "function"
+            ]
+
+            if isinstance(self.ctx.responses_tool_choice, OpenAIResponseInputToolChoiceMode):
+                if self.ctx.responses_tool_choice.value == "required":
+                    if len(chat_tool_names) == 0:
+                        logger.warning("No tools available to enforce tool choice, skipping tool choice enforcement")
+                        return None
+
+                    # add all function tools to the allowed tools list and set mode to required
+                    return {
+                        "type": "allowed_tools",
+                        "allowed_tools": {
+                            "tools": [{"type": "function", "function": {"name": tool}} for tool in chat_tool_names],
+                            "mode": "required",
+                        },
+                    }
+                # return other modes as is
+                return self.ctx.responses_tool_choice.value
+
+            elif isinstance(self.ctx.responses_tool_choice, OpenAIResponseInputToolChoiceAllowedTools):
+                # ensure that specified tool choices are available in the chat tools, if not, remove them from the list
+                final_tools = []
+                for tool in self.ctx.responses_tool_choice.tools:
+                    if tool["type"] == "function":
+                        try:
+                            final_tools.append(convert_function_tool_choice(chat_tool_names, tool["name"]))
+                        except ValueError as e:
+                            logger.warning(
+                                f"Function tool choice could not be enforced due to the following error: {e}"
+                            )
+                            continue
+                    elif tool["type"] == "mcp":
+                        try:
+                            mcp_tool_choice = convert_mcp_tool_choice(
+                                chat_tool_names, tool["server_label"], self.server_label_to_tools, None
+                            )
+                            if isinstance(mcp_tool_choice, list):
+                                final_tools.extend(mcp_tool_choice)
+                        except ValueError as e:
+                            logger.warning(f"MCP tool choice could not be enforced due to the following error: {e}")
+                            continue
+                    elif tool["type"] == "file_search":
+                        try:
+                            final_tools.append(convert_file_search_tool_choice(chat_tool_names))
+                        except ValueError as e:
+                            logger.warning(
+                                f"File search tool choice could not be enforced due to the following error: {e}"
+                            )
+                            continue
+                    elif tool["type"] == "web_search":
+                        try:
+                            final_tools.append(convert_web_search_tool_choice(chat_tool_names))
+                        except ValueError as e:
+                            logger.warning(
+                                f"Web search tool choice could not be enforced due to the following error: {e}"
+                            )
+                            continue
+                    elif tool["type"] == "custom":
+                        try:
+                            final_tools.append(convert_custom_tool_choice(chat_tool_names, tool["name"]))
+                        except ValueError as e:
+                            logger.warning(f"Custom tool choice could not be enforced due to the following error: {e}")
+                            continue
+                    else:
+                        logger.warning(
+                            f"Unsupported tool type: {tool['type']}, skipping tool choice enforcement for it"
+                        )
+                        continue
+
+                return {
+                    "type": "allowed_tools",
+                    "allowed_tools": {
+                        "tools": final_tools,
+                        "mode": self.ctx.responses_tool_choice.mode,
+                    },
+                }
+
+            elif isinstance(self.ctx.responses_tool_choice, OpenAIResponseInputToolChoiceCustomTool):
+                try:
+                    return convert_custom_tool_choice(chat_tool_names, self.ctx.responses_tool_choice.name)
+                except ValueError as e:
+                    logger.warning(f"Custom tool choice could not be enforced due to the following error: {e}")
+                    return None
+
+            # all of these are translated to function tool choices
+            elif isinstance(self.ctx.responses_tool_choice, OpenAIResponseInputToolChoiceFunctionTool):  # type: ignore[arg-type]
+                try:
+                    return convert_function_tool_choice(chat_tool_names, self.ctx.responses_tool_choice.name)
+                except ValueError as e:
+                    logger.warning(f"Function tool choice could not be enforced due to the following error: {e}")
+                    return None
+
+            elif isinstance(self.ctx.responses_tool_choice, OpenAIResponseInputToolChoiceFileSearch):  # type: ignore[arg-type]
+                try:
+                    return convert_file_search_tool_choice(chat_tool_names)
+                except ValueError as e:
+                    logger.warning(f"File search tool choice could not be enforced due to the following error: {e}")
+                    return None
+
+            elif isinstance(self.ctx.responses_tool_choice, OpenAIResponseInputToolChoiceWebSearch):  # type: ignore[arg-type]
+                try:
+                    return convert_web_search_tool_choice(chat_tool_names)
+                except ValueError as e:
+                    logger.warning(f"Web search tool choice could not be enforced due to the following error: {e}")
+                    return None
+
+            elif isinstance(self.ctx.responses_tool_choice, OpenAIResponseInputToolChoiceMCPTool):  # type: ignore[arg-type]
+                try:
+                    tool_choice = convert_mcp_tool_choice(
+                        chat_tool_names,
+                        self.ctx.responses_tool_choice.server_label,
+                        self.server_label_to_tools,
+                        self.ctx.responses_tool_choice.name,
+                    )
+                    if isinstance(tool_choice, dict):
+                        # for single tool choice, return as function tool choice
+                        return tool_choice
+                    elif isinstance(tool_choice, list):
+                        # for multiple tool choices, return as allowed tools
+                        return {
+                            "type": "allowed_tools",
+                            "allowed_tools": {
+                                "tools": tool_choice,
+                                "mode": "required",
+                            },
+                        }
+                except ValueError as e:
+                    logger.warning(f"MCP tool choice could not be enforced due to the following error: {e}")
+                    return None
+
+        return None
 
     def _approval_required(self, tool_name: str) -> bool:
         if tool_name not in self.mcp_tool_to_server:

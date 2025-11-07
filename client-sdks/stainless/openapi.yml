@@ -6432,6 +6432,155 @@ components:
         - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
         - $ref: '#/components/schemas/OpenAIResponseMessage'
+    OpenAIResponseInputToolChoice:
+      oneOf:
+        - type: string
+          enum:
+            - auto
+            - required
+            - none
+          title: OpenAIResponseInputToolChoiceMode
+        - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+          discriminator:
+            propertyName: type
+            mapping:
+              allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+    "OpenAIResponseInputToolChoiceAllowedTools":
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+            - auto
+            - required
+          default: auto
+          description: >-
+            Constrains the tools available to the model to a pre-defined set
+        tools:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+          description: >-
+            A list of tool definitions that the model should be allowed to call
+        type:
+          type: string
+          const: allowed_tools
+          default: allowed_tools
+          description: >-
+            Tool choice type identifier, always "allowed_tools"
+      additionalProperties: false
+      required:
+        - mode
+        - tools
+        - type
+      title: >-
+        OpenAIResponseInputToolChoiceAllowedTools
+      description: >-
+        Constrains the tools available to the model to a pre-defined set.
+    OpenAIResponseInputToolChoiceCustomTool:
+      type: object
+      properties:
+        type:
+          type: string
+          const: custom
+          default: custom
+          description: >-
+            Tool choice type identifier, always "custom"
+        name:
+          type: string
+          description: The name of the custom tool to call.
+      additionalProperties: false
+      required:
+        - type
+        - name
+      title: OpenAIResponseInputToolChoiceCustomTool
+      description: Forces the model to call a custom tool.
+    OpenAIResponseInputToolChoiceFileSearch:
+      type: object
+      properties:
+        type:
+          type: string
+          const: file_search
+          default: file_search
+          description: >-
+            Tool choice type identifier, always "file_search"
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIResponseInputToolChoiceFileSearch
+      description: >-
+        Indicates that the model should use file search to generate a response.
+    "OpenAIResponseInputToolChoiceFunctionTool":
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the function to call
+        type:
+          type: string
+          const: function
+          default: function
+          description: >-
+            Tool choice type identifier, always "function"
+      additionalProperties: false
+      required:
+        - name
+        - type
+      title: >-
+        OpenAIResponseInputToolChoiceFunctionTool
+      description: >-
+        Forces the model to call a specific function.
+    OpenAIResponseInputToolChoiceMCPTool:
+      type: object
+      properties:
+        server_label:
+          type: string
+          description: The label of the MCP server to use.
+        type:
+          type: string
+          const: mcp
+          default: mcp
+          description: >-
+            Tool choice type identifier, always "mcp"
+        name:
+          type: string
+          description: >-
+            (Optional) The name of the tool to call on the server.
+      additionalProperties: false
+      required:
+        - server_label
+        - type
+      title: OpenAIResponseInputToolChoiceMCPTool
+      description: >-
+        Forces the model to call a specific tool on a remote MCP server
+    OpenAIResponseInputToolChoiceWebSearch:
+      type: object
+      properties:
+        type:
+          type: string
+          const: web_search_preview
+          default: web_search_preview
+          description: >-
+            Tool choice type identifier, always "web_search_preview"
+      additionalProperties: false
+      required:
+        - type
+      title: OpenAIResponseInputToolChoiceWebSearch
+      description: >-
+        Indicates that the model should use web search to generate a response.
     OpenAIResponseInputToolFileSearch:
       type: object
       properties:
@@ -6614,6 +6763,10 @@ components:
             $ref: '#/components/schemas/OpenAIResponseTool'
           description: >-
             (Optional) An array of tools the model may call while generating a response.
+        tool_choice:
+          $ref: '#/components/schemas/OpenAIResponseInputToolChoice'
+          description: >-
+            (Optional) Tool choice configuration for the response.
         truncation:
           type: string
           description: >-
@@ -6972,6 +7125,8 @@ components:
           type: number
         text:
           $ref: '#/components/schemas/OpenAIResponseText'
+        tool_choice:
+          $ref: '#/components/schemas/OpenAIResponseInputToolChoice'
         tools:
           type: array
           items:
@@ -7053,6 +7208,10 @@ components:
             $ref: '#/components/schemas/OpenAIResponseTool'
           description: >-
             (Optional) An array of tools the model may call while generating a response.
+        tool_choice:
+          $ref: '#/components/schemas/OpenAIResponseInputToolChoice'
+          description: >-
+            (Optional) Tool choice configuration for the response.
         truncation:
           type: string
           description: >-
