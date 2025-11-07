@@ -6417,13 +6417,11 @@ components:
               - type: array
               - type: object
           description: >-
-            (Optional) HTTP headers to include when connecting to the server (cannot
-            contain Authorization)
+            (Optional) HTTP headers to include when connecting to the server
         authorization:
           type: string
           description: >-
-            (Optional) OAuth access token for authenticating with the MCP server (excluded
-            from responses)
+            (Optional) OAuth access token for authenticating with the MCP server
         require_approval:
           oneOf:
             - type: string
