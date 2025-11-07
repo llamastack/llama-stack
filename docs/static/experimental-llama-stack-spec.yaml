@@ -162,7 +162,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterDatasetRequest'
         required: true
-      deprecated: false
+      deprecated: true
   /v1beta/datasets/{dataset_id}:
     get:
       responses:
@@ -219,7 +219,7 @@ paths:
           required: true
           schema:
             type: string
-      deprecated: false
+      deprecated: true
   /v1alpha/eval/benchmarks:
     get:
       responses:
@@ -270,7 +270,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterBenchmarkRequest'
         required: true
-      deprecated: false
+      deprecated: true
   /v1alpha/eval/benchmarks/{benchmark_id}:
     get:
       responses:
@@ -327,7 +327,7 @@ paths:
           required: true
           schema:
             type: string
-      deprecated: false
+      deprecated: true
   /v1alpha/eval/benchmarks/{benchmark_id}/evaluations:
     post:
       responses:
@@ -936,68 +936,6 @@ components:
         - data
       title: ListDatasetsResponse
       description: Response from listing datasets.
-    DataSource:
-      oneOf:
-        - $ref: '#/components/schemas/URIDataSource'
-        - $ref: '#/components/schemas/RowsDataSource'
-      discriminator:
-        propertyName: type
-        mapping:
-          uri: '#/components/schemas/URIDataSource'
-          rows: '#/components/schemas/RowsDataSource'
-    RegisterDatasetRequest:
-      type: object
-      properties:
-        purpose:
-          type: string
-          enum:
-            - post-training/messages
-            - eval/question-answer
-            - eval/messages-answer
-          description: >-
-            The purpose of the dataset. One of: - "post-training/messages": The dataset
-            contains a messages column with list of messages for post-training. {
-            "messages": [ {"role": "user", "content": "Hello, world!"}, {"role": "assistant",
-            "content": "Hello, world!"}, ] } - "eval/question-answer": The dataset
-            contains a question column and an answer column for evaluation. { "question":
-            "What is the capital of France?", "answer": "Paris" } - "eval/messages-answer":
-            The dataset contains a messages column with list of messages and an answer
-            column for evaluation. { "messages": [ {"role": "user", "content": "Hello,
-            my name is John Doe."}, {"role": "assistant", "content": "Hello, John
-            Doe. How can I help you today?"}, {"role": "user", "content": "What's
-            my name?"}, ], "answer": "John Doe" }
-        source:
-          $ref: '#/components/schemas/DataSource'
-          description: >-
-            The data source of the dataset. Ensure that the data source schema is
-            compatible with the purpose of the dataset. Examples: - { "type": "uri",
-            "uri": "https://mywebsite.com/mydata.jsonl" } - { "type": "uri", "uri":
-            "lsfs://mydata.jsonl" } - { "type": "uri", "uri": "data:csv;base64,{base64_content}"
-            } - { "type": "uri", "uri": "huggingface://llamastack/simpleqa?split=train"
-            } - { "type": "rows", "rows": [ { "messages": [ {"role": "user", "content":
-            "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}, ]
-            } ] }
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            The metadata for the dataset. - E.g. {"description": "My dataset"}.
-        dataset_id:
-          type: string
-          description: >-
-            The ID of the dataset. If not provided, an ID will be generated.
-      additionalProperties: false
-      required:
-        - purpose
-        - source
-      title: RegisterDatasetRequest
     Benchmark:
       type: object
       properties:
@@ -1065,47 +1003,6 @@ components:
       required:
         - data
       title: ListBenchmarksResponse
-    RegisterBenchmarkRequest:
-      type: object
-      properties:
-        benchmark_id:
-          type: string
-          description: The ID of the benchmark to register.
-        dataset_id:
-          type: string
-          description: >-
-            The ID of the dataset to use for the benchmark.
-        scoring_functions:
-          type: array
-          items:
-            type: string
-          description: >-
-            The scoring functions to use for the benchmark.
-        provider_benchmark_id:
-          type: string
-          description: >-
-            The ID of the provider benchmark to use for the benchmark.
-        provider_id:
-          type: string
-          description: >-
-            The ID of the provider to use for the benchmark.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: The metadata to use for the benchmark.
-      additionalProperties: false
-      required:
-        - benchmark_id
-        - dataset_id
-        - scoring_functions
-      title: RegisterBenchmarkRequest
     AggregationFunctionType:
       type: string
       enum:
@@ -2254,6 +2151,109 @@ components:
         - hyperparam_search_config
         - logger_config
       title: SupervisedFineTuneRequest
+    DataSource:
+      oneOf:
+        - $ref: '#/components/schemas/URIDataSource'
+        - $ref: '#/components/schemas/RowsDataSource'
+      discriminator:
+        propertyName: type
+        mapping:
+          uri: '#/components/schemas/URIDataSource'
+          rows: '#/components/schemas/RowsDataSource'
+    RegisterDatasetRequest:
+      type: object
+      properties:
+        purpose:
+          type: string
+          enum:
+            - post-training/messages
+            - eval/question-answer
+            - eval/messages-answer
+          description: >-
+            The purpose of the dataset. One of: - "post-training/messages": The dataset
+            contains a messages column with list of messages for post-training. {
+            "messages": [ {"role": "user", "content": "Hello, world!"}, {"role": "assistant",
+            "content": "Hello, world!"}, ] } - "eval/question-answer": The dataset
+            contains a question column and an answer column for evaluation. { "question":
+            "What is the capital of France?", "answer": "Paris" } - "eval/messages-answer":
+            The dataset contains a messages column with list of messages and an answer
+            column for evaluation. { "messages": [ {"role": "user", "content": "Hello,
+            my name is John Doe."}, {"role": "assistant", "content": "Hello, John
+            Doe. How can I help you today?"}, {"role": "user", "content": "What's
+            my name?"}, ], "answer": "John Doe" }
+        source:
+          $ref: '#/components/schemas/DataSource'
+          description: >-
+            The data source of the dataset. Ensure that the data source schema is
+            compatible with the purpose of the dataset. Examples: - { "type": "uri",
+            "uri": "https://mywebsite.com/mydata.jsonl" } - { "type": "uri", "uri":
+            "lsfs://mydata.jsonl" } - { "type": "uri", "uri": "data:csv;base64,{base64_content}"
+            } - { "type": "uri", "uri": "huggingface://llamastack/simpleqa?split=train"
+            } - { "type": "rows", "rows": [ { "messages": [ {"role": "user", "content":
+            "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}, ]
+            } ] }
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The metadata for the dataset. - E.g. {"description": "My dataset"}.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset. If not provided, an ID will be generated.
+      additionalProperties: false
+      required:
+        - purpose
+        - source
+      title: RegisterDatasetRequest
+    RegisterBenchmarkRequest:
+      type: object
+      properties:
+        benchmark_id:
+          type: string
+          description: The ID of the benchmark to register.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset to use for the benchmark.
+        scoring_functions:
+          type: array
+          items:
+            type: string
+          description: >-
+            The scoring functions to use for the benchmark.
+        provider_benchmark_id:
+          type: string
+          description: >-
+            The ID of the provider benchmark to use for the benchmark.
+        provider_id:
+          type: string
+          description: >-
+            The ID of the provider to use for the benchmark.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: The metadata to use for the benchmark.
+      additionalProperties: false
+      required:
+        - benchmark_id
+        - dataset_id
+        - scoring_functions
+      title: RegisterBenchmarkRequest
   responses:
     BadRequest400:
       description: The request was invalid or malformed
