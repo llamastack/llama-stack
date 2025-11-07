@@ -1055,15 +1055,6 @@ class StreamingResponseOrchestrator:
         """Process an MCP tool configuration and emit appropriate streaming events."""
         from llama_stack.providers.utils.tools.mcp import list_mcp_tools
 
-        # Validate that Authorization header is not passed via headers dict
-        if mcp_tool.headers:
-            for key in mcp_tool.headers.keys():
-                if key.lower() == "authorization":
-                    raise ValueError(
-                        "Authorization header cannot be passed via 'headers'. "
-                        "Please use the 'authorization' parameter instead."
-                    )
-
         # Emit mcp_list_tools.in_progress
         self.sequence_number += 1
         yield OpenAIResponseObjectStreamResponseMcpListToolsInProgress(
