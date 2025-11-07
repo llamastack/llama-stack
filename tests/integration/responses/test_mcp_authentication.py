@@ -70,7 +70,7 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
                     "type": "mcp",
                     "server_label": "auth2-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authorization": test_token,  # Just the token, not "Bearer <token>"
+                    "authorization": test_token,
                 }
             ],
             mcp_server_info,
@@ -112,7 +112,7 @@ def test_mcp_authorization_error_when_header_provided(compat_client, text_model_
 
         # Create response - should raise ValueError for security reasons
         with pytest.raises(
-            ValueError, match="For security reasons, Authorization header cannot be passed via 'headers'"
+            ValueError, match="Authorization header cannot be passed via 'headers'"
         ):
             compat_client.responses.create(
                 model=text_model_id,
