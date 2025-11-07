@@ -86,6 +86,9 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         headers = {}
         authorization = None
 
+        # PRIMARY SECURITY: This line prevents inference token leakage
+        # provider_data only contains X-LlamaStack-Provider-Data (request body),
+        # never the HTTP Authorization header (which contains the inference token)
         provider_data = self.get_request_provider_data()
         if provider_data:
             # Extract headers (excluding Authorization)
@@ -95,7 +98,8 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
                         continue
 
                     # Security check: reject Authorization header in mcp_headers
-                    # This prevents accidentally passing inference tokens to MCP servers
+                    # This enforces using the dedicated mcp_authorization field for auth tokens
+                    # Note: Inference tokens are already isolated by line 89 (provider_data only contains request body)
                     for key in values.keys():
                         if key.lower() == "authorization":
                             raise ValueError(
