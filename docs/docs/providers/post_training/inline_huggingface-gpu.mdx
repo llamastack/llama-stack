@@ -15,8 +15,8 @@ HuggingFace-based post-training provider for fine-tuning models using the Huggin
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `device` | `str` | No | cuda |  |
-| `distributed_backend` | `Literal['fsdp', 'deepspeed' \| None]` | No |  |  |
-| `checkpoint_format` | `Literal['full_state', 'huggingface' \| None]` | No | huggingface |  |
+| `distributed_backend` | `Literal[fsdp, deepspeed] \| None` | No |  |  |
+| `checkpoint_format` | `Literal[full_state, huggingface] \| None` | No | huggingface |  |
 | `chat_template` | `str` | No | `&lt;|user|&gt;`<br/>`{input}`<br/>`&lt;|assistant|&gt;`<br/>`{output}` |  |
 | `model_specific_config` | `dict` | No | `{'trust_remote_code': True, 'attn_implementation': 'sdpa'}` |  |
 | `max_seq_length` | `int` | No | 2048 |  |
@@ -29,7 +29,7 @@ HuggingFace-based post-training provider for fine-tuning models using the Huggin
 | `dataloader_pin_memory` | `bool` | No | True |  |
 | `dpo_beta` | `float` | No | 0.1 |  |
 | `use_reference_model` | `bool` | No | True |  |
-| `dpo_loss_type` | `Literal['sigmoid', 'hinge', 'ipo', 'kto_pair']` | No | sigmoid |  |
+| `dpo_loss_type` | `Literal[sigmoid, hinge, ipo, kto_pair]` | No | sigmoid |  |
 | `dpo_output_dir` | `str` | No |  |  |
 
 ## Sample Configuration

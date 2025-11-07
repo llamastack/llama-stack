@@ -20,7 +20,7 @@ AWS S3-based file storage provider for scalable cloud file management with metad
 | `aws_secret_access_key` | `str \| None` | No |  | AWS secret access key (optional if using IAM roles) |
 | `endpoint_url` | `str \| None` | No |  | Custom S3 endpoint URL (for MinIO, LocalStack, etc.) |
 | `auto_create_bucket` | `bool` | No | False | Automatically create the S3 bucket if it doesn't exist |
-| `metadata_store` | `llama_stack.core.storage.datatypes.SqlStoreReference` | No |  | SQL store configuration for file metadata |
+| `metadata_store` | `SqlStoreReference` | No |  | SQL store configuration for file metadata |
 
 ## Sample Configuration
 
