@@ -396,19 +396,19 @@ class VectorStoreListFilesResponse(BaseModel):
 
 
 @json_schema_type
-class VectorStoreFileContentsResponse(BaseModel):
-    """Response from retrieving the contents of a vector store file.
+class VectorStoreFileContentResponse(BaseModel):
+    """Represents the parsed content of a vector store file.
 
-    :param file_id: Unique identifier for the file
-    :param filename: Name of the file
-    :param attributes: Key-value attributes associated with the file
-    :param content: List of content items from the file
+    :param object: The object type, which is always `vector_store.file_content.page`
+    :param data: Parsed content of the file
+    :param has_more: Indicates if there are more content pages to fetch
+    :param next_page: The token for the next page, if any
     """
 
-    file_id: str
-    filename: str
-    attributes: dict[str, Any]
-    content: list[VectorStoreContent]
+    object: Literal["vector_store.file_content.page"] = "vector_store.file_content.page"
+    data: list[VectorStoreContent]
+    has_more: bool
+    next_page: str | None = None
 
 
 @json_schema_type
@@ -732,12 +732,12 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentsResponse:
+    ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file.
 
         :param vector_store_id: The ID of the vector store containing the file to retrieve.
         :param file_id: The ID of the file to retrieve.
-        :returns: A list of InterleavedContent representing the file contents.
+        :returns: A VectorStoreFileContentResponse representing the file contents.
         """
         ...
 
