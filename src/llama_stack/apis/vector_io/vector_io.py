@@ -13,10 +13,10 @@ from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 from fastapi import Body
 from pydantic import BaseModel, Field
 
+from llama_stack.apis.common.tracing import telemetry_traceable
 from llama_stack.apis.inference import InterleavedContent
 from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 from llama_stack.strong_typing.schema import register_schema
 
@@ -260,7 +260,7 @@ class VectorStoreSearchResponsePage(BaseModel):
     """
 
     object: str = "vector_store.search_results.page"
-    search_query: str
+    search_query: list[str]
     data: list[VectorStoreSearchResponse]
     has_more: bool = False
     next_page: str | None = None
@@ -478,7 +478,7 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
     name: str | None = None
     file_ids: list[str] | None = None
     expires_after: dict[str, Any] | None = None
-    chunking_strategy: dict[str, Any] | None = None
+    chunking_strategy: VectorStoreChunkingStrategy | None = None
     metadata: dict[str, Any] | None = None
 
 
@@ -502,7 +502,7 @@ class VectorStoreTable(Protocol):
 
 
 @runtime_checkable
-@trace_protocol
+@telemetry_traceable
 class VectorIO(Protocol):
     vector_store_table: VectorStoreTable | None = None
 

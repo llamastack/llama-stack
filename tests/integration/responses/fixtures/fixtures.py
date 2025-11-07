@@ -11,7 +11,7 @@ import pytest
 import yaml
 from openai import OpenAI
 
-from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
 # --- Helper Functions ---
 
