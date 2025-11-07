@@ -450,7 +450,7 @@ class OpenAIVectorStoreMixin(ABC):
         # Now that our vector store is created, attach any files that were provided
         file_ids = params.file_ids or []
         tasks = [self.openai_attach_file_to_vector_store(vector_store_id, file_id) for file_id in file_ids]
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await asyncio.gather(*tasks)
 
         # Get the updated store info and return it
         store_info = self.openai_vector_stores[vector_store_id]
@@ -927,6 +927,9 @@ class OpenAIVectorStoreMixin(ABC):
         """Retrieves the contents of a vector store file."""
         if vector_store_id not in self.openai_vector_stores:
             raise VectorStoreNotFoundError(vector_store_id)
+
+        # Parameters are already provided directly
+        # include_embeddings and include_metadata are now function parameters
 
         file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
         dict_chunks = await self._load_openai_vector_store_file_contents(vector_store_id, file_id)

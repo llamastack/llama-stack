@@ -46,7 +46,6 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
-from llama_stack.core.server.query_params_middleware import QueryParamsMiddleware
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -264,10 +263,6 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
             is_streaming = is_streaming_request(func.__name__, request, **kwargs)
 
-            # Inject extra_query from middleware if available
-            if hasattr(request.state, "extra_query") and request.state.extra_query:
-                kwargs["extra_query"] = request.state.extra_query
-
             try:
                 if is_streaming:
                     context_vars = [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
@@ -406,9 +401,6 @@ def create_app() -> StackApp:
 
     if not os.environ.get("LLAMA_STACK_DISABLE_VERSION_CHECK"):
         app.add_middleware(ClientVersionMiddleware)
-
-    # handle extra_query for specific GET requests
-    app.add_middleware(QueryParamsMiddleware)
 
     impls = app.stack.impls
 
