@@ -51,6 +51,11 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.41",                    # server - for conversations
 ]
 
+[project.optional-dependencies]
+client = [
+    "llama-stack-client>=0.3.0",  # Optional for library-only usage
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.4",

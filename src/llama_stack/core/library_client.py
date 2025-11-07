@@ -30,7 +30,7 @@ try:
     )
 except ImportError as e:
     raise ImportError(
-        "llama-stack-client is not installed. Please install it with `pip install llama-stack-client`."
+        "llama-stack-client is not installed. Please install it with `uv pip install llama-stack[client]`."
     ) from e
 
 from pydantic import BaseModel, TypeAdapter
