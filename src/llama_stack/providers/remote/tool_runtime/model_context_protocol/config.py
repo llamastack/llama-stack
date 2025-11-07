@@ -12,6 +12,8 @@ from pydantic import BaseModel
 class MCPProviderDataValidator(BaseModel):
     # mcp_endpoint => dict of headers to send
     mcp_headers: dict[str, dict[str, str]] | None = None
+    # mcp_endpoint => authorization token (without "Bearer " prefix)
+    mcp_authorization: dict[str, str] | None = None
 
 
 class MCPProviderConfig(BaseModel):
