@@ -16,7 +16,7 @@ SambaNova inference provider for running models on SambaNova's dataflow architec
 |-------|------|----------|---------|-------------|
 | `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
-| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+| `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
 | `url` | `str` | No | https://api.sambanova.ai/v1 | The URL for the SambaNova AI server |
 
 ## Sample Configuration
