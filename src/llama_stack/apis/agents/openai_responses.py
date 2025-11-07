@@ -486,8 +486,8 @@ class OpenAIResponseInputToolMCP(BaseModel):
     :param type: Tool type identifier, always "mcp"
     :param server_label: Label to identify this MCP server
     :param server_url: URL endpoint of the MCP server
-    :param headers: (Optional) HTTP headers to include when connecting to the server
-    :param authorization: (Optional) OAuth access token for authenticating with the MCP server
+    :param headers: (Optional) HTTP headers to include when connecting to the server (cannot contain Authorization)
+    :param authorization: (Optional) OAuth access token for authenticating with the MCP server (excluded from responses)
     :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
     :param allowed_tools: (Optional) Restriction on which tools can be used from this server
     """
@@ -496,10 +496,27 @@ class OpenAIResponseInputToolMCP(BaseModel):
     server_label: str
     server_url: str
     headers: dict[str, Any] | None = None
-    authorization: str | None = None
+    # Authorization is excluded from serialization for security (never returned in responses)
+    authorization: str | None = Field(default=None, exclude=True)
 
     require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
     allowed_tools: list[str] | AllowedToolsFilter | None = None
+
+    @model_validator(mode="after")
+    def validate_no_auth_in_headers(self) -> "OpenAIResponseInputToolMCP":
+        """Ensure Authorization header is not passed via headers dict.
+
+        Authorization must be provided via the dedicated 'authorization' parameter
+        to ensure proper security handling and prevent token leakage in responses.
+        """
+        if self.headers:
+            for key in self.headers.keys():
+                if key.lower() == "authorization":
+                    raise ValueError(
+                        "Authorization header cannot be passed via 'headers'. "
+                        "Please use the 'authorization' parameter instead."
+                    )
+        return self
 
 
 OpenAIResponseInputTool = Annotated[
