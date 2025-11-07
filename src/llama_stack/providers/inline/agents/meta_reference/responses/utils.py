@@ -506,3 +506,28 @@ def extract_guardrail_ids(guardrails: list | None) -> list[str]:
             raise ValueError(f"Unknown guardrail format: {guardrail}, expected str or ResponseGuardrailSpec")
 
     return guardrail_ids
+
+
+def convert_mcp_tool_choice(
+    chat_tool_names: list[str],
+    server_label: str | None = None,
+    server_label_to_tools: dict[str, list[str]] | None = None,
+    tool_name: str | None = None,
+) -> dict[str, str] | list[dict[str, str]]:
+    """Convert a responses tool choice of type mcp to a chat completions compatible function tool choice."""
+
+    if tool_name:
+        if tool_name not in chat_tool_names:
+            return None
+        return {"type": "function", "function": {"name": tool_name}}
+
+    elif server_label and server_label_to_tools:
+        # no tool name specified, so we need to enforce an allowed_tools with the function tools derived only from the given server label
+        # Use reverse mapping for lookup by server_label
+        # This already accounts for allowed_tools restrictions applied during _process_mcp_tool
+        tool_names = server_label_to_tools.get(server_label, [])
+        if not tool_names:
+            return None
+        matching_tools = [{"type": "function", "function": {"name": tool_name}} for tool_name in tool_names]
+        return matching_tools
+    return []
