@@ -91,7 +91,7 @@ class TorchtuneCheckpointer:
         if checkpoint_format == "meta" or checkpoint_format is None:
             self._save_meta_format_checkpoint(model_file_path, state_dict, adapter_only)
         elif checkpoint_format == "huggingface":
-            # Note: for saving hugging face format checkpoints, we only suppport saving adapter weights now
+            # Note: for saving hugging face format checkpoints, we only support saving adapter weights now
             self._save_hf_format_checkpoint(model_file_path, state_dict)
         else:
             raise ValueError(f"Unsupported checkpoint format: {format}")
