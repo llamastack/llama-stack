@@ -74,7 +74,7 @@ In addition to their actions as users, contributors may also find themselves doi
 *   Writing, editing, translating or reviewing the documentation
 *   Organizing events or evangelizing the project (e.g,. on Social Media)
 
-Contributors engage with the project through the issue tracker or by writing or editing documentation. They submit changes to the project itself via Pull Requests (PRs), which will be considered for inclusion in the project by existing Code Owners (see next section).
+Contributors engage with the project through GitHub issues or by writing or editing documentation. They submit changes to the project itself via Pull Requests (PRs), which will be considered for inclusion in the project by existing Code Owners (see next section).
 
 Contributors should follow the following guides when creating PRs:
 - [Contribution Process](CONTRIBUTING.md)
@@ -84,10 +84,22 @@ increase. At some stage, they may find themselves being nominated to become a Tr
 existing Code Owner.
 
 ### Triagers
-Triagers are contributors who have shown that they are committed to Llama Stack's continued development by helping to
-manage the project's backlog. They are responsible for ensuring that the project's issues are well-organized and up to
+Triagers (mapped in [TRIAGERS.md](./.github/TRIAGERS.md)) are contributors who have shown that they are committed to Llama Stack's continued development by helping to
+manage (track, label, assign issues - general issue hygiene) the project's backlog. They are responsible for ensuring that the project's issues are well-organized and up to
 date so that contributors and Code Owners can navigate the project efficiently and prioritize key requests from
 the community.
+
+#### Nomination Process
+
+Any Code Owner may nominate a contributor to become a Triager by opening a PR that adds their name
+to [TRIAGERS.md](./.github/TRIAGERS.md).
+
+The nomination follows **lazy consensus**:
+- If no Code Owner objects within 72 hours, the PR is merged.
+- If concerns are raised, they should be discussed constructively in the PR.
+- If consensus cannot be reached, maintainers will make the final decision.
+
+Once merged, the contributor is granted the GitHub `Triage` role.
 
 ### Code Owners
 
@@ -95,15 +107,15 @@ Code Owners (mapped in [CODEOWNERS](./.github/CODEOWNERS)) are community members
 ongoing engagement with the community. Because of this, they have the right to merge PRs and have voting rights.
 
 > **Note**: Code Owners, like other contributors, must make changes to Llama Stack via pull requests (with code review).
-> This applies to all changes to documentation, code, configuration, governance, and so on.
+> This applies to all changes to documentation, code, configuration, governance.
 
 #### Code Owner Responsibilities
 Code Owners are responsible for reviewing and merging PRs for the projects and areas they are
 assigned to. They also
-- Participate in strategic planning, approve changes to the governance model, and manage the
+- participate in strategic planning, approve changes to the governance model, and manage the
   copyrights within the project outputs.
-- Triage GitHub issues, applying [labels](https://github.com/llamastack/llama-stack/labels) to each new item. Labels are extremely useful for future issue follow ups. Adding labels is somewhat subjective, so please use your best judgment.
-- Make sure that ongoing PRs are moving forward at the right pace or closing them.
+- triage GitHub issues, applying [labels](https://github.com/llamastack/llama-stack/labels) to each new item. Labels are extremely useful for future issue follow ups. Adding labels is somewhat subjective, so please use your best judgment.
+- make sure that ongoing PRs are moving forward at the right pace or closing them.
 
 
 ### Becoming a Code Owner
@@ -114,19 +126,30 @@ its objectives, and its strategy. They will also have provided valuable contribu
 time. Code Owners must also act in the interest of the community.
 
 #### Process
-Any existing Code Owner can nominate new Code Owners by opening a PR to the [CODEOWNERS](./.github/CODEOWNERS) file. Once they have been nominated,
-there will be a vote by the rest of the Code Owners. Code Owner voting is one of the few activities that takes place in
-private. This is to allow Code Owners to express their opinions about a nominee without causing embarrassment freely.
-The approval requires majority vote (>50%) from the Code Owners.
+Any existing Code Owner may nominate a new Code Owner by opening a PR updating the
+[CODEOWNERS](./.github/CODEOWNERS) file. The nomination is discussed and voted on publicly.
+
+Code Owners cast their vote on the PR by:
+- **Approve** → ✅ Upvote
+- **Comment** → ➖ Abstain
+- **Request Changes** → ❌ Downvote
+
+A nomination passes if:
+- A minimum of 50% of all Code Owners participate (quorum), and
+- More than 50% of the votes cast are approvals.
+
+Votes remain open for **7 days** unless all Code Owners have voted earlier. If a nomination does not
+pass, the reasons should be provided constructively to help the nominee understand expectations and
+continue contributing.
+
 
 #### Earning a Nomination
 
-The nomination is at the discretion of the existing Code Owners and there is no single path of earning a nomination for,
-however, we can give some guidance about some actions that would help:
+The nomination is at the discretion of the existing Code Owners and there is no single path of
+earning a nomination. You don't have to be a triager to become a Code Owner, however, we can give some guidance about some actions that would help:
 
 *   Start by expressing interest to the Code Owners that you are interested in becoming a Code Owner.
-*   You can start tackling issues labeled as ‘help wanted’, or if you are new to the project, some of the ‘good first issue’ tickets.
-*   As you gain experience with the codebase and our standards, we will ask you to do code reviews for incoming PRs (i.e., all Code Owners are expected to shoulder a proportional share of community reviews).
+*   You can start tackling issues labeled as ‘help wanted’, or if you are new to the project, some of the ‘good first issue’ tickets. As you gain experience with the codebase and our standards, we will ask you to do code reviews for incoming PRs (i.e., all Code Owners are expected to shoulder a proportional share of community reviews).
 *   We will expect you to start contributing increasingly complicated PRs, under the guidance of the existing Code Owners.
 
 #### Losing Code Owner Status
@@ -136,17 +159,16 @@ moved to emeritus status. The Code Owner status is attributed for life otherwise
 reinstatement of commit access from the rest of Code Owners. Such reinstatement is subject to lazy consensus approval of
 active Code Owners.
 
-Emeritus status is a nominal title, and confers no special rights (like voting) or access. Emeritus members are
-functionally identical to normal contributors, with the exception that they can request for reinstatement of their
-commit access.
+Emeritus status is a nominal title, and confers no special rights (like voting) or access. Emeritus
+members are functionally identical to normal contributors, with the exception that they can request
+for reinstatement of their CODEOWNER access.
 
 In extreme cases, Code Owners can lose their status by a vote of the Code Owners per the voting process below.
 
 ## Decision Making Process
 
 Decisions about the future of Llama Stack are made through discussion with all community members, from the newest user
-to the most experienced maintainer. All non-sensitive project management discussion takes place on the project issue
-tracker system. Occasionally, sensitive discussion occurs on a private channel of our Discord.
+to the most experienced Code Owner. All non-sensitive project management discussion takes place on GitHub issues and discussions. Occasionally, sensitive discussion occurs on a private channel of our Discord.
 
 To ensure that the project is not bogged down by endless discussion and continual voting, the project operates a policy
 of lazy consensus. This allows the majority of decisions to be made without resorting to a formal vote.
@@ -157,11 +179,11 @@ of lazy consensus. This allows the majority of decisions to be made without reso
 Decision making typically involves the following steps:
 *   Discussion *(in Discord channels and GitHub)*
 *   Proposal *(via GitHub issue + GitHub PR)*
-*   (optional) Maintainers voting (if there is active opposition + consensus is not reached through discussion)
+*   (optional) Code Owners voting (if there is active opposition + consensus is not reached through discussion)
 *   Decision
 
 Any community member can make a proposal for consideration by the community. To initiate a discussion about a new idea,
-they should create an issue or submit a PR implementing the idea to the issue tracker. This will prompt a review and,
+they should create an issue or submit a PR implementing the idea. This will prompt a review and,
 if necessary, a discussion of the idea. The goal of this review and discussion is to gain approval for the contribution.
 Since most people in the project community have a shared vision, there is often little discussion to reach consensus.
 
@@ -218,8 +240,8 @@ Most of the issues we see can be handled with regular GitHub issues. However, so
 ask that these go through a design process and produce a consensus among the Llama Stack community and Code Owners.
 
 1. Contributor creates an issue using the Feature Request template
-2. Users, Contributors, Triagers, and Maintainers discuss and upvote the issue
-3. Maintainers approve issue when it is ready
+2. Users, Contributors, Triagers, and Code Owners discuss and upvote the issue
+3. Code Owners approve issue when it is ready
 
 If you submit a pull request to implement a new feature without going through the RFC process, it may be closed with a
 polite request to submit an RFC first. That said, if most of the work is done, we'd accelerate the process.
