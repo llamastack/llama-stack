@@ -8,7 +8,7 @@ import os
 
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 from .helpers import setup_mcp_tools
@@ -104,14 +104,18 @@ def test_mcp_authorization_error_when_header_provided(compat_client, text_model_
                     "type": "mcp",
                     "server_label": "header-auth-mcp",
                     "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "headers": {"Authorization": f"Bearer {test_token}"},  # Security risk - should be rejected
+                    "headers": {
+                        "Authorization": f"Bearer {test_token}"
+                    },  # Security risk - should be rejected
                 }
             ],
             mcp_server_info,
         )
 
         # Create response - should raise ValueError for security reasons
-        with pytest.raises(ValueError, match="Authorization header cannot be passed via 'headers'"):
+        with pytest.raises(
+            ValueError, match="Authorization header cannot be passed via 'headers'"
+        ):
             compat_client.responses.create(
                 model=text_model_id,
                 input="What is the boiling point of myawesomeliquid?",
