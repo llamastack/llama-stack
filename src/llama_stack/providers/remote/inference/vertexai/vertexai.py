@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import Iterable
 
 import google.auth.transport.requests
 from google.auth import default
@@ -42,3 +43,12 @@ class VertexAIInferenceAdapter(OpenAIMixin):
         Source: https://cloud.google.com/vertex-ai/generative-ai/docs/start/openai
         """
         return f"https://{self.config.location}-aiplatform.googleapis.com/v1/projects/{self.config.project}/locations/{self.config.location}/endpoints/openapi"
+
+    async def list_provider_model_ids(self) -> Iterable[str]:
+        """
+        VertexAI doesn't currently offer a way to query a list of available models from Google's Model Garden
+        For now we return a hardcoded version of the available models
+
+        :return: An iterable of model IDs
+        """
+        return ["vertexai/gemini-2.0-flash", "vertexai/gemini-2.5-flash", "vertexai/gemini-2.5-pro"]

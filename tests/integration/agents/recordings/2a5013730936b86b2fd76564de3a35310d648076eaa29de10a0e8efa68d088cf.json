@@ -49,21 +49,11 @@
           "choices": [
             {
               "delta": {
-                "content": "",
+                "content": "{\"name\":\"get_weather\",\"parameters':{'city':'New York'}}",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
-                "tool_calls": [
-                  {
-                    "index": 0,
-                    "id": "call_6p0j25ei",
-                    "function": {
-                      "arguments": "{\"city\":\"New York\"}",
-                      "name": "get_weather"
-                    },
-                    "type": "function"
-                  }
-                ]
+                "tool_calls": null
               },
               "finish_reason": null,
               "index": 0,
@@ -91,7 +81,7 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "tool_calls",
+              "finish_reason": "stop",
               "index": 0,
               "logprobs": null
             }

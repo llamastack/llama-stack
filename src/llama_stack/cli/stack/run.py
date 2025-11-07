@@ -31,6 +31,7 @@ from llama_stack.core.storage.datatypes import (
 )
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import LoggingConfig, get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -132,8 +133,14 @@ class StackRun(Subcommand):
                     )
                     sys.exit(1)
                 if provider_type in providers_for_api:
+                    config_type = instantiate_class_type(providers_for_api[provider_type].config_class)
+                    if config_type is not None and hasattr(config_type, "sample_run_config"):
+                        config = config_type.sample_run_config(__distro_dir__="~/.llama/distributions/providers-run")
+                    else:
+                        config = {}
                     provider = Provider(
                         provider_type=provider_type,
+                        config=config,
                         provider_id=provider_type.split("::")[1],
                     )
                     provider_list.setdefault(api, []).append(provider)
@@ -246,7 +253,7 @@ class StackRun(Subcommand):
             )
             return
 
-        ui_dir = REPO_ROOT / "llama_stack" / "ui"
+        ui_dir = REPO_ROOT / "llama_stack_ui"
         logs_dir = Path("~/.llama/ui/logs").expanduser()
         try:
             # Create logs directory if it doesn't exist

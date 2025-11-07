@@ -20,6 +20,8 @@ from llama_stack.apis.vector_io import (
     SearchRankingOptions,
     VectorIO,
     VectorStoreChunkingStrategy,
+    VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyStaticConfig,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
     VectorStoreFileContentsResponse,
@@ -167,6 +169,13 @@ class VectorIORouter(VectorIO):
         if embedding_dimension is not None:
             params.model_extra["embedding_dimension"] = embedding_dimension
 
+        # Set chunking strategy explicitly if not provided
+        if params.chunking_strategy is None or params.chunking_strategy.type == "auto":
+            # actualize the chunking strategy to static
+            params.chunking_strategy = VectorStoreChunkingStrategyStatic(
+                static=VectorStoreChunkingStrategyStaticConfig()
+            )
+
         return await provider.openai_create_vector_store(params)
 
     async def openai_list_vector_stores(
@@ -283,6 +292,8 @@ class VectorIORouter(VectorIO):
         chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> VectorStoreFileObject:
         logger.debug(f"VectorIORouter.openai_attach_file_to_vector_store: {vector_store_id}, {file_id}")
+        if chunking_strategy is None or chunking_strategy.type == "auto":
+            chunking_strategy = VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig())
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_attach_file_to_vector_store(
             vector_store_id=vector_store_id,

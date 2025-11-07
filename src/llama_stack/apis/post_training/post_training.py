@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from llama_stack.apis.common.content_types import URL
 from llama_stack.apis.common.job_types import JobStatus
 from llama_stack.apis.common.training_types import Checkpoint
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
+from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 
@@ -284,7 +284,6 @@ class PostTrainingJobArtifactsResponse(BaseModel):
 
 
 class PostTraining(Protocol):
-    @webmethod(route="/post-training/supervised-fine-tune", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/post-training/supervised-fine-tune", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def supervised_fine_tune(
         self,
@@ -312,7 +311,6 @@ class PostTraining(Protocol):
         """
         ...
 
-    @webmethod(route="/post-training/preference-optimize", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/post-training/preference-optimize", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def preference_optimize(
         self,
@@ -335,7 +333,6 @@ class PostTraining(Protocol):
         """
         ...
 
-    @webmethod(route="/post-training/jobs", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/post-training/jobs", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_training_jobs(self) -> ListPostTrainingJobsResponse:
         """Get all training jobs.
@@ -344,7 +341,6 @@ class PostTraining(Protocol):
         """
         ...
 
-    @webmethod(route="/post-training/job/status", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/post-training/job/status", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_training_job_status(self, job_uuid: str) -> PostTrainingJobStatusResponse:
         """Get the status of a training job.
@@ -354,7 +350,6 @@ class PostTraining(Protocol):
         """
         ...
 
-    @webmethod(route="/post-training/job/cancel", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/post-training/job/cancel", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def cancel_training_job(self, job_uuid: str) -> None:
         """Cancel a training job.
@@ -363,7 +358,6 @@ class PostTraining(Protocol):
         """
         ...
 
-    @webmethod(route="/post-training/job/artifacts", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/post-training/job/artifacts", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def get_training_job_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse:
         """Get the artifacts of a training job.

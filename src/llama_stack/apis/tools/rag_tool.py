@@ -5,18 +5,13 @@
 # the root directory of this source tree.
 
 from enum import Enum, StrEnum
-from typing import Annotated, Any, Literal, Protocol
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
-from typing_extensions import runtime_checkable
 
 from llama_stack.apis.common.content_types import URL, InterleavedContent
-from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.telemetry.trace_protocol import trace_protocol
-from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 
-@json_schema_type
 class RRFRanker(BaseModel):
     """
     Reciprocal Rank Fusion (RRF) ranker configuration.
@@ -30,7 +25,6 @@ class RRFRanker(BaseModel):
     impact_factor: float = Field(default=60.0, gt=0.0)  # default of 60 for optimal performance
 
 
-@json_schema_type
 class WeightedRanker(BaseModel):
     """
     Weighted ranker configuration that combines vector and keyword scores.
@@ -55,10 +49,8 @@ Ranker = Annotated[
     RRFRanker | WeightedRanker,
     Field(discriminator="type"),
 ]
-register_schema(Ranker, name="Ranker")
 
 
-@json_schema_type
 class RAGDocument(BaseModel):
     """
     A document to be used for document ingestion in the RAG Tool.
@@ -75,7 +67,6 @@ class RAGDocument(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-@json_schema_type
 class RAGQueryResult(BaseModel):
     """Result of a RAG query containing retrieved content and metadata.
 
@@ -87,7 +78,6 @@ class RAGQueryResult(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-@json_schema_type
 class RAGQueryGenerator(Enum):
     """Types of query generators for RAG systems.
 
@@ -101,7 +91,6 @@ class RAGQueryGenerator(Enum):
     custom = "custom"
 
 
-@json_schema_type
 class RAGSearchMode(StrEnum):
     """
     Search modes for RAG query retrieval:
@@ -115,7 +104,6 @@ class RAGSearchMode(StrEnum):
     HYBRID = "hybrid"
 
 
-@json_schema_type
 class DefaultRAGQueryGeneratorConfig(BaseModel):
     """Configuration for the default RAG query generator.
 
@@ -127,7 +115,6 @@ class DefaultRAGQueryGeneratorConfig(BaseModel):
     separator: str = " "
 
 
-@json_schema_type
 class LLMRAGQueryGeneratorConfig(BaseModel):
     """Configuration for the LLM-based RAG query generator.
 
@@ -145,10 +132,8 @@ RAGQueryGeneratorConfig = Annotated[
     DefaultRAGQueryGeneratorConfig | LLMRAGQueryGeneratorConfig,
     Field(discriminator="type"),
 ]
-register_schema(RAGQueryGeneratorConfig, name="RAGQueryGeneratorConfig")
 
 
-@json_schema_type
 class RAGQueryConfig(BaseModel):
     """
     Configuration for the RAG query generation.
@@ -181,38 +166,3 @@ class RAGQueryConfig(BaseModel):
         if len(v) == 0:
             raise ValueError("chunk_template must not be empty")
         return v
-
-
-@runtime_checkable
-@trace_protocol
-class RAGToolRuntime(Protocol):
-    @webmethod(route="/tool-runtime/rag-tool/insert", method="POST", level=LLAMA_STACK_API_V1)
-    async def insert(
-        self,
-        documents: list[RAGDocument],
-        vector_store_id: str,
-        chunk_size_in_tokens: int = 512,
-    ) -> None:
-        """Index documents so they can be used by the RAG system.
-
-        :param documents: List of documents to index in the RAG system
-        :param vector_store_id: ID of the vector database to store the document embeddings
-        :param chunk_size_in_tokens: (Optional) Size in tokens for document chunking during indexing
-        """
-        ...
-
-    @webmethod(route="/tool-runtime/rag-tool/query", method="POST", level=LLAMA_STACK_API_V1)
-    async def query(
-        self,
-        content: InterleavedContent,
-        vector_store_ids: list[str],
-        query_config: RAGQueryConfig | None = None,
-    ) -> RAGQueryResult:
-        """Query the RAG system for context; typically invoked by the agent.
-
-        :param content: The query content to search for in the indexed documents
-        :param vector_store_ids: List of vector database IDs to search within
-        :param query_config: (Optional) Configuration parameters for the query operation
-        :returns: RAGQueryResult containing the retrieved content and metadata
-        """
-        ...

@@ -84,6 +84,15 @@ def run_command(command: list[str]) -> int:
             text=True,
             check=False,
         )
+
+        # Print stdout and stderr if command failed
+        if result.returncode != 0:
+            log.error(f"Command {' '.join(command)} failed with returncode {result.returncode}")
+            if result.stdout:
+                log.error(f"STDOUT: {result.stdout}")
+            if result.stderr:
+                log.error(f"STDERR: {result.stderr}")
+
         return result.returncode
     except subprocess.SubprocessError as e:
         log.error(f"Subprocess error: {e}")

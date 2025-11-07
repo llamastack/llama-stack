@@ -24,11 +24,11 @@
         "id": "rec-3a680a3aabcd",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "length",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Hello! How can I help you today?",
+              "content": "Hello! It's nice to meet you. Is there anything I can help you with or would you",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 10,
+          "completion_tokens": 20,
           "prompt_tokens": 27,
-          "total_tokens": 37,
+          "total_tokens": 47,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

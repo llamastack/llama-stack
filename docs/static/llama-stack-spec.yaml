@@ -974,11 +974,11 @@ paths:
     get:
       responses:
         '200':
-          description: A ListModelsResponse.
+          description: A OpenAIListModelsResponse.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListModelsResponse'
+                $ref: '#/components/schemas/OpenAIListModelsResponse'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -991,8 +991,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
         - Models
-      summary: List all models.
-      description: List all models.
+      summary: List models using the OpenAI API.
+      description: List models using the OpenAI API.
       parameters: []
       deprecated: false
     post:
@@ -1982,40 +1982,6 @@ paths:
           schema:
             type: string
       deprecated: false
-  /v1/synthetic-data-generation/generate:
-    post:
-      responses:
-        '200':
-          description: >-
-            Response containing filtered synthetic data samples and optional statistics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SyntheticDataGenerationResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - SyntheticDataGeneration (Coming Soon)
-      summary: >-
-        Generate synthetic data based on input dialogs and apply filtering.
-      description: >-
-        Generate synthetic data based on input dialogs and apply filtering.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SyntheticDataGenerateRequest'
-        required: true
-      deprecated: false
   /v1/tool-runtime/invoke:
     post:
       responses:
@@ -2085,69 +2051,6 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/URL'
-      deprecated: false
-  /v1/tool-runtime/rag-tool/insert:
-    post:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - ToolRuntime
-      summary: >-
-        Index documents so they can be used by the RAG system.
-      description: >-
-        Index documents so they can be used by the RAG system.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InsertRequest'
-        required: true
-      deprecated: false
-  /v1/tool-runtime/rag-tool/query:
-    post:
-      responses:
-        '200':
-          description: >-
-            RAGQueryResult containing the retrieved content and metadata
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RAGQueryResult'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - ToolRuntime
-      summary: >-
-        Query the RAG system for context; typically invoked by the agent.
-      description: >-
-        Query the RAG system for context; typically invoked by the agent.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryRequest'
-        required: true
       deprecated: false
   /v1/toolgroups:
     get:
@@ -5619,6 +5522,88 @@ components:
       title: ListRoutesResponse
       description: >-
         Response containing a list of all available API routes.
+    OpenAIModel:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          const: model
+          default: model
+        created:
+          type: integer
+        owned_by:
+          type: string
+        custom_metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created
+        - owned_by
+      title: OpenAIModel
+      description: A model from OpenAI.
+    OpenAIListModelsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIModel'
+      additionalProperties: false
+      required:
+        - data
+      title: OpenAIListModelsResponse
+    ModelType:
+      type: string
+      enum:
+        - llm
+        - embedding
+        - rerank
+      title: ModelType
+      description: >-
+        Enumeration of supported model types in Llama Stack.
+    RegisterModelRequest:
+      type: object
+      properties:
+        model_id:
+          type: string
+          description: The identifier of the model to register.
+        provider_model_id:
+          type: string
+          description: >-
+            The identifier of the model in the provider.
+        provider_id:
+          type: string
+          description: The identifier of the provider.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Any additional metadata for this model.
+        model_type:
+          $ref: '#/components/schemas/ModelType'
+          description: The type of model to register.
+      additionalProperties: false
+      required:
+        - model_id
+      title: RegisterModelRequest
     Model:
       type: object
       properties:
@@ -5676,57 +5661,6 @@ components:
       title: Model
       description: >-
         A model resource representing an AI model registered in Llama Stack.
-    ModelType:
-      type: string
-      enum:
-        - llm
-        - embedding
-        - rerank
-      title: ModelType
-      description: >-
-        Enumeration of supported model types in Llama Stack.
-    ListModelsResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Model'
-      additionalProperties: false
-      required:
-        - data
-      title: ListModelsResponse
-    RegisterModelRequest:
-      type: object
-      properties:
-        model_id:
-          type: string
-          description: The identifier of the model to register.
-        provider_model_id:
-          type: string
-          description: >-
-            The identifier of the model in the provider.
-        provider_id:
-          type: string
-          description: The identifier of the provider.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: Any additional metadata for this model.
-        model_type:
-          $ref: '#/components/schemas/ModelType'
-          description: The type of model to register.
-      additionalProperties: false
-      required:
-        - model_id
-      title: RegisterModelRequest
     RunModerationRequest:
       type: object
       properties:
@@ -6141,6 +6075,8 @@ components:
               const: web_search_preview
             - type: string
               const: web_search_preview_2025_03_11
+            - type: string
+              const: web_search_2025_08_26
           default: web_search
           description: Web search tool type variant to use
         search_context_size:
@@ -8140,20 +8076,6 @@ components:
         - error
       title: ViolationLevel
       description: Severity level of a safety violation.
-    AgentTurnInputType:
-      type: object
-      properties:
-        type:
-          type: string
-          const: agent_turn_input
-          default: agent_turn_input
-          description: >-
-            Discriminator type. Always "agent_turn_input"
-      additionalProperties: false
-      required:
-        - type
-      title: AgentTurnInputType
-      description: Parameter type for agent turn input.
     AggregationFunctionType:
       type: string
       enum:
@@ -8396,7 +8318,6 @@ components:
             - $ref: '#/components/schemas/UnionType'
             - $ref: '#/components/schemas/ChatCompletionInputType'
             - $ref: '#/components/schemas/CompletionInputType'
-            - $ref: '#/components/schemas/AgentTurnInputType'
           discriminator:
             propertyName: type
             mapping:
@@ -8409,7 +8330,6 @@ components:
               union: '#/components/schemas/UnionType'
               chat_completion_input: '#/components/schemas/ChatCompletionInputType'
               completion_input: '#/components/schemas/CompletionInputType'
-              agent_turn_input: '#/components/schemas/AgentTurnInputType'
         params:
           $ref: '#/components/schemas/ScoringFnParams'
       additionalProperties: false
@@ -8490,7 +8410,6 @@ components:
         - $ref: '#/components/schemas/UnionType'
         - $ref: '#/components/schemas/ChatCompletionInputType'
         - $ref: '#/components/schemas/CompletionInputType'
-        - $ref: '#/components/schemas/AgentTurnInputType'
       discriminator:
         propertyName: type
         mapping:
@@ -8503,7 +8422,6 @@ components:
           union: '#/components/schemas/UnionType'
           chat_completion_input: '#/components/schemas/ChatCompletionInputType'
           completion_input: '#/components/schemas/CompletionInputType'
-          agent_turn_input: '#/components/schemas/AgentTurnInputType'
     RegisterScoringFunctionRequest:
       type: object
       properties:
@@ -8740,45 +8658,29 @@ components:
       required:
         - shield_id
       title: RegisterShieldRequest
-    CompletionMessage:
+    InvokeToolRequest:
       type: object
       properties:
-        role:
+        tool_name:
           type: string
-          const: assistant
-          default: assistant
+          description: The name of the tool to invoke.
+        kwargs:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
           description: >-
-            Must be "assistant" to identify this as the model's response
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The content of the model's response
-        stop_reason:
-          type: string
-          enum:
-            - end_of_turn
-            - end_of_message
-            - out_of_tokens
-          description: >-
-            Reason why the model stopped generating. Options are: - `StopReason.end_of_turn`:
-            The model finished generating the entire response. - `StopReason.end_of_message`:
-            The model finished generating but generated a partial response -- usually,
-            a tool call. The user may call the tool and continue the conversation
-            with the tool's response. - `StopReason.out_of_tokens`: The model ran
-            out of token budget.
-        tool_calls:
-          type: array
-          items:
-            $ref: '#/components/schemas/ToolCall'
-          description: >-
-            List of tool calls. Each tool call is a ToolCall object.
+            A dictionary of arguments to pass to the tool.
       additionalProperties: false
       required:
-        - role
-        - content
-        - stop_reason
-      title: CompletionMessage
-      description: >-
-        A message containing the model's (assistant) response in a chat conversation.
+        - tool_name
+        - kwargs
+      title: InvokeToolRequest
     ImageContentItem:
       type: object
       properties:
@@ -8825,41 +8727,6 @@ components:
         mapping:
           image: '#/components/schemas/ImageContentItem'
           text: '#/components/schemas/TextContentItem'
-    Message:
-      oneOf:
-        - $ref: '#/components/schemas/UserMessage'
-        - $ref: '#/components/schemas/SystemMessage'
-        - $ref: '#/components/schemas/ToolResponseMessage'
-        - $ref: '#/components/schemas/CompletionMessage'
-      discriminator:
-        propertyName: role
-        mapping:
-          user: '#/components/schemas/UserMessage'
-          system: '#/components/schemas/SystemMessage'
-          tool: '#/components/schemas/ToolResponseMessage'
-          assistant: '#/components/schemas/CompletionMessage'
-    SystemMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: system
-          default: system
-          description: >-
-            Must be "system" to identify this as a system message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the "system prompt". If multiple system messages are provided,
-            they are concatenated. The underlying Llama Stack code may also add other
-            system messages (for example, for formatting tool definitions).
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: SystemMessage
-      description: >-
-        A system message providing instructions or context to the model.
     TextContentItem:
       type: object
       properties:
@@ -8878,179 +8745,6 @@ components:
         - text
       title: TextContentItem
       description: A text content item
-    ToolCall:
-      type: object
-      properties:
-        call_id:
-          type: string
-        tool_name:
-          oneOf:
-            - type: string
-              enum:
-                - brave_search
-                - wolfram_alpha
-                - photogen
-                - code_interpreter
-              title: BuiltinTool
-            - type: string
-        arguments:
-          type: string
-      additionalProperties: false
-      required:
-        - call_id
-        - tool_name
-        - arguments
-      title: ToolCall
-    ToolResponseMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: tool
-          default: tool
-          description: >-
-            Must be "tool" to identify this as a tool response
-        call_id:
-          type: string
-          description: >-
-            Unique identifier for the tool call this response is for
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: The response content from the tool
-      additionalProperties: false
-      required:
-        - role
-        - call_id
-        - content
-      title: ToolResponseMessage
-      description: >-
-        A message representing the result of a tool invocation.
-    URL:
-      type: object
-      properties:
-        uri:
-          type: string
-          description: The URL string pointing to the resource
-      additionalProperties: false
-      required:
-        - uri
-      title: URL
-      description: A URL reference to external content.
-    UserMessage:
-      type: object
-      properties:
-        role:
-          type: string
-          const: user
-          default: user
-          description: >-
-            Must be "user" to identify this as a user message
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The content of the message, which can include text and other media
-        context:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            (Optional) This field is used internally by Llama Stack to pass RAG context.
-            This field may be removed in the API in the future.
-      additionalProperties: false
-      required:
-        - role
-        - content
-      title: UserMessage
-      description: >-
-        A message from the user in a chat conversation.
-    SyntheticDataGenerateRequest:
-      type: object
-      properties:
-        dialogs:
-          type: array
-          items:
-            $ref: '#/components/schemas/Message'
-          description: >-
-            List of conversation messages to use as input for synthetic data generation
-        filtering_function:
-          type: string
-          enum:
-            - none
-            - random
-            - top_k
-            - top_p
-            - top_k_top_p
-            - sigmoid
-          description: >-
-            Type of filtering to apply to generated synthetic data samples
-        model:
-          type: string
-          description: >-
-            (Optional) The identifier of the model to use. The model must be registered
-            with Llama Stack and available via the /models endpoint
-      additionalProperties: false
-      required:
-        - dialogs
-        - filtering_function
-      title: SyntheticDataGenerateRequest
-    SyntheticDataGenerationResponse:
-      type: object
-      properties:
-        synthetic_data:
-          type: array
-          items:
-            type: object
-            additionalProperties:
-              oneOf:
-                - type: 'null'
-                - type: boolean
-                - type: number
-                - type: string
-                - type: array
-                - type: object
-          description: >-
-            List of generated synthetic data samples that passed the filtering criteria
-        statistics:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            (Optional) Statistical information about the generation process and filtering
-            results
-      additionalProperties: false
-      required:
-        - synthetic_data
-      title: SyntheticDataGenerationResponse
-      description: >-
-        Response from the synthetic data generation. Batch of (prompt, response, score)
-        tuples that pass the threshold.
-    InvokeToolRequest:
-      type: object
-      properties:
-        tool_name:
-          type: string
-          description: The name of the tool to invoke.
-        kwargs:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            A dictionary of arguments to pass to the tool.
-      additionalProperties: false
-      required:
-        - tool_name
-        - kwargs
-      title: InvokeToolRequest
     ToolInvocationResult:
       type: object
       properties:
@@ -9081,6 +8775,17 @@ components:
       additionalProperties: false
       title: ToolInvocationResult
       description: Result of a tool invocation.
+    URL:
+      type: object
+      properties:
+        uri:
+          type: string
+          description: The URL string pointing to the resource
+      additionalProperties: false
+      required:
+        - uri
+      title: URL
+      description: A URL reference to external content.
     ToolDef:
       type: object
       properties:
@@ -9151,274 +8856,6 @@ components:
       title: ListToolDefsResponse
       description: >-
         Response containing a list of tool definitions.
-    RAGDocument:
-      type: object
-      properties:
-        document_id:
-          type: string
-          description: The unique identifier for the document.
-        content:
-          oneOf:
-            - type: string
-            - $ref: '#/components/schemas/InterleavedContentItem'
-            - type: array
-              items:
-                $ref: '#/components/schemas/InterleavedContentItem'
-            - $ref: '#/components/schemas/URL'
-          description: The content of the document.
-        mime_type:
-          type: string
-          description: The MIME type of the document.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: Additional metadata for the document.
-      additionalProperties: false
-      required:
-        - document_id
-        - content
-        - metadata
-      title: RAGDocument
-      description: >-
-        A document to be used for document ingestion in the RAG Tool.
-    InsertRequest:
-      type: object
-      properties:
-        documents:
-          type: array
-          items:
-            $ref: '#/components/schemas/RAGDocument'
-          description: >-
-            List of documents to index in the RAG system
-        vector_store_id:
-          type: string
-          description: >-
-            ID of the vector database to store the document embeddings
-        chunk_size_in_tokens:
-          type: integer
-          description: >-
-            (Optional) Size in tokens for document chunking during indexing
-      additionalProperties: false
-      required:
-        - documents
-        - vector_store_id
-        - chunk_size_in_tokens
-      title: InsertRequest
-    DefaultRAGQueryGeneratorConfig:
-      type: object
-      properties:
-        type:
-          type: string
-          const: default
-          default: default
-          description: >-
-            Type of query generator, always 'default'
-        separator:
-          type: string
-          default: ' '
-          description: >-
-            String separator used to join query terms
-      additionalProperties: false
-      required:
-        - type
-        - separator
-      title: DefaultRAGQueryGeneratorConfig
-      description: >-
-        Configuration for the default RAG query generator.
-    LLMRAGQueryGeneratorConfig:
-      type: object
-      properties:
-        type:
-          type: string
-          const: llm
-          default: llm
-          description: Type of query generator, always 'llm'
-        model:
-          type: string
-          description: >-
-            Name of the language model to use for query generation
-        template:
-          type: string
-          description: >-
-            Template string for formatting the query generation prompt
-      additionalProperties: false
-      required:
-        - type
-        - model
-        - template
-      title: LLMRAGQueryGeneratorConfig
-      description: >-
-        Configuration for the LLM-based RAG query generator.
-    RAGQueryConfig:
-      type: object
-      properties:
-        query_generator_config:
-          oneOf:
-            - $ref: '#/components/schemas/DefaultRAGQueryGeneratorConfig'
-            - $ref: '#/components/schemas/LLMRAGQueryGeneratorConfig'
-          discriminator:
-            propertyName: type
-            mapping:
-              default: '#/components/schemas/DefaultRAGQueryGeneratorConfig'
-              llm: '#/components/schemas/LLMRAGQueryGeneratorConfig'
-          description: Configuration for the query generator.
-        max_tokens_in_context:
-          type: integer
-          default: 4096
-          description: Maximum number of tokens in the context.
-        max_chunks:
-          type: integer
-          default: 5
-          description: Maximum number of chunks to retrieve.
-        chunk_template:
-          type: string
-          default: >
-            Result {index}
-
-            Content: {chunk.content}
-
-            Metadata: {metadata}
-          description: >-
-            Template for formatting each retrieved chunk in the context. Available
-            placeholders: {index} (1-based chunk ordinal), {chunk.content} (chunk
-            content string), {metadata} (chunk metadata dict). Default: "Result {index}\nContent:
-            {chunk.content}\nMetadata: {metadata}\n"
-        mode:
-          $ref: '#/components/schemas/RAGSearchMode'
-          default: vector
-          description: >-
-            Search mode for retrieval—either "vector", "keyword", or "hybrid". Default
-            "vector".
-        ranker:
-          $ref: '#/components/schemas/Ranker'
-          description: >-
-            Configuration for the ranker to use in hybrid search. Defaults to RRF
-            ranker.
-      additionalProperties: false
-      required:
-        - query_generator_config
-        - max_tokens_in_context
-        - max_chunks
-        - chunk_template
-      title: RAGQueryConfig
-      description: >-
-        Configuration for the RAG query generation.
-    RAGSearchMode:
-      type: string
-      enum:
-        - vector
-        - keyword
-        - hybrid
-      title: RAGSearchMode
-      description: >-
-        Search modes for RAG query retrieval: - VECTOR: Uses vector similarity search
-        for semantic matching - KEYWORD: Uses keyword-based search for exact matching
-        - HYBRID: Combines both vector and keyword search for better results
-    RRFRanker:
-      type: object
-      properties:
-        type:
-          type: string
-          const: rrf
-          default: rrf
-          description: The type of ranker, always "rrf"
-        impact_factor:
-          type: number
-          default: 60.0
-          description: >-
-            The impact factor for RRF scoring. Higher values give more weight to higher-ranked
-            results. Must be greater than 0
-      additionalProperties: false
-      required:
-        - type
-        - impact_factor
-      title: RRFRanker
-      description: >-
-        Reciprocal Rank Fusion (RRF) ranker configuration.
-    Ranker:
-      oneOf:
-        - $ref: '#/components/schemas/RRFRanker'
-        - $ref: '#/components/schemas/WeightedRanker'
-      discriminator:
-        propertyName: type
-        mapping:
-          rrf: '#/components/schemas/RRFRanker'
-          weighted: '#/components/schemas/WeightedRanker'
-    WeightedRanker:
-      type: object
-      properties:
-        type:
-          type: string
-          const: weighted
-          default: weighted
-          description: The type of ranker, always "weighted"
-        alpha:
-          type: number
-          default: 0.5
-          description: >-
-            Weight factor between 0 and 1. 0 means only use keyword scores, 1 means
-            only use vector scores, values in between blend both scores.
-      additionalProperties: false
-      required:
-        - type
-        - alpha
-      title: WeightedRanker
-      description: >-
-        Weighted ranker configuration that combines vector and keyword scores.
-    QueryRequest:
-      type: object
-      properties:
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            The query content to search for in the indexed documents
-        vector_store_ids:
-          type: array
-          items:
-            type: string
-          description: >-
-            List of vector database IDs to search within
-        query_config:
-          $ref: '#/components/schemas/RAGQueryConfig'
-          description: >-
-            (Optional) Configuration parameters for the query operation
-      additionalProperties: false
-      required:
-        - content
-        - vector_store_ids
-      title: QueryRequest
-    RAGQueryResult:
-      type: object
-      properties:
-        content:
-          $ref: '#/components/schemas/InterleavedContent'
-          description: >-
-            (Optional) The retrieved content from the query
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            Additional metadata about the query result
-      additionalProperties: false
-      required:
-        - metadata
-      title: RAGQueryResult
-      description: >-
-        Result of a RAG query containing retrieved content and metadata.
     ToolGroup:
       type: object
       properties:
@@ -9825,6 +9262,70 @@ components:
         - metadata
       title: VectorStoreObject
       description: OpenAI Vector Store object.
+    VectorStoreChunkingStrategy:
+      oneOf:
+        - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+        - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+      discriminator:
+        propertyName: type
+        mapping:
+          auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+          static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+    VectorStoreChunkingStrategyAuto:
+      type: object
+      properties:
+        type:
+          type: string
+          const: auto
+          default: auto
+          description: >-
+            Strategy type, always "auto" for automatic chunking
+      additionalProperties: false
+      required:
+        - type
+      title: VectorStoreChunkingStrategyAuto
+      description: >-
+        Automatic chunking strategy for vector store files.
+    VectorStoreChunkingStrategyStatic:
+      type: object
+      properties:
+        type:
+          type: string
+          const: static
+          default: static
+          description: >-
+            Strategy type, always "static" for static chunking
+        static:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategyStaticConfig'
+          description: >-
+            Configuration parameters for the static chunking strategy
+      additionalProperties: false
+      required:
+        - type
+        - static
+      title: VectorStoreChunkingStrategyStatic
+      description: >-
+        Static chunking strategy with configurable parameters.
+    VectorStoreChunkingStrategyStaticConfig:
+      type: object
+      properties:
+        chunk_overlap_tokens:
+          type: integer
+          default: 400
+          description: >-
+            Number of tokens to overlap between adjacent chunks
+        max_chunk_size_tokens:
+          type: integer
+          default: 800
+          description: >-
+            Maximum number of tokens per chunk, must be between 100 and 4096
+      additionalProperties: false
+      required:
+        - chunk_overlap_tokens
+        - max_chunk_size_tokens
+      title: VectorStoreChunkingStrategyStaticConfig
+      description: >-
+        Configuration for static chunking strategy.
     "OpenAICreateVectorStoreRequestWithExtraBody":
       type: object
       properties:
@@ -9850,15 +9351,7 @@ components:
           description: >-
             (Optional) Expiration policy for the vector store
         chunking_strategy:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
+          $ref: '#/components/schemas/VectorStoreChunkingStrategy'
           description: >-
             (Optional) Strategy for splitting files into chunks
         metadata:
@@ -9934,70 +9427,6 @@ components:
         - deleted
       title: VectorStoreDeleteResponse
       description: Response from deleting a vector store.
-    VectorStoreChunkingStrategy:
-      oneOf:
-        - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-        - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-      discriminator:
-        propertyName: type
-        mapping:
-          auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-          static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-    VectorStoreChunkingStrategyAuto:
-      type: object
-      properties:
-        type:
-          type: string
-          const: auto
-          default: auto
-          description: >-
-            Strategy type, always "auto" for automatic chunking
-      additionalProperties: false
-      required:
-        - type
-      title: VectorStoreChunkingStrategyAuto
-      description: >-
-        Automatic chunking strategy for vector store files.
-    VectorStoreChunkingStrategyStatic:
-      type: object
-      properties:
-        type:
-          type: string
-          const: static
-          default: static
-          description: >-
-            Strategy type, always "static" for static chunking
-        static:
-          $ref: '#/components/schemas/VectorStoreChunkingStrategyStaticConfig'
-          description: >-
-            Configuration parameters for the static chunking strategy
-      additionalProperties: false
-      required:
-        - type
-        - static
-      title: VectorStoreChunkingStrategyStatic
-      description: >-
-        Static chunking strategy with configurable parameters.
-    VectorStoreChunkingStrategyStaticConfig:
-      type: object
-      properties:
-        chunk_overlap_tokens:
-          type: integer
-          default: 400
-          description: >-
-            Number of tokens to overlap between adjacent chunks
-        max_chunk_size_tokens:
-          type: integer
-          default: 800
-          description: >-
-            Maximum number of tokens per chunk, must be between 100 and 4096
-      additionalProperties: false
-      required:
-        - chunk_overlap_tokens
-        - max_chunk_size_tokens
-      title: VectorStoreChunkingStrategyStaticConfig
-      description: >-
-        Configuration for static chunking strategy.
     "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
       type: object
       properties:
@@ -10455,7 +9884,9 @@ components:
           description: >-
             Object type identifier for the search results page
         search_query:
-          type: string
+          type: array
+          items:
+            type: string
           description: >-
             The original search query that was executed
         data:
@@ -10682,8 +10113,6 @@ tags:
     description: ''
   - name: Shields
     description: ''
-  - name: SyntheticDataGeneration (Coming Soon)
-    description: ''
   - name: ToolGroups
     description: ''
   - name: ToolRuntime
@@ -10706,7 +10135,6 @@ x-tagGroups:
       - Scoring
       - ScoringFunctions
       - Shields
-      - SyntheticDataGeneration (Coming Soon)
       - ToolGroups
       - ToolRuntime
       - VectorIO

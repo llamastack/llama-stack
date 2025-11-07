@@ -84,7 +84,6 @@ def generate_spec(output_dir: Path, stability_filter: str = None, main_spec: boo
     )
 
     yaml_filename = f"{filename_prefix}llama-stack-spec.yaml"
-    html_filename = f"{filename_prefix}llama-stack-spec.html"
 
     with open(output_dir / yaml_filename, "w", encoding="utf-8") as fp:
         y = yaml.YAML()
@@ -101,11 +100,6 @@ def generate_spec(output_dir: Path, stability_filter: str = None, main_spec: boo
             spec.get_json(),
             fp,
         )
-
-    with open(output_dir / html_filename, "w") as fp:
-        spec.write_html(fp, pretty_print=True)
-
-    print(f"Generated {yaml_filename} and {html_filename}")
 
 def main(output_dir: str):
     output_dir = Path(output_dir)

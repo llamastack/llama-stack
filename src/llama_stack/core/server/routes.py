@@ -13,7 +13,6 @@ from aiohttp import hdrs
 from starlette.routing import Route
 
 from llama_stack.apis.datatypes import Api, ExternalApiSpec
-from llama_stack.apis.tools import RAGToolRuntime, SpecialToolGroup
 from llama_stack.core.resolver import api_protocol_map
 from llama_stack.schema_utils import WebMethod
 
@@ -25,32 +24,15 @@ RouteImpls = dict[str, PathImpl]
 RouteMatch = tuple[EndpointFunc, PathParams, str, WebMethod]
 
 
-def toolgroup_protocol_map():
-    return {
-        SpecialToolGroup.rag_tool: RAGToolRuntime,
-    }
-
-
 def get_all_api_routes(
     external_apis: dict[Api, ExternalApiSpec] | None = None,
 ) -> dict[Api, list[tuple[Route, WebMethod]]]:
     apis = {}
 
     protocols = api_protocol_map(external_apis)
-    toolgroup_protocols = toolgroup_protocol_map()
     for api, protocol in protocols.items():
         routes = []
         protocol_methods = inspect.getmembers(protocol, predicate=inspect.isfunction)
-
-        # HACK ALERT
-        if api == Api.tool_runtime:
-            for tool_group in SpecialToolGroup:
-                sub_protocol = toolgroup_protocols[tool_group]
-                sub_protocol_methods = inspect.getmembers(sub_protocol, predicate=inspect.isfunction)
-                for name, method in sub_protocol_methods:
-                    if not hasattr(method, "__webmethod__"):
-                        continue
-                    protocol_methods.append((f"{tool_group.value}.{name}", method))
 
         for name, method in protocol_methods:
             # Get all webmethods for this method (supports multiple decorators)

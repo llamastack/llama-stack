@@ -65,9 +65,9 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_2cu7jl5t",
+                  "id": "call_z19o22kj",
                   "function": {
-                    "arguments": "{\"data\":\"[1, 2, 3]\"}",
+                    "arguments": "{\"data\":\"[1, 2, 3, 4, 5]\"}",
                     "name": "process_data"
                   },
                   "type": "function",
@@ -83,14 +83,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 24,
+          "completion_tokens": 30,
           "prompt_tokens": 176,
-          "total_tokens": 200,
+          "total_tokens": 206,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

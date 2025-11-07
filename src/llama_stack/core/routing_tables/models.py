@@ -134,6 +134,12 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 object="model",
                 created=int(time.time()),
                 owned_by="llama_stack",
+                custom_metadata={
+                    "model_type": model.model_type,
+                    "provider_id": model.provider_id,
+                    "provider_resource_id": model.provider_resource_id,
+                    **model.metadata,
+                },
             )
             for model in all_models
         ]

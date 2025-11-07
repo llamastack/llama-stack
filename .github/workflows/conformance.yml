@@ -22,7 +22,6 @@ on:
       - 'docs/static/stable-llama-stack-spec.yaml'       # Stable APIs spec
       - 'docs/static/experimental-llama-stack-spec.yaml' # Experimental APIs spec
       - 'docs/static/deprecated-llama-stack-spec.yaml'   # Deprecated APIs spec
-      - 'docs/static/llama-stack-spec.html'              # Legacy HTML spec
       - '.github/workflows/conformance.yml'              # This workflow itself
 
 concurrency:

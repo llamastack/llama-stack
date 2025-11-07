@@ -6,26 +6,22 @@
 
 from .conversations import (
     Conversation,
-    ConversationCreateRequest,
     ConversationDeletedResource,
     ConversationItem,
     ConversationItemCreateRequest,
     ConversationItemDeletedResource,
     ConversationItemList,
     Conversations,
-    ConversationUpdateRequest,
     Metadata,
 )
 
 __all__ = [
     "Conversation",
-    "ConversationCreateRequest",
     "ConversationDeletedResource",
     "ConversationItem",
     "ConversationItemCreateRequest",
     "ConversationItemDeletedResource",
     "ConversationItemList",
     "Conversations",
-    "ConversationUpdateRequest",
     "Metadata",
 ]

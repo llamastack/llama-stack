@@ -8,9 +8,9 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
+from llama_stack.apis.common.tracing import telemetry_traceable
 from llama_stack.apis.resource import Resource, ResourceType
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 
 
@@ -48,7 +48,7 @@ class ListShieldsResponse(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
+@telemetry_traceable
 class Shields(Protocol):
     @webmethod(route="/shields", method="GET", level=LLAMA_STACK_API_V1)
     async def list_shields(self) -> ListShieldsResponse:

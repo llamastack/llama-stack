@@ -10,8 +10,8 @@ from .config import PassthroughImplConfig
 
 
 class PassthroughProviderDataValidator(BaseModel):
-    url: str
-    api_key: str
+    passthrough_url: str
+    passthrough_api_key: str
 
 
 async def get_adapter_impl(config: PassthroughImplConfig, _deps):

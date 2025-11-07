@@ -12,8 +12,8 @@ import httpx
 import openai
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
 from llama_stack.core.datatypes import AuthenticationRequiredError
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import dependency_tools, make_mcp_server
 
 from .fixtures.test_cases import (

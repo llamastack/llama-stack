@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Humans currently live on Earth. It is the only known planet in our solar system that supports life.",
+              "content": "Humans live on Earth.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 21,
+          "completion_tokens": 6,
           "prompt_tokens": 32,
-          "total_tokens": 53,
+          "total_tokens": 38,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

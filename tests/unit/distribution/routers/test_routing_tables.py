@@ -166,6 +166,14 @@ async def test_models_routing_table(cached_disk_dist_registry):
     assert "test_provider/test-model" in openai_model_ids
     assert "test_provider/test-model-2" in openai_model_ids
 
+    # Verify custom_metadata is populated with Llama Stack-specific data
+    for openai_model in openai_models.data:
+        assert openai_model.custom_metadata is not None
+        assert "model_type" in openai_model.custom_metadata
+        assert "provider_id" in openai_model.custom_metadata
+        assert "provider_resource_id" in openai_model.custom_metadata
+        assert openai_model.custom_metadata["provider_id"] == "test_provider"
+
     # Test get_object_by_identifier
     model = await table.get_object_by_identifier("model", "test_provider/test-model")
     assert model is not None

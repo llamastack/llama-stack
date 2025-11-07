@@ -87,9 +87,9 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_jo6hckbv",
+                  "id": "call_m5909pw6",
                   "function": {
-                    "arguments": "{\"flight\":\"{\\\"date\\\":\\\"2023-12-15\\\",\\\"from\\\":\\\"SFO\\\",\\\"to\\\":\\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\":\\\", \\\"name\\\":\\\"John Doe\\\"}\"}",
+                    "arguments": "{\"flight\":\"{\\\"date\\\": \\\"2024-01-01\\\", \\\"from\\\": \\\"SFO\\\", \\\"to\\\": \\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\": 30, \\\"name\\\": \\\"John Doe\\\"}\"}",
                     "name": "book_flight"
                   },
                   "type": "function",
@@ -105,14 +105,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 52,
+          "completion_tokens": 59,
           "prompt_tokens": 227,
-          "total_tokens": 279,
+          "total_tokens": 286,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

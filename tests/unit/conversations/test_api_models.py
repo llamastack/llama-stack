@@ -7,16 +7,9 @@
 
 from llama_stack.apis.conversations.conversations import (
     Conversation,
-    ConversationCreateRequest,
     ConversationItem,
     ConversationItemList,
 )
-
-
-def test_conversation_create_request_defaults():
-    request = ConversationCreateRequest()
-    assert request.items == []
-    assert request.metadata == {}
 
 
 def test_conversation_model_defaults():

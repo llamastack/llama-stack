@@ -20,8 +20,8 @@ import yaml
 from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
-from llama_stack import LlamaStackAsLibraryClient
 from llama_stack.core.datatypes import VectorStoresConfig
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
 from llama_stack.env import get_env_or_fail
 
@@ -160,7 +160,7 @@ def client_with_models(
     providers = [p for p in client.providers.list() if p.api == "inference"]
     assert len(providers) > 0, "No inference providers found"
 
-    model_ids = {m.identifier for m in client.models.list()}
+    model_ids = {m.id for m in client.models.list()}
 
     if text_model_id and text_model_id not in model_ids:
         raise ValueError(f"text_model_id {text_model_id} not found")

@@ -13,7 +13,7 @@ import json
 
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 AUTH_TOKEN = "test-token"

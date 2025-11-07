@@ -25,7 +25,7 @@ def llama_stack_instruct_to_torchtune_instruct(
     )
     input_messages = json.loads(sample[ColumnName.chat_completion_input.value])
 
-    assert len(input_messages) == 1, "llama stack intruct dataset format only supports 1 user message"
+    assert len(input_messages) == 1, "llama stack instruct dataset format only supports 1 user message"
     input_message = input_messages[0]
 
     assert "content" in input_message, "content not found in input message"

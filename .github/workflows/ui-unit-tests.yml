@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'src/llama_stack/ui/**'
+      - 'src/llama_stack_ui/**'
       - '.github/workflows/ui-unit-tests.yml' # This workflow
   workflow_dispatch:
 
@@ -33,22 +33,22 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: 'src/llama_stack/ui/package-lock.json'
+          cache-dependency-path: 'src/llama_stack_ui/package-lock.json'
 
       - name: Install dependencies
-        working-directory: src/llama_stack/ui
+        working-directory: src/llama_stack_ui
         run: npm ci
 
       - name: Run linting
-        working-directory: src/llama_stack/ui
+        working-directory: src/llama_stack_ui
         run: npm run lint
 
       - name: Run format check
-        working-directory: src/llama_stack/ui
+        working-directory: src/llama_stack_ui
         run: npm run format:check
 
       - name: Run unit tests
-        working-directory: src/llama_stack/ui
+        working-directory: src/llama_stack_ui
         env:
           CI: true
 

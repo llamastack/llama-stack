@@ -129,6 +129,15 @@ def trace_protocol[T: type[Any]](cls: T) -> T:
         else:
             return sync_wrapper
 
+    # Wrap methods on the class itself (for classes applied at runtime)
+    # Skip if already wrapped (indicated by __wrapped__ attribute)
+    for name, method in vars(cls).items():
+        if inspect.isfunction(method) and not name.startswith("_"):
+            if not hasattr(method, "__wrapped__"):
+                wrapped = trace_method(method)
+                setattr(cls, name, wrapped)  # noqa: B010
+
+    # Also set up __init_subclass__ for future subclasses
     original_init_subclass = cast(Callable[..., Any] | None, getattr(cls, "__init_subclass__", None))
 
     def __init_subclass__(cls_child: type[Any], **kwargs: Any) -> None:  # noqa: N807

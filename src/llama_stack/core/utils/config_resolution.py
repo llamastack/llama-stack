@@ -52,7 +52,17 @@ def resolve_config_or_distro(
             logger.debug(f"Using distribution: {distro_config}")
             return distro_config
 
-    # Strategy 3: Try as built distribution name
+    # Strategy 3: Try as distro config path (if no .yaml extension and contains a slash)
+    # eg: starter::run-with-postgres-store.yaml
+    # Use :: to avoid slash and confusion with a filesystem path
+    if "::" in config_or_distro:
+        distro_name, config_name = config_or_distro.split("::")
+        distro_config = _get_distro_config_path(distro_name, config_name)
+        if distro_config.exists():
+            logger.info(f"Using distribution: {distro_config}")
+            return distro_config
+
+    # Strategy 4: Try as built distribution name
     distrib_config = DISTRIBS_BASE_DIR / f"llamastack-{config_or_distro}" / f"{config_or_distro}-{mode}.yaml"
     if distrib_config.exists():
         logger.debug(f"Using built distribution: {distrib_config}")
@@ -63,13 +73,15 @@ def resolve_config_or_distro(
         logger.debug(f"Using built distribution: {distrib_config}")
         return distrib_config
 
-    # Strategy 4: Failed - provide helpful error
+    # Strategy 5: Failed - provide helpful error
     raise ValueError(_format_resolution_error(config_or_distro, mode))
 
 
-def _get_distro_config_path(distro_name: str, mode: Mode) -> Path:
+def _get_distro_config_path(distro_name: str, mode: str) -> Path:
     """Get the config file path for a distro."""
-    return DISTRO_DIR / distro_name / f"{mode}.yaml"
+    if not mode.endswith(".yaml"):
+        mode = f"{mode}.yaml"
+    return DISTRO_DIR / distro_name / mode
 
 
 def _format_resolution_error(config_or_distro: str, mode: Mode) -> str:

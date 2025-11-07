@@ -44,7 +44,7 @@ spec:
 
             # Navigate to the UI directory
             echo "Navigating to UI directory..."
-            cd /app/llama_stack/ui
+            cd /app/llama_stack_ui
 
             # Check if package.json exists
             if [ ! -f "package.json" ]; then

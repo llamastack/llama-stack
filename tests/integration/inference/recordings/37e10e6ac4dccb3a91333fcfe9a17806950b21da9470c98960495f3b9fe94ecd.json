@@ -43,21 +43,11 @@
           "choices": [
             {
               "delta": {
-                "content": "",
+                "content": "{\"name\":\"get_time\",\"parameters>{\"timezone\":\"UTC\"}}",
                 "function_call": null,
                 "refusal": null,
                 "role": "assistant",
-                "tool_calls": [
-                  {
-                    "index": 0,
-                    "id": "call_c9erx268",
-                    "function": {
-                      "arguments": "{\"timezone\":\"UTC\"}",
-                      "name": "get_time"
-                    },
-                    "type": "function"
-                  }
-                ]
+                "tool_calls": null
               },
               "finish_reason": null,
               "index": 0,
@@ -85,7 +75,7 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "tool_calls",
+              "finish_reason": "stop",
               "index": 0,
               "logprobs": null
             }
@@ -100,5 +90,6 @@
       }
     ],
     "is_streaming": true
-  }
+  },
+  "id_normalization_mapping": {}
 }

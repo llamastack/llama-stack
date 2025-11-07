@@ -161,7 +161,7 @@ repos:
         name: Format & Lint UI
         entry: bash ./scripts/run-ui-linter.sh
         language: system
-        files: ^src/llama_stack/ui/.*\.(ts|tsx)$
+        files: ^src/llama_stack_ui/.*\.(ts|tsx)$
         pass_filenames: false
         require_serial: true
 

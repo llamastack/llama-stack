@@ -4,17 +4,16 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Annotated, Any, Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.agents import AgentConfig
 from llama_stack.apis.common.job_types import Job
 from llama_stack.apis.inference import SamplingParams, SystemMessage
 from llama_stack.apis.scoring import ScoringResult
 from llama_stack.apis.scoring_functions import ScoringFnParams
-from llama_stack.apis.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
-from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
+from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
+from llama_stack.schema_utils import json_schema_type, webmethod
 
 
 @json_schema_type
@@ -32,19 +31,7 @@ class ModelCandidate(BaseModel):
     system_message: SystemMessage | None = None
 
 
-@json_schema_type
-class AgentCandidate(BaseModel):
-    """An agent candidate for evaluation.
-
-    :param config: The configuration for the agent candidate.
-    """
-
-    type: Literal["agent"] = "agent"
-    config: AgentConfig
-
-
-EvalCandidate = Annotated[ModelCandidate | AgentCandidate, Field(discriminator="type")]
-register_schema(EvalCandidate, name="EvalCandidate")
+EvalCandidate = ModelCandidate
 
 
 @json_schema_type
@@ -86,7 +73,6 @@ class Eval(Protocol):
 
     Llama Stack Evaluation API for running evaluations on model and agent candidates."""
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def run_eval(
         self,
@@ -101,9 +87,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/evaluations", method="POST", level=LLAMA_STACK_API_V1, deprecated=True
-    )
     @webmethod(route="/eval/benchmarks/{benchmark_id}/evaluations", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def evaluate_rows(
         self,
@@ -122,9 +105,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True
-    )
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def job_status(self, benchmark_id: str, job_id: str) -> Job:
         """Get the status of a job.
@@ -135,12 +115,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}",
-        method="DELETE",
-        level=LLAMA_STACK_API_V1,
-        deprecated=True,
-    )
     @webmethod(route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
     async def job_cancel(self, benchmark_id: str, job_id: str) -> None:
         """Cancel a job.
@@ -150,12 +124,6 @@ class Eval(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result",
-        method="GET",
-        level=LLAMA_STACK_API_V1,
-        deprecated=True,
-    )
     @webmethod(
         route="/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result", method="GET", level=LLAMA_STACK_API_V1ALPHA
     )

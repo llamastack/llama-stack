@@ -19,6 +19,7 @@ This provider enables safety checks and guardrails for LLM interactions using NV
 Build the NVIDIA environment:
 
 ```bash
+uv pip install llama-stack-client
 uv run llama stack list-deps nvidia | xargs -L1 uv pip install
 ```
 
