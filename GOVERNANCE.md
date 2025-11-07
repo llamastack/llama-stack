@@ -126,21 +126,17 @@ its objectives, and its strategy. They will also have provided valuable contribu
 time. Code Owners must also act in the interest of the community.
 
 #### Process
-Any existing Code Owner may nominate a new Code Owner by opening a PR updating the
-[CODEOWNERS](./.github/CODEOWNERS) file. The nomination is discussed and voted on publicly.
+Any existing Code Owner may nominate a contributor to join the Code Owners group.
 
-Code Owners cast their vote on the PR by:
-- **Approve** → ✅ Upvote
-- **Comment** → ➖ Abstain
-- **Request Changes** → ❌ Downvote
+Code Owner nominations and voting take place **privately** among the current Code Owners.
+This privacy ensures that Code Owners can share candid assessments without risking public
+embarrassment for the nominee.
 
-A nomination passes if:
-- A minimum of 50% of all Code Owners participate (quorum), and
-- More than 50% of the votes cast are approvals.
+A nomination is approved when it receives a **majority vote (>50%)** from the current
+Code Owners.
 
-Votes remain open for **7 days** unless all Code Owners have voted earlier. If a nomination does not
-pass, the reasons should be provided constructively to help the nominee understand expectations and
-continue contributing.
+If a nomination is not approved, the nominee should receive constructive feedback so they
+understand the reasons and can continue to grow toward the role.
 
 
 #### Earning a Nomination
