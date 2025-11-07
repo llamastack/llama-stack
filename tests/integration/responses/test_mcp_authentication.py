@@ -111,9 +111,7 @@ def test_mcp_authorization_error_when_header_provided(compat_client, text_model_
         )
 
         # Create response - should raise ValueError for security reasons
-        with pytest.raises(
-            ValueError, match="Authorization header cannot be passed via 'headers'"
-        ):
+        with pytest.raises(ValueError, match="Authorization header cannot be passed via 'headers'"):
             compat_client.responses.create(
                 model=text_model_id,
                 input="What is the boiling point of myawesomeliquid?",
