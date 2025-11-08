@@ -19,7 +19,13 @@ class ModelRunner:
         self.llama = llama
 
     def __call__(self, task: Any):
-        raise ValueError(f"Unexpected task type {task[0]}")
+        task_type = task[0]
+        if task_type == "chat_completion":
+            # task[1] is [params, raw_messages]
+            params, raw_messages = task[1]
+            return self.llama.chat_completion(params, raw_messages)
+        else:
+            raise ValueError(f"Unexpected task type {task_type}")
 
 
 def init_model_cb(

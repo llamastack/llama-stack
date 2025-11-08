@@ -5,11 +5,16 @@
 # the root directory of this source tree.
 
 import asyncio
+import time
+import uuid
 from collections.abc import AsyncIterator
 
 from llama_stack.apis.inference import (
     InferenceProvider,
+    OpenAIAssistantMessageParam,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionUsage,
+    OpenAIChoice,
     OpenAICompletionRequestWithExtraBody,
 )
 from llama_stack.apis.inference.inference import (
@@ -136,10 +141,14 @@ class MetaReferenceInferenceImpl(
         self.llama_model = llama_model
 
         log.info("Warming up...")
+        from llama_stack.apis.inference import OpenAIUserMessageParam
+
         await self.openai_chat_completion(
-            model=model_id,
-            messages=[{"role": "user", "content": "Hi how are you?"}],
-            max_tokens=20,
+            params=OpenAIChatCompletionRequestWithExtraBody(
+                model=model_id,
+                messages=[OpenAIUserMessageParam(role="user", content="Hi how are you?")],
+                max_tokens=20,
+            )
         )
         log.info("Warmed up!")
 
@@ -155,4 +164,50 @@ class MetaReferenceInferenceImpl(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        raise NotImplementedError("OpenAI chat completion not supported by meta-reference inference provider")
+        self.check_model(params)
+
+        # Convert OpenAI messages to RawMessages
+        from llama_stack.providers.utils.inference.prompt_adapter import convert_openai_message_to_raw_message
+
+        raw_messages = [await convert_openai_message_to_raw_message(msg) for msg in params.messages]
+
+        # Call generator's chat_completion method (works for both single-GPU and model-parallel)
+        if isinstance(self.generator, LlamaGenerator):
+            generator = self.generator.chat_completion(params, raw_messages)
+        else:
+            # Model parallel: submit task to process group
+            generator = self.generator.group.run_inference(("chat_completion", [params, raw_messages]))
+
+        # Collect all generated text
+        generated_text = ""
+        for result_batch in generator:
+            for result in result_batch:
+                if not result.ignore_token and result.source == "output":
+                    generated_text += result.text
+
+        # Create OpenAI response
+        response_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
+        created = int(time.time())
+
+        return OpenAIChatCompletion(
+            id=response_id,
+            object="chat.completion",
+            created=created,
+            model=params.model,
+            choices=[
+                OpenAIChoice(
+                    index=0,
+                    message=OpenAIAssistantMessageParam(
+                        role="assistant",
+                        content=generated_text,
+                    ),
+                    finish_reason="stop",
+                    logprobs=None,
+                )
+            ],
+            usage=OpenAIChatCompletionUsage(
+                prompt_tokens=0,  # TODO: calculate properly
+                completion_tokens=0,  # TODO: calculate properly
+                total_tokens=0,  # TODO: calculate properly
+            ),
+        )

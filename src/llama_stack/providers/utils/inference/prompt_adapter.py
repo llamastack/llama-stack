@@ -22,9 +22,14 @@ from llama_stack.apis.common.content_types import (
 )
 from llama_stack.apis.inference import (
     CompletionRequest,
+    OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
     OpenAIFile,
+    OpenAIMessageParam,
+    OpenAISystemMessageParam,
+    OpenAIToolMessageParam,
+    OpenAIUserMessageParam,
     ResponseFormat,
     ResponseFormatType,
     ToolChoice,
@@ -37,6 +42,7 @@ from llama_stack.models.llama.datatypes import (
     RawMessage,
     RawTextItem,
     StopReason,
+    ToolCall,
     ToolDefinition,
     ToolPromptFormat,
 )
@@ -126,6 +132,36 @@ async def interleaved_content_convert_to_raw(
         return await asyncio.gather(*(_localize_single(c) for c in content))
     else:
         return await _localize_single(content)
+
+
+async def convert_openai_message_to_raw_message(message: OpenAIMessageParam) -> RawMessage:
+    """Convert OpenAI message format to RawMessage format used by Llama formatters."""
+    if isinstance(message, OpenAIUserMessageParam):
+        content = await interleaved_content_convert_to_raw(message.content)  # type: ignore[arg-type]
+        return RawMessage(role="user", content=content)
+    elif isinstance(message, OpenAISystemMessageParam):
+        content = await interleaved_content_convert_to_raw(message.content)  # type: ignore[arg-type]
+        return RawMessage(role="system", content=content)
+    elif isinstance(message, OpenAIAssistantMessageParam):
+        content = await interleaved_content_convert_to_raw(message.content or "")  # type: ignore[arg-type]
+        tool_calls = []
+        if message.tool_calls:
+            for tc in message.tool_calls:
+                if tc.function:
+                    tool_calls.append(
+                        ToolCall(
+                            call_id=tc.id or "",
+                            tool_name=tc.function.name or "",
+                            arguments=tc.function.arguments or "{}",
+                        )
+                    )
+        return RawMessage(role="assistant", content=content, tool_calls=tool_calls)
+    elif isinstance(message, OpenAIToolMessageParam):
+        content = await interleaved_content_convert_to_raw(message.content)  # type: ignore[arg-type]
+        return RawMessage(role="tool", content=content)
+    else:
+        # Handle OpenAIDeveloperMessageParam if needed
+        raise ValueError(f"Unsupported message type: {type(message)}")
 
 
 def content_has_media(content: InterleavedContent):
