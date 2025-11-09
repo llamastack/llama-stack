@@ -75,17 +75,27 @@
         "id": "rec-95be86b56c9f",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "tool_calls",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "{\"name\": \"book_flight\",\"parameters\": {\"date\": \"2023-01-01\", \"from\": \"SFO\", \"to\": \"JFK\", \"flight\": \"\", \"passenger\": '{\"age\": 30, \"name\": \"John Doe\"}'}}",
+              "content": "",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": null
+              "tool_calls": [
+                {
+                  "id": "call_m5909pw6",
+                  "function": {
+                    "arguments": "{\"flight\":\"{\\\"date\\\": \\\"2024-01-01\\\", \\\"from\\\": \\\"SFO\\\", \\\"to\\\": \\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\": 30, \\\"name\\\": \\\"John Doe\\\"}\"}",
+                    "name": "book_flight"
+                  },
+                  "type": "function",
+                  "index": 0
+                }
+              ]
             }
           }
         ],
@@ -95,9 +105,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 57,
+          "completion_tokens": 59,
           "prompt_tokens": 227,
-          "total_tokens": 284,
+          "total_tokens": 286,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

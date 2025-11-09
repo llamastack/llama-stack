@@ -16,7 +16,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
 from llama_stack.apis.datatypes import Api
 from llama_stack.apis.inference.inference import (
     OpenAIAssistantMessageParam,
@@ -24,6 +23,7 @@ from llama_stack.apis.inference.inference import (
     OpenAIChatCompletionUsage,
     OpenAIChoice,
 )
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.telemetry.telemetry import MetricEvent
 
 

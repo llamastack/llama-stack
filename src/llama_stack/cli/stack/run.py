@@ -253,7 +253,7 @@ class StackRun(Subcommand):
             )
             return
 
-        ui_dir = REPO_ROOT / "llama_stack" / "ui"
+        ui_dir = REPO_ROOT / "llama_stack_ui"
         logs_dir = Path("~/.llama/ui/logs").expanduser()
         try:
             # Create logs directory if it doesn't exist

@@ -20,8 +20,8 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall,
 )
+from llama_stack.apis.common.tracing import telemetry_traceable
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, register_schema, webmethod
 
 Metadata = dict[str, str]
@@ -103,32 +103,6 @@ register_schema(ConversationItem, name="ConversationItem")
 
 
 @json_schema_type
-class ConversationCreateRequest(BaseModel):
-    """Request body for creating a conversation."""
-
-    items: list[ConversationItem] | None = Field(
-        default=[],
-        description="Initial items to include in the conversation context. You may add up to 20 items at a time.",
-        max_length=20,
-    )
-    metadata: Metadata | None = Field(
-        default={},
-        description="Set of 16 key-value pairs that can be attached to an object. Useful for storing additional information",
-        max_length=16,
-    )
-
-
-@json_schema_type
-class ConversationUpdateRequest(BaseModel):
-    """Request body for updating a conversation."""
-
-    metadata: Metadata = Field(
-        ...,
-        description="Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.",
-    )
-
-
-@json_schema_type
 class ConversationDeletedResource(BaseModel):
     """Response for deleted conversation."""
 
@@ -183,7 +157,7 @@ class ConversationItemDeletedResource(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
+@telemetry_traceable
 class Conversations(Protocol):
     """Conversations
 

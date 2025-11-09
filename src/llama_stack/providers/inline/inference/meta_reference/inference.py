@@ -146,7 +146,7 @@ class MetaReferenceInferenceImpl(
     def check_model(self, request) -> None:
         if self.model_id is None or self.llama_model is None:
             raise RuntimeError(
-                "No avaible model yet, please register your requested model or add your model in the resouces first"
+                "No available model yet, please register your requested model or add your model in the resources first"
             )
         elif request.model != self.model_id:
             raise RuntimeError(f"Model mismatch: request model: {request.model} != loaded model: {self.model_id}")

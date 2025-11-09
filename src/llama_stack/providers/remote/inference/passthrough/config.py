@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import Field, SecretStr
+from pydantic import Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.schema_utils import json_schema_type
@@ -17,11 +17,6 @@ class PassthroughImplConfig(RemoteInferenceProviderConfig):
     url: str = Field(
         default=None,
         description="The URL for the passthrough endpoint",
-    )
-
-    api_key: SecretStr | None = Field(
-        default=None,
-        description="API Key for the passthrouth endpoint",
     )
 
     @classmethod

@@ -11,12 +11,10 @@ from pydantic import BaseModel
 from typing_extensions import runtime_checkable
 
 from llama_stack.apis.common.content_types import URL, InterleavedContent
+from llama_stack.apis.common.tracing import telemetry_traceable
 from llama_stack.apis.resource import Resource, ResourceType
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
-
-from .rag_tool import RAGToolRuntime
 
 
 @json_schema_type
@@ -109,7 +107,7 @@ class ListToolDefsResponse(BaseModel):
 
 
 @runtime_checkable
-@trace_protocol
+@telemetry_traceable
 class ToolGroups(Protocol):
     @webmethod(route="/toolgroups", method="POST", level=LLAMA_STACK_API_V1)
     async def register_tool_group(
@@ -191,11 +189,9 @@ class SpecialToolGroup(Enum):
 
 
 @runtime_checkable
-@trace_protocol
+@telemetry_traceable
 class ToolRuntime(Protocol):
     tool_store: ToolStore | None = None
-
-    rag_tool: RAGToolRuntime | None = None
 
     # TODO: This needs to be renamed once OPEN API generator name conflict issue is fixed.
     @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1)
