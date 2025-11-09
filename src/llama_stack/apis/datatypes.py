@@ -127,6 +127,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     files = "files"
     prompts = "prompts"
     conversations = "conversations"
+    file_processor = "file_processor"
 
     # built-in API
     inspect = "inspect"

@@ -128,6 +128,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="remote::weaviate"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
+        "file_processor": [BuildProvider(provider_type="inline::reference")],
         "safety": [
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
