@@ -41,6 +41,7 @@ from llama_stack.providers.remote.vector_io.pgvector.config import (
 )
 from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOConfig
 from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
+from llama_stack.providers.remote.vector_io.elasticsearch.config import ElasticsearchVectorIOConfig
 from llama_stack.providers.utils.kvstore.config import PostgresKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
 
@@ -126,6 +127,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
             BuildProvider(provider_type="remote::qdrant"),
             BuildProvider(provider_type="remote::weaviate"),
+            BuildProvider(provider_type="remote::elasticsearch"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
         "safety": [
@@ -238,6 +240,15 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 config=WeaviateVectorIOConfig.sample_run_config(
                     f"~/.llama/distributions/{name}",
                     cluster_url="${env.WEAVIATE_CLUSTER_URL:=}",
+                ),
+            ),
+            Provider(
+                provider_id="${env.ELASTICSEARCH_URL:+elasticsearch}",
+                provider_type="remote::elasticsearch",
+                config=ElasticsearchVectorIOConfig.sample_run_config(
+                    f"~/.llama/distributions/{name}",
+                    elasticsearch_url="${env.ELASTICSEARCH_URL:=localhost:9200}",
+                    elasticsearch_api_key="${env.ELASTICSEARCH_API_KEY:=}",
                 ),
             ),
         ],

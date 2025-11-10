@@ -244,8 +244,10 @@ class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStore
         self.vector_store_table = None
 
     async def initialize(self) -> None:
-        client_config = self.config.model_dump(exclude_none=True)
-        self.client = AsyncElasticsearch(**client_config)
+        self.client = AsyncElasticsearch(
+            hosts=self.config.elasticsearch_url, 
+            api_key=self.config.elasticsearch_api_key
+        )
         self.kvstore = await kvstore_impl(self.config.persistence)
 
         start_key = VECTOR_DBS_PREFIX

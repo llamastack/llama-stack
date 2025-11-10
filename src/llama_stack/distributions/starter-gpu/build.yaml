@@ -28,6 +28,7 @@ distribution_spec:
     - provider_type: remote::pgvector
     - provider_type: remote::qdrant
     - provider_type: remote::weaviate
+    - provider_type: remote::elasticsearch
     files:
     - provider_type: inline::localfs
     safety:
