@@ -146,7 +146,7 @@ class ListDatasetsResponse(BaseModel):
 
 
 class Datasets(Protocol):
-    @webmethod(route="/datasets", method="POST", level=LLAMA_STACK_API_V1BETA)
+    @webmethod(route="/datasets", method="POST", level=LLAMA_STACK_API_V1BETA, deprecated=True)
     async def register_dataset(
         self,
         purpose: DatasetPurpose,
@@ -235,7 +235,7 @@ class Datasets(Protocol):
         """
         ...
 
-    @webmethod(route="/datasets/{dataset_id:path}", method="DELETE", level=LLAMA_STACK_API_V1BETA)
+    @webmethod(route="/datasets/{dataset_id:path}", method="DELETE", level=LLAMA_STACK_API_V1BETA, deprecated=True)
     async def unregister_dataset(
         self,
         dataset_id: str,

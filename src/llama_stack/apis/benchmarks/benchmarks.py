@@ -74,7 +74,7 @@ class Benchmarks(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks", method="POST", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(route="/eval/benchmarks", method="POST", level=LLAMA_STACK_API_V1ALPHA, deprecated=True)
     async def register_benchmark(
         self,
         benchmark_id: str,
@@ -95,7 +95,7 @@ class Benchmarks(Protocol):
         """
         ...
 
-    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(route="/eval/benchmarks/{benchmark_id}", method="DELETE", level=LLAMA_STACK_API_V1ALPHA, deprecated=True)
     async def unregister_benchmark(self, benchmark_id: str) -> None:
         """Unregister a benchmark.
 

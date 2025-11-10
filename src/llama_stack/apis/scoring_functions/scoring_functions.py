@@ -178,7 +178,7 @@ class ScoringFunctions(Protocol):
         """
         ...
 
-    @webmethod(route="/scoring-functions", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/scoring-functions", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def register_scoring_function(
         self,
         scoring_fn_id: str,
@@ -199,7 +199,9 @@ class ScoringFunctions(Protocol):
         """
         ...
 
-    @webmethod(route="/scoring-functions/{scoring_fn_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(
+        route="/scoring-functions/{scoring_fn_id:path}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True
+    )
     async def unregister_scoring_function(self, scoring_fn_id: str) -> None:
         """Unregister a scoring function.
 

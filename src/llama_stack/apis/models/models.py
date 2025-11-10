@@ -136,7 +136,7 @@ class Models(Protocol):
         """
         ...
 
-    @webmethod(route="/models", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/models", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def register_model(
         self,
         model_id: str,
@@ -158,7 +158,7 @@ class Models(Protocol):
         """
         ...
 
-    @webmethod(route="/models/{model_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/models/{model_id:path}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     async def unregister_model(
         self,
         model_id: str,
