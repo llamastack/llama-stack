@@ -6626,6 +6626,10 @@ components:
           type: string
           description: >-
             (Optional) System message inserted into the model's context
+        max_output_tokens:
+          type: integer
+          description: >-
+            (Optional) Upper bound for response tokens generation.
         input:
           type: array
           items:
@@ -6984,6 +6988,10 @@ components:
             (Optional) Additional fields to include in the response.
         max_infer_iters:
           type: integer
+        max_output_tokens:
+          type: integer
+          description: >-
+            (Optional) Maximum tokens generated in a response.
       additionalProperties: false
       required:
         - input
@@ -7065,6 +7073,10 @@ components:
           type: string
           description: >-
             (Optional) System message inserted into the model's context
+        max_output_tokens:
+          type: integer
+          description: >-
+            (Optional) Upper bound for response tokens generation.
       additionalProperties: false
       required:
         - created_at

@@ -221,6 +221,16 @@ class StreamingResponseOrchestrator:
 
         try:
             while True:
+                # Check if the max_output_tokens are depleted are not
+                if (
+                    self.ctx.max_output_tokens
+                    and self.accumulated_usage
+                    and self.accumulated_usage.output_tokens >= self.ctx.max_output_tokens
+                ):
+                    logger.info("exiting inference loop, remaining max_output_tokens is depleted")
+                    final_status = "incomplete"
+                    break
+
                 # Text is the default response format for chat completion so don't need to pass it
                 # (some providers don't support non-empty response_format when tools are present)
                 response_format = (
