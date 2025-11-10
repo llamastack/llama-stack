@@ -153,7 +153,7 @@ providers:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter-gpu/files}
       metadata_store:
         table_name: files_metadata
-        backend: sql_postgres
+        backend: sql_default
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
@@ -237,10 +237,10 @@ providers:
     config:
       kvstore:
         namespace: batches
-        backend: kv_postgres
+        backend: kv_default
 storage:
   backends:
-    kv_postgres:
+    kv_default:
       type: kv_postgres
       host: ${env.POSTGRES_HOST:=localhost}
       port: ${env.POSTGRES_PORT:=5432}
@@ -248,7 +248,7 @@ storage:
       user: ${env.POSTGRES_USER:=llamastack}
       password: ${env.POSTGRES_PASSWORD:=llamastack}
       table_name: ${env.POSTGRES_TABLE_NAME:=llamastack_kvstore}
-    sql_postgres:
+    sql_default:
       type: sql_postgres
       host: ${env.POSTGRES_HOST:=localhost}
       port: ${env.POSTGRES_PORT:=5432}
@@ -258,18 +258,18 @@ storage:
   stores:
     metadata:
       namespace: registry
-      backend: kv_postgres
+      backend: kv_default
     inference:
       table_name: inference_store
-      backend: sql_postgres
+      backend: sql_default
       max_write_queue_size: 10000
       num_writers: 4
     conversations:
       table_name: openai_conversations
-      backend: sql_postgres
+      backend: sql_default
     prompts:
       namespace: prompts
-      backend: kv_postgres
+      backend: kv_default
 registered_resources:
   models: []
   shields: []

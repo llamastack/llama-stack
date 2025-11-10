@@ -160,15 +160,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::localfs",
         config=files_config,
     )
-    postgres_files_config = dict(files_config)
-    postgres_metadata_store = dict(postgres_files_config.get("metadata_store", {}))
-    postgres_metadata_store["backend"] = "sql_postgres"
-    postgres_files_config["metadata_store"] = postgres_metadata_store
-    postgres_files_provider = Provider(
-        provider_id="meta-reference-files",
-        provider_type="inline::localfs",
-        config=postgres_files_config,
-    )
     embedding_provider = Provider(
         provider_id="sentence-transformers",
         provider_type="inline::sentence-transformers",
@@ -197,7 +188,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             provider_shield_id="${env.CODE_SCANNER_MODEL:=}",
         ),
     ]
-    postgres_config = PostgresSqlStoreConfig.sample_run_config()
+    postgres_sql_config = PostgresSqlStoreConfig.sample_run_config()
+    postgres_kv_config = PostgresKVStoreConfig.sample_run_config()
     default_overrides = {
         "inference": remote_inference_providers + [embedding_provider],
         "vector_io": [
@@ -282,14 +274,13 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "run-with-postgres-store.yaml": RunConfigSettings(
                 provider_overrides={
                     **default_overrides,
-                    "files": [postgres_files_provider],
                     "agents": [
                         Provider(
                             provider_id="meta-reference",
                             provider_type="inline::meta-reference",
                             config=dict(
-                                persistence_store=postgres_config,
-                                responses_store=postgres_config,
+                                persistence_store=postgres_sql_config,
+                                responses_store=postgres_sql_config,
                             ),
                         )
                     ],
@@ -299,7 +290,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                             provider_type="inline::reference",
                             config=dict(
                                 kvstore=KVStoreReference(
-                                    backend="kv_postgres",
+                                    backend="kv_default",
                                     namespace="batches",
                                 ).model_dump(exclude_none=True),
                             ),
@@ -307,24 +298,24 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                     ],
                 },
                 storage_backends={
-                    "kv_postgres": PostgresKVStoreConfig.sample_run_config(),
-                    "sql_postgres": postgres_config,
+                    "kv_default": postgres_kv_config,
+                    "sql_default": postgres_sql_config,
                 },
                 storage_stores={
                     "metadata": KVStoreReference(
-                        backend="kv_postgres",
+                        backend="kv_default",
                         namespace="registry",
                     ).model_dump(exclude_none=True),
                     "inference": InferenceStoreReference(
-                        backend="sql_postgres",
+                        backend="sql_default",
                         table_name="inference_store",
                     ).model_dump(exclude_none=True),
                     "conversations": SqlStoreReference(
-                        backend="sql_postgres",
+                        backend="sql_default",
                         table_name="openai_conversations",
                     ).model_dump(exclude_none=True),
                     "prompts": KVStoreReference(
-                        backend="kv_postgres",
+                        backend="kv_default",
                         namespace="prompts",
                     ).model_dump(exclude_none=True),
                 },
