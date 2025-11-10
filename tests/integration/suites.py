@@ -71,8 +71,8 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "ollama/nomic-embed-text:v1.5",
         },
     ),
-    "postgres": Setup(
-        name="postgres",
+    "ollama-postgres": Setup(
+        name="ollama-postgres",
         description="Server-mode tests with Postgres-backed persistence",
         env={
             "OLLAMA_URL": "http://0.0.0.0:11434",
