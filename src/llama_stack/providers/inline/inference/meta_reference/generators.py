@@ -14,7 +14,9 @@ from llama_stack.apis.inference import (
     GreedySamplingStrategy,
     JsonSchemaResponseFormat,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIResponseFormatJSONSchema,
     ResponseFormat,
+    ResponseFormatType,
     SamplingParams,
     TopPSamplingStrategy,
 )
@@ -163,7 +165,8 @@ class LlamaGenerator:
         sampling_params = SamplingParams()
         if request.temperature is not None or request.top_p is not None:
             sampling_params.strategy = TopPSamplingStrategy(
-                temperature=request.temperature or 1.0, top_p=request.top_p or 1.0
+                temperature=request.temperature if request.temperature is not None else 1.0,
+                top_p=request.top_p if request.top_p is not None else 1.0,
             )
         if request.max_tokens:
             sampling_params.max_tokens = request.max_tokens
@@ -177,9 +180,12 @@ class LlamaGenerator:
         # Get logits processor for response format
         logits_processor = None
         if request.response_format:
-            if isinstance(request.response_format, dict) and request.response_format.get("type") == "json_schema":
+            if isinstance(request.response_format, OpenAIResponseFormatJSONSchema):
+                # Extract the actual schema from OpenAIJSONSchema TypedDict
+                schema_dict = request.response_format.json_schema.get("schema") or {}
                 json_schema_format = JsonSchemaResponseFormat(
-                    type="json_schema", json_schema=request.response_format.get("json_schema", {})
+                    type=ResponseFormatType.json_schema,
+                    json_schema=schema_dict,
                 )
                 logits_processor = get_logits_processor(self.tokenizer, self.args.vocab_size, json_schema_format)
 
