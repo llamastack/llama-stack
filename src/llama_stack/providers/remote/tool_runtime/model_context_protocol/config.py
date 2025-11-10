@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MCPProviderDataValidator(BaseModel):
@@ -36,7 +36,11 @@ class MCPProviderDataValidator(BaseModel):
 
     # mcp_endpoint => authorization token
     # Example: {"http://server.com": "token123"}
-    mcp_authorization: dict[str, str] | None = None
+    # Security: exclude=True ensures this field is NEVER included in:
+    # - API responses
+    # - Logs
+    # - Serialization (model_dump, dict(), json())
+    mcp_authorization: dict[str, str] | None = Field(default=None, exclude=True)
 
 
 class MCPProviderConfig(BaseModel):
