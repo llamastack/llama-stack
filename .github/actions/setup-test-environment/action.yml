@@ -40,7 +40,7 @@ runs:
       uses: ./.github/actions/setup-vllm
 
     - name: Start Postgres service
-      if: ${{ inputs.setup == 'postgres' }}
+      if: ${{ contains(inputs.setup, 'postgres') }}
       shell: bash
       run: |
         sudo docker rm -f postgres-ci || true
