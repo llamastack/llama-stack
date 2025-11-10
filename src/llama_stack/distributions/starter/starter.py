@@ -20,11 +20,19 @@ from llama_stack.core.datatypes import (
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
     KVStoreReference,
+    ResponsesStoreReference,
     SqlStoreReference,
 )
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.datatypes import RemoteProviderSpec
+from llama_stack.providers.inline.agents.meta_reference.config import (
+    AgentPersistenceConfig,
+    MetaReferenceAgentsImplConfig,
+)
+from llama_stack.providers.inline.batches.reference.config import (
+    ReferenceBatchesImplConfig,
+)
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
@@ -278,22 +286,30 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                         Provider(
                             provider_id="meta-reference",
                             provider_type="inline::meta-reference",
-                            config=dict(
-                                persistence_store=postgres_sql_config,
-                                responses_store=postgres_sql_config,
-                            ),
+                            config=MetaReferenceAgentsImplConfig(
+                                persistence=AgentPersistenceConfig(
+                                    agent_state=KVStoreReference(
+                                        backend="kv_default",
+                                        namespace="agents",
+                                    ),
+                                    responses=ResponsesStoreReference(
+                                        backend="sql_default",
+                                        table_name="agent_responses",
+                                    ),
+                                ),
+                            ).model_dump(exclude_none=True),
                         )
                     ],
                     "batches": [
                         Provider(
                             provider_id="reference",
                             provider_type="inline::reference",
-                            config=dict(
+                            config=ReferenceBatchesImplConfig(
                                 kvstore=KVStoreReference(
                                     backend="kv_default",
                                     namespace="batches",
-                                ).model_dump(exclude_none=True),
-                            ),
+                                ),
+                            ).model_dump(exclude_none=True),
                         )
                     ],
                 },
