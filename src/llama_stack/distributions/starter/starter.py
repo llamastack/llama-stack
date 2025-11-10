@@ -154,10 +154,20 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::reference"),
         ],
     }
+    files_config = LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}")
     files_provider = Provider(
         provider_id="meta-reference-files",
         provider_type="inline::localfs",
-        config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+        config=files_config,
+    )
+    postgres_files_config = dict(files_config)
+    postgres_metadata_store = dict(postgres_files_config.get("metadata_store", {}))
+    postgres_metadata_store["backend"] = "sql_postgres"
+    postgres_files_config["metadata_store"] = postgres_metadata_store
+    postgres_files_provider = Provider(
+        provider_id="meta-reference-files",
+        provider_type="inline::localfs",
+        config=postgres_files_config,
     )
     embedding_provider = Provider(
         provider_id="sentence-transformers",
@@ -272,6 +282,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "run-with-postgres-store.yaml": RunConfigSettings(
                 provider_overrides={
                     **default_overrides,
+                    "files": [postgres_files_provider],
                     "agents": [
                         Provider(
                             provider_id="meta-reference",

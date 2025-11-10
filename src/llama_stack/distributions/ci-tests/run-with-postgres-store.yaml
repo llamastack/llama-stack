@@ -153,7 +153,7 @@ providers:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/ci-tests/files}
       metadata_store:
         table_name: files_metadata
-        backend: sql_default
+        backend: sql_postgres
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
