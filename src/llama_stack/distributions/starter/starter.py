@@ -17,22 +17,9 @@ from llama_stack.core.datatypes import (
     ToolGroupInput,
     VectorStoresConfig,
 )
-from llama_stack.core.storage.datatypes import (
-    InferenceStoreReference,
-    KVStoreReference,
-    ResponsesStoreReference,
-    SqlStoreReference,
-)
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.datatypes import RemoteProviderSpec
-from llama_stack.providers.inline.agents.meta_reference.config import (
-    AgentPersistenceConfig,
-    MetaReferenceAgentsImplConfig,
-)
-from llama_stack.providers.inline.batches.reference.config import (
-    ReferenceBatchesImplConfig,
-)
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
@@ -254,6 +241,33 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         "files": [files_provider],
     }
 
+    base_run_settings = RunConfigSettings(
+        provider_overrides=default_overrides,
+        default_models=[],
+        default_tool_groups=default_tool_groups,
+        default_shields=default_shields,
+        vector_stores_config=VectorStoresConfig(
+            default_provider_id="faiss",
+            default_embedding_model=QualifiedModel(
+                provider_id="sentence-transformers",
+                model_id="nomic-ai/nomic-embed-text-v1.5",
+            ),
+        ),
+        safety_config=SafetyConfig(
+            default_shield_id="llama-guard",
+        ),
+    )
+
+    postgres_run_settings = base_run_settings.model_copy(
+        update={
+            "storage_backends": {
+                "kv_default": postgres_kv_config,
+                "sql_default": postgres_sql_config,
+            }
+        },
+        deep=True,
+    )
+
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -263,79 +277,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         providers=providers,
         additional_pip_packages=list(set(PostgresSqlStoreConfig.pip_packages() + PostgresKVStoreConfig.pip_packages())),
         run_configs={
-            "run.yaml": RunConfigSettings(
-                provider_overrides=default_overrides,
-                default_models=[],
-                default_tool_groups=default_tool_groups,
-                default_shields=default_shields,
-                vector_stores_config=VectorStoresConfig(
-                    default_provider_id="faiss",
-                    default_embedding_model=QualifiedModel(
-                        provider_id="sentence-transformers",
-                        model_id="nomic-ai/nomic-embed-text-v1.5",
-                    ),
-                ),
-                safety_config=SafetyConfig(
-                    default_shield_id="llama-guard",
-                ),
-            ),
-            "run-with-postgres-store.yaml": RunConfigSettings(
-                provider_overrides={
-                    **default_overrides,
-                    "agents": [
-                        Provider(
-                            provider_id="meta-reference",
-                            provider_type="inline::meta-reference",
-                            config=MetaReferenceAgentsImplConfig(
-                                persistence=AgentPersistenceConfig(
-                                    agent_state=KVStoreReference(
-                                        backend="kv_default",
-                                        namespace="agents",
-                                    ),
-                                    responses=ResponsesStoreReference(
-                                        backend="sql_default",
-                                        table_name="agent_responses",
-                                    ),
-                                ),
-                            ).model_dump(exclude_none=True),
-                        )
-                    ],
-                    "batches": [
-                        Provider(
-                            provider_id="reference",
-                            provider_type="inline::reference",
-                            config=ReferenceBatchesImplConfig(
-                                kvstore=KVStoreReference(
-                                    backend="kv_default",
-                                    namespace="batches",
-                                ),
-                            ).model_dump(exclude_none=True),
-                        )
-                    ],
-                },
-                storage_backends={
-                    "kv_default": postgres_kv_config,
-                    "sql_default": postgres_sql_config,
-                },
-                storage_stores={
-                    "metadata": KVStoreReference(
-                        backend="kv_default",
-                        namespace="registry",
-                    ).model_dump(exclude_none=True),
-                    "inference": InferenceStoreReference(
-                        backend="sql_default",
-                        table_name="inference_store",
-                    ).model_dump(exclude_none=True),
-                    "conversations": SqlStoreReference(
-                        backend="sql_default",
-                        table_name="openai_conversations",
-                    ).model_dump(exclude_none=True),
-                    "prompts": KVStoreReference(
-                        backend="kv_default",
-                        namespace="prompts",
-                    ).model_dump(exclude_none=True),
-                },
-            ),
+            "run.yaml": base_run_settings,
+            "run-with-postgres-store.yaml": postgres_run_settings,
         },
         run_config_env_vars={
             "LLAMA_STACK_PORT": (

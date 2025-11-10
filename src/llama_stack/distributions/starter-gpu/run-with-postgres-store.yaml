@@ -170,7 +170,7 @@ providers:
           namespace: agents
           backend: kv_default
         responses:
-          table_name: agent_responses
+          table_name: responses
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
@@ -233,8 +233,6 @@ providers:
       kvstore:
         namespace: batches
         backend: kv_default
-      max_concurrent_batches: 1
-      max_concurrent_requests_per_batch: 10
 storage:
   backends:
     kv_default:
@@ -269,13 +267,30 @@ storage:
       backend: kv_default
 registered_resources:
   models: []
-  shields: []
+  shields:
+  - shield_id: llama-guard
+    provider_id: ${env.SAFETY_MODEL:+llama-guard}
+    provider_shield_id: ${env.SAFETY_MODEL:=}
+  - shield_id: code-scanner
+    provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
+    provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
   vector_dbs: []
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups: []
+  tool_groups:
+  - toolgroup_id: builtin::websearch
+    provider_id: tavily-search
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8321
 telemetry:
   enabled: true
+vector_stores:
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: nomic-ai/nomic-embed-text-v1.5
+safety:
+  default_shield_id: llama-guard
