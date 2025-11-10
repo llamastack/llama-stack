@@ -490,16 +490,6 @@ class Telemetry:
             )
         return cast(metrics.Counter, _GLOBAL_STORAGE["counters"][name])
 
-    def _get_or_create_gauge(self, name: str, unit: str) -> metrics.ObservableGauge:
-        assert self.meter is not None
-        if name not in _GLOBAL_STORAGE["gauges"]:
-            _GLOBAL_STORAGE["gauges"][name] = self.meter.create_gauge(
-                name=name,
-                unit=unit,
-                description=f"Gauge for {name}",
-            )
-        return cast(metrics.ObservableGauge, _GLOBAL_STORAGE["gauges"][name])
-
     def _get_or_create_histogram(self, name: str, unit: str) -> metrics.Histogram:
         assert self.meter is not None
         if name not in _GLOBAL_STORAGE["histograms"]:
