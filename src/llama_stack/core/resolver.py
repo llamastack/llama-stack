@@ -392,8 +392,6 @@ async def instantiate_provider(
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:
             args.append(policy)
-        if "telemetry_enabled" in inspect.signature(getattr(module, method)).parameters and run_config.telemetry:
-            args.append(run_config.telemetry.enabled)
 
     fn = getattr(module, method)
     impl = await fn(*args)
