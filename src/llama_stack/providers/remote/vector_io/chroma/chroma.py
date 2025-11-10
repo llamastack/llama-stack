@@ -131,7 +131,6 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.persistence)
-        self.vector_store_table = self.kvstore
 
         if isinstance(self.config, RemoteChromaVectorIOConfig):
             log.info(f"Connecting to Chroma server at: {self.config.url}")
@@ -190,9 +189,16 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         if vector_store_id in self.cache:
             return self.cache[vector_store_id]
 
-        vector_store = await self.vector_store_table.get_vector_store(vector_store_id)
-        if not vector_store:
+        # Try to load from kvstore
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before using vector stores.")
+
+        key = f"{VECTOR_DBS_PREFIX}{vector_store_id}"
+        vector_store_data = await self.kvstore.get(key)
+        if not vector_store_data:
             raise ValueError(f"Vector DB {vector_store_id} not found in Llama Stack")
+
+        vector_store = VectorStore.model_validate_json(vector_store_data)
         collection = await maybe_await(self.client.get_collection(vector_store_id))
         if not collection:
             raise ValueError(f"Vector DB {vector_store_id} not found in Chroma")

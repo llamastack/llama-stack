@@ -109,7 +109,7 @@ class ListToolDefsResponse(BaseModel):
 @runtime_checkable
 @telemetry_traceable
 class ToolGroups(Protocol):
-    @webmethod(route="/toolgroups", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/toolgroups", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def register_tool_group(
         self,
         toolgroup_id: str,
@@ -167,7 +167,7 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     async def unregister_toolgroup(
         self,
         toolgroup_id: str,

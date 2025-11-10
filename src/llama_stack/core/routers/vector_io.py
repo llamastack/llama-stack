@@ -24,7 +24,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategyStaticConfig,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
     VectorStoreFilesListInBatchResponse,
@@ -338,7 +338,7 @@ class VectorIORouter(VectorIO):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentsResponse:
+    ) -> VectorStoreFileContentResponse:
         logger.debug(f"VectorIORouter.openai_retrieve_vector_store_file_contents: {vector_store_id}, {file_id}")
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_retrieve_vector_store_file_contents(
