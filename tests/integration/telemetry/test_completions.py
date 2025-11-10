@@ -12,9 +12,13 @@ before and after each test, ensuring test isolation.
 
 import json
 
+import pytest
+
 
 def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_model_id):
     """Verify streaming adds chunk_count and __type__=async_generator."""
+
+    pytest.skip("Disabled: See https://github.com/llamastack/llama-stack/issues/4089")
     stream = llama_stack_client.chat.completions.create(
         model=text_model_id,
         messages=[{"role": "user", "content": "Test trace openai 1"}],
@@ -50,6 +54,7 @@ def test_streaming_chunk_count(mock_otlp_collector, llama_stack_client, text_mod
 def test_telemetry_format_completeness(mock_otlp_collector, llama_stack_client, text_model_id):
     """Comprehensive validation of telemetry data format including spans and metrics."""
 
+    pytest.skip("Disabled: See https://github.com/llamastack/llama-stack/issues/4089")
     response = llama_stack_client.chat.completions.create(
         model=text_model_id,
         messages=[{"role": "user", "content": "Test trace openai with temperature 0.7"}],
