@@ -67,7 +67,7 @@ class Shields(Protocol):
         """
         ...
 
-    @webmethod(route="/shields", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/shields", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def register_shield(
         self,
         shield_id: str,
@@ -85,7 +85,7 @@ class Shields(Protocol):
         """
         ...
 
-    @webmethod(route="/shields/{identifier:path}", method="DELETE", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/shields/{identifier:path}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     async def unregister_shield(self, identifier: str) -> None:
         """Unregister a shield.
 

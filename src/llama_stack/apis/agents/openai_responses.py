@@ -594,6 +594,7 @@ class OpenAIResponseObject(BaseModel):
     :param truncation: (Optional) Truncation strategy applied to the response
     :param usage: (Optional) Token usage information for the response
     :param instructions: (Optional) System message inserted into the model's context
+    :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response
     """
 
     created_at: int
@@ -615,6 +616,7 @@ class OpenAIResponseObject(BaseModel):
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None
+    max_tool_calls: int | None = None
 
 
 @json_schema_type

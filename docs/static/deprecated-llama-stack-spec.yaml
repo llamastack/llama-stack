@@ -13,7 +13,352 @@ info:
     migration reference only.
 servers:
   - url: http://any-hosted-llama-stack.com
-paths: {}
+paths:
+  /v1/models:
+    post:
+      responses:
+        '200':
+          description: A Model.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Models
+      summary: Register model.
+      description: >-
+        Register model.
+
+        Register a model.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterModelRequest'
+        required: true
+      deprecated: true
+  /v1/models/{model_id}:
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Models
+      summary: Unregister model.
+      description: >-
+        Unregister model.
+
+        Unregister a model.
+      parameters:
+        - name: model_id
+          in: path
+          description: >-
+            The identifier of the model to unregister.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/scoring-functions:
+    post:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - ScoringFunctions
+      summary: Register a scoring function.
+      description: Register a scoring function.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterScoringFunctionRequest'
+        required: true
+      deprecated: true
+  /v1/scoring-functions/{scoring_fn_id}:
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - ScoringFunctions
+      summary: Unregister a scoring function.
+      description: Unregister a scoring function.
+      parameters:
+        - name: scoring_fn_id
+          in: path
+          description: >-
+            The ID of the scoring function to unregister.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/shields:
+    post:
+      responses:
+        '200':
+          description: A Shield.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shield'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Shields
+      summary: Register a shield.
+      description: Register a shield.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterShieldRequest'
+        required: true
+      deprecated: true
+  /v1/shields/{identifier}:
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Shields
+      summary: Unregister a shield.
+      description: Unregister a shield.
+      parameters:
+        - name: identifier
+          in: path
+          description: >-
+            The identifier of the shield to unregister.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1/toolgroups:
+    post:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - ToolGroups
+      summary: Register a tool group.
+      description: Register a tool group.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterToolGroupRequest'
+        required: true
+      deprecated: true
+  /v1/toolgroups/{toolgroup_id}:
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - ToolGroups
+      summary: Unregister a tool group.
+      description: Unregister a tool group.
+      parameters:
+        - name: toolgroup_id
+          in: path
+          description: The ID of the tool group to unregister.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1beta/datasets:
+    post:
+      responses:
+        '200':
+          description: A Dataset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Datasets
+      summary: Register a new dataset.
+      description: Register a new dataset.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDatasetRequest'
+        required: true
+      deprecated: true
+  /v1beta/datasets/{dataset_id}:
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Datasets
+      summary: Unregister a dataset by its ID.
+      description: Unregister a dataset by its ID.
+      parameters:
+        - name: dataset_id
+          in: path
+          description: The ID of the dataset to unregister.
+          required: true
+          schema:
+            type: string
+      deprecated: true
+  /v1alpha/eval/benchmarks:
+    post:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Benchmarks
+      summary: Register a benchmark.
+      description: Register a benchmark.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterBenchmarkRequest'
+        required: true
+      deprecated: true
+  /v1alpha/eval/benchmarks/{benchmark_id}:
+    delete:
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          $ref: >-
+            #/components/responses/TooManyRequests429
+        '500':
+          $ref: >-
+            #/components/responses/InternalServerError500
+        default:
+          $ref: '#/components/responses/DefaultError'
+      tags:
+        - Benchmarks
+      summary: Unregister a benchmark.
+      description: Unregister a benchmark.
+      parameters:
+        - name: benchmark_id
+          in: path
+          description: The ID of the benchmark to unregister.
+          required: true
+          schema:
+            type: string
+      deprecated: true
 jsonSchemaDialect: >-
   https://json-schema.org/draft/2020-12/schema
 components:
@@ -46,6 +391,730 @@ components:
       title: Error
       description: >-
         Error response from the API. Roughly follows RFC 7807.
+    ModelType:
+      type: string
+      enum:
+        - llm
+        - embedding
+        - rerank
+      title: ModelType
+      description: >-
+        Enumeration of supported model types in Llama Stack.
+    RegisterModelRequest:
+      type: object
+      properties:
+        model_id:
+          type: string
+          description: The identifier of the model to register.
+        provider_model_id:
+          type: string
+          description: >-
+            The identifier of the model in the provider.
+        provider_id:
+          type: string
+          description: The identifier of the provider.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Any additional metadata for this model.
+        model_type:
+          $ref: '#/components/schemas/ModelType'
+          description: The type of model to register.
+      additionalProperties: false
+      required:
+        - model_id
+      title: RegisterModelRequest
+    Model:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: >-
+            Unique identifier for this resource in llama stack
+        provider_resource_id:
+          type: string
+          description: >-
+            Unique identifier for this resource in the provider
+        provider_id:
+          type: string
+          description: >-
+            ID of the provider that owns this resource
+        type:
+          type: string
+          enum:
+            - model
+            - shield
+            - vector_store
+            - dataset
+            - scoring_function
+            - benchmark
+            - tool
+            - tool_group
+            - prompt
+          const: model
+          default: model
+          description: >-
+            The resource type, always 'model' for model resources
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Any additional metadata for this model
+        model_type:
+          $ref: '#/components/schemas/ModelType'
+          default: llm
+          description: >-
+            The type of model (LLM or embedding model)
+      additionalProperties: false
+      required:
+        - identifier
+        - provider_id
+        - type
+        - metadata
+        - model_type
+      title: Model
+      description: >-
+        A model resource representing an AI model registered in Llama Stack.
+    AggregationFunctionType:
+      type: string
+      enum:
+        - average
+        - weighted_average
+        - median
+        - categorical_count
+        - accuracy
+      title: AggregationFunctionType
+      description: >-
+        Types of aggregation functions for scoring results.
+    ArrayType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: array
+          default: array
+          description: Discriminator type. Always "array"
+      additionalProperties: false
+      required:
+        - type
+      title: ArrayType
+      description: Parameter type for array values.
+    BasicScoringFnParams:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ScoringFnParamsType'
+          const: basic
+          default: basic
+          description: >-
+            The type of scoring function parameters, always basic
+        aggregation_functions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregationFunctionType'
+          description: >-
+            Aggregation functions to apply to the scores of each row
+      additionalProperties: false
+      required:
+        - type
+        - aggregation_functions
+      title: BasicScoringFnParams
+      description: >-
+        Parameters for basic scoring function configuration.
+    BooleanType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: boolean
+          default: boolean
+          description: Discriminator type. Always "boolean"
+      additionalProperties: false
+      required:
+        - type
+      title: BooleanType
+      description: Parameter type for boolean values.
+    ChatCompletionInputType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: chat_completion_input
+          default: chat_completion_input
+          description: >-
+            Discriminator type. Always "chat_completion_input"
+      additionalProperties: false
+      required:
+        - type
+      title: ChatCompletionInputType
+      description: >-
+        Parameter type for chat completion input.
+    CompletionInputType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: completion_input
+          default: completion_input
+          description: >-
+            Discriminator type. Always "completion_input"
+      additionalProperties: false
+      required:
+        - type
+      title: CompletionInputType
+      description: Parameter type for completion input.
+    JsonType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: json
+          default: json
+          description: Discriminator type. Always "json"
+      additionalProperties: false
+      required:
+        - type
+      title: JsonType
+      description: Parameter type for JSON values.
+    LLMAsJudgeScoringFnParams:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ScoringFnParamsType'
+          const: llm_as_judge
+          default: llm_as_judge
+          description: >-
+            The type of scoring function parameters, always llm_as_judge
+        judge_model:
+          type: string
+          description: >-
+            Identifier of the LLM model to use as a judge for scoring
+        prompt_template:
+          type: string
+          description: >-
+            (Optional) Custom prompt template for the judge model
+        judge_score_regexes:
+          type: array
+          items:
+            type: string
+          description: >-
+            Regexes to extract the answer from generated response
+        aggregation_functions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregationFunctionType'
+          description: >-
+            Aggregation functions to apply to the scores of each row
+      additionalProperties: false
+      required:
+        - type
+        - judge_model
+        - judge_score_regexes
+        - aggregation_functions
+      title: LLMAsJudgeScoringFnParams
+      description: >-
+        Parameters for LLM-as-judge scoring function configuration.
+    NumberType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: number
+          default: number
+          description: Discriminator type. Always "number"
+      additionalProperties: false
+      required:
+        - type
+      title: NumberType
+      description: Parameter type for numeric values.
+    ObjectType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: object
+          default: object
+          description: Discriminator type. Always "object"
+      additionalProperties: false
+      required:
+        - type
+      title: ObjectType
+      description: Parameter type for object values.
+    ParamType:
+      oneOf:
+        - $ref: '#/components/schemas/StringType'
+        - $ref: '#/components/schemas/NumberType'
+        - $ref: '#/components/schemas/BooleanType'
+        - $ref: '#/components/schemas/ArrayType'
+        - $ref: '#/components/schemas/ObjectType'
+        - $ref: '#/components/schemas/JsonType'
+        - $ref: '#/components/schemas/UnionType'
+        - $ref: '#/components/schemas/ChatCompletionInputType'
+        - $ref: '#/components/schemas/CompletionInputType'
+      discriminator:
+        propertyName: type
+        mapping:
+          string: '#/components/schemas/StringType'
+          number: '#/components/schemas/NumberType'
+          boolean: '#/components/schemas/BooleanType'
+          array: '#/components/schemas/ArrayType'
+          object: '#/components/schemas/ObjectType'
+          json: '#/components/schemas/JsonType'
+          union: '#/components/schemas/UnionType'
+          chat_completion_input: '#/components/schemas/ChatCompletionInputType'
+          completion_input: '#/components/schemas/CompletionInputType'
+    RegexParserScoringFnParams:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ScoringFnParamsType'
+          const: regex_parser
+          default: regex_parser
+          description: >-
+            The type of scoring function parameters, always regex_parser
+        parsing_regexes:
+          type: array
+          items:
+            type: string
+          description: >-
+            Regex to extract the answer from generated response
+        aggregation_functions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregationFunctionType'
+          description: >-
+            Aggregation functions to apply to the scores of each row
+      additionalProperties: false
+      required:
+        - type
+        - parsing_regexes
+        - aggregation_functions
+      title: RegexParserScoringFnParams
+      description: >-
+        Parameters for regex parser scoring function configuration.
+    ScoringFnParams:
+      oneOf:
+        - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
+        - $ref: '#/components/schemas/RegexParserScoringFnParams'
+        - $ref: '#/components/schemas/BasicScoringFnParams'
+      discriminator:
+        propertyName: type
+        mapping:
+          llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
+          regex_parser: '#/components/schemas/RegexParserScoringFnParams'
+          basic: '#/components/schemas/BasicScoringFnParams'
+    ScoringFnParamsType:
+      type: string
+      enum:
+        - llm_as_judge
+        - regex_parser
+        - basic
+      title: ScoringFnParamsType
+      description: >-
+        Types of scoring function parameter configurations.
+    StringType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: string
+          default: string
+          description: Discriminator type. Always "string"
+      additionalProperties: false
+      required:
+        - type
+      title: StringType
+      description: Parameter type for string values.
+    UnionType:
+      type: object
+      properties:
+        type:
+          type: string
+          const: union
+          default: union
+          description: Discriminator type. Always "union"
+      additionalProperties: false
+      required:
+        - type
+      title: UnionType
+      description: Parameter type for union values.
+    RegisterScoringFunctionRequest:
+      type: object
+      properties:
+        scoring_fn_id:
+          type: string
+          description: >-
+            The ID of the scoring function to register.
+        description:
+          type: string
+          description: The description of the scoring function.
+        return_type:
+          $ref: '#/components/schemas/ParamType'
+          description: The return type of the scoring function.
+        provider_scoring_fn_id:
+          type: string
+          description: >-
+            The ID of the provider scoring function to use for the scoring function.
+        provider_id:
+          type: string
+          description: >-
+            The ID of the provider to use for the scoring function.
+        params:
+          $ref: '#/components/schemas/ScoringFnParams'
+          description: >-
+            The parameters for the scoring function for benchmark eval, these can
+            be overridden for app eval.
+      additionalProperties: false
+      required:
+        - scoring_fn_id
+        - description
+        - return_type
+      title: RegisterScoringFunctionRequest
+    RegisterShieldRequest:
+      type: object
+      properties:
+        shield_id:
+          type: string
+          description: >-
+            The identifier of the shield to register.
+        provider_shield_id:
+          type: string
+          description: >-
+            The identifier of the shield in the provider.
+        provider_id:
+          type: string
+          description: The identifier of the provider.
+        params:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: The parameters of the shield.
+      additionalProperties: false
+      required:
+        - shield_id
+      title: RegisterShieldRequest
+    Shield:
+      type: object
+      properties:
+        identifier:
+          type: string
+        provider_resource_id:
+          type: string
+        provider_id:
+          type: string
+        type:
+          type: string
+          enum:
+            - model
+            - shield
+            - vector_store
+            - dataset
+            - scoring_function
+            - benchmark
+            - tool
+            - tool_group
+            - prompt
+          const: shield
+          default: shield
+          description: The resource type, always shield
+        params:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Configuration parameters for the shield
+      additionalProperties: false
+      required:
+        - identifier
+        - provider_id
+        - type
+      title: Shield
+      description: >-
+        A safety shield resource that can be used to check content.
+    URL:
+      type: object
+      properties:
+        uri:
+          type: string
+          description: The URL string pointing to the resource
+      additionalProperties: false
+      required:
+        - uri
+      title: URL
+      description: A URL reference to external content.
+    RegisterToolGroupRequest:
+      type: object
+      properties:
+        toolgroup_id:
+          type: string
+          description: The ID of the tool group to register.
+        provider_id:
+          type: string
+          description: >-
+            The ID of the provider to use for the tool group.
+        mcp_endpoint:
+          $ref: '#/components/schemas/URL'
+          description: >-
+            The MCP endpoint to use for the tool group.
+        args:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            A dictionary of arguments to pass to the tool group.
+      additionalProperties: false
+      required:
+        - toolgroup_id
+        - provider_id
+      title: RegisterToolGroupRequest
+    DataSource:
+      oneOf:
+        - $ref: '#/components/schemas/URIDataSource'
+        - $ref: '#/components/schemas/RowsDataSource'
+      discriminator:
+        propertyName: type
+        mapping:
+          uri: '#/components/schemas/URIDataSource'
+          rows: '#/components/schemas/RowsDataSource'
+    RowsDataSource:
+      type: object
+      properties:
+        type:
+          type: string
+          const: rows
+          default: rows
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: 'null'
+                - type: boolean
+                - type: number
+                - type: string
+                - type: array
+                - type: object
+          description: >-
+            The dataset is stored in rows. E.g. - [ {"messages": [{"role": "user",
+            "content": "Hello, world!"}, {"role": "assistant", "content": "Hello,
+            world!"}]} ]
+      additionalProperties: false
+      required:
+        - type
+        - rows
+      title: RowsDataSource
+      description: A dataset stored in rows.
+    URIDataSource:
+      type: object
+      properties:
+        type:
+          type: string
+          const: uri
+          default: uri
+        uri:
+          type: string
+          description: >-
+            The dataset can be obtained from a URI. E.g. - "https://mywebsite.com/mydata.jsonl"
+            - "lsfs://mydata.jsonl" - "data:csv;base64,{base64_content}"
+      additionalProperties: false
+      required:
+        - type
+        - uri
+      title: URIDataSource
+      description: >-
+        A dataset that can be obtained from a URI.
+    RegisterDatasetRequest:
+      type: object
+      properties:
+        purpose:
+          type: string
+          enum:
+            - post-training/messages
+            - eval/question-answer
+            - eval/messages-answer
+          description: >-
+            The purpose of the dataset. One of: - "post-training/messages": The dataset
+            contains a messages column with list of messages for post-training. {
+            "messages": [ {"role": "user", "content": "Hello, world!"}, {"role": "assistant",
+            "content": "Hello, world!"}, ] } - "eval/question-answer": The dataset
+            contains a question column and an answer column for evaluation. { "question":
+            "What is the capital of France?", "answer": "Paris" } - "eval/messages-answer":
+            The dataset contains a messages column with list of messages and an answer
+            column for evaluation. { "messages": [ {"role": "user", "content": "Hello,
+            my name is John Doe."}, {"role": "assistant", "content": "Hello, John
+            Doe. How can I help you today?"}, {"role": "user", "content": "What's
+            my name?"}, ], "answer": "John Doe" }
+        source:
+          $ref: '#/components/schemas/DataSource'
+          description: >-
+            The data source of the dataset. Ensure that the data source schema is
+            compatible with the purpose of the dataset. Examples: - { "type": "uri",
+            "uri": "https://mywebsite.com/mydata.jsonl" } - { "type": "uri", "uri":
+            "lsfs://mydata.jsonl" } - { "type": "uri", "uri": "data:csv;base64,{base64_content}"
+            } - { "type": "uri", "uri": "huggingface://llamastack/simpleqa?split=train"
+            } - { "type": "rows", "rows": [ { "messages": [ {"role": "user", "content":
+            "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}, ]
+            } ] }
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The metadata for the dataset. - E.g. {"description": "My dataset"}.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset. If not provided, an ID will be generated.
+      additionalProperties: false
+      required:
+        - purpose
+        - source
+      title: RegisterDatasetRequest
+    Dataset:
+      type: object
+      properties:
+        identifier:
+          type: string
+        provider_resource_id:
+          type: string
+        provider_id:
+          type: string
+        type:
+          type: string
+          enum:
+            - model
+            - shield
+            - vector_store
+            - dataset
+            - scoring_function
+            - benchmark
+            - tool
+            - tool_group
+            - prompt
+          const: dataset
+          default: dataset
+          description: >-
+            Type of resource, always 'dataset' for datasets
+        purpose:
+          type: string
+          enum:
+            - post-training/messages
+            - eval/question-answer
+            - eval/messages-answer
+          description: >-
+            Purpose of the dataset indicating its intended use
+        source:
+          oneOf:
+            - $ref: '#/components/schemas/URIDataSource'
+            - $ref: '#/components/schemas/RowsDataSource'
+          discriminator:
+            propertyName: type
+            mapping:
+              uri: '#/components/schemas/URIDataSource'
+              rows: '#/components/schemas/RowsDataSource'
+          description: >-
+            Data source configuration for the dataset
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Additional metadata for the dataset
+      additionalProperties: false
+      required:
+        - identifier
+        - provider_id
+        - type
+        - purpose
+        - source
+        - metadata
+      title: Dataset
+      description: >-
+        Dataset resource for storing and accessing training or evaluation data.
+    RegisterBenchmarkRequest:
+      type: object
+      properties:
+        benchmark_id:
+          type: string
+          description: The ID of the benchmark to register.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset to use for the benchmark.
+        scoring_functions:
+          type: array
+          items:
+            type: string
+          description: >-
+            The scoring functions to use for the benchmark.
+        provider_benchmark_id:
+          type: string
+          description: >-
+            The ID of the provider benchmark to use for the benchmark.
+        provider_id:
+          type: string
+          description: >-
+            The ID of the provider to use for the benchmark.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: The metadata to use for the benchmark.
+      additionalProperties: false
+      required:
+        - benchmark_id
+        - dataset_id
+        - scoring_functions
+      title: RegisterBenchmarkRequest
   responses:
     BadRequest400:
       description: The request was invalid or malformed
@@ -93,4 +1162,25 @@ components:
             detail: An unexpected error occurred
 security:
   - Default: []
-tags: []
+tags:
+  - name: Benchmarks
+    description: ''
+  - name: Datasets
+    description: ''
+  - name: Models
+    description: ''
+  - name: ScoringFunctions
+    description: ''
+  - name: Shields
+    description: ''
+  - name: ToolGroups
+    description: ''
+x-tagGroups:
+  - name: Operations
+    tags:
+      - Benchmarks
+      - Datasets
+      - Models
+      - ScoringFunctions
+      - Shields
+      - ToolGroups

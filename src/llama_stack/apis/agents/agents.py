@@ -87,6 +87,7 @@ class Agents(Protocol):
                 "List of guardrails to apply during response generation. Guardrails provide safety and content moderation."
             ),
         ] = None,
+        max_tool_calls: int | None = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a model response.
 
@@ -97,6 +98,7 @@ class Agents(Protocol):
         :param conversation: (Optional) The ID of a conversation to add the response to. Must begin with 'conv_'. Input and output messages will be automatically added to the conversation.
         :param include: (Optional) Additional fields to include in the response.
         :param guardrails: (Optional) List of guardrails to apply during response generation. Can be guardrail IDs (strings) or guardrail specifications.
+        :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response.
         :returns: An OpenAIResponseObject.
         """
         ...

@@ -4,17 +4,12 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Callable, Generator
-from copy import deepcopy
+from collections.abc import Callable
 from functools import partial
 from typing import Any
 
 from llama_stack.models.llama.llama3.chat_format import ChatFormat as Llama3ChatFormat
 from llama_stack.models.llama.llama4.chat_format import ChatFormat as Llama4ChatFormat
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    ChatCompletionRequestWithRawContent,
-    CompletionRequestWithRawContent,
-)
 
 from .parallel_utils import ModelParallelProcessGroup
 
@@ -23,12 +18,14 @@ class ModelRunner:
     def __init__(self, llama):
         self.llama = llama
 
-    # the `task` object is the same that is sent to `ModelParallelProcessGroup.run_inference()`
     def __call__(self, task: Any):
-        if task[0] == "chat_completion":
-            return self.llama.chat_completion(task[1])
+        task_type = task[0]
+        if task_type == "chat_completion":
+            # task[1] is [params, raw_messages]
+            params, raw_messages = task[1]
+            return self.llama.chat_completion(params, raw_messages)
         else:
-            raise ValueError(f"Unexpected task type {task[0]}")
+            raise ValueError(f"Unexpected task type {task_type}")
 
 
 def init_model_cb(
@@ -78,19 +75,3 @@ class LlamaModelParallelGenerator:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.group.stop()
-
-    def completion(
-        self,
-        request_batch: list[CompletionRequestWithRawContent],
-    ) -> Generator:
-        req_obj = deepcopy(request_batch)
-        gen = self.group.run_inference(("completion", req_obj))
-        yield from gen
-
-    def chat_completion(
-        self,
-        request_batch: list[ChatCompletionRequestWithRawContent],
-    ) -> Generator:
-        req_obj = deepcopy(request_batch)
-        gen = self.group.run_inference(("chat_completion", req_obj))
-        yield from gen
