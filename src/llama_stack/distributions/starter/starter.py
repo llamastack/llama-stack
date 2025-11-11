@@ -44,7 +44,6 @@ from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOC
 from llama_stack.providers.remote.vector_io.weaviate.config import (
     WeaviateVectorIOConfig,
 )
-from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
 from llama_stack.providers.utils.kvstore.config import PostgresKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
 
@@ -323,7 +322,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                     ],
                     "files": [files_provider],
                 },
-                provider_overrides=default_overrides,
                 default_models=[],
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
