@@ -6,7 +6,7 @@
 
 from llama_stack_client import LlamaStackClient
 
-from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
 
 class TestProviders:

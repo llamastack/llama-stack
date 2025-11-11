@@ -95,6 +95,14 @@ web_search_test_cases = [
         ),
         id="llama_experts",
     ),
+    pytest.param(
+        ResponsesTestCase(
+            input="What is the latest version of Python?",
+            tools=[{"type": "web_search_2025_08_26"}],
+            expected="python",
+        ),
+        id="web_search_2025_08_26_type",
+    ),
 ]
 
 # File search test cases

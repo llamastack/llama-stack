@@ -48,11 +48,9 @@ Both OpenAI and Llama Stack support a web-search built-in tool.  The [OpenAI doc
 
 > The type of the web search tool. One of `web_search` or `web_search_2025_08_26`.
 
-In contrast, the [Llama Stack documentation](https://llamastack.github.io/docs/api/create-a-new-open-ai-response) says that the allowed values for `type` for web search are `MOD1`, `MOD2` and `MOD3`.
-Is that correct?  If so, what are the meanings of each of them?  It might make sense for the allowed values for OpenAI map to some values for Llama Stack so that code written to the OpenAI specification
-also work with Llama Stack.
+Llama Stack now supports both `web_search` and `web_search_2025_08_26` types, matching OpenAI's API. For backward compatibility, Llama Stack also supports `web_search_preview` and `web_search_preview_2025_03_11` types.
 
-The OpenAI web search tool also has fields for `filters` and `user_location` which are not documented as options for Llama Stack.  If feasible, it would be good to support these too.
+The OpenAI web search tool also has fields for `filters` and `user_location` which are not yet implemented in Llama Stack.  If feasible, it would be good to support these too.
 
 ---
 

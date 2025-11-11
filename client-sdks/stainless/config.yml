@@ -1,0 +1,521 @@
+# yaml-language-server: $schema=https://app.stainlessapi.com/config-internal.schema.json
+
+organization:
+  # Name of your organization or company, used to determine the name of the client
+  # and headings.
+  name: llama-stack-client
+  docs: https://llama-stack.readthedocs.io/en/latest/
+  contact: llamastack@meta.com
+security:
+  - {}
+  - BearerAuth: []
+security_schemes:
+  BearerAuth:
+    type: http
+    scheme: bearer
+# `targets` define the output targets and their customization options, such as
+# whether to emit the Node SDK and what it's package name should be.
+targets:
+  node:
+    package_name: llama-stack-client
+    production_repo: llamastack/llama-stack-client-typescript
+    publish:
+      npm: false
+  python:
+    package_name: llama_stack_client
+    production_repo: llamastack/llama-stack-client-python
+    options:
+      use_uv: true
+    publish:
+      pypi: true
+    project_name: llama_stack_client
+  kotlin:
+    reverse_domain: com.llama_stack_client.api
+    production_repo: null
+    publish:
+      maven: false
+  go:
+    package_name: llama-stack-client
+    production_repo: llamastack/llama-stack-client-go
+    options:
+      enable_v2: true
+      back_compat_use_shared_package: false
+
+# `client_settings` define settings for the API client, such as extra constructor
+# arguments (used for authentication), retry behavior, idempotency, etc.
+client_settings:
+  default_env_prefix: LLAMA_STACK_CLIENT
+  opts:
+    api_key:
+      type: string
+      read_env: LLAMA_STACK_CLIENT_API_KEY
+      auth: { security_scheme: BearerAuth }
+      nullable: true
+
+# `environments` are a map of the name of the environment (e.g. "sandbox",
+# "production") to the corresponding url to use.
+environments:
+  production: http://any-hosted-llama-stack.com
+
+# `pagination` defines [pagination schemes] which provides a template to match
+# endpoints and generate next-page and auto-pagination helpers in the SDKs.
+pagination:
+  - name: datasets_iterrows
+    type: offset
+    request:
+      dataset_id:
+        type: string
+      start_index:
+        type: integer
+        x-stainless-pagination-property:
+          purpose: offset_count_param
+      limit:
+        type: integer
+    response:
+      data:
+        type: array
+        items:
+          type: object
+      next_index:
+        type: integer
+        x-stainless-pagination-property:
+          purpose: offset_count_start_field
+  - name: openai_cursor_page
+    type: cursor
+    request:
+      limit:
+        type: integer
+      after:
+        type: string
+        x-stainless-pagination-property:
+          purpose: next_cursor_param
+    response:
+      data:
+        type: array
+        items: {}
+      has_more:
+        type: boolean
+      last_id:
+        type: string
+        x-stainless-pagination-property:
+          purpose: next_cursor_field
+# `resources` define the structure and organziation for your API, such as how
+# methods and models are grouped together and accessed. See the [configuration
+# guide] for more information.
+#
+# [configuration guide]:
+#   https://app.stainlessapi.com/docs/guides/configure#resources
+resources:
+  $shared:
+    models:
+      interleaved_content_item: InterleavedContentItem
+      interleaved_content: InterleavedContent
+      param_type: ParamType
+      safety_violation: SafetyViolation
+      sampling_params: SamplingParams
+      scoring_result: ScoringResult
+      system_message: SystemMessage
+      query_result: RAGQueryResult
+      document: RAGDocument
+      query_config: RAGQueryConfig
+  toolgroups:
+    models:
+      tool_group: ToolGroup
+      list_tool_groups_response: ListToolGroupsResponse
+    methods:
+      register: post /v1/toolgroups
+      get: get /v1/toolgroups/{toolgroup_id}
+      list: get /v1/toolgroups
+      unregister: delete /v1/toolgroups/{toolgroup_id}
+  tools:
+    methods:
+      get: get /v1/tools/{tool_name}
+      list:
+        endpoint: get /v1/tools
+        paginated: false
+
+  tool_runtime:
+    models:
+      tool_def: ToolDef
+      tool_invocation_result: ToolInvocationResult
+    methods:
+      list_tools:
+        endpoint: get /v1/tool-runtime/list-tools
+        paginated: false
+      invoke_tool: post /v1/tool-runtime/invoke
+    subresources:
+      rag_tool:
+        methods:
+          insert: post /v1/tool-runtime/rag-tool/insert
+          query: post /v1/tool-runtime/rag-tool/query
+
+  responses:
+    models:
+      response_object_stream: OpenAIResponseObjectStream
+      response_object: OpenAIResponseObject
+    methods:
+      create:
+        type: http
+        endpoint: post /v1/responses
+        streaming:
+          stream_event_model: responses.response_object_stream
+          param_discriminator: stream
+      retrieve: get /v1/responses/{response_id}
+      list:
+        type: http
+        endpoint: get /v1/responses
+      delete:
+        type: http
+        endpoint: delete /v1/responses/{response_id}
+    subresources:
+      input_items:
+        methods:
+          list:
+            type: http
+            endpoint: get /v1/responses/{response_id}/input_items
+
+  prompts:
+    models:
+      prompt: Prompt
+      list_prompts_response: ListPromptsResponse
+    methods:
+      create: post /v1/prompts
+      list:
+        endpoint: get /v1/prompts
+        paginated: false
+      retrieve: get /v1/prompts/{prompt_id}
+      update: post /v1/prompts/{prompt_id}
+      delete: delete /v1/prompts/{prompt_id}
+      set_default_version: post /v1/prompts/{prompt_id}/set-default-version
+    subresources:
+      versions:
+        methods:
+          list:
+            endpoint: get /v1/prompts/{prompt_id}/versions
+            paginated: false
+
+  conversations:
+    models:
+      conversation_object: Conversation
+    methods:
+      create:
+        type: http
+        endpoint: post /v1/conversations
+      retrieve: get /v1/conversations/{conversation_id}
+      update:
+        type: http
+        endpoint: post /v1/conversations/{conversation_id}
+      delete:
+        type: http
+        endpoint: delete /v1/conversations/{conversation_id}
+    subresources:
+      items:
+        methods:
+          get:
+            type: http
+            endpoint: get /v1/conversations/{conversation_id}/items/{item_id}
+          list:
+            type: http
+            endpoint: get /v1/conversations/{conversation_id}/items
+          create:
+            type: http
+            endpoint: post /v1/conversations/{conversation_id}/items
+
+  inspect:
+    models:
+      healthInfo: HealthInfo
+      providerInfo: ProviderInfo
+      routeInfo: RouteInfo
+      versionInfo: VersionInfo
+    methods:
+      health: get /v1/health
+      version: get /v1/version
+
+  embeddings:
+    models:
+      create_embeddings_response: OpenAIEmbeddingsResponse
+    methods:
+      create: post /v1/embeddings
+
+  chat:
+    models:
+      chat_completion_chunk: OpenAIChatCompletionChunk
+    subresources:
+      completions:
+        methods:
+          create:
+            type: http
+            endpoint: post /v1/chat/completions
+            streaming:
+              stream_event_model: chat.chat_completion_chunk
+              param_discriminator: stream
+          list:
+            type: http
+            endpoint: get /v1/chat/completions
+          retrieve:
+            type: http
+            endpoint: get /v1/chat/completions/{completion_id}
+  completions:
+    methods:
+      create:
+        type: http
+        endpoint: post /v1/completions
+        streaming:
+          param_discriminator: stream
+
+  vector_io:
+    models:
+      queryChunksResponse: QueryChunksResponse
+    methods:
+      insert: post /v1/vector-io/insert
+      query: post /v1/vector-io/query
+
+  vector_stores:
+    models:
+      vector_store: VectorStoreObject
+      list_vector_stores_response: VectorStoreListResponse
+      vector_store_delete_response: VectorStoreDeleteResponse
+      vector_store_search_response: VectorStoreSearchResponsePage
+    methods:
+      create: post /v1/vector_stores
+      list:
+        endpoint: get /v1/vector_stores
+      retrieve: get /v1/vector_stores/{vector_store_id}
+      update: post /v1/vector_stores/{vector_store_id}
+      delete: delete /v1/vector_stores/{vector_store_id}
+      search: post /v1/vector_stores/{vector_store_id}/search
+    subresources:
+      files:
+        models:
+          vector_store_file: VectorStoreFileObject
+        methods:
+          list: get /v1/vector_stores/{vector_store_id}/files
+          retrieve: get /v1/vector_stores/{vector_store_id}/files/{file_id}
+          update: post /v1/vector_stores/{vector_store_id}/files/{file_id}
+          delete: delete /v1/vector_stores/{vector_store_id}/files/{file_id}
+          create: post /v1/vector_stores/{vector_store_id}/files
+          content: get /v1/vector_stores/{vector_store_id}/files/{file_id}/content
+      file_batches:
+        models:
+          vector_store_file_batches: VectorStoreFileBatchObject
+          list_vector_store_files_in_batch_response: VectorStoreFilesListInBatchResponse
+        methods:
+          create: post /v1/vector_stores/{vector_store_id}/file_batches
+          retrieve: get /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}
+          list_files: get /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files
+          cancel: post /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel
+
+  models:
+    models:
+      model: OpenAIModel
+      list_models_response: OpenAIListModelsResponse
+    methods:
+      list:
+        endpoint: get /v1/models
+        paginated: false
+      retrieve: get /v1/models/{model_id}
+      register: post /v1/models
+      unregister: delete /v1/models/{model_id}
+    subresources:
+      openai:
+        methods:
+          list:
+            endpoint: get /v1/models
+            paginated: false
+
+  providers:
+    models:
+      list_providers_response: ListProvidersResponse
+    methods:
+      list:
+        endpoint: get /v1/providers
+        paginated: false
+      retrieve: get /v1/providers/{provider_id}
+
+  routes:
+    models:
+      list_routes_response: ListRoutesResponse
+    methods:
+      list:
+        endpoint: get /v1/inspect/routes
+        paginated: false
+
+  moderations:
+    models:
+      create_response: ModerationObject
+    methods:
+      create: post /v1/moderations
+
+  safety:
+    models:
+      run_shield_response: RunShieldResponse
+    methods:
+      run_shield: post /v1/safety/run-shield
+
+  shields:
+    models:
+      shield: Shield
+      list_shields_response: ListShieldsResponse
+    methods:
+      retrieve: get /v1/shields/{identifier}
+      list:
+        endpoint: get /v1/shields
+        paginated: false
+      register: post /v1/shields
+      delete: delete /v1/shields/{identifier}
+
+  scoring:
+    methods:
+      score: post /v1/scoring/score
+      score_batch: post /v1/scoring/score-batch
+  scoring_functions:
+    methods:
+      retrieve: get /v1/scoring-functions/{scoring_fn_id}
+      list:
+        endpoint: get /v1/scoring-functions
+        paginated: false
+      register: post /v1/scoring-functions
+    models:
+      scoring_fn: ScoringFn
+      scoring_fn_params: ScoringFnParams
+      list_scoring_functions_response: ListScoringFunctionsResponse
+
+  files:
+    methods:
+      create: post /v1/files
+      list: get /v1/files
+      retrieve: get /v1/files/{file_id}
+      delete: delete /v1/files/{file_id}
+      content: get /v1/files/{file_id}/content
+    models:
+      file: OpenAIFileObject
+      list_files_response: ListOpenAIFileResponse
+      delete_file_response: OpenAIFileDeleteResponse
+
+  alpha:
+    subresources:
+      inference:
+        methods:
+          rerank: post /v1alpha/inference/rerank
+
+      post_training:
+        models:
+          algorithm_config: AlgorithmConfig
+          post_training_job: PostTrainingJob
+          list_post_training_jobs_response: ListPostTrainingJobsResponse
+        methods:
+          preference_optimize: post /v1alpha/post-training/preference-optimize
+          supervised_fine_tune: post /v1alpha/post-training/supervised-fine-tune
+        subresources:
+          job:
+            methods:
+              artifacts: get /v1alpha/post-training/job/artifacts
+              cancel: post /v1alpha/post-training/job/cancel
+              status: get /v1alpha/post-training/job/status
+              list:
+                endpoint: get /v1alpha/post-training/jobs
+                paginated: false
+
+      benchmarks:
+        methods:
+          retrieve: get /v1alpha/eval/benchmarks/{benchmark_id}
+          list:
+            endpoint: get /v1alpha/eval/benchmarks
+            paginated: false
+          register: post /v1alpha/eval/benchmarks
+        models:
+          benchmark: Benchmark
+          list_benchmarks_response: ListBenchmarksResponse
+
+      eval:
+        methods:
+          evaluate_rows: post /v1alpha/eval/benchmarks/{benchmark_id}/evaluations
+          run_eval: post /v1alpha/eval/benchmarks/{benchmark_id}/jobs
+          evaluate_rows_alpha: post /v1alpha/eval/benchmarks/{benchmark_id}/evaluations
+          run_eval_alpha: post /v1alpha/eval/benchmarks/{benchmark_id}/jobs
+
+        subresources:
+          jobs:
+            methods:
+              cancel: delete /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}
+              status: get /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}
+              retrieve: get /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result
+        models:
+          evaluate_response: EvaluateResponse
+          benchmark_config: BenchmarkConfig
+          job: Job
+
+  beta:
+    subresources:
+      datasets:
+        models:
+          list_datasets_response: ListDatasetsResponse
+        methods:
+          register: post /v1beta/datasets
+          retrieve: get /v1beta/datasets/{dataset_id}
+          list:
+            endpoint: get /v1beta/datasets
+            paginated: false
+          unregister: delete /v1beta/datasets/{dataset_id}
+          iterrows: get /v1beta/datasetio/iterrows/{dataset_id}
+          appendrows: post /v1beta/datasetio/append-rows/{dataset_id}
+
+settings:
+  license: MIT
+  unwrap_response_fields: [data]
+
+openapi:
+  transformations:
+    - command: mergeObject
+      reason: Better return_type using enum
+      args:
+        target:
+          - "$.components.schemas"
+        object:
+          ReturnType:
+            additionalProperties: false
+            properties:
+              type:
+                enum:
+                  - string
+                  - number
+                  - boolean
+                  - array
+                  - object
+                  - json
+                  - union
+                  - chat_completion_input
+                  - completion_input
+                  - agent_turn_input
+            required:
+              - type
+            type: object
+    - command: replaceProperties
+      reason: Replace return type properties with better model (see above)
+      args:
+        filter:
+          only:
+            - "$.components.schemas.ScoringFn.properties.return_type"
+            - "$.components.schemas.RegisterScoringFunctionRequest.properties.return_type"
+        value:
+          $ref: "#/components/schemas/ReturnType"
+    - command: oneOfToAnyOf
+      reason: Prism (mock server) doesn't like one of our requests as it technically matches multiple variants
+
+# `readme` is used to configure the code snippets that will be rendered in the
+# README.md of various SDKs. In particular, you can change the `headline`
+# snippet's endpoint and the arguments to call it with.
+readme:
+  example_requests:
+    default:
+      type: request
+      endpoint: post /v1/chat/completions
+      params: &ref_0 {}
+    headline:
+      type: request
+      endpoint: post /v1/models
+      params: *ref_0
+    pagination:
+      type: request
+      endpoint: post /v1/chat/completions
+      params: {}

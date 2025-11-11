@@ -1945,7 +1945,6 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "jsonschema" },
-    { name = "llama-stack-client" },
     { name = "openai" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
@@ -1955,12 +1954,18 @@ dependencies = [
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
     { name = "python-multipart" },
+    { name = "pyyaml" },
     { name = "rich" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "starlette" },
     { name = "termcolor" },
     { name = "tiktoken" },
     { name = "uvicorn" },
+]
+
+[package.optional-dependencies]
+client = [
+    { name = "llama-stack-client" },
 ]
 
 [package.dev-dependencies]
@@ -2035,6 +2040,7 @@ type-checking = [
     { name = "datasets" },
     { name = "fairscale" },
     { name = "faiss-cpu" },
+    { name = "llama-stack-client" },
     { name = "lm-format-enforcer" },
     { name = "mcp" },
     { name = "nest-asyncio" },
@@ -2088,7 +2094,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
-    { name = "llama-stack-client", specifier = ">=0.3.0" },
+    { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.3.0" },
     { name = "openai", specifier = ">=2.5.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
@@ -2098,6 +2104,7 @@ requires-dist = [
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10.0" },
     { name = "python-dotenv" },
     { name = "python-multipart", specifier = ">=0.0.20" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "rich" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
     { name = "starlette" },
@@ -2105,6 +2112,7 @@ requires-dist = [
     { name = "tiktoken" },
     { name = "uvicorn", specifier = ">=0.34.0" },
 ]
+provides-extras = ["client"]
 
 [package.metadata.requires-dev]
 benchmark = [{ name = "locust", specifier = ">=2.39.1" }]
@@ -2175,6 +2183,7 @@ type-checking = [
     { name = "datasets" },
     { name = "fairscale" },
     { name = "faiss-cpu" },
+    { name = "llama-stack-client", specifier = ">=0.3.0" },
     { name = "lm-format-enforcer" },
     { name = "mcp" },
     { name = "nest-asyncio" },
