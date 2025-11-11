@@ -8,6 +8,8 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
+from opentelemetry import trace
+
 from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
@@ -65,7 +67,6 @@ from llama_stack_api import (
     WebSearchToolTypes,
 )
 
-from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
@@ -77,6 +78,7 @@ from .utils import (
 )
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
+tracer = trace.get_tracer(__name__)
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -1092,7 +1094,10 @@ class StreamingResponseOrchestrator:
                 "server_url": mcp_tool.server_url,
                 "mcp_list_tools_id": list_id,
             }
-            async with tracing.span("list_mcp_tools", attributes):
+
+            # TODO: follow semantic conventions for Open Telemetry tool spans
+            # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
+            with tracer.start_as_current_span("list_mcp_tools", attributes=attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
                     headers=mcp_tool.headers or {},
