@@ -7,10 +7,15 @@
 from typing import Any
 
 from llama_stack.core.datatypes import SafetyConfig
+from llama_stack.core.telemetry.constants import GUARDRAIL_SPAN_NAME
+from llama_stack.core.telemetry.helpers import guardrail_request_span_attributes
 from llama_stack.log import get_logger
 from llama_stack_api import ModerationObject, OpenAIMessageParam, RoutingTable, RunShieldResponse, Safety, Shield
 
+from opentelemetry import trace
+
 logger = get_logger(name=__name__, category="core::routers")
+tracer = trace.get_tracer(__name__)
 
 
 class SafetyRouter(Safety):
@@ -45,6 +50,7 @@ class SafetyRouter(Safety):
         logger.debug(f"SafetyRouter.unregister_shield: {identifier}")
         return await self.routing_table.unregister_shield(identifier)
 
+    @tracer.start_as_current_span(name=GUARDRAIL_SPAN_NAME)
     async def run_shield(
         self,
         shield_id: str,
@@ -53,11 +59,14 @@ class SafetyRouter(Safety):
     ) -> RunShieldResponse:
         logger.debug(f"SafetyRouter.run_shield: {shield_id}")
         provider = await self.routing_table.get_provider_impl(shield_id)
-        return await provider.run_shield(
+        response = await provider.run_shield(
             shield_id=shield_id,
             messages=messages,
             params=params,
         )
+
+        guardrail_request_span_attributes(shield_id, messages, response)
+        return response
 
     async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
         list_shields_response = await self.routing_table.list_shields()
