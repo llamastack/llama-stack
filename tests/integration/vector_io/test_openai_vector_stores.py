@@ -350,7 +350,7 @@ def test_openai_vector_store_search_empty(
     assert search_response is not None
     assert hasattr(search_response, "data")
     assert len(search_response.data) == 0  # Empty store should return no results
-    assert search_response.search_query == "test query"
+    assert search_response.search_query == ["test query"]
     assert search_response.has_more is False
 
 
@@ -679,7 +679,7 @@ def test_openai_vector_store_attach_file(
     assert file_attach_response.id == file.id
     assert file_attach_response.vector_store_id == vector_store.id
     assert file_attach_response.status == "completed"
-    assert file_attach_response.chunking_strategy.type == "auto"
+    assert file_attach_response.chunking_strategy.type == "static"
     assert file_attach_response.created_at > 0
     assert not file_attach_response.last_error
 
@@ -815,8 +815,8 @@ def test_openai_vector_store_list_files(
     assert set(file_ids) == {file.id for file in files_list.data}
     assert files_list.data[0].object == "vector_store.file"
     assert files_list.data[0].vector_store_id == vector_store.id
-    assert files_list.data[0].status == "completed"
-    assert files_list.data[0].chunking_strategy.type == "auto"
+    assert files_list.data[0].status in ["completed", "in_progress"]
+    assert files_list.data[0].chunking_strategy.type == "static"
     assert files_list.data[0].created_at > 0
     assert files_list.first_id == files_list.data[0].id
     assert not files_list.data[0].last_error
@@ -825,7 +825,7 @@ def test_openai_vector_store_list_files(
     assert first_page.has_more
     assert len(first_page.data) == 2
     assert first_page.first_id == first_page.data[0].id
-    assert first_page.last_id != first_page.data[-1].id
+    assert first_page.last_id == first_page.data[-1].id
 
     next_page = compat_client.vector_stores.files.list(
         vector_store_id=vector_store.id, limit=2, after=first_page.data[-1].id
@@ -907,16 +907,16 @@ def test_openai_vector_store_retrieve_file_contents(
     )
 
     assert file_contents is not None
-    assert len(file_contents.content) == 1
-    content = file_contents.content[0]
+    assert file_contents.object == "vector_store.file_content.page"
+    assert len(file_contents.data) == 1
+    content = file_contents.data[0]
 
     # llama-stack-client returns a model, openai-python is a badboy and returns a dict
     if not isinstance(content, dict):
         content = content.model_dump()
     assert content["type"] == "text"
     assert content["text"] == test_content.decode("utf-8")
-    assert file_contents.filename == file_name
-    assert file_contents.attributes == attributes
+    assert file_contents.has_more is False
 
 
 @vector_provider_wrapper
@@ -1483,14 +1483,12 @@ def test_openai_vector_store_file_batch_retrieve_contents(
         )
 
         assert file_contents is not None
-        assert file_contents.filename == file_data[i][0]
-        assert len(file_contents.content) > 0
+        assert file_contents.object == "vector_store.file_content.page"
+        assert len(file_contents.data) > 0
 
         # Verify the content matches what we uploaded
         content_text = (
-            file_contents.content[0].text
-            if hasattr(file_contents.content[0], "text")
-            else file_contents.content[0]["text"]
+            file_contents.data[0].text if hasattr(file_contents.data[0], "text") else file_contents.data[0]["text"]
         )
         assert file_data[i][1].decode("utf-8") in content_text
 

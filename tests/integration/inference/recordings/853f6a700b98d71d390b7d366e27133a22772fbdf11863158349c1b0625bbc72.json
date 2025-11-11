@@ -1,0 +1,128 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestEdgeCases::test_multiple_tools_with_different_schemas[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use one of the available tools"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "simple",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "complex",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/$defs/Complex"
+                }
+              },
+              "$defs": {
+                "Complex": {
+                  "type": "object",
+                  "properties": {
+                    "nested": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "with_output",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-853f6a700b98",
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, let's see. The user wants me to use one of the available tools. The tools provided are simple, complex, and with_output. The simple function takes an argument 'x' of type string. The complex function requires a 'data' parameter that's an object with a nested array of numbers. The with_output function takes an input string.\n\nThe user's query is about using a tool, but there's no specific function name mentioned. Wait, maybe the user expects me to choose one based on the context. Since the tools are available, but the query is a general instruction, perhaps I should ask for clarification. However, the instructions say to use one of the tools if possible. Since the user hasn't specified a particular function, maybe I should check if there's any implicit function needed. But looking at the tools, none are directly related to the query. The user might need to specify which tool to use. Alternatively, maybe the answer is to call the simple function with an example input. But without more context, it's hard to tell. Wait, maybe the user expects me to choose the simplest one. Let's go with the simple function first. So the tool call would be to the simple function with x set to some value. But the user hasn't provided a specific value. Maybe I should state that the tool requires a value. But according to the instructions, if possible, use one of the tools. Since the user hasn't given a value, perhaps the answer is to call the simple function with an example. But the parameters for the simple function require 'x' which is a string. Maybe the user expects me to proceed without needing more info. So I'll proceed by calling the simple function with x as \"example\".\n</think>\n\n",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-12e2ba0189cf484bb936cbb254a5c32a",
+                  "function": {
+                    "arguments": "{\"x\": \"example\"}",
+                    "name": "simple"
+                  },
+                  "type": "function"
+                }
+              ],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 378,
+          "prompt_tokens": 265,
+          "total_tokens": 643,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

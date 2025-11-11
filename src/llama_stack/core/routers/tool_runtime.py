@@ -8,14 +8,9 @@ from typing import Any
 
 from llama_stack.apis.common.content_types import (
     URL,
-    InterleavedContent,
 )
 from llama_stack.apis.tools import (
     ListToolDefsResponse,
-    RAGDocument,
-    RAGQueryConfig,
-    RAGQueryResult,
-    RAGToolRuntime,
     ToolRuntime,
 )
 from llama_stack.log import get_logger
@@ -26,47 +21,12 @@ logger = get_logger(name=__name__, category="core::routers")
 
 
 class ToolRuntimeRouter(ToolRuntime):
-    class RagToolImpl(RAGToolRuntime):
-        def __init__(
-            self,
-            routing_table: ToolGroupsRoutingTable,
-        ) -> None:
-            logger.debug("Initializing ToolRuntimeRouter.RagToolImpl")
-            self.routing_table = routing_table
-
-        async def query(
-            self,
-            content: InterleavedContent,
-            vector_store_ids: list[str],
-            query_config: RAGQueryConfig | None = None,
-        ) -> RAGQueryResult:
-            logger.debug(f"ToolRuntimeRouter.RagToolImpl.query: {vector_store_ids}")
-            provider = await self.routing_table.get_provider_impl("knowledge_search")
-            return await provider.query(content, vector_store_ids, query_config)
-
-        async def insert(
-            self,
-            documents: list[RAGDocument],
-            vector_store_id: str,
-            chunk_size_in_tokens: int = 512,
-        ) -> None:
-            logger.debug(
-                f"ToolRuntimeRouter.RagToolImpl.insert: {vector_store_id}, {len(documents)} documents, chunk_size={chunk_size_in_tokens}"
-            )
-            provider = await self.routing_table.get_provider_impl("insert_into_memory")
-            return await provider.insert(documents, vector_store_id, chunk_size_in_tokens)
-
     def __init__(
         self,
         routing_table: ToolGroupsRoutingTable,
     ) -> None:
         logger.debug("Initializing ToolRuntimeRouter")
         self.routing_table = routing_table
-
-        # HACK ALERT this should be in sync with "get_all_api_endpoints()"
-        self.rag_tool = self.RagToolImpl(routing_table)
-        for method in ("query", "insert"):
-            setattr(self, f"rag_tool.{method}", getattr(self.rag_tool, method))
 
     async def initialize(self) -> None:
         logger.debug("ToolRuntimeRouter.initialize")

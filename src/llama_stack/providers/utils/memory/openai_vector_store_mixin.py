@@ -26,10 +26,11 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
     VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyStaticConfig,
     VectorStoreContent,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileCounts,
     VectorStoreFileDeleteResponse,
     VectorStoreFileLastError,
@@ -414,6 +415,10 @@ class OpenAIVectorStoreMixin(ABC):
             in_progress=0,
             total=0,
         )
+        if not params.chunking_strategy or params.chunking_strategy.type == "auto":
+            chunking_strategy = VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig())
+        else:
+            chunking_strategy = params.chunking_strategy
         store_info: dict[str, Any] = {
             "id": vector_store_id,
             "object": "vector_store",
@@ -426,7 +431,7 @@ class OpenAIVectorStoreMixin(ABC):
             "expires_at": None,
             "last_active_at": created_at,
             "file_ids": [],
-            "chunking_strategy": params.chunking_strategy,
+            "chunking_strategy": chunking_strategy.model_dump(),
         }
 
         # Add provider information to metadata if provided
@@ -637,7 +642,7 @@ class OpenAIVectorStoreMixin(ABC):
                     break
 
             return VectorStoreSearchResponsePage(
-                search_query=search_query,
+                search_query=query if isinstance(query, list) else [query],
                 data=data,
                 has_more=False,  # For simplicity, we don't implement pagination here
                 next_page=None,
@@ -647,7 +652,7 @@ class OpenAIVectorStoreMixin(ABC):
             logger.error(f"Error searching vector store {vector_store_id}: {e}")
             # Return empty results on error
             return VectorStoreSearchResponsePage(
-                search_query=search_query,
+                search_query=query if isinstance(query, list) else [query],
                 data=[],
                 has_more=False,
                 next_page=None,
@@ -886,8 +891,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Determine pagination info
         has_more = len(file_objects) > limit
-        first_id = file_objects[0].id if file_objects else None
-        last_id = file_objects[-1].id if file_objects else None
+        first_id = limited_files[0].id if file_objects else None
+        last_id = limited_files[-1].id if file_objects else None
 
         return VectorStoreListFilesResponse(
             data=limited_files,
@@ -916,22 +921,21 @@ class OpenAIVectorStoreMixin(ABC):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentsResponse:
+    ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file."""
         if vector_store_id not in self.openai_vector_stores:
             raise VectorStoreNotFoundError(vector_store_id)
 
-        file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
         dict_chunks = await self._load_openai_vector_store_file_contents(vector_store_id, file_id)
         chunks = [Chunk.model_validate(c) for c in dict_chunks]
         content = []
         for chunk in chunks:
             content.extend(self._chunk_to_vector_store_content(chunk))
-        return VectorStoreFileContentsResponse(
-            file_id=file_id,
-            filename=file_info.get("filename", ""),
-            attributes=file_info.get("attributes", {}),
-            content=content,
+        return VectorStoreFileContentResponse(
+            object="vector_store.file_content.page",
+            data=content,
+            has_more=False,
+            next_page=None,
         )
 
     async def openai_update_vector_store_file(
