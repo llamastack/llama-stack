@@ -8,8 +8,9 @@ import json
 import re
 
 from llama_stack.log import get_logger
+from llama_stack.models.llama.datatypes import BuiltinTool, ToolCall, ToolPromptFormat
 
-from ..datatypes import BuiltinTool, RecursiveType, ToolCall, ToolPromptFormat
+from ..datatypes import RecursiveType
 
 logger = get_logger(name=__name__, category="models::llama")
 
