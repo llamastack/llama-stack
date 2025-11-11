@@ -5746,7 +5746,10 @@ components:
         parallel_tool_calls:
           type: boolean
           title: Parallel Tool Calls
-          default: false
+          default: true
+          description: >-
+            (Optional) Whether to allow more than one function tool call generated
+            per turn.
         previous_response_id:
           anyOf:
           - type: string
@@ -6143,9 +6146,12 @@ components:
           - type: 'null'
           title: OpenAIResponsePrompt
         instructions:
+          type: string
           anyOf:
           - type: string
           - type: 'null'
+        parallel_tool_calls:
+          type: boolean
         previous_response_id:
           anyOf:
           - type: string
@@ -6274,7 +6280,10 @@ components:
         parallel_tool_calls:
           type: boolean
           title: Parallel Tool Calls
-          default: false
+          default: true
+          description: >-
+            (Optional) Whether to allow more than one function tool call generated
+            per turn.
         previous_response_id:
           anyOf:
           - type: string

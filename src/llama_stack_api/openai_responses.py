@@ -585,7 +585,7 @@ class OpenAIResponseObject(BaseModel):
     :param model: Model identifier used for generation
     :param object: Object type identifier, always "response"
     :param output: List of generated output items (messages, tool calls, etc.)
-    :param parallel_tool_calls: Whether tool calls can be executed in parallel
+    :param parallel_tool_calls: (Optional) Whether to allow more than one function tool call generated per turn.
     :param previous_response_id: (Optional) ID of the previous response in a conversation
     :param prompt: (Optional) Reference to a prompt template and its variables.
     :param status: Current status of the response generation
@@ -605,7 +605,7 @@ class OpenAIResponseObject(BaseModel):
     model: str
     object: Literal["response"] = "response"
     output: Sequence[OpenAIResponseOutput]
-    parallel_tool_calls: bool = False
+    parallel_tool_calls: bool | None = True
     previous_response_id: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
