@@ -2688,16 +2688,8 @@ paths:
       responses:
         '200':
           description: >-
-<<<<<<< HEAD
-<<<<<<< HEAD
-            A VectorStoreFileContentResponse representing the file contents.
-=======
-            File contents, optionally with embeddings and metadata based on extra_query
-=======
             File contents, optionally with embeddings and metadata based on query
->>>>>>> c192529c (use FastAPI Query class instead of custom middlware)
             parameters.
->>>>>>> 639f0daa (feat: Adding optional embeddings to content)
           content:
             application/json:
               schema:
@@ -9416,11 +9408,10 @@ components:
           items:
             type: number
           description: >-
-            Optional embedding vector for this content chunk (when requested via extra_body)
+            Optional embedding vector for this content chunk
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
-          description: >-
-            Optional chunk metadata (when requested via extra_body)
+          description: Optional chunk metadata
         metadata:
           type: object
           additionalProperties:
@@ -9431,8 +9422,7 @@ components:
               - type: string
               - type: array
               - type: object
-          description: >-
-            Optional user-defined metadata (when requested via extra_body)
+          description: Optional user-defined metadata
       additionalProperties: false
       required:
         - type
@@ -9456,6 +9446,7 @@ components:
           description: Parsed content of the file
         has_more:
           type: boolean
+          default: false
           description: >-
             Indicates if there are more content pages to fetch
         next_page:

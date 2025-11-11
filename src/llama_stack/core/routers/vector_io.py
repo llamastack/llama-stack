@@ -24,7 +24,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreChunkingStrategyStaticConfig,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
     VectorStoreFilesListInBatchResponse,
@@ -347,7 +347,7 @@ class VectorIORouter(VectorIO):
         file_id: str,
         include_embeddings: bool | None = False,
         include_metadata: bool | None = False,
-    ) -> VectorStoreFileContentsResponse:
+    ) -> VectorStoreFileContentResponse:
         logger.debug(
             f"VectorIORouter.openai_retrieve_vector_store_file_contents: {vector_store_id}, {file_id}, "
             f"include_embeddings={include_embeddings}, include_metadata={include_metadata}"

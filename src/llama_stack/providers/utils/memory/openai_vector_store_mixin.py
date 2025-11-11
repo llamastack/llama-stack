@@ -30,7 +30,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreContent,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileCounts,
     VectorStoreFileDeleteResponse,
     VectorStoreFileLastError,
@@ -704,18 +704,18 @@ class OpenAIVectorStoreMixin(ABC):
             # Unknown filter type, default to no match
             raise ValueError(f"Unsupported filter type: {filter_type}")
 
-    def _extract_chunk_fields(self, chunk: Chunk, include_embeddings: bool, include_metadata: bool) -> dict:
-        """Extract embedding and metadata fields from chunk based on include flags."""
-        return {
-            "embedding": chunk.embedding if include_embeddings else None,
-            "chunk_metadata": chunk.chunk_metadata if include_metadata else None,
-            "metadata": chunk.metadata if include_metadata else None,
-        }
-
     def _chunk_to_vector_store_content(
         self, chunk: Chunk, include_embeddings: bool = False, include_metadata: bool = False
     ) -> list[VectorStoreContent]:
-        fields = self._extract_chunk_fields(chunk, include_embeddings, include_metadata)
+        def extract_fields() -> dict:
+            """Extract embedding and metadata fields from chunk based on include flags."""
+            return {
+                "embedding": chunk.embedding if include_embeddings else None,
+                "chunk_metadata": chunk.chunk_metadata if include_metadata else None,
+                "metadata": chunk.metadata if include_metadata else None,
+            }
+
+        fields = extract_fields()
 
         if isinstance(chunk.content, str):
             content_item = VectorStoreContent(type="text", text=chunk.content, **fields)
@@ -923,7 +923,7 @@ class OpenAIVectorStoreMixin(ABC):
         file_id: str,
         include_embeddings: bool | None = False,
         include_metadata: bool | None = False,
-    ) -> VectorStoreFileContentsResponse:
+    ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file."""
         if vector_store_id not in self.openai_vector_stores:
             raise VectorStoreNotFoundError(vector_store_id)
@@ -931,7 +931,6 @@ class OpenAIVectorStoreMixin(ABC):
         # Parameters are already provided directly
         # include_embeddings and include_metadata are now function parameters
 
-        file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
         dict_chunks = await self._load_openai_vector_store_file_contents(vector_store_id, file_id)
         chunks = [Chunk.model_validate(c) for c in dict_chunks]
         content = []
@@ -941,11 +940,8 @@ class OpenAIVectorStoreMixin(ABC):
                     chunk, include_embeddings=include_embeddings or False, include_metadata=include_metadata or False
                 )
             )
-        return VectorStoreFileContentsResponse(
-            file_id=file_id,
-            filename=file_info.get("filename", ""),
-            attributes=file_info.get("attributes", {}),
-            content=content,
+        return VectorStoreFileContentResponse(
+            data=content,
         )
 
     async def openai_update_vector_store_file(

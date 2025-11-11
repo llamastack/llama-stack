@@ -15,7 +15,7 @@ from llama_stack.apis.vector_io.vector_io import (
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
     VectorStoreFileStatus,
@@ -197,7 +197,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         file_id: str,
         include_embeddings: bool | None = False,
         include_metadata: bool | None = False,
-    ) -> VectorStoreFileContentsResponse:
+    ) -> VectorStoreFileContentResponse:
         await self.assert_action_allowed("read", "vector_store", vector_store_id)
 
         provider = await self.get_provider_impl(vector_store_id)

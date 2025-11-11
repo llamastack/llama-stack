@@ -224,9 +224,9 @@ class VectorStoreContent(BaseModel):
 
     :param type: Content type, currently only "text" is supported
     :param text: The actual text content
-    :param embedding: Optional embedding vector for this content chunk (when requested via extra_body)
-    :param chunk_metadata: Optional chunk metadata (when requested via extra_body)
-    :param metadata: Optional user-defined metadata (when requested via extra_body)
+    :param embedding: Optional embedding vector for this content chunk
+    :param chunk_metadata: Optional chunk metadata
+    :param metadata: Optional user-defined metadata
     """
 
     type: Literal["text"]
@@ -284,6 +284,22 @@ class VectorStoreDeleteResponse(BaseModel):
     id: str
     object: str = "vector_store.deleted"
     deleted: bool = True
+
+
+@json_schema_type
+class VectorStoreFileContentResponse(BaseModel):
+    """Represents the parsed content of a vector store file.
+
+    :param object: The object type, which is always `vector_store.file_content.page`
+    :param data: Parsed content of the file
+    :param has_more: Indicates if there are more content pages to fetch
+    :param next_page: The token for the next page, if any
+    """
+
+    object: Literal["vector_store.file_content.page"] = "vector_store.file_content.page"
+    data: list[VectorStoreContent]
+    has_more: bool = False
+    next_page: str | None = None
 
 
 @json_schema_type
@@ -724,7 +740,7 @@ class VectorIO(Protocol):
         file_id: str,
         include_embeddings: Annotated[bool | None, Query(default=False)] = False,
         include_metadata: Annotated[bool | None, Query(default=False)] = False,
-    ) -> VectorStoreFileContentsResponse:
+    ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file.
 
         :param vector_store_id: The ID of the vector store containing the file to retrieve.
