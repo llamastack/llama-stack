@@ -1469,64 +1469,6 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
   /v1/responses:
-    post:
-      tags:
-      - Agents
-      summary: Create Openai Response
-      description: Create a model response.
-      operationId: create_openai_response_v1_responses_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_responses_Request'
-        x-llama-stack-extra-body-params:
-          guardrails:
-            $defs:
-              ResponseGuardrailSpec:
-                description: |-
-                  Specification for a guardrail to apply during response generation.
-
-                  :param type: The type/identifier of the guardrail.
-                properties:
-                  type:
-                    title: Type
-                    type: string
-                required:
-                - type
-                title: ResponseGuardrailSpec
-                type: object
-            anyOf:
-            - items:
-                anyOf:
-                - type: string
-                - $ref: '#/components/schemas/ResponseGuardrailSpec'
-              type: array
-            - type: 'null'
-            description: List of guardrails to apply during response generation. Guardrails provide safety and content moderation.
-      responses:
-        '200':
-          description: An OpenAIResponseObject.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenAIResponseObject'
-            text/event-stream:
-              schema:
-                $ref: '#/components/schemas/OpenAIResponseObjectStream'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
     get:
       tags:
       - Agents
@@ -1575,6 +1517,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListOpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+    post:
+      tags:
+      - Agents
+      summary: Create Openai Response
+      description: Create a model response.
+      operationId: create_openai_response_v1_responses_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_responses_Request'
+        x-llama-stack-extra-body-params:
+          guardrails:
+            $defs:
+              ResponseGuardrailSpec:
+                description: |-
+                  Specification for a guardrail to apply during response generation.
+
+                  :param type: The type/identifier of the guardrail.
+                properties:
+                  type:
+                    title: Type
+                    type: string
+                required:
+                - type
+                title: ResponseGuardrailSpec
+                type: object
+            anyOf:
+            - items:
+                anyOf:
+                - type: string
+                - $ref: '#/components/schemas/ResponseGuardrailSpec'
+              type: array
+            - type: 'null'
+            description: List of guardrails to apply during response generation. Guardrails provide safety and content moderation.
+      responses:
+        '200':
+          description: An OpenAIResponseObject.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObject'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObjectStream'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -2335,44 +2335,6 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
   /v1/vector_stores/{vector_store_id}/files:
-    post:
-      tags:
-      - Vector Io
-      summary: Openai Attach File To Vector Store
-      description: Attach a file to a vector store.
-      operationId: openai_attach_file_to_vector_store_v1_vector_stores__vector_store_id__files_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_vector_stores_vector_store_id_files_Request'
-      responses:
-        '200':
-          description: A VectorStoreFileObject representing the attached file.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorStoreFileObject'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      parameters:
-      - name: vector_store_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: vector_store_id'
     get:
       tags:
       - Vector Io
@@ -2454,6 +2416,44 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
+    post:
+      tags:
+      - Vector Io
+      summary: Openai Attach File To Vector Store
+      description: Attach a file to a vector store.
+      operationId: openai_attach_file_to_vector_store_v1_vector_stores__vector_store_id__files_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_vector_stores_vector_store_id_files_Request'
+      responses:
+        '200':
+          description: A VectorStoreFileObject representing the attached file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      parameters:
+      - name: vector_store_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: vector_store_id'
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel:
     post:
       tags:
@@ -2494,40 +2494,6 @@ paths:
           type: string
         description: 'Path parameter: batch_id'
   /v1/vector_stores:
-    post:
-      tags:
-      - Vector Io
-      summary: Openai Create Vector Store
-      description: |-
-        Creates a vector store.
-
-        Generate an OpenAI-compatible vector store with the given parameters.
-      operationId: openai_create_vector_store_v1_vector_stores_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
-      responses:
-        '200':
-          description: A VectorStoreObject representing the created vector store.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorStoreObject'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
     get:
       tags:
       - Vector Io
@@ -2576,6 +2542,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VectorStoreListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+    post:
+      tags:
+      - Vector Io
+      summary: Openai Create Vector Store
+      description: |-
+        Creates a vector store.
+
+        Generate an OpenAI-compatible vector store with the given parameters.
+      operationId: openai_create_vector_store_v1_vector_stores_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
+      responses:
+        '200':
+          description: A VectorStoreObject representing the created vector store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreObject'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -4708,40 +4708,6 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
   /v1/prompts/{prompt_id}:
-    delete:
-      tags:
-      - Prompts
-      summary: Delete Prompt
-      description: |-
-        Delete prompt.
-
-        Delete a prompt.
-      operationId: delete_prompt_v1_prompts__prompt_id__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      parameters:
-      - name: prompt_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: prompt_id'
     get:
       tags:
       - Prompts
@@ -4807,6 +4773,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Prompt'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      parameters:
+      - name: prompt_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: prompt_id'
+    delete:
+      tags:
+      - Prompts
+      summary: Delete Prompt
+      description: |-
+        Delete prompt.
+
+        Delete a prompt.
+      operationId: delete_prompt_v1_prompts__prompt_id__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -4905,47 +4905,6 @@ paths:
           type: string
         description: 'Path parameter: prompt_id'
   /v1/conversations/{conversation_id}/items:
-    post:
-      tags:
-      - Conversations
-      summary: Add Items
-      description: |-
-        Create items.
-
-        Create items in the conversation.
-      operationId: add_items_v1_conversations__conversation_id__items_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_conversations_conversation_id_items_Request'
-      responses:
-        '200':
-          description: List of created items.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConversationItemList'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      parameters:
-      - name: conversation_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: conversation_id'
     get:
       tags:
       - Conversations
@@ -5018,6 +4977,47 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
+    post:
+      tags:
+      - Conversations
+      summary: Add Items
+      description: |-
+        Create items.
+
+        Create items in the conversation.
+      operationId: add_items_v1_conversations__conversation_id__items_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_conversations_conversation_id_items_Request'
+      responses:
+        '200':
+          description: List of created items.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationItemList'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: conversation_id'
   /v1/conversations:
     post:
       tags:

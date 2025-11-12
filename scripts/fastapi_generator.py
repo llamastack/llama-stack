@@ -1647,19 +1647,30 @@ def _filter_combined_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     # Filter paths to include stable (v1) and experimental (v1alpha, v1beta), excluding deprecated
     filtered_paths = {}
     for path, path_item in filtered_schema["paths"].items():
-        # Check if path has any deprecated operations
-        is_deprecated = _is_path_deprecated(path_item)
-
-        # Skip deprecated endpoints
-        if is_deprecated:
+        if not isinstance(path_item, dict):
             continue
 
-        # Include stable v1 paths
-        if _is_stable_path(path):
-            filtered_paths[path] = path_item
-        # Include experimental paths (v1alpha or v1beta)
-        elif _is_experimental_path(path):
-            filtered_paths[path] = path_item
+        # Filter at operation level, not path level
+        # This allows paths with both deprecated and non-deprecated operations
+        filtered_path_item = {}
+        for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
+            if method not in path_item:
+                continue
+            operation = path_item[method]
+            if not isinstance(operation, dict):
+                continue
+
+            # Skip deprecated operations
+            if operation.get("deprecated", False):
+                continue
+
+            filtered_path_item[method] = operation
+
+        # Only include path if it has at least one operation after filtering
+        if filtered_path_item:
+            # Check if path matches version filter (stable or experimental)
+            if _is_stable_path(path) or _is_experimental_path(path):
+                filtered_paths[path] = filtered_path_item
 
     filtered_schema["paths"] = filtered_paths
 
