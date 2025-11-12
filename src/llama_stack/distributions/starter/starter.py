@@ -36,11 +36,14 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
 )
 from llama_stack.providers.registry.inference import available_providers
 from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
+from llama_stack.providers.remote.vector_io.mongodb.config import MongoDBVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
 from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOConfig
-from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
+from llama_stack.providers.remote.vector_io.weaviate.config import (
+    WeaviateVectorIOConfig,
+)
 from llama_stack.providers.utils.kvstore.config import PostgresKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
 
@@ -124,6 +127,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::milvus"),
             BuildProvider(provider_type="remote::chromadb"),
             BuildProvider(provider_type="remote::pgvector"),
+            BuildProvider(provider_type="remote::mongodb"),
             BuildProvider(provider_type="remote::qdrant"),
             BuildProvider(provider_type="remote::weaviate"),
         ],
@@ -254,7 +258,70 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         additional_pip_packages=list(set(PostgresSqlStoreConfig.pip_packages() + PostgresKVStoreConfig.pip_packages())),
         run_configs={
             "run.yaml": RunConfigSettings(
-                provider_overrides=default_overrides,
+                provider_overrides={
+                    "inference": remote_inference_providers + [embedding_provider],
+                    "vector_io": [
+                        Provider(
+                            provider_id="faiss",
+                            provider_type="inline::faiss",
+                            config=FaissVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                        ),
+                        Provider(
+                            provider_id="sqlite-vec",
+                            provider_type="inline::sqlite-vec",
+                            config=SQLiteVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                        ),
+                        Provider(
+                            provider_id="${env.MILVUS_URL:+milvus}",
+                            provider_type="inline::milvus",
+                            config=MilvusVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                        ),
+                        Provider(
+                            provider_id="${env.CHROMADB_URL:+chromadb}",
+                            provider_type="remote::chromadb",
+                            config=ChromaVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}/",
+                                url="${env.CHROMADB_URL:=}",
+                            ),
+                        ),
+                        Provider(
+                            provider_id="${env.PGVECTOR_DB:+pgvector}",
+                            provider_type="remote::pgvector",
+                            config=PGVectorVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}",
+                                db="${env.PGVECTOR_DB:=}",
+                                user="${env.PGVECTOR_USER:=}",
+                                password="${env.PGVECTOR_PASSWORD:=}",
+                            ),
+                        ),
+                        Provider(
+                            provider_id="${env.MONGODB_CONNECTION_STRING:+mongodb_atlas}",
+                            provider_type="remote::mongodb",
+                            config=MongoDBVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}",
+                                connection_string="${env.MONGODB_CONNECTION_STRING:=}",
+                                database_name="${env.MONGODB_DATABASE_NAME:=llama_stack}",
+                            ),
+                        ),
+                        Provider(
+                            provider_id="${env.QDRANT_URL:+qdrant}",
+                            provider_type="remote::qdrant",
+                            config=QdrantVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}",
+                                url="${env.QDRANT_URL:=}",
+                            ),
+                        ),
+                        Provider(
+                            provider_id="${env.WEAVIATE_CLUSTER_URL:+weaviate}",
+                            provider_type="remote::weaviate",
+                            config=WeaviateVectorIOConfig.sample_run_config(
+                                f"~/.llama/distributions/{name}",
+                                cluster_url="${env.WEAVIATE_CLUSTER_URL:=}",
+                            ),
+                        ),
+                    ],
+                    "files": [files_provider],
+                },
                 default_models=[],
                 default_tool_groups=default_tool_groups,
                 default_shields=default_shields,
@@ -383,6 +450,14 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "AZURE_API_TYPE": (
                 "azure",
                 "Azure API Type",
+            ),
+            "MONGODB_CONNECTION_STRING": (
+                "",
+                "MongoDB Atlas connection string (e.g., mongodb+srv://user:pass@cluster.mongodb.net/)",
+            ),
+            "MONGODB_DATABASE_NAME": (
+                "llama_stack",
+                "MongoDB database name",
             ),
         },
     )
