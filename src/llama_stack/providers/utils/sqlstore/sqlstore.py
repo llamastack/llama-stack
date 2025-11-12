@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from threading import Lock
 from typing import Annotated, cast
 
 from pydantic import Field
@@ -21,6 +22,8 @@ from .api import SqlStore
 sql_store_pip_packages = ["sqlalchemy[asyncio]", "aiosqlite", "asyncpg"]
 
 _SQLSTORE_BACKENDS: dict[str, StorageBackendConfig] = {}
+_SQLSTORE_INSTANCES: dict[str, SqlStore] = {}
+_SQLSTORE_LOCKS: dict[str, Lock] = {}
 
 
 SqlStoreConfig = Annotated[
@@ -52,19 +55,34 @@ def sqlstore_impl(reference: SqlStoreReference) -> SqlStore:
             f"Unknown SQL store backend '{backend_name}'. Registered backends: {sorted(_SQLSTORE_BACKENDS)}"
         )
 
-    if isinstance(backend_config, SqliteSqlStoreConfig | PostgresSqlStoreConfig):
-        from .sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
+    existing = _SQLSTORE_INSTANCES.get(backend_name)
+    if existing:
+        return existing
 
-        config = cast(SqliteSqlStoreConfig | PostgresSqlStoreConfig, backend_config).model_copy()
-        return SqlAlchemySqlStoreImpl(config)
-    else:
-        raise ValueError(f"Unknown sqlstore type {backend_config.type}")
+    lock = _SQLSTORE_LOCKS.setdefault(backend_name, Lock())
+    with lock:
+        existing = _SQLSTORE_INSTANCES.get(backend_name)
+        if existing:
+            return existing
+
+        if isinstance(backend_config, SqliteSqlStoreConfig | PostgresSqlStoreConfig):
+            from .sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
+
+            config = cast(SqliteSqlStoreConfig | PostgresSqlStoreConfig, backend_config).model_copy()
+            instance = SqlAlchemySqlStoreImpl(config)
+            _SQLSTORE_INSTANCES[backend_name] = instance
+            return instance
+        else:
+            raise ValueError(f"Unknown sqlstore type {backend_config.type}")
 
 
 def register_sqlstore_backends(backends: dict[str, StorageBackendConfig]) -> None:
     """Register the set of available SQL store backends for reference resolution."""
     global _SQLSTORE_BACKENDS
+    global _SQLSTORE_INSTANCES
 
     _SQLSTORE_BACKENDS.clear()
+    _SQLSTORE_INSTANCES.clear()
+    _SQLSTORE_LOCKS.clear()
     for name, cfg in backends.items():
         _SQLSTORE_BACKENDS[name] = cfg
