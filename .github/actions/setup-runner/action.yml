@@ -37,6 +37,10 @@ runs:
           echo "Exported UV environment variables for current and subsequent steps"
         fi
 
+        echo "Clearing Python bytecode cache to avoid stale .pyc files"
+        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+        find . -name "*.pyc" -delete 2>/dev/null || true
+
         echo "Updating project dependencies via uv sync"
         uv sync --all-groups
 
