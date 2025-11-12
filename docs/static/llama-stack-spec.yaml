@@ -121,6 +121,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIResponseObject'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObjectStream'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -454,6 +457,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIChatCompletion'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OpenAIChatCompletionChunk'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
