@@ -1030,10 +1030,11 @@ def _fix_path_parameters(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
-    """Fix common schema issues: exclusiveMinimum and null defaults."""
+    """Fix common schema issues: exclusiveMinimum, null defaults, and add titles to unions."""
     if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
-        for schema_def in openapi_schema["components"]["schemas"].values():
+        for schema_name, schema_def in openapi_schema["components"]["schemas"].items():
             _fix_schema_recursive(schema_def)
+            _add_titles_to_unions(schema_def, schema_name)
     return openapi_schema
 
 
@@ -1062,6 +1063,130 @@ def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI 
     except Exception as e:
         print(f"❌ {schema_name} validation error: {e}")
         return False
+
+
+def _get_schema_title(item: dict[str, Any]) -> str | None:
+    """Extract a title for a schema item to use in union variant names."""
+    if "$ref" in item:
+        return item["$ref"].split("/")[-1]
+    elif "type" in item:
+        type_val = item["type"]
+        if type_val == "null":
+            return None
+        if type_val == "array" and "items" in item:
+            items = item["items"]
+            if isinstance(items, dict):
+                if "anyOf" in items or "oneOf" in items:
+                    nested_union = items.get("anyOf") or items.get("oneOf")
+                    if isinstance(nested_union, list) and len(nested_union) > 0:
+                        nested_types = []
+                        for nested_item in nested_union:
+                            if isinstance(nested_item, dict):
+                                if "$ref" in nested_item:
+                                    nested_types.append(nested_item["$ref"].split("/")[-1])
+                                elif "oneOf" in nested_item:
+                                    one_of_items = nested_item.get("oneOf", [])
+                                    if one_of_items and isinstance(one_of_items[0], dict) and "$ref" in one_of_items[0]:
+                                        base_name = one_of_items[0]["$ref"].split("/")[-1].split("-")[0]
+                                        nested_types.append(f"{base_name}Union")
+                                    else:
+                                        nested_types.append("Union")
+                                elif "type" in nested_item and nested_item["type"] != "null":
+                                    nested_types.append(nested_item["type"])
+                        if nested_types:
+                            unique_nested = list(dict.fromkeys(nested_types))
+                            # Use more descriptive names for better code generation
+                            if len(unique_nested) <= 3:
+                                return f"list[{' | '.join(unique_nested)}]"
+                            else:
+                                # Include first few types for better naming
+                                return f"list[{unique_nested[0]} | {unique_nested[1]} | ...]"
+                        return "list[Union]"
+                elif "$ref" in items:
+                    return f"list[{items['$ref'].split('/')[-1]}]"
+                elif "type" in items:
+                    return f"list[{items['type']}]"
+            return "array"
+        return type_val
+    elif "title" in item:
+        return item["title"]
+    return None
+
+
+def _add_titles_to_unions(obj: Any, parent_key: str | None = None) -> None:
+    """Recursively add titles to union schemas (anyOf/oneOf) to help code generators infer names."""
+    if isinstance(obj, dict):
+        # Check if this is a union schema (anyOf or oneOf)
+        if "anyOf" in obj or "oneOf" in obj:
+            union_type = "anyOf" if "anyOf" in obj else "oneOf"
+            union_items = obj[union_type]
+
+            if isinstance(union_items, list) and len(union_items) > 0:
+                # Skip simple nullable unions (type | null) - these don't need titles
+                is_simple_nullable = (
+                    len(union_items) == 2
+                    and any(isinstance(item, dict) and item.get("type") == "null" for item in union_items)
+                    and any(
+                        isinstance(item, dict) and "type" in item and item.get("type") != "null" for item in union_items
+                    )
+                    and not any(
+                        isinstance(item, dict) and ("$ref" in item or "anyOf" in item or "oneOf" in item)
+                        for item in union_items
+                    )
+                )
+
+                if is_simple_nullable:
+                    # Remove title from simple nullable unions if it exists
+                    if "title" in obj:
+                        del obj["title"]
+                else:
+                    # Add titles to individual union variants that need them
+                    for item in union_items:
+                        if isinstance(item, dict):
+                            # Skip null types
+                            if item.get("type") == "null":
+                                continue
+                            # Add title to complex variants (arrays with unions, nested unions, etc.)
+                            # Also add to simple types if they're part of a complex union
+                            needs_title = (
+                                "items" in item
+                                or "anyOf" in item
+                                or "oneOf" in item
+                                or ("$ref" in item and "title" not in item)
+                            )
+                            if needs_title and "title" not in item:
+                                variant_title = _get_schema_title(item)
+                                if variant_title:
+                                    item["title"] = variant_title
+
+                    # Try to infer a meaningful title from the union items for the parent
+                    titles = []
+                    for item in union_items:
+                        if isinstance(item, dict):
+                            title = _get_schema_title(item)
+                            if title:
+                                titles.append(title)
+
+                    if titles:
+                        # Create a title from the union items
+                        unique_titles = list(dict.fromkeys(titles))  # Preserve order, remove duplicates
+                        if len(unique_titles) <= 3:
+                            title = " | ".join(unique_titles)
+                        else:
+                            title = f"{unique_titles[0]} | ... ({len(unique_titles)} variants)"
+                        # Always set the title for unions to help code generators
+                        # This will replace generic property titles with union-specific ones
+                        obj["title"] = title
+                    elif "title" not in obj and parent_key:
+                        # Use parent key as fallback only if no title exists
+                        obj["title"] = f"{parent_key.title()}Union"
+
+        # Recursively process all values
+        for key, value in obj.items():
+            _add_titles_to_unions(value, key)
+    elif isinstance(obj, list):
+        for item in obj:
+            _add_titles_to_unions(item, parent_key)
 
 
 def _fix_schema_recursive(obj: Any) -> None:
