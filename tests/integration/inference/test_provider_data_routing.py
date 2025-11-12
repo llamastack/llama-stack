@@ -24,7 +24,7 @@ from llama_stack.apis.inference.inference import (
     OpenAIChatCompletionUsage,
     OpenAIChoice,
 )
-from llama_stack.core.telemetry.telemetry import MetricEvent
+from llama_stack.apis.telemetry.telemetry import MetricEvent
 
 
 class OpenAIChatCompletionWithMetrics(OpenAIChatCompletion):
