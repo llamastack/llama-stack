@@ -1660,13 +1660,13 @@ def test_openai_vector_store_file_contents_with_extra_query(
     # Validate that both calls succeed
     assert content_with_extra_query is not None
     assert content_without_extra_query is not None
-    assert len(content_with_extra_query.content) > 0
-    assert len(content_without_extra_query.content) > 0
+    assert len(content_with_extra_query.data) > 0
+    assert len(content_without_extra_query.data) > 0
 
     # Validate that extra_query parameter is processed correctly
     # Both should have the embedding/metadata fields available (may be None based on flags)
-    first_chunk_with_flags = content_with_extra_query.content[0]
-    first_chunk_without_flags = content_without_extra_query.content[0]
+    first_chunk_with_flags = content_with_extra_query.data[0]
+    first_chunk_without_flags = content_without_extra_query.data[0]
 
     # The key validation: extra_query fields are present in the response
     # Handle both dict and object responses (different clients may return different formats)
