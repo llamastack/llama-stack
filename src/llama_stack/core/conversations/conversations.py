@@ -203,16 +203,11 @@ class ConversationServiceImpl(Conversations):
                 "item_data": item_dict,
             }
 
-            # TODO: Add support for upsert in sql_store, this will fail first if ID exists and then update
-            try:
-                await self.sql_store.insert(table="conversation_items", data=item_record)
-            except Exception:
-                # If insert fails due to ID conflict, update existing record
-                await self.sql_store.update(
-                    table="conversation_items",
-                    data={"created_at": created_at, "item_data": item_dict},
-                    where={"id": item_id},
-                )
+            await self.sql_store.upsert(
+                table="conversation_items",
+                data=item_record,
+                conflict_columns=["id"],
+            )
 
             created_items.append(item_dict)
 

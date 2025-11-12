@@ -66,12 +66,12 @@ jobs:
   run-replay-mode-tests:
     needs: generate-matrix
     runs-on: ubuntu-latest
-    name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client-type, matrix.config.setup, matrix.python-version, matrix.client-version, matrix.config.suite) }}
+    name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client, matrix.config.setup, matrix.python-version, matrix.client-version, matrix.config.suite) }}
 
     strategy:
       fail-fast: false
       matrix:
-        client-type: [library, docker, server]
+        client: [library, docker, server]
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
@@ -84,6 +84,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Setup test environment
+        if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
         uses: ./.github/actions/setup-test-environment
         with:
           python-version: ${{ matrix.python-version }}
@@ -93,11 +94,16 @@ jobs:
           inference-mode: 'replay'
 
       - name: Run tests
+        if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
         uses: ./.github/actions/run-and-record-tests
         env:
           OPENAI_API_KEY: dummy
         with:
-          stack-config: ${{ matrix.client-type == 'library' && 'ci-tests' || matrix.client-type == 'server' && 'server:ci-tests' || 'docker:ci-tests' }}
+          stack-config: >-
+            ${{ matrix.config.stack_config
+                || (matrix.client == 'library' && 'ci-tests')
+                || (matrix.client == 'server' && 'server:ci-tests')
+                || 'docker:ci-tests' }}
           setup: ${{ matrix.config.setup }}
           inference-mode: 'replay'
           suite: ${{ matrix.config.suite }}

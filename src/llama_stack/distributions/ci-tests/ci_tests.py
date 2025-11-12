@@ -13,6 +13,5 @@ from ..starter.starter import get_distribution_template as get_starter_distribut
 def get_distribution_template() -> DistributionTemplate:
     template = get_starter_distribution_template(name="ci-tests")
     template.description = "CI tests for Llama Stack"
-    template.run_configs.pop("run-with-postgres-store.yaml", None)
 
     return template
