@@ -10,15 +10,16 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from codeshield.cs import CodeShieldScanResult
 
-from llama_stack_api.apis.inference import OpenAIMessageParam
-from llama_stack_api.apis.safety import (
+from llama_stack_api.inference import OpenAIMessageParam
+from llama_stack_api.safety import (
+    ModerationObject,
+    ModerationObjectResults,
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ViolationLevel,
 )
-from llama_stack_api.apis.safety.safety import ModerationObject, ModerationObjectResults
-from llama_stack_api.apis.shields import Shield
+from llama_stack_api.shields import Shield
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import (

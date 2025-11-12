@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 import pytest
 from botocore.exceptions import ClientError
-from llama_stack_api.apis.common.errors import ResourceNotFoundError
-from llama_stack_api.apis.files import OpenAIFilePurpose
+from llama_stack_api.common.errors import ResourceNotFoundError
+from llama_stack_api.files import OpenAIFilePurpose
 
 
 class TestS3FilesImpl:
@@ -227,7 +227,7 @@ class TestS3FilesImpl:
 
             mock_now.return_value = 0
 
-            from llama_stack_api.apis.files import ExpiresAfter
+            from llama_stack_api.files import ExpiresAfter
 
             sample_text_file.filename = "test_expired_file"
             uploaded = await s3_provider.openai_upload_file(
@@ -259,7 +259,7 @@ class TestS3FilesImpl:
 
     async def test_unsupported_expires_after_anchor(self, s3_provider, sample_text_file):
         """Unsupported anchor value should raise ValueError."""
-        from llama_stack_api.apis.files import ExpiresAfter
+        from llama_stack_api.files import ExpiresAfter
 
         sample_text_file.filename = "test_unsupported_expires_after_anchor"
 
@@ -272,7 +272,7 @@ class TestS3FilesImpl:
 
     async def test_nonint_expires_after_seconds(self, s3_provider, sample_text_file):
         """Non-integer seconds in expires_after should raise ValueError."""
-        from llama_stack_api.apis.files import ExpiresAfter
+        from llama_stack_api.files import ExpiresAfter
 
         sample_text_file.filename = "test_nonint_expires_after_seconds"
 
@@ -285,7 +285,7 @@ class TestS3FilesImpl:
 
     async def test_expires_after_seconds_out_of_bounds(self, s3_provider, sample_text_file):
         """Seconds outside allowed range should raise ValueError."""
-        from llama_stack_api.apis.files import ExpiresAfter
+        from llama_stack_api.files import ExpiresAfter
 
         with pytest.raises(ValueError, match="greater than or equal to 3600"):
             await s3_provider.openai_upload_file(

@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack_api.apis.agents import (
+from llama_stack_api.agents import (
     Agents,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -14,16 +14,16 @@ from llama_stack_api.apis.agents import (
     OpenAIResponseInputTool,
     OpenAIResponseObject,
     Order,
+    ResponseGuardrail,
 )
-from llama_stack_api.apis.agents.agents import ResponseGuardrail
-from llama_stack_api.apis.agents.openai_responses import OpenAIResponsePrompt, OpenAIResponseText
-from llama_stack_api.apis.conversations import Conversations
-from llama_stack_api.apis.inference import (
+from llama_stack_api.conversations import Conversations
+from llama_stack_api.inference import (
     Inference,
 )
-from llama_stack_api.apis.safety import Safety
-from llama_stack_api.apis.tools import ToolGroups, ToolRuntime
-from llama_stack_api.apis.vector_io import VectorIO
+from llama_stack_api.openai_responses import OpenAIResponsePrompt, OpenAIResponseText
+from llama_stack_api.safety import Safety
+from llama_stack_api.tools import ToolGroups, ToolRuntime
+from llama_stack_api.vector_io import VectorIO
 
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.log import get_logger

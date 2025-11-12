@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 import yaml
-from llama_stack_api.providers.datatypes import (
+from llama_stack_api.datatypes import (
     Api,
     InlineProviderSpec,
     ProviderSpec,

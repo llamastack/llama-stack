@@ -8,11 +8,11 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from llama_stack_api.apis.benchmarks import Benchmark
-from llama_stack_api.apis.common.job_types import Job, JobStatus
-from llama_stack_api.apis.eval.eval import BenchmarkConfig, EvaluateResponse, ModelCandidate, SamplingParams
-from llama_stack_api.apis.inference.inference import TopPSamplingStrategy
-from llama_stack_api.apis.resource import ResourceType
+from llama_stack_api.benchmarks import Benchmark
+from llama_stack_api.common.job_types import Job, JobStatus
+from llama_stack_api.eval import BenchmarkConfig, EvaluateResponse, ModelCandidate, SamplingParams
+from llama_stack_api.inference import TopPSamplingStrategy
+from llama_stack_api.resource import ResourceType
 
 from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack.providers.remote.eval.nvidia.config import NVIDIAEvalConfig

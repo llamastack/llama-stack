@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from llama_stack_api.apis.benchmarks import Benchmark, Benchmarks, ListBenchmarksResponse
+from llama_stack_api.benchmarks import Benchmark, Benchmarks, ListBenchmarksResponse
 
 from llama_stack.core.datatypes import (
     BenchmarkWithOwner,

@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack_api.providers.datatypes import (
+from llama_stack_api.datatypes import (
     Api,
     InlineProviderSpec,
     ProviderSpec,

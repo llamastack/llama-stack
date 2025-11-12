@@ -7,7 +7,7 @@
 from enum import Enum
 from typing import Any
 
-from llama_stack_api.apis.common.type_system import (
+from llama_stack_api.common.type_system import (
     ChatCompletionInputType,
     CompletionInputType,
     StringType,

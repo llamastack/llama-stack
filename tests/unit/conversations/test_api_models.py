@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack_api.apis.conversations.conversations import (
+from llama_stack_api.conversations import (
     Conversation,
     ConversationItem,
     ConversationItemList,

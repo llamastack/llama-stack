@@ -9,7 +9,7 @@ import mimetypes
 import os
 
 import pytest
-from llama_stack_api.apis.safety import ViolationLevel
+from llama_stack_api.safety import ViolationLevel
 
 VISION_SHIELD_ENABLED_PROVIDERS = {"together"}
 

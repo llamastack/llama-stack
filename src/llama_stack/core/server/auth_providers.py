@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
 import jwt
-from llama_stack_api.apis.common.errors import TokenValidationError
+from llama_stack_api.common.errors import TokenValidationError
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import (

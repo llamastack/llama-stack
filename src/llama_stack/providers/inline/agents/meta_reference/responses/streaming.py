@@ -8,7 +8,17 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack_api.apis.agents.openai_responses import (
+from llama_stack_api.inference import (
+    Inference,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionToolCall,
+    OpenAIChoice,
+    OpenAIMessageParam,
+)
+from llama_stack_api.openai_responses import (
     AllowedToolsFilter,
     ApprovalFilter,
     MCPListToolsTool,
@@ -55,16 +65,6 @@ from llama_stack_api.apis.agents.openai_responses import (
     OpenAIResponseUsageInputTokensDetails,
     OpenAIResponseUsageOutputTokensDetails,
     WebSearchToolTypes,
-)
-from llama_stack_api.apis.inference import (
-    Inference,
-    OpenAIAssistantMessageParam,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIChatCompletionToolCall,
-    OpenAIChoice,
-    OpenAIMessageParam,
 )
 
 from llama_stack.core.telemetry import tracing
@@ -1024,7 +1024,7 @@ class StreamingResponseOrchestrator:
         self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process all tools and emit appropriate streaming events."""
-        from llama_stack_api.apis.tools import ToolDef
+        from llama_stack_api.tools import ToolDef
         from openai.types.chat import ChatCompletionToolParam
 
         from llama_stack.models.llama.datatypes import ToolDefinition

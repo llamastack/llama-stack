@@ -12,13 +12,13 @@ import re
 from typing import Any
 
 import httpx
-from llama_stack_api.apis.common.content_types import (
+from llama_stack_api.common.content_types import (
     ImageContentItem,
     InterleavedContent,
     InterleavedContentItem,
     TextContentItem,
 )
-from llama_stack_api.apis.inference import (
+from llama_stack_api.inference import (
     CompletionRequest,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,

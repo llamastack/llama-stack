@@ -7,8 +7,8 @@
 import uuid
 from typing import Any
 
-from llama_stack_api.apis.common.errors import DatasetNotFoundError
-from llama_stack_api.apis.datasets import (
+from llama_stack_api.common.errors import DatasetNotFoundError
+from llama_stack_api.datasets import (
     Dataset,
     DatasetPurpose,
     Datasets,
@@ -18,7 +18,7 @@ from llama_stack_api.apis.datasets import (
     RowsDataSource,
     URIDataSource,
 )
-from llama_stack_api.apis.resource import ResourceType
+from llama_stack_api.resource import ResourceType
 
 from llama_stack.core.datatypes import (
     DatasetWithOwner,

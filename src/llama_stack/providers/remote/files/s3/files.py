@@ -17,9 +17,9 @@ from fastapi import Depends, File, Form, Response, UploadFile
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
 
-from llama_stack_api.apis.common.errors import ResourceNotFoundError
-from llama_stack_api.apis.common.responses import Order
-from llama_stack_api.apis.files import (
+from llama_stack_api.common.errors import ResourceNotFoundError
+from llama_stack_api.common.responses import Order
+from llama_stack_api.files import (
     ExpiresAfter,
     Files,
     ListOpenAIFileResponse,

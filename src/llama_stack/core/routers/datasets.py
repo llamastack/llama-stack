@@ -6,10 +6,10 @@
 
 from typing import Any
 
-from llama_stack_api.apis.common.responses import PaginatedResponse
-from llama_stack_api.apis.datasetio import DatasetIO
-from llama_stack_api.apis.datasets import DatasetPurpose, DataSource
-from llama_stack_api.providers.datatypes import RoutingTable
+from llama_stack_api.common.responses import PaginatedResponse
+from llama_stack_api.datasetio import DatasetIO
+from llama_stack_api.datasets import DatasetPurpose, DataSource
+from llama_stack_api.datatypes import RoutingTable
 
 from llama_stack.log import get_logger
 

@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from llama_stack_api.providers.datatypes import Api
+from llama_stack_api.datatypes import Api
 
 from .config import FaissVectorIOConfig
 

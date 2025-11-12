@@ -6,7 +6,7 @@
 import asyncio
 from typing import Any
 
-from llama_stack_api.apis.inference import (
+from llama_stack_api.inference import (
     ListOpenAIChatCompletionResponse,
     OpenAIChatCompletion,
     OpenAICompletionWithInputMessages,

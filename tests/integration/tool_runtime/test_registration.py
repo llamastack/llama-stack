@@ -7,7 +7,7 @@
 import re
 
 import pytest
-from llama_stack_api.apis.common.errors import ToolGroupNotFoundError
+from llama_stack_api.common.errors import ToolGroupNotFoundError
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import MCP_TOOLGROUP_ID, make_mcp_server

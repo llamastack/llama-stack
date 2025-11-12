@@ -58,9 +58,9 @@ Current version: **0.1.0**
 ## Usage Example
 
 ```python
-from llama_stack_api.apis.inference import Inference, ChatCompletionRequest
+from llama_stack_api.inference import Inference, ChatCompletionRequest
 from llama_stack_api.providers.datatypes import ProviderSpec, InlineProviderSpec
-from llama_stack_api.apis.datatypes import Api
+from llama_stack_api.datatypes import Api
 
 
 # Use protocol definitions for type checking

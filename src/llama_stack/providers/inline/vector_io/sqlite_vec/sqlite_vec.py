@@ -12,12 +12,12 @@ from typing import Any
 
 import numpy as np
 import sqlite_vec  # type: ignore[import-untyped]
-from llama_stack_api.apis.common.errors import VectorStoreNotFoundError
-from llama_stack_api.apis.files import Files
-from llama_stack_api.apis.inference import Inference
-from llama_stack_api.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack_api.apis.vector_stores import VectorStore
-from llama_stack_api.providers.datatypes import VectorStoresProtocolPrivate
+from llama_stack_api.common.errors import VectorStoreNotFoundError
+from llama_stack_api.datatypes import VectorStoresProtocolPrivate
+from llama_stack_api.files import Files
+from llama_stack_api.inference import Inference
+from llama_stack_api.vector_io import Chunk, QueryChunksResponse, VectorIO
+from llama_stack_api.vector_stores import VectorStore
 from numpy.typing import NDArray
 
 from llama_stack.log import get_logger

@@ -9,7 +9,7 @@ import time
 import uuid
 
 import pytest
-from llama_stack_api.apis.post_training import (
+from llama_stack_api.post_training import (
     DataConfig,
     DatasetFormat,
     DPOAlignmentConfig,

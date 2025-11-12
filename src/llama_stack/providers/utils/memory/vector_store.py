@@ -14,15 +14,15 @@ from urllib.parse import unquote
 
 import httpx
 import numpy as np
-from llama_stack_api.apis.common.content_types import (
+from llama_stack_api.common.content_types import (
     URL,
     InterleavedContent,
 )
-from llama_stack_api.apis.inference import OpenAIEmbeddingsRequestWithExtraBody
-from llama_stack_api.apis.tools import RAGDocument
-from llama_stack_api.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
-from llama_stack_api.apis.vector_stores import VectorStore
-from llama_stack_api.providers.datatypes import Api
+from llama_stack_api.datatypes import Api
+from llama_stack_api.inference import OpenAIEmbeddingsRequestWithExtraBody
+from llama_stack_api.rag_tool import RAGDocument
+from llama_stack_api.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
+from llama_stack_api.vector_stores import VectorStore
 from numpy.typing import NDArray
 from pydantic import BaseModel
 

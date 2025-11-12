@@ -13,7 +13,7 @@
 from collections.abc import Callable
 
 import torch
-from llama_stack_api.apis.post_training import DatasetFormat
+from llama_stack_api.post_training import DatasetFormat
 from pydantic import BaseModel
 from torchtune.data._messages import InputOutputToMessages, ShareGPTToMessages
 from torchtune.models.llama3 import llama3_tokenizer

@@ -8,7 +8,7 @@ import asyncio
 
 import numpy as np
 import pytest
-from llama_stack_api.apis.vector_io import Chunk, QueryChunksResponse
+from llama_stack_api.vector_io import Chunk, QueryChunksResponse
 
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import (
     SQLiteVecIndex,

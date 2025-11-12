@@ -7,7 +7,7 @@
 import time
 
 import pytest
-from llama_stack_api.apis.inference import (
+from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChoice,

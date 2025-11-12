@@ -6,7 +6,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal, cast
 
-from llama_stack_api.apis.common.responses import PaginatedResponse
+from llama_stack_api.common.responses import PaginatedResponse
 from sqlalchemy import (
     JSON,
     Boolean,

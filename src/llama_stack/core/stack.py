@@ -12,27 +12,27 @@ import tempfile
 from typing import Any
 
 import yaml
-from llama_stack_api.apis.agents import Agents
-from llama_stack_api.apis.batches import Batches
-from llama_stack_api.apis.benchmarks import Benchmarks
-from llama_stack_api.apis.conversations import Conversations
-from llama_stack_api.apis.datasetio import DatasetIO
-from llama_stack_api.apis.datasets import Datasets
-from llama_stack_api.apis.eval import Eval
-from llama_stack_api.apis.files import Files
-from llama_stack_api.apis.inference import Inference
-from llama_stack_api.apis.inspect import Inspect
-from llama_stack_api.apis.models import Models
-from llama_stack_api.apis.post_training import PostTraining
-from llama_stack_api.apis.prompts import Prompts
-from llama_stack_api.apis.providers import Providers
-from llama_stack_api.apis.safety import Safety
-from llama_stack_api.apis.scoring import Scoring
-from llama_stack_api.apis.scoring_functions import ScoringFunctions
-from llama_stack_api.apis.shields import Shields
-from llama_stack_api.apis.tools import ToolGroups, ToolRuntime
-from llama_stack_api.apis.vector_io import VectorIO
-from llama_stack_api.providers.datatypes import Api
+from llama_stack_api.agents import Agents
+from llama_stack_api.batches import Batches
+from llama_stack_api.benchmarks import Benchmarks
+from llama_stack_api.conversations import Conversations
+from llama_stack_api.datasetio import DatasetIO
+from llama_stack_api.datasets import Datasets
+from llama_stack_api.datatypes import Api
+from llama_stack_api.eval import Eval
+from llama_stack_api.files import Files
+from llama_stack_api.inference import Inference
+from llama_stack_api.inspect import Inspect
+from llama_stack_api.models import Models
+from llama_stack_api.post_training import PostTraining
+from llama_stack_api.prompts import Prompts
+from llama_stack_api.providers import Providers
+from llama_stack_api.safety import Safety
+from llama_stack_api.scoring import Scoring
+from llama_stack_api.scoring_functions import ScoringFunctions
+from llama_stack_api.shields import Shields
+from llama_stack_api.tools import ToolGroups, ToolRuntime
+from llama_stack_api.vector_io import VectorIO
 
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig

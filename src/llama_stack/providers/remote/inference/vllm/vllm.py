@@ -7,15 +7,15 @@ from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
 import httpx
-from llama_stack_api.apis.inference import (
+from llama_stack_api.datatypes import (
+    HealthResponse,
+    HealthStatus,
+)
+from llama_stack_api.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     ToolChoice,
-)
-from llama_stack_api.providers.datatypes import (
-    HealthResponse,
-    HealthStatus,
 )
 from pydantic import ConfigDict
 

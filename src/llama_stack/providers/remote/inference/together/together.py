@@ -8,12 +8,12 @@
 from collections.abc import Iterable
 from typing import Any, cast
 
-from llama_stack_api.apis.inference import (
+from llama_stack_api.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
+    OpenAIEmbeddingUsage,
 )
-from llama_stack_api.apis.inference.inference import OpenAIEmbeddingUsage
-from llama_stack_api.apis.models import Model
+from llama_stack_api.models import Model
 from together import AsyncTogether  # type: ignore[import-untyped]
 from together.constants import BASE_URL  # type: ignore[import-untyped]
 

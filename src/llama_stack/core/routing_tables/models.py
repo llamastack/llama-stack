@@ -7,8 +7,8 @@
 import time
 from typing import Any
 
-from llama_stack_api.apis.common.errors import ModelNotFoundError
-from llama_stack_api.apis.models import (
+from llama_stack_api.common.errors import ModelNotFoundError
+from llama_stack_api.models import (
     ListModelsResponse,
     Model,
     Models,

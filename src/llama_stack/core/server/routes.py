@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any
 
 from aiohttp import hdrs
-from llama_stack_api.apis.datatypes import Api, ExternalApiSpec
+from llama_stack_api.datatypes import Api, ExternalApiSpec
 from llama_stack_api.schema_utils import WebMethod
 from starlette.routing import Route
 

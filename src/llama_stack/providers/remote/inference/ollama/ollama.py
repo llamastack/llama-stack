@@ -7,12 +7,12 @@
 
 import asyncio
 
-from llama_stack_api.apis.common.errors import UnsupportedModelError
-from llama_stack_api.apis.models import Model
-from llama_stack_api.providers.datatypes import (
+from llama_stack_api.common.errors import UnsupportedModelError
+from llama_stack_api.datatypes import (
     HealthResponse,
     HealthStatus,
 )
+from llama_stack_api.models import Model
 from ollama import AsyncClient as AsyncOllamaClient
 
 from llama_stack.log import get_logger

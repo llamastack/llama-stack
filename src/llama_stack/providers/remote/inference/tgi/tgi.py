@@ -8,7 +8,7 @@
 from collections.abc import Iterable
 
 from huggingface_hub import AsyncInferenceClient, HfApi
-from llama_stack_api.apis.inference import (
+from llama_stack_api.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )

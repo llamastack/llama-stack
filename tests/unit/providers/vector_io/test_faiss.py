@@ -9,10 +9,10 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from llama_stack_api.apis.files import Files
-from llama_stack_api.apis.vector_io import Chunk, QueryChunksResponse
-from llama_stack_api.apis.vector_stores import VectorStore
-from llama_stack_api.providers.datatypes import HealthStatus
+from llama_stack_api.datatypes import HealthStatus
+from llama_stack_api.files import Files
+from llama_stack_api.vector_io import Chunk, QueryChunksResponse
+from llama_stack_api.vector_stores import VectorStore
 
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import (

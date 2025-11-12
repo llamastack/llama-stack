@@ -10,8 +10,8 @@ from typing import Any, Literal
 import jinja2
 import rich
 import yaml
-from llama_stack_api.apis.datasets import DatasetPurpose
-from llama_stack_api.apis.models import ModelType
+from llama_stack_api.datasets import DatasetPurpose
+from llama_stack_api.models import ModelType
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import (

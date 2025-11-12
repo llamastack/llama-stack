@@ -16,7 +16,7 @@ from typing import Annotated, Any, Dict, get_args, get_origin, Set, Union
 
 from fastapi import UploadFile
 
-from llama_stack_api.apis.datatypes import Error
+from llama_stack_api.datatypes import Error
 from llama_stack_api.strong_typing.core import JsonType
 from llama_stack_api.strong_typing.docstring import Docstring, parse_type
 from llama_stack_api.strong_typing.inspection import (

@@ -8,9 +8,9 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import Depends, File, Form, Response, UploadFile
-from llama_stack_api.apis.common.errors import ResourceNotFoundError
-from llama_stack_api.apis.common.responses import Order
-from llama_stack_api.apis.files import (
+from llama_stack_api.common.errors import ResourceNotFoundError
+from llama_stack_api.common.responses import Order
+from llama_stack_api.files import (
     ExpiresAfter,
     Files,
     ListOpenAIFileResponse,

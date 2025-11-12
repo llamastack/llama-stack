@@ -10,13 +10,13 @@ from enum import Enum
 from typing import Any, cast
 
 import httpx
-from llama_stack_api.apis.common.content_types import (
+from llama_stack_api.common.content_types import (
     ImageContentItem,
     InterleavedContentItem,
     TextContentItem,
     _URLOrData,
 )
-from llama_stack_api.apis.tools import (
+from llama_stack_api.tools import (
     ListToolDefsResponse,
     ToolDef,
     ToolInvocationResult,

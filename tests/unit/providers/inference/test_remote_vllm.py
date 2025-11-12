@@ -9,7 +9,8 @@ import time
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
-from llama_stack_api.apis.inference import (
+from llama_stack_api.datatypes import HealthStatus
+from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -19,8 +20,7 @@ from llama_stack_api.apis.inference import (
     OpenAICompletionRequestWithExtraBody,
     ToolChoice,
 )
-from llama_stack_api.apis.models import Model
-from llama_stack_api.providers.datatypes import HealthStatus
+from llama_stack_api.models import Model
 
 from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.core.routing_tables.models import ModelsRoutingTable

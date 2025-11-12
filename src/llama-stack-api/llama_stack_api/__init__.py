@@ -13,14 +13,15 @@ and clients that need to interact with Llama Stack APIs without requiring the fu
 server implementation.
 
 Key components:
-- apis: Protocol definitions for all Llama Stack APIs
-- providers: Provider interface specifications
+- API modules (agents, inference, safety, etc.): Protocol definitions for all Llama Stack APIs
+- datatypes: Core data types and provider specifications
+- common: Common data types used across APIs
 - strong_typing: Type system utilities
 - schema_utils: Schema validation and utilities
 """
 
 __version__ = "0.1.0"
 
-from . import apis, providers, schema_utils, strong_typing  # noqa: F401
+from . import common, datatypes, schema_utils, strong_typing  # noqa: F401
 
-__all__ = ["apis", "providers", "schema_utils", "strong_typing"]
+__all__ = ["common", "datatypes", "schema_utils", "strong_typing"]

@@ -7,10 +7,10 @@
 from typing import Any
 
 import requests
-from llama_stack_api.apis.inference import OpenAIMessageParam
-from llama_stack_api.apis.safety import ModerationObject, RunShieldResponse, Safety, SafetyViolation, ViolationLevel
-from llama_stack_api.apis.shields import Shield
-from llama_stack_api.providers.datatypes import ShieldsProtocolPrivate
+from llama_stack_api.datatypes import ShieldsProtocolPrivate
+from llama_stack_api.inference import OpenAIMessageParam
+from llama_stack_api.safety import ModerationObject, RunShieldResponse, Safety, SafetyViolation, ViolationLevel
+from llama_stack_api.shields import Shield
 
 from llama_stack.log import get_logger
 

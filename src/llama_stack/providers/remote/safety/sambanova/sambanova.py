@@ -8,15 +8,15 @@ from typing import Any
 
 import litellm
 import requests
-from llama_stack_api.apis.inference import OpenAIMessageParam
-from llama_stack_api.apis.safety import (
+from llama_stack_api.datatypes import ShieldsProtocolPrivate
+from llama_stack_api.inference import OpenAIMessageParam
+from llama_stack_api.safety import (
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ViolationLevel,
 )
-from llama_stack_api.apis.shields import Shield
-from llama_stack_api.providers.datatypes import ShieldsProtocolPrivate
+from llama_stack_api.shields import Shield
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger

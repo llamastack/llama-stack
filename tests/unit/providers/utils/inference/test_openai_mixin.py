@@ -10,8 +10,8 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
-from llama_stack_api.apis.inference import Model, OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
-from llama_stack_api.apis.models import ModelType
+from llama_stack_api.inference import Model, OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
+from llama_stack_api.models import ModelType
 from pydantic import BaseModel, Field
 
 from llama_stack.core.request_headers import request_provider_data_context

@@ -7,10 +7,10 @@
 from typing import Any
 
 import aiohttp
-from llama_stack_api.apis.common.content_types import URL
-from llama_stack_api.apis.common.responses import PaginatedResponse
-from llama_stack_api.apis.common.type_system import ParamType
-from llama_stack_api.apis.datasets import Dataset
+from llama_stack_api.common.content_types import URL
+from llama_stack_api.common.responses import PaginatedResponse
+from llama_stack_api.common.type_system import ParamType
+from llama_stack_api.datasets import Dataset
 
 from .config import NvidiaDatasetIOConfig
 

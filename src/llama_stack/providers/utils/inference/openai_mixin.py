@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
-from llama_stack_api.apis.inference import (
+from llama_stack_api.inference import (
     Model,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -23,7 +23,7 @@ from llama_stack_api.apis.inference import (
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
 )
-from llama_stack_api.apis.models import ModelType
+from llama_stack_api.models import ModelType
 from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict
 

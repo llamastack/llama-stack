@@ -7,15 +7,15 @@
 from typing import Any
 
 import httpx
-from llama_stack_api.apis.common.content_types import URL
-from llama_stack_api.apis.tools import (
+from llama_stack_api.common.content_types import URL
+from llama_stack_api.datatypes import ToolGroupsProtocolPrivate
+from llama_stack_api.tools import (
     ListToolDefsResponse,
     ToolDef,
     ToolGroup,
     ToolInvocationResult,
     ToolRuntime,
 )
-from llama_stack_api.providers.datatypes import ToolGroupsProtocolPrivate
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.models.llama.datatypes import BuiltinTool

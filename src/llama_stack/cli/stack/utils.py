@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import yaml
-from llama_stack_api.providers.datatypes import Api
+from llama_stack_api.datatypes import Api
 from termcolor import cprint
 
 from llama_stack.core.datatypes import (

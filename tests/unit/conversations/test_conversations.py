@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from llama_stack_api.apis.agents.openai_responses import (
+from llama_stack_api.openai_responses import (
     OpenAIResponseInputMessageContentText,
     OpenAIResponseMessage,
 )
