@@ -45,8 +45,13 @@ def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: Use
         enhanced["owner_principal"] = current_user.principal
         enhanced["access_attributes"] = current_user.attributes
     else:
-        enhanced["owner_principal"] = None
-        enhanced["access_attributes"] = None
+        # IMPORTANT: Use empty string and null value (not None) to match public access filter
+        # The public access filter in _get_public_access_conditions() expects:
+        # - owner_principal = '' (empty string)
+        # - access_attributes = null (JSON null, which serializes to the string 'null')
+        # Setting them to None (SQL NULL) will cause rows to be filtered out on read.
+        enhanced["owner_principal"] = ""
+        enhanced["access_attributes"] = None  # Pydantic/JSON will serialize this as JSON null
     return enhanced
 
 
@@ -188,8 +193,9 @@ class AuthorizedSqlStore:
             enhanced_data["owner_principal"] = current_user.principal
             enhanced_data["access_attributes"] = current_user.attributes
         else:
-            enhanced_data["owner_principal"] = None
-            enhanced_data["access_attributes"] = None
+            # IMPORTANT: Use empty string for owner_principal to match public access filter
+            enhanced_data["owner_principal"] = ""
+            enhanced_data["access_attributes"] = None  # Will serialize as JSON null
 
         await self.sql_store.update(table, enhanced_data, where)
 
@@ -245,14 +251,24 @@ class AuthorizedSqlStore:
             raise ValueError(f"Unsupported database type: {self.database_type}")
 
     def _get_public_access_conditions(self) -> list[str]:
-        """Get the SQL conditions for public access."""
-        # Public records are records that have no owner_principal or access_attributes
+        """Get the SQL conditions for public access.
+
+        Public records are those with:
+        - owner_principal = '' (empty string)
+        - access_attributes is either SQL NULL or JSON null
+
+        Note: Different databases serialize None differently:
+        - SQLite: None → JSON null (text = 'null')
+        - Postgres: None → SQL NULL (IS NULL)
+        """
         conditions = ["owner_principal = ''"]
         if self.database_type == StorageBackendType.SQL_POSTGRES.value:
-            # Postgres stores JSON null as 'null'
-            conditions.append("access_attributes::text = 'null'")
+            # Accept both SQL NULL and JSON null for Postgres compatibility
+            # This handles both old rows (SQL NULL) and new rows (JSON null)
+            conditions.append("(access_attributes IS NULL OR access_attributes::text = 'null')")
         elif self.database_type == StorageBackendType.SQL_SQLITE.value:
-            conditions.append("access_attributes = 'null'")
+            # SQLite serializes None as JSON null
+            conditions.append("(access_attributes IS NULL OR access_attributes = 'null')")
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")
         return conditions

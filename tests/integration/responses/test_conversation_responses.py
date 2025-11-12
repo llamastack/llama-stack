@@ -65,8 +65,14 @@ class TestConversationResponses:
         conversation_items = openai_client.conversations.items.list(conversation.id)
         assert len(conversation_items.data) >= 4  # 2 user + 2 assistant messages
 
+    @pytest.mark.timeout(60, method="thread")
     def test_conversation_context_loading(self, openai_client, text_model_id):
-        """Test that conversation context is properly loaded for responses."""
+        """Test that conversation context is properly loaded for responses.
+
+        Note: 60s timeout added due to CI-specific deadlock in pytest/OpenAI client/httpx
+        after running 25+ tests. Hangs before first HTTP request is made. Works fine locally.
+        Investigation needed: connection pool exhaustion or event loop state issue.
+        """
         conversation = openai_client.conversations.create(
             items=[
                 {"type": "message", "role": "user", "content": "My name is Alice. I like to eat apples."},
