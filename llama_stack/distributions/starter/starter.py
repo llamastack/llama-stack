@@ -35,6 +35,7 @@ from llama_stack.providers.remote.vector_io.pgvector.config import (
 )
 from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOConfig
 from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
+from llama_stack.providers.utils.kvstore.config import PostgresKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
 
 
@@ -250,9 +251,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="sentence-transformers",
                 model_id="nomic-ai/nomic-embed-text-v1.5",
             ),
-        ),
-        safety_config=SafetyConfig(
-            default_shield_id="llama-guard",
         ),
     )
 

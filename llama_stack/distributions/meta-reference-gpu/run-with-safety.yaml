@@ -122,9 +122,6 @@ storage:
     conversations:
       table_name: openai_conversations
       backend: sql_default
-    prompts:
-      namespace: prompts
-      backend: kv_default
 registered_resources:
   models:
   - metadata: {}
