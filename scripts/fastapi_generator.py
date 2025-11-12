@@ -201,6 +201,8 @@ def _create_dynamic_request_model(
 
     try:
         field_definitions = _build_field_definitions(query_parameters, use_any)
+        if not field_definitions:
+            return None
         clean_route = webmethod.route.replace("/", "_").replace("{", "").replace("}", "").replace("-", "_")
         model_name = f"{clean_route}_Request"
         if add_uuid:
@@ -238,13 +240,13 @@ def _create_fastapi_endpoint(app: FastAPI, route, webmethod, api: Api):
     methods = route.methods
     name = route.name
     fastapi_path = path.replace("{", "{").replace("}", "}")
+    is_post_put = any(method.upper() in ["POST", "PUT", "PATCH"] for method in methods)
 
     request_model, response_model, query_parameters, file_form_params, streaming_response_model = (
-        _find_models_for_endpoint(webmethod, api, name)
+        _find_models_for_endpoint(webmethod, api, name, is_post_put)
     )
     operation_description = _extract_operation_description_from_docstring(api, name)
     response_description = _extract_response_description_from_docstring(webmethod, response_model, api, name)
-    is_post_put = any(method.upper() in ["POST", "PUT", "PATCH"] for method in methods)
 
     # Retrieve and store extra body fields for this endpoint
     func = _get_protocol_method(api, name)
@@ -499,7 +501,7 @@ def _extract_response_models_from_union(union_type: Any) -> tuple[type | None, t
 
 
 def _find_models_for_endpoint(
-    webmethod, api: Api, method_name: str
+    webmethod, api: Api, method_name: str, is_post_put: bool = False
 ) -> tuple[type | None, type | None, list[tuple[str, type, Any]], list[inspect.Parameter], type | None]:
     """
     Find appropriate request and response models for an endpoint by analyzing the actual function signature.
@@ -509,6 +511,7 @@ def _find_models_for_endpoint(
         webmethod: The webmethod metadata
         api: The API enum for looking up the function
         method_name: The method name (function name)
+        is_post_put: Whether this is a POST, PUT, or PATCH request (GET requests should never have request bodies)
 
     Returns:
         tuple: (request_model, response_model, query_parameters, file_form_params, streaming_response_model)
@@ -612,7 +615,8 @@ def _find_models_for_endpoint(
 
         # If there's exactly one body parameter and it's a Pydantic model, use it directly
         # Otherwise, we'll create a combined request model from all parameters
-        if len(query_parameters) == 1:
+        # BUT: For GET requests, never create a request body - all parameters should be query parameters
+        if is_post_put and len(query_parameters) == 1:
             param_name, param_type, default_value = query_parameters[0]
             if hasattr(param_type, "model_json_schema"):
                 request_model = param_type
@@ -1223,6 +1227,94 @@ def _remove_query_params_from_body_endpoints(openapi_schema: dict[str, Any]) -> 
     return openapi_schema
 
 
+def _remove_request_bodies_from_get_endpoints(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """
+    Remove request bodies from GET endpoints and convert their parameters to query parameters.
+
+    GET requests should never have request bodies - all parameters should be query parameters.
+    This function removes any requestBody that FastAPI may have incorrectly added to GET endpoints
+    and converts any parameters in the requestBody to query parameters.
+    """
+    if "paths" not in openapi_schema:
+        return openapi_schema
+
+    for _path, path_item in openapi_schema["paths"].items():
+        if not isinstance(path_item, dict):
+            continue
+
+        # Check GET method specifically
+        if "get" in path_item:
+            operation = path_item["get"]
+            if not isinstance(operation, dict):
+                continue
+
+            if "requestBody" in operation:
+                request_body = operation["requestBody"]
+                # Extract parameters from requestBody and convert to query parameters
+                if isinstance(request_body, dict) and "content" in request_body:
+                    content = request_body.get("content", {})
+                    json_content = content.get("application/json", {})
+                    schema = json_content.get("schema", {})
+
+                    if "parameters" not in operation:
+                        operation["parameters"] = []
+                    elif not isinstance(operation["parameters"], list):
+                        operation["parameters"] = []
+
+                    # If the schema has properties, convert each to a query parameter
+                    if isinstance(schema, dict) and "properties" in schema:
+                        for param_name, param_schema in schema["properties"].items():
+                            # Check if this parameter is already in the parameters list
+                            existing_param = None
+                            for existing in operation["parameters"]:
+                                if isinstance(existing, dict) and existing.get("name") == param_name:
+                                    existing_param = existing
+                                    break
+
+                            if not existing_param:
+                                # Create a new query parameter from the requestBody property
+                                required = param_name in schema.get("required", [])
+                                query_param = {
+                                    "name": param_name,
+                                    "in": "query",
+                                    "required": required,
+                                    "schema": param_schema,
+                                }
+                                # Add description if present
+                                if "description" in param_schema:
+                                    query_param["description"] = param_schema["description"]
+                                operation["parameters"].append(query_param)
+                    elif isinstance(schema, dict):
+                        # Handle direct schema (not a model with properties)
+                        # Try to infer parameter name from schema title
+                        param_name = schema.get("title", "").lower().replace(" ", "_")
+                        if param_name:
+                            # Check if this parameter is already in the parameters list
+                            existing_param = None
+                            for existing in operation["parameters"]:
+                                if isinstance(existing, dict) and existing.get("name") == param_name:
+                                    existing_param = existing
+                                    break
+
+                            if not existing_param:
+                                # Create a new query parameter from the requestBody schema
+                                query_param = {
+                                    "name": param_name,
+                                    "in": "query",
+                                    "required": False,  # Default to optional for GET requests
+                                    "schema": schema,
+                                }
+                                # Add description if present
+                                if "description" in schema:
+                                    query_param["description"] = schema["description"]
+                                operation["parameters"].append(query_param)
+
+                # Remove request body from GET endpoint
+                del operation["requestBody"]
+
+    return openapi_schema
+
+
 def _convert_multiline_strings_to_literal(obj: Any) -> Any:
     """Recursively convert multi-line strings to LiteralScalarString for YAML block scalar formatting."""
     try:
@@ -1618,6 +1710,11 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
 
     # Add x-llama-stack-extra-body-params extension for ExtraBodyField parameters
     openapi_schema = _add_extra_body_params_extension(openapi_schema)
+
+    # Remove request bodies from GET endpoints (GET requests should never have request bodies)
+    # This must run AFTER _add_extra_body_params_extension to ensure any request bodies
+    # that FastAPI incorrectly added to GET endpoints are removed
+    openapi_schema = _remove_request_bodies_from_get_endpoints(openapi_schema)
 
     # Split into stable (v1 only), experimental (v1alpha + v1beta), deprecated, and combined (stainless) specs
     # Each spec needs its own deep copy of the full schema to avoid cross-contamination

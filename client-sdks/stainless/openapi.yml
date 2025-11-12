@@ -1701,16 +1701,16 @@ paths:
         schema:
           type: string
         description: 'Path parameter: response_id'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              anyOf:
-              - type: array
-                items:
-                  type: string
-              - type: 'null'
-              title: Include
+      - name: include
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Include
       responses:
         '200':
           description: An ListOpenAIResponseInputItem.
@@ -4004,14 +4004,14 @@ paths:
           - type: string
           - type: 'null'
           title: Tool Group Id
-      requestBody:
-        content:
-          application/json:
-            schema:
-              anyOf:
-              - $ref: '#/components/schemas/URL'
-              - type: 'null'
-              title: Mcp Endpoint
+      - name: mcp_endpoint
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+          - type: 'null'
+          title: Mcp Endpoint
       responses:
         '200':
           description: A ListToolDefsResponse.
@@ -4579,16 +4579,16 @@ paths:
         schema:
           type: string
         description: 'Path parameter: conversation_id'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              anyOf:
-              - type: array
-                items:
-                  $ref: '#/components/schemas/ConversationItemInclude'
-              - type: 'null'
-              title: Include
+      - name: include
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ConversationItemInclude'
+          - type: 'null'
+          title: Include
       responses:
         '200':
           description: List of conversation items.
