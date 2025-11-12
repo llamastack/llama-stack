@@ -40,6 +40,9 @@ runs:
         echo "Updating project dependencies via uv sync"
         uv sync --all-groups
 
+        echo "Force reinstalling llama-stack from source to ensure latest changes"
+        uv pip install --force-reinstall --no-deps -e .
+
         echo "Installing ad-hoc dependencies"
         uv pip install faiss-cpu
 
