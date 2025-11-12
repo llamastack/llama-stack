@@ -66,11 +66,6 @@ class InferenceStore:
             },
         )
 
-        if self.enable_write_queue:
-            logger.debug(
-                f"Inference store write queue configured for {self._num_writers} writers, max queue size {self._max_write_queue_size}"
-            )
-
     async def shutdown(self) -> None:
         if not self._worker_tasks:
             return

@@ -90,7 +90,6 @@ class ResponsesStore:
         input: list[OpenAIResponseInput],
         messages: list[OpenAIMessageParam],
     ) -> None:
-        logger.info(f"💾 Writing response id={response_object.id}")
         await self._write_response_object(response_object, input, messages)
 
     async def _write_response_object(
@@ -250,8 +249,6 @@ class ResponsesStore:
         if not self.sql_store:
             raise ValueError("Responses store is not initialized")
 
-        logger.info(f"💬 Storing {len(messages)} messages for conversation {conversation_id}")
-
         # Serialize messages to dict format for JSON storage
         messages_data = [msg.model_dump() for msg in messages]
 
@@ -261,16 +258,13 @@ class ResponsesStore:
                 table="conversation_messages",
                 data={"conversation_id": conversation_id, "messages": messages_data},
             )
-            logger.info(f"✅ Inserted conversation messages for {conversation_id}")
-        except Exception as e:
-            logger.info(f"🔄 Insert failed, trying update for {conversation_id}: {e}")
+        except Exception:
             # If insert fails due to ID conflict, update existing record
             await self.sql_store.update(
                 table="conversation_messages",
                 data={"messages": messages_data},
                 where={"conversation_id": conversation_id},
             )
-            logger.info(f"✅ Updated conversation messages for {conversation_id}")
 
         logger.debug(f"Stored {len(messages)} messages for conversation {conversation_id}")
 
