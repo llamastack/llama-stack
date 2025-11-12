@@ -5,4 +5,4 @@ These are the source-of-truth configuration files used to generate the Stainless
 
 A small side note: notice the `.yml` suffixes since Stainless uses that suffix typically for its configuration files.
 
-These files go hand-in-hand. As of now, only the `openapi.yml` file is automatically generated using the `run_openapi_generator.sh` script.
+These files go hand-in-hand. As of now, only the `openapi.yml` file is automatically generated using the `scripts/run_openapi_generator.sh` script.
