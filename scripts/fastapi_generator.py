@@ -334,9 +334,34 @@ def _create_fastapi_endpoint(app: FastAPI, route, webmethod, api: Api):
         params_only_endpoint.__annotations__ = param_annotations
         endpoint_func = params_only_endpoint
     else:
+        # Endpoint with no parameters and no response model
+        # If we have a response_model from the function signature, use it even if _find_models_for_endpoint didn't find it
+        # This can happen if there was an exception during model finding
+        if response_model is None:
+            # Try to get response model directly from the function signature as a fallback
+            func = _get_protocol_method(api, name)
+            if func:
+                try:
+                    sig = inspect.signature(func)
+                    return_annotation = sig.return_annotation
+                    if return_annotation != inspect.Signature.empty:
+                        if hasattr(return_annotation, "model_json_schema"):
+                            response_model = return_annotation
+                        elif get_origin(return_annotation) is Annotated:
+                            args = get_args(return_annotation)
+                            if args and hasattr(args[0], "model_json_schema"):
+                                response_model = args[0]
+                except Exception:
+                    pass
 
-        async def no_params_endpoint():
-            return {}
+        if response_model:
+
+            async def no_params_endpoint() -> response_model:
+                return response_model() if response_model else {}
+        else:
+
+            async def no_params_endpoint():
+                return {}
 
         if operation_description:
             no_params_endpoint.__doc__ = operation_description
@@ -385,6 +410,11 @@ def _create_fastapi_endpoint(app: FastAPI, route, webmethod, api: Api):
             "default": {"$ref": "#/components/responses/DefaultError"},
         },
     }
+
+    # FastAPI needs response_model parameter to properly generate OpenAPI spec
+    # Use the non-streaming response model if available
+    if response_model:
+        route_kwargs["response_model"] = response_model
 
     method_map = {"GET": app.get, "POST": app.post, "PUT": app.put, "DELETE": app.delete, "PATCH": app.patch}
     for method in methods:
@@ -1434,10 +1464,30 @@ def _filter_schema_by_version(
 
     filtered_paths = {}
     for path, path_item in filtered_schema["paths"].items():
-        if exclude_deprecated and _is_path_deprecated(path_item):
+        if not isinstance(path_item, dict):
             continue
-        if (stable_only and _is_stable_path(path)) or (not stable_only and _is_experimental_path(path)):
-            filtered_paths[path] = path_item
+
+        # Filter at operation level, not path level
+        # This allows paths with both deprecated and non-deprecated operations
+        filtered_path_item = {}
+        for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
+            if method not in path_item:
+                continue
+            operation = path_item[method]
+            if not isinstance(operation, dict):
+                continue
+
+            # Skip deprecated operations if exclude_deprecated is True
+            if exclude_deprecated and operation.get("deprecated", False):
+                continue
+
+            filtered_path_item[method] = operation
+
+        # Only include path if it has at least one operation after filtering
+        if filtered_path_item:
+            # Check if path matches version filter
+            if (stable_only and _is_stable_path(path)) or (not stable_only and _is_experimental_path(path)):
+                filtered_paths[path] = filtered_path_item
 
     filtered_schema["paths"] = filtered_paths
     return _filter_schemas_by_references(filtered_schema, filtered_paths, openapi_schema)

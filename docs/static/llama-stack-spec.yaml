@@ -78,64 +78,6 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
   /v1/responses:
-    post:
-      tags:
-      - Agents
-      summary: Create Openai Response
-      description: Create a model response.
-      operationId: create_openai_response_v1_responses_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_responses_Request'
-        x-llama-stack-extra-body-params:
-          guardrails:
-            $defs:
-              ResponseGuardrailSpec:
-                description: |-
-                  Specification for a guardrail to apply during response generation.
-
-                  :param type: The type/identifier of the guardrail.
-                properties:
-                  type:
-                    title: Type
-                    type: string
-                required:
-                - type
-                title: ResponseGuardrailSpec
-                type: object
-            anyOf:
-            - items:
-                anyOf:
-                - type: string
-                - $ref: '#/components/schemas/ResponseGuardrailSpec'
-              type: array
-            - type: 'null'
-            description: List of guardrails to apply during response generation. Guardrails provide safety and content moderation.
-      responses:
-        '200':
-          description: An OpenAIResponseObject.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenAIResponseObject'
-            text/event-stream:
-              schema:
-                $ref: '#/components/schemas/OpenAIResponseObjectStream'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
     get:
       tags:
       - Agents
@@ -184,6 +126,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListOpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+    post:
+      tags:
+      - Agents
+      summary: Create Openai Response
+      description: Create a model response.
+      operationId: create_openai_response_v1_responses_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_responses_Request'
+        x-llama-stack-extra-body-params:
+          guardrails:
+            $defs:
+              ResponseGuardrailSpec:
+                description: |-
+                  Specification for a guardrail to apply during response generation.
+
+                  :param type: The type/identifier of the guardrail.
+                properties:
+                  type:
+                    title: Type
+                    type: string
+                required:
+                - type
+                title: ResponseGuardrailSpec
+                type: object
+            anyOf:
+            - items:
+                anyOf:
+                - type: string
+                - $ref: '#/components/schemas/ResponseGuardrailSpec'
+              type: array
+            - type: 'null'
+            description: List of guardrails to apply during response generation. Guardrails provide safety and content moderation.
+      responses:
+        '200':
+          description: An OpenAIResponseObject.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObject'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObjectStream'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -677,37 +677,6 @@ paths:
           type: string
         description: 'Path parameter: batch_id'
   /v1/batches:
-    post:
-      tags:
-      - Batches
-      summary: Create Batch
-      description: Create a new batch for processing multiple API requests.
-      operationId: create_batch_v1_batches_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_batches_Request'
-      responses:
-        '200':
-          description: The created batch object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Batch'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
     get:
       tags:
       - Batches
@@ -737,6 +706,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListBatchesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+    post:
+      tags:
+      - Batches
+      summary: Create Batch
+      description: Create a new batch for processing multiple API requests.
+      operationId: create_batch_v1_batches_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_batches_Request'
+      responses:
+        '200':
+          description: The created batch object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Batch'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -817,44 +817,6 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
   /v1/vector_stores/{vector_store_id}/files:
-    post:
-      tags:
-      - Vector Io
-      summary: Openai Attach File To Vector Store
-      description: Attach a file to a vector store.
-      operationId: openai_attach_file_to_vector_store_v1_vector_stores__vector_store_id__files_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_vector_stores_vector_store_id_files_Request'
-      responses:
-        '200':
-          description: A VectorStoreFileObject representing the attached file.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorStoreFileObject'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      parameters:
-      - name: vector_store_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: vector_store_id'
     get:
       tags:
       - Vector Io
@@ -936,6 +898,44 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
+    post:
+      tags:
+      - Vector Io
+      summary: Openai Attach File To Vector Store
+      description: Attach a file to a vector store.
+      operationId: openai_attach_file_to_vector_store_v1_vector_stores__vector_store_id__files_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_vector_stores_vector_store_id_files_Request'
+      responses:
+        '200':
+          description: A VectorStoreFileObject representing the attached file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      parameters:
+      - name: vector_store_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: vector_store_id'
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel:
     post:
       tags:
@@ -976,40 +976,6 @@ paths:
           type: string
         description: 'Path parameter: batch_id'
   /v1/vector_stores:
-    post:
-      tags:
-      - Vector Io
-      summary: Openai Create Vector Store
-      description: |-
-        Creates a vector store.
-
-        Generate an OpenAI-compatible vector store with the given parameters.
-      operationId: openai_create_vector_store_v1_vector_stores_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
-      responses:
-        '200':
-          description: A VectorStoreObject representing the created vector store.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorStoreObject'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
     get:
       tags:
       - Vector Io
@@ -1058,6 +1024,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VectorStoreListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+    post:
+      tags:
+      - Vector Io
+      summary: Openai Create Vector Store
+      description: |-
+        Creates a vector store.
+
+        Generate an OpenAI-compatible vector store with the given parameters.
+      operationId: openai_create_vector_store_v1_vector_stores_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
+      responses:
+        '200':
+          description: A VectorStoreObject representing the created vector store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreObject'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -1569,6 +1569,68 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+  /v1/models/{model_id}:
+    get:
+      tags:
+      - Models
+      summary: Get Model
+      description: |-
+        Get model.
+
+        Get a model by its identifier.
+      operationId: get_model_v1_models__model_id__get
+      responses:
+        '200':
+          description: A Model.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: model_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: model_id'
+  /v1/models:
+    get:
+      tags:
+      - Models
+      summary: Openai List Models
+      description: List models using the OpenAI API.
+      operationId: openai_list_models_v1_models_get
+      responses:
+        '200':
+          description: A OpenAIListModelsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIListModelsResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
   /v1/moderations:
     post:
       tags:
@@ -1627,6 +1689,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RunShieldResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+  /v1/shields/{identifier}:
+    get:
+      tags:
+      - Shields
+      summary: Get Shield
+      description: Get a shield by its identifier.
+      operationId: get_shield_v1_shields__identifier__get
+      responses:
+        '200':
+          description: A Shield.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shield'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: identifier
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: identifier'
+  /v1/shields:
+    get:
+      tags:
+      - Shields
+      summary: List Shields
+      description: List all shields.
+      operationId: list_shields_v1_shields_get
+      responses:
+        '200':
+          description: A ListShieldsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListShieldsResponse'
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -1703,6 +1824,65 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+  /v1/scoring-functions/{scoring_fn_id}:
+    get:
+      tags:
+      - Scoring Functions
+      summary: Get Scoring Function
+      description: Get a scoring function by its ID.
+      operationId: get_scoring_function_v1_scoring_functions__scoring_fn_id__get
+      responses:
+        '200':
+          description: A ScoringFn.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoringFn'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: scoring_fn_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: scoring_fn_id'
+  /v1/scoring-functions:
+    get:
+      tags:
+      - Scoring Functions
+      summary: List Scoring Functions
+      description: List all scoring functions.
+      operationId: list_scoring_functions_v1_scoring_functions_get
+      responses:
+        '200':
+          description: A ListScoringFunctionsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListScoringFunctionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
   /v1/tools/{tool_name}:
     get:
       tags:
@@ -1736,6 +1916,65 @@ paths:
         schema:
           type: string
         description: 'Path parameter: tool_name'
+  /v1/toolgroups/{toolgroup_id}:
+    get:
+      tags:
+      - Tool Groups
+      summary: Get Tool Group
+      description: Get a tool group by its ID.
+      operationId: get_tool_group_v1_toolgroups__toolgroup_id__get
+      responses:
+        '200':
+          description: A ToolGroup.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolGroup'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      parameters:
+      - name: toolgroup_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: toolgroup_id'
+  /v1/toolgroups:
+    get:
+      tags:
+      - Tool Groups
+      summary: List Tool Groups
+      description: List tool groups with optional provider.
+      operationId: list_tool_groups_v1_toolgroups_get
+      responses:
+        '200':
+          description: A ListToolGroupsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolGroupsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
   /v1/tools:
     get:
       tags:
@@ -2326,6 +2565,40 @@ paths:
         schema:
           type: string
         description: 'Path parameter: prompt_id'
+    delete:
+      tags:
+      - Prompts
+      summary: Delete Prompt
+      description: |-
+        Delete prompt.
+
+        Delete a prompt.
+      operationId: delete_prompt_v1_prompts__prompt_id__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      parameters:
+      - name: prompt_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: prompt_id'
   /v1/prompts/{prompt_id}/versions:
     get:
       tags:
@@ -2405,47 +2678,6 @@ paths:
           type: string
         description: 'Path parameter: prompt_id'
   /v1/conversations/{conversation_id}/items:
-    post:
-      tags:
-      - Conversations
-      summary: Add Items
-      description: |-
-        Create items.
-
-        Create items in the conversation.
-      operationId: add_items_v1_conversations__conversation_id__items_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_conversations_conversation_id_items_Request'
-      responses:
-        '200':
-          description: List of created items.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConversationItemList'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      parameters:
-      - name: conversation_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: conversation_id'
     get:
       tags:
       - Conversations
@@ -2518,6 +2750,47 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
+    post:
+      tags:
+      - Conversations
+      summary: Add Items
+      description: |-
+        Create items.
+
+        Create items in the conversation.
+      operationId: add_items_v1_conversations__conversation_id__items_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_conversations_conversation_id_items_Request'
+      responses:
+        '200':
+          description: List of created items.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationItemList'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: conversation_id'
   /v1/conversations:
     post:
       tags:
@@ -3111,6 +3384,37 @@ components:
       type: object
       title: ChatCompletionInputType
       description: Parameter type for chat completion input.
+    Checkpoint:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        epoch:
+          type: integer
+          title: Epoch
+        post_training_job_id:
+          type: string
+          title: Post Training Job Id
+        path:
+          type: string
+          title: Path
+        training_metrics:
+          anyOf:
+          - $ref: '#/components/schemas/PostTrainingMetric'
+          - type: 'null'
+      type: object
+      required:
+      - identifier
+      - created_at
+      - epoch
+      - post_training_job_id
+      - path
+      title: Checkpoint
+      description: Checkpoint created during training runs.
     Chunk-Input:
       properties:
         content:
@@ -3766,6 +4070,166 @@ components:
       - judge_model
       title: LLMAsJudgeScoringFnParams
       description: Parameters for LLM-as-judge scoring function configuration.
+    ListBatchesResponse:
+      properties:
+        object:
+          type: string
+          const: list
+          title: Object
+          default: list
+        data:
+          items:
+            $ref: '#/components/schemas/Batch'
+          type: array
+          title: Data
+          description: List of batch objects
+        first_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Id
+          description: ID of the first batch in the list
+        last_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Id
+          description: ID of the last batch in the list
+        has_more:
+          type: boolean
+          title: Has More
+          description: Whether there are more batches available
+          default: false
+      type: object
+      required:
+      - data
+      title: ListBatchesResponse
+      description: Response containing a list of batch objects.
+    ListOpenAIChatCompletionResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/OpenAICompletionWithInputMessages'
+          type: array
+          title: Data
+        has_more:
+          type: boolean
+          title: Has More
+        first_id:
+          type: string
+          title: First Id
+        last_id:
+          type: string
+          title: Last Id
+        object:
+          type: string
+          const: list
+          title: Object
+          default: list
+      type: object
+      required:
+      - data
+      - has_more
+      - first_id
+      - last_id
+      title: ListOpenAIChatCompletionResponse
+      description: Response from listing OpenAI-compatible chat completions.
+    ListOpenAIFileResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/OpenAIFileObject'
+          type: array
+          title: Data
+        has_more:
+          type: boolean
+          title: Has More
+        first_id:
+          type: string
+          title: First Id
+        last_id:
+          type: string
+          title: Last Id
+        object:
+          type: string
+          const: list
+          title: Object
+          default: list
+      type: object
+      required:
+      - data
+      - has_more
+      - first_id
+      - last_id
+      title: ListOpenAIFileResponse
+      description: Response for listing files in OpenAI Files API.
+    ListOpenAIResponseInputItem:
+      properties:
+        data:
+          items:
+            anyOf:
+            - oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+          type: array
+          title: Data
+        object:
+          type: string
+          const: list
+          title: Object
+          default: list
+      type: object
+      required:
+      - data
+      title: ListOpenAIResponseInputItem
+      description: List container for OpenAI response input items.
+    ListOpenAIResponseObject:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/OpenAIResponseObjectWithInput-Output'
+          type: array
+          title: Data
+        has_more:
+          type: boolean
+          title: Has More
+        first_id:
+          type: string
+          title: First Id
+        last_id:
+          type: string
+          title: Last Id
+        object:
+          type: string
+          const: list
+          title: Object
+          default: list
+      type: object
+      required:
+      - data
+      - has_more
+      - first_id
+      - last_id
+      title: ListOpenAIResponseObject
+      description: Paginated list of OpenAI response objects with navigation metadata.
     ListPromptsResponse:
       properties:
         data:
@@ -3790,6 +4254,64 @@ components:
       - data
       title: ListProvidersResponse
       description: Response containing a list of all available providers.
+    ListRoutesResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/RouteInfo'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListRoutesResponse
+      description: Response containing a list of all available API routes.
+    ListScoringFunctionsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ScoringFn'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListScoringFunctionsResponse
+    ListShieldsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Shield'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListShieldsResponse
+    ListToolDefsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ToolDef'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListToolDefsResponse
+      description: Response containing a list of tool definitions.
+    ListToolGroupsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ToolGroup'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListToolGroupsResponse
+      description: Response containing a list of tool groups.
     LoraFinetuningConfig:
       properties:
         type:
@@ -4995,6 +5517,17 @@ components:
       type: object
       title: OpenAIJSONSchema
       description: JSON schema specification for OpenAI-compatible structured response format.
+    OpenAIListModelsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/OpenAIModel'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: OpenAIListModelsResponse
     OpenAIModel:
       properties:
         id:
@@ -5735,6 +6268,155 @@ components:
       - status
       title: OpenAIResponseObject
       description: Complete OpenAI response object containing generation results and metadata.
+    OpenAIResponseObjectWithInput-Output:
+      properties:
+        created_at:
+          type: integer
+          title: Created At
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseError'
+          - type: 'null'
+        id:
+          type: string
+          title: Id
+        model:
+          type: string
+          title: Model
+        object:
+          type: string
+          const: response
+          title: Object
+          default: response
+        output:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+            discriminator:
+              propertyName: type
+              mapping:
+                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                message: '#/components/schemas/OpenAIResponseMessage-Output'
+                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+          type: array
+          title: Output
+        parallel_tool_calls:
+          type: boolean
+          title: Parallel Tool Calls
+          default: false
+        previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Previous Response Id
+        prompt:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponsePrompt'
+          - type: 'null'
+        status:
+          type: string
+          title: Status
+        temperature:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Temperature
+        text:
+          $ref: '#/components/schemas/OpenAIResponseText'
+          default:
+            format:
+              type: text
+        top_p:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Top P
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+              - $ref: '#/components/schemas/OpenAIResponseToolMCP'
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+            type: array
+          - type: 'null'
+          title: Tools
+        truncation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Truncation
+        usage:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseUsage'
+          - type: 'null'
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instructions
+        max_tool_calls:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max Tool Calls
+        input:
+          items:
+            anyOf:
+            - oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+          type: array
+          title: Input
+      type: object
+      required:
+      - created_at
+      - id
+      - model
+      - output
+      - status
+      - input
+      title: OpenAIResponseObjectWithInput
+      description: OpenAI response object extended with input context information.
     OpenAIResponseOutputMessageContentOutputText:
       properties:
         text:
@@ -6300,6 +6982,107 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    PaginatedResponse:
+      properties:
+        data:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Data
+        has_more:
+          type: boolean
+          title: Has More
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+      type: object
+      required:
+      - data
+      - has_more
+      title: PaginatedResponse
+      description: A generic paginated response that follows a simple format.
+    PostTrainingJobArtifactsResponse:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+        checkpoints:
+          items:
+            $ref: '#/components/schemas/Checkpoint'
+          type: array
+          title: Checkpoints
+      type: object
+      required:
+      - job_uuid
+      title: PostTrainingJobArtifactsResponse
+      description: Artifacts of a finetuning job.
+    PostTrainingJobStatusResponse:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        scheduled_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Scheduled At
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        resources_allocated:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Resources Allocated
+        checkpoints:
+          items:
+            $ref: '#/components/schemas/Checkpoint'
+          type: array
+          title: Checkpoints
+      type: object
+      required:
+      - job_uuid
+      - status
+      title: PostTrainingJobStatusResponse
+      description: Status of a finetuning job.
+    PostTrainingMetric:
+      properties:
+        epoch:
+          type: integer
+          title: Epoch
+        train_loss:
+          type: number
+          title: Train Loss
+        validation_loss:
+          type: number
+          title: Validation Loss
+        perplexity:
+          type: number
+          title: Perplexity
+      type: object
+      required:
+      - epoch
+      - train_loss
+      - validation_loss
+      - perplexity
+      title: PostTrainingMetric
+      description: Training metrics captured during post-training jobs.
     Prompt:
       properties:
         prompt:
@@ -6447,6 +7230,26 @@ components:
       - data
       title: RerankResponse
       description: Response from a reranking request.
+    RouteInfo:
+      properties:
+        route:
+          type: string
+          title: Route
+        method:
+          type: string
+          title: Method
+        provider_types:
+          items:
+            type: string
+          type: array
+          title: Provider Types
+      type: object
+      required:
+      - route
+      - method
+      - provider_types
+      title: RouteInfo
+      description: Information about an API route including its path, method, and implementing providers.
     RowsDataSource:
       properties:
         type:
@@ -7250,6 +8053,96 @@ components:
       - vector_store_id
       title: VectorStoreFileObject
       description: OpenAI Vector Store File object.
+    VectorStoreFilesListInBatchResponse:
+      properties:
+        object:
+          type: string
+          title: Object
+          default: list
+        data:
+          items:
+            $ref: '#/components/schemas/VectorStoreFileObject'
+          type: array
+          title: Data
+        first_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Id
+        last_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Id
+        has_more:
+          type: boolean
+          title: Has More
+          default: false
+      type: object
+      required:
+      - data
+      title: VectorStoreFilesListInBatchResponse
+      description: Response from listing files in a vector store file batch.
+    VectorStoreListFilesResponse:
+      properties:
+        object:
+          type: string
+          title: Object
+          default: list
+        data:
+          items:
+            $ref: '#/components/schemas/VectorStoreFileObject'
+          type: array
+          title: Data
+        first_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Id
+        last_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Id
+        has_more:
+          type: boolean
+          title: Has More
+          default: false
+      type: object
+      required:
+      - data
+      title: VectorStoreListFilesResponse
+      description: Response from listing files in a vector store.
+    VectorStoreListResponse:
+      properties:
+        object:
+          type: string
+          title: Object
+          default: list
+        data:
+          items:
+            $ref: '#/components/schemas/VectorStoreObject'
+          type: array
+          title: Data
+        first_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Id
+        last_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Id
+        has_more:
+          type: boolean
+          title: Has More
+          default: false
+      type: object
+      required:
+      - data
+      title: VectorStoreListResponse
+      description: Response from listing vector stores.
     VectorStoreObject:
       properties:
         id:
@@ -9818,43 +10711,15 @@ components:
       - $ref: '#/components/schemas/UnstructuredLogEvent'
       - $ref: '#/components/schemas/MetricEvent'
       - $ref: '#/components/schemas/StructuredLogEvent'
-    ListOpenAIResponseInputItem:
-      description: List container for OpenAI response input items.
+    ResponseGuardrailSpec:
+      description: Specification for a guardrail to apply during response generation.
       properties:
-        data:
-          items:
-            anyOf:
-            - discriminator:
-                mapping:
-                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  message: '#/components/schemas/OpenAIResponseMessage'
-                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseMessage'
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-            - $ref: '#/components/schemas/OpenAIResponseMessage'
-          title: Data
-          type: array
-        object:
-          const: list
-          default: list
-          title: Object
+        type:
+          title: Type
           type: string
       required:
-      - data
-      title: ListOpenAIResponseInputItem
+      - type
+      title: ResponseGuardrailSpec
       type: object
     OpenAIResponseObjectWithInput:
       description: OpenAI response object extended with input context information.
@@ -10015,82 +10880,6 @@ components:
       - input
       title: OpenAIResponseObjectWithInput
       type: object
-    ListOpenAIResponseObject:
-      description: Paginated list of OpenAI response objects with navigation metadata.
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/OpenAIResponseObjectWithInput'
-          title: Data
-          type: array
-        has_more:
-          title: Has More
-          type: boolean
-        first_id:
-          title: First Id
-          type: string
-        last_id:
-          title: Last Id
-          type: string
-        object:
-          const: list
-          default: list
-          title: Object
-          type: string
-      required:
-      - data
-      - has_more
-      - first_id
-      - last_id
-      title: ListOpenAIResponseObject
-      type: object
-    ResponseGuardrailSpec:
-      description: Specification for a guardrail to apply during response generation.
-      properties:
-        type:
-          title: Type
-          type: string
-      required:
-      - type
-      title: ResponseGuardrailSpec
-      type: object
-    ListBatchesResponse:
-      description: Response containing a list of batch objects.
-      properties:
-        object:
-          const: list
-          default: list
-          title: Object
-          type: string
-        data:
-          description: List of batch objects
-          items:
-            $ref: '#/components/schemas/Batch'
-          title: Data
-          type: array
-        first_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: ID of the first batch in the list
-          title: First Id
-          nullable: true
-        last_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: ID of the last batch in the list
-          title: Last Id
-          nullable: true
-        has_more:
-          default: false
-          description: Whether there are more batches available
-          title: Has More
-          type: boolean
-      required:
-      - data
-      title: ListBatchesResponse
-      type: object
     MetricInResponse:
       description: A metric value included in API responses.
       properties:
@@ -10112,83 +10901,6 @@ components:
       - metric
       - value
       title: MetricInResponse
-      type: object
-    PaginatedResponse:
-      description: A generic paginated response that follows a simple format.
-      properties:
-        data:
-          items:
-            additionalProperties: true
-            type: object
-          title: Data
-          type: array
-        has_more:
-          title: Has More
-          type: boolean
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Url
-          nullable: true
-      required:
-      - data
-      - has_more
-      title: PaginatedResponse
-      type: object
-    PostTrainingMetric:
-      description: Training metrics captured during post-training jobs.
-      properties:
-        epoch:
-          title: Epoch
-          type: integer
-        train_loss:
-          title: Train Loss
-          type: number
-        validation_loss:
-          title: Validation Loss
-          type: number
-        perplexity:
-          title: Perplexity
-          type: number
-      required:
-      - epoch
-      - train_loss
-      - validation_loss
-      - perplexity
-      title: PostTrainingMetric
-      type: object
-    Checkpoint:
-      description: Checkpoint created during training runs.
-      properties:
-        identifier:
-          title: Identifier
-          type: string
-        created_at:
-          format: date-time
-          title: Created At
-          type: string
-        epoch:
-          title: Epoch
-          type: integer
-        post_training_job_id:
-          title: Post Training Job Id
-          type: string
-        path:
-          title: Path
-          type: string
-        training_metrics:
-          anyOf:
-          - $ref: '#/components/schemas/PostTrainingMetric'
-          - type: 'null'
-          nullable: true
-      required:
-      - identifier
-      - created_at
-      - epoch
-      - post_training_job_id
-      - path
-      title: Checkpoint
       type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
@@ -10274,35 +10986,6 @@ components:
       - status
       title: ConversationMessage
       type: object
-    ListOpenAIFileResponse:
-      description: Response for listing files in OpenAI Files API.
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/OpenAIFileObject'
-          title: Data
-          type: array
-        has_more:
-          title: Has More
-          type: boolean
-        first_id:
-          title: First Id
-          type: string
-        last_id:
-          title: Last Id
-          type: string
-        object:
-          const: list
-          default: list
-          title: Object
-          type: string
-      required:
-      - data
-      - has_more
-      - first_id
-      - last_id
-      title: ListOpenAIFileResponse
-      type: object
     Bf16QuantizationConfig:
       description: Configuration for BFloat16 precision (typically no quantization).
       properties:
@@ -10353,92 +11036,6 @@ components:
           title: Scheme
       title: Int4QuantizationConfig
       type: object
-    OpenAIChoice:
-      description: A choice from an OpenAI-compatible chat completion response.
-      properties:
-        message:
-          discriminator:
-            mapping:
-              assistant: '#/components/schemas/OpenAIAssistantMessageParam'
-              developer: '#/components/schemas/OpenAIDeveloperMessageParam'
-              system: '#/components/schemas/OpenAISystemMessageParam'
-              tool: '#/components/schemas/OpenAIToolMessageParam'
-              user: '#/components/schemas/OpenAIUserMessageParam'
-            propertyName: role
-          oneOf:
-          - $ref: '#/components/schemas/OpenAIUserMessageParam'
-          - $ref: '#/components/schemas/OpenAISystemMessageParam'
-          - $ref: '#/components/schemas/OpenAIAssistantMessageParam'
-          - $ref: '#/components/schemas/OpenAIToolMessageParam'
-          - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-          title: Message
-        finish_reason:
-          title: Finish Reason
-          type: string
-        index:
-          title: Index
-          type: integer
-        logprobs:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-          - type: 'null'
-          nullable: true
-      required:
-      - message
-      - finish_reason
-      - index
-      title: OpenAIChoice
-      type: object
-    OpenAIChoiceLogprobs:
-      description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
-      properties:
-        content:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/OpenAITokenLogProb'
-            type: array
-          - type: 'null'
-          title: Content
-          nullable: true
-        refusal:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/OpenAITokenLogProb'
-            type: array
-          - type: 'null'
-          title: Refusal
-          nullable: true
-      title: OpenAIChoiceLogprobs
-      type: object
-    ListOpenAIChatCompletionResponse:
-      description: Response from listing OpenAI-compatible chat completions.
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/OpenAICompletionWithInputMessages'
-          title: Data
-          type: array
-        has_more:
-          title: Has More
-          type: boolean
-        first_id:
-          title: First Id
-          type: string
-        last_id:
-          title: Last Id
-          type: string
-        object:
-          const: list
-          default: list
-          title: Object
-          type: string
-      required:
-      - data
-      - has_more
-      - first_id
-      - last_id
-      title: ListOpenAIChatCompletionResponse
-      type: object
     OpenAIChoiceDelta:
       description: A delta from an OpenAI-compatible chat completion streaming response.
       properties:
@@ -10475,6 +11072,27 @@ components:
           title: Reasoning Content
           nullable: true
       title: OpenAIChoiceDelta
+      type: object
+    OpenAIChoiceLogprobs:
+      description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
+      properties:
+        content:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          title: Content
+          nullable: true
+        refusal:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          title: Refusal
+          nullable: true
+      title: OpenAIChoiceLogprobs
       type: object
     OpenAIChunkChoice:
       description: A chunk choice from an OpenAI-compatible chat completion streaming response.
@@ -10531,6 +11149,42 @@ components:
       - created
       - model
       title: OpenAIChatCompletionChunk
+      type: object
+    OpenAIChoice:
+      description: A choice from an OpenAI-compatible chat completion response.
+      properties:
+        message:
+          discriminator:
+            mapping:
+              assistant: '#/components/schemas/OpenAIAssistantMessageParam'
+              developer: '#/components/schemas/OpenAIDeveloperMessageParam'
+              system: '#/components/schemas/OpenAISystemMessageParam'
+              tool: '#/components/schemas/OpenAIToolMessageParam'
+              user: '#/components/schemas/OpenAIUserMessageParam'
+            propertyName: role
+          oneOf:
+          - $ref: '#/components/schemas/OpenAIUserMessageParam'
+          - $ref: '#/components/schemas/OpenAISystemMessageParam'
+          - $ref: '#/components/schemas/OpenAIAssistantMessageParam'
+          - $ref: '#/components/schemas/OpenAIToolMessageParam'
+          - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
+          title: Message
+        finish_reason:
+          title: Finish Reason
+          type: string
+        index:
+          title: Index
+          type: integer
+        logprobs:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
+          - type: 'null'
+          nullable: true
+      required:
+      - message
+      - finish_reason
+      - index
+      title: OpenAIChoice
       type: object
     OpenAICompletionChoice:
       description: |-
@@ -10714,53 +11368,6 @@ components:
       - content
       title: UserMessage
       type: object
-    RouteInfo:
-      description: Information about an API route including its path, method, and implementing providers.
-      properties:
-        route:
-          title: Route
-          type: string
-        method:
-          title: Method
-          type: string
-        provider_types:
-          items:
-            type: string
-          title: Provider Types
-          type: array
-      required:
-      - route
-      - method
-      - provider_types
-      title: RouteInfo
-      type: object
-    ListRoutesResponse:
-      description: Response containing a list of all available API routes.
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/RouteInfo'
-          title: Data
-          type: array
-      required:
-      - data
-      title: ListRoutesResponse
-      type: object
-    PostTrainingJobArtifactsResponse:
-      description: Artifacts of a finetuning job.
-      properties:
-        job_uuid:
-          title: Job Uuid
-          type: string
-        checkpoints:
-          items:
-            $ref: '#/components/schemas/Checkpoint'
-          title: Checkpoints
-          type: array
-      required:
-      - job_uuid
-      title: PostTrainingJobArtifactsResponse
-      type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.
       properties:
@@ -10776,52 +11383,6 @@ components:
       - job_uuid
       - log_lines
       title: PostTrainingJobLogStream
-      type: object
-    PostTrainingJobStatusResponse:
-      description: Status of a finetuning job.
-      properties:
-        job_uuid:
-          title: Job Uuid
-          type: string
-        status:
-          $ref: '#/components/schemas/JobStatus'
-        scheduled_at:
-          anyOf:
-          - format: date-time
-            type: string
-          - type: 'null'
-          title: Scheduled At
-          nullable: true
-        started_at:
-          anyOf:
-          - format: date-time
-            type: string
-          - type: 'null'
-          title: Started At
-          nullable: true
-        completed_at:
-          anyOf:
-          - format: date-time
-            type: string
-          - type: 'null'
-          title: Completed At
-          nullable: true
-        resources_allocated:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Resources Allocated
-          nullable: true
-        checkpoints:
-          items:
-            $ref: '#/components/schemas/Checkpoint'
-          title: Checkpoints
-          type: array
-      required:
-      - job_uuid
-      - status
-      title: PostTrainingJobStatusResponse
       type: object
     RLHFAlgorithm:
       description: Available reinforcement learning from human feedback algorithms.
@@ -10871,18 +11432,6 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
-      type: object
-    ListToolDefsResponse:
-      description: Response containing a list of tool definitions.
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/ToolDef'
-          title: Data
-          type: array
-      required:
-      - data
-      title: ListToolDefsResponse
       type: object
     ToolGroupInput:
       description: Input data for registering a tool group.
@@ -10993,102 +11542,6 @@ components:
           title: Metadata
           type: object
       title: VectorStoreCreateRequest
-      type: object
-    VectorStoreFilesListInBatchResponse:
-      description: Response from listing files in a vector store file batch.
-      properties:
-        object:
-          default: list
-          title: Object
-          type: string
-        data:
-          items:
-            $ref: '#/components/schemas/VectorStoreFileObject'
-          title: Data
-          type: array
-        first_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: First Id
-          nullable: true
-        last_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Last Id
-          nullable: true
-        has_more:
-          default: false
-          title: Has More
-          type: boolean
-      required:
-      - data
-      title: VectorStoreFilesListInBatchResponse
-      type: object
-    VectorStoreListFilesResponse:
-      description: Response from listing files in a vector store.
-      properties:
-        object:
-          default: list
-          title: Object
-          type: string
-        data:
-          items:
-            $ref: '#/components/schemas/VectorStoreFileObject'
-          title: Data
-          type: array
-        first_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: First Id
-          nullable: true
-        last_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Last Id
-          nullable: true
-        has_more:
-          default: false
-          title: Has More
-          type: boolean
-      required:
-      - data
-      title: VectorStoreListFilesResponse
-      type: object
-    VectorStoreListResponse:
-      description: Response from listing vector stores.
-      properties:
-        object:
-          default: list
-          title: Object
-          type: string
-        data:
-          items:
-            $ref: '#/components/schemas/VectorStoreObject'
-          title: Data
-          type: array
-        first_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: First Id
-          nullable: true
-        last_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Last Id
-          nullable: true
-        has_more:
-          default: false
-          title: Has More
-          type: boolean
-      required:
-      - data
-      title: VectorStoreListResponse
       type: object
     VectorStoreModifyRequest:
       description: Request to modify a vector store.
