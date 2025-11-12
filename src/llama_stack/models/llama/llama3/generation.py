@@ -26,8 +26,10 @@ from fairscale.nn.model_parallel.initialize import (
 )
 from termcolor import cprint
 
+from llama_stack.models.llama.datatypes import ToolPromptFormat
+
 from ..checkpoint import maybe_reshard_state_dict
-from ..datatypes import GenerationResult, QuantizationMode, RawContent, RawMessage, ToolPromptFormat
+from ..datatypes import GenerationResult, QuantizationMode, RawContent, RawMessage
 from .args import ModelArgs
 from .chat_format import ChatFormat, LLMInput
 from .model import Transformer

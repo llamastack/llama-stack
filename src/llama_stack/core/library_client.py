@@ -389,6 +389,12 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         matched_func, path_params, route_path, webmethod = find_matching_route(options.method, path, self.route_impls)
         body |= path_params
 
+        # Pass through params that aren't already handled as path params
+        if options.params:
+            extra_query_params = {k: v for k, v in options.params.items() if k not in path_params}
+            if extra_query_params:
+                body["extra_query"] = extra_query_params
+
         body, field_names = self._handle_file_uploads(options, body)
 
         body = self._convert_body(matched_func, body, exclude_params=set(field_names))

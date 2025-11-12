@@ -55,3 +55,65 @@ async def test_create_vector_stores_multiple_providers_missing_provider_id_error
 
     with pytest.raises(ValueError, match="Multiple vector_io providers available"):
         await router.openai_create_vector_store(request)
+
+
+async def test_update_vector_store_provider_id_change_fails():
+    """Test that updating a vector store with a different provider_id fails with clear error."""
+    mock_routing_table = Mock()
+
+    # Mock an existing vector store with provider_id "faiss"
+    mock_existing_store = Mock()
+    mock_existing_store.provider_id = "inline::faiss"
+    mock_existing_store.identifier = "vs_123"
+
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=mock_existing_store)
+    mock_routing_table.get_provider_impl = AsyncMock(
+        return_value=Mock(openai_update_vector_store=AsyncMock(return_value=Mock(id="vs_123")))
+    )
+
+    router = VectorIORouter(mock_routing_table)
+
+    # Try to update with different provider_id in metadata - this should fail
+    with pytest.raises(ValueError, match="provider_id cannot be changed after vector store creation"):
+        await router.openai_update_vector_store(
+            vector_store_id="vs_123",
+            name="updated_name",
+            metadata={"provider_id": "inline::sqlite"},  # Different provider_id
+        )
+
+    # Verify the existing store was looked up to check provider_id
+    mock_routing_table.get_object_by_identifier.assert_called_once_with("vector_store", "vs_123")
+
+    # Provider should not be called since validation failed
+    mock_routing_table.get_provider_impl.assert_not_called()
+
+
+async def test_update_vector_store_same_provider_id_succeeds():
+    """Test that updating a vector store with the same provider_id succeeds."""
+    mock_routing_table = Mock()
+
+    # Mock an existing vector store with provider_id "faiss"
+    mock_existing_store = Mock()
+    mock_existing_store.provider_id = "inline::faiss"
+    mock_existing_store.identifier = "vs_123"
+
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=mock_existing_store)
+    mock_routing_table.get_provider_impl = AsyncMock(
+        return_value=Mock(openai_update_vector_store=AsyncMock(return_value=Mock(id="vs_123")))
+    )
+
+    router = VectorIORouter(mock_routing_table)
+
+    # Update with same provider_id should succeed
+    await router.openai_update_vector_store(
+        vector_store_id="vs_123",
+        name="updated_name",
+        metadata={"provider_id": "inline::faiss"},  # Same provider_id
+    )
+
+    # Verify the provider update method was called
+    mock_routing_table.get_provider_impl.assert_called_once_with("vs_123")
+    provider = await mock_routing_table.get_provider_impl("vs_123")
+    provider.openai_update_vector_store.assert_called_once_with(
+        vector_store_id="vs_123", name="updated_name", expires_after=None, metadata={"provider_id": "inline::faiss"}
+    )

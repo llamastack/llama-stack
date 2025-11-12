@@ -963,7 +963,7 @@ paths:
             Optional filter to control which routes are returned. Can be an API level
             ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level,
             or 'deprecated' to show deprecated routes across all levels. If not specified,
-            returns only non-deprecated v1 routes.
+            returns all non-deprecated routes.
           required: false
           schema:
             type: string
@@ -998,39 +998,6 @@ paths:
       description: List models using the OpenAI API.
       parameters: []
       deprecated: false
-    post:
-      responses:
-        '200':
-          description: A Model.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Model'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Models
-      summary: Register model.
-      description: >-
-        Register model.
-
-        Register a model.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterModelRequest'
-        required: true
-      deprecated: false
   /v1/models/{model_id}:
     get:
       responses:
@@ -1061,36 +1028,6 @@ paths:
         - name: model_id
           in: path
           description: The identifier of the model to get.
-          required: true
-          schema:
-            type: string
-      deprecated: false
-    delete:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Models
-      summary: Unregister model.
-      description: >-
-        Unregister model.
-
-        Unregister a model.
-      parameters:
-        - name: model_id
-          in: path
-          description: >-
-            The identifier of the model to unregister.
           required: true
           schema:
             type: string
@@ -1725,32 +1662,6 @@ paths:
       description: List all scoring functions.
       parameters: []
       deprecated: false
-    post:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - ScoringFunctions
-      summary: Register a scoring function.
-      description: Register a scoring function.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterScoringFunctionRequest'
-        required: true
-      deprecated: false
   /v1/scoring-functions/{scoring_fn_id}:
     get:
       responses:
@@ -1778,33 +1689,6 @@ paths:
         - name: scoring_fn_id
           in: path
           description: The ID of the scoring function to get.
-          required: true
-          schema:
-            type: string
-      deprecated: false
-    delete:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - ScoringFunctions
-      summary: Unregister a scoring function.
-      description: Unregister a scoring function.
-      parameters:
-        - name: scoring_fn_id
-          in: path
-          description: >-
-            The ID of the scoring function to unregister.
           required: true
           schema:
             type: string
@@ -1897,36 +1781,6 @@ paths:
       description: List all shields.
       parameters: []
       deprecated: false
-    post:
-      responses:
-        '200':
-          description: A Shield.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Shield'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Shields
-      summary: Register a shield.
-      description: Register a shield.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterShieldRequest'
-        required: true
-      deprecated: false
   /v1/shields/{identifier}:
     get:
       responses:
@@ -1954,33 +1808,6 @@ paths:
         - name: identifier
           in: path
           description: The identifier of the shield to get.
-          required: true
-          schema:
-            type: string
-      deprecated: false
-    delete:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - Shields
-      summary: Unregister a shield.
-      description: Unregister a shield.
-      parameters:
-        - name: identifier
-          in: path
-          description: >-
-            The identifier of the shield to unregister.
           required: true
           schema:
             type: string
@@ -2080,32 +1907,6 @@ paths:
       description: List tool groups with optional provider.
       parameters: []
       deprecated: false
-    post:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - ToolGroups
-      summary: Register a tool group.
-      description: Register a tool group.
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterToolGroupRequest'
-        required: true
-      deprecated: false
   /v1/toolgroups/{toolgroup_id}:
     get:
       responses:
@@ -2133,32 +1934,6 @@ paths:
         - name: toolgroup_id
           in: path
           description: The ID of the tool group to get.
-          required: true
-          schema:
-            type: string
-      deprecated: false
-    delete:
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - ToolGroups
-      summary: Unregister a tool group.
-      description: Unregister a tool group.
-      parameters:
-        - name: toolgroup_id
-          in: path
-          description: The ID of the tool group to unregister.
           required: true
           schema:
             type: string
@@ -2916,11 +2691,12 @@ paths:
       responses:
         '200':
           description: >-
-            A list of InterleavedContent representing the file contents.
+            File contents, optionally with embeddings and metadata based on query
+            parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VectorStoreFileContentsResponse'
+                $ref: '#/components/schemas/VectorStoreFileContentResponse'
         '400':
           $ref: '#/components/responses/BadRequest400'
         '429':
@@ -2951,6 +2727,20 @@ paths:
           required: true
           schema:
             type: string
+        - name: include_embeddings
+          in: query
+          description: >-
+            Whether to include embedding vectors in the response.
+          required: false
+          schema:
+            $ref: '#/components/schemas/bool'
+        - name: include_metadata
+          in: query
+          description: >-
+            Whether to include chunk metadata in the response.
+          required: false
+          schema:
+            $ref: '#/components/schemas/bool'
       deprecated: false
   /v1/vector_stores/{vector_store_id}/search:
     post:
@@ -3171,7 +2961,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterDatasetRequest'
         required: true
-      deprecated: false
+      deprecated: true
   /v1beta/datasets/{dataset_id}:
     get:
       responses:
@@ -3228,7 +3018,7 @@ paths:
           required: true
           schema:
             type: string
-      deprecated: false
+      deprecated: true
   /v1alpha/eval/benchmarks:
     get:
       responses:
@@ -3279,7 +3069,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterBenchmarkRequest'
         required: true
-      deprecated: false
+      deprecated: true
   /v1alpha/eval/benchmarks/{benchmark_id}:
     get:
       responses:
@@ -3336,7 +3126,7 @@ paths:
           required: true
           schema:
             type: string
-      deprecated: false
+      deprecated: true
   /v1alpha/eval/benchmarks/{benchmark_id}/evaluations:
     post:
       responses:
@@ -6280,46 +6070,6 @@ components:
       required:
         - data
       title: OpenAIListModelsResponse
-    ModelType:
-      type: string
-      enum:
-        - llm
-        - embedding
-        - rerank
-      title: ModelType
-      description: >-
-        Enumeration of supported model types in Llama Stack.
-    RegisterModelRequest:
-      type: object
-      properties:
-        model_id:
-          type: string
-          description: The identifier of the model to register.
-        provider_model_id:
-          type: string
-          description: >-
-            The identifier of the model in the provider.
-        provider_id:
-          type: string
-          description: The identifier of the provider.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: Any additional metadata for this model.
-        model_type:
-          $ref: '#/components/schemas/ModelType'
-          description: The type of model to register.
-      additionalProperties: false
-      required:
-        - model_id
-      title: RegisterModelRequest
     Model:
       type: object
       properties:
@@ -6377,6 +6127,15 @@ components:
       title: Model
       description: >-
         A model resource representing an AI model registered in Llama Stack.
+    ModelType:
+      type: string
+      enum:
+        - llm
+        - embedding
+        - rerank
+      title: ModelType
+      description: >-
+        Enumeration of supported model types in Llama Stack.
     RunModerationRequest:
       type: object
       properties:
@@ -6882,6 +6641,11 @@ components:
           type: string
           description: >-
             (Optional) System message inserted into the model's context
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) Max number of total calls to built-in tools that can be processed
+            in a response
         input:
           type: array
           items:
@@ -7240,6 +7004,11 @@ components:
             (Optional) Additional fields to include in the response.
         max_infer_iters:
           type: integer
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) Max number of total calls to built-in tools that can be processed
+            in a response.
       additionalProperties: false
       required:
         - input
@@ -7321,6 +7090,11 @@ components:
           type: string
           description: >-
             (Optional) System message inserted into the model's context
+        max_tool_calls:
+          type: integer
+          description: >-
+            (Optional) Max number of total calls to built-in tools that can be processed
+            in a response
       additionalProperties: false
       required:
         - created_at
@@ -9115,61 +8889,6 @@ components:
       required:
         - data
       title: ListScoringFunctionsResponse
-    ParamType:
-      oneOf:
-        - $ref: '#/components/schemas/StringType'
-        - $ref: '#/components/schemas/NumberType'
-        - $ref: '#/components/schemas/BooleanType'
-        - $ref: '#/components/schemas/ArrayType'
-        - $ref: '#/components/schemas/ObjectType'
-        - $ref: '#/components/schemas/JsonType'
-        - $ref: '#/components/schemas/UnionType'
-        - $ref: '#/components/schemas/ChatCompletionInputType'
-        - $ref: '#/components/schemas/CompletionInputType'
-      discriminator:
-        propertyName: type
-        mapping:
-          string: '#/components/schemas/StringType'
-          number: '#/components/schemas/NumberType'
-          boolean: '#/components/schemas/BooleanType'
-          array: '#/components/schemas/ArrayType'
-          object: '#/components/schemas/ObjectType'
-          json: '#/components/schemas/JsonType'
-          union: '#/components/schemas/UnionType'
-          chat_completion_input: '#/components/schemas/ChatCompletionInputType'
-          completion_input: '#/components/schemas/CompletionInputType'
-    RegisterScoringFunctionRequest:
-      type: object
-      properties:
-        scoring_fn_id:
-          type: string
-          description: >-
-            The ID of the scoring function to register.
-        description:
-          type: string
-          description: The description of the scoring function.
-        return_type:
-          $ref: '#/components/schemas/ParamType'
-          description: The return type of the scoring function.
-        provider_scoring_fn_id:
-          type: string
-          description: >-
-            The ID of the provider scoring function to use for the scoring function.
-        provider_id:
-          type: string
-          description: >-
-            The ID of the provider to use for the scoring function.
-        params:
-          $ref: '#/components/schemas/ScoringFnParams'
-          description: >-
-            The parameters for the scoring function for benchmark eval, these can
-            be overridden for app eval.
-      additionalProperties: false
-      required:
-        - scoring_fn_id
-        - description
-        - return_type
-      title: RegisterScoringFunctionRequest
     ScoreRequest:
       type: object
       properties:
@@ -9345,35 +9064,6 @@ components:
       required:
         - data
       title: ListShieldsResponse
-    RegisterShieldRequest:
-      type: object
-      properties:
-        shield_id:
-          type: string
-          description: >-
-            The identifier of the shield to register.
-        provider_shield_id:
-          type: string
-          description: >-
-            The identifier of the shield in the provider.
-        provider_id:
-          type: string
-          description: The identifier of the provider.
-        params:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: The parameters of the shield.
-      additionalProperties: false
-      required:
-        - shield_id
-      title: RegisterShieldRequest
     InvokeToolRequest:
       type: object
       properties:
@@ -9634,37 +9324,6 @@ components:
       title: ListToolGroupsResponse
       description: >-
         Response containing a list of tool groups.
-    RegisterToolGroupRequest:
-      type: object
-      properties:
-        toolgroup_id:
-          type: string
-          description: The ID of the tool group to register.
-        provider_id:
-          type: string
-          description: >-
-            The ID of the provider to use for the tool group.
-        mcp_endpoint:
-          $ref: '#/components/schemas/URL'
-          description: >-
-            The MCP endpoint to use for the tool group.
-        args:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            A dictionary of arguments to pass to the tool group.
-      additionalProperties: false
-      required:
-        - toolgroup_id
-        - provider_id
-      title: RegisterToolGroupRequest
     Chunk:
       type: object
       properties:
@@ -10447,6 +10106,8 @@ components:
       title: VectorStoreFileDeleteResponse
       description: >-
         Response from deleting a vector store file.
+    bool:
+      type: boolean
     VectorStoreContent:
       type: object
       properties:
@@ -10458,23 +10119,16 @@ components:
         text:
           type: string
           description: The actual text content
-      additionalProperties: false
-      required:
-        - type
-        - text
-      title: VectorStoreContent
-      description: >-
-        Content item from a vector store file or search result.
-    VectorStoreFileContentsResponse:
-      type: object
-      properties:
-        file_id:
-          type: string
-          description: Unique identifier for the file
-        filename:
-          type: string
-          description: Name of the file
-        attributes:
+        embedding:
+          type: array
+          items:
+            type: number
+          description: >-
+            Optional embedding vector for this content chunk
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+          description: Optional chunk metadata
+        metadata:
           type: object
           additionalProperties:
             oneOf:
@@ -10484,22 +10138,44 @@ components:
               - type: string
               - type: array
               - type: object
+          description: Optional user-defined metadata
+      additionalProperties: false
+      required:
+        - type
+        - text
+      title: VectorStoreContent
+      description: >-
+        Content item from a vector store file or search result.
+    VectorStoreFileContentResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          const: vector_store.file_content.page
+          default: vector_store.file_content.page
           description: >-
-            Key-value attributes associated with the file
-        content:
+            The object type, which is always `vector_store.file_content.page`
+        data:
           type: array
           items:
             $ref: '#/components/schemas/VectorStoreContent'
-          description: List of content items from the file
+          description: Parsed content of the file
+        has_more:
+          type: boolean
+          default: false
+          description: >-
+            Indicates if there are more content pages to fetch
+        next_page:
+          type: string
+          description: The token for the next page, if any
       additionalProperties: false
       required:
-        - file_id
-        - filename
-        - attributes
-        - content
-      title: VectorStoreFileContentsResponse
+        - object
+        - data
+        - has_more
+      title: VectorStoreFileContentResponse
       description: >-
-        Response from retrieving the contents of a vector store file.
+        Represents the parsed content of a vector store file.
     OpenaiSearchVectorStoreRequest:
       type: object
       properties:
@@ -10816,68 +10492,6 @@ components:
         - data
       title: ListDatasetsResponse
       description: Response from listing datasets.
-    DataSource:
-      oneOf:
-        - $ref: '#/components/schemas/URIDataSource'
-        - $ref: '#/components/schemas/RowsDataSource'
-      discriminator:
-        propertyName: type
-        mapping:
-          uri: '#/components/schemas/URIDataSource'
-          rows: '#/components/schemas/RowsDataSource'
-    RegisterDatasetRequest:
-      type: object
-      properties:
-        purpose:
-          type: string
-          enum:
-            - post-training/messages
-            - eval/question-answer
-            - eval/messages-answer
-          description: >-
-            The purpose of the dataset. One of: - "post-training/messages": The dataset
-            contains a messages column with list of messages for post-training. {
-            "messages": [ {"role": "user", "content": "Hello, world!"}, {"role": "assistant",
-            "content": "Hello, world!"}, ] } - "eval/question-answer": The dataset
-            contains a question column and an answer column for evaluation. { "question":
-            "What is the capital of France?", "answer": "Paris" } - "eval/messages-answer":
-            The dataset contains a messages column with list of messages and an answer
-            column for evaluation. { "messages": [ {"role": "user", "content": "Hello,
-            my name is John Doe."}, {"role": "assistant", "content": "Hello, John
-            Doe. How can I help you today?"}, {"role": "user", "content": "What's
-            my name?"}, ], "answer": "John Doe" }
-        source:
-          $ref: '#/components/schemas/DataSource'
-          description: >-
-            The data source of the dataset. Ensure that the data source schema is
-            compatible with the purpose of the dataset. Examples: - { "type": "uri",
-            "uri": "https://mywebsite.com/mydata.jsonl" } - { "type": "uri", "uri":
-            "lsfs://mydata.jsonl" } - { "type": "uri", "uri": "data:csv;base64,{base64_content}"
-            } - { "type": "uri", "uri": "huggingface://llamastack/simpleqa?split=train"
-            } - { "type": "rows", "rows": [ { "messages": [ {"role": "user", "content":
-            "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}, ]
-            } ] }
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            The metadata for the dataset. - E.g. {"description": "My dataset"}.
-        dataset_id:
-          type: string
-          description: >-
-            The ID of the dataset. If not provided, an ID will be generated.
-      additionalProperties: false
-      required:
-        - purpose
-        - source
-      title: RegisterDatasetRequest
     Benchmark:
       type: object
       properties:
@@ -10945,47 +10559,6 @@ components:
       required:
         - data
       title: ListBenchmarksResponse
-    RegisterBenchmarkRequest:
-      type: object
-      properties:
-        benchmark_id:
-          type: string
-          description: The ID of the benchmark to register.
-        dataset_id:
-          type: string
-          description: >-
-            The ID of the dataset to use for the benchmark.
-        scoring_functions:
-          type: array
-          items:
-            type: string
-          description: >-
-            The scoring functions to use for the benchmark.
-        provider_benchmark_id:
-          type: string
-          description: >-
-            The ID of the provider benchmark to use for the benchmark.
-        provider_id:
-          type: string
-          description: >-
-            The ID of the provider to use for the benchmark.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: The metadata to use for the benchmark.
-      additionalProperties: false
-      required:
-        - benchmark_id
-        - dataset_id
-        - scoring_functions
-      title: RegisterBenchmarkRequest
     BenchmarkConfig:
       type: object
       properties:
@@ -11847,6 +11420,109 @@ components:
         - hyperparam_search_config
         - logger_config
       title: SupervisedFineTuneRequest
+    DataSource:
+      oneOf:
+        - $ref: '#/components/schemas/URIDataSource'
+        - $ref: '#/components/schemas/RowsDataSource'
+      discriminator:
+        propertyName: type
+        mapping:
+          uri: '#/components/schemas/URIDataSource'
+          rows: '#/components/schemas/RowsDataSource'
+    RegisterDatasetRequest:
+      type: object
+      properties:
+        purpose:
+          type: string
+          enum:
+            - post-training/messages
+            - eval/question-answer
+            - eval/messages-answer
+          description: >-
+            The purpose of the dataset. One of: - "post-training/messages": The dataset
+            contains a messages column with list of messages for post-training. {
+            "messages": [ {"role": "user", "content": "Hello, world!"}, {"role": "assistant",
+            "content": "Hello, world!"}, ] } - "eval/question-answer": The dataset
+            contains a question column and an answer column for evaluation. { "question":
+            "What is the capital of France?", "answer": "Paris" } - "eval/messages-answer":
+            The dataset contains a messages column with list of messages and an answer
+            column for evaluation. { "messages": [ {"role": "user", "content": "Hello,
+            my name is John Doe."}, {"role": "assistant", "content": "Hello, John
+            Doe. How can I help you today?"}, {"role": "user", "content": "What's
+            my name?"}, ], "answer": "John Doe" }
+        source:
+          $ref: '#/components/schemas/DataSource'
+          description: >-
+            The data source of the dataset. Ensure that the data source schema is
+            compatible with the purpose of the dataset. Examples: - { "type": "uri",
+            "uri": "https://mywebsite.com/mydata.jsonl" } - { "type": "uri", "uri":
+            "lsfs://mydata.jsonl" } - { "type": "uri", "uri": "data:csv;base64,{base64_content}"
+            } - { "type": "uri", "uri": "huggingface://llamastack/simpleqa?split=train"
+            } - { "type": "rows", "rows": [ { "messages": [ {"role": "user", "content":
+            "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}, ]
+            } ] }
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            The metadata for the dataset. - E.g. {"description": "My dataset"}.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset. If not provided, an ID will be generated.
+      additionalProperties: false
+      required:
+        - purpose
+        - source
+      title: RegisterDatasetRequest
+    RegisterBenchmarkRequest:
+      type: object
+      properties:
+        benchmark_id:
+          type: string
+          description: The ID of the benchmark to register.
+        dataset_id:
+          type: string
+          description: >-
+            The ID of the dataset to use for the benchmark.
+        scoring_functions:
+          type: array
+          items:
+            type: string
+          description: >-
+            The scoring functions to use for the benchmark.
+        provider_benchmark_id:
+          type: string
+          description: >-
+            The ID of the provider benchmark to use for the benchmark.
+        provider_id:
+          type: string
+          description: >-
+            The ID of the provider to use for the benchmark.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: The metadata to use for the benchmark.
+      additionalProperties: false
+      required:
+        - benchmark_id
+        - dataset_id
+        - scoring_functions
+      title: RegisterBenchmarkRequest
   responses:
     BadRequest400:
       description: The request was invalid or malformed
