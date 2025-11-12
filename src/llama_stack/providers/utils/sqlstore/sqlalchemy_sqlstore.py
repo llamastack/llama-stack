@@ -84,9 +84,15 @@ class SqlAlchemySqlStoreImpl(SqlStore):
             connect_args["timeout"] = 5.0
             connect_args["check_same_thread"] = False  # Allow usage across asyncio tasks
 
+        # Configure connection pool for concurrent access
+        # Default pool_size=5 + max_overflow=10 = 15 total connections
+        # Increase to handle concurrent tests and API operations (especially with Postgres)
         engine = create_async_engine(
             self.config.engine_str,
             pool_pre_ping=True,
+            pool_size=20,  # Increased from default 5
+            max_overflow=30,  # Increased from default 10
+            pool_recycle=3600,  # Recycle connections after 1 hour to prevent stale connections
             connect_args=connect_args,
         )
 
