@@ -62,7 +62,7 @@ runs:
         uv pip install --force-reinstall --no-deps -e .
 
         echo "Installing ci-tests distribution dependencies"
-        llama stack list-deps ci-tests | xargs -L1 uv pip install
+        uv run llama stack list-deps ci-tests | xargs -L1 uv pip install
 
         echo "Installing ad-hoc dependencies"
         uv pip install faiss-cpu
