@@ -1,11 +1,31 @@
 {
-  "name": "ui",
-  "version": "0.1.0",
-  "private": true,
+  "name": "llama-stack-ui",
+  "version": "0.4.0-alpha.4",
+  "description": "Web UI for Llama Stack",
+  "license": "MIT",
+  "author": "Llama Stack <llamastack@meta.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/llamastack/llama-stack.git",
+    "directory": "llama_stack_ui"
+  },
+  "bin": {
+    "llama-stack-ui": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    ".next",
+    "public",
+    "next.config.ts",
+    "instrumentation.ts",
+    "tsconfig.json",
+    "package.json"
+  ],
   "scripts": {
     "dev": "next dev --turbopack --port ${LLAMA_STACK_UI_PORT:-8322}",
-    "build": "next build",
+    "build": "next build && node scripts/postbuild.js",
     "start": "next start",
+    "prepublishOnly": "npm run build",
     "lint": "next lint",
     "format": "prettier --write \"./**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"./**/*.{ts,tsx}\"",
@@ -25,7 +45,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
-    "llama-stack-client": "github:llamastack/llama-stack-client-typescript",
+    "llama-stack-client": "^0.3.1",
     "lucide-react": "^0.545.0",
     "next": "15.5.4",
     "next-auth": "^4.24.11",
