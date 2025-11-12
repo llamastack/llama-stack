@@ -193,11 +193,6 @@ class TestMCPToolsInChatCompletion:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Authorization now passed as request body parameter
-        # Removed auth_headers - using authorization parameter instead
-            # (no longer needed)
-        }
-
         # Get the tools from MCP
         tools_response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
