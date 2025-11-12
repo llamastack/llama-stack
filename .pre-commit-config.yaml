@@ -105,7 +105,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^src/llama_stack/providers/.*$
+        files: ^src/llama_stack/providers/.*$|^scripts/run_openapi_generator.sh$
       - id: openapi-codegen
         name: API Spec Codegen
         additional_dependencies:
