@@ -123,15 +123,15 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        # Authorization now passed as request body parameter
+        # Removed auth_headers - using authorization parameter instead
+            # (no longer needed)
         }
 
         # List runtime tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         tools = response
@@ -166,15 +166,15 @@ class TestMCPSchemaPreservation:
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
         )
-        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        # Authorization now passed as request body parameter
+        # Removed auth_headers - using authorization parameter instead
+            # (no longer needed)
         }
 
         # List tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Find book_flight tool (which should have $ref/$defs)
@@ -216,14 +216,14 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        # Authorization now passed as request body parameter
+        # Removed auth_headers - using authorization parameter instead
+            # (no longer needed)
         }
 
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Find get_weather tool
@@ -263,15 +263,15 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        # Authorization now passed as request body parameter
+        # Removed auth_headers - using authorization parameter instead
+            # (no longer needed)
         }
 
         # List tools to populate the tool index
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Invoke tool with complex nested data
@@ -283,7 +283,7 @@ class TestMCPToolInvocation:
                     "shipping": {"address": {"street": "123 Main St", "city": "San Francisco", "zipcode": "94102"}},
                 }
             },
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Should succeed without schema validation errors
@@ -309,22 +309,22 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        # Authorization now passed as request body parameter
+        # Removed auth_headers - using authorization parameter instead
+            # (no longer needed)
         }
 
         # List tools to populate the tool index
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Test with email format
         result_email = llama_stack_client.tool_runtime.invoke_tool(
             tool_name="flexible_contact",
             kwargs={"contact_info": "user@example.com"},
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         assert result_email.error_message is None
@@ -333,7 +333,7 @@ class TestMCPToolInvocation:
         result_phone = llama_stack_client.tool_runtime.invoke_tool(
             tool_name="flexible_contact",
             kwargs={"contact_info": "+15551234567"},
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         assert result_phone.error_message is None
@@ -365,14 +365,14 @@ class TestAgentWithMCPTools:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        # Authorization now passed as request body parameter
+        # Removed auth_headers - using authorization parameter instead
+            # (no longer needed)
         }
 
         tools_list = llama_stack_client.tools.list(
             toolgroup_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
         tool_defs = [
             {
@@ -389,7 +389,7 @@ class TestAgentWithMCPTools:
             model=text_model_id,
             instructions="You are a helpful assistant that can process orders and book flights.",
             tools=tool_defs,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         session_id = agent.create_session("test-session-complex")
@@ -411,7 +411,7 @@ class TestAgentWithMCPTools:
                     }
                 ],
                 stream=True,
-                extra_headers=auth_headers,
+                authorization=AUTH_TOKEN,
             )
         )
 

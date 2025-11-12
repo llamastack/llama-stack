@@ -6,41 +6,20 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class MCPProviderDataValidator(BaseModel):
     """
     Validator for MCP provider-specific data passed via request headers.
-    Example usage:
-        HTTP Request Headers:
-            X-LlamaStack-Provider-Data: {
-                "mcp_headers": {
-                    "http://weather-mcp.com": {
-                        "X-Trace-ID": "trace-123",
-                        "X-Request-ID": "req-456"
-                    }
-                },
-                "mcp_authorization": {
-                    "http://weather-mcp.com": "weather_api_token_xyz"
-                }
-            }
-    Security Note:
-        - Authorization header MUST NOT be placed in mcp_headers
-        - Use the dedicated mcp_authorization field instead
-        - Each MCP endpoint can have its own separate token
+
+    Note: MCP authentication and headers are now configured via the request body
+    (OpenAIResponseInputToolMCP.authorization and .headers fields) rather than
+    via provider data to simplify the API and avoid multiple configuration paths.
+
+    This validator is kept for future provider-data extensions if needed.
     """
-
-    # mcp_endpoint => dict of headers to send (excluding Authorization)
-    mcp_headers: dict[str, dict[str, str]] | None = None
-
-    # mcp_endpoint => authorization token
-    # Example: {"http://server.com": "token123"}
-    # Security: exclude=True ensures this field is NEVER included in:
-    # - API responses
-    # - Logs
-    # - Serialization (model_dump, dict(), json())
-    mcp_authorization: dict[str, str] | None = Field(default=None, exclude=True)
+    pass
 
 
 class MCPProviderConfig(BaseModel):

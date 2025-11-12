@@ -25,7 +25,9 @@ from .config import MCPProviderConfig
 logger = get_logger(__name__, category="tools")
 
 
-class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+class ModelContextProtocolToolRuntimeImpl(
+    ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData
+):
     def __init__(self, config: MCPProviderConfig, _deps: dict[Api, Any]):
         self.config = config
 
@@ -39,15 +41,23 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         return
 
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
+        self,
+        tool_group_id: str | None = None,
+        mcp_endpoint: URL | None = None,
+        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         # this endpoint should be retrieved by getting the tool group right?
         if mcp_endpoint is None:
             raise ValueError("mcp_endpoint is required")
-        headers, authorization = await self.get_headers_from_request(mcp_endpoint.uri)
-        return await list_mcp_tools(endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization)
+        # Authorization now comes from request body parameter (not provider-data)
+        headers = {}
+        return await list_mcp_tools(
+            endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization
+        )
 
-    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
+    async def invoke_tool(
+        self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
+    ) -> ToolInvocationResult:
         tool = await self.tool_store.get_tool(tool_name)
         if tool.metadata is None or tool.metadata.get("endpoint") is None:
             raise ValueError(f"Tool {tool_name} does not have metadata")
@@ -55,7 +65,8 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         if urlparse(endpoint).scheme not in ("http", "https"):
             raise ValueError(f"Endpoint {endpoint} is not a valid HTTP(S) URL")
 
-        headers, authorization = await self.get_headers_from_request(endpoint)
+        # Authorization now comes from request body parameter (not provider-data)
+        headers = {}
         return await invoke_mcp_tool(
             endpoint=endpoint,
             tool_name=tool_name,
@@ -64,58 +75,22 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
             authorization=authorization,
         )
 
-    async def get_headers_from_request(self, mcp_endpoint_uri: str) -> tuple[dict[str, str], str | None]:
+    async def get_headers_from_request(
+        self, mcp_endpoint_uri: str
+    ) -> tuple[dict[str, str], str | None]:
         """
-        Extract headers and authorization from request provider data.
+        Placeholder method for extracting headers and authorization.
 
-        For security, Authorization should not be passed via mcp_headers.
-        Instead, use a dedicated authorization field in the provider data.
+        Note: MCP authentication and headers are now configured via the request body
+        (OpenAIResponseInputToolMCP.authorization and .headers fields) and are handled
+        by the responses API layer, not at the provider level.
+
+        This method is kept for interface compatibility but returns empty values
+        as the tool runtime provider no longer extracts per-request configuration.
 
         Returns:
-            Tuple of (headers_dict, authorization_token)
-            - headers_dict: All headers except Authorization
-            - authorization_token: Token from Authorization header (with "Bearer " prefix removed), or None
-
-        Raises:
-            ValueError: If Authorization header is found in mcp_headers (security risk)
+            Tuple of (empty_headers_dict, None)
         """
-
-        def canonicalize_uri(uri: str) -> str:
-            return f"{urlparse(uri).netloc or ''}/{urlparse(uri).path or ''}"
-
-        headers = {}
-        authorization = None
-
-        # PRIMARY SECURITY: This line prevents inference token leakage
-        # provider_data only contains X-LlamaStack-Provider-Data (request body),
-        # never the HTTP Authorization header (which contains the inference token)
-        provider_data = self.get_request_provider_data()
-        if provider_data:
-            # Extract headers (excluding Authorization)
-            if provider_data.mcp_headers:
-                for uri, values in provider_data.mcp_headers.items():
-                    if canonicalize_uri(uri) != canonicalize_uri(mcp_endpoint_uri):
-                        continue
-
-                    # Security check: reject Authorization header in mcp_headers
-                    # This enforces using the dedicated mcp_authorization field for auth tokens
-                    # Note: Inference tokens are already isolated by line 89 (provider_data only contains request body)
-                    for key in values.keys():
-                        if key.lower() == "authorization":
-                            raise ValueError(
-                                "Authorization header cannot be passed via 'mcp_headers'. "
-                                "Please use 'mcp_authorization' in provider_data instead."
-                            )
-
-                    # Collect all headers (Authorization already rejected above)
-                    headers.update(values)
-
-            # Extract authorization from dedicated field
-            if provider_data.mcp_authorization:
-                canonical_endpoint = canonicalize_uri(mcp_endpoint_uri)
-                for uri, token in provider_data.mcp_authorization.items():
-                    if canonicalize_uri(uri) == canonical_endpoint:
-                        authorization = token
-                        break
-
-        return headers, authorization
+        # Headers and authorization are now handled at the responses API layer
+        # via OpenAIResponseInputToolMCP.headers and .authorization fields
+        return {}, None

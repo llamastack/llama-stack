@@ -196,22 +196,32 @@ class ToolRuntime(Protocol):
     # TODO: This needs to be renamed once OPEN API generator name conflict issue is fixed.
     @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1)
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
+        self,
+        tool_group_id: str | None = None,
+        mcp_endpoint: URL | None = None,
+        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         """List all tools in the runtime.
 
         :param tool_group_id: The ID of the tool group to list tools for.
         :param mcp_endpoint: The MCP endpoint to use for the tool group.
+        :param authorization: (Optional) OAuth access token for authenticating with the MCP server.
         :returns: A ListToolDefsResponse.
         """
         ...
 
     @webmethod(route="/tool-runtime/invoke", method="POST", level=LLAMA_STACK_API_V1)
-    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
+    async def invoke_tool(
+        self,
+        tool_name: str,
+        kwargs: dict[str, Any],
+        authorization: str | None = None,
+    ) -> ToolInvocationResult:
         """Run a tool with the given arguments.
 
         :param tool_name: The name of the tool to invoke.
         :param kwargs: A dictionary of arguments to pass to the tool.
+        :param authorization: (Optional) OAuth access token for authenticating with the MCP server.
         :returns: A ToolInvocationResult.
         """
         ...

@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import json
-
 import pytest
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
@@ -42,21 +40,13 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
         mcp_endpoint=dict(uri=uri),
     )
 
-    provider_data = {
-        "mcp_authorization": {
-            uri: AUTH_TOKEN,  # Token
-        },
-    }
-    auth_headers = {
-        "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-    }
-
+    # Authorization now passed as request body parameter (not provider-data)
     with pytest.raises(Exception, match="Unauthorized"):
         llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)
 
     tools_list = llama_stack_client.tools.list(
         toolgroup_id=test_toolgroup_id,
-        extra_headers=auth_headers,
+        authorization=AUTH_TOKEN,  # Pass authorization as parameter
     )
     assert len(tools_list) == 2
     assert {t.name for t in tools_list} == {"greet_everyone", "get_boiling_point"}
@@ -64,7 +54,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="greet_everyone",
         kwargs=dict(url="https://www.google.com"),
-        extra_headers=auth_headers,
+        authorization=AUTH_TOKEN,  # Pass authorization as parameter
     )
     content = response.content
     assert len(content) == 1
@@ -105,7 +95,6 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
                 }
             ],
             stream=True,
-            extra_headers=auth_headers,
         )
     )
     events = [chunk.event for chunk in chunks]

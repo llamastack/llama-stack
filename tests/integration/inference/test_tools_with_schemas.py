@@ -193,15 +193,15 @@ class TestMCPToolsInChatCompletion:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_authorization": {uri: AUTH_TOKEN}}  # Token without "Bearer " prefix
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        # Authorization now passed as request body parameter
+        # Removed auth_headers - using authorization parameter instead
+            # (no longer needed)
         }
 
         # Get the tools from MCP
         tools_response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Convert to OpenAI format for inference
