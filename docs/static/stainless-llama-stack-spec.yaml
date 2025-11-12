@@ -1482,6 +1482,30 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/_responses_Request'
+        x-llama-stack-extra-body-params:
+          guardrails:
+            $defs:
+              ResponseGuardrailSpec:
+                description: |-
+                  Specification for a guardrail to apply during response generation.
+
+                  :param type: The type/identifier of the guardrail.
+                properties:
+                  type:
+                    title: Type
+                    type: string
+                required:
+                - type
+                title: ResponseGuardrailSpec
+                type: object
+            anyOf:
+            - items:
+                anyOf:
+                - type: string
+                - $ref: '#/components/schemas/ResponseGuardrailSpec'
+              type: array
+            - type: 'null'
+            description: List of guardrails to apply during response generation. Guardrails provide safety and content moderation.
       responses:
         '200':
           description: An OpenAIResponseObject.
@@ -5243,6 +5267,25 @@ components:
       type: object
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
+    ApprovalFilter:
+      properties:
+        always:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Always
+        never:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Never
+      type: object
+      title: ApprovalFilter
+      description: Filter configuration for MCP tool approval requirements.
     ArrayType:
       properties:
         type:
@@ -7957,6 +8000,48 @@ components:
       - parameters
       title: OpenAIResponseInputToolFunction
       description: Function tool configuration for OpenAI response inputs.
+    OpenAIResponseInputToolMCP:
+      properties:
+        type:
+          type: string
+          const: mcp
+          title: Type
+          default: mcp
+        server_label:
+          type: string
+          title: Server Label
+        server_url:
+          type: string
+          title: Server Url
+        headers:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Headers
+        require_approval:
+          anyOf:
+          - type: string
+            const: always
+          - type: string
+            const: never
+          - $ref: '#/components/schemas/ApprovalFilter'
+          title: Require Approval
+          default: never
+        allowed_tools:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - $ref: '#/components/schemas/AllowedToolsFilter'
+          - type: 'null'
+          title: Allowed Tools
+      type: object
+      required:
+      - server_label
+      - server_url
+      title: OpenAIResponseInputToolMCP
+      description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseInputToolWebSearch:
       properties:
         type:
@@ -10308,32 +10393,108 @@ components:
     _responses_Request:
       properties:
         input:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+            type: array
           title: Input
         model:
+          type: string
           title: Model
         prompt:
-          title: Prompt
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponsePrompt'
+          - type: 'null'
         instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Instructions
         previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Previous Response Id
         conversation:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Conversation
         store:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Store
           default: true
         stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Stream
           default: false
         temperature:
+          anyOf:
+          - type: number
+          - type: 'null'
           title: Temperature
         text:
-          title: Text
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+          - type: 'null'
         tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+            type: array
+          - type: 'null'
           title: Tools
         include:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
           title: Include
         max_infer_iters:
+          anyOf:
+          - type: integer
+          - type: 'null'
           title: Max Infer Iters
           default: 10
         guardrails:
@@ -11228,71 +11389,6 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-    ApprovalFilter:
-      description: Filter configuration for MCP tool approval requirements.
-      properties:
-        always:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Always
-          nullable: true
-        never:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Never
-          nullable: true
-      title: ApprovalFilter
-      type: object
-    OpenAIResponseInputToolMCP:
-      description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
-      properties:
-        type:
-          const: mcp
-          default: mcp
-          title: Type
-          type: string
-        server_label:
-          title: Server Label
-          type: string
-        server_url:
-          title: Server Url
-          type: string
-        headers:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Headers
-          nullable: true
-        require_approval:
-          anyOf:
-          - const: always
-            type: string
-          - const: never
-            type: string
-          - $ref: '#/components/schemas/ApprovalFilter'
-          default: never
-          title: Require Approval
-        allowed_tools:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - $ref: '#/components/schemas/AllowedToolsFilter'
-          - type: 'null'
-          title: Allowed Tools
-          nullable: true
-      required:
-      - server_label
-      - server_url
-      title: OpenAIResponseInputToolMCP
-      type: object
     OpenAIResponseInputTool:
       discriminator:
         mapping:

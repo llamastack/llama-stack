@@ -550,6 +550,25 @@ components:
       type: object
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
+    ApprovalFilter:
+      properties:
+        always:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Always
+        never:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Never
+      type: object
+      title: ApprovalFilter
+      description: Filter configuration for MCP tool approval requirements.
     ArrayType:
       properties:
         type:
@@ -3032,6 +3051,48 @@ components:
       - parameters
       title: OpenAIResponseInputToolFunction
       description: Function tool configuration for OpenAI response inputs.
+    OpenAIResponseInputToolMCP:
+      properties:
+        type:
+          type: string
+          const: mcp
+          title: Type
+          default: mcp
+        server_label:
+          type: string
+          title: Server Label
+        server_url:
+          type: string
+          title: Server Url
+        headers:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Headers
+        require_approval:
+          anyOf:
+          - type: string
+            const: always
+          - type: string
+            const: never
+          - $ref: '#/components/schemas/ApprovalFilter'
+          title: Require Approval
+          default: never
+        allowed_tools:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - $ref: '#/components/schemas/AllowedToolsFilter'
+          - type: 'null'
+          title: Allowed Tools
+      type: object
+      required:
+      - server_label
+      - server_url
+      title: OpenAIResponseInputToolMCP
+      description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseInputToolWebSearch:
       properties:
         type:
@@ -5551,71 +5612,6 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-    ApprovalFilter:
-      description: Filter configuration for MCP tool approval requirements.
-      properties:
-        always:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Always
-          nullable: true
-        never:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Never
-          nullable: true
-      title: ApprovalFilter
-      type: object
-    OpenAIResponseInputToolMCP:
-      description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
-      properties:
-        type:
-          const: mcp
-          default: mcp
-          title: Type
-          type: string
-        server_label:
-          title: Server Label
-          type: string
-        server_url:
-          title: Server Url
-          type: string
-        headers:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Headers
-          nullable: true
-        require_approval:
-          anyOf:
-          - const: always
-            type: string
-          - const: never
-            type: string
-          - $ref: '#/components/schemas/ApprovalFilter'
-          default: never
-          title: Require Approval
-        allowed_tools:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - $ref: '#/components/schemas/AllowedToolsFilter'
-          - type: 'null'
-          title: Allowed Tools
-          nullable: true
-      required:
-      - server_label
-      - server_url
-      title: OpenAIResponseInputToolMCP
-      type: object
     OpenAIResponseInputTool:
       discriminator:
         mapping:
