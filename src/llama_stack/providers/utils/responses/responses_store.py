@@ -252,19 +252,12 @@ class ResponsesStore:
         # Serialize messages to dict format for JSON storage
         messages_data = [msg.model_dump() for msg in messages]
 
-        # Upsert: try insert first, update if exists
-        try:
-            await self.sql_store.insert(
-                table="conversation_messages",
-                data={"conversation_id": conversation_id, "messages": messages_data},
-            )
-        except Exception:
-            # If insert fails due to ID conflict, update existing record
-            await self.sql_store.update(
-                table="conversation_messages",
-                data={"messages": messages_data},
-                where={"conversation_id": conversation_id},
-            )
+        await self.sql_store.upsert(
+            table="conversation_messages",
+            data={"conversation_id": conversation_id, "messages": messages_data},
+            conflict_columns=["conversation_id"],
+            update_columns=["messages"],
+        )
 
         logger.debug(f"Stored {len(messages)} messages for conversation {conversation_id}")
 

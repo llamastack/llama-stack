@@ -129,6 +129,23 @@ class AuthorizedSqlStore:
             enhanced_data = [_enhance_item_with_access_control(item, current_user) for item in data]
         await self.sql_store.insert(table, enhanced_data)
 
+    async def upsert(
+        self,
+        table: str,
+        data: Mapping[str, Any],
+        conflict_columns: list[str],
+        update_columns: list[str] | None = None,
+    ) -> None:
+        """Upsert a row with automatic access control attribute capture."""
+        current_user = get_authenticated_user()
+        enhanced_data = _enhance_item_with_access_control(data, current_user)
+        await self.sql_store.upsert(
+            table=table,
+            data=enhanced_data,
+            conflict_columns=conflict_columns,
+            update_columns=update_columns,
+        )
+
     async def fetch_all(
         self,
         table: str,
