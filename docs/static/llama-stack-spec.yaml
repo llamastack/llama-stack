@@ -3193,6 +3193,19 @@ components:
                 $ref: '#/components/schemas/OpenAIChatCompletionUsage'
                 description: >-
                   Token usage information for the completion
+              metadata:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: 'null'
+                    - type: boolean
+                    - type: number
+                    - type: string
+                    - type: array
+                    - type: object
+                description: >-
+                  (Optional) Set of key-value pairs that were attached to the request.
+                  This metadata is copied from the request.
               input_messages:
                 type: array
                 items:
@@ -3903,6 +3916,19 @@ components:
         user:
           type: string
           description: (Optional) The user to use.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Set of key-value pairs that can be attached to the request.
+            This metadata will be included in the response object.
       additionalProperties: false
       required:
         - model
@@ -3939,6 +3965,19 @@ components:
           $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: >-
             Token usage information for the completion
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Set of key-value pairs that were attached to the request. This
+            metadata is copied from the request.
       additionalProperties: false
       required:
         - id
@@ -3978,6 +4017,19 @@ components:
           $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: >-
             Token usage information (typically included in final chunk with stream_options)
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Set of key-value pairs that were attached to the request. This
+            metadata is copied from the request.
       additionalProperties: false
       required:
         - id
@@ -4067,6 +4119,19 @@ components:
           $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: >-
             Token usage information for the completion
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Set of key-value pairs that were attached to the request. This
+            metadata is copied from the request.
         input_messages:
           type: array
           items:
@@ -4172,6 +4237,19 @@ components:
           type: string
           description: >-
             (Optional) The suffix that should be appended to the completion.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Set of key-value pairs that can be attached to the request.
+            This metadata will be included in the response object.
       additionalProperties: false
       required:
         - model
@@ -4196,6 +4274,16 @@ components:
           type: string
           const: text_completion
           default: text_completion
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
       additionalProperties: false
       required:
         - id
@@ -5028,6 +5116,19 @@ components:
           description: >-
             (Optional) A unique identifier representing your end-user, which can help
             OpenAI to monitor and detect abuse.
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Set of key-value pairs that can be attached to the request.
+            This metadata will be included in the response object.
       additionalProperties: false
       required:
         - model
@@ -5101,6 +5202,19 @@ components:
         usage:
           $ref: '#/components/schemas/OpenAIEmbeddingUsage'
           description: Usage information
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: >-
+            (Optional) Set of key-value pairs that were attached to the request. This
+            metadata is copied from the request.
       additionalProperties: false
       required:
         - object

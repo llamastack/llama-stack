@@ -694,6 +694,7 @@ class OpenAIChatCompletion(BaseModel):
     :param created: The Unix timestamp in seconds when the chat completion was created
     :param model: The model that was used to generate the chat completion
     :param usage: Token usage information for the completion
+    :param metadata: (Optional) Set of key-value pairs that were attached to the request. This metadata is copied from the request.
     """
 
     id: str
@@ -702,6 +703,7 @@ class OpenAIChatCompletion(BaseModel):
     created: int
     model: str
     usage: OpenAIChatCompletionUsage | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -714,6 +716,7 @@ class OpenAIChatCompletionChunk(BaseModel):
     :param created: The Unix timestamp in seconds when the chat completion was created
     :param model: The model that was used to generate the chat completion
     :param usage: Token usage information (typically included in final chunk with stream_options)
+    :param metadata: (Optional) Set of key-value pairs that were attached to the request. This metadata is copied from the request.
     """
 
     id: str
@@ -722,6 +725,7 @@ class OpenAIChatCompletionChunk(BaseModel):
     created: int
     model: str
     usage: OpenAIChatCompletionUsage | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -765,6 +769,7 @@ class OpenAICompletion(BaseModel):
     :created: The Unix timestamp in seconds when the completion was created
     :model: The model that was used to generate the completion
     :object: The object type, which will be "text_completion"
+    :metadata: (Optional) Set of key-value pairs that were attached to the request. This metadata is copied from the request.
     """
 
     id: str
@@ -772,6 +777,7 @@ class OpenAICompletion(BaseModel):
     created: int
     model: str
     object: Literal["text_completion"] = "text_completion"
+    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -809,12 +815,14 @@ class OpenAIEmbeddingsResponse(BaseModel):
     :param data: List of embedding data objects
     :param model: The model that was used to generate the embeddings
     :param usage: Usage information
+    :param metadata: (Optional) Set of key-value pairs that were attached to the request. This metadata is copied from the request.
     """
 
     object: Literal["list"] = "list"
     data: list[OpenAIEmbeddingData]
     model: str
     usage: OpenAIEmbeddingUsage
+    metadata: dict[str, Any] | None = None
 
 
 class ModelStore(Protocol):
@@ -890,6 +898,7 @@ class OpenAICompletionRequestWithExtraBody(BaseModel, extra="allow"):
     :param top_p: (Optional) The top p to use.
     :param user: (Optional) The user to use.
     :param suffix: (Optional) The suffix that should be appended to the completion.
+    :param metadata: (Optional) Set of key-value pairs that can be attached to the request. This metadata will be included in the response object.
     """
 
     # Standard OpenAI completion parameters
@@ -911,6 +920,7 @@ class OpenAICompletionRequestWithExtraBody(BaseModel, extra="allow"):
     top_p: float | None = None
     user: str | None = None
     suffix: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 # extra_body can be accessed via .model_extra
@@ -941,6 +951,7 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     :param top_logprobs: (Optional) The top log probabilities to use.
     :param top_p: (Optional) The top p to use.
     :param user: (Optional) The user to use.
+    :param metadata: (Optional) Set of key-value pairs that can be attached to the request. This metadata will be included in the response object.
     """
 
     # Standard OpenAI chat completion parameters
@@ -967,6 +978,7 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     top_logprobs: int | None = None
     top_p: float | None = None
     user: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 # extra_body can be accessed via .model_extra
@@ -979,6 +991,7 @@ class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
     :param encoding_format: (Optional) The format to return the embeddings in. Can be either "float" or "base64". Defaults to "float".
     :param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.
     :param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+    :param metadata: (Optional) Set of key-value pairs that can be attached to the request. This metadata will be included in the response object.
     """
 
     model: str
@@ -986,6 +999,7 @@ class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
     encoding_format: str | None = "float"
     dimensions: int | None = None
     user: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @runtime_checkable
