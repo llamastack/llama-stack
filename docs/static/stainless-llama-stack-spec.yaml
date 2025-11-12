@@ -3350,7 +3350,6 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
-<<<<<<< HEAD
       tags:
         - VectorIO
       summary: >-
@@ -3387,8 +3386,6 @@ paths:
             $ref: '#/components/schemas/bool'
       deprecated: false
   /v1/vector_stores/{vector_store_id}/search:
-=======
->>>>>>> a84647350 (chore: use Pydantic to generate OpenAPI schema)
     post:
       tags:
       - Shields
