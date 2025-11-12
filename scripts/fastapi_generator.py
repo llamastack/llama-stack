@@ -11,7 +11,6 @@ FastAPI-based OpenAPI generator for Llama Stack.
 
 import importlib
 import inspect
-import json
 import pkgutil
 from pathlib import Path
 from typing import Annotated, Any, get_args, get_origin
@@ -905,32 +904,6 @@ def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI 
         return False
     except Exception as e:
         print(f"❌ {schema_name} validation error: {e}")
-        return False
-
-
-def validate_schema_file(file_path: Path) -> bool:
-    """
-    Validate an OpenAPI schema file (YAML or JSON).
-
-    Args:
-        file_path: Path to the schema file
-
-    Returns:
-        True if valid, False otherwise
-    """
-    try:
-        with open(file_path) as f:
-            if file_path.suffix.lower() in [".yaml", ".yml"]:
-                schema = yaml.safe_load(f)
-            elif file_path.suffix.lower() == ".json":
-                schema = json.load(f)
-            else:
-                print(f"❌ Unsupported file format: {file_path.suffix}")
-                return False
-
-        return validate_openapi_schema(schema, str(file_path))
-    except Exception as e:
-        print(f"❌ Failed to read {file_path}: {e}")
         return False
 
 
