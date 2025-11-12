@@ -56,7 +56,9 @@ runs:
         fi
 
         echo "Syncing dependencies with uv (will create fresh venv)"
-        uv sync --all-groups
+        # Use --no-install-project to avoid installing llama-stack yet (we'll do it later with -e)
+        # This prevents Python from importing old code during sync
+        uv sync --all-groups --no-install-project
 
         echo "Force reinstalling llama-stack from source to ensure latest changes"
         uv pip install --force-reinstall --no-deps -e .
