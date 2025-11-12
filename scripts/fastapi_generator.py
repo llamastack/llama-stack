@@ -1472,8 +1472,17 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
     deprecated_valid = validate_openapi_schema(deprecated_schema, "Deprecated schema")
     combined_valid = validate_openapi_schema(combined_schema, "Combined (stainless) schema")
 
-    if not all([stable_valid, experimental_valid, deprecated_valid, combined_valid]):
-        print("⚠️  Some schemas failed validation, but continuing with generation...")
+    failed_schemas = []
+    if not stable_valid:
+        failed_schemas.append("Stable schema")
+    if not experimental_valid:
+        failed_schemas.append("Experimental schema")
+    if not deprecated_valid:
+        failed_schemas.append("Deprecated schema")
+    if not combined_valid:
+        failed_schemas.append("Combined (stainless) schema")
+    if failed_schemas:
+        raise ValueError(f"Invalid schemas: {', '.join(failed_schemas)}")
 
     # Ensure output directory exists
     output_path = Path(output_dir)
