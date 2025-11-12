@@ -37,11 +37,12 @@ runs:
           echo "Exported UV environment variables for current and subsequent steps"
         fi
 
-        echo "Clearing Python bytecode cache to avoid stale .pyc files"
+        echo "Clearing Python bytecode cache and lock file to ensure fresh install"
         find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
         find . -name "*.pyc" -delete 2>/dev/null || true
+        rm -f uv.lock
 
-        echo "Updating project dependencies via uv sync"
+        echo "Syncing dependencies (will regenerate lock file)"
         uv sync --all-groups
 
         echo "Force reinstalling llama-stack from source to ensure latest changes"
