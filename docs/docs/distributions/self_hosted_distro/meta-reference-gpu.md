@@ -79,6 +79,33 @@ docker run \
   --port $LLAMA_STACK_PORT
 ```
 
+### Via Docker with Custom Run Configuration
+
+You can also run the Docker container with a custom run configuration file by mounting it into the container:
+
+```bash
+# Set the path to your custom run.yaml file
+CUSTOM_RUN_CONFIG=/path/to/your/custom-run.yaml
+LLAMA_STACK_PORT=8321
+
+docker run \
+  -it \
+  --pull always \
+  --gpu all \
+  -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+  -v ~/.llama:/root/.llama \
+  -v $CUSTOM_RUN_CONFIG:/app/custom-run.yaml \
+  -e RUN_CONFIG_PATH=/app/custom-run.yaml \
+  llamastack/distribution-meta-reference-gpu \
+  --port $LLAMA_STACK_PORT
+```
+
+**Note**: The run configuration must be mounted into the container before it can be used. The `-v` flag mounts your local file into the container, and the `RUN_CONFIG_PATH` environment variable tells the entrypoint script which configuration to use.
+
+Available run configurations for this distribution:
+- `run.yaml`
+- `run-with-safety.yaml`
+
 ### Via venv
 
 Make sure you have the Llama Stack CLI available.

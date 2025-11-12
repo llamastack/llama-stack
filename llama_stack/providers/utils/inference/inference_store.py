@@ -66,13 +66,6 @@ class InferenceStore:
             },
         )
 
-        if self.enable_write_queue:
-            self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
-            for _ in range(self._num_writers):
-                self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
-        else:
-            logger.info("Write queue disabled for SQLite to avoid concurrency issues")
-
     async def shutdown(self) -> None:
         if not self._worker_tasks:
             return
@@ -93,10 +86,29 @@ class InferenceStore:
         if self.enable_write_queue and self._queue is not None:
             await self._queue.join()
 
+    async def _ensure_workers_started(self) -> None:
+        """Ensure the async write queue workers run on the current loop."""
+        if not self.enable_write_queue:
+            return
+
+        if self._queue is None:
+            self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
+            logger.debug(
+                f"Inference store write queue created with max size {self._max_write_queue_size} "
+                f"and {self._num_writers} writers"
+            )
+
+        if not self._worker_tasks:
+            loop = asyncio.get_running_loop()
+            for _ in range(self._num_writers):
+                task = loop.create_task(self._worker_loop())
+                self._worker_tasks.append(task)
+
     async def store_chat_completion(
         self, chat_completion: OpenAIChatCompletion, input_messages: list[OpenAIMessageParam]
     ) -> None:
         if self.enable_write_queue:
+            await self._ensure_workers_started()
             if self._queue is None:
                 raise ValueError("Inference store is not initialized")
             try:
