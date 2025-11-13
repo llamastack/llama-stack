@@ -7,7 +7,12 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from llama_stack_api import OpenAICreateVectorStoreRequestWithExtraBody
+from llama_stack_api import (
+    ModelNotFoundError,
+    ModelType,
+    ModelTypeError,
+    OpenAICreateVectorStoreRequestWithExtraBody,
+)
 
 from llama_stack.core.routers.vector_io import VectorIORouter
 
@@ -21,6 +26,7 @@ async def test_single_provider_auto_selection():
             Mock(identifier="all-MiniLM-L6-v2", model_type="embedding", metadata={"embedding_dimension": 384})
         ]
     )
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.embedding))
     mock_routing_table.register_vector_store = AsyncMock(
         return_value=Mock(identifier="vs_123", provider_id="inline::faiss", provider_resource_id="vs_123")
     )
@@ -48,6 +54,7 @@ async def test_create_vector_stores_multiple_providers_missing_provider_id_error
             Mock(identifier="all-MiniLM-L6-v2", model_type="embedding", metadata={"embedding_dimension": 384})
         ]
     )
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.embedding))
     router = VectorIORouter(mock_routing_table)
     request = OpenAICreateVectorStoreRequestWithExtraBody.model_validate(
         {"name": "test_store", "embedding_model": "all-MiniLM-L6-v2"}
@@ -117,3 +124,31 @@ async def test_update_vector_store_same_provider_id_succeeds():
     provider.openai_update_vector_store.assert_called_once_with(
         vector_store_id="vs_123", name="updated_name", expires_after=None, metadata={"provider_id": "inline::faiss"}
     )
+
+
+async def test_create_vector_store_with_unknown_embedding_model_raises_error():
+    """Test that creating a vector store with an unknown embedding model raises ModelNotFoundError."""
+    mock_routing_table = Mock(impls_by_provider_id={"provider": "mock"})
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=None)
+
+    router = VectorIORouter(mock_routing_table)
+    request = OpenAICreateVectorStoreRequestWithExtraBody.model_validate(
+        {"embedding_model": "unknown-model", "embedding_dimension": 384}
+    )
+
+    with pytest.raises(ModelNotFoundError, match="Model 'unknown-model' not found"):
+        await router.openai_create_vector_store(request)
+
+
+async def test_create_vector_store_with_wrong_model_type_raises_error():
+    """Test that creating a vector store with a non-embedding model raises ModelTypeError."""
+    mock_routing_table = Mock(impls_by_provider_id={"provider": "mock"})
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.llm))
+
+    router = VectorIORouter(mock_routing_table)
+    request = OpenAICreateVectorStoreRequestWithExtraBody.model_validate(
+        {"embedding_model": "text-model", "embedding_dimension": 384}
+    )
+
+    with pytest.raises(ModelTypeError, match="Model 'text-model' is of type"):
+        await router.openai_create_vector_store(request)
