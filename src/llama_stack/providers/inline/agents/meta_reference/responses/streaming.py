@@ -8,8 +8,6 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from opentelemetry import trace
-
 from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
@@ -66,6 +64,7 @@ from llama_stack_api import (
     OpenAIResponseUsageOutputTokensDetails,
     WebSearchToolTypes,
 )
+from opentelemetry import trace
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
