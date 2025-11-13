@@ -16,6 +16,7 @@ from typing import (
     cast,
 )
 
+from llama_stack_api import json_schema_type, register_schema
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -28,7 +29,6 @@ from pydantic import BaseModel, Field
 
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import Primitive
-from llama_stack.schema_utils import json_schema_type, register_schema
 
 ROOT_SPAN_MARKERS = ["__root__", "__root_span__"]
 

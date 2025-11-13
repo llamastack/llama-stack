@@ -7,7 +7,8 @@
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, PropertyMock, patch
 
-from llama_stack.apis.inference import OpenAIChatCompletionRequestWithExtraBody
+from llama_stack_api import OpenAIChatCompletionRequestWithExtraBody
+
 from llama_stack.providers.remote.inference.bedrock.bedrock import BedrockInferenceAdapter
 from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
 

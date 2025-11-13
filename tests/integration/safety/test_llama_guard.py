@@ -12,8 +12,8 @@ import warnings
 from collections.abc import Generator
 
 import pytest
+from llama_stack_api import ViolationLevel
 
-from llama_stack.apis.safety import ViolationLevel
 from llama_stack.models.llama.sku_types import CoreModelId
 
 # Llama Guard models available for text and vision shields

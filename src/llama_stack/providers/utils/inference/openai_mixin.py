@@ -10,11 +10,9 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
-from openai import AsyncOpenAI
-from pydantic import BaseModel, ConfigDict
-
-from llama_stack.apis.inference import (
+from llama_stack_api import (
     Model,
+    ModelType,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -26,7 +24,9 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
 )
-from llama_stack.apis.models import ModelType
+from openai import AsyncOpenAI
+from pydantic import BaseModel, ConfigDict
+
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig

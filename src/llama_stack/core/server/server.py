@@ -28,11 +28,10 @@ from fastapi import Path as FastapiPath
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 from openai import BadRequestError
 from pydantic import BaseModel, ValidationError
 
-from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
-from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
@@ -58,7 +57,6 @@ from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger, setup_logging
-from llama_stack.providers.datatypes import Api
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware

@@ -7,8 +7,8 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from llama_stack_api import OpenAICreateVectorStoreRequestWithExtraBody
 
-from llama_stack.apis.vector_io import OpenAICreateVectorStoreRequestWithExtraBody
 from llama_stack.core.routers.vector_io import VectorIORouter
 
 

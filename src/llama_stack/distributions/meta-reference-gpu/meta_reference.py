@@ -6,7 +6,8 @@
 
 from pathlib import Path
 
-from llama_stack.apis.models import ModelType
+from llama_stack_api import ModelType
+
 from llama_stack.core.datatypes import (
     BuildProvider,
     ModelInput,

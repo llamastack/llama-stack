@@ -7,12 +7,18 @@
 from typing import Any
 
 import requests
+from llama_stack_api import (
+    ModerationObject,
+    OpenAIMessageParam,
+    RunShieldResponse,
+    Safety,
+    SafetyViolation,
+    Shield,
+    ShieldsProtocolPrivate,
+    ViolationLevel,
+)
 
-from llama_stack.apis.inference import OpenAIMessageParam
-from llama_stack.apis.safety import ModerationObject, RunShieldResponse, Safety, SafetyViolation, ViolationLevel
-from llama_stack.apis.shields import Shield
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import ShieldsProtocolPrivate
 
 from .config import NVIDIASafetyConfig
 

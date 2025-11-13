@@ -8,9 +8,7 @@ import math
 from typing import Optional
 
 import torch
-from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
-
-from llama_stack.apis.inference import (
+from llama_stack_api import (
     GreedySamplingStrategy,
     JsonSchemaResponseFormat,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -20,6 +18,8 @@ from llama_stack.apis.inference import (
     SamplingParams,
     TopPSamplingStrategy,
 )
+from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
+
 from llama_stack.models.llama.datatypes import QuantizationMode, ToolPromptFormat
 from llama_stack.models.llama.llama3.generation import Llama3
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer

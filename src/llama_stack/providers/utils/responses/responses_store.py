@@ -4,18 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.apis.agents import (
-    Order,
-)
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
+    OpenAIMessageParam,
     OpenAIResponseInput,
     OpenAIResponseObject,
     OpenAIResponseObjectWithInput,
+    Order,
 )
-from llama_stack.apis.inference import OpenAIMessageParam
+
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference
 from llama_stack.log import get_logger

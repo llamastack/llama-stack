@@ -6,8 +6,7 @@
 import statistics
 from typing import Any
 
-from llama_stack.apis.scoring import ScoringResultRow
-from llama_stack.apis.scoring_functions import AggregationFunctionType
+from llama_stack_api import AggregationFunctionType, ScoringResultRow
 
 
 def aggregate_accuracy(scoring_results: list[ScoringResultRow]) -> dict[str, Any]:

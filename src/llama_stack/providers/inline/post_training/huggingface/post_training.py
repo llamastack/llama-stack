@@ -6,11 +6,11 @@
 from enum import Enum
 from typing import Any
 
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.post_training import (
+from llama_stack_api import (
     AlgorithmConfig,
     Checkpoint,
+    DatasetIO,
+    Datasets,
     DPOAlignmentConfig,
     JobStatus,
     ListPostTrainingJobsResponse,
@@ -19,6 +19,7 @@ from llama_stack.apis.post_training import (
     PostTrainingJobStatusResponse,
     TrainingConfig,
 )
+
 from llama_stack.providers.inline.post_training.huggingface.config import (
     HuggingFacePostTrainingConfig,
 )

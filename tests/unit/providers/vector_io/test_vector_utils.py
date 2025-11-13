@@ -4,7 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.apis.vector_io import Chunk, ChunkMetadata
+from llama_stack_api import Chunk, ChunkMetadata
+
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
 # This test is a unit test for the chunk_utils.py helpers. This should only contain

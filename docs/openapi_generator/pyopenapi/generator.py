@@ -16,27 +16,27 @@ from typing import Annotated, Any, Dict, get_args, get_origin, Set, Union
 
 from fastapi import UploadFile
 
-from llama_stack.apis.datatypes import Error
-from llama_stack.strong_typing.core import JsonType
-from llama_stack.strong_typing.docstring import Docstring, parse_type
-from llama_stack.strong_typing.inspection import (
+from llama_stack_api import (
+    Docstring,
+    Error,
+    JsonSchemaGenerator,
+    JsonType,
+    Schema,
+    SchemaOptions,
+    get_schema_identifier,
     is_generic_list,
     is_type_optional,
     is_type_union,
     is_unwrapped_body_param,
+    json_dump_string,
+    object_to_json,
+    parse_type,
+    python_type_to_name,
+    register_schema,
     unwrap_generic_list,
     unwrap_optional_type,
     unwrap_union_types,
 )
-from llama_stack.strong_typing.name import python_type_to_name
-from llama_stack.strong_typing.schema import (
-    get_schema_identifier,
-    JsonSchemaGenerator,
-    register_schema,
-    Schema,
-    SchemaOptions,
-)
-from llama_stack.strong_typing.serialization import json_dump_string, object_to_json
 from pydantic import BaseModel
 
 from .operations import (

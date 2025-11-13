@@ -6,9 +6,16 @@
 
 from typing import Any
 
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.common.errors import ToolGroupNotFoundError
-from llama_stack.apis.tools import ListToolDefsResponse, ListToolGroupsResponse, ToolDef, ToolGroup, ToolGroups
+from llama_stack_api import (
+    URL,
+    ListToolDefsResponse,
+    ListToolGroupsResponse,
+    ToolDef,
+    ToolGroup,
+    ToolGroupNotFoundError,
+    ToolGroups,
+)
+
 from llama_stack.core.datatypes import AuthenticationRequiredError, ToolGroupWithOwner
 from llama_stack.log import get_logger
 

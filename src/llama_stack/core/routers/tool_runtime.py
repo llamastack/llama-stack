@@ -6,13 +6,12 @@
 
 from typing import Any
 
-from llama_stack.apis.common.content_types import (
+from llama_stack_api import (
     URL,
-)
-from llama_stack.apis.tools import (
     ListToolDefsResponse,
     ToolRuntime,
 )
+
 from llama_stack.log import get_logger
 
 from ..routing_tables.toolgroups import ToolGroupsRoutingTable

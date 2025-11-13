@@ -9,8 +9,7 @@ import warnings
 from unittest.mock import patch
 
 import pytest
-
-from llama_stack.apis.post_training.post_training import (
+from llama_stack_api import (
     DataConfig,
     DatasetFormat,
     EfficiencyConfig,
@@ -19,6 +18,7 @@ from llama_stack.apis.post_training.post_training import (
     OptimizerType,
     TrainingConfig,
 )
+
 from llama_stack.core.library_client import convert_pydantic_to_json_value
 from llama_stack.providers.remote.post_training.nvidia.post_training import (
     NvidiaPostTrainingAdapter,

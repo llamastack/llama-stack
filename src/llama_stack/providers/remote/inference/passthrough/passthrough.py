@@ -6,10 +6,9 @@
 
 from collections.abc import AsyncIterator
 
-from openai import AsyncOpenAI
-
-from llama_stack.apis.inference import (
+from llama_stack_api import (
     Inference,
+    Model,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -18,7 +17,8 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack.apis.models import Model
+from openai import AsyncOpenAI
+
 from llama_stack.core.request_headers import NeedsRequestProviderData
 
 from .config import PassthroughImplConfig

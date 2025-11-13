@@ -16,7 +16,7 @@ import sys
 import fire
 import ruamel.yaml as yaml
 
-from llama_stack.apis.version import LLAMA_STACK_API_V1 # noqa: E402
+from llama_stack_api import LLAMA_STACK_API_V1 # noqa: E402
 from llama_stack.core.stack import LlamaStack  # noqa: E402
 
 from .pyopenapi.options import Options  # noqa: E402

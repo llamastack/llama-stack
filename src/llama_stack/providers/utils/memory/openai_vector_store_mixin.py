@@ -13,16 +13,15 @@ from abc import ABC, abstractmethod
 from typing import Annotated, Any
 
 from fastapi import Body
-from pydantic import TypeAdapter
-
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files, OpenAIFileObject
-from llama_stack.apis.vector_io import (
+from llama_stack_api import (
     Chunk,
+    Files,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAIFileObject,
     QueryChunksResponse,
     SearchRankingOptions,
+    VectorStore,
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
     VectorStoreChunkingStrategyStatic,
@@ -39,11 +38,13 @@ from llama_stack.apis.vector_io import (
     VectorStoreFileStatus,
     VectorStoreListFilesResponse,
     VectorStoreListResponse,
+    VectorStoreNotFoundError,
     VectorStoreObject,
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
-from llama_stack.apis.vector_stores import VectorStore
+from pydantic import TypeAdapter
+
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.kvstore.api import KVStore

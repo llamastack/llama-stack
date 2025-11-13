@@ -10,17 +10,17 @@ from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
-
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.vector_io import (
+from llama_stack_api import (
     Chunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
+    VectorStore,
     VectorStoreChunkingStrategyAuto,
     VectorStoreFileObject,
+    VectorStoreNotFoundError,
 )
-from llama_stack.apis.vector_stores import VectorStore
+
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectorIO providers. This should only contain
@@ -222,7 +222,7 @@ async def test_insert_chunks_missing_db_raises(vector_io_adapter):
 
 async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
     """Ensure no KeyError when document_id is missing or in different places."""
-    from llama_stack.apis.vector_io import Chunk, ChunkMetadata
+    from llama_stack_api import Chunk, ChunkMetadata
 
     fake_index = AsyncMock()
     vector_io_adapter.cache["db1"] = fake_index
@@ -255,7 +255,7 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
 
 async def test_document_id_with_invalid_type_raises_error():
     """Ensure TypeError is raised when document_id is not a string."""
-    from llama_stack.apis.vector_io import Chunk
+    from llama_stack_api import Chunk
 
     # Integer document_id should raise TypeError
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id

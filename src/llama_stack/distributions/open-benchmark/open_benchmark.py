@@ -5,8 +5,8 @@
 # the root directory of this source tree.
 
 
-from llama_stack.apis.datasets import DatasetPurpose, URIDataSource
-from llama_stack.apis.models import ModelType
+from llama_stack_api import DatasetPurpose, ModelType, URIDataSource
+
 from llama_stack.core.datatypes import (
     BenchmarkInput,
     BuildProvider,

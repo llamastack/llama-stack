@@ -12,6 +12,17 @@ from pathlib import Path
 from typing import Any
 
 import torch
+from llama_stack_api import (
+    Checkpoint,
+    DataConfig,
+    DatasetIO,
+    Datasets,
+    LoraFinetuningConfig,
+    OptimizerConfig,
+    PostTrainingMetric,
+    QATFinetuningConfig,
+    TrainingConfig,
+)
 from torch import nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, DistributedSampler
@@ -32,17 +43,6 @@ from torchtune.training.lr_schedulers import get_cosine_schedule_with_warmup
 from torchtune.training.metric_logging import DiskLogger
 from tqdm import tqdm
 
-from llama_stack.apis.common.training_types import PostTrainingMetric
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.post_training import (
-    Checkpoint,
-    DataConfig,
-    LoraFinetuningConfig,
-    OptimizerConfig,
-    QATFinetuningConfig,
-    TrainingConfig,
-)
 from llama_stack.core.utils.config_dirs import DEFAULT_CHECKPOINT_DIR
 from llama_stack.core.utils.model_utils import model_local_dir
 from llama_stack.log import get_logger

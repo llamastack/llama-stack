@@ -7,8 +7,8 @@
 from collections.abc import Iterable
 
 from databricks.sdk import WorkspaceClient
+from llama_stack_api import OpenAICompletion, OpenAICompletionRequestWithExtraBody
 
-from llama_stack.apis.inference import OpenAICompletion, OpenAICompletionRequestWithExtraBody
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 

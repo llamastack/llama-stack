@@ -9,8 +9,7 @@ import struct
 from collections.abc import AsyncIterator
 
 import litellm
-
-from llama_stack.apis.inference import (
+from llama_stack_api import (
     InferenceProvider,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -22,6 +21,7 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
 )
+
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry

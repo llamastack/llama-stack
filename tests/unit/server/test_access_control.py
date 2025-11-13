@@ -8,10 +8,9 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import yaml
+from llama_stack_api import Api, ModelType
 from pydantic import TypeAdapter, ValidationError
 
-from llama_stack.apis.datatypes import Api
-from llama_stack.apis.models import ModelType
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.datatypes import AccessRule, ModelWithOwner, User
 from llama_stack.core.routing_tables.models import ModelsRoutingTable

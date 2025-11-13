@@ -6,15 +6,15 @@
 import asyncio
 from typing import Any
 
-from sqlalchemy.exc import IntegrityError
-
-from llama_stack.apis.inference import (
+from llama_stack_api import (
     ListOpenAIChatCompletionResponse,
     OpenAIChatCompletion,
     OpenAICompletionWithInputMessages,
     OpenAIMessageParam,
     Order,
 )
+from sqlalchemy.exc import IntegrityError
+
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import InferenceStoreReference, StorageBackendType
 from llama_stack.log import get_logger

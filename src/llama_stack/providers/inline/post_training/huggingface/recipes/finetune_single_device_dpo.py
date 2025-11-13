@@ -11,18 +11,18 @@ from typing import Any
 
 import torch
 from datasets import Dataset
+from llama_stack_api import (
+    Checkpoint,
+    DatasetIO,
+    Datasets,
+    DPOAlignmentConfig,
+    TrainingConfig,
+)
 from transformers import (
     AutoTokenizer,
 )
 from trl import DPOConfig, DPOTrainer
 
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.post_training import (
-    Checkpoint,
-    DPOAlignmentConfig,
-    TrainingConfig,
-)
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.post_training.common.utils import evacuate_model_from_device
 

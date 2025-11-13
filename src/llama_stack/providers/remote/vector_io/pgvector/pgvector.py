@@ -8,18 +8,23 @@ import heapq
 from typing import Any
 
 import psycopg2
+from llama_stack_api import (
+    Chunk,
+    Files,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
 from numpy.typing import NDArray
 from psycopg2 import sql
 from psycopg2.extras import Json, execute_values
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore

@@ -20,25 +20,23 @@ except ImportError:
     from openai.types.chat.chat_completion_message_tool_call import (
         ChatCompletionMessageToolCall as OpenAIChatCompletionMessageFunctionToolCall,
     )
+from llama_stack_api import (
+    URL,
+    GreedySamplingStrategy,
+    ImageContentItem,
+    JsonSchemaResponseFormat,
+    OpenAIResponseFormatParam,
+    SamplingParams,
+    TextContentItem,
+    TopKSamplingStrategy,
+    TopPSamplingStrategy,
+    _URLOrData,
+)
 from openai.types.chat import (
     ChatCompletionMessageToolCall,
 )
 from pydantic import BaseModel
 
-from llama_stack.apis.common.content_types import (
-    URL,
-    ImageContentItem,
-    TextContentItem,
-    _URLOrData,
-)
-from llama_stack.apis.inference import (
-    GreedySamplingStrategy,
-    JsonSchemaResponseFormat,
-    OpenAIResponseFormatParam,
-    SamplingParams,
-    TopKSamplingStrategy,
-    TopPSamplingStrategy,
-)
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import (
     BuiltinTool,

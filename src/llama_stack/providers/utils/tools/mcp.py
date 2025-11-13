@@ -10,17 +10,20 @@ from enum import Enum
 from typing import Any, cast
 
 import httpx
+from llama_stack_api import (
+    ImageContentItem,
+    InterleavedContentItem,
+    ListToolDefsResponse,
+    TextContentItem,
+    ToolDef,
+    ToolInvocationResult,
+    _URLOrData,
+)
 from mcp import ClientSession, McpError
 from mcp import types as mcp_types
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamablehttp_client
 
-from llama_stack.apis.common.content_types import ImageContentItem, InterleavedContentItem, TextContentItem, _URLOrData
-from llama_stack.apis.tools import (
-    ListToolDefsResponse,
-    ToolDef,
-    ToolInvocationResult,
-)
 from llama_stack.core.datatypes import AuthenticationRequiredError
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.tools.ttl_dict import TTLDict

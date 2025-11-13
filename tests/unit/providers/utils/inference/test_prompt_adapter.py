@@ -4,10 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.apis.inference import (
-    OpenAIAssistantMessageParam,
-    OpenAIUserMessageParam,
-)
+from llama_stack_api import OpenAIAssistantMessageParam, OpenAIUserMessageParam
+
 from llama_stack.models.llama.datatypes import RawTextItem
 from llama_stack.providers.utils.inference.prompt_adapter import (
     convert_openai_message_to_raw_message,

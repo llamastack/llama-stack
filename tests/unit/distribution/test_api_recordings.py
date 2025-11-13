@@ -9,10 +9,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from openai import AsyncOpenAI
 
 # Import the real Pydantic response types instead of using Mocks
-from llama_stack.apis.inference import (
+from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChoice,
@@ -20,6 +19,8 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
 )
+from openai import AsyncOpenAI
+
 from llama_stack.testing.api_recorder import (
     APIRecordingMode,
     ResponseStorage,

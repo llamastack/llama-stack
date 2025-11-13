@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import yaml
+from llama_stack_api import Api
 from termcolor import cprint
 
 from llama_stack.cli.stack.utils import ImageType
@@ -21,7 +22,6 @@ from llama_stack.core.datatypes import (
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.stack import replace_env_vars
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api
 
 TEMPLATES_PATH = Path(__file__).parent.parent.parent / "templates"
 

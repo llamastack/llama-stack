@@ -144,7 +144,7 @@ def middleware_with_mocks(mock_auth_endpoint):
     middleware = AuthenticationMiddleware(mock_app, auth_config, {})
 
     # Mock the route_impls to simulate finding routes with required scopes
-    from llama_stack.schema_utils import WebMethod
+    from llama_stack_api import WebMethod
 
     routes = {
         ("POST", "/test/scoped"): WebMethod(route="/test/scoped", method="POST", required_scope="test.read"),

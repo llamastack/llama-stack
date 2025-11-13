@@ -9,9 +9,9 @@ Unit tests for JSON Schema-based tool definitions.
 Tests the new input_schema and output_schema fields.
 """
 
+from llama_stack_api import ToolDef
 from pydantic import ValidationError
 
-from llama_stack.apis.tools import ToolDef
 from llama_stack.models.llama.datatypes import BuiltinTool, ToolDefinition
 
 

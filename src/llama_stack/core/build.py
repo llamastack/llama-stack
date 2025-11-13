@@ -6,6 +6,7 @@
 
 import sys
 
+from llama_stack_api import Api
 from pydantic import BaseModel
 from termcolor import cprint
 
@@ -13,7 +14,6 @@ from llama_stack.core.datatypes import BuildConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.distributions.template import DistributionTemplate
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api
 
 log = get_logger(name=__name__, category="core")
 

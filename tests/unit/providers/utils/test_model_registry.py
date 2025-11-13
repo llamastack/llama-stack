@@ -34,8 +34,8 @@
 #
 
 import pytest
+from llama_stack_api import Model
 
-from llama_stack.apis.models import Model
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 
 

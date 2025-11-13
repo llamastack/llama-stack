@@ -5,8 +5,7 @@
 # the root directory of this source tree.
 
 import pytest
-
-from llama_stack.apis.vector_io import Chunk
+from llama_stack_api import Chunk
 
 from ..conftest import vector_provider_wrapper
 

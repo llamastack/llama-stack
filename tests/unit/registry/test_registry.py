@@ -6,9 +6,8 @@
 
 
 import pytest
+from llama_stack_api import Model, VectorStore
 
-from llama_stack.apis.inference import Model
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.core.datatypes import VectorStoreWithOwner
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.core.store.registry import (
@@ -304,7 +303,8 @@ async def test_double_registration_different_objects(disk_dist_registry):
 
 async def test_double_registration_with_cache(cached_disk_dist_registry):
     """Test double registration behavior with caching enabled."""
-    from llama_stack.apis.models import ModelType
+    from llama_stack_api import ModelType
+
     from llama_stack.core.datatypes import ModelWithOwner
 
     model1 = ModelWithOwner(

@@ -9,7 +9,7 @@ import enum
 from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, List, Optional, Union
 
-from llama_stack.strong_typing.schema import JsonType, Schema, StrictJsonType
+from llama_stack_api import JsonType, Schema, StrictJsonType
 
 URL = str
 
