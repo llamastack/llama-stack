@@ -46,7 +46,6 @@ class ToolRuntimeRouter(ToolRuntime):
         )
 
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None, authorization: str | None = None
+        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
     ) -> ListToolDefsResponse:
-        logger.debug(f"ToolRuntimeRouter.list_runtime_tools: {tool_group_id}")
-        return await self.routing_table.list_tools(tool_group_id, authorization=authorization)
+        return await self.routing_table.list_tools(tool_group_id)

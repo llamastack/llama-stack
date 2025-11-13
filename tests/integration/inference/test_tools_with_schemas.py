@@ -196,7 +196,6 @@ class TestMCPToolsInChatCompletion:
         # Get the tools from MCP
         tools_response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
         )
 
         # Convert to OpenAI format for inference

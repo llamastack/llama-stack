@@ -199,13 +199,11 @@ class ToolRuntime(Protocol):
         self,
         tool_group_id: str | None = None,
         mcp_endpoint: URL | None = None,
-        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         """List all tools in the runtime.
 
         :param tool_group_id: The ID of the tool group to list tools for.
         :param mcp_endpoint: The MCP endpoint to use for the tool group.
-        :param authorization: (Optional) OAuth access token for authenticating with the MCP server.
         :returns: A ListToolDefsResponse.
         """
         ...
