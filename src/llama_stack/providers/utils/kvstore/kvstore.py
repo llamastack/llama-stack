@@ -11,6 +11,9 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections import defaultdict
+
 from llama_stack.core.storage.datatypes import KVStoreReference, StorageBackendConfig, StorageBackendType
 
 from .api import KVStore
@@ -53,45 +56,63 @@ class InmemoryKVStoreImpl(KVStore):
 
 
 _KVSTORE_BACKENDS: dict[str, KVStoreConfig] = {}
+_KVSTORE_INSTANCES: dict[tuple[str, str], KVStore] = {}
+_KVSTORE_LOCKS: defaultdict[tuple[str, str], asyncio.Lock] = defaultdict(asyncio.Lock)
 
 
 def register_kvstore_backends(backends: dict[str, StorageBackendConfig]) -> None:
     """Register the set of available KV store backends for reference resolution."""
     global _KVSTORE_BACKENDS
+    global _KVSTORE_INSTANCES
+    global _KVSTORE_LOCKS
 
     _KVSTORE_BACKENDS.clear()
+    _KVSTORE_INSTANCES.clear()
+    _KVSTORE_LOCKS.clear()
     for name, cfg in backends.items():
         _KVSTORE_BACKENDS[name] = cfg
 
 
 async def kvstore_impl(reference: KVStoreReference) -> KVStore:
     backend_name = reference.backend
+    cache_key = (backend_name, reference.namespace)
+
+    existing = _KVSTORE_INSTANCES.get(cache_key)
+    if existing:
+        return existing
 
     backend_config = _KVSTORE_BACKENDS.get(backend_name)
     if backend_config is None:
         raise ValueError(f"Unknown KVStore backend '{backend_name}'. Registered backends: {sorted(_KVSTORE_BACKENDS)}")
 
-    config = backend_config.model_copy()
-    config.namespace = reference.namespace
+    lock = _KVSTORE_LOCKS[cache_key]
+    async with lock:
+        existing = _KVSTORE_INSTANCES.get(cache_key)
+        if existing:
+            return existing
 
-    if config.type == StorageBackendType.KV_REDIS.value:
-        from .redis import RedisKVStoreImpl
+        config = backend_config.model_copy()
+        config.namespace = reference.namespace
 
-        impl = RedisKVStoreImpl(config)
-    elif config.type == StorageBackendType.KV_SQLITE.value:
-        from .sqlite import SqliteKVStoreImpl
+        if config.type == StorageBackendType.KV_REDIS.value:
+            from .redis import RedisKVStoreImpl
 
-        impl = SqliteKVStoreImpl(config)
-    elif config.type == StorageBackendType.KV_POSTGRES.value:
-        from .postgres import PostgresKVStoreImpl
+            impl = RedisKVStoreImpl(config)
+        elif config.type == StorageBackendType.KV_SQLITE.value:
+            from .sqlite import SqliteKVStoreImpl
 
-        impl = PostgresKVStoreImpl(config)
-    elif config.type == StorageBackendType.KV_MONGODB.value:
-        from .mongodb import MongoDBKVStoreImpl
+            impl = SqliteKVStoreImpl(config)
+        elif config.type == StorageBackendType.KV_POSTGRES.value:
+            from .postgres import PostgresKVStoreImpl
 
-        impl = MongoDBKVStoreImpl(config)
-    else:
-        raise ValueError(f"Unknown kvstore type {config.type}")
+            impl = PostgresKVStoreImpl(config)
+        elif config.type == StorageBackendType.KV_MONGODB.value:
+            from .mongodb import MongoDBKVStoreImpl
 
-    await impl.initialize()
-    return impl
+            impl = MongoDBKVStoreImpl(config)
+        else:
+            raise ValueError(f"Unknown kvstore type {config.type}")
+
+        await impl.initialize()
+        _KVSTORE_INSTANCES[cache_key] = impl
+        return impl

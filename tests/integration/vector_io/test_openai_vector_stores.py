@@ -11,6 +11,7 @@ import pytest
 from llama_stack_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
 
+from llama_stack.apis.files import ExpiresAfter
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
@@ -1604,3 +1605,97 @@ def test_openai_vector_store_embedding_config_from_metadata(
 
     assert "metadata_config_store" in store_names
     assert "consistent_config_store" in store_names
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_file_contents_with_extra_query(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    """Test that vector store file contents endpoint supports extra_query parameter."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(
+        name="test_extra_query_store",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # Create and attach a file
+    test_content = b"This is test content for extra_query validation."
+    with BytesIO(test_content) as file_buffer:
+        file_buffer.name = "test_extra_query.txt"
+        file = compat_client.files.create(
+            file=file_buffer,
+            purpose="assistants",
+            expires_after=ExpiresAfter(anchor="created_at", seconds=86400),
+        )
+
+    file_attach_response = compat_client.vector_stores.files.create(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        extra_body={"embedding_model": embedding_model_id},
+    )
+    assert file_attach_response.status == "completed"
+
+    # Wait for processing
+    time.sleep(2)
+
+    # Test that extra_query parameter is accepted and processed
+    content_with_extra_query = compat_client.vector_stores.files.content(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        extra_query={"include_embeddings": True, "include_metadata": True},
+    )
+
+    # Test without extra_query for comparison
+    content_without_extra_query = compat_client.vector_stores.files.content(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+    )
+
+    # Validate that both calls succeed
+    assert content_with_extra_query is not None
+    assert content_without_extra_query is not None
+    assert len(content_with_extra_query.data) > 0
+    assert len(content_without_extra_query.data) > 0
+
+    # Validate that extra_query parameter is processed correctly
+    # Both should have the embedding/metadata fields available (may be None based on flags)
+    first_chunk_with_flags = content_with_extra_query.data[0]
+    first_chunk_without_flags = content_without_extra_query.data[0]
+
+    # The key validation: extra_query fields are present in the response
+    # Handle both dict and object responses (different clients may return different formats)
+    def has_field(obj, field):
+        if isinstance(obj, dict):
+            return field in obj
+        else:
+            return hasattr(obj, field)
+
+    # Validate that all expected fields are present in both responses
+    expected_fields = ["embedding", "chunk_metadata", "metadata", "text"]
+    for field in expected_fields:
+        assert has_field(first_chunk_with_flags, field), f"Field '{field}' missing from response with extra_query"
+        assert has_field(first_chunk_without_flags, field), f"Field '{field}' missing from response without extra_query"
+
+    # Validate content is the same
+    def get_field(obj, field):
+        if isinstance(obj, dict):
+            return obj[field]
+        else:
+            return getattr(obj, field)
+
+    assert get_field(first_chunk_with_flags, "text") == test_content.decode("utf-8")
+    assert get_field(first_chunk_without_flags, "text") == test_content.decode("utf-8")
+
+    with_flags_embedding = get_field(first_chunk_with_flags, "embedding")
+    without_flags_embedding = get_field(first_chunk_without_flags, "embedding")
+
+    # Validate that embeddings are included when requested and excluded when not requested
+    assert with_flags_embedding is not None, "Embeddings should be included when include_embeddings=True"
+    assert len(with_flags_embedding) > 0, "Embedding should be a non-empty list"
+    assert without_flags_embedding is None, "Embeddings should not be included when include_embeddings=False"

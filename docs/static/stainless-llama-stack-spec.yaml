@@ -2691,7 +2691,8 @@ paths:
       responses:
         '200':
           description: >-
-            A VectorStoreFileContentResponse representing the file contents.
+            File contents, optionally with embeddings and metadata based on query
+            parameters.
           content:
             application/json:
               schema:
@@ -2726,6 +2727,20 @@ paths:
           required: true
           schema:
             type: string
+        - name: include_embeddings
+          in: query
+          description: >-
+            Whether to include embedding vectors in the response.
+          required: false
+          schema:
+            $ref: '#/components/schemas/bool'
+        - name: include_metadata
+          in: query
+          description: >-
+            Whether to include chunk metadata in the response.
+          required: false
+          schema:
+            $ref: '#/components/schemas/bool'
       deprecated: false
   /v1/vector_stores/{vector_store_id}/search:
     post:
@@ -10091,6 +10106,8 @@ components:
       title: VectorStoreFileDeleteResponse
       description: >-
         Response from deleting a vector store file.
+    bool:
+      type: boolean
     VectorStoreContent:
       type: object
       properties:
@@ -10102,6 +10119,26 @@ components:
         text:
           type: string
           description: The actual text content
+        embedding:
+          type: array
+          items:
+            type: number
+          description: >-
+            Optional embedding vector for this content chunk
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+          description: Optional chunk metadata
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: 'null'
+              - type: boolean
+              - type: number
+              - type: string
+              - type: array
+              - type: object
+          description: Optional user-defined metadata
       additionalProperties: false
       required:
         - type
@@ -10125,6 +10162,7 @@ components:
           description: Parsed content of the file
         has_more:
           type: boolean
+          default: false
           description: >-
             Indicates if there are more content pages to fetch
         next_page:

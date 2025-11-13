@@ -165,20 +165,15 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sql_postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
-      responses_store:
-        type: sql_postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
+      persistence:
+        agent_state:
+          namespace: agents
+          backend: kv_default
+        responses:
+          table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
   post_training:
   - provider_id: huggingface-gpu
     provider_type: inline::huggingface-gpu
@@ -237,10 +232,10 @@ providers:
     config:
       kvstore:
         namespace: batches
-        backend: kv_postgres
+        backend: kv_default
 storage:
   backends:
-    kv_postgres:
+    kv_default:
       type: kv_postgres
       host: ${env.POSTGRES_HOST:=localhost}
       port: ${env.POSTGRES_PORT:=5432}
@@ -248,7 +243,7 @@ storage:
       user: ${env.POSTGRES_USER:=llamastack}
       password: ${env.POSTGRES_PASSWORD:=llamastack}
       table_name: ${env.POSTGRES_TABLE_NAME:=llamastack_kvstore}
-    sql_postgres:
+    sql_default:
       type: sql_postgres
       host: ${env.POSTGRES_HOST:=localhost}
       port: ${env.POSTGRES_PORT:=5432}
@@ -258,27 +253,44 @@ storage:
   stores:
     metadata:
       namespace: registry
-      backend: kv_postgres
+      backend: kv_default
     inference:
       table_name: inference_store
-      backend: sql_postgres
+      backend: sql_default
       max_write_queue_size: 10000
       num_writers: 4
     conversations:
       table_name: openai_conversations
-      backend: sql_postgres
+      backend: sql_default
     prompts:
       namespace: prompts
-      backend: kv_postgres
+      backend: kv_default
 registered_resources:
   models: []
-  shields: []
+  shields:
+  - shield_id: llama-guard
+    provider_id: ${env.SAFETY_MODEL:+llama-guard}
+    provider_shield_id: ${env.SAFETY_MODEL:=}
+  - shield_id: code-scanner
+    provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
+    provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
   vector_dbs: []
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups: []
+  tool_groups:
+  - toolgroup_id: builtin::websearch
+    provider_id: tavily-search
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8321
 telemetry:
   enabled: true
+vector_stores:
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: nomic-ai/nomic-embed-text-v1.5
+safety:
+  default_shield_id: llama-guard
