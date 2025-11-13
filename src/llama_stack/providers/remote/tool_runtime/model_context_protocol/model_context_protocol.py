@@ -88,16 +88,13 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         """
         Extract headers and authorization from request provider data (Phase 1 backward compatibility).
 
-        For security, Authorization should not be passed via mcp_headers.
-        Instead, use a dedicated authorization field in the provider data.
+        Phase 1: Temporarily allows Authorization to be passed via mcp_headers for backward compatibility.
+        Phase 2: Will enforce that Authorization should use the dedicated authorization parameter instead.
 
         Returns:
             Tuple of (headers_dict, authorization_token)
             - headers_dict: All headers except Authorization
             - authorization_token: Token from Authorization header (with "Bearer " prefix removed), or None
-
-        Raises:
-            ValueError: If Authorization header is found in mcp_headers (security risk)
         """
 
         def canonicalize_uri(uri: str) -> str:
@@ -112,8 +109,8 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
                 if canonicalize_uri(uri) != canonicalize_uri(mcp_endpoint_uri):
                     continue
 
-                # Security check: reject Authorization header in mcp_headers
-                # This prevents accidentally passing inference tokens to MCP servers
+                # Phase 1: Extract Authorization from mcp_headers for backward compatibility
+                # (Phase 2 will reject this and require the dedicated authorization parameter)
                 for key in values.keys():
                     if key.lower() == "authorization":
                         # Extract authorization token and strip "Bearer " prefix if present
