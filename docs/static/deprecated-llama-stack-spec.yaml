@@ -3671,15 +3671,13 @@ components:
     OpenAIResponseInputMessageContentImage:
       properties:
         detail:
-          anyOf:
-          - type: string
-            const: low
-          - type: string
-            const: high
-          - type: string
-            const: auto
-          title: string
+          title: Detail
           default: auto
+          type: string
+          enum:
+          - low
+          - high
+          - auto
         type:
           type: string
           const: input_image
@@ -3822,17 +3820,14 @@ components:
     OpenAIResponseInputToolWebSearch:
       properties:
         type:
-          anyOf:
-          - type: string
-            const: web_search
-          - type: string
-            const: web_search_preview
-          - type: string
-            const: web_search_preview_2025_03_11
-          - type: string
-            const: web_search_2025_08_26
-          title: string
+          title: Type
           default: web_search
+          type: string
+          enum:
+          - web_search
+          - web_search_preview
+          - web_search_preview_2025_03_11
+          - web_search_2025_08_26
         search_context_size:
           anyOf:
           - type: string
@@ -3934,16 +3929,14 @@ components:
             title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
           title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
         role:
-          anyOf:
-          - type: string
-            const: system
-          - type: string
-            const: developer
-          - type: string
-            const: user
-          - type: string
-            const: assistant
-          title: string
+          title: Role
+          type: string
+          enum:
+          - system
+          - developer
+          - user
+          - assistant
+          default: system
         type:
           type: string
           const: message
@@ -4005,16 +3998,14 @@ components:
             title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
           title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
         role:
-          anyOf:
-          - type: string
-            const: system
-          - type: string
-            const: developer
-          - type: string
-            const: user
-          - type: string
-            const: assistant
-          title: string
+          title: Role
+          type: string
+          enum:
+          - system
+          - developer
+          - user
+          - assistant
+          default: system
         type:
           type: string
           const: message
@@ -4735,14 +4726,13 @@ components:
     OpenAIResponseTextFormat:
       properties:
         type:
-          anyOf:
-          - type: string
-            const: text
-          - type: string
-            const: json_schema
-          - type: string
-            const: json_object
-          title: string
+          title: Type
+          type: string
+          enum:
+          - text
+          - json_schema
+          - json_object
+          default: text
         name:
           anyOf:
           - type: string
@@ -6001,16 +5991,14 @@ components:
           type: string
           title: Vector Store Id
         status:
-          anyOf:
-          - type: string
-            const: completed
-          - type: string
-            const: in_progress
-          - type: string
-            const: cancelled
-          - type: string
-            const: failed
-          title: string
+          title: Status
+          type: string
+          enum:
+          - completed
+          - in_progress
+          - cancelled
+          - failed
+          default: completed
         file_counts:
           $ref: '#/components/schemas/VectorStoreFileCounts'
       type: object
@@ -6094,12 +6082,12 @@ components:
     VectorStoreFileLastError:
       properties:
         code:
-          anyOf:
-          - type: string
-            const: server_error
-          - type: string
-            const: rate_limit_exceeded
-          title: string
+          title: Code
+          type: string
+          enum:
+          - server_error
+          - rate_limit_exceeded
+          default: server_error
         message:
           type: string
           title: Message
@@ -6144,16 +6132,14 @@ components:
           - type: 'null'
           title: VectorStoreFileLastError
         status:
-          anyOf:
-          - type: string
-            const: completed
-          - type: string
-            const: in_progress
-          - type: string
-            const: cancelled
-          - type: string
-            const: failed
-          title: string
+          title: Status
+          type: string
+          enum:
+          - completed
+          - in_progress
+          - cancelled
+          - failed
+          default: completed
         usage_bytes:
           type: integer
           title: Usage Bytes
@@ -7519,16 +7505,13 @@ components:
         title: VectorStoreChunkingStrategyStatic
       title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
     VectorStoreFileStatus:
-      anyOf:
-      - const: completed
-        type: string
-      - const: in_progress
-        type: string
-      - const: cancelled
-        type: string
-      - const: failed
-        type: string
-      title: string
+      type: string
+      enum:
+      - completed
+      - in_progress
+      - cancelled
+      - failed
+      default: completed
     OpenAIResponseInputMessageContent:
       discriminator:
         mapping:
@@ -7617,16 +7600,14 @@ components:
             title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
           title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
         role:
-          anyOf:
-          - const: system
-            type: string
-          - const: developer
-            type: string
-          - const: user
-            type: string
-          - const: assistant
-            type: string
-          title: string
+          title: Role
+          type: string
+          enum:
+          - system
+          - developer
+          - user
+          - assistant
+          default: system
         type:
           const: message
           default: message

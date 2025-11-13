@@ -1031,6 +1031,10 @@ def _fix_path_parameters(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """Fix common schema issues: exclusiveMinimum, null defaults, and add titles to unions."""
+    # Convert anyOf with const values to enums across the entire schema
+    _convert_anyof_const_to_enum(openapi_schema)
+
+    # Fix other schema issues and add titles to unions
     if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
         for schema_name, schema_def in openapi_schema["components"]["schemas"].items():
             _fix_schema_recursive(schema_def)
@@ -1187,6 +1191,55 @@ def _add_titles_to_unions(obj: Any, parent_key: str | None = None) -> None:
     elif isinstance(obj, list):
         for item in obj:
             _add_titles_to_unions(item, parent_key)
+
+
+def _convert_anyof_const_to_enum(obj: Any) -> None:
+    """Convert anyOf with multiple const string values to a proper enum."""
+    if isinstance(obj, dict):
+        if "anyOf" in obj:
+            any_of = obj["anyOf"]
+            if isinstance(any_of, list):
+                # Check if all items are const string values
+                const_values = []
+                has_null = False
+                can_convert = True
+                for item in any_of:
+                    if isinstance(item, dict):
+                        if item.get("type") == "null":
+                            has_null = True
+                        elif item.get("type") == "string" and "const" in item:
+                            const_values.append(item["const"])
+                        else:
+                            # Not a simple const pattern, skip conversion for this anyOf
+                            can_convert = False
+                            break
+
+                # If we have const values and they're all strings, convert to enum
+                if can_convert and const_values and len(const_values) == len(any_of) - (1 if has_null else 0):
+                    # Convert to enum
+                    obj["type"] = "string"
+                    obj["enum"] = const_values
+                    # Preserve default if present, otherwise try to get from first const item
+                    if "default" not in obj:
+                        for item in any_of:
+                            if isinstance(item, dict) and "const" in item:
+                                obj["default"] = item["const"]
+                                break
+                    # Remove anyOf
+                    del obj["anyOf"]
+                    # Handle nullable
+                    if has_null:
+                        obj["nullable"] = True
+                    # Remove title if it's just "string"
+                    if obj.get("title") == "string":
+                        del obj["title"]
+
+        # Recursively process all values
+        for value in obj.values():
+            _convert_anyof_const_to_enum(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            _convert_anyof_const_to_enum(item)
 
 
 def _fix_schema_recursive(obj: Any) -> None:
