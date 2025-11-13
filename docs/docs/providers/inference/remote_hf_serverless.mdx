@@ -14,8 +14,8 @@ HuggingFace Inference API serverless provider for on-demand model inference.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `huggingface_repo` | `<class 'str'>` | No |  | The model ID of the model on the Hugging Face Hub (e.g. 'meta-llama/Meta-Llama-3.1-70B-Instruct') |
-| `api_token` | `pydantic.types.SecretStr \| None` | No |  | Your Hugging Face user access token (will default to locally saved token if not provided) |
+| `huggingface_repo` | `str` | No |  | The model ID of the model on the Hugging Face Hub (e.g. 'meta-llama/Meta-Llama-3.1-70B-Instruct') |
+| `api_token` | `SecretStr \| None` | No |  | Your Hugging Face user access token (will default to locally saved token if not provided) |
 
 ## Sample Configuration
 
