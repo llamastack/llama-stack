@@ -111,7 +111,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
                 logger.error(f"AWS Bedrock authentication token expired: {error_msg}")
                 raise ValueError(
                     "AWS Bedrock authentication failed: Bearer token has expired. "
-                    "The AWS_BEDROCK_API_KEY environment variable contains an expired pre-signed URL. "
+                    "The AWS_BEARER_TOKEN_BEDROCK environment variable contains an expired pre-signed URL. "
                     "Please refresh your token by generating a new pre-signed URL with AWS credentials. "
                     "Refer to AWS Bedrock documentation for details on OpenAI-compatible endpoints."
                 ) from e
