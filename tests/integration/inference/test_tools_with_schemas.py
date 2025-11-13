@@ -9,6 +9,8 @@ Integration tests for inference/chat completion with JSON Schema-based tools.
 Tests that tools pass through correctly to various LLM providers.
 """
 
+import json
+
 import pytest
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
@@ -191,9 +193,22 @@ class TestMCPToolsInChatCompletion:
             mcp_endpoint=dict(uri=uri),
         )
 
+        # Use old header-based approach for Phase 1 (backward compatibility)
+        provider_data = {
+            "mcp_headers": {
+                uri: {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                },
+            },
+        }
+        auth_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        }
+
         # Get the tools from MCP
         tools_response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
+            extra_headers=auth_headers,
         )
 
         # Convert to OpenAI format for inference

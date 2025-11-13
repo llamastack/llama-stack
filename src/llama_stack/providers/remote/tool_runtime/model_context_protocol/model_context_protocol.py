@@ -56,9 +56,7 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         final_authorization = authorization or provider_auth
 
         return await list_mcp_tools(
-            endpoint=mcp_endpoint.uri,
-            headers=provider_headers,
-            authorization=final_authorization
+            endpoint=mcp_endpoint.uri, headers=provider_headers, authorization=final_authorization
         )
 
     async def invoke_tool(
@@ -109,7 +107,7 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         authorization = None
 
         provider_data = self.get_request_provider_data()
-        if provider_data and hasattr(provider_data, 'mcp_headers') and provider_data.mcp_headers:
+        if provider_data and hasattr(provider_data, "mcp_headers") and provider_data.mcp_headers:
             for uri, values in provider_data.mcp_headers.items():
                 if canonicalize_uri(uri) != canonicalize_uri(mcp_endpoint_uri):
                     continue
