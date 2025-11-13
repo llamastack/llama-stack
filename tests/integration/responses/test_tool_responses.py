@@ -51,9 +51,6 @@ def test_response_non_streaming_web_search(responses_client, text_model_id, case
 def test_response_non_streaming_file_search(
     responses_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path, case
 ):
-    if isinstance(responses_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
-
     vector_store = new_vector_store(responses_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     if case.file_content:
@@ -108,9 +105,6 @@ def test_response_non_streaming_file_search(
 def test_response_non_streaming_file_search_empty_vector_store(
     responses_client, text_model_id, embedding_model_id, embedding_dimension
 ):
-    if isinstance(responses_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
-
     vector_store = new_vector_store(responses_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     # Create the response request, which should query our vector store
@@ -137,9 +131,6 @@ def test_response_sequential_file_search(
     responses_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path
 ):
     """Test file search with sequential responses using previous_response_id."""
-    if isinstance(responses_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
-
     vector_store = new_vector_store(responses_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     # Create a test file with content
