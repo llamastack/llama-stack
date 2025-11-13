@@ -52,7 +52,6 @@ class BingSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsReq
         self,
         tool_group_id: str | None = None,
         mcp_endpoint: URL | None = None,
-        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         return ListToolDefsResponse(
             data=[
